@@ -108,6 +108,7 @@ export async function sendStockMovementToKatana(
     success: true,
     barcode: input.barcode,
     variant_id: variant.id,
+    variant_name: variant.name ?? "",
     quantity: quantitySigned,
     katana_response: stockAdjustment,
   };

@@ -103,6 +103,10 @@ export async function POST(req: NextRequest) {
         sku,
         direction,
         eventId: insertedEvent.id,
+        variantName;
+        	typeof katanaResponse?.variant_name === "string"
+        		? katanaResponse.variant_name
+        		: "",
       });
     } catch (katanaError) {
       const message =

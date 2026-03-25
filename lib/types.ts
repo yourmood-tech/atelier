@@ -12,6 +12,7 @@ export type ScanApiResponse = {
   sku?: string;
   direction?: Direction;
   eventId?: string;
+  variantName?: string;
   error?: string;
   details?: unknown;
 };

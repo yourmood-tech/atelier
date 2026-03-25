@@ -15,6 +15,7 @@ export default function ScannerPage() {
   const [lastScan, setLastScan] = useState<string>("-");
   const [scanLines, setScanLines] = useState<ScanLine[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [lastVariantName, setLastVariantName] = useState<string>("-");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
@@ -110,9 +111,10 @@ export default function ScannerPage() {
         throw new Error(data.error || "Erreur API");
       }
 
-      setScanLines((prev) => [{ sku, ts: now }, ...prev].slice(0, 200));
-      setStatus(`OK · ${sku} · ${direction}`);
-      playBeep();
+			setScanLines((prev) => [{ sku, ts: now }, ...prev].slice(0, 200));
+			setLastVariantName(data.variantName || "-");
+			setStatus(`OK · ${sku} · ${direction}`);
+			playBeep();
     } catch (error) {
       setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
     }
@@ -150,6 +152,7 @@ export default function ScannerPage() {
     setScanLines([]);
     setLastScan("-");
     setStatus("Nouvelle session");
+    setLastVariantName("-");
   }
 
   return (
@@ -186,20 +189,24 @@ export default function ScannerPage() {
         className="pointer-events-none absolute opacity-0"
       />
 
-      <div className="mb-6 grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border p-4">
-          <div className="text-sm opacity-70">Mode</div>
-          <div className="text-2xl font-semibold">{direction}</div>
-        </div>
-        <div className="rounded-2xl border p-4">
-          <div className="text-sm opacity-70">Dernier scan</div>
-          <div className="text-2xl font-semibold">{lastScan}</div>
-        </div>
-        <div className="rounded-2xl border p-4">
-          <div className="text-sm opacity-70">Statut</div>
-          <div className="text-xl font-semibold">{status}</div>
-        </div>
-      </div>
+			<div className="mb-6 grid gap-3 md:grid-cols-4">
+			  <div className="rounded-2xl border p-4">
+			    <div className="text-sm opacity-70">Mode</div>
+			    <div className="text-2xl font-semibold">{direction}</div>
+			  </div>
+			  <div className="rounded-2xl border p-4">
+			    <div className="text-sm opacity-70">Dernier code-barres</div>
+			    <div className="text-2xl font-semibold">{lastScan}</div>
+			  </div>
+			  <div className="rounded-2xl border p-4">
+			    <div className="text-sm opacity-70">Variante</div>
+			    <div className="text-xl font-semibold">{lastVariantName}</div>
+			  </div>
+			  <div className="rounded-2xl border p-4">
+			    <div className="text-sm opacity-70">Statut</div>
+			    <div className="text-xl font-semibold">{status}</div>
+			  </div>
+			</div>
 
       <div className="mb-6 rounded-2xl border p-4">
         <div className="mb-2 text-sm opacity-70">Buffer scanner</div>
