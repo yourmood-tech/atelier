@@ -92,7 +92,19 @@ export default function ScannerPage() {
         body: JSON.stringify({ sku, direction, sessionId, deviceName: "scanner-bluetooth-1" }),
       });
 
-      const data = (await res.json()) as ScanApiResponse;
+      let data: ScanApiResponse | null = null;
+      let rawText = "";
+
+      try {
+        rawText = await res.text();
+        data = rawText ? (JSON.parse(rawText) as ScanApiResponse) : null;
+      } catch {
+        throw new Error(`Réponse non JSON de l'API: ${rawText.slice(0, 200)}`);
+      }
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Erreur API");
+      }
 
       if (!res.ok || !data.ok) {
         throw new Error(data.error || "Erreur API");
