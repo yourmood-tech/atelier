@@ -2,10 +2,17 @@ import type { Direction } from "./types";
 
 type KatanaVariant = {
   id: number;
+  product_id?: number | null;
+  material_id?: number | null;
   sku?: string | null;
   name?: string | null;
   internal_barcode?: string | null;
   registered_barcode?: string | null;
+};
+
+type KatanaProduct = {
+  id: number;
+  name?: string | null;
 };
 
 type KatanaMovementInput = {
@@ -63,6 +70,36 @@ async function findVariantByBarcode(barcode: string): Promise<KatanaVariant> {
   return data.data[0];
 }
 
+async function getProductName(productId: number): Promise<string> {
+  const product = (await katanaFetch(`/v1/products/${productId}`, {
+    method: "GET",
+  })) as KatanaProduct;
+
+  return product?.name?.trim() || "";
+}
+
+async function resolveVariantLabel(variant: KatanaVariant): Promise<string> {
+  if (typeof variant.name === "string" && variant.name.trim()) {
+    return variant.name.trim();
+  }
+
+  if (variant.product_id) {
+    const productName = await getProductName(variant.product_id);
+    if (productName && variant.sku) {
+      return `${productName} · ${variant.sku}`;
+    }
+    if (productName) {
+      return productName;
+    }
+  }
+
+  if (typeof variant.sku === "string" && variant.sku.trim()) {
+    return variant.sku.trim();
+  }
+
+  return "";
+}
+
 function makeStockAdjustmentNumber() {
   const ts = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
   return `SCN-${ts}`;
@@ -89,10 +126,9 @@ async function createStockAdjustment(params: {
   });
 }
 
-export async function sendStockMovementToKatana(
-  input: KatanaMovementInput
-) {
+export async function sendStockMovementToKatana(input: KatanaMovementInput) {
   const variant = await findVariantByBarcode(input.barcode);
+  const variantLabel = await resolveVariantLabel(variant);
 
   const quantitySigned =
     input.direction === "OUT"
@@ -108,7 +144,7 @@ export async function sendStockMovementToKatana(
     success: true,
     barcode: input.barcode,
     variant_id: variant.id,
-    variant_name: variant.name ?? "",
+    variant_name: variantLabel,
     quantity: quantitySigned,
     katana_response: stockAdjustment,
   };
