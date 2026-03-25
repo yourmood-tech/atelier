@@ -15,7 +15,30 @@ export async function POST(req: NextRequest) {
     const direction = body.direction;
     const sessionId = body.sessionId ?? null;
     const deviceName = body.deviceName ?? null;
+    const sku = String(body.sku ?? "").trim().toUpperCase();
+    const direction = body.direction;
 
+    if (!sku) {
+      return NextResponse.json(
+        { ok: false, error: "SKU manquant" },
+        { status: 400 }
+      );
+    }
+
+    // 👉 AJOUT ICI
+    if (sku.length < 3) {
+      return NextResponse.json(
+        { ok: false, error: "SKU invalide" },
+        { status: 400 }
+      );
+    }
+
+    if (direction !== "IN" && direction !== "OUT") {
+     return NextResponse.json(
+       { ok: false, error: "Direction invalide" },
+       { status: 400 }
+     );
+    }
     if (!sku) {
       return badRequest("SKU manquant");
     }
