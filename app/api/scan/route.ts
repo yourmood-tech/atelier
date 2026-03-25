@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const katanaResponse = await sendStockMovementToKatana({
-        sku,
+        barcode: sku,
         direction,
         quantity: 1,
       });
