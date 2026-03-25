@@ -15,8 +15,6 @@ export async function POST(req: NextRequest) {
     const direction = body.direction;
     const sessionId = body.sessionId ?? null;
     const deviceName = body.deviceName ?? null;
-    const sku = String(body.sku ?? "").trim().toUpperCase();
-    const direction = body.direction;
 
     if (!sku) {
       return NextResponse.json(
@@ -38,13 +36,6 @@ export async function POST(req: NextRequest) {
        { ok: false, error: "Direction invalide" },
        { status: 400 }
      );
-    }
-    if (!sku) {
-      return badRequest("SKU manquant");
-    }
-
-    if (direction !== "IN" && direction !== "OUT") {
-      return badRequest("Direction invalide");
     }
 
     const { data: insertedEvent, error: insertError } = await supabaseAdmin
