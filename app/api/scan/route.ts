@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         sku,
         direction,
         eventId: insertedEvent.id,
-        variantName;
+        variantName:
         	typeof katanaResponse?.variant_name === "string"
         		? katanaResponse.variant_name
         		: "",
