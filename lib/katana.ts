@@ -63,19 +63,24 @@ async function findVariantByBarcode(barcode: string): Promise<KatanaVariant> {
   return data.data[0];
 }
 
+function makeStockAdjustmentNumber() {
+  const ts = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
+  return `SCN-${ts}`;
+}
+
 async function createStockAdjustment(params: {
   variantId: number;
   quantity: number;
 }) {
   const payload = {
-    rows: [
+    stock_adjustment_number: makeStockAdjustmentNumber(),
+    location_id: DEFAULT_LOCATION_ID,
+    stock_adjustment_rows: [
       {
         variant_id: params.variantId,
-        location_id: DEFAULT_LOCATION_ID,
         quantity: params.quantity,
       },
     ],
-    reason: "scanner_mvp",
   };
 
   return katanaFetch("/v1/stock_adjustments", {
