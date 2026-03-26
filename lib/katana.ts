@@ -85,9 +85,11 @@ async function resolveVariantLabel(variant: KatanaVariant): Promise<string> {
 
   if (variant.product_id) {
     const productName = await getProductName(variant.product_id);
+
     if (productName && variant.sku) {
-      return `${productName} · ${variant.sku}`;
+      return `${productName} - ${variant.sku}`;
     }
+
     if (productName) {
       return productName;
     }
