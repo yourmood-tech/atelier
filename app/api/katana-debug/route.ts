@@ -19,8 +19,27 @@ async function katanaRaw(path: string) {
 export async function GET(req: NextRequest) {
   const sku = req.nextUrl.searchParams.get("sku")?.trim() ?? "";
   const id = req.nextUrl.searchParams.get("id")?.trim() ?? "";
+  const variantId = req.nextUrl.searchParams.get("variant_id")?.trim() ?? "";
 
   try {
+    // Inspect a specific ingredient variant → material chain
+    if (variantId) {
+      const variant = await katanaRaw(`/v1/variants/${variantId}`);
+      const materialId = variant.body?.material_id;
+      const productId = variant.body?.product_id;
+
+      let material = null;
+      if (materialId) {
+        material = await katanaRaw(`/v1/materials/${materialId}`);
+      }
+
+      return NextResponse.json({
+        variant: { endpoint: `/v1/variants/${variantId}`, ...variant },
+        material: material ? { endpoint: `/v1/materials/${materialId}`, ...material } : null,
+        product_id_on_variant: productId,
+      });
+    }
+
     if (id) {
       // Fetch single product by ID — includes recipe data
       const product = await katanaRaw(`/v1/products/${id}`);
