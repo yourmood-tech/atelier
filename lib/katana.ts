@@ -277,11 +277,17 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
 
           name = (mat.name as string) ?? "";
 
-          const ps = mat.preferred_supplier as Record<string, unknown> | null | undefined;
-          if (ps?.id && ps?.name) {
-            supplier = { id: ps.id as number, name: ps.name as string };
-          } else if (mat.supplier_id && mat.supplier_name) {
-            supplier = { id: mat.supplier_id as number, name: mat.supplier_name as string };
+          const supplierId = mat.default_supplier_id as number | null;
+          if (supplierId) {
+            try {
+              const sup = (await katanaFetch(`/v1/suppliers/${supplierId}`, {
+                method: "GET",
+              })) as Record<string, unknown>;
+              const supName = (sup.name as string) ?? "";
+              if (supName) supplier = { id: supplierId, name: supName };
+            } catch {
+              // Supplier name non critique
+            }
           }
         } else if (ingProductId) {
           // Sub-assembly product
