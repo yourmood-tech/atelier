@@ -38,9 +38,12 @@ const DEFAULT_LOCATION_ID = Number(process.env.KATANA_DEFAULT_LOCATION_ID!);
 
 const VARIANT_CACHE_TTL_MS = 10 * 60 * 1000;
 const PRODUCT_CACHE_TTL_MS = 10 * 60 * 1000;
+const SUPPLIER_CACHE_TTL_MS = 10 * 60 * 1000;
 
 const variantCache = new Map<string, CacheEntry<KatanaVariant>>();
 const productNameCache = new Map<number, CacheEntry<string>>();
+const supplierNameCache = new Map<number, CacheEntry<string>>();
+let supplierCachePopulatedAt = 0;
 
 function getCachedValue<T>(cache: Map<any, CacheEntry<T>>, key: any): T | null {
   const entry = cache.get(key);
@@ -189,6 +192,25 @@ async function createStockAdjustment(params: {
   });
 }
 
+async function getSupplierName(supplierId: number): Promise<string> {
+  const cached = getCachedValue(supplierNameCache, supplierId);
+  if (cached !== null) return cached;
+
+  // Populate cache from full list — /v1/suppliers/{id} doesn't exist in Katana API
+  if (Date.now() - supplierCachePopulatedAt > SUPPLIER_CACHE_TTL_MS) {
+    const data = (await katanaFetch("/v1/suppliers?limit=300", {
+      method: "GET",
+    })) as { data?: { id: number; name: string }[] };
+
+    supplierCachePopulatedAt = Date.now();
+    for (const sup of data?.data ?? []) {
+      setCachedValue(supplierNameCache, sup.id, sup.name ?? "", SUPPLIER_CACHE_TTL_MS);
+    }
+  }
+
+  return getCachedValue(supplierNameCache, supplierId) ?? "";
+}
+
 export async function searchRecipes(query: string, limit = 20): Promise<KatanaRecipe[]> {
   const params = new URLSearchParams({ search: query, limit: String(limit) });
   const data = (await katanaFetch(`/v1/products?${params}`, { method: "GET" })) as {
@@ -279,15 +301,8 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
 
           const supplierId = mat.default_supplier_id as number | null;
           if (supplierId) {
-            try {
-              const sup = (await katanaFetch(`/v1/suppliers/${supplierId}`, {
-                method: "GET",
-              })) as Record<string, unknown>;
-              const supName = (sup.name as string) ?? "";
-              if (supName) supplier = { id: supplierId, name: supName };
-            } catch {
-              // Supplier name non critique
-            }
+            const supName = await getSupplierName(supplierId);
+            if (supName) supplier = { id: supplierId, name: supName };
           }
         } else if (ingProductId) {
           // Sub-assembly product
