@@ -16,3 +16,58 @@ export type ScanApiResponse = {
   error?: string;
   details?: unknown;
 };
+
+export type KatanaRecipeIngredient = {
+  id: number;
+  name: string;
+  sku: string | null;
+  quantity: number;
+  unit: string | null;
+};
+
+export type KatanaRecipe = {
+  id: number;
+  name: string;
+  sku: string | null;
+  ingredients: KatanaRecipeIngredient[];
+};
+
+export type RecipesApiResponse = {
+  ok: boolean;
+  count?: number;
+  items?: KatanaRecipe[];
+  error?: string;
+};
+
+export type KatanaSupplier = {
+  id: number;
+  name: string;
+};
+
+export type KatanaRecipeIngredientWithSupplier = KatanaRecipeIngredient & {
+  supplier: KatanaSupplier | null;
+};
+
+export type ShopifyVariantInfo = {
+  variantId: number;
+  productId: number;
+  productTitle: string;
+  variantTitle: string;
+  sku: string;
+};
+
+export type RecipeLookupResult = {
+  shopify: ShopifyVariantInfo;
+  recipe: {
+    id: number;
+    name: string;
+    sku: string | null;
+    ingredients: KatanaRecipeIngredientWithSupplier[];
+  } | null;
+};
+
+export type RecipeLookupApiResponse = {
+  ok: boolean;
+  result?: RecipeLookupResult;
+  error?: string;
+};

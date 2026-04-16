@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Direction, ScanApiResponse } from "@/lib/types";
+import type { Direction, ScanApiResponse, RecipeLookupApiResponse, RecipeLookupResult } from "@/lib/types";
 
 type ScanLine = {
   sku: string;
   ts: number;
 };
 
+type AppMode = "scan" | "recipe";
+
 export default function ScannerPage() {
+  const [mode, setMode] = useState<AppMode>("scan");
   const [direction, setDirection] = useState<Direction>("OUT");
   const [buffer, setBuffer] = useState("");
   const [status, setStatus] = useState("Prêt");
@@ -16,6 +19,8 @@ export default function ScannerPage() {
   const [scanLines, setScanLines] = useState<ScanLine[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastVariantName, setLastVariantName] = useState<string>("-");
+  const [recipeResult, setRecipeResult] = useState<RecipeLookupResult | null>(null);
+  const [recipeLoading, setRecipeLoading] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
@@ -82,8 +87,13 @@ export default function ScannerPage() {
     }
 
     lastAcceptedRef.current = { sku, ts: now };
-
     setLastScan(sku);
+
+    if (mode === "recipe") {
+      await submitRecipeLookup(sku);
+      return;
+    }
+
     setStatus(`Envoi ${sku}...`);
 
     try {
@@ -111,12 +121,35 @@ export default function ScannerPage() {
         throw new Error(data.error || "Erreur API");
       }
 
-			setScanLines((prev) => [{ sku, ts: now }, ...prev].slice(0, 200));
-			setLastVariantName(data.variantName || "-");
-			setStatus(`OK · ${sku} · ${direction}`);
-			playBeep();
+      setScanLines((prev) => [{ sku, ts: now }, ...prev].slice(0, 200));
+      setLastVariantName(data.variantName || "-");
+      setStatus(`OK · ${sku} · ${direction}`);
+      playBeep();
     } catch (error) {
       setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
+    }
+  }
+
+  async function submitRecipeLookup(id: string) {
+    setRecipeLoading(true);
+    setRecipeResult(null);
+    setStatus(`Recherche recette ${id}...`);
+
+    try {
+      const res = await fetch(`/api/recipe-lookup?id=${encodeURIComponent(id)}`);
+      const data = (await res.json()) as RecipeLookupApiResponse;
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || "Erreur API");
+      }
+
+      setRecipeResult(data.result ?? null);
+      setStatus(`Recette trouvée · ${data.result?.shopify.productTitle ?? id}`);
+      playBeep();
+    } catch (error) {
+      setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
+    } finally {
+      setRecipeLoading(false);
     }
   }
 
@@ -159,18 +192,24 @@ export default function ScannerPage() {
     <main className="mx-auto max-w-4xl p-6">
       <h1 className="mb-6 text-3xl font-bold">Scanner stock</h1>
 
-      <div className="mb-6 flex gap-3">
+      <div className="mb-6 flex flex-wrap gap-3">
         <button
-          className={`rounded-xl border px-5 py-3 ${direction === "IN" ? "font-bold ring-2" : ""}`}
-          onClick={() => setDirection("IN")}
+          className={`rounded-xl border px-5 py-3 ${mode === "scan" && direction === "IN" ? "font-bold ring-2" : ""} ${mode === "recipe" ? "opacity-40" : ""}`}
+          onClick={() => { setMode("scan"); setDirection("IN"); }}
         >
           Entrée
         </button>
         <button
-          className={`rounded-xl border px-5 py-3 ${direction === "OUT" ? "font-bold ring-2" : ""}`}
-          onClick={() => setDirection("OUT")}
+          className={`rounded-xl border px-5 py-3 ${mode === "scan" && direction === "OUT" ? "font-bold ring-2" : ""} ${mode === "recipe" ? "opacity-40" : ""}`}
+          onClick={() => { setMode("scan"); setDirection("OUT"); }}
         >
           Sortie
+        </button>
+        <button
+          className={`rounded-xl border px-5 py-3 ${mode === "recipe" ? "font-bold ring-2" : ""}`}
+          onClick={() => { setMode("recipe"); setRecipeResult(null); setStatus("Scannez un produit Shopify"); }}
+        >
+          Mode Recette
         </button>
         <button className="rounded-xl border px-5 py-3" onClick={undoLastLocal}>
           Annuler local
@@ -213,41 +252,97 @@ export default function ScannerPage() {
         <div className="font-mono text-lg">{buffer || "—"}</div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <section className="rounded-2xl border p-4">
-          <h2 className="mb-4 text-xl font-semibold">Compteur session</h2>
-          <ul className="space-y-2">
-            {counts.length === 0 ? (
-              <li className="opacity-60">Aucun scan</li>
-            ) : (
-              counts.map(([sku, qty]) => (
-                <li key={sku} className="flex justify-between">
-                  <span className="font-mono">{sku}</span>
-                  <span>× {qty}</span>
-                </li>
-              ))
-            )}
-          </ul>
-        </section>
+      {mode === "scan" && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <section className="rounded-2xl border p-4">
+            <h2 className="mb-4 text-xl font-semibold">Compteur session</h2>
+            <ul className="space-y-2">
+              {counts.length === 0 ? (
+                <li className="opacity-60">Aucun scan</li>
+              ) : (
+                counts.map(([sku, qty]) => (
+                  <li key={sku} className="flex justify-between">
+                    <span className="font-mono">{sku}</span>
+                    <span>× {qty}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
 
+          <section className="rounded-2xl border p-4">
+            <h2 className="mb-4 text-xl font-semibold">Derniers scans</h2>
+            <ul className="space-y-2">
+              {scanLines.length === 0 ? (
+                <li className="opacity-60">Aucun scan</li>
+              ) : (
+                scanLines.slice(0, 20).map((line, idx) => (
+                  <li key={`${line.sku}-${line.ts}-${idx}`} className="flex justify-between">
+                    <span className="font-mono">{line.sku}</span>
+                    <span className="opacity-60">
+                      {new Date(line.ts).toLocaleTimeString()}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+        </div>
+      )}
+
+      {mode === "recipe" && (
         <section className="rounded-2xl border p-4">
-          <h2 className="mb-4 text-xl font-semibold">Derniers scans</h2>
-          <ul className="space-y-2">
-            {scanLines.length === 0 ? (
-              <li className="opacity-60">Aucun scan</li>
-            ) : (
-              scanLines.slice(0, 20).map((line, idx) => (
-                <li key={`${line.sku}-${line.ts}-${idx}`} className="flex justify-between">
-                  <span className="font-mono">{line.sku}</span>
-                  <span className="opacity-60">
-                    {new Date(line.ts).toLocaleTimeString()}
-                  </span>
-                </li>
-              ))
-            )}
-          </ul>
+          <h2 className="mb-4 text-xl font-semibold">Recette de fabrication</h2>
+
+          {recipeLoading && <p className="opacity-60">Chargement...</p>}
+
+          {!recipeLoading && !recipeResult && (
+            <p className="opacity-60">Scannez un code-barres produit Shopify</p>
+          )}
+
+          {recipeResult && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <div className="text-sm opacity-70">Produit Shopify</div>
+                <div className="font-semibold">{recipeResult.shopify.productTitle}</div>
+                <div className="font-mono text-sm opacity-70">
+                  SKU : {recipeResult.shopify.sku || "—"} · Taille : {recipeResult.shopify.variantTitle}
+                </div>
+              </div>
+
+              {!recipeResult.recipe ? (
+                <p className="opacity-60">Aucune recette Katana trouvée pour ce SKU</p>
+              ) : (
+                <div>
+                  <div className="mb-2 text-sm font-semibold opacity-70">
+                    Matériaux ({recipeResult.recipe.ingredients.length})
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left opacity-60">
+                        <th className="py-1 pr-4">Matière</th>
+                        <th className="py-1 pr-4">SKU</th>
+                        <th className="py-1 pr-4">Qté</th>
+                        <th className="py-1">Fournisseur</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recipeResult.recipe.ingredients.map((ing) => (
+                        <tr key={ing.id} className="border-b last:border-0">
+                          <td className="py-2 pr-4">{ing.name}</td>
+                          <td className="py-2 pr-4 font-mono text-xs">{ing.sku ?? "—"}</td>
+                          <td className="py-2 pr-4">{ing.quantity}{ing.unit ? ` ${ing.unit}` : ""}</td>
+                          <td className="py-2">{ing.supplier?.name ?? <span className="opacity-40">—</span>}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </section>
-      </div>
+      )}
     </main>
   );
 }

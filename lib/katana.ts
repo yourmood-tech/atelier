@@ -1,4 +1,10 @@
-import type { Direction } from "./types";
+import type {
+  Direction,
+  KatanaRecipe,
+  KatanaRecipeIngredient,
+  KatanaRecipeIngredientWithSupplier,
+  KatanaSupplier,
+} from "./types";
 
 type KatanaVariant = {
   id: number;
@@ -181,6 +187,106 @@ async function createStockAdjustment(params: {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function searchRecipes(query: string, limit = 20): Promise<KatanaRecipe[]> {
+  const params = new URLSearchParams({ search: query, limit: String(limit) });
+  const data = (await katanaFetch(`/v1/products?${params}`, { method: "GET" })) as {
+    data?: Record<string, unknown>[];
+  };
+
+  if (!data?.data?.length) return [];
+
+  return data.data.map((product) => ({
+    id: product.id as number,
+    name: (product.name as string) ?? "",
+    sku: (product.sku as string | null) ?? null,
+    ingredients: ((product.recipe_rows as Record<string, unknown>[]) ?? []).map(
+      (row): KatanaRecipeIngredient => ({
+        id: (row.ingredient_id ?? row.id) as number,
+        name: ((row.ingredient_name ?? row.name) as string) ?? "",
+        sku: ((row.ingredient_sku ?? row.sku) as string | null) ?? null,
+        quantity: (row.quantity as number) ?? 1,
+        unit: (row.unit as string | null) ?? null,
+      })
+    ),
+  }));
+}
+
+export async function getRecipeWithSuppliers(sku: string): Promise<{
+  id: number;
+  name: string;
+  sku: string | null;
+  ingredients: KatanaRecipeIngredientWithSupplier[];
+} | null> {
+  // Search by full SKU, then by base SKU without size suffix (CO-VOLCANBLACKXS-50 → CO-VOLCANBLACKXS)
+  const skusToTry = [sku, sku.replace(/-\d+$/, "")].filter(
+    (s, i, arr) => arr.indexOf(s) === i
+  );
+
+  let product: Record<string, unknown> | null = null;
+  for (const s of skusToTry) {
+    const params = new URLSearchParams({ search: s, limit: "5" });
+    const data = (await katanaFetch(`/v1/products?${params}`, {
+      method: "GET",
+    })) as { data?: Record<string, unknown>[] };
+    if (data?.data?.length) {
+      product = data.data[0];
+      break;
+    }
+  }
+
+  if (!product) return null;
+
+  const recipeRows = (product.recipe_rows ?? []) as Record<string, unknown>[];
+
+  const ingredients = await Promise.all(
+    recipeRows.map(async (row): Promise<KatanaRecipeIngredientWithSupplier> => {
+      const materialId = (row.material_id ?? row.ingredient_id) as
+        | number
+        | undefined;
+
+      let supplier: KatanaSupplier | null = null;
+      if (materialId) {
+        try {
+          const mat = (await katanaFetch(`/v1/materials/${materialId}`, {
+            method: "GET",
+          })) as Record<string, unknown>;
+
+          const ps = mat.preferred_supplier as
+            | Record<string, unknown>
+            | null
+            | undefined;
+          if (ps?.id && ps?.name) {
+            supplier = { id: ps.id as number, name: ps.name as string };
+          } else if (mat.supplier_id && mat.supplier_name) {
+            supplier = {
+              id: mat.supplier_id as number,
+              name: mat.supplier_name as string,
+            };
+          }
+        } catch {
+          // Supplier non critique — on continue sans
+        }
+      }
+
+      return {
+        id: (materialId ?? row.id) as number,
+        name: ((row.material_name ?? row.ingredient_name ?? row.name ?? "") as string),
+        sku: ((row.material_sku ?? row.ingredient_sku ?? row.sku ?? null) as string | null),
+        quantity: (row.quantity as number) ?? 1,
+        unit: (row.unit as string | null) ?? null,
+        supplier,
+      };
+    })
+  );
+
+  return {
+    id: product.id as number,
+    name: (product.name as string) ?? "",
+    sku: (product.sku as string | null) ?? null,
+    ingredients,
+  };
 }
 
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
