@@ -213,78 +213,98 @@ export async function searchRecipes(query: string, limit = 20): Promise<KatanaRe
   }));
 }
 
-export async function getRecipeWithSuppliers(sku: string): Promise<{
+export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise<{
   id: number;
   name: string;
   sku: string | null;
   ingredients: KatanaRecipeIngredientWithSupplier[];
 } | null> {
-  // Search by full SKU, then by base SKU without size suffix (CO-VOLCANBLACKXS-50 → CO-VOLCANBLACKXS)
-  const skusToTry = [sku, sku.replace(/-\d+$/, "")].filter(
-    (s, i, arr) => arr.indexOf(s) === i
+  // 1. Find the Katana variant by exact SKU
+  const variantData = (await katanaFetch(
+    `/v1/variants?sku=${encodeURIComponent(shopifyVariantSku)}&limit=3`,
+    { method: "GET" }
+  )) as { data?: Record<string, unknown>[] };
+
+  const katanaVariant = variantData?.data?.[0];
+  if (!katanaVariant) return null;
+
+  const katanaVariantId = katanaVariant.id as number;
+  const productId = katanaVariant.product_id as number;
+  if (!productId) return null;
+
+  // 2. Fetch product name + all recipe rows for this product
+  const [productRes, recipeRes] = await Promise.all([
+    katanaFetch(`/v1/products/${productId}`, { method: "GET" }) as Promise<Record<string, unknown>>,
+    katanaFetch(`/v1/recipes?product_id=${productId}&limit=500`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+  ]);
+
+  const productName = ((productRes as Record<string, unknown>).name as string) ?? "";
+  const allRows = (recipeRes as { data?: Record<string, unknown>[] }).data ?? [];
+
+  // 3. Keep only rows for our specific variant (size 50)
+  const variantRows = allRows.filter(
+    (row) => Number(row.product_variant_id) === katanaVariantId
   );
 
-  let product: Record<string, unknown> | null = null;
-  for (const s of skusToTry) {
-    const params = new URLSearchParams({ search: s, limit: "5" });
-    const data = (await katanaFetch(`/v1/products?${params}`, {
-      method: "GET",
-    })) as { data?: Record<string, unknown>[] };
-    if (data?.data?.length) {
-      product = data.data[0];
-      break;
-    }
-  }
+  if (!variantRows.length) return null;
 
-  if (!product) return null;
-
-  const recipeRows = (product.recipe_rows ?? []) as Record<string, unknown>[];
-
+  // 4. Fetch each ingredient variant → then its material/product for name + supplier
   const ingredients = await Promise.all(
-    recipeRows.map(async (row): Promise<KatanaRecipeIngredientWithSupplier> => {
-      const materialId = (row.material_id ?? row.ingredient_id) as
-        | number
-        | undefined;
+    variantRows.map(async (row): Promise<KatanaRecipeIngredientWithSupplier> => {
+      const ingredientVariantId = row.ingredient_variant_id as number;
+      const quantity = (row.quantity as number) ?? 1;
 
+      let name = "";
+      let sku: string | null = null;
       let supplier: KatanaSupplier | null = null;
-      if (materialId) {
-        try {
+
+      try {
+        const ingVariant = (await katanaFetch(
+          `/v1/variants/${ingredientVariantId}`,
+          { method: "GET" }
+        )) as Record<string, unknown>;
+
+        sku = (ingVariant.sku as string | null) ?? null;
+
+        const materialId = ingVariant.material_id as number | null;
+        const ingProductId = ingVariant.product_id as number | null;
+
+        if (materialId) {
+          // Purchased material → fetch for name + supplier
           const mat = (await katanaFetch(`/v1/materials/${materialId}`, {
             method: "GET",
           })) as Record<string, unknown>;
 
-          const ps = mat.preferred_supplier as
-            | Record<string, unknown>
-            | null
-            | undefined;
+          name = (mat.name as string) ?? "";
+
+          const ps = mat.preferred_supplier as Record<string, unknown> | null | undefined;
           if (ps?.id && ps?.name) {
             supplier = { id: ps.id as number, name: ps.name as string };
           } else if (mat.supplier_id && mat.supplier_name) {
-            supplier = {
-              id: mat.supplier_id as number,
-              name: mat.supplier_name as string,
-            };
+            supplier = { id: mat.supplier_id as number, name: mat.supplier_name as string };
           }
-        } catch {
-          // Supplier non critique — on continue sans
+        } else if (ingProductId) {
+          // Sub-assembly product
+          const subProd = (await katanaFetch(`/v1/products/${ingProductId}`, {
+            method: "GET",
+          })) as Record<string, unknown>;
+          name = (subProd.name as string) ?? "";
         }
+
+        // Fallback to variant name
+        if (!name && ingVariant.name) name = ingVariant.name as string;
+      } catch {
+        // Non-critical — ingredient without details
       }
 
-      return {
-        id: (materialId ?? row.id) as number,
-        name: ((row.material_name ?? row.ingredient_name ?? row.name ?? "") as string),
-        sku: ((row.material_sku ?? row.ingredient_sku ?? row.sku ?? null) as string | null),
-        quantity: (row.quantity as number) ?? 1,
-        unit: (row.unit as string | null) ?? null,
-        supplier,
-      };
+      return { id: ingredientVariantId, name, sku, quantity, unit: null, supplier };
     })
   );
 
   return {
-    id: product.id as number,
-    name: (product.name as string) ?? "",
-    sku: (product.sku as string | null) ?? null,
+    id: productId,
+    name: productName,
+    sku: shopifyVariantSku,
     ingredients,
   };
 }
