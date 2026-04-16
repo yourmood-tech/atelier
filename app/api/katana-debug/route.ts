@@ -30,22 +30,40 @@ export async function GET(req: NextRequest) {
     if (sku) {
       // Step 1: find variant by SKU
       const variantRes = await katanaRaw(`/v1/variants?sku=${encodeURIComponent(sku)}&limit=3`);
-
-      // Step 2: if variant found, fetch full product by product_id
       const variants = (variantRes.body?.data ?? []) as Record<string, unknown>[];
-      const productId = variants[0]?.product_id;
+      const variant = variants[0];
+      const productId = variant?.product_id;
+      const variantId = variant?.id;
 
-      if (productId) {
-        const productRes = await katanaRaw(`/v1/products/${productId}`);
-        return NextResponse.json({
-          variant_search: { endpoint: `/v1/variants?sku=${sku}`, ...variantRes },
-          product_detail: { endpoint: `/v1/products/${productId}`, ...productRes },
-        });
+      if (!productId) {
+        return NextResponse.json({ variant_search: variantRes, product_detail: null, recipes: null });
       }
 
+      // Step 2: fetch full product
+      const productRes = await katanaRaw(`/v1/products/${productId}`);
+
+      // Step 3: try all known recipe/BOM endpoints in parallel
+      const [
+        recipeByVariant,
+        recipeByProduct,
+        recipeRows,
+        moRows,
+      ] = await Promise.allSettled([
+        katanaRaw(`/v1/recipes?product_variant_id=${variantId}&limit=20`),
+        katanaRaw(`/v1/recipes?product_id=${productId}&limit=20`),
+        katanaRaw(`/v1/recipe_rows?product_variant_id=${variantId}&limit=20`),
+        katanaRaw(`/v1/manufacturing_order_rows?product_variant_id=${variantId}&limit=5`),
+      ]);
+
       return NextResponse.json({
-        variant_search: { endpoint: `/v1/variants?sku=${sku}`, ...variantRes },
-        product_detail: null,
+        variant: { id: variantId, product_id: productId, sku },
+        product_name: productRes.body?.name,
+        recipe_endpoints: {
+          "recipes?product_variant_id": recipeByVariant.status === "fulfilled" ? recipeByVariant.value : recipeByVariant.reason?.message,
+          "recipes?product_id": recipeByProduct.status === "fulfilled" ? recipeByProduct.value : recipeByProduct.reason?.message,
+          "recipe_rows?product_variant_id": recipeRows.status === "fulfilled" ? recipeRows.value : recipeRows.reason?.message,
+          "manufacturing_order_rows?product_variant_id": moRows.status === "fulfilled" ? moRows.value : moRows.reason?.message,
+        },
       });
     }
 
