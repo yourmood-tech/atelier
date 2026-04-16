@@ -41,20 +41,24 @@ async function getVariantById(id: string): Promise<ShopifyVariantInfo> {
 
 async function getProductById(id: string): Promise<ShopifyVariantInfo> {
   const { product: p } = await shopifyFetch(`/products/${id}.json`);
-  const v = p.variants?.[0];
+  const variants: Record<string, unknown>[] = p.variants ?? [];
+
+  // Always use size 50 as the recipe reference — recipe is the same for all sizes
+  const v =
+    variants.find((v) => String(v.title) === "50") ??
+    variants.find((v) => String(v.sku).endsWith("-50")) ??
+    variants[0];
+
   return {
-    variantId: v?.id ?? 0,
+    variantId: (v?.id as number) ?? 0,
     productId: p.id,
     productTitle: p.title,
-    variantTitle: v?.title ?? "",
-    sku: v?.sku ?? "",
+    variantTitle: (v?.title as string) ?? "",
+    sku: (v?.sku as string) ?? "",
   };
 }
 
 export async function lookupShopifyId(id: string): Promise<ShopifyVariantInfo> {
-  try {
-    return await getVariantById(id);
-  } catch {
-    return await getProductById(id);
-  }
+  // Scanned ID is always a Shopify product ID (not a variant ID)
+  return getProductById(id);
 }
