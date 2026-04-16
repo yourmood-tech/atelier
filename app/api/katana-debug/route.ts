@@ -22,15 +22,31 @@ export async function GET(req: NextRequest) {
 
   try {
     if (id) {
-      // Fetch a single product by ID to see full structure including recipe
+      // Fetch single product by ID — includes recipe data
       const product = await katanaRaw(`/v1/products/${id}`);
       return NextResponse.json({ endpoint: `/v1/products/${id}`, ...product });
     }
 
     if (sku) {
-      // Search product by SKU
-      const search = await katanaRaw(`/v1/products?search=${encodeURIComponent(sku)}&limit=3`);
-      return NextResponse.json({ endpoint: `/v1/products?search=${sku}`, ...search });
+      // Step 1: find variant by SKU
+      const variantRes = await katanaRaw(`/v1/variants?sku=${encodeURIComponent(sku)}&limit=3`);
+
+      // Step 2: if variant found, fetch full product by product_id
+      const variants = (variantRes.body?.data ?? []) as Record<string, unknown>[];
+      const productId = variants[0]?.product_id;
+
+      if (productId) {
+        const productRes = await katanaRaw(`/v1/products/${productId}`);
+        return NextResponse.json({
+          variant_search: { endpoint: `/v1/variants?sku=${sku}`, ...variantRes },
+          product_detail: { endpoint: `/v1/products/${productId}`, ...productRes },
+        });
+      }
+
+      return NextResponse.json({
+        variant_search: { endpoint: `/v1/variants?sku=${sku}`, ...variantRes },
+        product_detail: null,
+      });
     }
 
     return NextResponse.json({ error: "Paramètre sku ou id requis" }, { status: 400 });
