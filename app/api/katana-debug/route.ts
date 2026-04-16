@@ -20,8 +20,19 @@ export async function GET(req: NextRequest) {
   const sku = req.nextUrl.searchParams.get("sku")?.trim() ?? "";
   const id = req.nextUrl.searchParams.get("id")?.trim() ?? "";
   const variantId = req.nextUrl.searchParams.get("variant_id")?.trim() ?? "";
+  const supplierId = req.nextUrl.searchParams.get("supplier_id")?.trim() ?? "";
 
   try {
+    // Test supplier endpoint directly
+    if (supplierId) {
+      const single = await katanaRaw(`/v1/suppliers/${supplierId}`);
+      const list = await katanaRaw(`/v1/suppliers?limit=5`);
+      return NextResponse.json({
+        single: { endpoint: `/v1/suppliers/${supplierId}`, ...single },
+        list_sample: { endpoint: `/v1/suppliers?limit=5`, ...list },
+      });
+    }
+
     // Inspect a specific ingredient variant → material chain
     if (variantId) {
       const variant = await katanaRaw(`/v1/variants/${variantId}`);
