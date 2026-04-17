@@ -92,7 +92,7 @@ export async function generateBackorderEmail(
 Write a warm email to a customer informing them that one item in their order will take a little longer to be delivered.
 
 Context to weave naturally into the message (do NOT list these as bullet points — integrate them as authentic, human prose):
-- Our pieces are handcrafted in small batches or individually, which means we never overproduce
+- Our pieces are crafted with precision in small batches or individually, which means we never overproduce
 - This is a conscious choice: we prefer making each piece with care rather than stockpiling inventory
 - The wait is part of what makes the piece special — it is being made for them
 
