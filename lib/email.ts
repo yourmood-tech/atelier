@@ -84,7 +84,7 @@ export async function generateBackorderEmail(
   const language = LOCALE_LABELS[order.customer.locale] ?? "French";
 
   const etaText = estimatedDelivery
-    ? `estimated delivery date: ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })}`
+    ? `approximate delivery window based on supplier PO: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
     : (leadTimeMin && leadTimeMax)
     ? `estimated lead time: between ${leadTimeMin} and ${leadTimeMax} days from today`
     : leadTimeMin
@@ -100,6 +100,7 @@ Tone guidelines:
 - One brief mention that pieces are produced in small quantities by design (anti-overproduction), stated as a fact, not as a marketing pitch
 - No emotional language, no "cheesy" reassurances
 - NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente" — state facts, not feelings
+- When a delivery date is given, ALWAYS frame it as an estimate ("aux alentours du", "around", "etwa um den") — never as a confirmed or guaranteed date
 
 Rules:
 - Write entirely in ${language}
@@ -151,8 +152,8 @@ export async function generateFollowUpEmail(
       day: "numeric", month: "long", year: "numeric",
     });
     remainingText = daysRemaining > 0
-      ? `delivery still confirmed for ${deliveryDate} — approximately ${daysRemaining} days remaining from the date this email is sent`
-      : `delivery confirmed for ${deliveryDate}`;
+      ? `delivery still estimated around ${deliveryDate} — approximately ${daysRemaining} days remaining from the date this email is sent — phrase as estimate, not a guarantee`
+      : `delivery still estimated around ${deliveryDate} — phrase as estimate, not a guarantee`;
   } else if (leadTimeMin) {
     const remMin = Math.max(0, leadTimeMin - FOLLOWUP_DELAY_DAYS);
     const remMax = leadTimeMax ? Math.max(0, leadTimeMax - FOLLOWUP_DELAY_DAYS) : null;
