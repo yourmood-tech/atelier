@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderById, lookupShopifyId } from "@/lib/shopify";
+import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
 import { generateProductionEmail, sendProductionEventToKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { ProductionNotifyApiResponse, ProductionAnalysis, ProductionDirection, ProductionStep } from "@/lib/types";
@@ -63,6 +63,11 @@ export async function POST(req: NextRequest) {
       leadTimeMax: step.lead_time_max,
       leadTimeUnit: step.lead_time_unit,
     });
+
+    const tagReason = body.direction === "IN"
+      ? `${step.name} Entrée`
+      : `${step.name} Sortie`;
+    void addOrderTag(order.id, makeOrderTag(tagReason)).catch(console.error);
 
     return NextResponse.json<ProductionNotifyApiResponse>({ ok: true, result: analysis });
   } catch (error) {

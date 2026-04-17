@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderById, lookupShopifyId } from "@/lib/shopify";
+import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
       subject: string;
       body: string;
       orderId?: string;
+      orderNumericId?: number;
       productTitle?: string;
       estimatedDelivery?: string | null;
       supplierName?: string | null;
@@ -137,6 +138,10 @@ export async function POST(req: NextRequest) {
       followupSubject: body.followupSubject ?? null,
       followupBody: body.followupBody ?? null,
     });
+
+    if (body.orderNumericId) {
+      void addOrderTag(body.orderNumericId, makeOrderTag("Rupture")).catch(console.error);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

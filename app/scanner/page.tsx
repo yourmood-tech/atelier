@@ -291,6 +291,7 @@ export default function ScannerPage() {
           subject,
           body,
           orderId: item.result.order.name,
+          orderNumericId: item.result.order.id,
           productTitle: item.result.product.productTitle,
           estimatedDelivery: item.result.estimatedDelivery,
           supplierName: item.result.purchaseOrder?.supplierName ?? null,

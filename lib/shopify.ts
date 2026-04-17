@@ -63,6 +63,51 @@ export async function lookupShopifyId(id: string): Promise<ShopifyVariantInfo> {
   return getProductById(id);
 }
 
+// ── Shopify GraphQL — add a tag to an order (non-destructive, merges with existing tags) ──
+
+export async function addOrderTag(orderId: number, tag: string): Promise<void> {
+  const gid = `gid://shopify/Order/${orderId}`;
+  const query = `
+    mutation tagsAdd($id: ID!, $tags: [String!]!) {
+      tagsAdd(id: $id, tags: $tags) {
+        node { id }
+        userErrors { field message }
+      }
+    }
+  `;
+
+  const res = await fetch(
+    `https://${STORE}/admin/api/${API_VERSION}/graphql.json`,
+    {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, variables: { id: gid, tags: [tag] } }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Shopify GraphQL ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const json = await res.json() as { data?: { tagsAdd?: { userErrors?: { message: string }[] } } };
+  const errors = json.data?.tagsAdd?.userErrors;
+  if (errors?.length) {
+    throw new Error(`Shopify tagsAdd: ${errors[0].message}`);
+  }
+}
+
+// Returns a tag string like "Rupture 17.04.26 10:30"
+export function makeOrderTag(reason: string): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const ts = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${String(now.getFullYear()).slice(2)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  return `${reason} ${ts}`;
+}
+
 export async function getOrderById(id: string): Promise<import("./types").ShopifyOrder> {
   const { order: o } = await shopifyFetch(`/orders/${id}.json`);
 
