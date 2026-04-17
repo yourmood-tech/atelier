@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
-import { generateBackorderEmail, sendViaKlaviyo } from "@/lib/email";
+import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 
@@ -65,7 +65,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 5. Generate email draft
+    // 5. Determine if a follow-up is needed (lead time > 12 days)
+    const needsFollowUp = estimatedDelivery
+      ? Math.ceil((new Date(estimatedDelivery).getTime() - Date.now()) / 86_400_000) > 12
+      : (leadTimeMin ?? 0) > 12;
+
+    // 6. Generate email drafts (initial + optional follow-up) in parallel
     const analysis: BackorderAnalysis = {
       order,
       product,
@@ -75,10 +80,18 @@ export async function GET(req: NextRequest) {
       leadTimeMin,
       leadTimeMax,
       emailDraft: null,
+      followUpEmailDraft: null,
     };
 
-    const { subject, body } = await generateBackorderEmail(analysis);
-    analysis.emailDraft = `Subject: ${subject}\n\n${body}`;
+    const [initial, followUp] = await Promise.all([
+      generateBackorderEmail(analysis),
+      needsFollowUp ? generateFollowUpEmail(analysis) : Promise.resolve(null),
+    ]);
+
+    analysis.emailDraft = `Subject: ${initial.subject}\n\n${initial.body}`;
+    if (followUp) {
+      analysis.followUpEmailDraft = `Subject: ${followUp.subject}\n\n${followUp.body}`;
+    }
 
     return NextResponse.json<BackorderApiResponse>({ ok: true, result: analysis });
   } catch (error) {
@@ -101,6 +114,8 @@ export async function POST(req: NextRequest) {
       productTitle?: string;
       estimatedDelivery?: string | null;
       supplierName?: string | null;
+      followupSubject?: string | null;
+      followupBody?: string | null;
     };
 
     if (!body.to || !body.subject || !body.body) {
@@ -119,6 +134,8 @@ export async function POST(req: NextRequest) {
       productTitle: body.productTitle ?? "",
       estimatedDelivery: body.estimatedDelivery ?? null,
       supplierName: body.supplierName ?? null,
+      followupSubject: body.followupSubject ?? null,
+      followupBody: body.followupBody ?? null,
     });
 
     return NextResponse.json({ ok: true });

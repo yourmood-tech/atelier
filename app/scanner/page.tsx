@@ -263,6 +263,12 @@ export default function ScannerPage() {
           productTitle: item.result.product.productTitle,
           estimatedDelivery: item.result.estimatedDelivery,
           supplierName: item.result.purchaseOrder?.supplierName ?? null,
+          followupSubject: item.result.followUpEmailDraft
+            ? item.result.followUpEmailDraft.split("\n")[0].replace(/^Subject:\s*/i, "")
+            : null,
+          followupBody: item.result.followUpEmailDraft
+            ? item.result.followUpEmailDraft.split("\n").slice(2).join("\n")
+            : null,
         }),
       });
       const data = await res.json() as { ok: boolean; error?: string };

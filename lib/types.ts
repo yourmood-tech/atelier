@@ -124,6 +124,7 @@ export type BackorderAnalysis = {
   leadTimeMin: number | null;
   leadTimeMax: number | null;
   emailDraft: string | null;
+  followUpEmailDraft: string | null; // generated when lead time > 12 days
 };
 
 export type BackorderApiResponse = {

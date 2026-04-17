@@ -11,6 +11,8 @@ export async function sendViaKlaviyo(params: {
   productTitle: string;
   estimatedDelivery: string | null;
   supplierName: string | null;
+  followupSubject?: string | null;
+  followupBody?: string | null;
 }): Promise<void> {
   const apiKey = process.env.KLAVIYO_API_KEY!;
 
@@ -47,6 +49,9 @@ export async function sendViaKlaviyo(params: {
             product_title: params.productTitle,
             estimated_delivery: params.estimatedDelivery ?? "À confirmer",
             supplier_name: params.supplierName ?? "",
+            needs_followup: !!(params.followupSubject && params.followupBody),
+            followup_subject: params.followupSubject ?? "",
+            followup_body: params.followupBody ?? "",
           },
           time: new Date().toISOString(),
         },
@@ -75,12 +80,8 @@ const LOCALE_LABELS: Record<string, string> = {
 export async function generateBackorderEmail(
   analysis: BackorderAnalysis
 ): Promise<{ subject: string; body: string }> {
-  const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
   const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
-  const locale = order.customer.locale;
-  const language = LOCALE_LABELS[locale] ?? "French";
+  const language = LOCALE_LABELS[order.customer.locale] ?? "French";
 
   const etaText = estimatedDelivery
     ? `estimated delivery date: ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })}`
@@ -114,20 +115,61 @@ Customer info:
 - Product: ${product.productTitle}
 - Delivery situation: ${etaText}`;
 
+  return callClaude(prompt);
+}
+
+async function callClaude(prompt: string): Promise<{ subject: string; body: string }> {
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 600,
     messages: [{ role: "user", content: prompt }],
   });
-
-  const text =
-    response.content[0].type === "text" ? response.content[0].text : "";
-
+  const text = response.content[0].type === "text" ? response.content[0].text : "";
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Claude did not return valid JSON for email generation");
-  }
+  if (!jsonMatch) throw new Error("Claude did not return valid JSON");
+  return JSON.parse(jsonMatch[0]) as { subject: string; body: string };
+}
 
-  const parsed = JSON.parse(jsonMatch[0]) as { subject: string; body: string };
-  return { subject: parsed.subject, body: parsed.body };
+export async function generateFollowUpEmail(
+  analysis: BackorderAnalysis
+): Promise<{ subject: string; body: string }> {
+  const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
+  const language = LOCALE_LABELS[order.customer.locale] ?? "French";
+
+  const etaText = estimatedDelivery
+    ? `expected delivery: ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })}`
+    : (leadTimeMin && leadTimeMax)
+    ? `expected lead time: between ${leadTimeMin} and ${leadTimeMax} days from order date`
+    : leadTimeMin
+    ? `expected lead time: approximately ${leadTimeMin} days from order date`
+    : "delivery timing not yet confirmed";
+
+  const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief follow-up email to a customer whose order is still being prepared. This is a proactive update — they have been waiting for more than two weeks.
+
+Tone guidelines:
+- Professional, direct, and reassuring without being apologetic or dramatic
+- Acknowledge the wait matter-of-factly
+- Confirm the order is progressing and will be delivered
+- One sentence maximum on production being done in small quantities by design
+- No emotional language, no "magic", no "special", no "worth the wait"
+- Do NOT use words like "magie", "spécial", "ça vaut l'attente"
+
+Rules:
+- Write entirely in ${language}
+- 3-4 sentences maximum
+- Address by first name only — no "Madame/Monsieur"
+- No sign-off or signature — body text only
+- Use "livrer" / "deliver" — not "proposer" / "offer"
+- Return JSON: { "subject": "...", "body": "..." }
+
+Customer info:
+- First name: ${order.customer.firstName}
+- Order number: ${order.name}
+- Product: ${product.productTitle}
+- Status: ${etaText}`;
+
+  return callClaude(prompt);
 }
