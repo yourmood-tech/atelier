@@ -1,4 +1,4 @@
-import type { BackorderAnalysis } from "./types";
+import type { BackorderAnalysis, ProductionAnalysis, ProductionDirection } from "./types";
 
 // ── Klaviyo — track BackorderNotification event → triggers Flow ───────────────
 
@@ -192,4 +192,133 @@ Customer info:
 - Current status: ${remainingText}`;
 
   return callClaude(prompt);
+}
+
+// ── Klaviyo — production step events ──────────────────────────────────────────
+
+export async function sendProductionEventToKlaviyo(params: {
+  email: string;
+  firstName: string;
+  subject: string;
+  body: string;
+  orderId: string;
+  productTitle: string;
+  stepName: string;
+  direction: ProductionDirection;
+  leadTimeMin: number | null;
+  leadTimeMax: number | null;
+  leadTimeUnit: string;
+}): Promise<void> {
+  const apiKey = process.env.KLAVIYO_API_KEY!;
+  const metricName = params.direction === "IN" ? "ProductionStepStarted" : "ProductionStepCompleted";
+
+  const res = await fetch("https://a.klaviyo.com/api/events/", {
+    method: "POST",
+    headers: {
+      Authorization: `Klaviyo-API-Key ${apiKey}`,
+      "Content-Type": "application/json",
+      revision: "2024-10-15",
+    },
+    body: JSON.stringify({
+      data: {
+        type: "event",
+        attributes: {
+          profile: {
+            data: {
+              type: "profile",
+              attributes: { email: params.email, first_name: params.firstName },
+            },
+          },
+          metric: {
+            data: {
+              type: "metric",
+              attributes: { name: metricName },
+            },
+          },
+          properties: {
+            email_subject: params.subject,
+            email_body: params.body,
+            order_id: params.orderId,
+            product_title: params.productTitle,
+            step_name: params.stepName,
+            direction: params.direction,
+            lead_time_min: params.leadTimeMin ?? "",
+            lead_time_max: params.leadTimeMax ?? "",
+            lead_time_unit: params.leadTimeUnit,
+          },
+          time: new Date().toISOString(),
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Klaviyo ${res.status}: ${text.slice(0, 200)}`);
+  }
+}
+
+// ── Claude API — production step email generation ─────────────────────────────
+
+export async function generateProductionEmail(
+  analysis: ProductionAnalysis
+): Promise<{ subject: string; emailBody: string }> {
+  const { order, product, step, direction } = analysis;
+  const language = LOCALE_LABELS[order.customer.locale] ?? "French";
+
+  const durationText = (step.lead_time_min && step.lead_time_max)
+    ? `between ${step.lead_time_min} and ${step.lead_time_max} ${step.lead_time_unit}`
+    : step.lead_time_min
+    ? `approximately ${step.lead_time_min} ${step.lead_time_unit}`
+    : null;
+
+  const prompt = direction === "IN"
+    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief email to a customer informing them that their order has just entered the "${step.name}" production stage.${step.description ? `\n\nAbout this step: ${step.description}` : ""}
+
+Purpose: inform the customer their piece is now being actively worked on, and give an estimated duration for this step.
+
+Tone guidelines:
+- Professional and factual — this is a status update
+- Brief and informative, no corporate fluff
+- No emotional language, no "magic", no "special"
+
+Rules:
+- Write entirely in ${language}
+- 2-3 sentences maximum
+- Address by first name only — no "Madame/Monsieur"
+- No sign-off or signature — body text only
+- Return JSON: { "subject": "...", "body": "..." }
+
+Customer info:
+- First name: ${order.customer.firstName}
+- Order number: ${order.name}
+- Product: ${product.productTitle}
+- Step: ${step.name}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
+
+    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief email to a customer informing them that their order has just completed the "${step.name}" production stage and is moving forward.
+
+Purpose: confirm this step is done, signal progress — do not announce delivery date.
+
+Tone guidelines:
+- Professional and factual
+- Positive but not effusive
+- No emotional language, no "magic", no "special"
+
+Rules:
+- Write entirely in ${language}
+- 2 sentences maximum
+- Address by first name only — no "Madame/Monsieur"
+- No sign-off or signature — body text only
+- Return JSON: { "subject": "...", "body": "..." }
+
+Customer info:
+- First name: ${order.customer.firstName}
+- Order number: ${order.name}
+- Product: ${product.productTitle}
+- Completed step: ${step.name}`;
+
+  const result = await callClaude(prompt);
+  return { subject: result.subject, emailBody: result.body };
 }

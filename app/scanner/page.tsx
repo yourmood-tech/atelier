@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Direction, ScanApiResponse, RecipeLookupApiResponse, RecipeLookupResult, BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
+import type { Direction, ScanApiResponse, RecipeLookupApiResponse, RecipeLookupResult, BackorderApiResponse, BackorderAnalysis, ProductionStep, ProductionDirection, ProductionAnalysis, ProductionNotifyApiResponse } from "@/lib/types";
 
 type ScanLine = {
   sku: string;
@@ -17,8 +17,20 @@ type BatchItem = {
   error: string | null;
 };
 
-type AppMode = "scan" | "recipe" | "backorder" | "suppliers";
+type AppMode = "scan" | "recipe" | "backorder" | "suppliers" | "production";
 type BackorderStep = "order" | "product";
+
+type ProductionBatchItem = {
+  localId: string;
+  orderId: string;
+  productId: string;
+  stepKey: string;
+  stepName: string;
+  direction: ProductionDirection;
+  status: "analyzing" | "ready" | "error";
+  result: ProductionAnalysis | null;
+  error: string | null;
+};
 
 type SupplierRow = {
   supplier_id: number;
@@ -43,6 +55,19 @@ export default function ScannerPage() {
   const [backorderOrderId, setBackorderOrderId] = useState<string | null>(null);
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchSendingAll, setBatchSendingAll] = useState(false);
+  // Production mode
+  const [productionView, setProductionView] = useState<"scan" | "steps">("scan");
+  const [productionSteps, setProductionSteps] = useState<ProductionStep[]>([]);
+  const [productionStepsLoading, setProductionStepsLoading] = useState(false);
+  const [selectedStepKey, setSelectedStepKey] = useState<string>("");
+  const [productionDirection, setProductionDirection] = useState<ProductionDirection>("IN");
+  const [productionScanStep, setProductionScanStep] = useState<BackorderStep>("order");
+  const [productionOrderId, setProductionOrderId] = useState<string | null>(null);
+  const [productionBatch, setProductionBatch] = useState<ProductionBatchItem[]>([]);
+  const [editingStepId, setEditingStepId] = useState<number | null>(null);
+  const [editingStepMin, setEditingStepMin] = useState<string>("");
+  const [editingStepMax, setEditingStepMax] = useState<string>("");
+  const [editingStepUnit, setEditingStepUnit] = useState<"hours" | "days">("hours");
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [suppliersLoading, setSuppliersLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -52,6 +77,7 @@ export default function ScannerPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
   const modeRef = useRef<AppMode>("scan");
+  const productionViewRef = useRef<"scan" | "steps">("scan");
 
   useEffect(() => {
     const existing = sessionStorage.getItem("scanner_session_id");
@@ -66,13 +92,15 @@ export default function ScannerPage() {
   }, []);
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { productionViewRef.current = productionView; }, [productionView]);
 
   useEffect(() => {
     inputRef.current?.focus();
 
     const interval = window.setInterval(() => {
-      // Don't steal focus in suppliers mode (user needs to type in inputs)
+      // Don't steal focus when user needs to type in inputs
       if (modeRef.current === "suppliers") return;
+      if (modeRef.current === "production" && productionViewRef.current === "steps") return;
       if (document.activeElement !== inputRef.current) {
         inputRef.current?.focus();
       }
@@ -128,6 +156,11 @@ export default function ScannerPage() {
 
     if (mode === "backorder") {
       await submitBackorderScan(sku);
+      return;
+    }
+
+    if (mode === "production" && productionView === "scan") {
+      submitProductionScan(sku);
       return;
     }
 
@@ -292,6 +325,89 @@ export default function ScannerPage() {
     setStatus(`${readyItems.length} email(s) envoyé(s)`);
   }
 
+  async function loadProductionSteps() {
+    setProductionStepsLoading(true);
+    try {
+      const res = await fetch("/api/production-steps");
+      const data = await res.json() as { ok: boolean; steps?: ProductionStep[] };
+      if (data.ok && data.steps) {
+        setProductionSteps(data.steps);
+        if (!selectedStepKey && data.steps.length > 0) {
+          setSelectedStepKey(data.steps[0].step_key);
+        }
+      }
+    } finally {
+      setProductionStepsLoading(false);
+    }
+  }
+
+  async function saveProductionStep(id: number) {
+    const min = parseInt(editingStepMin, 10);
+    if (isNaN(min) || min < 0) { setEditingStepId(null); return; }
+    const maxRaw = parseInt(editingStepMax, 10);
+    const max = (!editingStepMax.trim() || isNaN(maxRaw)) ? null : maxRaw;
+
+    setProductionSteps((prev) =>
+      prev.map((s) => s.id === id ? { ...s, lead_time_min: min, lead_time_max: max, lead_time_unit: editingStepUnit, updated_at: new Date().toISOString() } : s)
+    );
+    setEditingStepId(null);
+
+    await fetch("/api/production-steps", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, lead_time_min: min, lead_time_max: max, lead_time_unit: editingStepUnit }),
+    });
+  }
+
+  async function analyzeProductionItem(localId: string, orderId: string, productId: string, stepKey: string, direction: ProductionDirection) {
+    try {
+      const res = await fetch("/api/production-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: orderId, product_id: productId, step_key: stepKey, direction }),
+      });
+      const data = await res.json() as ProductionNotifyApiResponse;
+      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
+      setProductionBatch((prev) =>
+        prev.map((item) => item.localId === localId ? { ...item, status: "ready", result: data.result ?? null } : item)
+      );
+    } catch (error) {
+      setProductionBatch((prev) =>
+        prev.map((item) => item.localId === localId ? { ...item, status: "error", error: error instanceof Error ? error.message : "Erreur" } : item)
+      );
+    }
+  }
+
+  function submitProductionScan(id: string) {
+    if (productionScanStep === "order") {
+      setProductionOrderId(id);
+      setProductionScanStep("product");
+      setStatus(`Commande ${id} — scannez le produit`);
+      return;
+    }
+    if (!productionOrderId) return;
+    const step = productionSteps.find((s) => s.step_key === selectedStepKey);
+    if (!step) return;
+
+    const localId = crypto.randomUUID();
+    setProductionBatch((prev) => [{
+      localId,
+      orderId: productionOrderId,
+      productId: id,
+      stepKey: selectedStepKey,
+      stepName: step.name,
+      direction: productionDirection,
+      status: "analyzing",
+      result: null,
+      error: null,
+    }, ...prev]);
+    setProductionScanStep("order");
+    setProductionOrderId(null);
+    setStatus(`${step.name} ${productionDirection === "IN" ? "▶ Entrée" : "◀ Sortie"} — scannez suivant`);
+    playBeep();
+    void analyzeProductionItem(localId, productionOrderId, id, selectedStepKey, productionDirection);
+  }
+
   async function loadSuppliers() {
     setSuppliersLoading(true);
     try {
@@ -397,6 +513,19 @@ export default function ScannerPage() {
           onClick={() => { setMode("suppliers"); if (suppliers.length === 0) loadSuppliers(); }}
         >
           Fournisseurs
+        </button>
+        <button
+          className={`rounded-xl border px-5 py-3 ${mode === "production" ? "font-bold ring-2" : ""}`}
+          onClick={() => {
+            setMode("production");
+            setProductionView("scan");
+            setProductionScanStep("order");
+            setProductionOrderId(null);
+            if (productionSteps.length === 0) loadProductionSteps();
+            setStatus("Sélectionnez une étape et scannez une commande");
+          }}
+        >
+          Production
         </button>
         <button className="rounded-xl border px-5 py-3" onClick={undoLastLocal}>
           Annuler local
@@ -576,6 +705,179 @@ export default function ScannerPage() {
                 : `Envoyer tous les emails prêts (${batchItems.filter((i) => i.status === "ready").length})`
               }
             </button>
+          )}
+        </section>
+      )}
+
+      {mode === "production" && (
+        <section className="rounded-2xl border p-4 space-y-4">
+          {/* Sub-nav */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Mode Production</h2>
+            <div className="flex gap-2 text-sm">
+              <button
+                className={`rounded-lg border px-3 py-1 ${productionView === "scan" ? "font-bold ring-2" : "opacity-60"}`}
+                onClick={() => setProductionView("scan")}
+              >Scanner</button>
+              <button
+                className={`rounded-lg border px-3 py-1 ${productionView === "steps" ? "font-bold ring-2" : "opacity-60"}`}
+                onClick={() => { setProductionView("steps"); if (productionSteps.length === 0) loadProductionSteps(); }}
+              >Étapes</button>
+            </div>
+          </div>
+
+          {/* ── SCAN VIEW ── */}
+          {productionView === "scan" && (
+            <div className="space-y-4">
+              {/* Step selector + direction */}
+              <div className="flex flex-wrap gap-3 items-center">
+                <select
+                  className="rounded-xl border px-3 py-2 text-sm font-medium"
+                  value={selectedStepKey}
+                  onChange={(e) => setSelectedStepKey(e.target.value)}
+                >
+                  {productionSteps.length === 0 && <option value="">Chargement…</option>}
+                  {productionSteps.map((s) => (
+                    <option key={s.step_key} value={s.step_key}>{s.name}</option>
+                  ))}
+                </select>
+                <div className="flex rounded-xl border overflow-hidden text-sm">
+                  <button
+                    className={`px-4 py-2 ${productionDirection === "IN" ? "bg-black text-white font-bold" : "opacity-50"}`}
+                    onClick={() => setProductionDirection("IN")}
+                  >▶ Entrée atelier</button>
+                  <button
+                    className={`px-4 py-2 ${productionDirection === "OUT" ? "bg-black text-white font-bold" : "opacity-50"}`}
+                    onClick={() => setProductionDirection("OUT")}
+                  >◀ Sortie atelier</button>
+                </div>
+              </div>
+
+              {/* Scan steps indicator */}
+              <div className="flex gap-3 text-sm">
+                <span className={`rounded-full px-3 py-1 border ${productionScanStep === "order" ? "font-bold ring-2" : "opacity-40"}`}>1 · Commande</span>
+                <span className={`rounded-full px-3 py-1 border ${productionScanStep === "product" ? "font-bold ring-2" : "opacity-40"}`}>2 · Produit</span>
+              </div>
+
+              <p className="text-sm opacity-60">
+                {productionScanStep === "order"
+                  ? "Scannez le numéro de commande Shopify"
+                  : <span>Commande <span className="font-mono font-semibold text-black">{productionOrderId}</span> — scannez le produit</span>
+                }
+              </p>
+
+              {/* Batch queue */}
+              {productionBatch.length > 0 && (
+                <div className="space-y-2">
+                  {productionBatch.map((item) => (
+                    <div key={item.localId} className="rounded-xl border p-3">
+                      {item.status === "analyzing" && (
+                        <div className="flex items-center gap-2 text-sm opacity-60">
+                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          <span>{item.stepName} {item.direction === "IN" ? "▶" : "◀"} — Commande {item.orderId}</span>
+                        </div>
+                      )}
+                      {item.status === "error" && (
+                        <div className="text-sm text-red-600">{item.stepName} — Commande {item.orderId} · {item.error}</div>
+                      )}
+                      {item.status === "ready" && item.result && (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold mr-2 ${item.direction === "IN" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}>
+                                {item.direction === "IN" ? "▶ Entrée" : "◀ Sortie"} {item.stepName}
+                              </span>
+                              <span className="font-semibold">{item.result.order.name}</span>
+                              <span className="opacity-60"> · {item.result.order.customer.firstName} {item.result.order.customer.lastName}</span>
+                            </div>
+                            <span className="text-xs text-green-600 font-semibold">Envoyé ✓</span>
+                          </div>
+                          <div className="text-xs opacity-40">{item.result.product.productTitle} · {item.result.order.customer.email}</div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {productionBatch.length > 0 && (
+                <button className="text-sm opacity-40 hover:opacity-80" onClick={() => setProductionBatch([])}>
+                  Vider la liste
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── STEPS SETTINGS VIEW ── */}
+          {productionView === "steps" && (
+            <div className="space-y-3">
+              <p className="text-sm opacity-60">Durée estimée par étape — utilisée dans les emails clients.</p>
+              {productionStepsLoading && productionSteps.length === 0 && <p className="opacity-60">Chargement…</p>}
+              {productionSteps.length > 0 && (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left opacity-60">
+                      <th className="py-2 pr-4">Étape</th>
+                      <th className="py-2 pr-4">Minimum</th>
+                      <th className="py-2 pr-4">Maximum</th>
+                      <th className="py-2 pr-4">Unité</th>
+                      <th className="py-2 text-xs font-normal">Modifié</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productionSteps.map((s) => (
+                      <tr key={s.id} className="border-b last:border-0 hover:bg-gray-50">
+                        <td className="py-2 pr-4 font-medium">{s.name}</td>
+                        {editingStepId === s.id ? (
+                          <>
+                            <td className="py-2 pr-2">
+                              <input type="number" min="0" placeholder="min" className="w-16 rounded border px-2 py-1 text-sm"
+                                value={editingStepMin} autoFocus
+                                onChange={(e) => setEditingStepMin(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") void saveProductionStep(s.id); if (e.key === "Escape") setEditingStepId(null); }}
+                              />
+                            </td>
+                            <td className="py-2 pr-2">
+                              <input type="number" min="0" placeholder="max" className="w-16 rounded border px-2 py-1 text-sm"
+                                value={editingStepMax}
+                                onChange={(e) => setEditingStepMax(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === "Enter") void saveProductionStep(s.id); if (e.key === "Escape") setEditingStepId(null); }}
+                              />
+                            </td>
+                            <td className="py-2 pr-4">
+                              <select className="rounded border px-2 py-1 text-sm" value={editingStepUnit}
+                                onChange={(e) => setEditingStepUnit(e.target.value as "hours" | "days")}
+                                onBlur={() => void saveProductionStep(s.id)}
+                              >
+                                <option value="hours">heures</option>
+                                <option value="days">jours</option>
+                              </select>
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="py-2 pr-2">
+                              <button className="rounded px-2 py-1 hover:bg-gray-100 min-w-[3rem] text-left"
+                                onClick={() => { setEditingStepId(s.id); setEditingStepMin(s.lead_time_min != null ? String(s.lead_time_min) : ""); setEditingStepMax(s.lead_time_max != null ? String(s.lead_time_max) : ""); setEditingStepUnit(s.lead_time_unit); }}>
+                                {s.lead_time_min != null ? <span className="font-semibold">{s.lead_time_min}</span> : <span className="opacity-30">—</span>}
+                              </button>
+                            </td>
+                            <td className="py-2 pr-2">
+                              <button className="rounded px-2 py-1 hover:bg-gray-100 min-w-[3rem] text-left"
+                                onClick={() => { setEditingStepId(s.id); setEditingStepMin(s.lead_time_min != null ? String(s.lead_time_min) : ""); setEditingStepMax(s.lead_time_max != null ? String(s.lead_time_max) : ""); setEditingStepUnit(s.lead_time_unit); }}>
+                                {s.lead_time_max != null ? <span className="font-semibold">{s.lead_time_max}</span> : <span className="opacity-30">—</span>}
+                              </button>
+                            </td>
+                            <td className="py-2 pr-4 opacity-60">{s.lead_time_unit === "hours" ? "heures" : "jours"}</td>
+                          </>
+                        )}
+                        <td className="py-2 text-xs opacity-40">{s.updated_at ? new Date(s.updated_at).toLocaleDateString("fr-CH") : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           )}
         </section>
       )}

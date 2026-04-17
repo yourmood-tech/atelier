@@ -132,3 +132,31 @@ export type BackorderApiResponse = {
   result?: BackorderAnalysis;
   error?: string;
 };
+
+export type ProductionStep = {
+  id: number;
+  name: string;
+  step_key: string;
+  description: string | null;
+  lead_time_min: number | null;
+  lead_time_max: number | null;
+  lead_time_unit: "hours" | "days";
+  sort_order: number;
+  updated_at: string | null;
+};
+
+export type ProductionDirection = "IN" | "OUT";
+
+export type ProductionAnalysis = {
+  order: ShopifyOrder;
+  product: ShopifyVariantInfo;
+  step: ProductionStep;
+  direction: ProductionDirection;
+  emailDraft: string | null;
+};
+
+export type ProductionNotifyApiResponse = {
+  ok: boolean;
+  result?: ProductionAnalysis;
+  error?: string;
+};
