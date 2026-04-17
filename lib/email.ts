@@ -264,7 +264,16 @@ export async function generateProductionEmail(
   analysis: ProductionAnalysis
 ): Promise<{ subject: string; emailBody: string }> {
   const { order, product, step, direction } = analysis;
-  const language = LOCALE_LABELS[order.customer.locale] ?? "French";
+  const locale = order.customer.locale;
+  const language = LOCALE_LABELS[locale] ?? "French";
+
+  // Pick translated step name/description based on customer locale
+  const stepName = locale === "de" ? (step.name_de ?? step.name)
+    : locale === "en" ? (step.name_en ?? step.name)
+    : step.name;
+  const stepDescription = locale === "de" ? (step.description_de ?? step.description)
+    : locale === "en" ? (step.description_en ?? step.description)
+    : step.description;
 
   const durationText = (step.lead_time_min && step.lead_time_max)
     ? `between ${step.lead_time_min} and ${step.lead_time_max} ${step.lead_time_unit}`
@@ -274,7 +283,7 @@ export async function generateProductionEmail(
 
   const prompt = direction === "IN"
     ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief email to a customer informing them that their order has just entered the "${step.name}" production stage.${step.description ? `\n\nAbout this step: ${step.description}` : ""}
+Write a brief email to a customer informing them that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
 
 Purpose: inform the customer their piece is now being actively worked on, and give an estimated duration for this step.
 
@@ -294,10 +303,10 @@ Customer info:
 - First name: ${order.customer.firstName}
 - Order number: ${order.name}
 - Product: ${product.productTitle}
-- Step: ${step.name}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
+- Step: ${stepName}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
 
     : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief email to a customer informing them that their order has just completed the "${step.name}" production stage and is moving forward.
+Write a brief email to a customer informing them that their order has just completed the "${stepName}" production stage and is moving forward.
 
 Purpose: confirm this step is done, signal progress — do not announce delivery date.
 
@@ -317,7 +326,7 @@ Customer info:
 - First name: ${order.customer.firstName}
 - Order number: ${order.name}
 - Product: ${product.productTitle}
-- Completed step: ${step.name}`;
+- Completed step: ${stepName}`;
 
   const result = await callClaude(prompt);
   return { subject: result.subject, emailBody: result.body };

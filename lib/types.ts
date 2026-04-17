@@ -136,8 +136,12 @@ export type BackorderApiResponse = {
 export type ProductionStep = {
   id: number;
   name: string;
+  name_de: string | null;
+  name_en: string | null;
   step_key: string;
   description: string | null;
+  description_de: string | null;
+  description_en: string | null;
   lead_time_min: number | null;
   lead_time_max: number | null;
   lead_time_unit: "hours" | "days";
