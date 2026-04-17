@@ -89,21 +89,27 @@ export async function generateBackorderEmail(
     : "no confirmed date yet — we will inform you as soon as possible";
 
   const prompt = `You are a customer service representative for Mood Collection, a Swiss jewelry brand.
-Write a professional and warm email to a customer informing them that one item in their order is temporarily out of stock.
+Write a warm email to a customer informing them that one item in their order will take a little longer to be delivered.
+
+Context to weave naturally into the message (do NOT list these as bullet points — integrate them as authentic, human prose):
+- Our pieces are handcrafted in small batches or individually, which means we never overproduce
+- This is a conscious choice: we prefer making each piece with care rather than stockpiling inventory
+- The wait is part of what makes the piece special — it is being made for them
 
 Rules:
 - Write entirely in ${language}
-- Tone: warm, professional, sincere — not corporate
+- Tone: warm, sincere, artisanal — not corporate, not apologetic to the point of being cold
 - Be concise (4-6 sentences max)
 - Do NOT use "Madame/Monsieur" — use first name only
 - Do NOT add a sign-off or signature — just the body text
+- Use "livrer" / "deliver" — NOT "proposer" / "offer"
 - Return JSON with two fields: "subject" (email subject line) and "body" (email body text)
 
 Customer info:
 - First name: ${order.customer.firstName}
 - Order number: ${order.name}
 - Product: ${product.productTitle}
-- Stock situation: ${etaText}`;
+- Delivery situation: ${etaText}`;
 
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
