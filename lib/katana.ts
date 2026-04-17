@@ -348,16 +348,10 @@ export async function getOpenPurchaseOrdersForSupplier(
   ];
   if (!pos.length) return null;
 
-  // For each PO, fetch its rows to find if our material variant is included
+  // Rows are embedded in each PO response as purchase_order_rows — no extra call needed
   for (const po of pos) {
     const poId = po.id as number;
-
-    const rowsData = (await katanaFetch(
-      `/v1/purchase_order_rows?purchase_order_id=${poId}&limit=100`,
-      { method: "GET" }
-    )) as { data?: Record<string, unknown>[] };
-
-    const rows = rowsData?.data ?? [];
+    const rows = (po.purchase_order_rows as Record<string, unknown>[]) ?? [];
 
     // Check if any of our material variants appear in this PO
     const matchingRows = rows.filter((row) =>
@@ -370,25 +364,21 @@ export async function getOpenPurchaseOrdersForSupplier(
       const poRows: KatanaPurchaseOrderRow[] = rows.map((row) => ({
         id: row.id as string,
         variantId: row.variant_id as number,
-        variantSku: (row.variant_sku as string | null) ?? null,
-        variantName: (row.variant_name ?? row.name ?? "") as string,
+        variantSku: null,  // not returned in PO row data
+        variantName: "",   // not returned in PO row data
         quantity: (row.quantity as number) ?? 0,
         receivedQuantity: (row.received_quantity as number) ?? 0,
       }));
 
-      // Estimated delivery: try multiple field names Katana might use
-      const eta =
-        (po.estimated_delivery_date as string | null) ??
-        (po.expected_delivery_date as string | null) ??
-        (po.delivery_date as string | null) ??
-        null;
+      // ETA field confirmed as expected_arrival_date
+      const eta = (po.expected_arrival_date as string | null) ?? null;
 
       return {
         id: poId,
-        number: (po.number ?? po.purchase_order_number ?? String(poId)) as string,
+        number: (po.order_no ?? String(poId)) as string,
         supplierId,
         supplierName,
-        status: (po.status as string) ?? "open",
+        status: (po.status as string) ?? "NOT_RECEIVED",
         estimatedDelivery: eta,
         rows: poRows,
       };
