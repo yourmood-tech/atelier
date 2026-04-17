@@ -22,8 +22,32 @@ export async function GET(req: NextRequest) {
   const variantId = req.nextUrl.searchParams.get("variant_id")?.trim() ?? "";
   const supplierId = req.nextUrl.searchParams.get("supplier_id")?.trim() ?? "";
   const poSupplierId = req.nextUrl.searchParams.get("po_supplier_id")?.trim() ?? "";
+  const poList = req.nextUrl.searchParams.get("po_list")?.trim() ?? "";
 
   try {
+    // List all open POs (no supplier filter) to find one with data
+    if (poList) {
+      const [notReceived, partiallyReceived] = await Promise.all([
+        katanaRaw(`/v1/purchase_orders?status=NOT_RECEIVED&limit=10`),
+        katanaRaw(`/v1/purchase_orders?status=PARTIALLY_RECEIVED&limit=10`),
+      ]);
+      const allPos = [
+        ...(notReceived.body?.data ?? []),
+        ...(partiallyReceived.body?.data ?? []),
+      ];
+      const firstPoId = allPos[0]?.id;
+      let rows = null;
+      if (firstPoId) {
+        rows = await katanaRaw(`/v1/purchase_order_rows?purchase_order_id=${firstPoId}&limit=20`);
+      }
+      return NextResponse.json({
+        not_received_count: (notReceived.body?.data ?? []).length,
+        partially_received_count: (partiallyReceived.body?.data ?? []).length,
+        sample_pos: allPos.slice(0, 5),
+        first_po_rows: rows ? { endpoint: `/v1/purchase_order_rows?purchase_order_id=${firstPoId}`, ...rows } : null,
+      });
+    }
+
     // Inspect PO structure for a supplier
     if (poSupplierId) {
       const [notReceived, partiallyReceived] = await Promise.all([
