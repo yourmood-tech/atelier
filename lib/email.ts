@@ -10,6 +10,7 @@ export async function sendViaKlaviyo(params: {
   orderId: string;
   productTitle: string;
   estimatedDelivery: string | null;
+  supplierName: string | null;
 }): Promise<void> {
   const apiKey = process.env.KLAVIYO_API_KEY!;
 
@@ -45,6 +46,7 @@ export async function sendViaKlaviyo(params: {
             order_id: params.orderId,
             product_title: params.productTitle,
             estimated_delivery: params.estimatedDelivery ?? "À confirmer",
+            supplier_name: params.supplierName ?? "",
           },
           time: new Date().toISOString(),
         },

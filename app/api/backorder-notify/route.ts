@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
       orderId?: string;
       productTitle?: string;
       estimatedDelivery?: string | null;
+      supplierName?: string | null;
     };
 
     if (!body.to || !body.subject || !body.body) {
@@ -117,6 +118,7 @@ export async function POST(req: NextRequest) {
       orderId: body.orderId ?? "",
       productTitle: body.productTitle ?? "",
       estimatedDelivery: body.estimatedDelivery ?? null,
+      supplierName: body.supplierName ?? null,
     });
 
     return NextResponse.json({ ok: true });

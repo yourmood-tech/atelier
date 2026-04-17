@@ -262,6 +262,7 @@ export default function ScannerPage() {
           orderId: item.result.order.name,
           productTitle: item.result.product.productTitle,
           estimatedDelivery: item.result.estimatedDelivery,
+          supplierName: item.result.purchaseOrder?.supplierName ?? null,
         }),
       });
       const data = await res.json() as { ok: boolean; error?: string };
