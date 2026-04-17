@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderById, lookupShopifyBySku, addOrderTag, makeOrderTag } from "@/lib/shopify";
+import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -9,11 +9,11 @@ import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 export async function GET(req: NextRequest) {
   try {
     const orderId = req.nextUrl.searchParams.get("order_id")?.trim() ?? "";
-    const variantSku = req.nextUrl.searchParams.get("variant_sku")?.trim() ?? "";
+    const productId = req.nextUrl.searchParams.get("product_id")?.trim() ?? "";
 
-    if (!orderId || !variantSku) {
+    if (!orderId || !productId) {
       return NextResponse.json<BackorderApiResponse>(
-        { ok: false, error: "Paramètres order_id et variant_sku requis" },
+        { ok: false, error: "Paramètres order_id et product_id requis" },
         { status: 400 }
       );
     }
@@ -21,11 +21,15 @@ export async function GET(req: NextRequest) {
     // 1. Fetch Shopify order + product in parallel
     const [order, product] = await Promise.all([
       getOrderById(orderId),
-      lookupShopifyBySku(variantSku),
+      lookupShopifyId(productId),
     ]);
 
-    // 2. Get recipe + materials + suppliers
-    const recipe = product.sku ? await getRecipeWithSuppliers(product.sku) : null;
+    // 2. Extract actual ordered variant SKU from the order's line items
+    const lineItem = order.lineItems.find((li) => String(li.productId) === productId);
+    const variantSku = lineItem?.sku ?? product.sku;
+
+    // 3. Get recipe + materials + suppliers
+    const recipe = variantSku ? await getRecipeWithSuppliers(variantSku) : null;
     const materials = recipe?.ingredients ?? [];
 
     // 3. Find open PO — search directly by ingredient variant ID across all open POs.

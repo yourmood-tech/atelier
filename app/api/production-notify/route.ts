@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderById, lookupShopifyBySku, addOrderTag, makeOrderTag } from "@/lib/shopify";
+import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
 import { generateProductionEmail, sendProductionEventToKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { ProductionNotifyApiResponse, ProductionAnalysis, ProductionDirection, ProductionStep } from "@/lib/types";
@@ -8,14 +8,14 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as {
       order_id: string;
-      variant_sku: string;
+      product_id: string;
       step_key: string;
       direction: ProductionDirection;
     };
 
-    if (!body.order_id || !body.variant_sku || !body.step_key || !body.direction) {
+    if (!body.order_id || !body.product_id || !body.step_key || !body.direction) {
       return NextResponse.json<ProductionNotifyApiResponse>(
-        { ok: false, error: "order_id, variant_sku, step_key et direction requis" },
+        { ok: false, error: "order_id, product_id, step_key et direction requis" },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     // 1. Fetch Shopify order + product + production step in parallel
     const [order, product, stepResult] = await Promise.all([
       getOrderById(body.order_id),
-      lookupShopifyBySku(body.variant_sku),
+      lookupShopifyId(body.product_id),
       supabaseAdmin
         .from("production_steps")
         .select("*")
