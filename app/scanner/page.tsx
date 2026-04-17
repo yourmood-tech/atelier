@@ -8,6 +8,15 @@ type ScanLine = {
   ts: number;
 };
 
+type BatchItem = {
+  localId: string;
+  orderId: string;
+  productId: string;
+  status: "analyzing" | "ready" | "error" | "sent";
+  result: BackorderAnalysis | null;
+  error: string | null;
+};
+
 type AppMode = "scan" | "recipe" | "backorder";
 type BackorderStep = "order" | "product";
 
@@ -24,10 +33,8 @@ export default function ScannerPage() {
   const [recipeLoading, setRecipeLoading] = useState(false);
   const [backorderStep, setBackorderStep] = useState<BackorderStep>("order");
   const [backorderOrderId, setBackorderOrderId] = useState<string | null>(null);
-  const [backorderResult, setBackorderResult] = useState<BackorderAnalysis | null>(null);
-  const [backorderLoading, setBackorderLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
-  const [emailSending, setEmailSending] = useState(false);
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
+  const [batchSendingAll, setBatchSendingAll] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
@@ -165,42 +172,63 @@ export default function ScannerPage() {
     }
   }
 
+  async function analyzeItem(localId: string, orderId: string, productId: string) {
+    try {
+      const res = await fetch(
+        `/api/backorder-notify?order_id=${encodeURIComponent(orderId)}&product_id=${encodeURIComponent(productId)}`
+      );
+      const data = (await res.json()) as BackorderApiResponse;
+      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
+      setBatchItems((prev) =>
+        prev.map((item) =>
+          item.localId === localId
+            ? { ...item, status: "ready", result: data.result ?? null }
+            : item
+        )
+      );
+    } catch (error) {
+      setBatchItems((prev) =>
+        prev.map((item) =>
+          item.localId === localId
+            ? { ...item, status: "error", error: error instanceof Error ? error.message : "Erreur" }
+            : item
+        )
+      );
+    }
+  }
+
   async function submitBackorderScan(id: string) {
     if (backorderStep === "order") {
       setBackorderOrderId(id);
       setBackorderStep("product");
-      setStatus(`Commande ${id} enregistrée — scannez le produit`);
+      setStatus(`Commande ${id} — scannez le produit`);
       return;
     }
 
-    // step === "product"
     if (!backorderOrderId) return;
-    setBackorderLoading(true);
-    setBackorderResult(null);
-    setEmailSent(false);
-    setStatus("Analyse en cours...");
 
-    try {
-      const res = await fetch(
-        `/api/backorder-notify?order_id=${encodeURIComponent(backorderOrderId)}&product_id=${encodeURIComponent(id)}`
-      );
-      const data = (await res.json()) as BackorderApiResponse;
-      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
-      setBackorderResult(data.result ?? null);
-      setStatus(`Analyse complète · ${data.result?.order.name ?? ""}`);
-      playBeep();
-    } catch (error) {
-      setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
-    } finally {
-      setBackorderLoading(false);
-    }
+    const localId = crypto.randomUUID();
+    setBatchItems((prev) => [
+      { localId, orderId: backorderOrderId, productId: id, status: "analyzing", result: null, error: null },
+      ...prev,
+    ]);
+    setBackorderStep("order");
+    setBackorderOrderId(null);
+    setStatus(`Commande ${backorderOrderId} en analyse — scannez suivante`);
+    playBeep();
+
+    void analyzeItem(localId, backorderOrderId, id);
   }
 
-  async function sendBackorderEmail() {
-    if (!backorderResult?.emailDraft || !backorderResult.order.customer.email) return;
-    setEmailSending(true);
+  async function sendBatchEmail(localId: string) {
+    const item = batchItems.find((i) => i.localId === localId);
+    if (!item?.result?.emailDraft || !item.result.order.customer.email) return;
 
-    const lines = backorderResult.emailDraft.split("\n");
+    setBatchItems((prev) =>
+      prev.map((i) => (i.localId === localId ? { ...i, status: "sent" } : i))
+    );
+
+    const lines = item.result.emailDraft.split("\n");
     const subject = lines[0].replace(/^Subject:\s*/i, "");
     const body = lines.slice(2).join("\n");
 
@@ -209,24 +237,34 @@ export default function ScannerPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          to: backorderResult.order.customer.email,
-          firstName: backorderResult.order.customer.firstName,
+          to: item.result.order.customer.email,
+          firstName: item.result.order.customer.firstName,
           subject,
           body,
-          orderId: backorderResult.order.name,
-          productTitle: backorderResult.product.productTitle,
-          estimatedDelivery: backorderResult.estimatedDelivery,
+          orderId: item.result.order.name,
+          productTitle: item.result.product.productTitle,
+          estimatedDelivery: item.result.estimatedDelivery,
         }),
       });
       const data = await res.json() as { ok: boolean; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error || "Erreur envoi");
-      setEmailSent(true);
-      setStatus("Email envoyé");
     } catch (error) {
-      setStatus(`Erreur envoi · ${error instanceof Error ? error.message : "inconnue"}`);
-    } finally {
-      setEmailSending(false);
+      setBatchItems((prev) =>
+        prev.map((i) =>
+          i.localId === localId
+            ? { ...i, status: "ready", error: `Erreur envoi: ${error instanceof Error ? error.message : ""}` }
+            : i
+        )
+      );
     }
+  }
+
+  async function sendAllReady() {
+    setBatchSendingAll(true);
+    const readyItems = batchItems.filter((i) => i.status === "ready");
+    await Promise.all(readyItems.map((i) => sendBatchEmail(i.localId)));
+    setBatchSendingAll(false);
+    setStatus(`${readyItems.length} email(s) envoyé(s)`);
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -289,7 +327,7 @@ export default function ScannerPage() {
         </button>
         <button
           className={`rounded-xl border px-5 py-3 ${mode === "backorder" ? "font-bold ring-2" : ""}`}
-          onClick={() => { setMode("backorder"); setBackorderStep("order"); setBackorderOrderId(null); setBackorderResult(null); setEmailSent(false); setStatus("Scannez le numéro de commande"); }}
+          onClick={() => { setMode("backorder"); setBackorderStep("order"); setBackorderOrderId(null); setStatus("Scannez le numéro de commande"); }}
         >
           Mode Suivi
         </button>
@@ -374,70 +412,101 @@ export default function ScannerPage() {
 
       {mode === "backorder" && (
         <section className="rounded-2xl border p-4 space-y-4">
-          <h2 className="text-xl font-semibold">Suivi commande — rupture de stock</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Mode Suivi — Batch</h2>
+            {batchItems.length > 0 && (
+              <button
+                className="text-sm opacity-40 hover:opacity-80"
+                onClick={() => setBatchItems([])}
+              >
+                Vider la liste
+              </button>
+            )}
+          </div>
 
           <div className="flex gap-3 text-sm">
-            <span className={`rounded-full px-3 py-1 border ${backorderStep === "order" && !backorderOrderId ? "font-bold ring-2" : "opacity-50"}`}>
+            <span className={`rounded-full px-3 py-1 border ${backorderStep === "order" ? "font-bold ring-2" : "opacity-40"}`}>
               1 · Commande
             </span>
-            <span className={`rounded-full px-3 py-1 border ${backorderStep === "product" ? "font-bold ring-2" : "opacity-50"}`}>
+            <span className={`rounded-full px-3 py-1 border ${backorderStep === "product" ? "font-bold ring-2" : "opacity-40"}`}>
               2 · Produit
             </span>
           </div>
 
-          {backorderOrderId && (
-            <div className="text-sm opacity-70">Commande : <span className="font-mono font-semibold text-black">{backorderOrderId}</span></div>
-          )}
+          <p className="text-sm opacity-60">
+            {backorderStep === "order"
+              ? "Scannez le numéro de commande Shopify"
+              : <span>Commande <span className="font-mono font-semibold text-black">{backorderOrderId}</span> — scannez le produit en rupture</span>
+            }
+          </p>
 
-          {backorderLoading && <p className="opacity-60">Analyse en cours...</p>}
+          {batchItems.length > 0 && (
+            <div className="space-y-2">
+              {batchItems.map((item) => (
+                <div
+                  key={item.localId}
+                  className={`rounded-xl border p-3 ${item.status === "sent" ? "opacity-50" : ""}`}
+                >
+                  {item.status === "analyzing" && (
+                    <div className="flex items-center gap-2 text-sm opacity-60">
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      <span>Commande {item.orderId} · analyse en cours...</span>
+                    </div>
+                  )}
 
-          {!backorderLoading && !backorderResult && (
-            <p className="opacity-60">
-              {backorderStep === "order" ? "Scannez le numéro de commande Shopify" : "Scannez le produit en rupture de stock"}
-            </p>
-          )}
+                  {item.status === "error" && (
+                    <div className="text-sm text-red-600">
+                      Commande {item.orderId} · {item.error}
+                    </div>
+                  )}
 
-          {backorderResult && (
-            <div className="space-y-4">
-              <div className="rounded-xl bg-gray-50 p-3 space-y-1">
-                <div className="font-semibold">{backorderResult.order.name} · {backorderResult.order.customer.firstName} {backorderResult.order.customer.lastName}</div>
-                <div className="text-sm opacity-70">{backorderResult.order.customer.email} · langue : {backorderResult.order.customer.locale.toUpperCase()}</div>
-                <div className="text-sm">Produit : <span className="font-semibold">{backorderResult.product.productTitle}</span></div>
-              </div>
-
-              <div className="rounded-xl bg-gray-50 p-3 space-y-1">
-                <div className="text-sm font-semibold opacity-70">Fournisseur & délai</div>
-                {backorderResult.purchaseOrder ? (
-                  <>
-                    <div className="text-sm">PO <span className="font-mono">{backorderResult.purchaseOrder.number}</span> · {backorderResult.purchaseOrder.supplierName}</div>
-                    <div className="text-sm">ETA : <span className="font-semibold">{backorderResult.estimatedDelivery ? new Date(backorderResult.estimatedDelivery).toLocaleDateString("fr-CH") : "—"}</span></div>
-                  </>
-                ) : (
-                  <div className="text-sm opacity-60">Aucun PO ouvert trouvé{backorderResult.leadTimeDays ? ` · délai standard : ${backorderResult.leadTimeDays}j` : ""}</div>
-                )}
-              </div>
-
-              {backorderResult.emailDraft && (
-                <div className="rounded-xl border p-3 space-y-2">
-                  <div className="text-sm font-semibold opacity-70">Email généré</div>
-                  <pre className="text-sm whitespace-pre-wrap font-sans">{backorderResult.emailDraft}</pre>
-                  <button
-                    disabled={emailSent || emailSending}
-                    onClick={sendBackorderEmail}
-                    className="rounded-xl bg-black text-white px-5 py-2 text-sm disabled:opacity-40"
-                  >
-                    {emailSent ? "Envoyé ✓" : emailSending ? "Envoi..." : `Envoyer à ${backorderResult.order.customer.email}`}
-                  </button>
+                  {(item.status === "ready" || item.status === "sent") && item.result && (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="font-semibold">
+                          {item.result.order.name}
+                          <span className="font-normal opacity-70"> · {item.result.order.customer.firstName} {item.result.order.customer.lastName}</span>
+                        </div>
+                        <div className="truncate text-sm opacity-60">{item.result.product.productTitle}</div>
+                        <div className="text-xs opacity-40">{item.result.order.customer.email} · {item.result.order.customer.locale.toUpperCase()}</div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        {item.result.estimatedDelivery ? (
+                          <span className="text-sm font-semibold text-green-700">
+                            {new Date(item.result.estimatedDelivery).toLocaleDateString("fr-CH")}
+                          </span>
+                        ) : (
+                          <span className="text-sm opacity-40">Pas de PO</span>
+                        )}
+                        {item.status === "sent" ? (
+                          <span className="text-sm text-blue-600">Envoyé ✓</span>
+                        ) : (
+                          <button
+                            onClick={() => sendBatchEmail(item.localId)}
+                            className="rounded-lg bg-black px-3 py-1 text-sm text-white"
+                          >
+                            Envoyer
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              <button
-                className="rounded-xl border px-4 py-2 text-sm"
-                onClick={() => { setBackorderStep("order"); setBackorderOrderId(null); setBackorderResult(null); setEmailSent(false); setStatus("Scannez le numéro de commande"); }}
-              >
-                Nouvelle analyse
-              </button>
+              ))}
             </div>
+          )}
+
+          {batchItems.some((i) => i.status === "ready") && (
+            <button
+              disabled={batchSendingAll}
+              onClick={sendAllReady}
+              className="w-full rounded-xl bg-black px-5 py-3 font-semibold text-white disabled:opacity-40"
+            >
+              {batchSendingAll
+                ? "Envoi en cours..."
+                : `Envoyer tous les emails prêts (${batchItems.filter((i) => i.status === "ready").length})`
+              }
+            </button>
           )}
         </section>
       )}

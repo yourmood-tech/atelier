@@ -46,6 +46,8 @@ const variantCache = new Map<string, CacheEntry<KatanaVariant>>();
 const productNameCache = new Map<number, CacheEntry<string>>();
 const supplierNameCache = new Map<number, CacheEntry<string>>();
 let supplierCachePopulatedAt = 0;
+let openPosCache: CacheEntry<Record<string, unknown>[]> | null = null;
+const OPEN_POS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function getCachedValue<T>(cache: Map<any, CacheEntry<T>>, key: any): T | null {
   const entry = cache.get(key);
@@ -361,14 +363,19 @@ function buildPoResult(
 }
 
 async function fetchAllOpenPos(): Promise<Record<string, unknown>[]> {
+  if (openPosCache && Date.now() < openPosCache.expiresAt) {
+    return openPosCache.value;
+  }
   const [notReceived, partiallyReceived] = await Promise.all([
     katanaFetch(`/v1/purchase_orders?status=NOT_RECEIVED&limit=100`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
     katanaFetch(`/v1/purchase_orders?status=PARTIALLY_RECEIVED&limit=100`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
   ]);
-  return [
+  const pos = [
     ...(notReceived?.data ?? []),
     ...(partiallyReceived?.data ?? []),
   ];
+  openPosCache = { value: pos, expiresAt: Date.now() + OPEN_POS_CACHE_TTL_MS };
+  return pos;
 }
 
 // Find the first open PO that contains any of the given ingredient variant IDs.
