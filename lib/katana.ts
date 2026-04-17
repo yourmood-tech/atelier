@@ -215,6 +215,13 @@ async function getSupplierName(supplierId: number): Promise<string> {
   return getCachedValue(supplierNameCache, supplierId) ?? "";
 }
 
+export async function getAllKatanaSuppliers(): Promise<{ id: number; name: string }[]> {
+  const data = (await katanaFetch("/v1/suppliers?limit=300", { method: "GET" })) as {
+    data?: { id: number; name: string }[];
+  };
+  return (data?.data ?? []).map((s) => ({ id: s.id, name: s.name ?? "" }));
+}
+
 export async function searchRecipes(query: string, limit = 20): Promise<KatanaRecipe[]> {
   const params = new URLSearchParams({ search: query, limit: String(limit) });
   const data = (await katanaFetch(`/v1/products?${params}`, { method: "GET" })) as {

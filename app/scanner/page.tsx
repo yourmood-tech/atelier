@@ -17,8 +17,15 @@ type BatchItem = {
   error: string | null;
 };
 
-type AppMode = "scan" | "recipe" | "backorder";
+type AppMode = "scan" | "recipe" | "backorder" | "suppliers";
 type BackorderStep = "order" | "product";
+
+type SupplierRow = {
+  supplier_id: number;
+  supplier_name: string;
+  lead_time_days: number | null;
+  updated_at: string | null;
+};
 
 export default function ScannerPage() {
   const [mode, setMode] = useState<AppMode>("scan");
@@ -35,6 +42,10 @@ export default function ScannerPage() {
   const [backorderOrderId, setBackorderOrderId] = useState<string | null>(null);
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
   const [batchSendingAll, setBatchSendingAll] = useState(false);
+  const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingValue, setEditingValue] = useState<string>("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
@@ -267,6 +278,40 @@ export default function ScannerPage() {
     setStatus(`${readyItems.length} email(s) envoyé(s)`);
   }
 
+  async function loadSuppliers() {
+    setSuppliersLoading(true);
+    try {
+      const res = await fetch("/api/supplier-lead-times");
+      const data = await res.json() as { ok: boolean; suppliers?: SupplierRow[] };
+      if (data.ok) setSuppliers(data.suppliers ?? []);
+    } finally {
+      setSuppliersLoading(false);
+    }
+  }
+
+  async function saveLeadTime(supplierId: number, supplierName: string) {
+    const days = parseInt(editingValue, 10);
+    if (isNaN(days) || days < 0) {
+      setEditingId(null);
+      return;
+    }
+
+    setSuppliers((prev) =>
+      prev.map((s) =>
+        s.supplier_id === supplierId
+          ? { ...s, lead_time_days: days, updated_at: new Date().toISOString() }
+          : s
+      )
+    );
+    setEditingId(null);
+
+    await fetch("/api/supplier-lead-times", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ supplier_id: supplierId, supplier_name: supplierName, lead_time_days: days }),
+    });
+  }
+
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -330,6 +375,12 @@ export default function ScannerPage() {
           onClick={() => { setMode("backorder"); setBackorderStep("order"); setBackorderOrderId(null); setStatus("Scannez le numéro de commande"); }}
         >
           Mode Suivi
+        </button>
+        <button
+          className={`rounded-xl border px-5 py-3 ${mode === "suppliers" ? "font-bold ring-2" : ""}`}
+          onClick={() => { setMode("suppliers"); if (suppliers.length === 0) loadSuppliers(); }}
+        >
+          Fournisseurs
         </button>
         <button className="rounded-xl border px-5 py-3" onClick={undoLastLocal}>
           Annuler local
@@ -507,6 +558,86 @@ export default function ScannerPage() {
                 : `Envoyer tous les emails prêts (${batchItems.filter((i) => i.status === "ready").length})`
               }
             </button>
+          )}
+        </section>
+      )}
+
+      {mode === "suppliers" && (
+        <section className="rounded-2xl border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Délais fournisseurs par défaut</h2>
+            <button
+              onClick={loadSuppliers}
+              disabled={suppliersLoading}
+              className="text-sm opacity-50 hover:opacity-100 disabled:opacity-30"
+            >
+              {suppliersLoading ? "Chargement..." : "Actualiser"}
+            </button>
+          </div>
+
+          <p className="text-sm opacity-60">
+            Délai utilisé en fallback quand aucun PO ouvert n'est trouvé pour ce fournisseur.
+          </p>
+
+          {suppliersLoading && suppliers.length === 0 && (
+            <p className="opacity-60">Chargement des fournisseurs Katana...</p>
+          )}
+
+          {suppliers.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left opacity-60">
+                    <th className="py-2 pr-6">Fournisseur</th>
+                    <th className="py-2 pr-6">Délai (jours)</th>
+                    <th className="py-2 opacity-60 text-xs font-normal">Modifié</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {suppliers.map((s) => (
+                    <tr key={s.supplier_id} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="py-2 pr-6 font-medium">{s.supplier_name}</td>
+                      <td className="py-2 pr-6">
+                        {editingId === s.supplier_id ? (
+                          <input
+                            type="number"
+                            min="0"
+                            className="w-20 rounded border px-2 py-1 text-sm"
+                            value={editingValue}
+                            autoFocus
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") void saveLeadTime(s.supplier_id, s.supplier_name);
+                              if (e.key === "Escape") setEditingId(null);
+                            }}
+                            onBlur={() => void saveLeadTime(s.supplier_id, s.supplier_name)}
+                          />
+                        ) : (
+                          <button
+                            className="rounded px-2 py-1 hover:bg-gray-100 min-w-[4rem] text-left"
+                            onClick={() => {
+                              setEditingId(s.supplier_id);
+                              setEditingValue(s.lead_time_days != null ? String(s.lead_time_days) : "");
+                            }}
+                          >
+                            {s.lead_time_days != null ? (
+                              <span className="font-semibold">{s.lead_time_days}j</span>
+                            ) : (
+                              <span className="opacity-30">— cliquer</span>
+                            )}
+                          </button>
+                        )}
+                      </td>
+                      <td className="py-2 text-xs opacity-40">
+                        {s.updated_at
+                          ? new Date(s.updated_at).toLocaleDateString("fr-CH")
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </section>
       )}

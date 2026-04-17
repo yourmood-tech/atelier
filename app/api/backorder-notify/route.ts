@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { generateBackorderEmail, sendViaKlaviyo } from "@/lib/email";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 
 // GET — analyse the backorder situation (order + product → ETA + email draft)
@@ -41,14 +42,24 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 4. Fallback to lead time if no PO found
+    // 4. Fallback to default supplier lead time from Supabase
     if (!estimatedDelivery && materials.length) {
-      const firstMaterialWithLeadTime = materials.find(
-        (m) => typeof (m as unknown as Record<string, unknown>).lead_time === "number"
-      );
-      if (firstMaterialWithLeadTime) {
-        leadTimeDays = (firstMaterialWithLeadTime as unknown as Record<string, unknown>)
-          .lead_time as number;
+      const supplierIds = materials
+        .filter((m) => m.supplier !== null)
+        .map((m) => m.supplier!.id);
+
+      if (supplierIds.length) {
+        const { data: ltRows } = await supabaseAdmin
+          .from("supplier_lead_times")
+          .select("lead_time_days")
+          .in("supplier_id", supplierIds)
+          .not("lead_time_days", "is", null)
+          .order("lead_time_days", { ascending: false })
+          .limit(1);
+
+        if (ltRows?.[0]?.lead_time_days) {
+          leadTimeDays = ltRows[0].lead_time_days as number;
+        }
       }
     }
 
