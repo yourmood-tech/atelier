@@ -1,31 +1,64 @@
 import type { BackorderAnalysis } from "./types";
 
-// ── Gmail send ────────────────────────────────────────────────────────────────
+// ── Klaviyo — track BackorderNotification event → triggers Flow ───────────────
 
-export async function sendEmail(params: {
-  to: string;
+export async function sendViaKlaviyo(params: {
+  email: string;
+  firstName: string;
   subject: string;
   body: string;
+  orderId: string;
+  productTitle: string;
+  estimatedDelivery: string | null;
 }): Promise<void> {
-  const nodemailer = await import("nodemailer");
+  const apiKey = process.env.KLAVIYO_API_KEY!;
 
-  const transporter = nodemailer.default.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.GMAIL_USER!,
-      pass: process.env.GMAIL_APP_PASSWORD!,
+  const res = await fetch("https://a.klaviyo.com/api/events/", {
+    method: "POST",
+    headers: {
+      Authorization: `Klaviyo-API-Key ${apiKey}`,
+      "Content-Type": "application/json",
+      revision: "2024-10-15",
     },
+    body: JSON.stringify({
+      data: {
+        type: "event",
+        attributes: {
+          profile: {
+            data: {
+              type: "profile",
+              attributes: {
+                email: params.email,
+                first_name: params.firstName,
+              },
+            },
+          },
+          metric: {
+            data: {
+              type: "metric",
+              attributes: { name: "BackorderNotification" },
+            },
+          },
+          properties: {
+            email_subject: params.subject,
+            email_body: params.body,
+            order_id: params.orderId,
+            product_title: params.productTitle,
+            estimated_delivery: params.estimatedDelivery ?? "À confirmer",
+          },
+          time: new Date().toISOString(),
+        },
+      },
+    }),
   });
 
-  await transporter.sendMail({
-    from: `"Mood Collection" <${process.env.GMAIL_USER}>`,
-    to: params.to,
-    subject: params.subject,
-    text: params.body,
-  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Klaviyo ${res.status}: ${text.slice(0, 200)}`);
+  }
 }
 
-// ── Email generation via Claude API ──────────────────────────────────────────
+// ── Claude API — email generation ─────────────────────────────────────────────
 
 const LOCALE_LABELS: Record<string, string> = {
   fr: "French",
@@ -79,7 +112,6 @@ Customer info:
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
 
-  // Extract JSON from response
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     throw new Error("Claude did not return valid JSON for email generation");

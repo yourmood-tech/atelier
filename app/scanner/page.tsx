@@ -210,8 +210,12 @@ export default function ScannerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: backorderResult.order.customer.email,
+          firstName: backorderResult.order.customer.firstName,
           subject,
           body,
+          orderId: backorderResult.order.name,
+          productTitle: backorderResult.product.productTitle,
+          estimatedDelivery: backorderResult.estimatedDelivery,
         }),
       });
       const data = await res.json() as { ok: boolean; error?: string };

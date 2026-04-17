@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrdersForSupplier } from "@/lib/katana";
-import { generateBackorderEmail, sendEmail } from "@/lib/email";
+import { generateBackorderEmail, sendViaKlaviyo } from "@/lib/email";
 import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 
 // GET — analyse the backorder situation (order + product → ETA + email draft)
@@ -89,8 +89,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as {
       to: string;
+      firstName?: string;
       subject: string;
       body: string;
+      orderId?: string;
+      productTitle?: string;
+      estimatedDelivery?: string | null;
     };
 
     if (!body.to || !body.subject || !body.body) {
@@ -100,7 +104,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await sendEmail({ to: body.to, subject: body.subject, body: body.body });
+    await sendViaKlaviyo({
+      email: body.to,
+      firstName: body.firstName ?? "",
+      subject: body.subject,
+      body: body.body,
+      orderId: body.orderId ?? "",
+      productTitle: body.productTitle ?? "",
+      estimatedDelivery: body.estimatedDelivery ?? null,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
