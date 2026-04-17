@@ -332,11 +332,75 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
   };
 }
 
+function buildPoResult(
+  po: Record<string, unknown>,
+  supplierId: number,
+  supplierName: string
+): KatanaPurchaseOrder {
+  const poId = po.id as number;
+  const rows = (po.purchase_order_rows as Record<string, unknown>[]) ?? [];
+
+  const poRows: KatanaPurchaseOrderRow[] = rows.map((row) => ({
+    id: row.id as string,
+    variantId: row.variant_id as number,
+    variantSku: null,
+    variantName: "",
+    quantity: (row.quantity as number) ?? 0,
+    receivedQuantity: (row.received_quantity as number) ?? 0,
+  }));
+
+  return {
+    id: poId,
+    number: (po.order_no ?? String(poId)) as string,
+    supplierId,
+    supplierName,
+    status: (po.status as string) ?? "NOT_RECEIVED",
+    estimatedDelivery: (po.expected_arrival_date as string | null) ?? null,
+    rows: poRows,
+  };
+}
+
+async function fetchAllOpenPos(): Promise<Record<string, unknown>[]> {
+  const [notReceived, partiallyReceived] = await Promise.all([
+    katanaFetch(`/v1/purchase_orders?status=NOT_RECEIVED&limit=100`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+    katanaFetch(`/v1/purchase_orders?status=PARTIALLY_RECEIVED&limit=100`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+  ]);
+  return [
+    ...(notReceived?.data ?? []),
+    ...(partiallyReceived?.data ?? []),
+  ];
+}
+
+// Find the first open PO that contains any of the given ingredient variant IDs.
+// Works even when materials have no default_supplier_id set in Katana.
+export async function getOpenPurchaseOrderForVariants(
+  ingredientVariantIds: number[]
+): Promise<KatanaPurchaseOrder | null> {
+  if (!ingredientVariantIds.length) return null;
+
+  const pos = await fetchAllOpenPos();
+
+  for (const po of pos) {
+    const rows = (po.purchase_order_rows as Record<string, unknown>[]) ?? [];
+    const hasMatch = rows.some((row) =>
+      ingredientVariantIds.includes(row.variant_id as number)
+    );
+
+    if (hasMatch) {
+      const supplierId = po.supplier_id as number;
+      const supplierName = await getSupplierName(supplierId);
+      return buildPoResult(po, supplierId, supplierName);
+    }
+  }
+
+  return null;
+}
+
+// Legacy: search by supplier ID (kept for cases where supplier is already known)
 export async function getOpenPurchaseOrdersForSupplier(
   supplierId: number,
   materialVariantIds: number[]
 ): Promise<KatanaPurchaseOrder | null> {
-  // Fetch open POs for this supplier (Katana uses NOT_RECEIVED / PARTIALLY_RECEIVED)
   const [notReceived, partiallyReceived] = await Promise.all([
     katanaFetch(`/v1/purchase_orders?supplier_id=${supplierId}&status=NOT_RECEIVED&limit=50`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
     katanaFetch(`/v1/purchase_orders?supplier_id=${supplierId}&status=PARTIALLY_RECEIVED&limit=50`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
@@ -346,42 +410,15 @@ export async function getOpenPurchaseOrdersForSupplier(
     ...(notReceived?.data ?? []),
     ...(partiallyReceived?.data ?? []),
   ];
-  if (!pos.length) return null;
 
-  // Rows are embedded in each PO response as purchase_order_rows — no extra call needed
   for (const po of pos) {
-    const poId = po.id as number;
     const rows = (po.purchase_order_rows as Record<string, unknown>[]) ?? [];
-
-    // Check if any of our material variants appear in this PO
-    const matchingRows = rows.filter((row) =>
+    const hasMatch = rows.some((row) =>
       materialVariantIds.includes(row.variant_id as number)
     );
-
-    if (matchingRows.length) {
+    if (hasMatch) {
       const supplierName = await getSupplierName(supplierId);
-
-      const poRows: KatanaPurchaseOrderRow[] = rows.map((row) => ({
-        id: row.id as string,
-        variantId: row.variant_id as number,
-        variantSku: null,  // not returned in PO row data
-        variantName: "",   // not returned in PO row data
-        quantity: (row.quantity as number) ?? 0,
-        receivedQuantity: (row.received_quantity as number) ?? 0,
-      }));
-
-      // ETA field confirmed as expected_arrival_date
-      const eta = (po.expected_arrival_date as string | null) ?? null;
-
-      return {
-        id: poId,
-        number: (po.order_no ?? String(poId)) as string,
-        supplierId,
-        supplierName,
-        status: (po.status as string) ?? "NOT_RECEIVED",
-        estimatedDelivery: eta,
-        rows: poRows,
-      };
+      return buildPoResult(po, supplierId, supplierName);
     }
   }
 

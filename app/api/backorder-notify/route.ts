@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId } from "@/lib/shopify";
-import { getRecipeWithSuppliers, getOpenPurchaseOrdersForSupplier } from "@/lib/katana";
+import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { generateBackorderEmail, sendViaKlaviyo } from "@/lib/email";
 import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 
@@ -27,26 +27,17 @@ export async function GET(req: NextRequest) {
     const recipe = product.sku ? await getRecipeWithSuppliers(product.sku) : null;
     const materials = recipe?.ingredients ?? [];
 
-    // 3. Find open PO for any supplier of this product's materials
+    // 3. Find open PO — search directly by ingredient variant ID across all open POs.
+    //    This works even when materials have no default_supplier_id set in Katana.
     let purchaseOrder = null;
     let estimatedDelivery: string | null = null;
     let leadTimeDays: number | null = null;
 
-    const suppliersWithMaterials = materials
-      .filter((m) => m.supplier !== null)
-      .reduce<Map<number, number[]>>((acc, m) => {
-        const sid = m.supplier!.id;
-        if (!acc.has(sid)) acc.set(sid, []);
-        acc.get(sid)!.push(m.id);
-        return acc;
-      }, new Map());
-
-    for (const [supplierId, variantIds] of suppliersWithMaterials) {
-      const po = await getOpenPurchaseOrdersForSupplier(supplierId, variantIds);
-      if (po) {
-        purchaseOrder = po;
-        estimatedDelivery = po.estimatedDelivery;
-        break;
+    if (materials.length) {
+      const allVariantIds = materials.map((m) => m.id);
+      purchaseOrder = await getOpenPurchaseOrderForVariants(allVariantIds);
+      if (purchaseOrder) {
+        estimatedDelivery = purchaseOrder.estimatedDelivery;
       }
     }
 
