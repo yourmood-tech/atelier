@@ -11,7 +11,7 @@ type ScanLine = {
 type BatchItem = {
   localId: string;
   orderId: string;
-  productId: string;
+  variantSku: string;
   status: "analyzing" | "ready" | "error" | "sent";
   result: BackorderAnalysis | null;
   error: string | null;
@@ -23,7 +23,7 @@ type BackorderStep = "order" | "product";
 type ProductionBatchItem = {
   localId: string;
   orderId: string;
-  productId: string;
+  variantSku: string;
   stepKey: string;
   stepName: string;
   direction: ProductionDirection;
@@ -221,10 +221,10 @@ export default function ScannerPage() {
     }
   }
 
-  async function analyzeItem(localId: string, orderId: string, productId: string) {
+  async function analyzeItem(localId: string, orderId: string, variantSku: string) {
     try {
       const res = await fetch(
-        `/api/backorder-notify?order_id=${encodeURIComponent(orderId)}&product_id=${encodeURIComponent(productId)}`
+        `/api/backorder-notify?order_id=${encodeURIComponent(orderId)}&variant_sku=${encodeURIComponent(variantSku)}`
       );
       const data = (await res.json()) as BackorderApiResponse;
       if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
@@ -250,7 +250,7 @@ export default function ScannerPage() {
     if (backorderStep === "order") {
       setBackorderOrderId(id);
       setBackorderStep("product");
-      setStatus(`Commande ${id} — scannez le produit`);
+      setStatus(`Commande ${id} — scannez le SKU variante`);
       return;
     }
 
@@ -258,7 +258,7 @@ export default function ScannerPage() {
 
     const localId = crypto.randomUUID();
     setBatchItems((prev) => [
-      { localId, orderId: backorderOrderId, productId: id, status: "analyzing", result: null, error: null },
+      { localId, orderId: backorderOrderId, variantSku: id, status: "analyzing", result: null, error: null },
       ...prev,
     ]);
     setBackorderStep("order");
@@ -358,12 +358,12 @@ export default function ScannerPage() {
     });
   }
 
-  async function analyzeProductionItem(localId: string, orderId: string, productId: string, stepKey: string, direction: ProductionDirection) {
+  async function analyzeProductionItem(localId: string, orderId: string, variantSku: string, stepKey: string, direction: ProductionDirection) {
     try {
       const res = await fetch("/api/production-notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: orderId, product_id: productId, step_key: stepKey, direction }),
+        body: JSON.stringify({ order_id: orderId, variant_sku: variantSku, step_key: stepKey, direction }),
       });
       const data = await res.json() as ProductionNotifyApiResponse;
       if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
@@ -381,7 +381,7 @@ export default function ScannerPage() {
     if (productionScanStep === "order") {
       setProductionOrderId(id);
       setProductionScanStep("product");
-      setStatus(`Commande ${id} — scannez le produit`);
+      setStatus(`Commande ${id} — scannez le SKU variante`);
       return;
     }
     if (!productionOrderId) return;
@@ -392,7 +392,7 @@ export default function ScannerPage() {
     setProductionBatch((prev) => [{
       localId,
       orderId: productionOrderId,
-      productId: id,
+      variantSku: id,
       stepKey: selectedStepKey,
       stepName: step.name,
       direction: productionDirection,
@@ -633,7 +633,7 @@ export default function ScannerPage() {
           <p className="text-sm opacity-60">
             {backorderStep === "order"
               ? "Scannez le numéro de commande Shopify"
-              : <span>Commande <span className="font-mono font-semibold text-black">{backorderOrderId}</span> — scannez le produit en rupture</span>
+              : <span>Commande <span className="font-mono font-semibold text-black">{backorderOrderId}</span> — scannez le SKU variante</span>
             }
           </p>
 
@@ -761,7 +761,7 @@ export default function ScannerPage() {
               <p className="text-sm opacity-60">
                 {productionScanStep === "order"
                   ? "Scannez le numéro de commande Shopify"
-                  : <span>Commande <span className="font-mono font-semibold text-black">{productionOrderId}</span> — scannez le produit</span>
+                  : <span>Commande <span className="font-mono font-semibold text-black">{productionOrderId}</span> — scannez le SKU variante</span>
                 }
               </p>
 

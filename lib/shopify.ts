@@ -63,6 +63,55 @@ export async function lookupShopifyId(id: string): Promise<ShopifyVariantInfo> {
   return getProductById(id);
 }
 
+export async function lookupShopifyBySku(sku: string): Promise<ShopifyVariantInfo> {
+  const query = `
+    query($q: String!) {
+      productVariants(first: 1, query: $q) {
+        edges {
+          node {
+            id
+            sku
+            title
+            product { id title }
+          }
+        }
+      }
+    }
+  `;
+
+  const res = await fetch(
+    `https://${STORE}/admin/api/${API_VERSION}/graphql.json`,
+    {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, variables: { q: `sku:${sku}` } }),
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Shopify GraphQL ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const json = await res.json() as {
+    data?: { productVariants?: { edges?: { node: { id: string; sku: string; title: string; product: { id: string; title: string } } }[] } };
+  };
+
+  const node = json.data?.productVariants?.edges?.[0]?.node;
+  if (!node) throw new Error(`Aucune variante Shopify trouvée pour SKU: ${sku}`);
+
+  return {
+    variantId: parseInt(node.id.split("/").pop()!, 10),
+    productId: parseInt(node.product.id.split("/").pop()!, 10),
+    productTitle: node.product.title,
+    variantTitle: node.title,
+    sku: node.sku ?? sku,
+  };
+}
+
 // ── Shopify GraphQL — add a tag to an order (non-destructive, merges with existing tags) ──
 
 export async function addOrderTag(orderId: number, tag: string): Promise<void> {

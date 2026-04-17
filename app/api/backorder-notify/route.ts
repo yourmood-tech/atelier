@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
+import { getOrderById, lookupShopifyBySku, addOrderTag, makeOrderTag } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -9,11 +9,11 @@ import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 export async function GET(req: NextRequest) {
   try {
     const orderId = req.nextUrl.searchParams.get("order_id")?.trim() ?? "";
-    const productId = req.nextUrl.searchParams.get("product_id")?.trim() ?? "";
+    const variantSku = req.nextUrl.searchParams.get("variant_sku")?.trim() ?? "";
 
-    if (!orderId || !productId) {
+    if (!orderId || !variantSku) {
       return NextResponse.json<BackorderApiResponse>(
-        { ok: false, error: "Paramètres order_id et product_id requis" },
+        { ok: false, error: "Paramètres order_id et variant_sku requis" },
         { status: 400 }
       );
     }
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     // 1. Fetch Shopify order + product in parallel
     const [order, product] = await Promise.all([
       getOrderById(orderId),
-      lookupShopifyId(productId),
+      lookupShopifyBySku(variantSku),
     ]);
 
     // 2. Get recipe + materials + suppliers
