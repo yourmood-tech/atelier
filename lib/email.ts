@@ -76,14 +76,16 @@ export async function generateBackorderEmail(
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-  const { order, product, estimatedDelivery, leadTimeDays } = analysis;
+  const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
 
   const etaText = estimatedDelivery
     ? `estimated delivery date: ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })}`
-    : leadTimeDays
-    ? `estimated lead time: ${leadTimeDays} days from today`
+    : (leadTimeMin && leadTimeMax)
+    ? `estimated lead time: between ${leadTimeMin} and ${leadTimeMax} days from today`
+    : leadTimeMin
+    ? `estimated lead time: approximately ${leadTimeMin} days from today`
     : "no confirmed date yet — we will inform you as soon as possible";
 
   const prompt = `You are a customer service representative for Mood Collection, a Swiss jewelry brand.

@@ -23,7 +23,8 @@ type BackorderStep = "order" | "product";
 type SupplierRow = {
   supplier_id: number;
   supplier_name: string;
-  lead_time_days: number | null;
+  lead_time_min: number | null;
+  lead_time_max: number | null;
   updated_at: string | null;
 };
 
@@ -45,10 +46,12 @@ export default function ScannerPage() {
   const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [suppliersLoading, setSuppliersLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingValue, setEditingValue] = useState<string>("");
+  const [editingMin, setEditingMin] = useState<string>("");
+  const [editingMax, setEditingMax] = useState<string>("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
+  const modeRef = useRef<AppMode>("scan");
 
   useEffect(() => {
     const existing = sessionStorage.getItem("scanner_session_id");
@@ -62,10 +65,14 @@ export default function ScannerPage() {
     setSessionId(newId);
   }, []);
 
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+
   useEffect(() => {
     inputRef.current?.focus();
 
     const interval = window.setInterval(() => {
+      // Don't steal focus in suppliers mode (user needs to type in inputs)
+      if (modeRef.current === "suppliers") return;
       if (document.activeElement !== inputRef.current) {
         inputRef.current?.focus();
       }
@@ -290,16 +297,18 @@ export default function ScannerPage() {
   }
 
   async function saveLeadTime(supplierId: number, supplierName: string) {
-    const days = parseInt(editingValue, 10);
-    if (isNaN(days) || days < 0) {
+    const min = parseInt(editingMin, 10);
+    if (isNaN(min) || min < 0) {
       setEditingId(null);
       return;
     }
+    const maxRaw = parseInt(editingMax, 10);
+    const max = (!editingMax.trim() || isNaN(maxRaw)) ? null : maxRaw;
 
     setSuppliers((prev) =>
       prev.map((s) =>
         s.supplier_id === supplierId
-          ? { ...s, lead_time_days: days, updated_at: new Date().toISOString() }
+          ? { ...s, lead_time_min: min, lead_time_max: max, updated_at: new Date().toISOString() }
           : s
       )
     );
@@ -308,7 +317,7 @@ export default function ScannerPage() {
     await fetch("/api/supplier-lead-times", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ supplier_id: supplierId, supplier_name: supplierName, lead_time_days: days }),
+      body: JSON.stringify({ supplier_id: supplierId, supplier_name: supplierName, lead_time_min: min, lead_time_max: max }),
     });
   }
 
@@ -418,10 +427,12 @@ export default function ScannerPage() {
 			  </div>
 			</div>
 
-      <div className="mb-6 rounded-2xl border p-4">
-        <div className="mb-2 text-sm opacity-70">Buffer scanner</div>
-        <div className="font-mono text-lg">{buffer || "—"}</div>
-      </div>
+      {mode !== "suppliers" && (
+        <div className="mb-6 rounded-2xl border p-4">
+          <div className="mb-2 text-sm opacity-70">Buffer scanner</div>
+          <div className="font-mono text-lg">{buffer || "—"}</div>
+        </div>
+      )}
 
       {mode === "scan" && (
         <div className="grid gap-6 md:grid-cols-2">
@@ -589,49 +600,89 @@ export default function ScannerPage() {
                 <thead>
                   <tr className="border-b text-left opacity-60">
                     <th className="py-2 pr-6">Fournisseur</th>
-                    <th className="py-2 pr-6">Délai (jours)</th>
-                    <th className="py-2 opacity-60 text-xs font-normal">Modifié</th>
+                    <th className="py-2 pr-6">Délai minimum</th>
+                    <th className="py-2 pr-6">Délai maximum</th>
+                    <th className="py-2 text-xs font-normal">Modifié</th>
                   </tr>
                 </thead>
                 <tbody>
                   {suppliers.map((s) => (
                     <tr key={s.supplier_id} className="border-b last:border-0 hover:bg-gray-50">
                       <td className="py-2 pr-6 font-medium">{s.supplier_name}</td>
-                      <td className="py-2 pr-6">
-                        {editingId === s.supplier_id ? (
-                          <input
-                            type="number"
-                            min="0"
-                            className="w-20 rounded border px-2 py-1 text-sm"
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") void saveLeadTime(s.supplier_id, s.supplier_name);
-                              if (e.key === "Escape") setEditingId(null);
-                            }}
-                            onBlur={() => void saveLeadTime(s.supplier_id, s.supplier_name)}
-                          />
-                        ) : (
-                          <button
-                            className="rounded px-2 py-1 hover:bg-gray-100 min-w-[4rem] text-left"
-                            onClick={() => {
-                              setEditingId(s.supplier_id);
-                              setEditingValue(s.lead_time_days != null ? String(s.lead_time_days) : "");
-                            }}
-                          >
-                            {s.lead_time_days != null ? (
-                              <span className="font-semibold">{s.lead_time_days}j</span>
-                            ) : (
-                              <span className="opacity-30">— cliquer</span>
-                            )}
-                          </button>
-                        )}
-                      </td>
+                      {editingId === s.supplier_id ? (
+                        <>
+                          <td className="py-2 pr-3">
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="ex: 15"
+                              className="w-20 rounded border px-2 py-1 text-sm"
+                              value={editingMin}
+                              autoFocus
+                              onChange={(e) => setEditingMin(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") void saveLeadTime(s.supplier_id, s.supplier_name);
+                                if (e.key === "Escape") setEditingId(null);
+                              }}
+                            />
+                          </td>
+                          <td className="py-2 pr-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="ex: 20"
+                                className="w-20 rounded border px-2 py-1 text-sm"
+                                value={editingMax}
+                                onChange={(e) => setEditingMax(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") void saveLeadTime(s.supplier_id, s.supplier_name);
+                                  if (e.key === "Escape") setEditingId(null);
+                                }}
+                                onBlur={() => void saveLeadTime(s.supplier_id, s.supplier_name)}
+                              />
+                              <span className="text-xs opacity-50">jours</span>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="py-2 pr-3">
+                            <button
+                              className="rounded px-2 py-1 hover:bg-gray-100 min-w-[4rem] text-left"
+                              onClick={() => {
+                                setEditingId(s.supplier_id);
+                                setEditingMin(s.lead_time_min != null ? String(s.lead_time_min) : "");
+                                setEditingMax(s.lead_time_max != null ? String(s.lead_time_max) : "");
+                              }}
+                            >
+                              {s.lead_time_min != null ? (
+                                <span className="font-semibold">{s.lead_time_min}j</span>
+                              ) : (
+                                <span className="opacity-30">—</span>
+                              )}
+                            </button>
+                          </td>
+                          <td className="py-2 pr-3">
+                            <button
+                              className="rounded px-2 py-1 hover:bg-gray-100 min-w-[4rem] text-left"
+                              onClick={() => {
+                                setEditingId(s.supplier_id);
+                                setEditingMin(s.lead_time_min != null ? String(s.lead_time_min) : "");
+                                setEditingMax(s.lead_time_max != null ? String(s.lead_time_max) : "");
+                              }}
+                            >
+                              {s.lead_time_max != null ? (
+                                <span className="font-semibold">{s.lead_time_max}j</span>
+                              ) : (
+                                <span className="opacity-30">—</span>
+                              )}
+                            </button>
+                          </td>
+                        </>
+                      )}
                       <td className="py-2 text-xs opacity-40">
-                        {s.updated_at
-                          ? new Date(s.updated_at).toLocaleDateString("fr-CH")
-                          : "—"}
+                        {s.updated_at ? new Date(s.updated_at).toLocaleDateString("fr-CH") : "—"}
                       </td>
                     </tr>
                   ))}

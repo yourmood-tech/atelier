@@ -5,7 +5,8 @@ import { getAllKatanaSuppliers } from "@/lib/katana";
 export type SupplierLeadTime = {
   supplier_id: number;
   supplier_name: string;
-  lead_time_days: number | null;
+  lead_time_min: number | null;
+  lead_time_max: number | null;
   updated_at: string | null;
 };
 
@@ -14,15 +15,16 @@ export async function GET() {
   try {
     const [katanaSuppliers, { data: rows, error }] = await Promise.all([
       getAllKatanaSuppliers(),
-      supabaseAdmin.from("supplier_lead_times").select("supplier_id, lead_time_days, updated_at"),
+      supabaseAdmin.from("supplier_lead_times").select("supplier_id, lead_time_min, lead_time_max, updated_at"),
     ]);
 
     if (error) throw new Error(error.message);
 
-    const leadTimeMap = new Map<number, { lead_time_days: number | null; updated_at: string | null }>();
+    const leadTimeMap = new Map<number, { lead_time_min: number | null; lead_time_max: number | null; updated_at: string | null }>();
     for (const row of rows ?? []) {
       leadTimeMap.set(row.supplier_id, {
-        lead_time_days: row.lead_time_days,
+        lead_time_min: row.lead_time_min,
+        lead_time_max: row.lead_time_max,
         updated_at: row.updated_at,
       });
     }
@@ -33,7 +35,8 @@ export async function GET() {
       .map((s) => ({
         supplier_id: s.id,
         supplier_name: s.name,
-        lead_time_days: leadTimeMap.get(s.id)?.lead_time_days ?? null,
+        lead_time_min: leadTimeMap.get(s.id)?.lead_time_min ?? null,
+        lead_time_max: leadTimeMap.get(s.id)?.lead_time_max ?? null,
         updated_at: leadTimeMap.get(s.id)?.updated_at ?? null,
       }));
 
@@ -52,12 +55,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as {
       supplier_id: number;
       supplier_name: string;
-      lead_time_days: number;
+      lead_time_min: number;
+      lead_time_max: number | null;
     };
 
-    if (!body.supplier_id || typeof body.lead_time_days !== "number") {
+    if (!body.supplier_id || typeof body.lead_time_min !== "number") {
       return NextResponse.json(
-        { ok: false, error: "supplier_id et lead_time_days requis" },
+        { ok: false, error: "supplier_id et lead_time_min requis" },
         { status: 400 }
       );
     }
@@ -66,7 +70,8 @@ export async function POST(req: NextRequest) {
       {
         supplier_id: body.supplier_id,
         supplier_name: body.supplier_name,
-        lead_time_days: body.lead_time_days,
+        lead_time_min: body.lead_time_min,
+        lead_time_max: body.lead_time_max ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "supplier_id" }

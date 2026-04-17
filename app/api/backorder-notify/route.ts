@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
     //    This works even when materials have no default_supplier_id set in Katana.
     let purchaseOrder = null;
     let estimatedDelivery: string | null = null;
-    let leadTimeDays: number | null = null;
+    let leadTimeMin: number | null = null;
+    let leadTimeMax: number | null = null;
 
     if (materials.length) {
       const allVariantIds = materials.map((m) => m.id);
@@ -51,14 +52,15 @@ export async function GET(req: NextRequest) {
       if (supplierIds.length) {
         const { data: ltRows } = await supabaseAdmin
           .from("supplier_lead_times")
-          .select("lead_time_days")
+          .select("lead_time_min, lead_time_max")
           .in("supplier_id", supplierIds)
-          .not("lead_time_days", "is", null)
-          .order("lead_time_days", { ascending: false })
+          .not("lead_time_min", "is", null)
+          .order("lead_time_max", { ascending: false, nullsFirst: false })
           .limit(1);
 
-        if (ltRows?.[0]?.lead_time_days) {
-          leadTimeDays = ltRows[0].lead_time_days as number;
+        if (ltRows?.[0]) {
+          leadTimeMin = ltRows[0].lead_time_min as number | null;
+          leadTimeMax = ltRows[0].lead_time_max as number | null;
         }
       }
     }
@@ -70,7 +72,8 @@ export async function GET(req: NextRequest) {
       materials,
       purchaseOrder,
       estimatedDelivery,
-      leadTimeDays,
+      leadTimeMin,
+      leadTimeMax,
       emailDraft: null,
     };
 

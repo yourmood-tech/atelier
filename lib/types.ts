@@ -121,7 +121,8 @@ export type BackorderAnalysis = {
   materials: KatanaRecipeIngredientWithSupplier[];
   purchaseOrder: KatanaPurchaseOrder | null;
   estimatedDelivery: string | null;
-  leadTimeDays: number | null;
+  leadTimeMin: number | null;
+  leadTimeMax: number | null;
   emailDraft: string | null;
 };
 
