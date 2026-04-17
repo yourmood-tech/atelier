@@ -88,21 +88,21 @@ export async function generateBackorderEmail(
     ? `estimated lead time: approximately ${leadTimeMin} days from today`
     : "no confirmed date yet — we will inform you as soon as possible";
 
-  const prompt = `You are a customer service representative for Mood Collection, a Swiss jewelry brand.
-Write a warm email to a customer informing them that one item in their order will take a little longer to be delivered.
+  const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand known for precision and intentional production.
+Write a clear, professional email informing a customer that one item in their order requires additional production time before it can be delivered.
 
-Context to weave naturally into the message (do NOT list these as bullet points — integrate them as authentic, human prose):
-- Our pieces are crafted with precision in small batches or individually, which means we never overproduce
-- This is a conscious choice: we prefer making each piece with care rather than stockpiling inventory
-- The wait is part of what makes the piece special — it is being made for them
+Tone guidelines:
+- Professional and direct — not overly warm, not cold
+- Honest and confident, not apologetic or overly compensatory
+- One brief mention that pieces are produced in small quantities by design (anti-overproduction), stated as a fact, not as a marketing pitch
+- No emotional language, no "cheesy" reassurances
 
 Rules:
 - Write entirely in ${language}
-- Tone: warm, sincere, artisanal — not corporate, not apologetic to the point of being cold
-- Be concise (4-6 sentences max)
-- Do NOT use "Madame/Monsieur" — use first name only
-- Do NOT add a sign-off or signature — just the body text
-- Use "livrer" / "deliver" — NOT "proposer" / "offer"
+- Be concise: 3-4 sentences maximum
+- Address the customer by first name only — no "Madame/Monsieur"
+- Do NOT add a sign-off or signature — body text only
+- Use "livrer" / "deliver" — not "proposer" / "offer"
 - Return JSON with two fields: "subject" (email subject line) and "body" (email body text)
 
 Customer info:
