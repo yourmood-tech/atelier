@@ -138,28 +138,48 @@ export async function generateFollowUpEmail(
   const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
   const language = LOCALE_LABELS[order.customer.locale] ?? "French";
 
-  const etaText = estimatedDelivery
-    ? `expected delivery: ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })}`
-    : (leadTimeMin && leadTimeMax)
-    ? `expected lead time: between ${leadTimeMin} and ${leadTimeMax} days from order date`
-    : leadTimeMin
-    ? `expected lead time: approximately ${leadTimeMin} days from order date`
-    : "delivery timing not yet confirmed";
+  // This email is sent 15 days after the first — compute remaining time from that point
+  const FOLLOWUP_DELAY_DAYS = 15;
+
+  let remainingText: string;
+  if (estimatedDelivery) {
+    const daysFromNow = Math.ceil(
+      (new Date(estimatedDelivery).getTime() - Date.now()) / 86_400_000
+    );
+    const daysRemaining = daysFromNow - FOLLOWUP_DELAY_DAYS;
+    const deliveryDate = new Date(estimatedDelivery).toLocaleDateString("fr-CH", {
+      day: "numeric", month: "long", year: "numeric",
+    });
+    remainingText = daysRemaining > 0
+      ? `delivery still confirmed for ${deliveryDate} — approximately ${daysRemaining} days remaining from the date this email is sent`
+      : `delivery confirmed for ${deliveryDate}`;
+  } else if (leadTimeMin) {
+    const remMin = Math.max(0, leadTimeMin - FOLLOWUP_DELAY_DAYS);
+    const remMax = leadTimeMax ? Math.max(0, leadTimeMax - FOLLOWUP_DELAY_DAYS) : null;
+    remainingText = remMax
+      ? `approximately ${remMin}–${remMax} days remaining from the date this email is sent`
+      : `approximately ${remMin} days remaining from the date this email is sent`;
+  } else {
+    remainingText = "delivery timing confirmed — no change to original estimate";
+  }
 
   const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief follow-up email to a customer whose order is still being prepared. This is a proactive update — they have been waiting for more than two weeks.
+Write a brief reassurance email to a customer. Their order is in production and on track — this is a proactive status update sent 15 days after their initial backorder notification.
+
+Purpose of this email:
+- Confirm the order is still in production and the delivery timeline has not changed
+- Give the customer the remaining estimated time before delivery
+- NOT announce any delay or problem — everything is on schedule
 
 Tone guidelines:
-- Professional, direct, and reassuring without being apologetic or dramatic
-- Acknowledge the wait matter-of-factly
-- Confirm the order is progressing and will be delivered
-- One sentence maximum on production being done in small quantities by design
+- Professional and factual — this is an update, not an apology
+- Confident: the order is progressing as planned
 - No emotional language, no "magic", no "special", no "worth the wait"
 - Do NOT use words like "magie", "spécial", "ça vaut l'attente"
 
 Rules:
 - Write entirely in ${language}
-- 3-4 sentences maximum
+- 3 sentences maximum
 - Address by first name only — no "Madame/Monsieur"
 - No sign-off or signature — body text only
 - Use "livrer" / "deliver" — not "proposer" / "offer"
@@ -169,7 +189,7 @@ Customer info:
 - First name: ${order.customer.firstName}
 - Order number: ${order.name}
 - Product: ${product.productTitle}
-- Status: ${etaText}`;
+- Current status: ${remainingText}`;
 
   return callClaude(prompt);
 }
