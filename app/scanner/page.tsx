@@ -76,9 +76,6 @@ export default function ScannerPage() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
-  const modeRef = useRef<AppMode>("scan");
-  const productionViewRef = useRef<"scan" | "steps">("scan");
-
   useEffect(() => {
     const existing = sessionStorage.getItem("scanner_session_id");
     if (existing) {
@@ -91,17 +88,18 @@ export default function ScannerPage() {
     setSessionId(newId);
   }, []);
 
-  useEffect(() => { modeRef.current = mode; }, [mode]);
-  useEffect(() => { productionViewRef.current = productionView; }, [productionView]);
-
   useEffect(() => {
     inputRef.current?.focus();
 
     const interval = window.setInterval(() => {
-      // Don't steal focus when user needs to type in inputs
-      if (modeRef.current === "suppliers") return;
-      if (modeRef.current === "production" && productionViewRef.current === "steps") return;
-      if (document.activeElement !== inputRef.current) {
+      const active = document.activeElement;
+      // Don't steal focus from any visible input / select / textarea
+      if (
+        active &&
+        active !== inputRef.current &&
+        (active.tagName === "INPUT" || active.tagName === "SELECT" || active.tagName === "TEXTAREA")
+      ) return;
+      if (active !== inputRef.current) {
         inputRef.current?.focus();
       }
     }, 300);
@@ -563,7 +561,7 @@ export default function ScannerPage() {
 			  </div>
 			</div>
 
-      {mode !== "suppliers" && (
+      {mode !== "suppliers" && !(mode === "production" && productionView === "steps") && (
         <div className="mb-6 rounded-2xl border p-4">
           <div className="mb-2 text-sm opacity-70">Buffer scanner</div>
           <div className="font-mono text-lg">{buffer || "—"}</div>
