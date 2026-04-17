@@ -140,7 +140,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (body.orderNumericId) {
-      void addOrderTag(body.orderNumericId, makeOrderTag("Rupture")).catch(console.error);
+      const tagReason = body.supplierName ? `Rupture ${body.supplierName}` : "Rupture";
+      void addOrderTag(body.orderNumericId, makeOrderTag(tagReason)).catch(console.error);
     }
 
     return NextResponse.json({ ok: true });
