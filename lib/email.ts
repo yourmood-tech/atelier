@@ -96,6 +96,7 @@ Tone guidelines:
 - Honest and confident, not apologetic or overly compensatory
 - One brief mention that pieces are produced in small quantities by design (anti-overproduction), stated as a fact, not as a marketing pitch
 - No emotional language, no "cheesy" reassurances
+- NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente" — state facts, not feelings
 
 Rules:
 - Write entirely in ${language}
