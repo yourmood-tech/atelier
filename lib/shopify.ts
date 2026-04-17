@@ -62,3 +62,31 @@ export async function lookupShopifyId(id: string): Promise<ShopifyVariantInfo> {
   // Scanned ID is always a Shopify product ID (not a variant ID)
   return getProductById(id);
 }
+
+export async function getOrderById(id: string): Promise<import("./types").ShopifyOrder> {
+  const { order: o } = await shopifyFetch(`/orders/${id}.json`);
+
+  const customer = o.customer ?? {};
+  const locale: string =
+    (o.customer_locale as string | null)?.split("-")[0]?.toLowerCase() ?? "fr";
+
+  return {
+    id: o.id,
+    name: o.name,
+    customer: {
+      id: customer.id ?? 0,
+      firstName: customer.first_name ?? "",
+      lastName: customer.last_name ?? "",
+      email: o.email ?? customer.email ?? "",
+      locale,
+    },
+    lineItems: (o.line_items ?? []).map((li: Record<string, unknown>) => ({
+      id: li.id as number,
+      productId: li.product_id as number,
+      variantId: li.variant_id as number,
+      title: li.title as string,
+      sku: (li.sku as string) ?? "",
+      quantity: li.quantity as number,
+    })),
+  };
+}

@@ -4,6 +4,8 @@ import type {
   KatanaRecipeIngredient,
   KatanaRecipeIngredientWithSupplier,
   KatanaSupplier,
+  KatanaPurchaseOrder,
+  KatanaPurchaseOrderRow,
 } from "./types";
 
 type KatanaVariant = {
@@ -328,6 +330,69 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
     sku: shopifyVariantSku,
     ingredients,
   };
+}
+
+export async function getOpenPurchaseOrdersForSupplier(
+  supplierId: number,
+  materialVariantIds: number[]
+): Promise<KatanaPurchaseOrder | null> {
+  // Fetch open POs for this supplier
+  const data = (await katanaFetch(
+    `/v1/purchase_orders?supplier_id=${supplierId}&status=open&limit=50`,
+    { method: "GET" }
+  )) as { data?: Record<string, unknown>[] };
+
+  const pos = data?.data ?? [];
+  if (!pos.length) return null;
+
+  // For each PO, fetch its rows to find if our material variant is included
+  for (const po of pos) {
+    const poId = po.id as number;
+
+    const rowsData = (await katanaFetch(
+      `/v1/purchase_order_rows?purchase_order_id=${poId}&limit=100`,
+      { method: "GET" }
+    )) as { data?: Record<string, unknown>[] };
+
+    const rows = rowsData?.data ?? [];
+
+    // Check if any of our material variants appear in this PO
+    const matchingRows = rows.filter((row) =>
+      materialVariantIds.includes(row.variant_id as number)
+    );
+
+    if (matchingRows.length) {
+      const supplierName = await getSupplierName(supplierId);
+
+      const poRows: KatanaPurchaseOrderRow[] = rows.map((row) => ({
+        id: row.id as string,
+        variantId: row.variant_id as number,
+        variantSku: (row.variant_sku as string | null) ?? null,
+        variantName: (row.variant_name ?? row.name ?? "") as string,
+        quantity: (row.quantity as number) ?? 0,
+        receivedQuantity: (row.received_quantity as number) ?? 0,
+      }));
+
+      // Estimated delivery: try multiple field names Katana might use
+      const eta =
+        (po.estimated_delivery_date as string | null) ??
+        (po.expected_delivery_date as string | null) ??
+        (po.delivery_date as string | null) ??
+        null;
+
+      return {
+        id: poId,
+        number: (po.number ?? po.purchase_order_number ?? String(poId)) as string,
+        supplierId,
+        supplierName,
+        status: (po.status as string) ?? "open",
+        estimatedDelivery: eta,
+        rows: poRows,
+      };
+    }
+  }
+
+  return null;
 }
 
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {

@@ -71,3 +71,62 @@ export type RecipeLookupApiResponse = {
   result?: RecipeLookupResult;
   error?: string;
 };
+
+export type ShopifyCustomer = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  locale: string; // e.g. "fr", "de", "en"
+};
+
+export type ShopifyOrderLineItem = {
+  id: number;
+  productId: number;
+  variantId: number;
+  title: string;
+  sku: string;
+  quantity: number;
+};
+
+export type ShopifyOrder = {
+  id: number;
+  name: string; // e.g. "#12345"
+  customer: ShopifyCustomer;
+  lineItems: ShopifyOrderLineItem[];
+};
+
+export type KatanaPurchaseOrderRow = {
+  id: string;
+  variantId: number;
+  variantSku: string | null;
+  variantName: string;
+  quantity: number;
+  receivedQuantity: number;
+};
+
+export type KatanaPurchaseOrder = {
+  id: number;
+  number: string;
+  supplierId: number;
+  supplierName: string;
+  status: string;
+  estimatedDelivery: string | null; // ISO date
+  rows: KatanaPurchaseOrderRow[];
+};
+
+export type BackorderAnalysis = {
+  order: ShopifyOrder;
+  product: ShopifyVariantInfo;
+  materials: KatanaRecipeIngredientWithSupplier[];
+  purchaseOrder: KatanaPurchaseOrder | null;
+  estimatedDelivery: string | null;
+  leadTimeDays: number | null;
+  emailDraft: string | null;
+};
+
+export type BackorderApiResponse = {
+  ok: boolean;
+  result?: BackorderAnalysis;
+  error?: string;
+};

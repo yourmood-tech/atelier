@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Direction, ScanApiResponse, RecipeLookupApiResponse, RecipeLookupResult } from "@/lib/types";
+import type { Direction, ScanApiResponse, RecipeLookupApiResponse, RecipeLookupResult, BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 
 type ScanLine = {
   sku: string;
   ts: number;
 };
 
-type AppMode = "scan" | "recipe";
+type AppMode = "scan" | "recipe" | "backorder";
+type BackorderStep = "order" | "product";
 
 export default function ScannerPage() {
   const [mode, setMode] = useState<AppMode>("scan");
@@ -21,6 +22,12 @@ export default function ScannerPage() {
   const [lastVariantName, setLastVariantName] = useState<string>("-");
   const [recipeResult, setRecipeResult] = useState<RecipeLookupResult | null>(null);
   const [recipeLoading, setRecipeLoading] = useState(false);
+  const [backorderStep, setBackorderStep] = useState<BackorderStep>("order");
+  const [backorderOrderId, setBackorderOrderId] = useState<string | null>(null);
+  const [backorderResult, setBackorderResult] = useState<BackorderAnalysis | null>(null);
+  const [backorderLoading, setBackorderLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
@@ -94,6 +101,11 @@ export default function ScannerPage() {
       return;
     }
 
+    if (mode === "backorder") {
+      await submitBackorderScan(sku);
+      return;
+    }
+
     setStatus(`Envoi ${sku}...`);
 
     try {
@@ -150,6 +162,66 @@ export default function ScannerPage() {
       setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
     } finally {
       setRecipeLoading(false);
+    }
+  }
+
+  async function submitBackorderScan(id: string) {
+    if (backorderStep === "order") {
+      setBackorderOrderId(id);
+      setBackorderStep("product");
+      setStatus(`Commande ${id} enregistrée — scannez le produit`);
+      return;
+    }
+
+    // step === "product"
+    if (!backorderOrderId) return;
+    setBackorderLoading(true);
+    setBackorderResult(null);
+    setEmailSent(false);
+    setStatus("Analyse en cours...");
+
+    try {
+      const res = await fetch(
+        `/api/backorder-notify?order_id=${encodeURIComponent(backorderOrderId)}&product_id=${encodeURIComponent(id)}`
+      );
+      const data = (await res.json()) as BackorderApiResponse;
+      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
+      setBackorderResult(data.result ?? null);
+      setStatus(`Analyse complète · ${data.result?.order.name ?? ""}`);
+      playBeep();
+    } catch (error) {
+      setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
+    } finally {
+      setBackorderLoading(false);
+    }
+  }
+
+  async function sendBackorderEmail() {
+    if (!backorderResult?.emailDraft || !backorderResult.order.customer.email) return;
+    setEmailSending(true);
+
+    const lines = backorderResult.emailDraft.split("\n");
+    const subject = lines[0].replace(/^Subject:\s*/i, "");
+    const body = lines.slice(2).join("\n");
+
+    try {
+      const res = await fetch("/api/backorder-notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: backorderResult.order.customer.email,
+          subject,
+          body,
+        }),
+      });
+      const data = await res.json() as { ok: boolean; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur envoi");
+      setEmailSent(true);
+      setStatus("Email envoyé");
+    } catch (error) {
+      setStatus(`Erreur envoi · ${error instanceof Error ? error.message : "inconnue"}`);
+    } finally {
+      setEmailSending(false);
     }
   }
 
@@ -210,6 +282,12 @@ export default function ScannerPage() {
           onClick={() => { setMode("recipe"); setRecipeResult(null); setStatus("Scannez un produit Shopify"); }}
         >
           Mode Recette
+        </button>
+        <button
+          className={`rounded-xl border px-5 py-3 ${mode === "backorder" ? "font-bold ring-2" : ""}`}
+          onClick={() => { setMode("backorder"); setBackorderStep("order"); setBackorderOrderId(null); setBackorderResult(null); setEmailSent(false); setStatus("Scannez le numéro de commande"); }}
+        >
+          Mode Suivi
         </button>
         <button className="rounded-xl border px-5 py-3" onClick={undoLastLocal}>
           Annuler local
@@ -288,6 +366,76 @@ export default function ScannerPage() {
             </ul>
           </section>
         </div>
+      )}
+
+      {mode === "backorder" && (
+        <section className="rounded-2xl border p-4 space-y-4">
+          <h2 className="text-xl font-semibold">Suivi commande — rupture de stock</h2>
+
+          <div className="flex gap-3 text-sm">
+            <span className={`rounded-full px-3 py-1 border ${backorderStep === "order" && !backorderOrderId ? "font-bold ring-2" : "opacity-50"}`}>
+              1 · Commande
+            </span>
+            <span className={`rounded-full px-3 py-1 border ${backorderStep === "product" ? "font-bold ring-2" : "opacity-50"}`}>
+              2 · Produit
+            </span>
+          </div>
+
+          {backorderOrderId && (
+            <div className="text-sm opacity-70">Commande : <span className="font-mono font-semibold text-black">{backorderOrderId}</span></div>
+          )}
+
+          {backorderLoading && <p className="opacity-60">Analyse en cours...</p>}
+
+          {!backorderLoading && !backorderResult && (
+            <p className="opacity-60">
+              {backorderStep === "order" ? "Scannez le numéro de commande Shopify" : "Scannez le produit en rupture de stock"}
+            </p>
+          )}
+
+          {backorderResult && (
+            <div className="space-y-4">
+              <div className="rounded-xl bg-gray-50 p-3 space-y-1">
+                <div className="font-semibold">{backorderResult.order.name} · {backorderResult.order.customer.firstName} {backorderResult.order.customer.lastName}</div>
+                <div className="text-sm opacity-70">{backorderResult.order.customer.email} · langue : {backorderResult.order.customer.locale.toUpperCase()}</div>
+                <div className="text-sm">Produit : <span className="font-semibold">{backorderResult.product.productTitle}</span></div>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-3 space-y-1">
+                <div className="text-sm font-semibold opacity-70">Fournisseur & délai</div>
+                {backorderResult.purchaseOrder ? (
+                  <>
+                    <div className="text-sm">PO <span className="font-mono">{backorderResult.purchaseOrder.number}</span> · {backorderResult.purchaseOrder.supplierName}</div>
+                    <div className="text-sm">ETA : <span className="font-semibold">{backorderResult.estimatedDelivery ? new Date(backorderResult.estimatedDelivery).toLocaleDateString("fr-CH") : "—"}</span></div>
+                  </>
+                ) : (
+                  <div className="text-sm opacity-60">Aucun PO ouvert trouvé{backorderResult.leadTimeDays ? ` · délai standard : ${backorderResult.leadTimeDays}j` : ""}</div>
+                )}
+              </div>
+
+              {backorderResult.emailDraft && (
+                <div className="rounded-xl border p-3 space-y-2">
+                  <div className="text-sm font-semibold opacity-70">Email généré</div>
+                  <pre className="text-sm whitespace-pre-wrap font-sans">{backorderResult.emailDraft}</pre>
+                  <button
+                    disabled={emailSent || emailSending}
+                    onClick={sendBackorderEmail}
+                    className="rounded-xl bg-black text-white px-5 py-2 text-sm disabled:opacity-40"
+                  >
+                    {emailSent ? "Envoyé ✓" : emailSending ? "Envoi..." : `Envoyer à ${backorderResult.order.customer.email}`}
+                  </button>
+                </div>
+              )}
+
+              <button
+                className="rounded-xl border px-4 py-2 text-sm"
+                onClick={() => { setBackorderStep("order"); setBackorderOrderId(null); setBackorderResult(null); setEmailSent(false); setStatus("Scannez le numéro de commande"); }}
+              >
+                Nouvelle analyse
+              </button>
+            </div>
+          )}
+        </section>
       )}
 
       {mode === "recipe" && (

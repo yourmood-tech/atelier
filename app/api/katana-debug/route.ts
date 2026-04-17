@@ -21,8 +21,23 @@ export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id")?.trim() ?? "";
   const variantId = req.nextUrl.searchParams.get("variant_id")?.trim() ?? "";
   const supplierId = req.nextUrl.searchParams.get("supplier_id")?.trim() ?? "";
+  const poSupplierId = req.nextUrl.searchParams.get("po_supplier_id")?.trim() ?? "";
 
   try {
+    // Inspect PO structure for a supplier
+    if (poSupplierId) {
+      const pos = await katanaRaw(`/v1/purchase_orders?supplier_id=${poSupplierId}&status=open&limit=5`);
+      const firstPoId = pos.body?.data?.[0]?.id;
+      let rows = null;
+      if (firstPoId) {
+        rows = await katanaRaw(`/v1/purchase_order_rows?purchase_order_id=${firstPoId}&limit=20`);
+      }
+      return NextResponse.json({
+        purchase_orders: { endpoint: `/v1/purchase_orders?supplier_id=${poSupplierId}&status=open`, ...pos },
+        first_po_rows: rows ? { endpoint: `/v1/purchase_order_rows?purchase_order_id=${firstPoId}`, ...rows } : null,
+      });
+    }
+
     // Test supplier endpoint directly
     if (supplierId) {
       const single = await katanaRaw(`/v1/suppliers/${supplierId}`);
