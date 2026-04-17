@@ -26,14 +26,22 @@ export async function GET(req: NextRequest) {
   try {
     // Inspect PO structure for a supplier
     if (poSupplierId) {
-      const pos = await katanaRaw(`/v1/purchase_orders?supplier_id=${poSupplierId}&status=open&limit=5`);
-      const firstPoId = pos.body?.data?.[0]?.id;
+      const [notReceived, partiallyReceived] = await Promise.all([
+        katanaRaw(`/v1/purchase_orders?supplier_id=${poSupplierId}&status=NOT_RECEIVED&limit=5`),
+        katanaRaw(`/v1/purchase_orders?supplier_id=${poSupplierId}&status=PARTIALLY_RECEIVED&limit=5`),
+      ]);
+      const allPos = [
+        ...(notReceived.body?.data ?? []),
+        ...(partiallyReceived.body?.data ?? []),
+      ];
+      const firstPoId = allPos[0]?.id;
       let rows = null;
       if (firstPoId) {
         rows = await katanaRaw(`/v1/purchase_order_rows?purchase_order_id=${firstPoId}&limit=20`);
       }
       return NextResponse.json({
-        purchase_orders: { endpoint: `/v1/purchase_orders?supplier_id=${poSupplierId}&status=open`, ...pos },
+        not_received: { endpoint: `/v1/purchase_orders?supplier_id=${poSupplierId}&status=NOT_RECEIVED`, ...notReceived },
+        partially_received: { endpoint: `/v1/purchase_orders?supplier_id=${poSupplierId}&status=PARTIALLY_RECEIVED`, ...partiallyReceived },
         first_po_rows: rows ? { endpoint: `/v1/purchase_order_rows?purchase_order_id=${firstPoId}`, ...rows } : null,
       });
     }

@@ -336,13 +336,16 @@ export async function getOpenPurchaseOrdersForSupplier(
   supplierId: number,
   materialVariantIds: number[]
 ): Promise<KatanaPurchaseOrder | null> {
-  // Fetch open POs for this supplier
-  const data = (await katanaFetch(
-    `/v1/purchase_orders?supplier_id=${supplierId}&status=open&limit=50`,
-    { method: "GET" }
-  )) as { data?: Record<string, unknown>[] };
+  // Fetch open POs for this supplier (Katana uses NOT_RECEIVED / PARTIALLY_RECEIVED)
+  const [notReceived, partiallyReceived] = await Promise.all([
+    katanaFetch(`/v1/purchase_orders?supplier_id=${supplierId}&status=NOT_RECEIVED&limit=50`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+    katanaFetch(`/v1/purchase_orders?supplier_id=${supplierId}&status=PARTIALLY_RECEIVED&limit=50`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+  ]);
 
-  const pos = data?.data ?? [];
+  const pos = [
+    ...(notReceived?.data ?? []),
+    ...(partiallyReceived?.data ?? []),
+  ];
   if (!pos.length) return null;
 
   // For each PO, fetch its rows to find if our material variant is included
