@@ -298,6 +298,7 @@ Rules:
 - 2-3 sentences maximum
 - Address by first name only — no "Madame/Monsieur"
 - No sign-off or signature — body text only
+- Always mention the product name (${product.productTitle}) in the email body
 - Return JSON: { "subject": "...", "body": "..." }
 
 Customer info:
@@ -321,6 +322,7 @@ Rules:
 - 2 sentences maximum
 - Address by first name only — no "Madame/Monsieur"
 - No sign-off or signature — body text only
+- Always mention the product name (${product.productTitle}) in the email body
 - Return JSON: { "subject": "...", "body": "..." }
 
 Customer info:
