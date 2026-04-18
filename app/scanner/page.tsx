@@ -74,37 +74,60 @@ export default function ScannerPage() {
   const [editingMin, setEditingMin] = useState<string>("");
   const [editingMax, setEditingMax] = useState<string>("");
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
+  const submitScanRef = useRef<(raw: string) => Promise<void>>(async () => {});
+
   useEffect(() => {
     const existing = sessionStorage.getItem("scanner_session_id");
     if (existing) {
       setSessionId(existing);
       return;
     }
-
     const newId = crypto.randomUUID();
     sessionStorage.setItem("scanner_session_id", newId);
     setSessionId(newId);
   }, []);
 
+  // Keep the ref pointing to the latest submitScan on every render
   useEffect(() => {
-    inputRef.current?.focus();
+    submitScanRef.current = submitScan;
+  });
 
-    const interval = window.setInterval(() => {
+  // Document-level keydown capture — fires regardless of which element has focus
+  useEffect(() => {
+    const buf = { value: "" };
+
+    const onKey = (e: KeyboardEvent) => {
       const active = document.activeElement;
-      // Don't steal focus from any visible input / select / textarea
+      // Let real text inputs handle their own keystrokes
       if (
         active &&
-        active !== inputRef.current &&
+        active !== document.body &&
         (active.tagName === "INPUT" || active.tagName === "SELECT" || active.tagName === "TEXTAREA")
       ) return;
-      if (active !== inputRef.current) {
-        inputRef.current?.focus();
-      }
-    }, 300);
 
-    return () => window.clearInterval(interval);
+      if (e.key === "Enter") {
+        if (buf.value) {
+          e.preventDefault();
+          const val = buf.value;
+          buf.value = "";
+          setBuffer("");
+          void submitScanRef.current(val);
+        }
+      } else if (e.key === "Backspace") {
+        if (buf.value) {
+          e.preventDefault();
+          buf.value = buf.value.slice(0, -1);
+          setBuffer(buf.value);
+        }
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        buf.value += e.key;
+        setBuffer(buf.value);
+      }
+    };
+
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   const counts = useMemo(() => {
@@ -443,26 +466,6 @@ export default function ScannerPage() {
     });
   }
 
-  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const current = buffer;
-      setBuffer("");
-      void submitScan(current);
-      return;
-    }
-
-    if (e.key === "Backspace") {
-      e.preventDefault();
-      setBuffer((prev) => prev.slice(0, -1));
-      return;
-    }
-
-    if (e.key.length === 1) {
-      setBuffer((prev) => prev + e.key);
-    }
-  }
-
   function undoLastLocal() {
     setScanLines((prev) => prev.slice(1));
     setStatus("Dernier scan retiré localement");
@@ -534,16 +537,8 @@ export default function ScannerPage() {
         </button>
       </div>
 
-      <input
-        ref={inputRef}
-        value=""
-        onChange={() => {}}
-        onKeyDown={onKeyDown}
-        autoFocus
-        className="pointer-events-none absolute opacity-0"
-      />
 
-			<div className="mb-6 grid gap-3 md:grid-cols-4">
+<div className="mb-6 grid gap-3 md:grid-cols-4">
 			  <div className="rounded-2xl border p-4">
 			    <div className="text-sm opacity-70">Mode</div>
 			    <div className="text-2xl font-semibold">{direction}</div>
