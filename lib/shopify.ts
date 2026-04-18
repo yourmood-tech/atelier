@@ -181,7 +181,7 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
     o = orders[0] as Record<string, unknown>;
   }
 
-  const customer = o.customer ?? {};
+  const customer = (o.customer ?? {}) as Record<string, unknown>;
 
   // order.customer_locale — storefront language at order time (fallback only)
   const fromOrderLocale = (o.customer_locale as string | null)?.split("-")[0]?.toLowerCase();
