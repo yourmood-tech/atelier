@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
-import { generateProductionEmail, sendProductionEventToKlaviyo } from "@/lib/email";
+import { generateProductionEmail, sendProductionEventToKlaviyo, getKlaviyoProfileLocale } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { ProductionNotifyApiResponse, ProductionAnalysis, ProductionDirection, ProductionStep } from "@/lib/types";
 
@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
 
     const step = stepResult.data as ProductionStep;
 
-    // 2. Generate email
+    // 2. Override locale from Klaviyo — more reliable than Shopify REST for multilingual customers
+    const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
+    if (klaviyoLocale) order.customer.locale = klaviyoLocale;
+
+    // 3. Generate email
     const analysis: ProductionAnalysis = {
       order,
       product,

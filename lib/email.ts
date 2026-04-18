@@ -1,5 +1,36 @@
 import type { BackorderAnalysis, ProductionAnalysis, ProductionDirection } from "./types";
 
+// ── Klaviyo — profile locale lookup ──────────────────────────────────────────
+// Shopify REST API often returns a stale locale (e.g. "fr" for a de customer).
+// Klaviyo's profile, synced by the native integration, is more reliable.
+
+export async function getKlaviyoProfileLocale(email: string): Promise<string | null> {
+  try {
+    const apiKey = process.env.KLAVIYO_API_KEY!;
+    const url = `https://a.klaviyo.com/api/profiles/?filter=equals(email,${JSON.stringify(email)})&fields[profile]=locale,properties`;
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Klaviyo-API-Key ${apiKey}`,
+        revision: "2024-10-15",
+      },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { data?: { attributes?: Record<string, unknown> }[] };
+    const attrs = data?.data?.[0]?.attributes;
+    if (!attrs) return null;
+    // Try standard locale field
+    const locale = attrs.locale as string | null | undefined;
+    if (locale) return locale.split("-")[0].toLowerCase();
+    // Try custom properties synced from Shopify
+    const props = attrs.properties as Record<string, unknown> | null | undefined;
+    const propLocale = props?.locale ?? props?.Locale ?? props?.customer_locale;
+    if (propLocale) return String(propLocale).split("-")[0].toLowerCase();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Klaviyo — track BackorderNotification event → triggers Flow ───────────────
 
 export async function sendViaKlaviyo(params: {
