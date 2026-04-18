@@ -93,22 +93,14 @@ export default function ScannerPage() {
     submitScanRef.current = submitScan;
   });
 
-  // Document-level capture — uses focusin/focusout to track blocking state
-  // More reliable than reading document.activeElement inside keydown
+  // Document-level keydown — blocked only when a free-text field (INPUT/TEXTAREA) has focus
+  // SELECT is intentionally NOT blocked: scanner works even when the step selector is active
   useEffect(() => {
     const buf = { value: "" };
-    const blocked = { value: false };
-
-    const isEditableTag = (el: EventTarget | null) => {
-      const tag = (el as HTMLElement | null)?.tagName ?? "";
-      return tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA";
-    };
-
-    const onFocusIn  = (e: FocusEvent) => { if (isEditableTag(e.target))        blocked.value = true;  };
-    const onFocusOut = (e: FocusEvent) => { if (!isEditableTag(e.relatedTarget)) blocked.value = false; };
 
     const onKey = (e: KeyboardEvent) => {
-      if (blocked.value) return;
+      const tag = (document.activeElement as HTMLElement | null)?.tagName ?? "";
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
 
       if (e.key === "Enter") {
         if (buf.value) {
@@ -130,14 +122,8 @@ export default function ScannerPage() {
       }
     };
 
-    document.addEventListener("focusin",  onFocusIn);
-    document.addEventListener("focusout", onFocusOut);
-    document.addEventListener("keydown",  onKey);
-    return () => {
-      document.removeEventListener("focusin",  onFocusIn);
-      document.removeEventListener("focusout", onFocusOut);
-      document.removeEventListener("keydown",  onKey);
-    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   const counts = useMemo(() => {
