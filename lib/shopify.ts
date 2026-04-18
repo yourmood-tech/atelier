@@ -169,7 +169,17 @@ const COUNTRY_TO_LOCALE: Record<string, string> = {
 };
 
 export async function getOrderById(id: string): Promise<import("./types").ShopifyOrder> {
-  const { order: o } = await shopifyFetch(`/orders/${id}.json`);
+  // Shopify internal IDs are 10+ digits. Shorter values are order names (#392523 → "392523").
+  const isInternalId = /^\d{10,}$/.test(id.trim());
+  let o: Record<string, unknown>;
+  if (isInternalId) {
+    ({ order: o } = await shopifyFetch(`/orders/${id}.json`));
+  } else {
+    const name = id.startsWith("#") ? id : `#${id}`;
+    const { orders } = await shopifyFetch(`/orders.json?name=${encodeURIComponent(name)}&status=any&limit=1`);
+    if (!orders?.length) throw new Error(`Commande introuvable: ${name}`);
+    o = orders[0] as Record<string, unknown>;
+  }
 
   const customer = o.customer ?? {};
 
