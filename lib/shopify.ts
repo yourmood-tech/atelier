@@ -157,12 +157,30 @@ export function makeOrderTag(reason: string): string {
   return `${reason} ${ts}`;
 }
 
+// Map billing/shipping country code → language when customer_locale is absent
+const COUNTRY_TO_LOCALE: Record<string, string> = {
+  DE: "de", AT: "de",           // German-speaking
+  FR: "fr", BE: "fr", LU: "fr", // CH omitted — multilingual, customer_locale is the only reliable source
+  IT: "it",
+  ES: "es",
+  NL: "nl",
+  PT: "pt",
+  GB: "en", US: "en", CA: "en", AU: "en", IE: "en",
+};
+
 export async function getOrderById(id: string): Promise<import("./types").ShopifyOrder> {
   const { order: o } = await shopifyFetch(`/orders/${id}.json`);
 
   const customer = o.customer ?? {};
-  const locale: string =
-    (o.customer_locale as string | null)?.split("-")[0]?.toLowerCase() ?? "fr";
+
+  // 1. customer_locale (most reliable — set by storefront language)
+  const fromLocale = (o.customer_locale as string | null)?.split("-")[0]?.toLowerCase();
+
+  // 2. Fallback: billing address country → locale
+  const billingCountry = ((o.billing_address as Record<string, unknown> | null)?.country_code as string | null)?.toUpperCase();
+  const fromCountry = billingCountry ? COUNTRY_TO_LOCALE[billingCountry] : undefined;
+
+  const locale: string = fromLocale ?? fromCountry ?? "fr";
 
   return {
     id: o.id,
