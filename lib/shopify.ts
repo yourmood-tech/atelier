@@ -204,16 +204,16 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
   const locale: string = fromCustomer ?? fromOrderLocale ?? fromCountry ?? "fr";
 
   return {
-    id: o.id,
-    name: o.name,
+    id: o.id as number,
+    name: o.name as string,
     customer: {
-      id: customer.id ?? 0,
-      firstName: customer.first_name ?? "",
-      lastName: customer.last_name ?? "",
-      email: o.email ?? customer.email ?? "",
+      id: (customer.id as number) ?? 0,
+      firstName: (customer.first_name as string) ?? "",
+      lastName: (customer.last_name as string) ?? "",
+      email: (o.email as string) ?? (customer.email as string) ?? "",
       locale,
     },
-    lineItems: (o.line_items ?? []).map((li: Record<string, unknown>) => ({
+    lineItems: ((o.line_items as Record<string, unknown>[]) ?? []).map((li) => ({
       id: li.id as number,
       productId: li.product_id as number,
       variantId: li.variant_id as number,
