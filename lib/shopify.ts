@@ -173,21 +173,21 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
 
   const customer = o.customer ?? {};
 
-  // 2. order.customer_locale — storefront language at order time
+  // order.customer_locale — storefront language at order time (fallback only)
   const fromOrderLocale = (o.customer_locale as string | null)?.split("-")[0]?.toLowerCase();
 
-  // 3. Fallback: billing address country → locale
+  // billing address country → locale (last resort)
   const billingCountry = ((o.billing_address as Record<string, unknown> | null)?.country_code as string | null)?.toUpperCase();
   const fromCountry = billingCountry ? COUNTRY_TO_LOCALE[billingCountry] : undefined;
 
-  // 1. customer.locale — "Will receive notifications in X" (not always in order response, fetch separately)
+  // customer.locale — "Will receive notifications in X" — ALWAYS fetched, takes priority over order locale
   let fromCustomer: string | undefined;
-  if (customer.id && !fromOrderLocale) {
+  if (customer.id) {
     try {
       const { customer: fullCustomer } = await shopifyFetch(`/customers/${customer.id}.json?fields=id,locale`);
       fromCustomer = (fullCustomer?.locale as string | null)?.split("-")[0]?.toLowerCase() || undefined;
     } catch {
-      // non-blocking — fall through to other sources
+      // non-blocking
     }
   }
 
