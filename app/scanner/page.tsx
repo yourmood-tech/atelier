@@ -76,6 +76,7 @@ export default function ScannerPage() {
 
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
   const submitScanRef = useRef<(raw: string) => Promise<void>>(async () => {});
+  const focusSinkRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const existing = sessionStorage.getItem("scanner_session_id");
@@ -482,6 +483,9 @@ export default function ScannerPage() {
   }
 
   return (
+    <>
+    {/* Focus sink: keeps window focus inside the page after select/button interactions */}
+    <div ref={focusSinkRef} tabIndex={-1} className="sr-only" aria-hidden="true" />
     <main className="mx-auto max-w-4xl p-6">
       <h1 className="mb-6 text-3xl font-bold">Scanner stock</h1>
 
@@ -728,7 +732,7 @@ export default function ScannerPage() {
                 <select
                   className="rounded-xl border px-3 py-2 text-sm font-medium"
                   value={selectedStepKey}
-                  onChange={(e) => { setSelectedStepKey(e.target.value); e.currentTarget.blur(); }}
+                  onChange={(e) => { setSelectedStepKey(e.target.value); focusSinkRef.current?.focus(); }}
                 >
                   {productionSteps.length === 0 && <option value="">Chargement…</option>}
                   {productionSteps.map((s) => (
@@ -1050,6 +1054,7 @@ export default function ScannerPage() {
         </section>
       )}
     </main>
+    </>
   );
 }
 
