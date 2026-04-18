@@ -728,7 +728,7 @@ export default function ScannerPage() {
                 <select
                   className="rounded-xl border px-3 py-2 text-sm font-medium"
                   value={selectedStepKey}
-                  onChange={(e) => setSelectedStepKey(e.target.value)}
+                  onChange={(e) => { setSelectedStepKey(e.target.value); e.currentTarget.blur(); }}
                 >
                   {productionSteps.length === 0 && <option value="">Chargement…</option>}
                   {productionSteps.map((s) => (
