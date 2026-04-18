@@ -209,6 +209,7 @@ export async function sendProductionEventToKlaviyo(params: {
   leadTimeMin: number | null;
   leadTimeMax: number | null;
   leadTimeUnit: string;
+  customerLocale?: string;
 }): Promise<void> {
   const apiKey = process.env.KLAVIYO_API_KEY!;
   const metricName = params.direction === "IN" ? "ProductionStepStarted" : "ProductionStepCompleted";
@@ -246,6 +247,7 @@ export async function sendProductionEventToKlaviyo(params: {
             lead_time_min: params.leadTimeMin ?? "",
             lead_time_max: params.leadTimeMax ?? "",
             lead_time_unit: params.leadTimeUnit,
+            customer_locale: params.customerLocale ?? "",
           },
           time: new Date().toISOString(),
         },

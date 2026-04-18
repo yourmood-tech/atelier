@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       leadTimeMin: step.lead_time_min,
       leadTimeMax: step.lead_time_max,
       leadTimeUnit: step.lead_time_unit,
+      customerLocale: order.customer.locale,
     });
 
     const tagReason = body.direction === "IN"
