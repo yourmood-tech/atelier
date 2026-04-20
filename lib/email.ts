@@ -381,8 +381,12 @@ export async function detectDelayInquiry(
     messages: [
       {
         role: "user",
-        content: `Analyze this customer support message. Is the customer asking about a delivery delay, order status, or when their order will arrive?
-Also extract the order number if mentioned (formats: #12345, commande 12345, order 12345, Bestellung 12345, etc.)
+        content: `Analyze this customer support message (may be in French, German, English or other languages).
+
+Is the customer asking anything about their order — including: where it is, delivery status, when it will arrive, a delay, production status, tracking, or any question about receiving their order?
+Be permissive: "où en est ma commande", "wo ist meine Bestellung", "where is my order", "quand vais-je recevoir" all count as YES.
+
+Also extract the order number if mentioned anywhere (formats: #12345, commande 12345, order 12345, Bestellung 12345, numéro 12345, etc.)
 Return JSON only: { "is_delay_inquiry": boolean, "order_number": string | null }
 
 Message: ${JSON.stringify(messageText)}`,
