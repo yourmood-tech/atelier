@@ -444,7 +444,7 @@ Instructions:
 - Write entirely in the same language as the customer's message
 - Address the customer by first name only
 - Be professional and factual — no excessive apologies
-- Mention that the piece is in production and briefly explain that Mood Collection produces in small quantities after purchase (one sentence, stated as a fact)
+- Mention that the piece is in production and briefly explain that Mood Collection keeps a small stock and produces certain pieces after purchase to guarantee the widest choice and artisan quality (one sentence, stated as a fact — never say "each piece" / "chaque pièce" / "jedes Stück", always say "certain pieces" / "certaines pièces" / "bestimmte Stücke")
 - If an estimated timeframe is available, mention it as an estimate, not a guarantee
 - 3–4 sentences maximum
 - No sign-off or signature — body text only
