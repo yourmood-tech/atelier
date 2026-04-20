@@ -61,5 +61,6 @@ export async function postInternalNote(ticketId: number, text: string): Promise<
     channel: "internal-note",
     body_html: html,
     body_text: text,
+    sender: { email: process.env.GORGIAS_API_EMAIL! },
   });
 }
