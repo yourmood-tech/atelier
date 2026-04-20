@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrderById } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { detectDelayInquiry, generateGorgiasResponse, getKlaviyoProfileLocale } from "@/lib/email";
-import { getTicketLastCustomerMessage, postInternalNote } from "@/lib/gorgias";
+import { getTicketLastCustomerMessage, getTicketSubject, postInternalNote } from "@/lib/gorgias";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/gorgias-test?ticket_id=12345
@@ -16,14 +16,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "ticket_id requis" }, { status: 400 });
   }
 
-  // 1. Fetch last customer message from Gorgias
-  const msg = await getTicketLastCustomerMessage(ticketId);
+  // 1. Fetch ticket subject + last customer message from Gorgias
+  const [subject, msg] = await Promise.all([
+    getTicketSubject(ticketId),
+    getTicketLastCustomerMessage(ticketId),
+  ]);
   if (!msg?.text) {
     return NextResponse.json({ ok: false, error: "Aucun message client trouvé dans ce ticket" });
   }
 
-  // 2. Detect delay inquiry + order number
-  const detection = await detectDelayInquiry(msg.text);
+  // 2. Detect delay inquiry + order number (search in subject AND message body)
+  const textToAnalyze = [subject, msg.text].filter(Boolean).join("\n");
+  const detection = await detectDelayInquiry(textToAnalyze);
   if (!detection.is_delay_inquiry || !detection.order_number) {
     return NextResponse.json({
       ok: false,

@@ -21,6 +21,11 @@ async function gorgiasGet(path: string) {
   return res.json();
 }
 
+export async function getTicketSubject(ticketId: number): Promise<string | null> {
+  const data = await gorgiasGet(`/tickets/${ticketId}`) as Record<string, unknown>;
+  return (data?.subject as string | null) ?? null;
+}
+
 export async function getTicketLastCustomerMessage(
   ticketId: number
 ): Promise<{ text: string; senderEmail: string } | null> {

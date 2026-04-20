@@ -36,13 +36,15 @@ export async function POST(req: NextRequest) {
 
     const ticketId = ticket.id as number;
     const messageText = (message.body_text as string) ?? "";
+    const ticketSubject = (ticket.subject as string) ?? "";
 
     if (!messageText.trim() || !ticketId) {
       return NextResponse.json({ ok: true, skipped: "empty message" });
     }
 
-    // 1. Detect if this is a delay inquiry and extract order number
-    const detection = await detectDelayInquiry(messageText);
+    // 1. Detect delay inquiry — search in subject AND message body
+    const textToAnalyze = [ticketSubject, messageText].filter(Boolean).join("\n");
+    const detection = await detectDelayInquiry(textToAnalyze);
 
     if (!detection.is_delay_inquiry || !detection.order_number) {
       return NextResponse.json({ ok: true, skipped: "not a delay inquiry" });
