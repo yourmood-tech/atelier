@@ -57,14 +57,7 @@ export default function FulfillmentPage() {
       const body =
         action === "unfulfill"
           ? { action, orderId: data.orderId, lineItemId: li.lineItemId, fulfillmentId: li.fulfillmentId }
-          : {
-              action,
-              orderId: data.orderId,
-              lineItemId: li.lineItemId,
-              fulfillmentOrderId: li.fulfillmentOrderId,
-              fulfillmentOrderLineItemId: li.fulfillmentOrderLineItemId,
-              fulfillmentOrderLineItemQuantity: li.fulfillmentOrderLineItemQuantity,
-            };
+          : { action, orderId: data.orderId, lineItemId: li.lineItemId, quantity: li.quantity };
 
       const res = await fetch("/api/fulfillment-order", {
         method: "POST",
@@ -157,10 +150,7 @@ export default function FulfillmentPage() {
               const state = actionStates[li.lineItemId] ?? "idle";
               const msg = actionMessages[li.lineItemId] ?? "";
               const canUnfulfill = li.fulfillmentStatus === "fulfilled" && li.fulfillmentId !== null;
-              const canFulfill =
-                li.fulfillmentStatus === "unfulfilled" &&
-                li.fulfillmentOrderId !== null &&
-                li.fulfillmentOrderLineItemId !== null;
+              const canFulfill = li.fulfillmentStatus === "unfulfilled";
 
               return (
                 <div

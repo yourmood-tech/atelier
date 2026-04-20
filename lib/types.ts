@@ -175,9 +175,6 @@ export type FulfillmentLineItemData = {
   variantTitle: string;
   fulfillmentStatus: FulfillmentStatus;
   fulfillmentId: number | null;
-  fulfillmentOrderId: number | null;
-  fulfillmentOrderLineItemId: number | null;
-  fulfillmentOrderLineItemQuantity: number | null;
 };
 
 export type OrderFulfillmentData = {

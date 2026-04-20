@@ -55,20 +55,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "fulfill") {
-      const fulfillmentOrderId = body.fulfillmentOrderId as number;
-      const fulfillmentOrderLineItemId = body.fulfillmentOrderLineItemId as number;
-      const fulfillmentOrderLineItemQuantity = (body.fulfillmentOrderLineItemQuantity as number) ?? 1;
+      const lineItemId = body.lineItemId as number;
+      const quantity = (body.quantity as number) ?? 1;
 
-      if (!fulfillmentOrderId || !fulfillmentOrderLineItemId) {
+      if (!orderId || !lineItemId) {
         return NextResponse.json(
-          { ok: false, error: "fulfillmentOrderId et fulfillmentOrderLineItemId requis" },
+          { ok: false, error: "orderId et lineItemId requis" },
           { status: 400 }
         );
       }
 
-      await createShopifyFulfillment(fulfillmentOrderId, [
-        { id: fulfillmentOrderLineItemId, quantity: fulfillmentOrderLineItemQuantity },
-      ]);
+      await createShopifyFulfillment(orderId, lineItemId, quantity);
 
       return NextResponse.json({ ok: true });
     }
