@@ -21,7 +21,7 @@ async function gorgiasGet(path: string) {
 export async function getTicketLastCustomerMessage(
   ticketId: number
 ): Promise<{ text: string; senderEmail: string } | null> {
-  const data = await gorgiasGet(`/tickets/${ticketId}/messages?limit=50`) as {
+  const data = await gorgiasGet(`/messages?ticket_id=${ticketId}&limit=50`) as {
     data?: Record<string, unknown>[];
   };
   const messages = data?.data ?? [];
