@@ -8,6 +8,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 // GET /api/gorgias-test?ticket_id=12345
 // Manually runs the delay-inquiry analysis on an existing Gorgias ticket.
 export async function GET(req: NextRequest) {
+  try {
   const ticketIdStr = req.nextUrl.searchParams.get("ticket_id")?.trim() ?? "";
   const ticketId = Number(ticketIdStr);
 
@@ -128,4 +129,10 @@ export async function GET(req: NextRequest) {
     backorder_items: backorderItems.length,
     draft_preview: draftText.slice(0, 300),
   });
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
