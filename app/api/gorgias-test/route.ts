@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrderById } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { detectDelayInquiry, generateGorgiasResponse, getKlaviyoProfileLocale } from "@/lib/email";
-import { getTicketLastCustomerMessage, getTicketSubject, postInternalNote } from "@/lib/gorgias";
+import { getTicketCustomerMessages, getTicketSubject, postInternalNote } from "@/lib/gorgias";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // GET /api/gorgias-test?ticket_id=12345
@@ -16,24 +16,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "ticket_id requis" }, { status: 400 });
   }
 
-  // 1. Fetch ticket subject + last customer message from Gorgias
-  const [subject, msg] = await Promise.all([
+  // 1. Fetch ticket subject + all customer messages from Gorgias
+  const [subject, msgs] = await Promise.all([
     getTicketSubject(ticketId),
-    getTicketLastCustomerMessage(ticketId),
+    getTicketCustomerMessages(ticketId),
   ]);
-  if (!msg?.text) {
+  if (!msgs) {
     return NextResponse.json({ ok: false, error: "Aucun message client trouvé dans ce ticket" });
   }
 
-  // 2. Detect delay inquiry + order number (search in subject AND message body)
-  const textToAnalyze = [subject, msg.text].filter(Boolean).join("\n");
+  // 2. Detect delay inquiry — search in subject + ALL customer messages
+  const textToAnalyze = [subject, msgs.allText].filter(Boolean).join("\n");
   const detection = await detectDelayInquiry(textToAnalyze);
   if (!detection.is_delay_inquiry || !detection.order_number) {
     return NextResponse.json({
       ok: false,
       error: "Pas une demande de délai, ou numéro de commande introuvable dans le message",
       detection,
-      message_preview: msg.text.slice(0, 200),
+      message_preview: msgs.lastText.slice(0, 200),
     });
   }
 
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
   const draftText = await generateGorgiasResponse({
     orderName: order.name,
     customerFirstName: order.customer.firstName,
-    customerMessage: msg.text,
+    customerMessage: msgs.lastText,
     backorderItems,
   });
 

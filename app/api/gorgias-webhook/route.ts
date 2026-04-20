@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrderById } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { detectDelayInquiry, generateGorgiasResponse, getKlaviyoProfileLocale } from "@/lib/email";
-import { postInternalNote } from "@/lib/gorgias";
+import { postInternalNote, getTicketCustomerMessages } from "@/lib/gorgias";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const TARGET_GROUP = "Demande de Délais (Groupe)";
@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, skipped: "empty message" });
     }
 
-    // 1. Detect delay inquiry — search in subject AND message body
-    const textToAnalyze = [ticketSubject, messageText].filter(Boolean).join("\n");
+    // 1. Detect delay inquiry — search in subject + ALL customer messages in thread
+    const allMsgs = await getTicketCustomerMessages(ticketId).catch(() => null);
+    const textToAnalyze = [ticketSubject, allMsgs?.allText ?? messageText].filter(Boolean).join("\n");
     const detection = await detectDelayInquiry(textToAnalyze);
 
     if (!detection.is_delay_inquiry || !detection.order_number) {

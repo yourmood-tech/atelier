@@ -26,21 +26,21 @@ export async function getTicketSubject(ticketId: number): Promise<string | null>
   return (data?.subject as string | null) ?? null;
 }
 
-export async function getTicketLastCustomerMessage(
+export async function getTicketCustomerMessages(
   ticketId: number
-): Promise<{ text: string; senderEmail: string } | null> {
+): Promise<{ lastText: string; allText: string; senderEmail: string } | null> {
   const data = await gorgiasGet(`/messages?ticket_id=${ticketId}&limit=50`) as {
     data?: Record<string, unknown>[];
   };
   const messages = data?.data ?? [];
-  // Last message from a customer (not agent)
-  const customerMsg = [...messages]
-    .reverse()
-    .find((m) => m.from_agent === false || m.from_agent === null);
-  if (!customerMsg) return null;
+  const customerMsgs = messages.filter((m) => m.from_agent === false || m.from_agent === null);
+  if (!customerMsgs.length) return null;
+
+  const lastMsg = customerMsgs[customerMsgs.length - 1];
   return {
-    text: (customerMsg.body_text as string) ?? "",
-    senderEmail: ((customerMsg.sender as Record<string, unknown>)?.email as string) ?? "",
+    lastText: (lastMsg.body_text as string) ?? "",
+    allText: customerMsgs.map((m) => (m.body_text as string) ?? "").join("\n---\n"),
+    senderEmail: ((lastMsg.sender as Record<string, unknown>)?.email as string) ?? "",
   };
 }
 
