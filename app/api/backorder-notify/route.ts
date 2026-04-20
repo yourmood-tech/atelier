@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     if (materials.length) {
       const allVariantIds = materials.map((m) => m.id);
       purchaseOrder = await getOpenPurchaseOrderForVariants(allVariantIds);
-      if (purchaseOrder) {
+      if (purchaseOrder?.estimatedDelivery && new Date(purchaseOrder.estimatedDelivery) > new Date()) {
         estimatedDelivery = purchaseOrder.estimatedDelivery;
       }
     }

@@ -79,7 +79,9 @@ export async function POST(req: NextRequest) {
             if (materials.length) {
               const variantIds = materials.map((m) => m.id);
               const po = await getOpenPurchaseOrderForVariants(variantIds);
-              if (po) estimatedDelivery = po.estimatedDelivery;
+              if (po?.estimatedDelivery && new Date(po.estimatedDelivery) > new Date()) {
+                estimatedDelivery = po.estimatedDelivery;
+              }
 
               if (!estimatedDelivery) {
                 const supplierIds = materials
