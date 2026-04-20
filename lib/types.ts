@@ -164,3 +164,25 @@ export type ProductionNotifyApiResponse = {
   result?: ProductionAnalysis;
   error?: string;
 };
+
+export type FulfillmentStatus = "fulfilled" | "unfulfilled" | "partial" | "restocked";
+
+export type FulfillmentLineItemData = {
+  lineItemId: number;
+  title: string;
+  quantity: number;
+  sku: string;
+  variantTitle: string;
+  fulfillmentStatus: FulfillmentStatus;
+  fulfillmentId: number | null;
+  fulfillmentOrderId: number | null;
+  fulfillmentOrderLineItemId: number | null;
+  fulfillmentOrderLineItemQuantity: number | null;
+};
+
+export type OrderFulfillmentData = {
+  orderId: number;
+  orderName: string;
+  tags: string[];
+  lineItems: FulfillmentLineItemData[];
+};

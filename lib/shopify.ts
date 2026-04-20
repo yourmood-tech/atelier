@@ -25,6 +25,26 @@ async function shopifyFetch(path: string) {
   return JSON.parse(text);
 }
 
+async function shopifyPost(path: string, body: unknown) {
+  const res = await fetch(
+    `https://${STORE}/admin/api/${API_VERSION}${path}`,
+    {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    }
+  );
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Shopify ${res.status} on ${path}: ${text.slice(0, 300)}`);
+  }
+  return JSON.parse(text);
+}
+
 async function getVariantById(id: string): Promise<ShopifyVariantInfo> {
   const { variant: v } = await shopifyFetch(`/variants/${id}.json`);
   const { product: p } = await shopifyFetch(
@@ -222,4 +242,93 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
       quantity: li.quantity as number,
     })),
   };
+}
+
+export async function getOrderFulfillmentData(orderNameOrId: string): Promise<import("./types").OrderFulfillmentData> {
+  const isInternalId = /^\d{10,}$/.test(orderNameOrId.trim());
+  let o: Record<string, unknown>;
+  if (isInternalId) {
+    ({ order: o } = await shopifyFetch(`/orders/${orderNameOrId}.json`));
+  } else {
+    const name = orderNameOrId.startsWith("#") ? orderNameOrId : `#${orderNameOrId}`;
+    const { orders } = await shopifyFetch(`/orders.json?name=${encodeURIComponent(name)}&status=any&limit=1`);
+    if (!orders?.length) throw new Error(`Commande introuvable: ${name}`);
+    o = orders[0] as Record<string, unknown>;
+  }
+
+  const orderId = o.id as number;
+  const orderName = o.name as string;
+  const tags = ((o.tags as string) ?? "").split(",").map((t: string) => t.trim()).filter(Boolean);
+
+  const [fulfillmentsData, fulfillmentOrdersData] = await Promise.all([
+    shopifyFetch(`/orders/${orderId}/fulfillments.json`),
+    shopifyFetch(`/orders/${orderId}/fulfillment_orders.json`),
+  ]);
+
+  const fulfillments = (fulfillmentsData.fulfillments ?? []) as Record<string, unknown>[];
+  const fulfillmentOrders = (fulfillmentOrdersData.fulfillment_orders ?? []) as Record<string, unknown>[];
+
+  // lineItemId → active fulfillmentId (status "success")
+  const lineItemToFulfillmentId = new Map<number, number>();
+  for (const f of fulfillments) {
+    if ((f.status as string) === "success") {
+      for (const li of ((f.line_items as Record<string, unknown>[]) ?? [])) {
+        lineItemToFulfillmentId.set(li.id as number, f.id as number);
+      }
+    }
+  }
+
+  // lineItemId → fulfillment order info (for creating fulfillments)
+  const lineItemToFOInfo = new Map<number, { fulfillmentOrderId: number; fulfillmentOrderLineItemId: number; quantity: number }>();
+  for (const fo of fulfillmentOrders) {
+    for (const foli of ((fo.line_items as Record<string, unknown>[]) ?? [])) {
+      lineItemToFOInfo.set(foli.line_item_id as number, {
+        fulfillmentOrderId: fo.id as number,
+        fulfillmentOrderLineItemId: foli.id as number,
+        quantity: foli.quantity as number,
+      });
+    }
+  }
+
+  const lineItems = ((o.line_items as Record<string, unknown>[]) ?? []).map((li) => {
+    const lineItemId = li.id as number;
+    const rawStatus = (li.fulfillment_status as string | null) ?? "unfulfilled";
+    const fulfillmentStatus = (["fulfilled", "partial", "restocked"].includes(rawStatus) ? rawStatus : "unfulfilled") as import("./types").FulfillmentStatus;
+    const foInfo = lineItemToFOInfo.get(lineItemId);
+
+    return {
+      lineItemId,
+      title: li.title as string,
+      quantity: li.quantity as number,
+      sku: (li.sku as string) ?? "",
+      variantTitle: (li.variant_title as string) ?? "",
+      fulfillmentStatus,
+      fulfillmentId: lineItemToFulfillmentId.get(lineItemId) ?? null,
+      fulfillmentOrderId: foInfo?.fulfillmentOrderId ?? null,
+      fulfillmentOrderLineItemId: foInfo?.fulfillmentOrderLineItemId ?? null,
+      fulfillmentOrderLineItemQuantity: foInfo?.quantity ?? null,
+    };
+  });
+
+  return { orderId, orderName, tags, lineItems };
+}
+
+export async function cancelShopifyFulfillment(fulfillmentId: number): Promise<void> {
+  await shopifyPost(`/fulfillments/${fulfillmentId}/cancel.json`, {});
+}
+
+export async function createShopifyFulfillment(
+  fulfillmentOrderId: number,
+  lineItems: { id: number; quantity: number }[]
+): Promise<void> {
+  await shopifyPost("/fulfillments.json", {
+    fulfillment: {
+      line_items_by_fulfillment_order: [
+        {
+          fulfillment_order_id: fulfillmentOrderId,
+          fulfillment_order_line_items: lineItems,
+        },
+      ],
+    },
+  });
 }
