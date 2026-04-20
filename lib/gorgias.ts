@@ -7,13 +7,16 @@ function auth() {
 }
 
 async function gorgiasGet(path: string) {
-  const res = await fetch(`https://${DOMAIN}.gorgias.com/api/v2${path}`, {
+  // Support both "yourmood" and "yourmood.gorgias.com" in env var
+  const domain = DOMAIN.includes(".") ? DOMAIN : `${DOMAIN}.gorgias.com`;
+  const url = `https://${domain}/api/v2${path}`;
+  const res = await fetch(url, {
     headers: { Authorization: auth(), "Content-Type": "application/json" },
     cache: "no-store",
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gorgias ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(`Gorgias ${res.status} on ${url}: ${text.slice(0, 200)}`);
   }
   return res.json();
 }
@@ -37,18 +40,17 @@ export async function getTicketLastCustomerMessage(
 }
 
 async function gorgiasPost(path: string, body: unknown) {
-  const res = await fetch(`https://${DOMAIN}.gorgias.com/api/v2${path}`, {
+  const domain = DOMAIN.includes(".") ? DOMAIN : `${DOMAIN}.gorgias.com`;
+  const url = `https://${domain}/api/v2${path}`;
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: auth(),
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: auth(), "Content-Type": "application/json" },
     body: JSON.stringify(body),
     cache: "no-store",
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Gorgias ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(`Gorgias ${res.status} on ${url}: ${text.slice(0, 200)}`);
   }
   return res.json();
 }
