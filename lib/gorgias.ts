@@ -6,6 +6,36 @@ function auth() {
   return `Basic ${Buffer.from(`${API_EMAIL}:${API_KEY}`).toString("base64")}`;
 }
 
+async function gorgiasGet(path: string) {
+  const res = await fetch(`https://${DOMAIN}.gorgias.com/api/v2${path}`, {
+    headers: { Authorization: auth(), "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Gorgias ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return res.json();
+}
+
+export async function getTicketLastCustomerMessage(
+  ticketId: number
+): Promise<{ text: string; senderEmail: string } | null> {
+  const data = await gorgiasGet(`/tickets/${ticketId}/messages?limit=50`) as {
+    data?: Record<string, unknown>[];
+  };
+  const messages = data?.data ?? [];
+  // Last message from a customer (not agent)
+  const customerMsg = [...messages]
+    .reverse()
+    .find((m) => m.from_agent === false || m.from_agent === null);
+  if (!customerMsg) return null;
+  return {
+    text: (customerMsg.body_text as string) ?? "",
+    senderEmail: ((customerMsg.sender as Record<string, unknown>)?.email as string) ?? "",
+  };
+}
+
 async function gorgiasPost(path: string, body: unknown) {
   const res = await fetch(`https://${DOMAIN}.gorgias.com/api/v2${path}`, {
     method: "POST",
