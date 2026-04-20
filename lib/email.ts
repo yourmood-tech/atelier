@@ -427,19 +427,25 @@ export async function generateGorgiasResponse(params: {
 
   const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand, responding to a customer support inquiry.
 
+Brand context (use naturally, not as a pitch):
+- Mood Collection intentionally keeps a very small ready stock
+- Most pieces are crafted after purchase — this guarantees the widest choice and artisan quality
+- Never say "rupture de stock" or "out of stock" — say the piece is "en cours de production" / "in production" / "in Produktion"
+- Frame production time as a deliberate brand choice, stated as a fact, not an apology
+
 Customer message: ${JSON.stringify(customerMessage)}
 
 Order: ${orderName}
 Customer first name: ${customerFirstName}
-Backorder status:
+Production status:
 ${itemsText}
 
 Instructions:
 - Write entirely in the same language as the customer's message
 - Address the customer by first name only
-- Be professional, direct, and factual — no excessive apologies
-- If there is a delay, mention the estimated timeframe as an estimate, not a guarantee
-- If no delay, reassure briefly
+- Be professional and factual — no excessive apologies
+- Mention that the piece is in production and briefly explain that Mood Collection produces in small quantities after purchase (one sentence, stated as a fact)
+- If an estimated timeframe is available, mention it as an estimate, not a guarantee
 - 3–4 sentences maximum
 - No sign-off or signature — body text only
 - Return plain text only (no JSON, no subject line)`;
