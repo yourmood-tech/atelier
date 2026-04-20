@@ -367,3 +367,89 @@ Customer info:
   const result = await callClaude(prompt);
   return { subject: result.subject, emailBody: result.body };
 }
+
+// ── Gorgias — detect delay inquiry + extract order number ────────────────────
+
+export async function detectDelayInquiry(
+  messageText: string
+): Promise<{ is_delay_inquiry: boolean; order_number: string | null }> {
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 100,
+    messages: [
+      {
+        role: "user",
+        content: `Analyze this customer support message. Is the customer asking about a delivery delay, order status, or when their order will arrive?
+Also extract the order number if mentioned (formats: #12345, commande 12345, order 12345, Bestellung 12345, etc.)
+Return JSON only: { "is_delay_inquiry": boolean, "order_number": string | null }
+
+Message: ${JSON.stringify(messageText)}`,
+      },
+    ],
+  });
+  const text = response.content[0].type === "text" ? response.content[0].text : "";
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return { is_delay_inquiry: false, order_number: null };
+  return JSON.parse(match[0]) as { is_delay_inquiry: boolean; order_number: string | null };
+}
+
+// ── Gorgias — generate draft customer reply ───────────────────────────────────
+
+type GorgiasBackorderItem = {
+  productTitle: string;
+  estimatedDelivery: string | null;
+  leadTimeMin: number | null;
+  leadTimeMax: number | null;
+};
+
+export async function generateGorgiasResponse(params: {
+  orderName: string;
+  customerFirstName: string;
+  customerMessage: string;
+  backorderItems: GorgiasBackorderItem[];
+}): Promise<string> {
+  const { orderName, customerFirstName, customerMessage, backorderItems } = params;
+
+  const itemsText = backorderItems.length
+    ? backorderItems.map((item) => {
+        const eta = item.estimatedDelivery
+          ? `estimated delivery around ${new Date(item.estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} (estimate, not guaranteed)`
+          : item.leadTimeMin && item.leadTimeMax
+          ? `estimated lead time: ${item.leadTimeMin}–${item.leadTimeMax} days`
+          : item.leadTimeMin
+          ? `estimated lead time: approximately ${item.leadTimeMin} days`
+          : "no confirmed date yet";
+        return `- ${item.productTitle}: ${eta}`;
+      }).join("\n")
+    : "No backorder detected — order appears to be processing normally.";
+
+  const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand, responding to a customer support inquiry.
+
+Customer message: ${JSON.stringify(customerMessage)}
+
+Order: ${orderName}
+Customer first name: ${customerFirstName}
+Backorder status:
+${itemsText}
+
+Instructions:
+- Write entirely in the same language as the customer's message
+- Address the customer by first name only
+- Be professional, direct, and factual — no excessive apologies
+- If there is a delay, mention the estimated timeframe as an estimate, not a guarantee
+- If no delay, reassure briefly
+- 3–4 sentences maximum
+- No sign-off or signature — body text only
+- Return plain text only (no JSON, no subject line)`;
+
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 400,
+    messages: [{ role: "user", content: prompt }],
+  });
+  return response.content[0].type === "text" ? response.content[0].text.trim() : "";
+}
