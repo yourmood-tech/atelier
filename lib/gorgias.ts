@@ -9,7 +9,7 @@ function auth() {
 async function gorgiasGet(path: string) {
   // Support both "yourmood" and "yourmood.gorgias.com" in env var
   const domain = DOMAIN.includes(".") ? DOMAIN : `${DOMAIN}.gorgias.com`;
-  const url = `https://${domain}/api/v2${path}`;
+  const url = `https://${domain}/api${path}`;
   const res = await fetch(url, {
     headers: { Authorization: auth(), "Content-Type": "application/json" },
     cache: "no-store",
@@ -41,7 +41,7 @@ export async function getTicketLastCustomerMessage(
 
 async function gorgiasPost(path: string, body: unknown) {
   const domain = DOMAIN.includes(".") ? DOMAIN : `${DOMAIN}.gorgias.com`;
-  const url = `https://${domain}/api/v2${path}`;
+  const url = `https://${domain}/api${path}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { Authorization: auth(), "Content-Type": "application/json" },
