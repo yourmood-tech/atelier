@@ -39,8 +39,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: false, error: `Produit introuvable : ${handle}` }, { status: 404 });
     }
 
+    const focusVariantId = extractShopifyVariantId(raw);
+    const variantsToProcess = focusVariantId
+      ? product.variants.filter((v) => v.id === focusVariantId)
+      : product.variants.slice(0, 1);
+
     const variants = await Promise.all(
-      product.variants.map(async (variant) => {
+      variantsToProcess.map(async (variant) => {
         const recipe = await getRecipeWithSuppliers(variant.sku).catch(() => null);
 
         // — Product with recipe (manufactured) → show materials stock —
@@ -88,8 +93,6 @@ export async function GET(req: NextRequest) {
         };
       })
     );
-
-    const focusVariantId = extractShopifyVariantId(raw);
 
     return NextResponse.json({
       ok: true,
