@@ -463,3 +463,56 @@ Instructions:
   });
   return response.content[0].type === "text" ? response.content[0].text.trim() : "";
 }
+
+// ── Resend — internal fulfillment notification ────────────────────────────────
+
+export async function sendFulfillmentNotification(params: {
+  action: "fulfill" | "unfulfill";
+  orderName: string;
+  lineItemTitle: string;
+  variantTitle: string;
+  sku: string;
+  quantity: number;
+  performedBy: string;
+  siblingsUnfulfilled?: { title: string }[];
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const actionLabel = params.action === "fulfill" ? "✅ Fulfillé" : "↩️ Unfulfillé";
+  const variant = params.variantTitle && params.variantTitle !== "Default Title"
+    ? ` — ${params.variantTitle}` : "";
+
+  const siblingsNote = params.siblingsUnfulfilled?.length
+    ? `<p style="color:#b45309;margin-top:16px">⚠️ ${params.siblingsUnfulfilled.length} autre(s) article(s) unfulfillé(s) par la même opération :<br>${params.siblingsUnfulfilled.map(s => `&nbsp;&nbsp;• ${s.title}`).join("<br>")}</p>`
+    : "";
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;color:#111">
+      <h2 style="margin-bottom:4px">${actionLabel}</h2>
+      <p style="color:#555;margin-top:0">Commande <strong>${params.orderName}</strong></p>
+      <table style="border-collapse:collapse;width:100%;margin-top:16px">
+        <tr><td style="padding:6px 0;color:#555;width:120px">Article</td><td><strong>${params.lineItemTitle}${variant}</strong></td></tr>
+        <tr><td style="padding:6px 0;color:#555">SKU</td><td>${params.sku || "—"}</td></tr>
+        <tr><td style="padding:6px 0;color:#555">Quantité</td><td>${params.quantity}</td></tr>
+        <tr><td style="padding:6px 0;color:#555">Par</td><td>${params.performedBy}</td></tr>
+        <tr><td style="padding:6px 0;color:#555">Heure</td><td>${new Date().toLocaleString("fr-CH", { timeZone: "Europe/Zurich" })}</td></tr>
+      </table>
+      ${siblingsNote}
+    </div>
+  `;
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "katana@yourmood.net",
+      to: "philippe@yourmood.net",
+      subject: `${actionLabel} — ${params.orderName} · ${params.lineItemTitle}${variant}`,
+      html,
+    }),
+  });
+}

@@ -54,10 +54,18 @@ export default function FulfillmentPage() {
     setActionMessages((s) => ({ ...s, [li.lineItemId]: "" }));
 
     try {
-      const body =
-        action === "unfulfill"
-          ? { action, orderId: data.orderId, lineItemId: li.lineItemId, fulfillmentId: li.fulfillmentId }
-          : { action, orderId: data.orderId, lineItemId: li.lineItemId, quantity: li.quantity };
+      const common = {
+        orderId: data.orderId,
+        orderName: data.orderName,
+        lineItemId: li.lineItemId,
+        lineItemTitle: li.title,
+        variantTitle: li.variantTitle,
+        sku: li.sku,
+        quantity: li.quantity,
+      };
+      const body = action === "unfulfill"
+        ? { action, ...common, fulfillmentId: li.fulfillmentId }
+        : { action, ...common };
 
       const res = await fetch("/api/fulfillment-order", {
         method: "POST",
