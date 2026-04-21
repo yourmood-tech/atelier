@@ -328,8 +328,11 @@ export async function createShopifyFulfillment(
   const { fulfillment_orders } = await shopifyFetch(`/orders/${orderId}/fulfillment_orders.json`);
 
   for (const fo of ((fulfillment_orders ?? []) as Record<string, unknown>[])) {
+    if ((fo.status as string) === "closed" || (fo.status as string) === "cancelled") continue;
     const foLineItem = ((fo.line_items as Record<string, unknown>[]) ?? []).find(
-      (li) => (li.line_item_id as number) === lineItemId
+      (li) =>
+        (li.line_item_id as number) === lineItemId &&
+        ((li.fulfillable_quantity as number) ?? 0) > 0
     );
     if (foLineItem) {
       await shopifyPost(`/fulfillments.json`, {

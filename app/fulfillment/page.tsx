@@ -64,11 +64,14 @@ export default function FulfillmentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const json = await res.json() as { ok: boolean; tagAdded?: boolean; error?: string };
+      const json = await res.json() as { ok: boolean; tagAdded?: boolean; siblingsUnfulfilled?: { lineItemId: number; title: string }[]; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur inconnue");
 
       let msg = action === "unfulfill" ? "Unfulfillé" : "Fulfillé";
       if (json.tagAdded) msg += " + tag ATTENTION ajouté";
+      if (json.siblingsUnfulfilled?.length) {
+        msg += ` — ${json.siblingsUnfulfilled.length} autre(s) article(s) unfulfillé(s) : re-fulfillez-les manuellement`;
+      }
       setActionStates((s) => ({ ...s, [li.lineItemId]: "done" }));
       setActionMessages((s) => ({ ...s, [li.lineItemId]: msg }));
 
