@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProductByHandle } from "@/lib/shopify";
-import { getRecipeWithSuppliers, getVariantStock } from "@/lib/katana";
+import { getRecipeWithSuppliers, getVariantStock, getKatanaVariantIdBySku } from "@/lib/katana";
 
 function extractHandle(raw: string): string | null {
   try {
@@ -11,12 +11,11 @@ function extractHandle(raw: string): string | null {
   } catch {
     // Not a full URL — treat as raw handle
   }
-  // Accept bare handle or path segment
   const clean = raw.trim().replace(/^\/+|\/+$/g, "").split("/").pop() ?? "";
   return clean || null;
 }
 
-// GET /api/stock-check?url=https://yourmood.net/products/bague-aura-titane
+// GET /api/stock-check?url=https://yourmood.net/products/...
 export async function GET(req: NextRequest) {
   try {
     const raw = req.nextUrl.searchParams.get("url")?.trim() ?? "";
@@ -26,54 +25,60 @@ export async function GET(req: NextRequest) {
 
     const handle = extractHandle(raw);
     if (!handle) {
-      return NextResponse.json({ ok: false, error: "URL invalide — impossible d'extraire le handle produit" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "URL invalide" }, { status: 400 });
     }
 
-    // 1. Get product + all variants from Shopify
     const product = await getProductByHandle(handle);
     if (!product) {
-      return NextResponse.json({ ok: false, error: `Produit introuvable pour le handle : ${handle}` }, { status: 404 });
+      return NextResponse.json({ ok: false, error: `Produit introuvable : ${handle}` }, { status: 404 });
     }
 
-    // 2. For each variant, get Katana recipe + stock
     const variants = await Promise.all(
       product.variants.map(async (variant) => {
         const recipe = await getRecipeWithSuppliers(variant.sku).catch(() => null);
 
-        if (!recipe?.ingredients.length) {
+        // — Product with recipe (manufactured) → show materials stock —
+        if (recipe?.ingredients.length) {
+          const ingredients = await Promise.all(
+            recipe.ingredients.map(async (ing) => {
+              const stock = await getVariantStock(ing.id).catch(() => ({
+                inStock: 0, committed: 0, available: 0, toReceive: 0,
+              }));
+              return {
+                name: ing.name,
+                sku: ing.sku,
+                quantityNeeded: ing.quantity,
+                supplier: ing.supplier?.name ?? null,
+                stock,
+                canMake: ing.quantity > 0 ? Math.floor(stock.available / ing.quantity) : 0,
+              };
+            })
+          );
           return {
             variantId: variant.id,
             variantTitle: variant.title,
             sku: variant.sku,
-            ingredients: [],
-            minCanMake: 0,
+            type: "manufactured" as const,
+            ingredients,
+            directStock: null,
+            minCanMake: Math.min(...ingredients.map((i) => i.canMake)),
           };
         }
 
-        const ingredients = await Promise.all(
-          recipe.ingredients.map(async (ing) => {
-            const stock = await getVariantStock(ing.id).catch(() => ({
-              inStock: 0, committed: 0, available: 0, toReceive: 0,
-            }));
-            return {
-              name: ing.name,
-              sku: ing.sku,
-              quantityNeeded: ing.quantity,
-              supplier: ing.supplier?.name ?? null,
-              stock,
-              canMake: ing.quantity > 0 ? Math.floor(stock.available / ing.quantity) : 0,
-            };
-          })
-        );
-
-        const minCanMake = Math.min(...ingredients.map((i) => i.canMake));
+        // — Product without recipe (purchased / finished good) → show direct stock —
+        const katanaId = await getKatanaVariantIdBySku(variant.sku).catch(() => null);
+        const directStock = katanaId
+          ? await getVariantStock(katanaId).catch(() => null)
+          : null;
 
         return {
           variantId: variant.id,
           variantTitle: variant.title,
           sku: variant.sku,
-          ingredients,
-          minCanMake,
+          type: "purchased" as const,
+          ingredients: [],
+          directStock,
+          minCanMake: directStock ? directStock.available : 0,
         };
       })
     );

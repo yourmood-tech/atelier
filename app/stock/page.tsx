@@ -22,7 +22,9 @@ type VariantResult = {
   variantId: number;
   variantTitle: string;
   sku: string;
+  type: "manufactured" | "purchased";
   ingredients: Ingredient[];
+  directStock: StockInfo | null;
   minCanMake: number;
 };
 
@@ -58,7 +60,7 @@ function CanMakeBadge({ value }: { value: number }) {
       : "bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300";
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${color}`}>
-      {value === 0 ? "✗ Stock insuffisant" : `✓ ${value} fabricable${value > 1 ? "s" : ""}`}
+      {value === 0 ? "✗ Stock insuffisant" : `✓ ${value} en stock`}
     </span>
   );
 }
@@ -91,8 +93,8 @@ export default function StockPage() {
       const json = await res.json() as ApiResponse;
       if (!json.ok) throw new Error(json.error ?? "Erreur inconnue");
       setData(json);
-      // Auto-open first variant with ingredients
-      const first = json.variants?.find((v) => v.ingredients.length > 0);
+      // Auto-open first variant
+      const first = json.variants?.[0];
       if (first) setOpenVariants(new Set([first.variantId]));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur");
@@ -101,7 +103,7 @@ export default function StockPage() {
     }
   }
 
-  const variants = data?.variants?.filter((v) => v.ingredients.length > 0) ?? [];
+  const variants = data?.variants ?? [];
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans p-6">
@@ -120,7 +122,7 @@ export default function StockPage() {
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://yourmood.net/products/bague-aura-titane"
+            placeholder="https://yourmood.net/products/anneau-addon-medium-aura…"
             className="flex-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-400"
           />
           <button
@@ -140,7 +142,7 @@ export default function StockPage() {
 
         {data && variants.length === 0 && (
           <div className="text-sm text-zinc-500 text-center py-8">
-            Aucune recette Katana trouvée pour ce produit
+            Aucune donnée trouvée pour ce produit
           </div>
         )}
 
@@ -158,14 +160,13 @@ export default function StockPage() {
                   key={v.variantId}
                   className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden"
                 >
-                  {/* Variant header — clickable */}
                   <button
                     onClick={() => toggleVariant(v.variantId)}
                     className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-zinc-900 dark:text-zinc-100 text-sm">
-                        Taille {v.variantTitle}
+                        {v.variantTitle === "taille inconnue" ? "Taille unique" : `Taille ${v.variantTitle}`}
                       </span>
                       <span className="text-xs text-zinc-400">{v.sku}</span>
                     </div>
@@ -175,34 +176,59 @@ export default function StockPage() {
                     </div>
                   </button>
 
-                  {/* Ingredients — collapsible */}
                   {isOpen && (
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
-                      {v.ingredients.map((ing, i) => (
-                        <div key={i} className="px-5 py-4">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <div>
-                              <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                {ing.name || ing.sku || "—"}
-                              </div>
-                              <div className="text-xs text-zinc-400 mt-0.5 space-x-2">
-                                {ing.sku && <span>SKU: {ing.sku}</span>}
-                                {ing.supplier && <span>· {ing.supplier}</span>}
-                                <span>· Qté/unité: {ing.quantityNeeded}</span>
-                              </div>
-                            </div>
-                            <CanMakeBadge value={ing.canMake} />
-                          </div>
+                    <div className="border-t border-zinc-100 dark:border-zinc-800">
+                      {/* Purchased product — direct stock */}
+                      {v.type === "purchased" && v.directStock && (
+                        <div className="px-5 py-4">
+                          <p className="text-xs text-zinc-400 mb-3">Stock produit fini</p>
                           <div className="flex gap-3 flex-wrap">
-                            <StockBadge value={ing.stock.inStock} label="En stock" />
-                            <StockBadge value={ing.stock.committed} label="Engagé" />
-                            <StockBadge value={ing.stock.available} label="Disponible" />
-                            {ing.stock.toReceive > 0 && (
-                              <StockBadge value={ing.stock.toReceive} label="À recevoir" />
+                            <StockBadge value={v.directStock.inStock} label="En stock" />
+                            <StockBadge value={v.directStock.committed} label="Engagé" />
+                            <StockBadge value={v.directStock.available} label="Disponible" />
+                            {v.directStock.toReceive > 0 && (
+                              <StockBadge value={v.directStock.toReceive} label="À recevoir" />
                             )}
                           </div>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Manufactured product — materials */}
+                      {v.type === "manufactured" && v.ingredients.length > 0 && (
+                        <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                          {v.ingredients.map((ing, i) => (
+                            <div key={i} className="px-5 py-4">
+                              <div className="flex items-start justify-between gap-4 mb-3">
+                                <div>
+                                  <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                    {ing.name || ing.sku || "—"}
+                                  </div>
+                                  <div className="text-xs text-zinc-400 mt-0.5 space-x-2">
+                                    {ing.sku && <span>SKU: {ing.sku}</span>}
+                                    {ing.supplier && <span>· {ing.supplier}</span>}
+                                    <span>· Qté/unité: {ing.quantityNeeded}</span>
+                                  </div>
+                                </div>
+                                <CanMakeBadge value={ing.canMake} />
+                              </div>
+                              <div className="flex gap-3 flex-wrap">
+                                <StockBadge value={ing.stock.inStock} label="En stock" />
+                                <StockBadge value={ing.stock.committed} label="Engagé" />
+                                <StockBadge value={ing.stock.available} label="Disponible" />
+                                {ing.stock.toReceive > 0 && (
+                                  <StockBadge value={ing.stock.toReceive} label="À recevoir" />
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {v.type === "purchased" && !v.directStock && (
+                        <div className="px-5 py-4 text-xs text-zinc-400">
+                          Variant introuvable dans Katana
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
