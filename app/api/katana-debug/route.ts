@@ -23,8 +23,25 @@ export async function GET(req: NextRequest) {
   const supplierId = req.nextUrl.searchParams.get("supplier_id")?.trim() ?? "";
   const poSupplierId = req.nextUrl.searchParams.get("po_supplier_id")?.trim() ?? "";
   const poList = req.nextUrl.searchParams.get("po_list")?.trim() ?? "";
+  const stockId = req.nextUrl.searchParams.get("stock_id")?.trim() ?? "";
 
   try {
+    // Debug stock endpoints for a variant ID
+    if (stockId) {
+      const [withLoc, withoutLoc, allStock] = await Promise.all([
+        katanaRaw(`/v1/stock?variant_id=${stockId}&location_id=${process.env.KATANA_DEFAULT_LOCATION_ID}`),
+        katanaRaw(`/v1/stock?variant_id=${stockId}`),
+        katanaRaw(`/v1/stock?limit=3`),
+      ]);
+      return NextResponse.json({
+        variant_id: stockId,
+        location_id_used: process.env.KATANA_DEFAULT_LOCATION_ID,
+        with_location_filter: withLoc,
+        without_location_filter: withoutLoc,
+        sample_all_stock: allStock,
+      });
+    }
+
     // List all open POs (no supplier filter) to find one with data
     if (poList) {
       const [notReceived, partiallyReceived] = await Promise.all([
