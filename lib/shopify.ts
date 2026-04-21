@@ -324,9 +324,27 @@ export async function createShopifyFulfillment(
   lineItemId: number,
   quantity: number
 ): Promise<void> {
-  await shopifyPost(`/orders/${orderId}/fulfillments.json`, {
-    fulfillment: {
-      line_items: [{ id: lineItemId, quantity }],
-    },
-  });
+  // Use Fulfillment Orders API (required in 2025-01+)
+  const { fulfillment_orders } = await shopifyFetch(`/orders/${orderId}/fulfillment_orders.json`);
+
+  for (const fo of ((fulfillment_orders ?? []) as Record<string, unknown>[])) {
+    const foLineItem = ((fo.line_items as Record<string, unknown>[]) ?? []).find(
+      (li) => (li.line_item_id as number) === lineItemId
+    );
+    if (foLineItem) {
+      await shopifyPost(`/fulfillments.json`, {
+        fulfillment: {
+          line_items_by_fulfillment_order: [
+            {
+              fulfillment_order_id: fo.id,
+              fulfillment_order_line_items: [{ id: foLineItem.id, quantity }],
+            },
+          ],
+        },
+      });
+      return;
+    }
+  }
+
+  throw new Error(`Article ${lineItemId} introuvable dans les fulfillment orders de la commande ${orderId}`);
 }
