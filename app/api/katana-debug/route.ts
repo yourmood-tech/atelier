@@ -37,8 +37,14 @@ export async function GET(req: NextRequest) {
   const poList = req.nextUrl.searchParams.get("po_list")?.trim() ?? "";
   const stockId = req.nextUrl.searchParams.get("stock_id")?.trim() ?? "";
   const handle = req.nextUrl.searchParams.get("handle")?.trim() ?? "";
+  const locations = req.nextUrl.searchParams.get("locations")?.trim() ?? "";
 
   try {
+    if (locations) {
+      const data = await katanaRaw(`/v1/locations?limit=100`);
+      return NextResponse.json(data);
+    }
+
     // Full trace: Shopify handle → variants → Katana SKU lookup
     if (handle) {
       const shopify = await shopifyRaw(`/products.json?handle=${encodeURIComponent(handle)}&limit=1&fields=id,title,variants`);
