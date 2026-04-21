@@ -8,11 +8,17 @@ function extractHandle(raw: string): string | null {
     const parts = u.pathname.split("/");
     const idx = parts.indexOf("products");
     if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
-  } catch {
-    // Not a full URL — treat as raw handle
-  }
+  } catch { /* not a full URL */ }
   const clean = raw.trim().replace(/^\/+|\/+$/g, "").split("/").pop() ?? "";
   return clean || null;
+}
+
+function extractShopifyVariantId(raw: string): number | null {
+  try {
+    const u = new URL(raw.trim());
+    const v = u.searchParams.get("variant");
+    return v ? Number(v) || null : null;
+  } catch { return null; }
 }
 
 // GET /api/stock-check?url=https://yourmood.net/products/...
@@ -83,10 +89,13 @@ export async function GET(req: NextRequest) {
       })
     );
 
+    const focusVariantId = extractShopifyVariantId(raw);
+
     return NextResponse.json({
       ok: true,
       product: product.title,
       productId: product.id,
+      focusVariantId,
       variants,
     });
   } catch (error) {

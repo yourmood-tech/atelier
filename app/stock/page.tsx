@@ -32,6 +32,7 @@ type ApiResponse = {
   ok: boolean;
   product?: string;
   productId?: number;
+  focusVariantId?: number | null;
   variants?: VariantResult[];
   error?: string;
 };
@@ -93,9 +94,11 @@ export default function StockPage() {
       const json = await res.json() as ApiResponse;
       if (!json.ok) throw new Error(json.error ?? "Erreur inconnue");
       setData(json);
-      // Auto-open first variant
-      const first = json.variants?.[0];
-      if (first) setOpenVariants(new Set([first.variantId]));
+      // Auto-open the variant from the URL ?variant= param, or first variant
+      const target = json.focusVariantId
+        ? json.variants?.find((v) => v.variantId === json.focusVariantId)
+        : json.variants?.[0];
+      if (target) setOpenVariants(new Set([target.variantId]));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur");
     } finally {
