@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       if (!product) return NextResponse.json({ error: "Produit Shopify introuvable", handle, shopify });
 
       const variants = (product.variants ?? []) as Record<string, unknown>[];
-      const skuSamples = variants.slice(0, 5).map((v: Record<string, unknown>) => ({ id: v.id, title: v.title, sku: v.sku }));
+      const skuSamples = variants.map((v: Record<string, unknown>) => ({ id: v.id, title: v.title, sku: v.sku }));
 
       // Try Katana lookup with the first non-empty SKU
       const firstSku = variants.find((v: Record<string, unknown>) => v.sku)?.sku as string | undefined;
