@@ -274,15 +274,10 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
   const productName = ((productRes as Record<string, unknown>).name as string) ?? "";
   const allRows = (recipeRes as { data?: Record<string, unknown>[] }).data ?? [];
 
-  // 3. Keep rows for our specific variant; fall back to any rows for the product
-  let variantRows = allRows.filter(
+  // 3. Keep only rows for our specific variant
+  const variantRows = allRows.filter(
     (row) => Number(row.product_variant_id) === katanaVariantId
   );
-
-  if (!variantRows.length) {
-    // Recipe is the same for all sizes — use any available rows
-    variantRows = allRows.slice(0, 50);
-  }
 
   if (!variantRows.length) return null;
 
@@ -460,16 +455,20 @@ export async function getVariantStock(variantId: number): Promise<{
   toReceive: number;
 }> {
   const data = (await katanaFetch(
-    `/v1/inventory?variant_id=${variantId}&location_id=${DEFAULT_LOCATION_ID}`,
+    `/v1/inventory?variant_id=${variantId}`,
     { method: "GET" }
   )) as { data?: Record<string, unknown>[] };
 
-  const row = data?.data?.[0];
-  if (!row) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
+  const rows = data?.data ?? [];
+  if (!rows.length) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
 
-  const inStock = Number(row.quantity_in_stock ?? 0);
-  const committed = Number(row.quantity_committed ?? 0);
-  const toReceive = Number(row.quantity_expected ?? 0);
+  // Sum across all locations
+  let inStock = 0, committed = 0, toReceive = 0;
+  for (const row of rows) {
+    inStock += Number(row.quantity_in_stock ?? 0);
+    committed += Number(row.quantity_committed ?? 0);
+    toReceive += Number(row.quantity_expected ?? 0);
+  }
   const available = Math.max(0, inStock - committed);
 
   return { inStock, committed, available, toReceive };
