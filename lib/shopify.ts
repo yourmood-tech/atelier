@@ -244,24 +244,24 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
   };
 }
 
-export async function searchShopifyProducts(query: string): Promise<
-  { id: number; title: string; sku50: string }[]
-> {
+export async function getProductByHandle(handle: string): Promise<{
+  id: number;
+  title: string;
+  variants: { id: number; title: string; sku: string }[];
+} | null> {
   const { products } = await shopifyFetch(
-    `/products.json?title=${encodeURIComponent(query)}&limit=8&fields=id,title,variants`
+    `/products.json?handle=${encodeURIComponent(handle)}&limit=1&fields=id,title,variants`
   );
-  return ((products ?? []) as Record<string, unknown>[]).map((p) => {
-    const variants = (p.variants as Record<string, unknown>[]) ?? [];
-    const v50 =
-      variants.find((v) => String(v.title) === "50") ??
-      variants.find((v) => String(v.sku).endsWith("-50")) ??
-      variants[0];
-    return {
-      id: p.id as number,
-      title: p.title as string,
-      sku50: (v50?.sku as string) ?? "",
-    };
-  }).filter((p) => p.sku50);
+  const p = (products as Record<string, unknown>[])?.[0];
+  if (!p) return null;
+  const variants = ((p.variants as Record<string, unknown>[]) ?? [])
+    .map((v) => ({
+      id: v.id as number,
+      title: (v.title as string) ?? "",
+      sku: (v.sku as string) ?? "",
+    }))
+    .filter((v) => v.sku);
+  return { id: p.id as number, title: p.title as string, variants };
 }
 
 export async function getOrderFulfillmentData(orderNameOrId: string): Promise<import("./types").OrderFulfillmentData> {

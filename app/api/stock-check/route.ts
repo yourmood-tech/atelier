@@ -1,27 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchShopifyProducts } from "@/lib/shopify";
+import { getProductByHandle } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getVariantStock } from "@/lib/katana";
 
-// GET /api/stock-check?q=aura
+function extractHandle(raw: string): string | null {
+  try {
+    const u = new URL(raw.trim());
+    const parts = u.pathname.split("/");
+    const idx = parts.indexOf("products");
+    if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+  } catch {
+    // Not a full URL — treat as raw handle
+  }
+  // Accept bare handle or path segment
+  const clean = raw.trim().replace(/^\/+|\/+$/g, "").split("/").pop() ?? "";
+  return clean || null;
+}
+
+// GET /api/stock-check?url=https://yourmood.net/products/bague-aura-titane
 export async function GET(req: NextRequest) {
   try {
-    const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
-    if (!q || q.length < 2) {
-      return NextResponse.json({ ok: false, error: "Recherche trop courte" }, { status: 400 });
+    const raw = req.nextUrl.searchParams.get("url")?.trim() ?? "";
+    if (!raw) {
+      return NextResponse.json({ ok: false, error: "Paramètre 'url' requis" }, { status: 400 });
     }
 
-    // 1. Search Shopify products
-    const shopifyProducts = await searchShopifyProducts(q);
-    if (!shopifyProducts.length) {
-      return NextResponse.json({ ok: true, results: [] });
+    const handle = extractHandle(raw);
+    if (!handle) {
+      return NextResponse.json({ ok: false, error: "URL invalide — impossible d'extraire le handle produit" }, { status: 400 });
     }
 
-    // 2. For each product, get recipe + stock
-    const results = await Promise.all(
-      shopifyProducts.map(async (product) => {
-        const recipe = await getRecipeWithSuppliers(product.sku50).catch(() => null);
+    // 1. Get product + all variants from Shopify
+    const product = await getProductByHandle(handle);
+    if (!product) {
+      return NextResponse.json({ ok: false, error: `Produit introuvable pour le handle : ${handle}` }, { status: 404 });
+    }
+
+    // 2. For each variant, get Katana recipe + stock
+    const variants = await Promise.all(
+      product.variants.map(async (variant) => {
+        const recipe = await getRecipeWithSuppliers(variant.sku).catch(() => null);
+
         if (!recipe?.ingredients.length) {
-          return { product: product.title, productId: product.id, ingredients: [] };
+          return {
+            variantId: variant.id,
+            variantTitle: variant.title,
+            sku: variant.sku,
+            ingredients: [],
+            minCanMake: 0,
+          };
         }
 
         const ingredients = await Promise.all(
@@ -35,27 +61,29 @@ export async function GET(req: NextRequest) {
               quantityNeeded: ing.quantity,
               supplier: ing.supplier?.name ?? null,
               stock,
-              canMake: stock.available > 0
-                ? Math.floor(stock.available / ing.quantity)
-                : 0,
+              canMake: ing.quantity > 0 ? Math.floor(stock.available / ing.quantity) : 0,
             };
           })
         );
 
-        const minCanMake = ingredients.length
-          ? Math.min(...ingredients.map((i) => i.canMake))
-          : 0;
+        const minCanMake = Math.min(...ingredients.map((i) => i.canMake));
 
         return {
-          product: product.title,
-          productId: product.id,
+          variantId: variant.id,
+          variantTitle: variant.title,
+          sku: variant.sku,
           ingredients,
           minCanMake,
         };
       })
     );
 
-    return NextResponse.json({ ok: true, results: results.filter((r) => r.ingredients.length) });
+    return NextResponse.json({
+      ok: true,
+      product: product.title,
+      productId: product.id,
+      variants,
+    });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Erreur serveur" },
