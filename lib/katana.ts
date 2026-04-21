@@ -455,14 +455,15 @@ export async function getVariantStock(variantId: number): Promise<{
   toReceive: number;
 }> {
   const data = (await katanaFetch(
-    `/v1/inventory?variant_id=${variantId}&location_id=${DEFAULT_LOCATION_ID}`,
+    `/v1/inventory?variant_id=${variantId}`,
     { method: "GET" }
   )) as { data?: Record<string, unknown>[] };
 
   const rows = data?.data ?? [];
-  if (!rows.length) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
+  // Filter in code to target location — API may ignore location_id param
+  const row = rows.find((r) => Number(r.location_id) === DEFAULT_LOCATION_ID) ?? rows[0];
+  if (!row) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
 
-  const row = rows[0];
   const inStock = Number(row.quantity_in_stock ?? 0);
   const committed = Number(row.quantity_committed ?? 0);
   const toReceive = Number(row.quantity_expected ?? 0);
