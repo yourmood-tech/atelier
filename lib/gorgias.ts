@@ -60,6 +60,19 @@ async function gorgiasPost(path: string, body: unknown) {
   return res.json();
 }
 
+export async function hasExistingDraftNote(ticketId: number): Promise<boolean> {
+  const data = await gorgiasGet(`/messages?ticket_id=${ticketId}&limit=50`) as {
+    data?: Record<string, unknown>[];
+  };
+  const messages = data?.data ?? [];
+  return messages.some(
+    (m) =>
+      m.channel === "internal-note" &&
+      typeof m.body_text === "string" &&
+      m.body_text.startsWith("🤖 AI Draft")
+  );
+}
+
 export async function postInternalNote(ticketId: number, text: string): Promise<void> {
   const html = `<p>${text.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</p>`;
   await gorgiasPost(`/tickets/${ticketId}/messages`, {

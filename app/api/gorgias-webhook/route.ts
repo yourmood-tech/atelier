@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getOrderById } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
 import { detectDelayInquiry, generateGorgiasResponse, getKlaviyoProfileLocale } from "@/lib/email";
-import { postInternalNote, getTicketCustomerMessages } from "@/lib/gorgias";
+import { postInternalNote, getTicketCustomerMessages, hasExistingDraftNote } from "@/lib/gorgias";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const TARGET_GROUP = "Demande de Délais (Groupe)";
@@ -16,12 +16,14 @@ export async function POST(req: NextRequest) {
     const ticket = data?.ticket as Record<string, unknown> | undefined;
     const message = data?.message as Record<string, unknown> | undefined;
 
-    // Only handle new messages from customers
-    if (eventType !== "ticket-message-created" || !ticket || !message) {
-      return NextResponse.json({ ok: true, skipped: "not a customer message event" });
+    // Handle message-created, ticket-updated, and ticket-created events
+    const handledEvents = ["ticket-message-created", "ticket-updated", "ticket-created"];
+    if (!handledEvents.includes(eventType ?? "") || !ticket) {
+      return NextResponse.json({ ok: true, skipped: "not a relevant event" });
     }
 
-    if (message.from_agent === true) {
+    // For message-created: skip agent messages
+    if (eventType === "ticket-message-created" && message?.from_agent === true) {
       return NextResponse.json({ ok: true, skipped: "agent message" });
     }
 
@@ -35,8 +37,18 @@ export async function POST(req: NextRequest) {
     }
 
     const ticketId = ticket.id as number;
-    const messageText = (message.body_text as string) ?? "";
     const ticketSubject = (ticket.subject as string) ?? "";
+
+    // Deduplication: don't post a second note if one already exists
+    const alreadyProcessed = await hasExistingDraftNote(ticketId).catch(() => false);
+    if (alreadyProcessed) {
+      return NextResponse.json({ ok: true, skipped: "note already posted" });
+    }
+
+    // For ticket-updated/created: no message in payload — fetch from Gorgias API
+    const messageText = message
+      ? ((message.body_text as string) ?? "")
+      : "";
 
     if (!messageText.trim() || !ticketId) {
       return NextResponse.json({ ok: true, skipped: "empty message" });
