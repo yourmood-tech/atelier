@@ -37,31 +37,31 @@ type ApiResponse = {
   error?: string;
 };
 
-function StockBadge({ value, label }: { value: number; label: string }) {
+function StockBadge({ value }: { value: number }) {
   const color =
     value === 0
       ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-      : value < 5
+      : value < 3
       ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
       : "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300";
   return (
     <span className={`inline-flex flex-col items-center rounded-lg px-3 py-1.5 text-center min-w-[56px] ${color}`}>
       <span className="text-lg font-semibold leading-none">{value}</span>
-      <span className="text-xs mt-0.5 opacity-75">{label}</span>
+      <span className="text-xs mt-0.5 opacity-75">En stock</span>
     </span>
   );
 }
 
-function CanMakeBadge({ value }: { value: number }) {
+function VariantStockBadge({ inStock }: { inStock: number }) {
   const color =
-    value === 0
+    inStock === 0
       ? "bg-red-50 border-red-200 text-red-700 dark:bg-red-950 dark:border-red-800 dark:text-red-300"
-      : value < 3
+      : inStock < 3
       ? "bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300"
       : "bg-green-50 border-green-200 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300";
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${color}`}>
-      {value === 0 ? "✗ Stock insuffisant" : `✓ ${value} en stock`}
+      {inStock === 0 ? "✗ Rupture" : `✓ ${inStock} en stock`}
     </span>
   );
 }
@@ -174,7 +174,7 @@ export default function StockPage() {
                       <span className="text-xs text-zinc-400">{v.sku}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <CanMakeBadge value={v.minCanMake} />
+                      <VariantStockBadge inStock={v.minCanMake} />
                       <span className="text-zinc-400 text-sm">{isOpen ? "▲" : "▼"}</span>
                     </div>
                   </button>
@@ -183,16 +183,18 @@ export default function StockPage() {
                     <div className="border-t border-zinc-100 dark:border-zinc-800">
                       {/* Purchased product — direct stock */}
                       {v.type === "purchased" && v.directStock && (
-                        <div className="px-5 py-4">
-                          <p className="text-xs text-zinc-400 mb-3">Stock produit fini</p>
-                          <div className="flex gap-3 flex-wrap">
-                            <StockBadge value={v.directStock.inStock} label="En stock" />
-                            <StockBadge value={v.directStock.committed} label="Engagé" />
-                            <StockBadge value={v.directStock.available} label="Disponible" />
+                        <div className="px-5 py-4 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <StockBadge value={v.directStock.inStock} />
                             {v.directStock.toReceive > 0 && (
-                              <StockBadge value={v.directStock.toReceive} label="À recevoir" />
+                              <span className="text-xs text-zinc-500">{v.directStock.toReceive} à recevoir</span>
                             )}
                           </div>
+                          {v.directStock.inStock < 3 && v.directStock.inStock > 0 && (
+                            <p className="text-xs text-orange-600 dark:text-orange-400">
+                              ⚠️ Stock faible — vérifier la disponibilité avec l&apos;atelier avant de confirmer
+                            </p>
+                          )}
                         </div>
                       )}
 
@@ -201,27 +203,26 @@ export default function StockPage() {
                         <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                           {v.ingredients.map((ing, i) => (
                             <div key={i} className="px-5 py-4">
-                              <div className="flex items-start justify-between gap-4 mb-3">
+                              <div className="flex items-start justify-between gap-4 mb-2">
                                 <div>
                                   <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                                     {ing.name || ing.sku || "—"}
                                   </div>
                                   <div className="text-xs text-zinc-400 mt-0.5 space-x-2">
-                                    {ing.sku && <span>SKU: {ing.sku}</span>}
+                                    {ing.sku && <span>{ing.sku}</span>}
                                     {ing.supplier && <span>· {ing.supplier}</span>}
-                                    <span>· Qté/unité: {ing.quantityNeeded}</span>
                                   </div>
                                 </div>
-                                <CanMakeBadge value={ing.canMake} />
+                                <StockBadge value={ing.stock.inStock} />
                               </div>
-                              <div className="flex gap-3 flex-wrap">
-                                <StockBadge value={ing.stock.inStock} label="En stock" />
-                                <StockBadge value={ing.stock.committed} label="Engagé" />
-                                <StockBadge value={ing.stock.available} label="Disponible" />
-                                {ing.stock.toReceive > 0 && (
-                                  <StockBadge value={ing.stock.toReceive} label="À recevoir" />
-                                )}
-                              </div>
+                              {ing.stock.inStock < 3 && ing.stock.inStock > 0 && (
+                                <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">
+                                  ⚠️ Stock faible — vérifier la disponibilité avec l&apos;atelier avant de confirmer
+                                </p>
+                              )}
+                              {ing.stock.toReceive > 0 && (
+                                <p className="text-xs text-zinc-500 mt-1">{ing.stock.toReceive} en commande fournisseur</p>
+                              )}
                             </div>
                           ))}
                         </div>

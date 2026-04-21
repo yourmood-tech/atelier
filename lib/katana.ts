@@ -465,11 +465,9 @@ export async function getVariantStock(variantId: number): Promise<{
   if (!row) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
 
   const inStock = Number(row.quantity_in_stock ?? 0);
-  const committed = Number(row.quantity_committed ?? 0);
   const toReceive = Number(row.quantity_expected ?? 0);
-  const available = Math.max(0, inStock - committed);
 
-  return { inStock, committed, available, toReceive };
+  return { inStock, committed: 0, available: inStock, toReceive };
 }
 
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {

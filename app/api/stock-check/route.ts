@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
                 quantityNeeded: ing.quantity,
                 supplier: ing.supplier?.name ?? null,
                 stock,
-                canMake: ing.quantity > 0 ? Math.floor(stock.available / ing.quantity) : 0,
+                canMake: ing.quantity > 0 ? Math.floor(stock.inStock / ing.quantity) : 0,
               };
             })
           );
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
             type: "manufactured" as const,
             ingredients,
             directStock: null,
-            minCanMake: Math.min(...ingredients.map((i) => i.canMake)),
+            minCanMake: ingredients.length ? Math.min(...ingredients.map((i) => i.canMake)) : 0,
           };
         }
 
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
           type: "purchased" as const,
           ingredients: [],
           directStock,
-          minCanMake: directStock ? directStock.available : 0,
+          minCanMake: directStock ? directStock.inStock : 0,
         };
       })
     );
