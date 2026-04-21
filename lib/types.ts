@@ -171,6 +171,7 @@ export type FulfillmentLineItemData = {
   lineItemId: number;
   title: string;
   quantity: number;
+  fulfilledQuantity: number;
   sku: string;
   variantTitle: string;
   fulfillmentStatus: FulfillmentStatus;

@@ -283,12 +283,14 @@ export async function getOrderFulfillmentData(orderNameOrId: string): Promise<im
   const fulfillmentsData = await shopifyFetch(`/orders/${orderId}/fulfillments.json`);
   const fulfillments = (fulfillmentsData.fulfillments ?? []) as Record<string, unknown>[];
 
-  // lineItemId → active fulfillmentId (status "success")
+  // lineItemId → { fulfillmentId, fulfilledQuantity }
   const lineItemToFulfillmentId = new Map<number, number>();
+  const lineItemToFulfilledQty = new Map<number, number>();
   for (const f of fulfillments) {
     if ((f.status as string) === "success") {
       for (const li of ((f.line_items as Record<string, unknown>[]) ?? [])) {
         lineItemToFulfillmentId.set(li.id as number, f.id as number);
+        lineItemToFulfilledQty.set(li.id as number, (li.quantity as number) ?? 0);
       }
     }
   }
@@ -302,6 +304,7 @@ export async function getOrderFulfillmentData(orderNameOrId: string): Promise<im
       lineItemId,
       title: li.title as string,
       quantity: li.quantity as number,
+      fulfilledQuantity: lineItemToFulfilledQty.get(lineItemId) ?? 0,
       sku: (li.sku as string) ?? "",
       variantTitle: (li.variant_title as string) ?? "",
       fulfillmentStatus,

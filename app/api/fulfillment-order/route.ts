@@ -36,11 +36,28 @@ export async function POST(req: NextRequest) {
 
     if (action === "unfulfill") {
       const fulfillmentId = body.fulfillmentId as number;
+      const targetLineItemId = body.lineItemId as number;
       if (!fulfillmentId) {
         return NextResponse.json({ ok: false, error: "fulfillmentId requis pour unfulfill" }, { status: 400 });
       }
 
+      // Fetch order data BEFORE canceling to find sibling line items in the same fulfillment
+      const orderDataBefore = await getOrderFulfillmentData(String(orderId));
+      const siblings = orderDataBefore.lineItems.filter(
+        (li) => li.fulfillmentId === fulfillmentId && li.lineItemId !== targetLineItemId
+      );
+
+      // Cancel the entire fulfillment
       await cancelShopifyFulfillment(fulfillmentId);
+
+      // Re-fulfill siblings that were in the same fulfillment but shouldn't be unfulfilled
+      if (siblings.length > 0) {
+        await Promise.all(
+          siblings.map((li) =>
+            createShopifyFulfillment(orderId, li.lineItemId, li.fulfilledQuantity || li.quantity)
+          )
+        );
+      }
 
       // Reload tags to check for "en production"
       const orderData = await getOrderFulfillmentData(String(orderId));
