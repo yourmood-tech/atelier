@@ -455,20 +455,17 @@ export async function getVariantStock(variantId: number): Promise<{
   toReceive: number;
 }> {
   const data = (await katanaFetch(
-    `/v1/inventory?variant_id=${variantId}`,
+    `/v1/inventory?variant_id=${variantId}&location_id=${DEFAULT_LOCATION_ID}`,
     { method: "GET" }
   )) as { data?: Record<string, unknown>[] };
 
   const rows = data?.data ?? [];
   if (!rows.length) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
 
-  // Sum across all locations
-  let inStock = 0, committed = 0, toReceive = 0;
-  for (const row of rows) {
-    inStock += Number(row.quantity_in_stock ?? 0);
-    committed += Number(row.quantity_committed ?? 0);
-    toReceive += Number(row.quantity_expected ?? 0);
-  }
+  const row = rows[0];
+  const inStock = Number(row.quantity_in_stock ?? 0);
+  const committed = Number(row.quantity_committed ?? 0);
+  const toReceive = Number(row.quantity_expected ?? 0);
   const available = Math.max(0, inStock - committed);
 
   return { inStock, committed, available, toReceive };
