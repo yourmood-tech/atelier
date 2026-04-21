@@ -439,6 +439,28 @@ export async function getOpenPurchaseOrdersForSupplier(
   return null;
 }
 
+export async function getVariantStock(variantId: number): Promise<{
+  inStock: number;
+  committed: number;
+  available: number;
+  toReceive: number;
+}> {
+  const data = (await katanaFetch(
+    `/v1/stock?variant_id=${variantId}&location_id=${DEFAULT_LOCATION_ID}`,
+    { method: "GET" }
+  )) as { data?: Record<string, unknown>[] };
+
+  const row = data?.data?.[0];
+  if (!row) return { inStock: 0, committed: 0, available: 0, toReceive: 0 };
+
+  const inStock = Number(row.in_stock ?? 0);
+  const committed = Number(row.committed_stock ?? row.committed ?? 0);
+  const toReceive = Number(row.to_receive ?? row.expected_quantity ?? 0);
+  const available = Math.max(0, inStock - committed);
+
+  return { inStock, committed, available, toReceive };
+}
+
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
   const variant = await findVariantByBarcode(input.barcode);
   const variantLabel = await resolveVariantLabel(variant);
