@@ -64,17 +64,22 @@ export async function GET(req: NextRequest) {
 
     // Debug stock endpoints for a variant ID
     if (stockId) {
-      const [withLoc, withoutLoc, allStock] = await Promise.all([
-        katanaRaw(`/v1/stock?variant_id=${stockId}&location_id=${process.env.KATANA_DEFAULT_LOCATION_ID}`),
-        katanaRaw(`/v1/stock?variant_id=${stockId}`),
-        katanaRaw(`/v1/stock?limit=3`),
+      const candidates = await Promise.all([
+        katanaRaw(`/v1/variants/${stockId}`),
+        katanaRaw(`/v1/inventory?variant_id=${stockId}`),
+        katanaRaw(`/v1/inventory?limit=1`),
+        katanaRaw(`/v1/variant_locations?variant_id=${stockId}`),
+        katanaRaw(`/v1/variant_locations?limit=1`),
+        katanaRaw(`/v1/product_variant_locations?variant_id=${stockId}`),
       ]);
       return NextResponse.json({
         variant_id: stockId,
-        location_id_used: process.env.KATANA_DEFAULT_LOCATION_ID,
-        with_location_filter: withLoc,
-        without_location_filter: withoutLoc,
-        sample_all_stock: allStock,
+        "variants/{id}": candidates[0],
+        "inventory?variant_id": candidates[1],
+        "inventory?limit=1": candidates[2],
+        "variant_locations?variant_id": candidates[3],
+        "variant_locations?limit=1": candidates[4],
+        "product_variant_locations?variant_id": candidates[5],
       });
     }
 
