@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BASE_URL = process.env.KATANA_BASE_URL!;
 const API_KEY = process.env.KATANA_API_KEY!;
+const SHOPIFY_STORE = process.env.SHOPIFY_STORE!;
+const SHOPIFY_TOKEN = process.env.SHOPIFY_API_TOKEN!;
+const SHOPIFY_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
+
+async function shopifyRaw(path: string) {
+  const res = await fetch(`https://${SHOPIFY_STORE}/admin/api/${SHOPIFY_VERSION}${path}`, {
+    headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN, "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  return { status: res.status, body: text ? JSON.parse(text) : null };
+}
 
 async function katanaRaw(path: string) {
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -24,8 +36,32 @@ export async function GET(req: NextRequest) {
   const poSupplierId = req.nextUrl.searchParams.get("po_supplier_id")?.trim() ?? "";
   const poList = req.nextUrl.searchParams.get("po_list")?.trim() ?? "";
   const stockId = req.nextUrl.searchParams.get("stock_id")?.trim() ?? "";
+  const handle = req.nextUrl.searchParams.get("handle")?.trim() ?? "";
 
   try {
+    // Full trace: Shopify handle → variants → Katana SKU lookup
+    if (handle) {
+      const shopify = await shopifyRaw(`/products.json?handle=${encodeURIComponent(handle)}&limit=1&fields=id,title,variants`);
+      const product = shopify.body?.products?.[0];
+      if (!product) return NextResponse.json({ error: "Produit Shopify introuvable", handle, shopify });
+
+      const variants = (product.variants ?? []) as Record<string, unknown>[];
+      const skuSamples = variants.slice(0, 5).map((v: Record<string, unknown>) => ({ id: v.id, title: v.title, sku: v.sku }));
+
+      // Try Katana lookup with the first non-empty SKU
+      const firstSku = variants.find((v: Record<string, unknown>) => v.sku)?.sku as string | undefined;
+      let katanaLookup = null;
+      if (firstSku) {
+        katanaLookup = await katanaRaw(`/v1/variants?sku=${encodeURIComponent(firstSku)}&limit=3`);
+      }
+
+      return NextResponse.json({
+        shopify_product: { id: product.id, title: product.title, variant_count: variants.length },
+        sku_samples: skuSamples,
+        katana_sku_lookup: { sku_tried: firstSku, result: katanaLookup },
+      });
+    }
+
     // Debug stock endpoints for a variant ID
     if (stockId) {
       const [withLoc, withoutLoc, allStock] = await Promise.all([
