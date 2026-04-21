@@ -274,10 +274,15 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
   const productName = ((productRes as Record<string, unknown>).name as string) ?? "";
   const allRows = (recipeRes as { data?: Record<string, unknown>[] }).data ?? [];
 
-  // 3. Keep only rows for our specific variant (size 50)
-  const variantRows = allRows.filter(
+  // 3. Keep rows for our specific variant; fall back to any rows for the product
+  let variantRows = allRows.filter(
     (row) => Number(row.product_variant_id) === katanaVariantId
   );
+
+  if (!variantRows.length) {
+    // Recipe is the same for all sizes — use any available rows
+    variantRows = allRows.slice(0, 50);
+  }
 
   if (!variantRows.length) return null;
 
