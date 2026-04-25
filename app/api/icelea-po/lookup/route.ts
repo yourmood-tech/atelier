@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRecipeWithSuppliers } from "@/lib/katana";
 
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE!;
 const SHOPIFY_TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -7,9 +6,14 @@ const SHOPIFY_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 
 type ShopifyVariant = {
   id: number;
-  sku: string | null;
   title: string;
-  product_id: number;
+  sku: string | null;
+};
+
+type ShopifyProduct = {
+  id: number;
+  title: string;
+  variants: ShopifyVariant[];
 };
 
 async function shopifyGet(path: string): Promise<unknown> {
@@ -28,18 +32,6 @@ async function shopifyGet(path: string): Promise<unknown> {
   return text ? JSON.parse(text) : null;
 }
 
-async function findShopifyVariant(barcode: string): Promise<ShopifyVariant | null> {
-  // Try as variant ID first (most common from scanned order slips)
-  const byId = await shopifyGet(`/variants/${barcode}.json`) as { variant?: ShopifyVariant } | null;
-  if (byId?.variant?.sku) return byId.variant;
-
-  // Fallback: search by barcode field
-  const byBarcode = await shopifyGet(`/variants.json?barcode=${encodeURIComponent(barcode)}&limit=1`) as { variants?: ShopifyVariant[] } | null;
-  if (byBarcode?.variants?.[0]?.sku) return byBarcode.variants[0];
-
-  return null;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as { barcode?: string };
@@ -48,56 +40,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "barcode requis" }, { status: 400 });
     }
 
-    // 1. Resolve Shopify variant → SKU
-    const shopifyVariant = await findShopifyVariant(barcode);
-    if (!shopifyVariant) {
-      return NextResponse.json(
-        { error: `Variant Shopify introuvable (barcode: ${barcode})` },
-        { status: 404 }
-      );
+    // Try as Shopify product_id
+    const byProduct = await shopifyGet(
+      `/products/${barcode}.json?fields=id,title,variants`
+    ) as { product?: ShopifyProduct } | null;
+
+    if (byProduct?.product) {
+      const product = byProduct.product;
+      const variants = product.variants
+        .filter((v) => v.sku)
+        .map((v) => ({ title: v.title, sku: v.sku! }))
+        .sort((a, b) => {
+          const na = parseFloat(a.title);
+          const nb = parseFloat(b.title);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return a.title.localeCompare(b.title);
+        });
+
+      return NextResponse.json({
+        ok: true,
+        type: "product",
+        productId: product.id,
+        productName: product.title,
+        variants,
+      });
     }
 
-    const sku = shopifyVariant.sku;
-    if (!sku) {
-      return NextResponse.json(
-        { error: `Variant Shopify trouvé mais sans SKU (id: ${shopifyVariant.id})` },
-        { status: 404 }
-      );
+    // Fallback: try as variant_id
+    const byVariant = await shopifyGet(
+      `/variants/${barcode}.json`
+    ) as { variant?: ShopifyVariant & { product_id: number } } | null;
+
+    if (byVariant?.variant?.sku) {
+      const v = byVariant.variant;
+      return NextResponse.json({
+        ok: true,
+        type: "variant",
+        productId: v.product_id,
+        variantTitle: v.title,
+        sku: v.sku,
+      });
     }
 
-    // 2. Get Katana recipe with supplier info
-    const recipe = await getRecipeWithSuppliers(sku);
-    if (!recipe) {
-      return NextResponse.json(
-        { error: `Recette Katana introuvable pour SKU ${sku}` },
-        { status: 404 }
-      );
-    }
-
-    // 3. Filter Icelea ingredients
-    const icelea = recipe.ingredients.filter(
-      (i) => i.supplier?.name?.toLowerCase().includes("icelea")
+    return NextResponse.json(
+      { error: `Produit Shopify introuvable (id: ${barcode})` },
+      { status: 404 }
     );
-
-    if (!icelea.length) {
-      return NextResponse.json(
-        {
-          error: `Aucun composant Icelea dans la recette de "${recipe.name}" (${sku})`,
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      ok: true,
-      productName: recipe.name,
-      productSku: sku,
-      icelea: icelea.map((i) => ({
-        variantId: i.id,
-        name: i.name,
-        sku: i.sku ?? null,
-      })),
-    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur" },

@@ -10,15 +10,18 @@ type IceleaIngredient = {
   sku: string | null;
 };
 
+type ScannedVariant = { title: string; sku: string };
+
 type ScannedItem = {
   localId: string;
-  // Shopify product that was scanned
   productName: string;
   productSku: string | null;
-  // Icelea material(s) from the recipe
+  // Available sizes (when scanned as product_id)
+  variants: ScannedVariant[];
+  // Resolved Icelea ingredient(s)
   icelea: IceleaIngredient[];
   quantity: number;
-  status: "loading" | "ok" | "error";
+  status: "loading" | "selecting_size" | "resolving" | "ok" | "error";
   error?: string;
 };
 
@@ -59,6 +62,51 @@ export default function IceleaPOPage() {
       .finally(() => setSuppliersLoading(false));
   }, []);
 
+  // Resolve SKU → Icelea ingredient and update an item
+  async function resolveSize(localId: string, sku: string, sizeTitle: string) {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.localId === localId ? { ...i, status: "resolving", productSku: sku } : i
+      )
+    );
+    setLastStatus(`Résolution ${sizeTitle}…`);
+
+    try {
+      const res = await fetch("/api/icelea-po/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sku }),
+      });
+      const data = await res.json() as {
+        ok?: boolean;
+        icelea?: IceleaIngredient[];
+        error?: string;
+      };
+
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Introuvable");
+
+      setItems((prev) =>
+        prev.map((i) =>
+          i.localId === localId
+            ? { ...i, status: "ok", icelea: data.icelea ?? [] }
+            : i
+        )
+      );
+      const names = (data.icelea ?? []).map((x) => x.name).join(", ");
+      setLastStatus(`✓ Taille ${sizeTitle} → ${names}`);
+      playBeep();
+    } catch (err) {
+      setItems((prev) =>
+        prev.map((i) =>
+          i.localId === localId
+            ? { ...i, status: "error", error: err instanceof Error ? err.message : "Erreur" }
+            : i
+        )
+      );
+      setLastStatus(`✗ ${err instanceof Error ? err.message : "Erreur"}`);
+    }
+  }
+
   const handleBarcode = useCallback(
     async (barcode: string) => {
       if (phase !== "scanning") return;
@@ -76,6 +124,7 @@ export default function IceleaPOPage() {
           localId,
           productName: barcode,
           productSku: null,
+          variants: [],
           icelea: [],
           quantity: 1,
           status: "loading",
@@ -91,46 +140,60 @@ export default function IceleaPOPage() {
         });
         const data = await res.json() as {
           ok?: boolean;
+          type?: "product" | "variant";
           productName?: string;
-          productSku?: string | null;
-          icelea?: IceleaIngredient[];
+          variants?: ScannedVariant[];
+          // variant direct
+          variantTitle?: string;
+          sku?: string;
           error?: string;
         };
 
         if (!res.ok || !data.ok) throw new Error(data.error ?? "Introuvable");
 
-        setItems((prev) =>
-          prev.map((item) =>
-            item.localId === localId
-              ? {
-                  ...item,
-                  status: "ok",
-                  productName: data.productName ?? barcode,
-                  productSku: data.productSku ?? null,
-                  icelea: data.icelea ?? [],
-                }
-              : item
-          )
-        );
-
-        const iceleaNames = (data.icelea ?? []).map((i) => i.name).join(", ");
-        setLastStatus(`✓ ${data.productName} → ${iceleaNames}`);
-        playBeep();
+        if (data.type === "product") {
+          // Multiple sizes → ask Philippe to pick one
+          setItems((prev) =>
+            prev.map((i) =>
+              i.localId === localId
+                ? {
+                    ...i,
+                    status: "selecting_size",
+                    productName: data.productName ?? barcode,
+                    variants: data.variants ?? [],
+                  }
+                : i
+            )
+          );
+          setLastStatus(`${data.productName} — sélectionnez la taille`);
+        } else if (data.type === "variant" && data.sku) {
+          // Single variant resolved directly
+          setItems((prev) =>
+            prev.map((i) =>
+              i.localId === localId
+                ? {
+                    ...i,
+                    productName: data.productName ?? barcode,
+                    productSku: data.sku ?? null,
+                    variants: [],
+                  }
+                : i
+            )
+          );
+          await resolveSize(localId, data.sku, data.variantTitle ?? "");
+        }
       } catch (err) {
         setItems((prev) =>
-          prev.map((item) =>
-            item.localId === localId
-              ? {
-                  ...item,
-                  status: "error",
-                  error: err instanceof Error ? err.message : "Erreur",
-                }
-              : item
+          prev.map((i) =>
+            i.localId === localId
+              ? { ...i, status: "error", error: err instanceof Error ? err.message : "Erreur" }
+              : i
           )
         );
         setLastStatus(`✗ ${err instanceof Error ? err.message : "Erreur"}`);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [phase]
   );
 
@@ -140,13 +203,10 @@ export default function IceleaPOPage() {
 
   useEffect(() => {
     if (phase !== "scanning") return;
-
     const buf = { value: "" };
-
     const onKey = (e: KeyboardEvent) => {
       const tag = (document.activeElement as HTMLElement | null)?.tagName ?? "";
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
       if (e.key === "Enter") {
         if (buf.value) {
           e.preventDefault();
@@ -163,7 +223,6 @@ export default function IceleaPOPage() {
         setBuffer(buf.value);
       }
     };
-
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [phase]);
@@ -191,7 +250,6 @@ export default function IceleaPOPage() {
     setPhase("scanning");
   }
 
-  // Build consolidated PO items: group identical Icelea variants, sum quantities
   function buildPoItems(scannedItems: ScannedItem[]): SubmitItem[] {
     const map = new Map<number, SubmitItem>();
     for (const item of scannedItems) {
@@ -216,32 +274,18 @@ export default function IceleaPOPage() {
   async function closePO() {
     const supplier = suppliers.find((s) => s.id === selectedSupplierId);
     if (!supplier) return;
-
     const poItems = buildPoItems(items);
     if (!poItems.length) return;
-
     setSubmitting(true);
     setClosedError(null);
-
     try {
       const res = await fetch("/api/icelea-po/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          supplierId: supplier.id,
-          supplierName: supplier.name,
-          items: poItems,
-        }),
+        body: JSON.stringify({ supplierId: supplier.id, supplierName: supplier.name, items: poItems }),
       });
-
-      const data = await res.json() as {
-        ok?: boolean;
-        poNumber?: string;
-        error?: string;
-      };
-
+      const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur création PO");
-
       setClosedPONumber(data.poNumber ?? "—");
       setPhase("closed");
     } catch (err) {
@@ -253,24 +297,22 @@ export default function IceleaPOPage() {
 
   function updateQuantity(localId: string, qty: number) {
     if (qty < 1) return;
-    setItems((prev) =>
-      prev.map((i) => (i.localId === localId ? { ...i, quantity: qty } : i))
-    );
+    setItems((prev) => prev.map((i) => (i.localId === localId ? { ...i, quantity: qty } : i)));
   }
 
   function removeItem(localId: string) {
     setItems((prev) => prev.filter((i) => i.localId !== localId));
   }
 
-  const validItems = items.filter((i) => i.status === "ok" && i.icelea.length > 0);
-  const poItems = buildPoItems(validItems);
+  const poItems = buildPoItems(items);
   const totalQty = poItems.reduce((s, i) => s + i.quantity, 0);
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
+  const hasPending = items.some((i) => i.status === "selecting_size" || i.status === "resolving");
 
   // ── CLOSED ────────────────────────────────────────────────────────────────
   if (phase === "closed") {
     return (
-      <div style={styles.container}>
+      <div style={s.container}>
         <div style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
           <h2 style={{ margin: 0 }}>Bon de commande créé</h2>
@@ -280,16 +322,10 @@ export default function IceleaPOPage() {
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
             {poItems.length} référence(s) · {totalQty} pièce(s)
           </p>
-          <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>
-            Email envoyé à philippe@yourmood.net
-          </p>
+          <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>Email envoyé à philippe@yourmood.net</p>
           <button
-            style={{ ...styles.btn, marginTop: 32 }}
-            onClick={() => {
-              setPhase("setup");
-              setItems([]);
-              setClosedPONumber(null);
-            }}
+            style={{ ...s.btn, marginTop: 32 }}
+            onClick={() => { setPhase("setup"); setItems([]); setClosedPONumber(null); }}
           >
             Nouveau PO
           </button>
@@ -301,92 +337,94 @@ export default function IceleaPOPage() {
   // ── SCANNING ──────────────────────────────────────────────────────────────
   if (phase === "scanning") {
     return (
-      <div style={styles.container}>
-        <div style={styles.header}>
+      <div style={s.container}>
+        <div style={s.header}>
           <div>
-            <div style={styles.title}>📦 PO Icelea</div>
+            <div style={s.title}>📦 PO Icelea</div>
             <div style={{ color: "#555", fontSize: 13 }}>
               {selectedSupplier?.name} · {poItems.length} réf. · {totalQty} pce
             </div>
           </div>
           <button
-            style={{
-              ...styles.btn,
-              background: poItems.length ? "#111" : "#ccc",
-              cursor: poItems.length ? "pointer" : "not-allowed",
-            }}
-            disabled={!poItems.length || submitting}
+            style={{ ...s.btn, background: (poItems.length && !hasPending) ? "#111" : "#ccc", cursor: (poItems.length && !hasPending) ? "pointer" : "not-allowed" }}
+            disabled={!poItems.length || hasPending || submitting}
             onClick={closePO}
           >
             {submitting ? "En cours…" : "Clore le PO"}
           </button>
         </div>
 
-        <div style={styles.statusBar}>{buffer ? `> ${buffer}` : lastStatus}</div>
-
-        {closedError && <div style={styles.errorBox}>{closedError}</div>}
-
-        {items.length === 0 && (
-          <div style={styles.empty}>Scannez les articles à commander</div>
-        )}
+        <div style={s.statusBar}>{buffer ? `> ${buffer}` : lastStatus}</div>
+        {closedError && <div style={s.errorBox}>{closedError}</div>}
+        {items.length === 0 && <div style={s.empty}>Scannez les articles à commander</div>}
 
         <div>
           {items.map((item) => (
-            <div key={item.localId} style={styles.itemRow}>
+            <div key={item.localId} style={s.itemRow}>
               <div style={{ flex: 1, minWidth: 0 }}>
+
                 {item.status === "loading" && (
-                  <div style={{ color: "#888", fontSize: 14 }}>
-                    Recherche {item.productName}…
-                  </div>
+                  <div style={{ color: "#888", fontSize: 14 }}>Recherche…</div>
                 )}
+
                 {item.status === "error" && (
                   <div style={{ color: "#c62828", fontSize: 13 }}>
-                    ✗ {item.productName}
+                    <strong>{item.productName}</strong>
                     <br />
                     <span style={{ fontStyle: "italic" }}>{item.error}</span>
                   </div>
                 )}
+
+                {item.status === "selecting_size" && (
+                  <>
+                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>
+                      {item.productName}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {item.variants.map((v) => (
+                        <button
+                          key={v.sku}
+                          style={s.sizeBtn}
+                          onClick={() => resolveSize(item.localId, v.sku, v.title)}
+                        >
+                          {v.title}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {item.status === "resolving" && (
+                  <div style={{ color: "#888", fontSize: 14 }}>
+                    {item.productName} · {item.productSku} — résolution…
+                  </div>
+                )}
+
                 {item.status === "ok" && (
                   <>
                     <div style={{ fontSize: 12, color: "#888" }}>
-                      {item.productName}
-                      {item.productSku ? ` · ${item.productSku}` : ""}
+                      {item.productName}{item.productSku ? ` · ${item.productSku}` : ""}
                     </div>
                     {item.icelea.map((ing) => (
                       <div key={ing.variantId} style={{ fontWeight: 600, fontSize: 14 }}>
                         → {ing.name}
-                        {ing.sku ? (
-                          <span style={{ fontWeight: 400, color: "#888" }}> · {ing.sku}</span>
-                        ) : null}
+                        {ing.sku && <span style={{ fontWeight: 400, color: "#888" }}> · {ing.sku}</span>}
                       </div>
                     ))}
                   </>
                 )}
+
               </div>
 
               {item.status === "ok" && item.icelea.length > 0 && (
-                <div style={styles.qtyControl}>
-                  <button
-                    style={styles.qtyBtn}
-                    onClick={() => updateQuantity(item.localId, item.quantity - 1)}
-                  >
-                    −
-                  </button>
-                  <span style={{ minWidth: 24, textAlign: "center" }}>
-                    {item.quantity}
-                  </span>
-                  <button
-                    style={styles.qtyBtn}
-                    onClick={() => updateQuantity(item.localId, item.quantity + 1)}
-                  >
-                    +
-                  </button>
+                <div style={s.qtyControl}>
+                  <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity - 1)}>−</button>
+                  <span style={{ minWidth: 24, textAlign: "center" }}>{item.quantity}</span>
+                  <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity + 1)}>+</button>
                 </div>
               )}
 
-              <button style={styles.removeBtn} onClick={() => removeItem(item.localId)}>
-                ✕
-              </button>
+              <button style={s.removeBtn} onClick={() => removeItem(item.localId)}>✕</button>
             </div>
           ))}
         </div>
@@ -396,39 +434,27 @@ export default function IceleaPOPage() {
 
   // ── SETUP ─────────────────────────────────────────────────────────────────
   return (
-    <div style={styles.container}>
-      <div style={styles.title}>📦 Nouvel ordre d&apos;achat Icelea</div>
-
+    <div style={s.container}>
+      <div style={s.title}>📦 Nouvel ordre d&apos;achat Icelea</div>
       <div style={{ marginTop: 32 }}>
-        <label style={styles.label}>Fournisseur</label>
+        <label style={s.label}>Fournisseur</label>
         {suppliersLoading ? (
           <div style={{ color: "#888", fontSize: 14 }}>Chargement…</div>
         ) : (
           <select
-            style={styles.select}
+            style={s.select}
             value={selectedSupplierId}
             onChange={(e) => setSelectedSupplierId(Number(e.target.value))}
           >
             <option value="">— Sélectionner —</option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
+            {suppliers.map((sup) => (
+              <option key={sup.id} value={sup.id}>{sup.name}</option>
             ))}
           </select>
         )}
       </div>
-
       <button
-        style={{
-          ...styles.btn,
-          marginTop: 32,
-          width: "100%",
-          background: selectedSupplierId ? "#111" : "#ccc",
-          cursor: selectedSupplierId ? "pointer" : "not-allowed",
-          fontSize: 17,
-          padding: "14px 0",
-        }}
+        style={{ ...s.btn, marginTop: 32, width: "100%", background: selectedSupplierId ? "#111" : "#ccc", cursor: selectedSupplierId ? "pointer" : "not-allowed", fontSize: 17, padding: "14px 0" }}
         disabled={!selectedSupplierId}
         onClick={startScanning}
       >
@@ -438,103 +464,19 @@ export default function IceleaPOPage() {
   );
 }
 
-const styles = {
-  container: {
-    fontFamily: "sans-serif",
-    maxWidth: 520,
-    margin: "0 auto",
-    padding: "24px 16px",
-    color: "#111",
-  } as React.CSSProperties,
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
-    gap: 12,
-  } as React.CSSProperties,
-  title: {
-    fontSize: 20,
-    fontWeight: 700,
-    marginBottom: 4,
-  } as React.CSSProperties,
-  statusBar: {
-    background: "#f5f5f5",
-    borderRadius: 6,
-    padding: "10px 14px",
-    fontSize: 14,
-    color: "#333",
-    marginBottom: 16,
-    minHeight: 40,
-  } as React.CSSProperties,
-  errorBox: {
-    background: "#fef2f2",
-    border: "1px solid #fca5a5",
-    borderRadius: 6,
-    padding: "10px 14px",
-    fontSize: 13,
-    color: "#c62828",
-    marginBottom: 16,
-  } as React.CSSProperties,
-  empty: {
-    textAlign: "center" as const,
-    color: "#aaa",
-    fontSize: 15,
-    padding: "40px 0",
-  },
-  itemRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "10px 0",
-    borderBottom: "1px solid #f0f0f0",
-  } as React.CSSProperties,
-  qtyControl: {
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    fontSize: 15,
-    flexShrink: 0,
-  } as React.CSSProperties,
-  qtyBtn: {
-    width: 28,
-    height: 28,
-    border: "1px solid #ddd",
-    borderRadius: 4,
-    background: "#fff",
-    cursor: "pointer",
-    fontSize: 16,
-  } as React.CSSProperties,
-  removeBtn: {
-    background: "none",
-    border: "none",
-    color: "#aaa",
-    cursor: "pointer",
-    fontSize: 14,
-    padding: "4px 6px",
-    flexShrink: 0,
-  } as React.CSSProperties,
-  btn: {
-    padding: "10px 20px",
-    background: "#111",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    fontSize: 15,
-    cursor: "pointer",
-  } as React.CSSProperties,
-  label: {
-    display: "block",
-    fontSize: 13,
-    color: "#555",
-    marginBottom: 6,
-  } as React.CSSProperties,
-  select: {
-    width: "100%",
-    padding: "10px 12px",
-    border: "1px solid #ddd",
-    borderRadius: 6,
-    fontSize: 15,
-    background: "#fff",
-  } as React.CSSProperties,
+const s = {
+  container: { fontFamily: "sans-serif", maxWidth: 520, margin: "0 auto", padding: "24px 16px", color: "#111" } as React.CSSProperties,
+  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 12 } as React.CSSProperties,
+  title: { fontSize: 20, fontWeight: 700, marginBottom: 4 } as React.CSSProperties,
+  statusBar: { background: "#f5f5f5", borderRadius: 6, padding: "10px 14px", fontSize: 14, color: "#333", marginBottom: 16, minHeight: 40 } as React.CSSProperties,
+  errorBox: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 6, padding: "10px 14px", fontSize: 13, color: "#c62828", marginBottom: 16 } as React.CSSProperties,
+  empty: { textAlign: "center" as const, color: "#aaa", fontSize: 15, padding: "40px 0" },
+  itemRow: { display: "flex", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: "1px solid #f0f0f0" } as React.CSSProperties,
+  sizeBtn: { padding: "6px 14px", border: "1px solid #ddd", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 600 } as React.CSSProperties,
+  qtyControl: { display: "flex", alignItems: "center", gap: 6, fontSize: 15, flexShrink: 0 } as React.CSSProperties,
+  qtyBtn: { width: 28, height: 28, border: "1px solid #ddd", borderRadius: 4, background: "#fff", cursor: "pointer", fontSize: 16 } as React.CSSProperties,
+  removeBtn: { background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, padding: "4px 6px", flexShrink: 0 } as React.CSSProperties,
+  btn: { padding: "10px 20px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, cursor: "pointer" } as React.CSSProperties,
+  label: { display: "block", fontSize: 13, color: "#555", marginBottom: 6 } as React.CSSProperties,
+  select: { width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 6, fontSize: 15, background: "#fff" } as React.CSSProperties,
 };
