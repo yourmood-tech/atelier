@@ -493,12 +493,22 @@ export async function createKatanaPOWithRows(
   supplierId: number,
   rows: { variantId: number; quantity: number }[]
 ): Promise<{ id: number; number: string }> {
+  // Fetch tax rates — Katana requires tax_rate_id on PO creation
+  const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
+    data?: { id: number; name: string; is_default?: boolean }[];
+  };
+  const taxRates = taxData?.data ?? [];
+  const taxRate =
+    taxRates.find((t) => t.is_default) ?? taxRates[0];
+  if (!taxRate) throw new Error("Aucun taux de taxe configuré dans Katana");
+
   const ts = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   const payload = {
     supplier_id: supplierId,
     order_no: `ICE-${ts}-${rand}`,
     location_id: DEFAULT_LOCATION_ID,
+    tax_rate_id: taxRate.id,
     purchase_order_rows: rows.map((r) => ({
       variant_id: r.variantId,
       quantity: r.quantity,
