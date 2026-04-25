@@ -470,6 +470,47 @@ export async function getVariantStock(variantId: number): Promise<{
   return { inStock, committed: 0, available: inStock, toReceive };
 }
 
+export async function getKatanaVariantByBarcode(barcode: string): Promise<{
+  id: number;
+  sku: string | null;
+  name: string;
+}> {
+  const data = (await katanaFetch(
+    `/v1/variants?internal_barcode=${encodeURIComponent(barcode)}`,
+    { method: "GET" }
+  )) as { data?: KatanaVariant[] };
+
+  if (!data?.data?.length) {
+    throw new Error(`Barcode introuvable dans Katana: ${barcode}`);
+  }
+
+  const variant = data.data[0];
+  const name = await resolveVariantLabel(variant);
+  return { id: variant.id, sku: variant.sku ?? null, name };
+}
+
+export async function createKatanaPOWithRows(
+  supplierId: number,
+  rows: { variantId: number; quantity: number }[]
+): Promise<{ id: number; number: string }> {
+  const payload = {
+    supplier_id: supplierId,
+    purchase_order_rows: rows.map((r) => ({
+      variant_id: r.variantId,
+      quantity: r.quantity,
+    })),
+  };
+  const result = (await katanaFetch("/v1/purchase_orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })) as Record<string, unknown>;
+
+  return {
+    id: result.id as number,
+    number: (result.order_no ?? String(result.id)) as string,
+  };
+}
+
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
   const variant = await findVariantByBarcode(input.barcode);
   const variantLabel = await resolveVariantLabel(variant);
