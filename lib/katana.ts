@@ -493,11 +493,16 @@ export async function createKatanaPOWithRows(
   supplierId: number,
   rows: { variantId: number; quantity: number }[]
 ): Promise<{ id: number; number: string }> {
+  const ts = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   const payload = {
     supplier_id: supplierId,
+    order_no: `ICE-${ts}-${rand}`,
+    location_id: DEFAULT_LOCATION_ID,
     purchase_order_rows: rows.map((r) => ({
       variant_id: r.variantId,
       quantity: r.quantity,
+      price_per_unit: 0,
     })),
   };
   const result = (await katanaFetch("/v1/purchase_orders", {
