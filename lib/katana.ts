@@ -508,11 +508,11 @@ export async function createKatanaPOWithRows(
     supplier_id: supplierId,
     order_no: `ICE-${ts}-${rand}`,
     location_id: DEFAULT_LOCATION_ID,
-    tax_rate_id: taxRate.id,
     purchase_order_rows: rows.map((r) => ({
       variant_id: r.variantId,
       quantity: r.quantity,
       price_per_unit: 0,
+      tax_rate_id: taxRate.id,
     })),
   };
   const result = (await katanaFetch("/v1/purchase_orders", {
