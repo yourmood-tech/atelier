@@ -302,13 +302,20 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
         const materialId = ingVariant.material_id as number | null;
         const ingProductId = ingVariant.product_id as number | null;
 
+        let purchasePrice: number | null = null;
+
         if (materialId) {
-          // Purchased material → fetch for name + supplier
+          // Purchased material → fetch for name + supplier + price
           const mat = (await katanaFetch(`/v1/materials/${materialId}`, {
             method: "GET",
           })) as Record<string, unknown>;
 
           name = (mat.name as string) ?? "";
+
+          const rawPrice = mat.purchase_price ?? mat.price ?? mat.cost_price;
+          if (rawPrice != null && !isNaN(Number(rawPrice))) {
+            purchasePrice = Number(rawPrice);
+          }
 
           const supplierId = mat.default_supplier_id as number | null;
           if (supplierId) {
@@ -325,11 +332,13 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
 
         // Fallback to variant name
         if (!name && ingVariant.name) name = ingVariant.name as string;
+
+        return { id: ingredientVariantId, name, sku, quantity, unit: null, supplier, purchasePrice };
       } catch {
         // Non-critical — ingredient without details
       }
 
-      return { id: ingredientVariantId, name, sku, quantity, unit: null, supplier };
+      return { id: ingredientVariantId, name, sku, quantity, unit: null, supplier, purchasePrice: null };
     })
   );
 

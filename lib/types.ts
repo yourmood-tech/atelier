@@ -46,6 +46,7 @@ export type KatanaSupplier = {
 
 export type KatanaRecipeIngredientWithSupplier = KatanaRecipeIngredient & {
   supplier: KatanaSupplier | null;
+  purchasePrice: number | null;
 };
 
 export type ShopifyVariantInfo = {

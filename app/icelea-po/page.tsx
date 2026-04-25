@@ -8,6 +8,7 @@ type IceleaIngredient = {
   variantId: number;
   name: string;
   sku: string | null;
+  purchasePrice: number;
 };
 
 type ScannedVariant = { title: string; sku: string };
@@ -21,7 +22,6 @@ type ScannedItem = {
   // Resolved Icelea ingredient(s)
   icelea: IceleaIngredient[];
   quantity: number;
-  pricePerUnit: number;
   status: "loading" | "selecting_size" | "resolving" | "ok" | "error";
   error?: string;
 };
@@ -90,7 +90,7 @@ export default function IceleaPOPage() {
       setItems((prev) =>
         prev.map((i) =>
           i.localId === localId
-            ? { ...i, status: "ok", icelea: data.icelea ?? [] }
+            ? { ...i, status: "ok", icelea: (data.icelea ?? []).map((x) => ({ ...x, purchasePrice: x.purchasePrice ?? 0 })) }
             : i
         )
       );
@@ -129,7 +129,6 @@ export default function IceleaPOPage() {
           variants: [],
           icelea: [],
           quantity: 1,
-          pricePerUnit: 0,
           status: "loading",
         },
         ...prev,
@@ -268,7 +267,7 @@ export default function IceleaPOPage() {
             variantName: ing.name,
             variantSku: ing.sku,
             quantity: item.quantity,
-            pricePerUnit: item.pricePerUnit,
+            pricePerUnit: ing.purchasePrice,
           });
         }
       }
@@ -276,11 +275,6 @@ export default function IceleaPOPage() {
     return Array.from(map.values());
   }
 
-  function updatePrice(localId: string, price: number) {
-    setItems((prev) =>
-      prev.map((i) => (i.localId === localId ? { ...i, pricePerUnit: price } : i))
-    );
-  }
 
   async function closePO() {
     const supplier = suppliers.find((s) => s.id === selectedSupplierId);
@@ -434,22 +428,14 @@ export default function IceleaPOPage() {
 
               {item.status === "ok" && item.icelea.length > 0 && (
                 <>
+                  <div style={{ fontSize: 12, color: "#888", flexShrink: 0, textAlign: "right" as const }}>
+                    CHF {item.icelea[0].purchasePrice.toFixed(2)}<br />
+                    <span style={{ fontSize: 11 }}>/ pièce</span>
+                  </div>
                   <div style={s.qtyControl}>
                     <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity - 1)}>−</button>
                     <span style={{ minWidth: 24, textAlign: "center" }}>{item.quantity}</span>
                     <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity + 1)}>+</button>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <span style={{ fontSize: 12, color: "#888" }}>CHF</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.pricePerUnit || ""}
-                      placeholder="0.00"
-                      onChange={(e) => updatePrice(item.localId, parseFloat(e.target.value) || 0)}
-                      style={s.priceInput}
-                    />
                   </div>
                 </>
               )}
@@ -505,7 +491,6 @@ const s = {
   sizeBtn: { padding: "6px 14px", border: "1px solid #ddd", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 600 } as React.CSSProperties,
   qtyControl: { display: "flex", alignItems: "center", gap: 6, fontSize: 15, flexShrink: 0 } as React.CSSProperties,
   qtyBtn: { width: 28, height: 28, border: "1px solid #ddd", borderRadius: 4, background: "#fff", cursor: "pointer", fontSize: 16 } as React.CSSProperties,
-  priceInput: { width: 68, padding: "4px 6px", border: "1px solid #ddd", borderRadius: 4, fontSize: 14, textAlign: "right" as const },
   removeBtn: { background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, padding: "4px 6px", flexShrink: 0 } as React.CSSProperties,
   btn: { padding: "10px 20px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, cursor: "pointer" } as React.CSSProperties,
   label: { display: "block", fontSize: 13, color: "#555", marginBottom: 6 } as React.CSSProperties,

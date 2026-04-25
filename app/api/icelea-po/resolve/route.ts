@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         variantId: i.id,
         name: i.name,
         sku: i.sku ?? null,
+        purchasePrice: i.purchasePrice ?? 0,
       })),
     });
   } catch (err) {
