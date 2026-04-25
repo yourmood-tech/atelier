@@ -38,8 +38,32 @@ export async function GET(req: NextRequest) {
   const stockId = req.nextUrl.searchParams.get("stock_id")?.trim() ?? "";
   const handle = req.nextUrl.searchParams.get("handle")?.trim() ?? "";
   const locations = req.nextUrl.searchParams.get("locations")?.trim() ?? "";
+  const materialId = req.nextUrl.searchParams.get("material_id")?.trim() ?? "";
+  const materialSku = req.nextUrl.searchParams.get("material_sku")?.trim() ?? "";
 
   try {
+    // Dump raw material by ID — for field name discovery
+    if (materialId) {
+      const mat = await katanaRaw(`/v1/materials/${materialId}`);
+      return NextResponse.json({ endpoint: `/v1/materials/${materialId}`, ...mat });
+    }
+
+    // Dump raw material by SKU (via variant lookup)
+    if (materialSku) {
+      const varRes = await katanaRaw(`/v1/variants?sku=${encodeURIComponent(materialSku)}&limit=3`);
+      const variant = varRes.body?.data?.[0];
+      if (!variant) return NextResponse.json({ error: "Variant introuvable", varRes });
+      const matId = variant.material_id;
+      if (!matId) return NextResponse.json({ error: "Pas de material_id sur ce variant", variant });
+      const mat = await katanaRaw(`/v1/materials/${matId}`);
+      const taxRates = await katanaRaw(`/v1/tax_rates?limit=50`);
+      return NextResponse.json({
+        variant,
+        material: { endpoint: `/v1/materials/${matId}`, ...mat },
+        tax_rates: taxRates,
+      });
+    }
+
     if (locations) {
       const data = await katanaRaw(`/v1/locations?limit=100`);
       return NextResponse.json(data);
