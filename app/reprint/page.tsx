@@ -3,6 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 
+const PROCESSES = [
+  { key: "coloration",  label: "Coloration" },
+  { key: "gravure",     label: "Gravure" },
+  { key: "bijouterie",  label: "Bijouterie" },
+  { key: "sertissage",  label: "Sertissage" },
+  { key: "pvd",         label: "PVD" },
+  { key: "laser",       label: "Découpe laser" },
+  { key: "casting",     label: "Casting" },
+  { key: "picking",     label: "Picking" },
+];
+
 type PrintResult = {
   order: string;
   copies?: number;
@@ -12,12 +23,21 @@ type PrintResult = {
 
 export default function ReprintPage() {
   const [orders, setOrders] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PrintResult[]>([]);
 
+  function toggle(key: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!orders.trim()) return;
+    if (!orders.trim() || selected.size === 0) return;
     setLoading(true);
     setResults([]);
 
@@ -25,7 +45,7 @@ export default function ReprintPage() {
       const res = await fetch("/api/reprint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orders }),
+        body: JSON.stringify({ orders, processes: [...selected] }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -40,10 +60,12 @@ export default function ReprintPage() {
     }
   }
 
+  const canSubmit = orders.trim().length > 0 && selected.size > 0 && !loading;
+
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-start pt-16 px-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex items-center gap-3">
+        <div className="mb-8">
           <Link href="/" className="text-zinc-500 hover:text-white text-sm transition-colors">
             ← Retour
           </Link>
@@ -51,25 +73,54 @@ export default function ReprintPage() {
 
         <h1 className="text-2xl font-semibold mb-1">Réimpression</h1>
         <p className="text-zinc-400 text-sm mb-8">
-          Entre un ou plusieurs numéros de commande, un par ligne ou séparés par des virgules.
+          Sélectionne le(s) processus à réimprimer et entre les numéros de commande.
         </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <textarea
-            value={orders}
-            onChange={e => setOrders(e.target.value)}
-            placeholder={"12345\n12346\n12347"}
-            rows={5}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 text-white placeholder-zinc-600 p-4 text-sm font-mono resize-none focus:outline-none focus:border-zinc-400 transition-colors"
-            disabled={loading}
-            autoFocus
-          />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+          {/* Process selector */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">Processus</p>
+            <div className="grid grid-cols-2 gap-2">
+              {PROCESSES.map(p => {
+                const active = selected.has(p.key);
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => toggle(p.key)}
+                    className={`rounded-xl border px-4 py-2.5 text-sm font-medium text-left transition-colors ${
+                      active
+                        ? "border-white bg-white text-black"
+                        : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Order numbers */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">Commandes</p>
+            <textarea
+              value={orders}
+              onChange={e => setOrders(e.target.value)}
+              placeholder={"12345\n12346\n12347"}
+              rows={4}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-900 text-white placeholder-zinc-600 p-4 text-sm font-mono resize-none focus:outline-none focus:border-zinc-400 transition-colors"
+              disabled={loading}
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={loading || !orders.trim()}
+            disabled={!canSubmit}
             className="w-full rounded-xl bg-white text-black font-semibold py-3 text-sm hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? "Impression en cours…" : "Imprimer"}
+            {loading ? "Impression en cours…" : `Imprimer${selected.size > 0 ? ` — ${[...selected].map(k => PROCESSES.find(p => p.key === k)?.label).join(", ")}` : ""}`}
           </button>
         </form>
 
