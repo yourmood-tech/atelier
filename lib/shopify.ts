@@ -351,3 +351,13 @@ export async function createShopifyFulfillment(
 
   throw new Error(`Article ${lineItemId} introuvable dans les fulfillment orders de la commande ${orderId}`);
 }
+
+export async function getAtelierTunnelUrl(): Promise<string | null> {
+  try {
+    const data = await shopifyFetch("/metafields.json?namespace=atelier&key=tunnel_url");
+    return data.metafields?.[0]?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
