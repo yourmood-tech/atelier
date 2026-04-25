@@ -302,20 +302,18 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
         const materialId = ingVariant.material_id as number | null;
         const ingProductId = ingVariant.product_id as number | null;
 
-        let purchasePrice: number | null = null;
+        // Price is on the variant, not the material
+        const rawPrice = ingVariant.purchase_price;
+        const purchasePrice: number | null =
+          rawPrice != null && !isNaN(Number(rawPrice)) ? Number(rawPrice) : null;
 
         if (materialId) {
-          // Purchased material → fetch for name + supplier + price
+          // Purchased material → fetch for name + supplier
           const mat = (await katanaFetch(`/v1/materials/${materialId}`, {
             method: "GET",
           })) as Record<string, unknown>;
 
           name = (mat.name as string) ?? "";
-
-          const rawPrice = mat.purchase_price ?? mat.price ?? mat.cost_price;
-          if (rawPrice != null && !isNaN(Number(rawPrice))) {
-            purchasePrice = Number(rawPrice);
-          }
 
           const supplierId = mat.default_supplier_id as number | null;
           if (supplierId) {
@@ -504,12 +502,12 @@ export async function createKatanaPOWithRows(
 ): Promise<{ id: number; number: string }> {
   // Find 0% tax rate (imports) — fallback to default, then first available
   const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
-    data?: { id: number; name: string; rate?: number; percentage?: number; is_default?: boolean }[];
+    data?: { id: number; name: string; rate?: number | null; percentage?: number; is_default?: boolean; is_default_purchases?: boolean }[];
   };
   const taxRates = taxData?.data ?? [];
   const taxRate =
-    taxRates.find((t) => Number(t.rate ?? t.percentage) === 0) ??
-    taxRates.find((t) => t.is_default) ??
+    taxRates.find((t) => t.rate === null || (t.name as string)?.toLowerCase().includes("no tax")) ??
+    taxRates.find((t) => t.is_default_purchases) ??
     taxRates[0];
   if (!taxRate) throw new Error("Aucun taux de taxe configuré dans Katana");
 
