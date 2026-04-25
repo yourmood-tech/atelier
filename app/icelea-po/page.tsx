@@ -21,6 +21,7 @@ type ScannedItem = {
   // Resolved Icelea ingredient(s)
   icelea: IceleaIngredient[];
   quantity: number;
+  pricePerUnit: number;
   status: "loading" | "selecting_size" | "resolving" | "ok" | "error";
   error?: string;
 };
@@ -28,6 +29,7 @@ type ScannedItem = {
 type SubmitItem = {
   variantId: number;
   variantName: string;
+  pricePerUnit: number;
   variantSku: string | null;
   quantity: number;
 };
@@ -127,6 +129,7 @@ export default function IceleaPOPage() {
           variants: [],
           icelea: [],
           quantity: 1,
+          pricePerUnit: 0,
           status: "loading",
         },
         ...prev,
@@ -258,17 +261,25 @@ export default function IceleaPOPage() {
         const existing = map.get(ing.variantId);
         if (existing) {
           existing.quantity += item.quantity;
+          // Keep price of first occurrence (same ingredient = same price)
         } else {
           map.set(ing.variantId, {
             variantId: ing.variantId,
             variantName: ing.name,
             variantSku: ing.sku,
             quantity: item.quantity,
+            pricePerUnit: item.pricePerUnit,
           });
         }
       }
     }
     return Array.from(map.values());
+  }
+
+  function updatePrice(localId: string, price: number) {
+    setItems((prev) =>
+      prev.map((i) => (i.localId === localId ? { ...i, pricePerUnit: price } : i))
+    );
   }
 
   async function closePO() {
@@ -282,7 +293,11 @@ export default function IceleaPOPage() {
       const res = await fetch("/api/icelea-po/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supplierId: supplier.id, supplierName: supplier.name, items: poItems }),
+        body: JSON.stringify({
+          supplierId: supplier.id,
+          supplierName: supplier.name,
+          items: poItems,
+        }),
       });
       const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur création PO");
@@ -306,6 +321,7 @@ export default function IceleaPOPage() {
 
   const poItems = buildPoItems(items);
   const totalQty = poItems.reduce((s, i) => s + i.quantity, 0);
+  const totalCost = poItems.reduce((s, i) => s + i.quantity * i.pricePerUnit, 0);
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
   const hasPending = items.some((i) => i.status === "selecting_size" || i.status === "resolving");
 
@@ -320,7 +336,7 @@ export default function IceleaPOPage() {
             PO n° <strong>{closedPONumber}</strong> — {selectedSupplier?.name}
           </p>
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
-            {poItems.length} référence(s) · {totalQty} pièce(s)
+            {poItems.length} référence(s) · {totalQty} pièce(s) · CHF {totalCost.toFixed(2)}
           </p>
           <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>Email envoyé à philippe@yourmood.net</p>
           <button
@@ -342,7 +358,7 @@ export default function IceleaPOPage() {
           <div>
             <div style={s.title}>📦 PO Icelea</div>
             <div style={{ color: "#555", fontSize: 13 }}>
-              {selectedSupplier?.name} · {poItems.length} réf. · {totalQty} pce
+              {selectedSupplier?.name} · {poItems.length} réf. · {totalQty} pce · CHF {totalCost.toFixed(2)}
             </div>
           </div>
           <button
@@ -417,11 +433,25 @@ export default function IceleaPOPage() {
               </div>
 
               {item.status === "ok" && item.icelea.length > 0 && (
-                <div style={s.qtyControl}>
-                  <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity - 1)}>−</button>
-                  <span style={{ minWidth: 24, textAlign: "center" }}>{item.quantity}</span>
-                  <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity + 1)}>+</button>
-                </div>
+                <>
+                  <div style={s.qtyControl}>
+                    <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity - 1)}>−</button>
+                    <span style={{ minWidth: 24, textAlign: "center" }}>{item.quantity}</span>
+                    <button style={s.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity + 1)}>+</button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, color: "#888" }}>CHF</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.pricePerUnit || ""}
+                      placeholder="0.00"
+                      onChange={(e) => updatePrice(item.localId, parseFloat(e.target.value) || 0)}
+                      style={s.priceInput}
+                    />
+                  </div>
+                </>
               )}
 
               <button style={s.removeBtn} onClick={() => removeItem(item.localId)}>✕</button>
@@ -475,6 +505,7 @@ const s = {
   sizeBtn: { padding: "6px 14px", border: "1px solid #ddd", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 600 } as React.CSSProperties,
   qtyControl: { display: "flex", alignItems: "center", gap: 6, fontSize: 15, flexShrink: 0 } as React.CSSProperties,
   qtyBtn: { width: 28, height: 28, border: "1px solid #ddd", borderRadius: 4, background: "#fff", cursor: "pointer", fontSize: 16 } as React.CSSProperties,
+  priceInput: { width: 68, padding: "4px 6px", border: "1px solid #ddd", borderRadius: 4, fontSize: 14, textAlign: "right" as const },
   removeBtn: { background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 14, padding: "4px 6px", flexShrink: 0 } as React.CSSProperties,
   btn: { padding: "10px 20px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, cursor: "pointer" } as React.CSSProperties,
   label: { display: "block", fontSize: 13, color: "#555", marginBottom: 6 } as React.CSSProperties,

@@ -491,15 +491,17 @@ export async function getKatanaVariantByBarcode(barcode: string): Promise<{
 
 export async function createKatanaPOWithRows(
   supplierId: number,
-  rows: { variantId: number; quantity: number }[]
+  rows: { variantId: number; quantity: number; pricePerUnit: number }[]
 ): Promise<{ id: number; number: string }> {
-  // Fetch tax rates — Katana requires tax_rate_id on PO creation
+  // Find 0% tax rate (imports) — fallback to default, then first available
   const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
-    data?: { id: number; name: string; is_default?: boolean }[];
+    data?: { id: number; name: string; rate?: number; percentage?: number; is_default?: boolean }[];
   };
   const taxRates = taxData?.data ?? [];
   const taxRate =
-    taxRates.find((t) => t.is_default) ?? taxRates[0];
+    taxRates.find((t) => Number(t.rate ?? t.percentage) === 0) ??
+    taxRates.find((t) => t.is_default) ??
+    taxRates[0];
   if (!taxRate) throw new Error("Aucun taux de taxe configuré dans Katana");
 
   const ts = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -511,7 +513,7 @@ export async function createKatanaPOWithRows(
     purchase_order_rows: rows.map((r) => ({
       variant_id: r.variantId,
       quantity: r.quantity,
-      price_per_unit: 0,
+      price_per_unit: r.pricePerUnit,
       tax_rate_id: taxRate.id,
     })),
   };

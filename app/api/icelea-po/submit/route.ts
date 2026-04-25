@@ -6,6 +6,7 @@ type SubmitItem = {
   variantName: string;
   variantSku: string | null;
   quantity: number;
+  pricePerUnit: number;
 };
 
 export async function POST(req: NextRequest) {
@@ -24,11 +25,14 @@ export async function POST(req: NextRequest) {
 
     const po = await createKatanaPOWithRows(
       supplierId,
-      items.map((i) => ({ variantId: i.variantId, quantity: i.quantity }))
+      items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit }))
     );
 
     const apiKey = process.env.RESEND_API_KEY;
     if (apiKey) {
+      const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+      const totalCost = items.reduce((sum, i) => sum + i.quantity * i.pricePerUnit, 0);
+
       const itemRows = items
         .map(
           (item) =>
@@ -36,14 +40,14 @@ export async function POST(req: NextRequest) {
               <td style="padding:5px 0;border-bottom:1px solid #f0f0f0">${item.variantName}</td>
               <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;color:#555">${item.variantSku ?? "—"}</td>
               <td style="padding:5px 0;border-bottom:1px solid #f0f0f0;text-align:right">${item.quantity}</td>
+              <td style="padding:5px 0 5px 8px;border-bottom:1px solid #f0f0f0;text-align:right">${item.pricePerUnit.toFixed(2)}</td>
+              <td style="padding:5px 0 5px 8px;border-bottom:1px solid #f0f0f0;text-align:right">${(item.quantity * item.pricePerUnit).toFixed(2)}</td>
             </tr>`
         )
         .join("");
 
-      const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
-
       const html = `
-        <div style="font-family:sans-serif;max-width:560px;color:#111">
+        <div style="font-family:sans-serif;max-width:600px;color:#111">
           <h2 style="margin-bottom:4px">📦 Bon de commande Icelea créé</h2>
           <p style="color:#555;margin-top:0">
             Fournisseur : <strong>${supplierName}</strong> &nbsp;—&nbsp;
@@ -55,6 +59,8 @@ export async function POST(req: NextRequest) {
                 <th style="padding:5px 0;text-align:left;font-weight:600">Article</th>
                 <th style="padding:5px 8px;text-align:left;font-weight:600">SKU</th>
                 <th style="padding:5px 0;text-align:right;font-weight:600">Qté</th>
+                <th style="padding:5px 0 5px 8px;text-align:right;font-weight:600">Prix/u</th>
+                <th style="padding:5px 0 5px 8px;text-align:right;font-weight:600">Total</th>
               </tr>
             </thead>
             <tbody>${itemRows}</tbody>
@@ -62,6 +68,8 @@ export async function POST(req: NextRequest) {
               <tr>
                 <td colspan="2" style="padding:8px 0;font-weight:600">Total</td>
                 <td style="padding:8px 0;text-align:right;font-weight:600">${totalQty}</td>
+                <td></td>
+                <td style="padding:8px 0 8px 8px;text-align:right;font-weight:600">CHF ${totalCost.toFixed(2)}</td>
               </tr>
             </tfoot>
           </table>
@@ -80,7 +88,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: "katana@yourmood.net",
           to: "philippe@yourmood.net",
-          subject: `📦 PO Icelea ${po.number} — ${items.length} référence(s), ${totalQty} pièce(s)`,
+          subject: `📦 PO Icelea ${po.number} — ${items.length} réf. · CHF ${totalCost.toFixed(2)}`,
           html,
         }),
       });
