@@ -4,14 +4,29 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Supplier = { id: number; name: string };
 
+type IceleaIngredient = {
+  variantId: number;
+  name: string;
+  sku: string | null;
+};
+
 type ScannedItem = {
   localId: string;
+  // Shopify product that was scanned
+  productName: string;
+  productSku: string | null;
+  // Icelea material(s) from the recipe
+  icelea: IceleaIngredient[];
+  quantity: number;
+  status: "loading" | "ok" | "error";
+  error?: string;
+};
+
+type SubmitItem = {
   variantId: number;
   variantName: string;
   variantSku: string | null;
   quantity: number;
-  status: "ok" | "error";
-  error?: string;
 };
 
 type Phase = "setup" | "scanning" | "closed";
@@ -31,24 +46,19 @@ export default function IceleaPOPage() {
   const lastAcceptedRef = useRef<{ barcode: string; ts: number } | null>(null);
   const scanHandlerRef = useRef<(barcode: string) => void>(() => {});
 
-  // Load suppliers on mount
   useEffect(() => {
     fetch("/api/icelea-po/suppliers")
       .then((r) => r.json())
       .then((data: { suppliers?: Supplier[] }) => {
         const list = data.suppliers ?? [];
         setSuppliers(list);
-        // Pre-select Icelea if found
-        const icelea = list.find((s) =>
-          s.name.toLowerCase().includes("icelea")
-        );
+        const icelea = list.find((s) => s.name.toLowerCase().includes("icelea"));
         if (icelea) setSelectedSupplierId(icelea.id);
       })
       .catch(() => {})
       .finally(() => setSuppliersLoading(false));
   }, []);
 
-  // Barcode scanner handler (updated via ref so keydown listener stays stable)
   const handleBarcode = useCallback(
     async (barcode: string) => {
       if (phase !== "scanning") return;
@@ -61,15 +71,14 @@ export default function IceleaPOPage() {
       const localId = crypto.randomUUID();
       setLastStatus(`Recherche ${barcode}…`);
 
-      // Add a pending placeholder
       setItems((prev) => [
         {
           localId,
-          variantId: 0,
-          variantName: barcode,
-          variantSku: null,
+          productName: barcode,
+          productSku: null,
+          icelea: [],
           quantity: 1,
-          status: "ok",
+          status: "loading",
         },
         ...prev,
       ]);
@@ -82,9 +91,9 @@ export default function IceleaPOPage() {
         });
         const data = await res.json() as {
           ok?: boolean;
-          id?: number;
-          name?: string;
-          sku?: string | null;
+          productName?: string;
+          productSku?: string | null;
+          icelea?: IceleaIngredient[];
           error?: string;
         };
 
@@ -95,14 +104,17 @@ export default function IceleaPOPage() {
             item.localId === localId
               ? {
                   ...item,
-                  variantId: data.id!,
-                  variantName: data.name ?? barcode,
-                  variantSku: data.sku ?? null,
+                  status: "ok",
+                  productName: data.productName ?? barcode,
+                  productSku: data.productSku ?? null,
+                  icelea: data.icelea ?? [],
                 }
               : item
           )
         );
-        setLastStatus(`✓ ${data.name ?? barcode}`);
+
+        const iceleaNames = (data.icelea ?? []).map((i) => i.name).join(", ");
+        setLastStatus(`✓ ${data.productName} → ${iceleaNames}`);
         playBeep();
       } catch (err) {
         setItems((prev) =>
@@ -126,7 +138,6 @@ export default function IceleaPOPage() {
     scanHandlerRef.current = handleBarcode;
   });
 
-  // Keyboard capture for barcode scanner
   useEffect(() => {
     if (phase !== "scanning") return;
 
@@ -180,14 +191,34 @@ export default function IceleaPOPage() {
     setPhase("scanning");
   }
 
+  // Build consolidated PO items: group identical Icelea variants, sum quantities
+  function buildPoItems(scannedItems: ScannedItem[]): SubmitItem[] {
+    const map = new Map<number, SubmitItem>();
+    for (const item of scannedItems) {
+      if (item.status !== "ok") continue;
+      for (const ing of item.icelea) {
+        const existing = map.get(ing.variantId);
+        if (existing) {
+          existing.quantity += item.quantity;
+        } else {
+          map.set(ing.variantId, {
+            variantId: ing.variantId,
+            variantName: ing.name,
+            variantSku: ing.sku,
+            quantity: item.quantity,
+          });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }
+
   async function closePO() {
     const supplier = suppliers.find((s) => s.id === selectedSupplierId);
     if (!supplier) return;
 
-    const validItems = items.filter(
-      (i) => i.status === "ok" && i.variantId !== 0
-    );
-    if (!validItems.length) return;
+    const poItems = buildPoItems(items);
+    if (!poItems.length) return;
 
     setSubmitting(true);
     setClosedError(null);
@@ -199,12 +230,7 @@ export default function IceleaPOPage() {
         body: JSON.stringify({
           supplierId: supplier.id,
           supplierName: supplier.name,
-          items: validItems.map((i) => ({
-            variantId: i.variantId,
-            variantName: i.variantName,
-            variantSku: i.variantSku,
-            quantity: i.quantity,
-          })),
+          items: poItems,
         }),
       });
 
@@ -236,8 +262,9 @@ export default function IceleaPOPage() {
     setItems((prev) => prev.filter((i) => i.localId !== localId));
   }
 
-  const validItems = items.filter((i) => i.status === "ok" && i.variantId !== 0);
-  const totalQty = validItems.reduce((s, i) => s + i.quantity, 0);
+  const validItems = items.filter((i) => i.status === "ok" && i.icelea.length > 0);
+  const poItems = buildPoItems(validItems);
+  const totalQty = poItems.reduce((s, i) => s + i.quantity, 0);
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
 
   // ── CLOSED ────────────────────────────────────────────────────────────────
@@ -251,7 +278,7 @@ export default function IceleaPOPage() {
             PO n° <strong>{closedPONumber}</strong> — {selectedSupplier?.name}
           </p>
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
-            {validItems.length} référence(s) · {totalQty} pièce(s)
+            {poItems.length} référence(s) · {totalQty} pièce(s)
           </p>
           <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>
             Email envoyé à philippe@yourmood.net
@@ -279,16 +306,16 @@ export default function IceleaPOPage() {
           <div>
             <div style={styles.title}>📦 PO Icelea</div>
             <div style={{ color: "#555", fontSize: 13 }}>
-              {selectedSupplier?.name} · {validItems.length} réf. · {totalQty} pce
+              {selectedSupplier?.name} · {poItems.length} réf. · {totalQty} pce
             </div>
           </div>
           <button
             style={{
               ...styles.btn,
-              background: validItems.length ? "#111" : "#ccc",
-              cursor: validItems.length ? "pointer" : "not-allowed",
+              background: poItems.length ? "#111" : "#ccc",
+              cursor: poItems.length ? "pointer" : "not-allowed",
             }}
-            disabled={!validItems.length || submitting}
+            disabled={!poItems.length || submitting}
             onClick={closePO}
           >
             {submitting ? "En cours…" : "Clore le PO"}
@@ -297,44 +324,67 @@ export default function IceleaPOPage() {
 
         <div style={styles.statusBar}>{buffer ? `> ${buffer}` : lastStatus}</div>
 
-        {closedError && (
-          <div style={styles.errorBox}>{closedError}</div>
-        )}
+        {closedError && <div style={styles.errorBox}>{closedError}</div>}
 
         {items.length === 0 && (
-          <div style={styles.empty}>
-            Scannez les articles à commander
-          </div>
+          <div style={styles.empty}>Scannez les articles à commander</div>
         )}
 
         <div>
           {items.map((item) => (
             <div key={item.localId} style={styles.itemRow}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                {item.status === "error" ? (
-                  <div style={{ color: "#c62828", fontSize: 14 }}>
-                    ✗ {item.variantName} — {item.error}
+                {item.status === "loading" && (
+                  <div style={{ color: "#888", fontSize: 14 }}>
+                    Recherche {item.productName}…
                   </div>
-                ) : (
+                )}
+                {item.status === "error" && (
+                  <div style={{ color: "#c62828", fontSize: 13 }}>
+                    ✗ {item.productName}
+                    <br />
+                    <span style={{ fontStyle: "italic" }}>{item.error}</span>
+                  </div>
+                )}
+                {item.status === "ok" && (
                   <>
-                    <div style={{ fontWeight: 600, fontSize: 15 }}>{item.variantName}</div>
-                    {item.variantSku && (
-                      <div style={{ color: "#888", fontSize: 12 }}>{item.variantSku}</div>
-                    )}
+                    <div style={{ fontSize: 12, color: "#888" }}>
+                      {item.productName}
+                      {item.productSku ? ` · ${item.productSku}` : ""}
+                    </div>
+                    {item.icelea.map((ing) => (
+                      <div key={ing.variantId} style={{ fontWeight: 600, fontSize: 14 }}>
+                        → {ing.name}
+                        {ing.sku ? (
+                          <span style={{ fontWeight: 400, color: "#888" }}> · {ing.sku}</span>
+                        ) : null}
+                      </div>
+                    ))}
                   </>
                 )}
               </div>
-              {item.status === "ok" && item.variantId !== 0 && (
+
+              {item.status === "ok" && item.icelea.length > 0 && (
                 <div style={styles.qtyControl}>
-                  <button style={styles.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity - 1)}>−</button>
-                  <span style={{ minWidth: 24, textAlign: "center" }}>{item.quantity}</span>
-                  <button style={styles.qtyBtn} onClick={() => updateQuantity(item.localId, item.quantity + 1)}>+</button>
+                  <button
+                    style={styles.qtyBtn}
+                    onClick={() => updateQuantity(item.localId, item.quantity - 1)}
+                  >
+                    −
+                  </button>
+                  <span style={{ minWidth: 24, textAlign: "center" }}>
+                    {item.quantity}
+                  </span>
+                  <button
+                    style={styles.qtyBtn}
+                    onClick={() => updateQuantity(item.localId, item.quantity + 1)}
+                  >
+                    +
+                  </button>
                 </div>
               )}
-              <button
-                style={styles.removeBtn}
-                onClick={() => removeItem(item.localId)}
-              >
+
+              <button style={styles.removeBtn} onClick={() => removeItem(item.localId)}>
                 ✕
               </button>
             </div>
@@ -444,6 +494,7 @@ const styles = {
     alignItems: "center",
     gap: 6,
     fontSize: 15,
+    flexShrink: 0,
   } as React.CSSProperties,
   qtyBtn: {
     width: 28,
@@ -453,9 +504,6 @@ const styles = {
     background: "#fff",
     cursor: "pointer",
     fontSize: 16,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
   } as React.CSSProperties,
   removeBtn: {
     background: "none",
@@ -464,6 +512,7 @@ const styles = {
     cursor: "pointer",
     fontSize: 14,
     padding: "4px 6px",
+    flexShrink: 0,
   } as React.CSSProperties,
   btn: {
     padding: "10px 20px",
