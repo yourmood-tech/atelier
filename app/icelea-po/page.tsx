@@ -19,6 +19,7 @@ type ScannedItem = {
   productSku: string | null;
   variants: ScannedVariant[];
   icelea: IceleaIngredient[];
+  excludedVariantIds: number[];
   quantity: number;
   status: "loading" | "selecting_size" | "resolving" | "ok" | "error";
   error?: string;
@@ -114,7 +115,7 @@ export default function IceleaPOPage() {
       setItems((prev) =>
         prev.map((i) =>
           i.localId === localId
-            ? { ...i, status: "ok", icelea: (data.icelea ?? []).map((x) => ({ ...x, purchasePrice: x.purchasePrice ?? 0 })) }
+            ? { ...i, status: "ok", icelea: (data.icelea ?? []).map((x) => ({ ...x, purchasePrice: x.purchasePrice ?? 0 })), excludedVariantIds: [] }
             : i
         )
       );
@@ -172,7 +173,7 @@ export default function IceleaPOPage() {
         setLastStatus(`Recherche ${barcode}…`);
 
         setItems((prev) => [
-          { localId, productName: barcode, productSku: null, variants: [], icelea: [], quantity: 1, status: "loading" },
+          { localId, productName: barcode, productSku: null, variants: [], icelea: [], excludedVariantIds: [], quantity: 1, status: "loading" },
           ...prev,
         ]);
 
@@ -276,7 +277,7 @@ export default function IceleaPOPage() {
     const map = new Map<number, SubmitItem>();
     for (const item of scannedItems) {
       if (item.status !== "ok") continue;
-      for (const ing of item.icelea) {
+      for (const ing of item.icelea.filter((ing) => !item.excludedVariantIds.includes(ing.variantId))) {
         const existing = map.get(ing.variantId);
         if (existing) {
           existing.quantity += item.quantity;
@@ -341,6 +342,18 @@ export default function IceleaPOPage() {
 
   function removeItem(localId: string) {
     setItems((prev) => prev.filter((i) => i.localId !== localId));
+  }
+
+  function toggleIngredient(localId: string, variantId: number) {
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.localId !== localId) return i;
+        const excluded = i.excludedVariantIds.includes(variantId)
+          ? i.excludedVariantIds.filter((id) => id !== variantId)
+          : [...i.excludedVariantIds, variantId];
+        return { ...i, excludedVariantIds: excluded };
+      })
+    );
   }
 
   const poItems = buildPoItems(items);
@@ -481,12 +494,19 @@ export default function IceleaPOPage() {
                     <div style={{ fontSize: 12, color: "#888" }}>
                       {item.productName}{item.productSku ? ` · ${item.productSku}` : ""}
                     </div>
-                    {item.icelea.map((ing) => (
-                      <div key={ing.variantId} style={{ fontWeight: 600, fontSize: 14 }}>
-                        → {ing.name}
-                        {ing.sku && <span style={{ fontWeight: 400, color: "#888" }}> · {ing.sku}</span>}
-                      </div>
-                    ))}
+                    {item.icelea.map((ing) => {
+                      const excluded = item.excludedVariantIds.includes(ing.variantId);
+                      return (
+                        <div
+                          key={ing.variantId}
+                          onClick={() => toggleIngredient(item.localId, ing.variantId)}
+                          style={{ fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: excluded ? 0.35 : 1, textDecoration: excluded ? "line-through" : "none", userSelect: "none" }}
+                        >
+                          → {ing.name}
+                          {ing.sku && <span style={{ fontWeight: 400, color: "#888" }}> · {ing.sku}</span>}
+                        </div>
+                      );
+                    })}
                   </>
                 )}
 
@@ -495,7 +515,7 @@ export default function IceleaPOPage() {
               {item.status === "ok" && item.icelea.length > 0 && (
                 <>
                   <div style={{ fontSize: 12, color: "#888", flexShrink: 0, textAlign: "right" as const }}>
-                    CHF {item.icelea[0].purchasePrice.toFixed(2)}<br />
+                    CHF {item.icelea.filter((ing) => !item.excludedVariantIds.includes(ing.variantId)).reduce((s, ing) => s + ing.purchasePrice, 0).toFixed(2)}<br />
                     <span style={{ fontSize: 11 }}>/ pièce</span>
                   </div>
                   <div style={s.qtyControl}>
