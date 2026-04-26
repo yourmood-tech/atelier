@@ -274,7 +274,7 @@ export default function RecipesPage() {
             <input
               ref={ingInputRef}
               style={{ ...s.input, flex: 1 }}
-              placeholder="Préfixe SKU (ex: MTRL-MD-RI-113)"
+              placeholder="SKU d'une variante (ex: MTRL-MD-RI-113-Infinity CZ-50)"
               value={ingQuery}
               onChange={(e) => setIngQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") void searchIngredient(ingQuery); }}

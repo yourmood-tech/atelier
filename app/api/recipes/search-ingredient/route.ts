@@ -16,77 +16,58 @@ function looksLikeSize(s: string): boolean {
   return /^\d{2,3}$/.test(s.trim());
 }
 
-function getTailleFromConfig(configAttributes: { config_name: string; config_value: string }[]): string | null {
-  const t = configAttributes.find(
-    (a) => ["taille", "size", "ring size"].includes(a.config_name.toLowerCase())
-  );
-  return t?.config_value ?? null;
-}
-
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ materials: [] });
 
-  try {
-    // Search variants by SKU prefix — the only reliable Katana search
-    const varRes = await katanaGet(`/v1/variants?sku=${encodeURIComponent(q)}&limit=50`) as {
-      data?: {
-        id: number;
-        sku: string | null;
-        material_id: number | null;
-        product_id: number | null;
-        config_attributes: { config_name: string; config_value: string }[];
-      }[];
-    } | null;
+  // Exact SKU lookup on one variant → fetch parent → return all sibling variants
+  const varRes = await katanaGet(`/v1/variants?sku=${encodeURIComponent(q)}&limit=3`) as {
+    data?: {
+      id: number;
+      sku: string | null;
+      material_id: number | null;
+      product_id: number | null;
+      config_attributes: { config_name: string; config_value: string }[];
+    }[];
+  } | null;
 
-    const variantRows = varRes?.data ?? [];
-
-    // Group variants by parent (material_id or product_id)
-    const groups = new Map<string, typeof variantRows>();
-    for (const v of variantRows) {
-      const key = v.material_id ? `mat-${v.material_id}` : `prod-${v.product_id}`;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(v);
-    }
-
-    // Fetch parent names and build result
-    const materials = await Promise.all(
-      [...groups.entries()].map(async ([key, variants]) => {
-        const isMaterial = key.startsWith("mat-");
-        const parentId = parseInt(key.split("-")[1]);
-
-        let name = q;
-        try {
-          const parent = await katanaGet(
-            isMaterial ? `/v1/materials/${parentId}` : `/v1/products/${parentId}`
-          ) as { name?: string } | null;
-          if (parent?.name) name = parent.name;
-        } catch { /* use SKU as fallback */ }
-
-        const mapped = variants.map((v) => {
-          const tailleAttr = getTailleFromConfig(v.config_attributes);
-          const variantName = tailleAttr ?? v.sku ?? String(v.id);
-          return { id: v.id, sku: v.sku ?? null, name: variantName };
-        });
-
-        const hasTaille =
-          mapped.length > 1 && mapped.every((v) => looksLikeSize(v.name));
-
-        return {
-          id: parentId,
-          name,
-          kind: (isMaterial ? "material" : "product") as "material" | "product",
-          variants: mapped,
-          hasTaille,
-        };
-      })
-    );
-
-    return NextResponse.json({ materials });
-  } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Erreur" },
-      { status: 500 }
-    );
+  const found = varRes?.data?.[0];
+  if (!found) {
+    return NextResponse.json({ materials: [], hint: "SKU introuvable — entre le SKU complet d'une variante (ex: MTRL-MD-RI-113-Infinity CZ-50)" });
   }
+
+  const isMaterial = !!found.material_id;
+  const parentId = found.material_id ?? found.product_id;
+  if (!parentId) return NextResponse.json({ materials: [] });
+
+  // Fetch parent to get name + ALL variants
+  const parent = await katanaGet(
+    isMaterial ? `/v1/materials/${parentId}` : `/v1/products/${parentId}`
+  ) as {
+    name?: string;
+    variants?: { id: number; sku: string | null; config_attributes?: { config_name: string; config_value: string }[] }[];
+  } | null;
+
+  const name = parent?.name ?? q;
+  const allVariants = parent?.variants ?? [found];
+
+  const mapped = allVariants.map((v) => {
+    const attrs = v.config_attributes ?? [];
+    const taille = attrs.find(
+      (a) => ["taille", "size", "ring size"].includes(a.config_name.toLowerCase())
+    )?.config_value;
+    return { id: v.id, sku: v.sku ?? null, name: taille ?? v.sku ?? String(v.id) };
+  });
+
+  const hasTaille = mapped.length > 1 && mapped.every((v) => looksLikeSize(v.name));
+
+  return NextResponse.json({
+    materials: [{
+      id: parentId,
+      name,
+      kind: isMaterial ? "material" : "product",
+      variants: mapped,
+      hasTaille,
+    }],
+  });
 }
