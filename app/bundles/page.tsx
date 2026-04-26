@@ -73,8 +73,7 @@ function generateCSV(
   bundleProduct: ShopifyProduct,
   components: ComponentEntry[]
 ): { csv: string; warnings: string[] } {
-  const header =
-    "bundle_variant_sku,bundle_variant_id,bundle_item_variant_sku,bundle_item_variant_id,bundle_item_quantity,bundle_type,sync_price,bundle_discount_percentage,infinite_option_names,infinite_option_values";
+  const header = "bundle_variant_sku,bundle_item_variant_sku,bundle_item_quantity,sync_price";
   const rows: string[] = [header];
   const warnings: string[] = [];
 
@@ -92,29 +91,11 @@ function generateCSV(
           }) ?? comp.product.variants[0];
 
       if (!itemVariant) {
-        warnings.push(
-          `Pas de variante trouvée pour "${comp.product.title}" — taille ${bundleSize}`
-        );
+        warnings.push(`Pas de variante trouvée pour "${comp.product.title}" — taille ${bundleSize}`);
         continue;
       }
 
-      for (let q = 0; q < comp.quantity; q += comp.quantity) {
-        rows.push(
-          [
-            bundleVariant.sku ?? "",
-            bundleVariant.id,
-            itemVariant.sku ?? "",
-            itemVariant.id,
-            comp.quantity,
-            "simple",
-            "TRUE",
-            "",
-            "",
-            "",
-          ].join(",")
-        );
-        break;
-      }
+      rows.push([bundleVariant.id, itemVariant.id, comp.quantity, "FALSE"].join(","));
     }
   }
 
