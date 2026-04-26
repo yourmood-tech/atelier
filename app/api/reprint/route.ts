@@ -22,15 +22,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Fire-and-forget : lancer l'impression sans attendre la fin (évite le timeout Vercel)
-  fetch(`${tunnelUrl}/reprint`, {
+  const printRes = await fetch(`${tunnelUrl}/reprint`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ orders, processes }),
+    signal: AbortSignal.timeout(10_000),
   }).catch(() => null);
 
-  return NextResponse.json({
-    ok: true,
-    results: [{ order: "Impression lancée", copies: "—", processes: "vérifier les logs atelier" }],
-  });
+  if (!printRes?.ok) {
+    return NextResponse.json(
+      { ok: false, error: "Serveur atelier n'a pas répondu" },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({ ok: true, results: [{ order: "Impression lancée", copies: "—", processes: "vérifier les logs atelier" }] });
 }
