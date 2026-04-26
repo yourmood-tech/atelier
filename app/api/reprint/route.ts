@@ -12,19 +12,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Vérifier que le serveur répond avant de lancer (timeout court)
   try {
-    const res = await fetch(`${tunnelUrl}/reprint`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orders, processes }),
-      signal: AbortSignal.timeout(120_000),
-    });
-
-    if (!res.ok) throw new Error(`Atelier server ${res.status}`);
-    const data = await res.json();
-    return NextResponse.json({ ok: true, results: data.results });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, error: msg }, { status: 502 });
+    await fetch(`${tunnelUrl}/health`, { signal: AbortSignal.timeout(5_000) });
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Serveur atelier injoignable — vérifier que le tunnel est actif" },
+      { status: 502 }
+    );
   }
+
+  // Fire-and-forget : lancer l'impression sans attendre la fin (évite le timeout Vercel)
+  fetch(`${tunnelUrl}/reprint`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orders, processes }),
+  }).catch(() => null);
+
+  return NextResponse.json({
+    ok: true,
+    results: [{ order: "Impression lancée", copies: "—", processes: "vérifier les logs atelier" }],
+  });
 }
