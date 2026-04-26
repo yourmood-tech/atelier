@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BASE_URL = "https://app.katanamrp.com/api";
+const BASE_URL = process.env.KATANA_BASE_URL!;
 const API_KEY = process.env.KATANA_API_KEY!;
 
 async function katanaGet(path: string) {
