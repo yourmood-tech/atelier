@@ -11,7 +11,8 @@ async function katanaGet(path: string) {
     },
     cache: "no-store",
   });
-  return res.json();
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return { _rawText: text, _status: res.status }; }
 }
 
 function looksLikeSize(name: string): boolean {
@@ -27,7 +28,8 @@ type KatanaIngredient = {
 };
 
 async function searchMaterials(q: string): Promise<KatanaIngredient[]> {
-  const raw = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&limit=15`);
+  // Try both search params — Katana materials may use 'name' instead of 'search'
+  const raw = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&name=${encodeURIComponent(q)}&limit=15`);
   const rows: { id: number; name: string; variants?: unknown[] }[] =
     Array.isArray(raw) ? raw : (raw?.data ?? []);
 
@@ -77,10 +79,12 @@ export async function GET(req: NextRequest) {
     ]);
 
     if (debug) {
-      return NextResponse.json({
-        materials: materials.status === "fulfilled" ? materials.value : { error: String(materials.reason) },
-        products: products.status === "fulfilled" ? products.value : { error: String(products.reason) },
-      });
+      // Raw responses before any transformation
+      const [rawMat, rawProd] = await Promise.all([
+        katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&name=${encodeURIComponent(q)}&limit=15`),
+        katanaGet(`/v1/products?search=${encodeURIComponent(q)}&limit=15`),
+      ]);
+      return NextResponse.json({ rawMaterials: rawMat, rawProducts: rawProd });
     }
 
     const result: KatanaIngredient[] = [
