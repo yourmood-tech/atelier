@@ -5,94 +5,84 @@ const API_KEY = process.env.KATANA_API_KEY!;
 
 async function katanaGet(path: string) {
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${API_KEY}`,
-    },
+    headers: { Accept: "application/json", Authorization: `Bearer ${API_KEY}` },
     cache: "no-store",
   });
   const text = await res.text();
-  try { return JSON.parse(text); } catch { return { _rawText: text, _status: res.status }; }
+  try { return JSON.parse(text); } catch { return null; }
 }
 
-function looksLikeSize(name: string): boolean {
-  return /^\d{2,3}$/.test(name.trim());
+function looksLikeSize(s: string): boolean {
+  return /^\d{2,3}$/.test(s.trim());
 }
 
-type KatanaIngredient = {
-  id: number;
-  name: string;
-  kind: "material" | "product";
-  variants: { id: number; sku: string | null; name: string }[];
-  hasTaille: boolean;
-};
-
-async function searchMaterials(q: string): Promise<KatanaIngredient[]> {
-  // Try both search params — Katana materials may use 'name' instead of 'search'
-  const raw = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&name=${encodeURIComponent(q)}&limit=15`);
-  const rows: { id: number; name: string; variants?: unknown[] }[] =
-    Array.isArray(raw) ? raw : (raw?.data ?? []);
-
-  return Promise.all(
-    rows.map(async (m) => {
-      let variants: { id: number; sku: string | null; name: string }[] = [];
-      if (Array.isArray(m.variants) && m.variants.length > 0) {
-        variants = (m.variants as { id: number; sku?: string | null; name?: string | null }[]).map((v) => ({
-          id: v.id, sku: v.sku ?? null, name: v.name ?? "",
-        }));
-      } else {
-        const full = await katanaGet(`/v1/materials/${m.id}`);
-        const fv: { id: number; sku?: string | null; name?: string | null }[] =
-          Array.isArray(full?.variants) ? full.variants : [];
-        variants = fv.map((v) => ({ id: v.id, sku: v.sku ?? null, name: v.name ?? "" }));
-      }
-      const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
-      return { id: m.id, name: m.name, kind: "material" as const, variants, hasTaille };
-    })
+function getTailleFromConfig(configAttributes: { config_name: string; config_value: string }[]): string | null {
+  const t = configAttributes.find(
+    (a) => ["taille", "size", "ring size"].includes(a.config_name.toLowerCase())
   );
-}
-
-async function searchProducts(q: string): Promise<KatanaIngredient[]> {
-  const raw = await katanaGet(`/v1/products?search=${encodeURIComponent(q)}&limit=15`);
-  const rows: { id: number; name: string; variants?: unknown[] }[] =
-    Array.isArray(raw) ? raw : (raw?.data ?? []);
-
-  return rows.map((p) => {
-    const variants = (p.variants as { id: number; sku?: string | null; name?: string | null }[] ?? []).map((v) => ({
-      id: v.id, sku: v.sku ?? null, name: v.name ?? "",
-    }));
-    const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
-    return { id: p.id, name: p.name, kind: "product" as const, variants, hasTaille };
-  });
+  return t?.config_value ?? null;
 }
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ materials: [] });
 
-  const debug = req.nextUrl.searchParams.has("debug");
-
   try {
-    const [materials, products] = await Promise.allSettled([
-      searchMaterials(q),
-      searchProducts(q),
-    ]);
+    // Search variants by SKU prefix — the only reliable Katana search
+    const varRes = await katanaGet(`/v1/variants?sku=${encodeURIComponent(q)}&limit=50`) as {
+      data?: {
+        id: number;
+        sku: string | null;
+        material_id: number | null;
+        product_id: number | null;
+        config_attributes: { config_name: string; config_value: string }[];
+      }[];
+    } | null;
 
-    if (debug) {
-      // Raw responses before any transformation
-      const [rawMat, rawProd] = await Promise.all([
-        katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&name=${encodeURIComponent(q)}&limit=15`),
-        katanaGet(`/v1/products?search=${encodeURIComponent(q)}&limit=15`),
-      ]);
-      return NextResponse.json({ rawMaterials: rawMat, rawProducts: rawProd });
+    const variantRows = varRes?.data ?? [];
+
+    // Group variants by parent (material_id or product_id)
+    const groups = new Map<string, typeof variantRows>();
+    for (const v of variantRows) {
+      const key = v.material_id ? `mat-${v.material_id}` : `prod-${v.product_id}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(v);
     }
 
-    const result: KatanaIngredient[] = [
-      ...(materials.status === "fulfilled" ? materials.value : []),
-      ...(products.status === "fulfilled" ? products.value : []),
-    ];
+    // Fetch parent names and build result
+    const materials = await Promise.all(
+      [...groups.entries()].map(async ([key, variants]) => {
+        const isMaterial = key.startsWith("mat-");
+        const parentId = parseInt(key.split("-")[1]);
 
-    return NextResponse.json({ materials: result });
+        let name = q;
+        try {
+          const parent = await katanaGet(
+            isMaterial ? `/v1/materials/${parentId}` : `/v1/products/${parentId}`
+          ) as { name?: string } | null;
+          if (parent?.name) name = parent.name;
+        } catch { /* use SKU as fallback */ }
+
+        const mapped = variants.map((v) => {
+          const tailleAttr = getTailleFromConfig(v.config_attributes);
+          const variantName = tailleAttr ?? v.sku ?? String(v.id);
+          return { id: v.id, sku: v.sku ?? null, name: variantName };
+        });
+
+        const hasTaille =
+          mapped.length > 1 && mapped.every((v) => looksLikeSize(v.name));
+
+        return {
+          id: parentId,
+          name,
+          kind: (isMaterial ? "material" : "product") as "material" | "product",
+          variants: mapped,
+          hasTaille,
+        };
+      })
+    );
+
+    return NextResponse.json({ materials });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur" },
