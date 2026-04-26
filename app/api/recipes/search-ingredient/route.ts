@@ -22,24 +22,43 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ materials: [] });
 
-  try {
-    const data = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&limit=20`) as {
-      data?: {
-        id: number;
-        name: string;
-        variants?: { id: number; sku: string | null; name: string | null }[];
-      }[];
-    };
+  const debug = req.nextUrl.searchParams.has("debug");
 
-    const materials = (data.data ?? []).map((m) => {
-      const variants = (m.variants ?? []).map((v) => ({
-        id: v.id,
-        sku: v.sku ?? null,
-        name: v.name ?? "",
-      }));
-      const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
-      return { id: m.id, name: m.name, variants, hasTaille };
-    });
+  try {
+    const raw = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&limit=20`);
+
+    if (debug) return NextResponse.json({ raw });
+
+    const rows: { id: number; name: string; variants?: unknown[] }[] =
+      Array.isArray(raw) ? raw : (raw?.data ?? []);
+
+    // Katana list endpoint may omit variants — fetch each individually if needed
+    const materials = await Promise.all(
+      rows.map(async (m) => {
+        let variants: { id: number; sku: string | null; name: string }[] = [];
+
+        if (Array.isArray(m.variants) && m.variants.length > 0) {
+          variants = (m.variants as { id: number; sku?: string | null; name?: string | null }[]).map((v) => ({
+            id: v.id,
+            sku: v.sku ?? null,
+            name: v.name ?? "",
+          }));
+        } else {
+          // Fetch full material to get variants
+          const full = await katanaGet(`/v1/materials/${m.id}`);
+          const fullVariants: { id: number; sku?: string | null; name?: string | null }[] =
+            Array.isArray(full?.variants) ? full.variants : [];
+          variants = fullVariants.map((v) => ({
+            id: v.id,
+            sku: v.sku ?? null,
+            name: v.name ?? "",
+          }));
+        }
+
+        const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
+        return { id: m.id, name: m.name, variants, hasTaille };
+      })
+    );
 
     return NextResponse.json({ materials });
   } catch (err) {
