@@ -4,34 +4,67 @@ const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
 const VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 
-async function shopifyGet(path: string) {
-  const res = await fetch(`https://${STORE}/admin/api/${VERSION}${path}`, {
-    headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Shopify ${res.status}`);
-  return res.json();
+function gidToId(gid: string): number {
+  return parseInt(gid.split("/").pop()!, 10);
 }
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ products: [] });
 
+  const gql = `{
+    products(first: 10, query: "title:*${q.replace(/"/g, "")}*") {
+      edges {
+        node {
+          id
+          title
+          status
+          variants(first: 30) {
+            edges {
+              node { id title sku }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
   try {
-    const data = await shopifyGet(
-      `/products.json?title=${encodeURIComponent(q)}&limit=10&status=any&fields=id,title,variants,status`
-    );
-    const products = (data.products ?? []).map((p: {
-      id: number;
-      title: string;
-      status: string;
-      variants: { id: number; title: string; sku: string | null }[];
-    }) => ({
-      id: p.id,
+    const res = await fetch(`https://${STORE}/admin/api/${VERSION}/graphql.json`, {
+      method: "POST",
+      headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({ query: gql }),
+      cache: "no-store",
+    });
+
+    if (!res.ok) throw new Error(`Shopify GraphQL ${res.status}`);
+
+    const data = await res.json() as {
+      data?: {
+        products?: {
+          edges: {
+            node: {
+              id: string;
+              title: string;
+              status: string;
+              variants: { edges: { node: { id: string; title: string; sku: string | null } }[] };
+            };
+          }[];
+        };
+      };
+    };
+
+    const products = (data.data?.products?.edges ?? []).map(({ node: p }) => ({
+      id: gidToId(p.id),
       title: p.title,
       status: p.status,
-      variants: p.variants.map((v) => ({ id: v.id, title: v.title, sku: v.sku })),
+      variants: p.variants.edges.map(({ node: v }) => ({
+        id: gidToId(v.id),
+        title: v.title,
+        sku: v.sku,
+      })),
     }));
+
     return NextResponse.json({ products });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
