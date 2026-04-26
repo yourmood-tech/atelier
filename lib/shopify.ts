@@ -302,6 +302,7 @@ export async function getOrderFulfillmentData(orderNameOrId: string): Promise<im
 
     return {
       lineItemId,
+      productId: li.product_id as number,
       title: li.title as string,
       quantity: li.quantity as number,
       fulfilledQuantity: lineItemToFulfilledQty.get(lineItemId) ?? 0,
@@ -350,6 +351,66 @@ export async function createShopifyFulfillment(
   }
 
   throw new Error(`Article ${lineItemId} introuvable dans les fulfillment orders de la commande ${orderId}`);
+}
+
+// Bulk fulfillment: fulfill multiple line items at once, with optional tracking.
+// lineItemIds empty = fulfill all unfulfilled items in the order.
+export async function createBulkFulfillment(
+  orderId: number,
+  lineItemIds: number[],
+  trackingNumber?: string
+): Promise<void> {
+  const { fulfillment_orders } = await shopifyFetch(`/orders/${orderId}/fulfillment_orders.json`);
+  const fos = (fulfillment_orders ?? []) as Record<string, unknown>[];
+
+  const fulfillAll = lineItemIds.length === 0;
+
+  const lineItemsByFo: { fulfillment_order_id: number; fulfillment_order_line_items?: { id: number; quantity: number }[] }[] = [];
+
+  for (const fo of fos) {
+    if ((fo.status as string) === "closed" || (fo.status as string) === "cancelled") continue;
+
+    const foLineItems = (fo.line_items as Record<string, unknown>[]) ?? [];
+    const fulfillableItems = foLineItems.filter((li) => ((li.fulfillable_quantity as number) ?? 0) > 0);
+
+    if (!fulfillableItems.length) continue;
+
+    if (fulfillAll) {
+      // No item filter — fulfill all items in this fulfillment order
+      lineItemsByFo.push({ fulfillment_order_id: fo.id as number });
+    } else {
+      // Only items whose line_item_id is in the requested list
+      const selected = fulfillableItems.filter((li) => lineItemIds.includes(li.line_item_id as number));
+      if (!selected.length) continue;
+      lineItemsByFo.push({
+        fulfillment_order_id: fo.id as number,
+        fulfillment_order_line_items: selected.map((li) => ({
+          id: li.id as number,
+          quantity: li.fulfillable_quantity as number,
+        })),
+      });
+    }
+  }
+
+  if (!lineItemsByFo.length) throw new Error("Aucun article fulfillable trouvé");
+
+  const tracking = trackingNumber
+    ? {
+        tracking_info: {
+          number: trackingNumber,
+          company: "Swiss Post",
+          url: `https://service.post.ch/ekp-web/ui/list/rap/item/details/${trackingNumber}`,
+        },
+        notify_customer: true,
+      }
+    : {};
+
+  await shopifyPost(`/fulfillments.json`, {
+    fulfillment: {
+      line_items_by_fulfillment_order: lineItemsByFo,
+      ...tracking,
+    },
+  });
 }
 
 export async function getAtelierTunnelUrl(): Promise<string | null> {

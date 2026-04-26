@@ -170,6 +170,7 @@ export type FulfillmentStatus = "fulfilled" | "unfulfilled" | "partial" | "resto
 
 export type FulfillmentLineItemData = {
   lineItemId: number;
+  productId: number;
   title: string;
   quantity: number;
   fulfilledQuantity: number;
