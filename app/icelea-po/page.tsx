@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Supplier = { id: number; name: string };
 
@@ -17,9 +17,7 @@ type ScannedItem = {
   localId: string;
   productName: string;
   productSku: string | null;
-  // Available sizes (when scanned as product_id)
   variants: ScannedVariant[];
-  // Resolved Icelea ingredient(s)
   icelea: IceleaIngredient[];
   quantity: number;
   status: "loading" | "selecting_size" | "resolving" | "ok" | "error";
@@ -34,6 +32,8 @@ type SubmitItem = {
   quantity: number;
 };
 
+type LinkedOrder = { id: number; name: string };
+
 type Phase = "setup" | "scanning" | "closed";
 
 export default function IceleaPOPage() {
@@ -43,20 +43,22 @@ export default function IceleaPOPage() {
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | "">("");
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [buffer, setBuffer] = useState("");
-  const [lastStatus, setLastStatus] = useState("Prêt — scannez un article");
+  const [lastStatus, setLastStatus] = useState("Scannez une commande client");
   const [submitting, setSubmitting] = useState(false);
   const [closedPONumber, setClosedPONumber] = useState<string | null>(null);
   const [closedError, setClosedError] = useState<string | null>(null);
 
-  // Order linking
-  const [orderInput, setOrderInput] = useState("");
-  const [orderValidating, setOrderValidating] = useState(false);
-  const [orderError, setOrderError] = useState<string | null>(null);
-  const [shopifyOrderId, setShopifyOrderId] = useState<number | null>(null);
-  const [shopifyOrderName, setShopifyOrderName] = useState<string | null>(null);
+  // Multi-order linking
+  const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
+  const [currentOrderName, setCurrentOrderName] = useState<string | null>(null);
+  const [linkedOrders, setLinkedOrders] = useState<LinkedOrder[]>([]);
+  const [closedLinkedOrders, setClosedLinkedOrders] = useState<LinkedOrder[]>([]);
 
+  // Refs for event handlers (avoid stale closures)
+  const currentOrderRef = useRef<LinkedOrder | null>(null);
   const lastAcceptedRef = useRef<{ barcode: string; ts: number } | null>(null);
   const scanHandlerRef = useRef<(barcode: string) => void>(() => {});
+  const tabHandlerRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     fetch("/api/icelea-po/suppliers")
@@ -71,7 +73,27 @@ export default function IceleaPOPage() {
       .finally(() => setSuppliersLoading(false));
   }, []);
 
-  // Resolve SKU → Icelea ingredient and update an item
+  function setCurrentOrder(order: LinkedOrder | null) {
+    currentOrderRef.current = order;
+    setCurrentOrderId(order?.id ?? null);
+    setCurrentOrderName(order?.name ?? null);
+  }
+
+  function playBeep(freq = 880) {
+    try {
+      const ctx = new window.AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.value = 0.03;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch {}
+  }
+
   async function resolveSize(localId: string, sku: string, sizeTitle: string) {
     setItems((prev) =>
       prev.map((i) =>
@@ -86,12 +108,7 @@ export default function IceleaPOPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sku }),
       });
-      const data = await res.json() as {
-        ok?: boolean;
-        icelea?: IceleaIngredient[];
-        error?: string;
-      };
-
+      const data = await res.json() as { ok?: boolean; icelea?: IceleaIngredient[]; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Introuvable");
 
       setItems((prev) =>
@@ -116,8 +133,16 @@ export default function IceleaPOPage() {
     }
   }
 
-  const handleBarcode = useCallback(
-    async (barcode: string) => {
+  // Keep scan handler refs fresh every render — avoids stale closures
+  useEffect(() => {
+    tabHandlerRef.current = () => {
+      if (currentOrderRef.current !== null) {
+        setCurrentOrder(null);
+        setLastStatus("Commande suivante — scannez une commande client");
+      }
+    };
+
+    scanHandlerRef.current = async (barcode: string) => {
       if (phase !== "scanning") return;
 
       const now = Date.now();
@@ -125,97 +150,98 @@ export default function IceleaPOPage() {
       if (last && last.barcode === barcode && now - last.ts < 200) return;
       lastAcceptedRef.current = { barcode, ts: now };
 
-      const localId = crypto.randomUUID();
-      setLastStatus(`Recherche ${barcode}…`);
-
-      setItems((prev) => [
-        {
-          localId,
-          productName: barcode,
-          productSku: null,
-          variants: [],
-          icelea: [],
-          quantity: 1,
-          status: "loading",
-        },
-        ...prev,
-      ]);
-
-      try {
-        const res = await fetch("/api/icelea-po/lookup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ barcode }),
-        });
-        const data = await res.json() as {
-          ok?: boolean;
-          type?: "product" | "variant";
-          productName?: string;
-          variants?: ScannedVariant[];
-          // variant direct
-          variantTitle?: string;
-          sku?: string;
-          error?: string;
-        };
-
-        if (!res.ok || !data.ok) throw new Error(data.error ?? "Introuvable");
-
-        if (data.type === "product") {
-          // Multiple sizes → ask Philippe to pick one
-          setItems((prev) =>
-            prev.map((i) =>
-              i.localId === localId
-                ? {
-                    ...i,
-                    status: "selecting_size",
-                    productName: data.productName ?? barcode,
-                    variants: data.variants ?? [],
-                  }
-                : i
-            )
-          );
-          setLastStatus(`${data.productName} — sélectionnez la taille`);
-        } else if (data.type === "variant" && data.sku) {
-          // Single variant resolved directly
-          setItems((prev) =>
-            prev.map((i) =>
-              i.localId === localId
-                ? {
-                    ...i,
-                    productName: data.productName ?? barcode,
-                    productSku: data.sku ?? null,
-                    variants: [],
-                  }
-                : i
-            )
-          );
-          await resolveSize(localId, data.sku, data.variantTitle ?? "");
+      if (currentOrderRef.current === null) {
+        // ── ORDER SCAN MODE ──────────────────────────────────────────
+        setLastStatus(`Recherche commande ${barcode}…`);
+        try {
+          const res = await fetch(`/api/icelea-po/order?id=${encodeURIComponent(barcode)}`);
+          const data = await res.json() as { ok?: boolean; orderId?: number; orderName?: string; error?: string };
+          if (!res.ok || !data.ok) throw new Error(data.error ?? "Commande introuvable");
+          const order: LinkedOrder = { id: data.orderId!, name: data.orderName! };
+          setCurrentOrder(order);
+          setLinkedOrders((prev) => prev.some((o) => o.id === order.id) ? prev : [...prev, order]);
+          setLastStatus(`✓ ${order.name} — scannez les articles`);
+          playBeep();
+        } catch (err) {
+          setLastStatus(`✗ ${err instanceof Error ? err.message : "Commande introuvable"}`);
+          playBeep(300);
         }
-      } catch (err) {
-        setItems((prev) =>
-          prev.map((i) =>
-            i.localId === localId
-              ? { ...i, status: "error", error: err instanceof Error ? err.message : "Erreur" }
-              : i
-          )
-        );
-        setLastStatus(`✗ ${err instanceof Error ? err.message : "Erreur"}`);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phase]
-  );
+      } else {
+        // ── PRODUCT SCAN MODE ────────────────────────────────────────
+        const localId = crypto.randomUUID();
+        setLastStatus(`Recherche ${barcode}…`);
 
-  useEffect(() => {
-    scanHandlerRef.current = handleBarcode;
+        setItems((prev) => [
+          { localId, productName: barcode, productSku: null, variants: [], icelea: [], quantity: 1, status: "loading" },
+          ...prev,
+        ]);
+
+        try {
+          const res = await fetch("/api/icelea-po/lookup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ barcode }),
+          });
+          const data = await res.json() as {
+            ok?: boolean;
+            type?: "product" | "variant";
+            productName?: string;
+            variants?: ScannedVariant[];
+            variantTitle?: string;
+            sku?: string;
+            error?: string;
+          };
+
+          if (!res.ok || !data.ok) throw new Error(data.error ?? "Introuvable");
+
+          if (data.type === "product") {
+            setItems((prev) =>
+              prev.map((i) =>
+                i.localId === localId
+                  ? { ...i, status: "selecting_size", productName: data.productName ?? barcode, variants: data.variants ?? [] }
+                  : i
+              )
+            );
+            setLastStatus(`${data.productName} — sélectionnez la taille`);
+          } else if (data.type === "variant" && data.sku) {
+            setItems((prev) =>
+              prev.map((i) =>
+                i.localId === localId
+                  ? { ...i, productName: data.productName ?? barcode, productSku: data.sku ?? null, variants: [] }
+                  : i
+              )
+            );
+            await resolveSize(localId, data.sku, data.variantTitle ?? "");
+          }
+        } catch (err) {
+          setItems((prev) =>
+            prev.map((i) =>
+              i.localId === localId
+                ? { ...i, status: "error", error: err instanceof Error ? err.message : "Erreur" }
+                : i
+            )
+          );
+          setLastStatus(`✗ ${err instanceof Error ? err.message : "Erreur"}`);
+        }
+      }
+    };
   });
 
+  // Keyboard listener — active only in scanning phase
   useEffect(() => {
     if (phase !== "scanning") return;
     const buf = { value: "" };
     const onKey = (e: KeyboardEvent) => {
       const tag = (document.activeElement as HTMLElement | null)?.tagName ?? "";
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.key === "Tab") {
+        e.preventDefault();
+        buf.value = "";
+        setBuffer("");
+        tabHandlerRef.current();
+        return;
+      }
       if (e.key === "Enter") {
         if (buf.value) {
           e.preventDefault();
@@ -236,45 +262,12 @@ export default function IceleaPOPage() {
     return () => document.removeEventListener("keydown", onKey);
   }, [phase]);
 
-  function playBeep() {
-    try {
-      const ctx = new window.AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 880;
-      gain.gain.value = 0.03;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.08);
-    } catch {}
-  }
-
-  async function validateOrder() {
-    const raw = orderInput.trim().replace(/^#/, "");
-    if (!raw) return;
-    setOrderValidating(true);
-    setOrderError(null);
-    setShopifyOrderId(null);
-    setShopifyOrderName(null);
-    try {
-      const res = await fetch(`/api/icelea-po/order?name=${encodeURIComponent(raw)}`);
-      const data = await res.json() as { ok?: boolean; orderId?: number; orderName?: string; error?: string };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "Commande introuvable");
-      setShopifyOrderId(data.orderId!);
-      setShopifyOrderName(data.orderName!);
-    } catch (err) {
-      setOrderError(err instanceof Error ? err.message : "Erreur");
-    } finally {
-      setOrderValidating(false);
-    }
-  }
-
   function startScanning() {
     if (!selectedSupplierId) return;
     setItems([]);
-    setLastStatus("Prêt — scannez un article");
+    setLinkedOrders([]);
+    setCurrentOrder(null);
+    setLastStatus("Scannez une commande client");
     setBuffer("");
     setPhase("scanning");
   }
@@ -287,7 +280,6 @@ export default function IceleaPOPage() {
         const existing = map.get(ing.variantId);
         if (existing) {
           existing.quantity += item.quantity;
-          // Keep price of first occurrence (same ingredient = same price)
         } else {
           map.set(ing.variantId, {
             variantId: ing.variantId,
@@ -301,7 +293,6 @@ export default function IceleaPOPage() {
     }
     return Array.from(map.values());
   }
-
 
   async function closePO() {
     const supplier = suppliers.find((s) => s.id === selectedSupplierId);
@@ -318,18 +309,29 @@ export default function IceleaPOPage() {
           supplierId: supplier.id,
           supplierName: supplier.name,
           items: poItems,
-          ...(shopifyOrderId ? { shopifyOrderId } : {}),
+          shopifyOrderIds: linkedOrders.map((o) => o.id),
         }),
       });
       const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur création PO");
       setClosedPONumber(data.poNumber ?? "—");
+      setClosedLinkedOrders(linkedOrders);
       setPhase("closed");
     } catch (err) {
       setClosedError(err instanceof Error ? err.message : "Erreur");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function resetAll() {
+    setPhase("setup");
+    setItems([]);
+    setClosedPONumber(null);
+    setCurrentOrder(null);
+    setLinkedOrders([]);
+    setClosedLinkedOrders([]);
+    setClosedError(null);
   }
 
   function updateQuantity(localId: string, qty: number) {
@@ -346,6 +348,7 @@ export default function IceleaPOPage() {
   const totalCost = poItems.reduce((s, i) => s + i.quantity * i.pricePerUnit, 0);
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
   const hasPending = items.some((i) => i.status === "selecting_size" || i.status === "resolving");
+  const inProductMode = currentOrderId !== null;
 
   // ── CLOSED ────────────────────────────────────────────────────────────────
   if (phase === "closed") {
@@ -360,16 +363,20 @@ export default function IceleaPOPage() {
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
             {poItems.length} référence(s) · {totalQty} pièce(s) · CHF {totalCost.toFixed(2)}
           </p>
-          {shopifyOrderName && (
-            <p style={{ color: "#2e7d32", fontSize: 13, marginTop: 8 }}>
-              ✓ Tags ajoutés sur commande {shopifyOrderName}
-            </p>
+          {closedLinkedOrders.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ color: "#2e7d32", fontSize: 13, margin: "0 0 6px" }}>
+                ✓ Tags ajoutés sur {closedLinkedOrders.length} commande(s) :
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
+                {closedLinkedOrders.map((o) => (
+                  <span key={o.id} style={s.chip}>{o.name}</span>
+                ))}
+              </div>
+            </div>
           )}
-          <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>Email envoyé à philippe@yourmood.net</p>
-          <button
-            style={{ ...s.btn, marginTop: 32 }}
-            onClick={() => { setPhase("setup"); setItems([]); setClosedPONumber(null); setShopifyOrderId(null); setShopifyOrderName(null); setOrderInput(""); setOrderError(null); }}
-          >
+          <p style={{ color: "#888", fontSize: 13, marginTop: 12 }}>Email envoyé à philippe@yourmood.net</p>
+          <button style={{ ...s.btn, marginTop: 32 }} onClick={resetAll}>
             Nouveau PO
           </button>
         </div>
@@ -382,17 +389,14 @@ export default function IceleaPOPage() {
     return (
       <div style={s.container}>
         <div style={s.header}>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div style={s.title}>📦 PO Icelea</div>
             <div style={{ color: "#555", fontSize: 13 }}>
               {selectedSupplier?.name} · {poItems.length} réf. · {totalQty} pce · CHF {totalCost.toFixed(2)}
             </div>
-            {shopifyOrderName && (
-              <div style={{ color: "#2e7d32", fontSize: 12, marginTop: 2 }}>→ {shopifyOrderName}</div>
-            )}
           </div>
           <button
-            style={{ ...s.btn, background: (poItems.length && !hasPending) ? "#111" : "#ccc", cursor: (poItems.length && !hasPending) ? "pointer" : "not-allowed" }}
+            style={{ ...s.btn, background: (poItems.length && !hasPending) ? "#111" : "#ccc", cursor: (poItems.length && !hasPending) ? "pointer" : "not-allowed", flexShrink: 0 }}
             disabled={!poItems.length || hasPending || submitting}
             onClick={closePO}
           >
@@ -400,9 +404,35 @@ export default function IceleaPOPage() {
           </button>
         </div>
 
+        {/* Mode banner */}
+        <div style={{
+          ...s.modeBanner,
+          background: inProductMode ? "#e8f5e9" : "#fff8e1",
+          borderColor: inProductMode ? "#a5d6a7" : "#ffe082",
+          color: inProductMode ? "#2e7d32" : "#856404",
+        }}>
+          {inProductMode
+            ? `📋 ${currentOrderName} — scannez les articles`
+            : "📋 Scannez une commande client"}
+          {inProductMode && (
+            <span style={{ float: "right", fontSize: 11, opacity: 0.7 }}>Tab = commande suivante</span>
+          )}
+        </div>
+
+        {/* Linked orders chips */}
+        {linkedOrders.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 10 }}>
+            {linkedOrders.map((o) => (
+              <span key={o.id} style={{ ...s.chip, background: o.id === currentOrderId ? "#111" : "#eee", color: o.id === currentOrderId ? "#fff" : "#555" }}>
+                {o.name}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div style={s.statusBar}>{buffer ? `> ${buffer}` : lastStatus}</div>
         {closedError && <div style={s.errorBox}>{closedError}</div>}
-        {items.length === 0 && <div style={s.empty}>Scannez les articles à commander</div>}
+        {items.length === 0 && <div style={s.empty}>Scannez une commande client puis les articles</div>}
 
         <div>
           {items.map((item) => (
@@ -488,43 +518,7 @@ export default function IceleaPOPage() {
   return (
     <div style={s.container}>
       <div style={s.title}>📦 Nouvel ordre d&apos;achat Icelea</div>
-
-      {/* Order number scan */}
       <div style={{ marginTop: 32 }}>
-        <label style={s.label}>Commande client (scanner ou saisir)</label>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            style={{ ...s.select, flex: 1 }}
-            type="text"
-            placeholder="#12345"
-            value={orderInput}
-            onChange={(e) => { setOrderInput(e.target.value); setShopifyOrderId(null); setShopifyOrderName(null); setOrderError(null); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void validateOrder(); } }}
-            disabled={orderValidating}
-          />
-          <button
-            style={{ ...s.btn, flexShrink: 0, background: orderInput.trim() ? "#111" : "#ccc", cursor: orderInput.trim() ? "pointer" : "not-allowed" }}
-            disabled={!orderInput.trim() || orderValidating}
-            onClick={() => void validateOrder()}
-          >
-            {orderValidating ? "…" : "Valider"}
-          </button>
-        </div>
-        {orderError && <div style={{ color: "#c62828", fontSize: 13, marginTop: 6 }}>{orderError}</div>}
-        {shopifyOrderName && (
-          <div style={{ color: "#2e7d32", fontSize: 13, marginTop: 6 }}>
-            ✓ {shopifyOrderName} — les tags seront ajoutés après création du PO
-          </div>
-        )}
-        {!shopifyOrderName && !orderError && (
-          <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>
-            Optionnel — permet de lier le PO à la commande Shopify
-          </div>
-        )}
-      </div>
-
-      {/* Supplier */}
-      <div style={{ marginTop: 24 }}>
         <label style={s.label}>Fournisseur</label>
         {suppliersLoading ? (
           <div style={{ color: "#888", fontSize: 14 }}>Chargement…</div>
@@ -541,9 +535,11 @@ export default function IceleaPOPage() {
           </select>
         )}
       </div>
-
+      <div style={{ color: "#888", fontSize: 12, marginTop: 24, lineHeight: 1.5 }}>
+        Flux : scanner la commande client → scanner les articles → Tab pour la commande suivante → Clore le PO
+      </div>
       <button
-        style={{ ...s.btn, marginTop: 32, width: "100%", background: selectedSupplierId ? "#111" : "#ccc", cursor: selectedSupplierId ? "pointer" : "not-allowed", fontSize: 17, padding: "14px 0" }}
+        style={{ ...s.btn, marginTop: 16, width: "100%", background: selectedSupplierId ? "#111" : "#ccc", cursor: selectedSupplierId ? "pointer" : "not-allowed", fontSize: 17, padding: "14px 0" }}
         disabled={!selectedSupplierId}
         onClick={startScanning}
       >
@@ -555,10 +551,11 @@ export default function IceleaPOPage() {
 
 const s = {
   container: { fontFamily: "sans-serif", maxWidth: 520, margin: "0 auto", padding: "24px 16px", color: "#111" } as React.CSSProperties,
-  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 12 } as React.CSSProperties,
+  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, gap: 12 } as React.CSSProperties,
   title: { fontSize: 20, fontWeight: 700, marginBottom: 4 } as React.CSSProperties,
-  statusBar: { background: "#f5f5f5", borderRadius: 6, padding: "10px 14px", fontSize: 14, color: "#333", marginBottom: 16, minHeight: 40 } as React.CSSProperties,
-  errorBox: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 6, padding: "10px 14px", fontSize: 13, color: "#c62828", marginBottom: 16 } as React.CSSProperties,
+  modeBanner: { border: "1px solid", borderRadius: 6, padding: "8px 12px", fontSize: 13, fontWeight: 500, marginBottom: 10 } as React.CSSProperties,
+  statusBar: { background: "#f5f5f5", borderRadius: 6, padding: "10px 14px", fontSize: 14, color: "#333", marginBottom: 12, minHeight: 40 } as React.CSSProperties,
+  errorBox: { background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 6, padding: "10px 14px", fontSize: 13, color: "#c62828", marginBottom: 12 } as React.CSSProperties,
   empty: { textAlign: "center" as const, color: "#aaa", fontSize: 15, padding: "40px 0" },
   itemRow: { display: "flex", alignItems: "center", gap: 10, padding: "12px 0", borderBottom: "1px solid #f0f0f0" } as React.CSSProperties,
   sizeBtn: { padding: "6px 14px", border: "1px solid #ddd", borderRadius: 6, background: "#fff", cursor: "pointer", fontSize: 15, fontWeight: 600 } as React.CSSProperties,
@@ -568,4 +565,5 @@ const s = {
   btn: { padding: "10px 20px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 15, cursor: "pointer" } as React.CSSProperties,
   label: { display: "block", fontSize: 13, color: "#555", marginBottom: 6 } as React.CSSProperties,
   select: { width: "100%", padding: "10px 12px", border: "1px solid #ddd", borderRadius: 6, fontSize: 15, background: "#fff" } as React.CSSProperties,
+  chip: { padding: "2px 8px", borderRadius: 12, fontSize: 12, fontWeight: 500 } as React.CSSProperties,
 };

@@ -22,10 +22,10 @@ export async function POST(req: NextRequest) {
       supplierId: number;
       supplierName: string;
       items: SubmitItem[];
-      shopifyOrderId?: number;
+      shopifyOrderIds?: number[];
     };
 
-    const { supplierId, supplierName, items, shopifyOrderId } = body;
+    const { supplierId, supplierName, items, shopifyOrderIds } = body;
 
     if (!supplierId || !items?.length) {
       return NextResponse.json({ error: "supplierId et items requis" }, { status: 400 });
@@ -102,13 +102,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Tag the linked Shopify order with PO number and estimated delivery date
-    if (shopifyOrderId) {
+    // Tag all linked Shopify orders with PO number and estimated delivery date
+    if (shopifyOrderIds?.length) {
       const deliveryFormatted = formatDeliveryDate(po.deliveryDate);
-      await Promise.allSettled([
-        addOrderTag(shopifyOrderId, `Icelea-PO:${po.number}`),
-        addOrderTag(shopifyOrderId, `Icelea-livraison:${deliveryFormatted}`),
-      ]);
+      await Promise.allSettled(
+        shopifyOrderIds.flatMap((orderId) => [
+          addOrderTag(orderId, `Icelea-PO:${po.number}`),
+          addOrderTag(orderId, `Icelea-livraison:${deliveryFormatted}`),
+        ])
+      );
     }
 
     return NextResponse.json({ ok: true, poId: po.id, poNumber: po.number, deliveryDate: po.deliveryDate });
