@@ -16,12 +16,14 @@ export async function GET(req: NextRequest) {
     products(first: 10, query: "title:*${q.replace(/"/g, "")}*") {
       edges {
         node {
-          id
-          title
-          status
-          variants(first: 30) {
+          id title status
+          options { name values }
+          variants(first: 50) {
             edges {
-              node { id title sku }
+              node {
+                id sku title
+                selectedOptions { name value }
+              }
             }
           }
         }
@@ -36,7 +38,6 @@ export async function GET(req: NextRequest) {
       body: JSON.stringify({ query: gql }),
       cache: "no-store",
     });
-
     if (!res.ok) throw new Error(`Shopify GraphQL ${res.status}`);
 
     const data = await res.json() as {
@@ -44,10 +45,16 @@ export async function GET(req: NextRequest) {
         products?: {
           edges: {
             node: {
-              id: string;
-              title: string;
-              status: string;
-              variants: { edges: { node: { id: string; title: string; sku: string | null } }[] };
+              id: string; title: string; status: string;
+              options: { name: string; values: string[] }[];
+              variants: {
+                edges: {
+                  node: {
+                    id: string; sku: string | null; title: string;
+                    selectedOptions: { name: string; value: string }[];
+                  };
+                }[];
+              };
             };
           }[];
         };
@@ -58,10 +65,12 @@ export async function GET(req: NextRequest) {
       id: gidToId(p.id),
       title: p.title,
       status: p.status,
+      options: p.options,
       variants: p.variants.edges.map(({ node: v }) => ({
         id: gidToId(v.id),
-        title: v.title,
         sku: v.sku,
+        title: v.title,
+        options: Object.fromEntries(v.selectedOptions.map((o) => [o.name, o.value])),
       })),
     }));
 
