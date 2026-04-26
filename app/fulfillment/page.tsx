@@ -33,14 +33,8 @@ export default function FulfillmentPage() {
       const res = await fetch(`/api/fulfillment?order=${encodeURIComponent(cleaned)}`);
       const json = await res.json() as { ok: boolean; data?: OrderFulfillmentData; error?: string };
       if (!json.ok || !json.data) throw new Error(json.error ?? "Commande introuvable");
-      const data = json.data;
-      const ids = new Set(
-        data.lineItems
-          .filter((li) => li.fulfillmentStatus === "unfulfilled" || li.fulfillmentStatus === "partial")
-          .map((li) => li.lineItemId)
-      );
-      setOrder(data);
-      setSelectedIds(ids);
+      setOrder(json.data);
+      setSelectedIds(new Set()); // rien sélectionné — scan = ajouter, Tab sans scan = tout fulfiller
       setMessage("");
       setPhase("items");
     } catch (err) {
@@ -54,14 +48,13 @@ export default function FulfillmentPage() {
     if (!productId || !order) return;
     const matches = unfulfilled.filter((li) => li.productId === productId);
     if (!matches.length) {
-      // Vibrate / flash — barcode not found in order
       setMessage(`Produit ${productId} non trouvé dans cette commande`);
       setTimeout(() => setMessage(""), 2000);
       return;
     }
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      // Toggle: if all matches selected → deselect, else select all
+      // Toggle : pas encore sélectionné → ajouter ; déjà sélectionné → retirer
       const allSelected = matches.every((li) => prev.has(li.lineItemId));
       matches.forEach((li) => allSelected ? next.delete(li.lineItemId) : next.add(li.lineItemId));
       return next;
@@ -74,9 +67,8 @@ export default function FulfillmentPage() {
     setPhase("submitting");
     setMessage("Fulfillment en cours…");
     try {
-      const lineItemIds = selectedIds.size === unfulfilled.length
-        ? []  // all selected → let Shopify handle as full fulfillment
-        : [...selectedIds];
+      // Vide = aucun scan = fulfill tout ; sinon partial avec les items scannés
+      const lineItemIds = selectedIds.size === 0 ? [] : [...selectedIds];
 
       const res = await fetch("/api/fulfillment", {
         method: "POST",
@@ -110,9 +102,14 @@ export default function FulfillmentPage() {
     if (e.key === "Tab") {
       e.preventDefault();
       if (phase === "items") {
+        // Si le scanner envoie Tab comme terminateur, traiter le contenu comme un scan
+        if (scanInput.trim()) {
+          handleItemScan(scanInput.trim());
+          setScanInput("");
+        }
         setPhase("tracking");
       } else if (phase === "tracking") {
-        void submitFulfillment(undefined);
+        void submitFulfillment(scanInput.trim() || undefined);
       }
       return;
     }
@@ -179,7 +176,7 @@ export default function FulfillmentPage() {
             <div className="flex items-center justify-between">
               <span className="text-xl font-bold">{order.orderName}</span>
               <span className="text-xs text-zinc-400">
-                {selectedCount}/{totalUnfulfilled} article{totalUnfulfilled > 1 ? "s" : ""}
+                {selectedCount === 0 ? `tout (${totalUnfulfilled})` : `${selectedCount}/${totalUnfulfilled} sélectionné${selectedCount > 1 ? "s" : ""}`}
               </span>
             </div>
             <div className="space-y-2">
@@ -217,7 +214,7 @@ export default function FulfillmentPage() {
           <div className="space-y-2">
             <label className="text-xs text-zinc-500 uppercase tracking-widest">
               {phase === "order" && "Scanner numéro de commande"}
-              {phase === "items" && "Scanner article pour toggle · TAB → continuer"}
+              {phase === "items" && (selectedCount === 0 ? "Scanner article(s) à fulfiller · TAB sans scan = tout fulfiller" : `${selectedCount} sélectionné(s) · scanner pour ajouter/retirer · TAB → continuer`)}
               {phase === "tracking" && "Scanner tracking Swiss Post · TAB → sans tracking"}
             </label>
             <input
@@ -283,7 +280,7 @@ function LineItemRow({
       onClick={disabled ? undefined : onToggle}
       className={`w-full text-left rounded px-3 py-2 flex items-center gap-3 transition-colors ${
         disabled ? "cursor-default" :
-        selected ? "bg-green-900/40 hover:bg-green-900/60" : "bg-zinc-800/50 hover:bg-zinc-800"
+        selected ? "bg-green-900/50 border border-green-700 hover:bg-green-900/70" : "bg-zinc-800/30 border border-transparent hover:bg-zinc-800"
       }`}
     >
       <span className={`w-4 h-4 rounded-sm border flex-shrink-0 flex items-center justify-center text-xs ${
