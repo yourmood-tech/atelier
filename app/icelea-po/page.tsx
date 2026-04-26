@@ -491,22 +491,34 @@ export default function IceleaPOPage() {
 
                 {item.status === "ok" && (
                   <>
-                    <div style={{ fontSize: 12, color: "#888" }}>
+                    <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>
                       {item.productName}{item.productSku ? ` · ${item.productSku}` : ""}
                     </div>
-                    {item.icelea.map((ing) => {
-                      const excluded = item.excludedVariantIds.includes(ing.variantId);
-                      return (
-                        <div
-                          key={ing.variantId}
-                          onClick={() => toggleIngredient(item.localId, ing.variantId)}
-                          style={{ fontWeight: 600, fontSize: 14, cursor: "pointer", opacity: excluded ? 0.35 : 1, textDecoration: excluded ? "line-through" : "none", userSelect: "none" }}
-                        >
-                          → {ing.name}
-                          {ing.sku && <span style={{ fontWeight: 400, color: "#888" }}> · {ing.sku}</span>}
-                        </div>
-                      );
-                    })}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {item.icelea.map((ing) => {
+                        const excluded = item.excludedVariantIds.includes(ing.variantId);
+                        return (
+                          <button
+                            key={ing.variantId}
+                            onClick={() => toggleIngredient(item.localId, ing.variantId)}
+                            style={{
+                              padding: "5px 12px",
+                              border: `1px solid ${excluded ? "#ddd" : "#111"}`,
+                              borderRadius: 20,
+                              background: excluded ? "#f5f5f5" : "#111",
+                              color: excluded ? "#bbb" : "#fff",
+                              fontSize: 13,
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              textDecoration: excluded ? "line-through" : "none",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            {ing.name}{ing.sku ? <span style={{ fontWeight: 400, opacity: 0.7 }}> · {ing.sku}</span> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </>
                 )}
 
