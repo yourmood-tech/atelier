@@ -499,7 +499,7 @@ export async function getKatanaVariantByBarcode(barcode: string): Promise<{
 export async function createKatanaPOWithRows(
   supplierId: number,
   rows: { variantId: number; quantity: number; pricePerUnit: number }[]
-): Promise<{ id: number; number: string }> {
+): Promise<{ id: number; number: string; deliveryDate: string | null }> {
   // Find 0% tax rate (imports) — fallback to default, then first available
   const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
     data?: { id: number; name: string; rate?: number | null; percentage?: number; is_default?: boolean; is_default_purchases?: boolean }[];
@@ -529,9 +529,11 @@ export async function createKatanaPOWithRows(
     body: JSON.stringify(payload),
   })) as Record<string, unknown>;
 
+  const katanaDate = result.expected_arrival_date as string | null | undefined;
   return {
     id: result.id as number,
     number: (result.order_no ?? String(result.id)) as string,
+    deliveryDate: katanaDate ?? null,
   };
 }
 

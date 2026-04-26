@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createKatanaPOWithRows } from "@/lib/katana";
+import { addOrderTag } from "@/lib/shopify";
+
+function formatDeliveryDate(dateStr: string | null | undefined): string {
+  const d = dateStr ? new Date(dateStr) : (() => { const n = new Date(); n.setDate(n.getDate() + 21); return n; })();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
 
 type SubmitItem = {
   variantId: number;
@@ -15,9 +22,10 @@ export async function POST(req: NextRequest) {
       supplierId: number;
       supplierName: string;
       items: SubmitItem[];
+      shopifyOrderId?: number;
     };
 
-    const { supplierId, supplierName, items } = body;
+    const { supplierId, supplierName, items, shopifyOrderId } = body;
 
     if (!supplierId || !items?.length) {
       return NextResponse.json({ error: "supplierId et items requis" }, { status: 400 });
@@ -94,7 +102,16 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ ok: true, poId: po.id, poNumber: po.number });
+    // Tag the linked Shopify order with PO number and estimated delivery date
+    if (shopifyOrderId) {
+      const deliveryFormatted = formatDeliveryDate(po.deliveryDate);
+      await Promise.allSettled([
+        addOrderTag(shopifyOrderId, `Icelea-PO:${po.number}`),
+        addOrderTag(shopifyOrderId, `Icelea-livraison:${deliveryFormatted}`),
+      ]);
+    }
+
+    return NextResponse.json({ ok: true, poId: po.id, poNumber: po.number, deliveryDate: po.deliveryDate });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur" },

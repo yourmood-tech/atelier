@@ -48,6 +48,13 @@ export default function IceleaPOPage() {
   const [closedPONumber, setClosedPONumber] = useState<string | null>(null);
   const [closedError, setClosedError] = useState<string | null>(null);
 
+  // Order linking
+  const [orderInput, setOrderInput] = useState("");
+  const [orderValidating, setOrderValidating] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [shopifyOrderId, setShopifyOrderId] = useState<number | null>(null);
+  const [shopifyOrderName, setShopifyOrderName] = useState<string | null>(null);
+
   const lastAcceptedRef = useRef<{ barcode: string; ts: number } | null>(null);
   const scanHandlerRef = useRef<(barcode: string) => void>(() => {});
 
@@ -244,6 +251,26 @@ export default function IceleaPOPage() {
     } catch {}
   }
 
+  async function validateOrder() {
+    const raw = orderInput.trim().replace(/^#/, "");
+    if (!raw) return;
+    setOrderValidating(true);
+    setOrderError(null);
+    setShopifyOrderId(null);
+    setShopifyOrderName(null);
+    try {
+      const res = await fetch(`/api/icelea-po/order?name=${encodeURIComponent(raw)}`);
+      const data = await res.json() as { ok?: boolean; orderId?: number; orderName?: string; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Commande introuvable");
+      setShopifyOrderId(data.orderId!);
+      setShopifyOrderName(data.orderName!);
+    } catch (err) {
+      setOrderError(err instanceof Error ? err.message : "Erreur");
+    } finally {
+      setOrderValidating(false);
+    }
+  }
+
   function startScanning() {
     if (!selectedSupplierId) return;
     setItems([]);
@@ -291,6 +318,7 @@ export default function IceleaPOPage() {
           supplierId: supplier.id,
           supplierName: supplier.name,
           items: poItems,
+          ...(shopifyOrderId ? { shopifyOrderId } : {}),
         }),
       });
       const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
@@ -332,10 +360,15 @@ export default function IceleaPOPage() {
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
             {poItems.length} référence(s) · {totalQty} pièce(s) · CHF {totalCost.toFixed(2)}
           </p>
+          {shopifyOrderName && (
+            <p style={{ color: "#2e7d32", fontSize: 13, marginTop: 8 }}>
+              ✓ Tags ajoutés sur commande {shopifyOrderName}
+            </p>
+          )}
           <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>Email envoyé à philippe@yourmood.net</p>
           <button
             style={{ ...s.btn, marginTop: 32 }}
-            onClick={() => { setPhase("setup"); setItems([]); setClosedPONumber(null); }}
+            onClick={() => { setPhase("setup"); setItems([]); setClosedPONumber(null); setShopifyOrderId(null); setShopifyOrderName(null); setOrderInput(""); setOrderError(null); }}
           >
             Nouveau PO
           </button>
@@ -354,6 +387,9 @@ export default function IceleaPOPage() {
             <div style={{ color: "#555", fontSize: 13 }}>
               {selectedSupplier?.name} · {poItems.length} réf. · {totalQty} pce · CHF {totalCost.toFixed(2)}
             </div>
+            {shopifyOrderName && (
+              <div style={{ color: "#2e7d32", fontSize: 12, marginTop: 2 }}>→ {shopifyOrderName}</div>
+            )}
           </div>
           <button
             style={{ ...s.btn, background: (poItems.length && !hasPending) ? "#111" : "#ccc", cursor: (poItems.length && !hasPending) ? "pointer" : "not-allowed" }}
@@ -452,7 +488,43 @@ export default function IceleaPOPage() {
   return (
     <div style={s.container}>
       <div style={s.title}>📦 Nouvel ordre d&apos;achat Icelea</div>
+
+      {/* Order number scan */}
       <div style={{ marginTop: 32 }}>
+        <label style={s.label}>Commande client (scanner ou saisir)</label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            style={{ ...s.select, flex: 1 }}
+            type="text"
+            placeholder="#12345"
+            value={orderInput}
+            onChange={(e) => { setOrderInput(e.target.value); setShopifyOrderId(null); setShopifyOrderName(null); setOrderError(null); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void validateOrder(); } }}
+            disabled={orderValidating}
+          />
+          <button
+            style={{ ...s.btn, flexShrink: 0, background: orderInput.trim() ? "#111" : "#ccc", cursor: orderInput.trim() ? "pointer" : "not-allowed" }}
+            disabled={!orderInput.trim() || orderValidating}
+            onClick={() => void validateOrder()}
+          >
+            {orderValidating ? "…" : "Valider"}
+          </button>
+        </div>
+        {orderError && <div style={{ color: "#c62828", fontSize: 13, marginTop: 6 }}>{orderError}</div>}
+        {shopifyOrderName && (
+          <div style={{ color: "#2e7d32", fontSize: 13, marginTop: 6 }}>
+            ✓ {shopifyOrderName} — les tags seront ajoutés après création du PO
+          </div>
+        )}
+        {!shopifyOrderName && !orderError && (
+          <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>
+            Optionnel — permet de lier le PO à la commande Shopify
+          </div>
+        )}
+      </div>
+
+      {/* Supplier */}
+      <div style={{ marginTop: 24 }}>
         <label style={s.label}>Fournisseur</label>
         {suppliersLoading ? (
           <div style={{ color: "#888", fontSize: 14 }}>Chargement…</div>
@@ -469,6 +541,7 @@ export default function IceleaPOPage() {
           </select>
         )}
       </div>
+
       <button
         style={{ ...s.btn, marginTop: 32, width: "100%", background: selectedSupplierId ? "#111" : "#ccc", cursor: selectedSupplierId ? "pointer" : "not-allowed", fontSize: 17, padding: "14px 0" }}
         disabled={!selectedSupplierId}

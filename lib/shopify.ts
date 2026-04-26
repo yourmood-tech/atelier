@@ -132,6 +132,18 @@ export async function lookupShopifyBySku(sku: string): Promise<ShopifyVariantInf
   };
 }
 
+// ── Shopify REST — look up an order by name ──────────────────────────────────
+
+export async function lookupOrderByName(name: string): Promise<{ id: number; name: string }> {
+  const orderName = name.startsWith("#") ? name : `#${name}`;
+  const data = await shopifyFetch(
+    `/orders.json?name=${encodeURIComponent(orderName)}&status=any&limit=1&fields=id,name`
+  );
+  const order = (data.orders as { id: number; name: string }[] | undefined)?.[0];
+  if (!order) throw new Error(`Commande introuvable: ${orderName}`);
+  return { id: order.id, name: order.name };
+}
+
 // ── Shopify GraphQL — add a tag to an order (non-destructive, merges with existing tags) ──
 
 export async function addOrderTag(orderId: number, tag: string): Promise<void> {
