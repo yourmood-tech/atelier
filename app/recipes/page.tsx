@@ -27,6 +27,7 @@ type KatanaMaterialVariant = {
 type KatanaMaterial = {
   id: number;
   name: string;
+  kind: "material" | "product";
   variants: KatanaMaterialVariant[];
   hasTaille: boolean;
 };
@@ -290,10 +291,10 @@ export default function RecipesPage() {
           {ingResults.length > 0 && (
             <div style={s.results}>
               {ingResults.map((m) => (
-                <button key={m.id} style={s.resultRow} onClick={() => addIngredient(m)}>
+                <button key={`${m.kind}-${m.id}`} style={s.resultRow} onClick={() => addIngredient(m)}>
                   <span style={s.productName}>{m.name}</span>
                   <span style={s.badge}>
-                    {m.variants.length} variante{m.variants.length > 1 ? "s" : ""}
+                    {m.kind === "product" ? "produit" : "matière"} · {m.variants.length} variante{m.variants.length > 1 ? "s" : ""}
                     {m.hasTaille ? " · taille ✓" : ""}
                   </span>
                 </button>

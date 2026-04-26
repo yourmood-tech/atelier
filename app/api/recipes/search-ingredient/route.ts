@@ -18,6 +18,52 @@ function looksLikeSize(name: string): boolean {
   return /^\d{2,3}$/.test(name.trim());
 }
 
+type KatanaIngredient = {
+  id: number;
+  name: string;
+  kind: "material" | "product";
+  variants: { id: number; sku: string | null; name: string }[];
+  hasTaille: boolean;
+};
+
+async function searchMaterials(q: string): Promise<KatanaIngredient[]> {
+  const raw = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&limit=15`);
+  const rows: { id: number; name: string; variants?: unknown[] }[] =
+    Array.isArray(raw) ? raw : (raw?.data ?? []);
+
+  return Promise.all(
+    rows.map(async (m) => {
+      let variants: { id: number; sku: string | null; name: string }[] = [];
+      if (Array.isArray(m.variants) && m.variants.length > 0) {
+        variants = (m.variants as { id: number; sku?: string | null; name?: string | null }[]).map((v) => ({
+          id: v.id, sku: v.sku ?? null, name: v.name ?? "",
+        }));
+      } else {
+        const full = await katanaGet(`/v1/materials/${m.id}`);
+        const fv: { id: number; sku?: string | null; name?: string | null }[] =
+          Array.isArray(full?.variants) ? full.variants : [];
+        variants = fv.map((v) => ({ id: v.id, sku: v.sku ?? null, name: v.name ?? "" }));
+      }
+      const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
+      return { id: m.id, name: m.name, kind: "material" as const, variants, hasTaille };
+    })
+  );
+}
+
+async function searchProducts(q: string): Promise<KatanaIngredient[]> {
+  const raw = await katanaGet(`/v1/products?search=${encodeURIComponent(q)}&limit=15`);
+  const rows: { id: number; name: string; variants?: unknown[] }[] =
+    Array.isArray(raw) ? raw : (raw?.data ?? []);
+
+  return rows.map((p) => {
+    const variants = (p.variants as { id: number; sku?: string | null; name?: string | null }[] ?? []).map((v) => ({
+      id: v.id, sku: v.sku ?? null, name: v.name ?? "",
+    }));
+    const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
+    return { id: p.id, name: p.name, kind: "product" as const, variants, hasTaille };
+  });
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ materials: [] });
@@ -25,42 +71,24 @@ export async function GET(req: NextRequest) {
   const debug = req.nextUrl.searchParams.has("debug");
 
   try {
-    const raw = await katanaGet(`/v1/materials?search=${encodeURIComponent(q)}&limit=20`);
+    const [materials, products] = await Promise.allSettled([
+      searchMaterials(q),
+      searchProducts(q),
+    ]);
 
-    if (debug) return NextResponse.json({ raw });
+    if (debug) {
+      return NextResponse.json({
+        materials: materials.status === "fulfilled" ? materials.value : { error: String(materials.reason) },
+        products: products.status === "fulfilled" ? products.value : { error: String(products.reason) },
+      });
+    }
 
-    const rows: { id: number; name: string; variants?: unknown[] }[] =
-      Array.isArray(raw) ? raw : (raw?.data ?? []);
+    const result: KatanaIngredient[] = [
+      ...(materials.status === "fulfilled" ? materials.value : []),
+      ...(products.status === "fulfilled" ? products.value : []),
+    ];
 
-    // Katana list endpoint may omit variants — fetch each individually if needed
-    const materials = await Promise.all(
-      rows.map(async (m) => {
-        let variants: { id: number; sku: string | null; name: string }[] = [];
-
-        if (Array.isArray(m.variants) && m.variants.length > 0) {
-          variants = (m.variants as { id: number; sku?: string | null; name?: string | null }[]).map((v) => ({
-            id: v.id,
-            sku: v.sku ?? null,
-            name: v.name ?? "",
-          }));
-        } else {
-          // Fetch full material to get variants
-          const full = await katanaGet(`/v1/materials/${m.id}`);
-          const fullVariants: { id: number; sku?: string | null; name?: string | null }[] =
-            Array.isArray(full?.variants) ? full.variants : [];
-          variants = fullVariants.map((v) => ({
-            id: v.id,
-            sku: v.sku ?? null,
-            name: v.name ?? "",
-          }));
-        }
-
-        const hasTaille = variants.length > 1 && variants.every((v) => looksLikeSize(v.name));
-        return { id: m.id, name: m.name, variants, hasTaille };
-      })
-    );
-
-    return NextResponse.json({ materials });
+    return NextResponse.json({ materials: result });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur" },
