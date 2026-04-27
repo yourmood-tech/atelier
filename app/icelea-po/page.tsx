@@ -23,7 +23,15 @@ type ScannedItem = {
   quantity: number;
   status: "loading" | "selecting_size" | "resolving" | "ok" | "error";
   error?: string;
+  selectedSize?: string; // set when size chosen but multiple variants remain (color sub-selection)
 };
+
+const SIZES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
+
+function variantsForSize(variants: ScannedVariant[], size: number): ScannedVariant[] {
+  const sizeStr = String(size);
+  return variants.filter(v => v.title.split(/[\s\/\-]+/).some(p => p === sizeStr));
+}
 
 type SubmitItem = {
   variantId: number;
@@ -132,6 +140,28 @@ export default function IceleaPOPage() {
       );
       setLastStatus(`✗ ${err instanceof Error ? err.message : "Erreur"}`);
     }
+  }
+
+  function handleSizeSelect(localId: string, productName: string, size: number, allVariants: ScannedVariant[]) {
+    const matches = variantsForSize(allVariants, size);
+    if (matches.length === 0) {
+      setItems(prev => prev.map(i => i.localId === localId
+        ? { ...i, status: "error", error: `Taille ${size} introuvable dans ce produit` }
+        : i
+      ));
+      setLastStatus(`✗ Taille ${size} introuvable pour ${productName}`);
+      return;
+    }
+    if (matches.length === 1) {
+      void resolveSize(localId, matches[0].sku, matches[0].title);
+      return;
+    }
+    // Multiple variants for this size (color variants) — show sub-selection
+    setItems(prev => prev.map(i => i.localId === localId
+      ? { ...i, selectedSize: String(size) }
+      : i
+    ));
+    setLastStatus(`Taille ${size} — sélectionnez la couleur`);
   }
 
   // Keep scan handler refs fresh every render — avoids stale closures
@@ -469,17 +499,51 @@ export default function IceleaPOPage() {
                     <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>
                       {item.productName}
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {item.variants.map((v) => (
-                        <button
-                          key={v.sku}
-                          style={s.sizeBtn}
-                          onClick={() => resolveSize(item.localId, v.sku, v.title)}
-                        >
-                          {v.title}
-                        </button>
-                      ))}
-                    </div>
+                    {!item.selectedSize ? (
+                      // Step 1 — taille
+                      <>
+                        <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>Taille</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {SIZES.map((size) => {
+                            const available = variantsForSize(item.variants, size).length > 0;
+                            return (
+                              <button
+                                key={size}
+                                style={{ ...s.sizeBtn, opacity: available ? 1 : 0.25, cursor: available ? "pointer" : "default" }}
+                                disabled={!available}
+                                onClick={() => handleSizeSelect(item.localId, item.productName, size, item.variants)}
+                              >
+                                {size}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      // Step 2 — couleur/variant (taille déjà choisie, plusieurs options)
+                      <>
+                        <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
+                          Taille {item.selectedSize} — couleur
+                          <button
+                            style={{ marginLeft: 8, fontSize: 11, color: "#888", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                            onClick={() => setItems(prev => prev.map(i => i.localId === item.localId ? { ...i, selectedSize: undefined } : i))}
+                          >
+                            ← retour
+                          </button>
+                        </div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                          {variantsForSize(item.variants, Number(item.selectedSize)).map((v) => (
+                            <button
+                              key={v.sku}
+                              style={s.sizeBtn}
+                              onClick={() => resolveSize(item.localId, v.sku, v.title)}
+                            >
+                              {v.title}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
