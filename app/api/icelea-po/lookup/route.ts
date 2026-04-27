@@ -16,7 +16,7 @@ type ShopifyProduct = {
   variants: ShopifyVariant[];
 };
 
-async function shopifyGet(path: string): Promise<unknown> {
+async function shopifyGet(path: string): Promise<{ data: unknown; nextUrl: string | null }> {
   const res = await fetch(
     `https://${SHOPIFY_STORE}/admin/api/${SHOPIFY_VERSION}${path}`,
     {
@@ -27,9 +27,30 @@ async function shopifyGet(path: string): Promise<unknown> {
       cache: "no-store",
     }
   );
-  if (!res.ok) return null;
+  if (!res.ok) return { data: null, nextUrl: null };
   const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  const link = res.headers.get("link");
+  const nextUrl = link?.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+  return { data: text ? JSON.parse(text) : null, nextUrl };
+}
+
+async function fetchAllVariants(productId: string): Promise<ShopifyVariant[]> {
+  const all: ShopifyVariant[] = [];
+  let url: string | null =
+    `https://${SHOPIFY_STORE}/admin/api/${SHOPIFY_VERSION}/products/${productId}/variants.json?limit=250&fields=id,title,sku`;
+
+  while (url) {
+    const pageRes: Response = await fetch(url, {
+      headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN },
+      cache: "no-store",
+    });
+    if (!pageRes.ok) break;
+    const data = await pageRes.json() as { variants?: ShopifyVariant[] };
+    all.push(...(data.variants ?? []));
+    const linkHeader: string | null = pageRes.headers.get("link");
+    url = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+  }
+  return all;
 }
 
 export async function POST(req: NextRequest) {
@@ -41,13 +62,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Try as Shopify product_id
-    const byProduct = await shopifyGet(
-      `/products/${barcode}.json?fields=id,title,variants`
-    ) as { product?: ShopifyProduct } | null;
+    const { data: productData } = await shopifyGet(`/products/${barcode}.json?fields=id,title`);
+    const byProduct = productData as { product?: { id: number; title: string } } | null;
 
     if (byProduct?.product) {
       const product = byProduct.product;
-      const variants = product.variants
+      const allVariants = await fetchAllVariants(String(product.id));
+      const variants = allVariants
         .filter((v) => v.sku)
         .map((v) => ({ title: v.title, sku: v.sku! }))
         .sort((a, b) => {
@@ -67,9 +88,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Fallback: try as variant_id
-    const byVariant = await shopifyGet(
-      `/variants/${barcode}.json`
-    ) as { variant?: ShopifyVariant & { product_id: number } } | null;
+    const { data: variantData } = await shopifyGet(`/variants/${barcode}.json`);
+    const byVariant = variantData as { variant?: ShopifyVariant & { product_id: number } } | null;
 
     if (byVariant?.variant?.sku) {
       const v = byVariant.variant;
