@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrderFulfillmentData, addOrderTag } from "@/lib/shopify";
+import {
+  getOrderFulfillmentData,
+  addOrderTag,
+  getProductCoffretCount,
+  setProductCoffretCount,
+} from "@/lib/shopify";
+
+function isCoffret(title: string) {
+  const t = title.toLowerCase();
+  return t.startsWith("pack") || t.startsWith("coffret");
+}
 
 // GET /api/rassemblement?order=394907
+// Returns order data + coffretCounts map for Pack/Coffret items
 export async function GET(req: NextRequest) {
   const orderParam = req.nextUrl.searchParams.get("order")?.trim() ?? "";
   if (!orderParam) {
@@ -9,27 +20,58 @@ export async function GET(req: NextRequest) {
   }
   try {
     const data = await getOrderFulfillmentData(orderParam);
-    return NextResponse.json({ ok: true, data });
+
+    // Fetch coffret counts for Pack/Coffret items (deduplicated by productId)
+    const coffretProductIds = [
+      ...new Set(data.lineItems.filter(li => isCoffret(li.title)).map(li => li.productId)),
+    ];
+    const coffretCounts: Record<number, number | null> = {};
+    await Promise.all(
+      coffretProductIds.map(async (pid) => {
+        coffretCounts[pid] = await getProductCoffretCount(pid);
+      })
+    );
+
+    return NextResponse.json({ ok: true, data, coffretCounts });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
   }
 }
 
 // POST /api/rassemblement
-// body: { orderId, productId }
-// Adds tag: prod-ok:YYYY-MM-DD:productId
+// Regular item:   { orderId, productId }               → tag prod-ok:YYYY-MM-DD:productId
+// Coffret item:   { orderId, productId, n, total }      → tag prod-ok-N/TOTAL:YYYY-MM-DD:productId
 export async function POST(req: NextRequest) {
   try {
-    const { orderId, productId } = await req.json() as { orderId: number; productId: number };
+    const body = await req.json() as { orderId: number; productId: number; n?: number; total?: number };
+    const { orderId, productId, n, total } = body;
+
     if (!orderId || !productId) {
       return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const tag = `prod-ok:${today}:${productId}`;
-    await addOrderTag(orderId, tag);
+    const tag = (n !== undefined && total !== undefined)
+      ? `prod-ok-${n}/${total}:${today}:${productId}`
+      : `prod-ok:${today}:${productId}`;
 
+    await addOrderTag(orderId, tag);
     return NextResponse.json({ ok: true, tag });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
+  }
+}
+
+// PATCH /api/rassemblement
+// { productId, count } → saves coffret_count metafield on product
+export async function PATCH(req: NextRequest) {
+  try {
+    const { productId, count } = await req.json() as { productId: number; count: number };
+    if (!productId || !count || count < 1) {
+      return NextResponse.json({ ok: false, error: "productId et count requis" }, { status: 400 });
+    }
+    await setProductCoffretCount(productId, count);
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
   }

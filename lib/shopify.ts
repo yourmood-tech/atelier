@@ -25,6 +25,26 @@ async function shopifyFetch(path: string) {
   return JSON.parse(text);
 }
 
+async function shopifyPut(path: string, body: unknown) {
+  const res = await fetch(
+    `https://${STORE}/admin/api/${API_VERSION}${path}`,
+    {
+      method: "PUT",
+      headers: {
+        "X-Shopify-Access-Token": TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    }
+  );
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Shopify ${res.status} on ${path}: ${text.slice(0, 300)}`);
+  }
+  return JSON.parse(text);
+}
+
 async function shopifyPost(path: string, body: unknown) {
   const res = await fetch(
     `https://${STORE}/admin/api/${API_VERSION}${path}`,
@@ -423,6 +443,32 @@ export async function createBulkFulfillment(
       ...tracking,
     },
   });
+}
+
+export async function getProductCoffretCount(productId: number): Promise<number | null> {
+  try {
+    const data = await shopifyFetch(`/products/${productId}/metafields.json?namespace=atelier&key=coffret_count`);
+    const mf = data.metafields?.[0];
+    if (!mf) return null;
+    const n = parseInt(mf.value, 10);
+    return isNaN(n) ? null : n;
+  } catch {
+    return null;
+  }
+}
+
+export async function setProductCoffretCount(productId: number, count: number): Promise<void> {
+  const data = await shopifyFetch(`/products/${productId}/metafields.json?namespace=atelier&key=coffret_count`);
+  const existing = data.metafields?.[0];
+  if (existing) {
+    await shopifyPut(`/metafields/${existing.id}.json`, {
+      metafield: { id: existing.id, value: String(count), type: "number_integer" },
+    });
+  } else {
+    await shopifyPost(`/products/${productId}/metafields.json`, {
+      metafield: { namespace: "atelier", key: "coffret_count", value: String(count), type: "number_integer" },
+    });
+  }
 }
 
 export async function getAtelierTunnelUrl(): Promise<string | null> {

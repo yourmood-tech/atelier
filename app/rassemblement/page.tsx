@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { OrderFulfillmentData, FulfillmentLineItemData } from "@/lib/types";
 
-type Phase = "order" | "items" | "submitting" | "error";
+type Phase = "order" | "items" | "coffret-count" | "submitting" | "error";
+
+type ProdState =
+  | { type: "done" }
+  | { type: "coffret"; current: number; total: number };
 
 type HistoryEntry = {
   orderName: string;
@@ -23,32 +27,63 @@ function saveHistory(entries: HistoryEntry[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 3)));
 }
 
-// Extract prodOk productIds from order tags
-function getProdOkIds(tags: string[]): Set<number> {
-  const ids = new Set<number>();
+function isCoffret(title: string) {
+  const t = title.toLowerCase();
+  return t.startsWith("pack") || t.startsWith("coffret");
+}
+
+// Parse prod states from existing order tags
+function parseProdStates(tags: string[]): Map<number, ProdState> {
+  const states = new Map<number, ProdState>();
   for (const tag of tags) {
-    const m = tag.match(/^prod-ok:\d{4}-\d{2}-\d{2}:(\d+)$/);
-    if (m) ids.add(Number(m[1]));
+    // Regular: prod-ok:YYYY-MM-DD:productId
+    const regular = tag.match(/^prod-ok:[\d-]+:(\d+)$/);
+    if (regular) {
+      states.set(Number(regular[1]), { type: "done" });
+      continue;
+    }
+    // Coffret: prod-ok-N/TOTAL:YYYY-MM-DD:productId
+    const coffret = tag.match(/^prod-ok-(\d+)\/(\d+):[\d-]+:(\d+)$/);
+    if (coffret) {
+      const n = Number(coffret[1]);
+      const total = Number(coffret[2]);
+      const pid = Number(coffret[3]);
+      const existing = states.get(pid);
+      // Keep highest N seen
+      if (!existing || existing.type !== "coffret" || existing.current < n) {
+        states.set(pid, { type: "coffret", current: n, total });
+      }
+    }
   }
-  return ids;
+  return states;
 }
 
 export default function RassemblementPage() {
   const [phase, setPhase] = useState<Phase>("order");
   const [scanInput, setScanInput] = useState("");
   const [order, setOrder] = useState<OrderFulfillmentData | null>(null);
-  const [prodOkIds, setProdOkIds] = useState<Set<number>>(new Set());
+  const [coffretCounts, setCoffretCounts] = useState<Record<number, number | null>>({});
+  const [prodStates, setProdStates] = useState<Map<number, ProdState>>(new Map());
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+
+  // Coffret count prompt state
+  const [pendingProduct, setPendingProduct] = useState<FulfillmentLineItemData | null>(null);
+  const [coffretCountInput, setCoffretCountInput] = useState("");
+
   const inputRef = useRef<HTMLInputElement>(null);
+  const coffretCountRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setHistory(loadHistory()); }, []);
 
   useEffect(() => {
-    setHistory(loadHistory());
-  }, []);
-
-  useEffect(() => {
-    setScanInput("");
-    setTimeout(() => inputRef.current?.focus(), 50);
+    if (phase !== "coffret-count") {
+      setScanInput("");
+      setTimeout(() => inputRef.current?.focus(), 50);
+    } else {
+      setCoffretCountInput("");
+      setTimeout(() => coffretCountRef.current?.focus(), 50);
+    }
   }, [phase]);
 
   async function handleOrderScan(value: string) {
@@ -58,7 +93,12 @@ export default function RassemblementPage() {
     setMessage("Chargement…");
     try {
       const res = await fetch(`/api/rassemblement?order=${encodeURIComponent(cleaned)}`);
-      const json = await res.json() as { ok: boolean; data?: OrderFulfillmentData; error?: string };
+      const json = await res.json() as {
+        ok: boolean;
+        data?: OrderFulfillmentData;
+        coffretCounts?: Record<number, number | null>;
+        error?: string;
+      };
       if (!json.ok || !json.data) throw new Error(json.error ?? "Commande introuvable");
 
       const entry: HistoryEntry = {
@@ -71,7 +111,8 @@ export default function RassemblementPage() {
       setHistory(updated.slice(0, 3));
 
       setOrder(json.data);
-      setProdOkIds(getProdOkIds(json.data.tags));
+      setCoffretCounts(json.coffretCounts ?? {});
+      setProdStates(parseProdStates(json.data.tags));
       setMessage("");
       setPhase("items");
     } catch (err) {
@@ -91,12 +132,41 @@ export default function RassemblementPage() {
       return;
     }
 
-    if (prodOkIds.has(productId)) {
-      setMessage(`Produit déjà marqué prod-ok`);
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
+    const item = matches[0];
+    const state = prodStates.get(productId);
 
+    if (isCoffret(item.title)) {
+      const total = coffretCounts[productId] ?? null;
+
+      // Already fully done
+      if (state?.type === "coffret" && state.current >= state.total) {
+        setMessage(`${item.title} — tous les éléments déjà scannés (${state.total}/${state.total})`);
+        setTimeout(() => setMessage(""), 2500);
+        return;
+      }
+
+      // Need to ask for count
+      if (total === null) {
+        setPendingProduct(item);
+        setPhase("coffret-count");
+        return;
+      }
+
+      // Proceed with coffret scan
+      await submitCoffretScan(productId, item, total, state);
+    } else {
+      // Regular item
+      if (state?.type === "done") {
+        setMessage(`Produit déjà marqué prod-ok`);
+        setTimeout(() => setMessage(""), 2000);
+        return;
+      }
+      await submitRegularScan(productId);
+    }
+  }
+
+  async function submitRegularScan(productId: number) {
+    if (!order) return;
     setPhase("submitting");
     setMessage("Enregistrement…");
     try {
@@ -105,17 +175,76 @@ export default function RassemblementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: order.orderId, productId }),
       });
-      const json = await res.json() as { ok: boolean; tag?: string; error?: string };
+      const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdOkIds(prev => new Set([...prev, productId]));
-      setMessage(`✓ prod-ok enregistré`);
+      setProdStates(prev => new Map(prev).set(productId, { type: "done" }));
+      setMessage("✓ prod-ok enregistré");
       setTimeout(() => setMessage(""), 2000);
       setPhase("items");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Erreur");
       setPhase("error");
     }
+  }
+
+  async function submitCoffretScan(
+    productId: number,
+    item: FulfillmentLineItemData,
+    total: number,
+    currentState: ProdState | undefined
+  ) {
+    if (!order) return;
+    const currentN = (currentState?.type === "coffret" ? currentState.current : 0);
+    const n = currentN + 1;
+
+    setPhase("submitting");
+    setMessage("Enregistrement…");
+    try {
+      const res = await fetch("/api/rassemblement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.orderId, productId, n, total }),
+      });
+      const json = await res.json() as { ok: boolean; error?: string };
+      if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
+
+      setProdStates(prev => new Map(prev).set(productId, { type: "coffret", current: n, total }));
+      const msg = n >= total
+        ? `✓ ${item.title} — ${n}/${total} complet !`
+        : `✓ ${item.title} — ${n}/${total} enregistré`;
+      setMessage(msg);
+      setTimeout(() => setMessage(""), 2500);
+      setPhase("items");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Erreur");
+      setPhase("error");
+    }
+  }
+
+  async function handleCoffretCountConfirm() {
+    const count = parseInt(coffretCountInput.trim(), 10);
+    if (!pendingProduct || isNaN(count) || count < 1) return;
+
+    const productId = pendingProduct.productId;
+
+    // Save to Shopify metafield
+    try {
+      await fetch("/api/rassemblement", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, count }),
+      });
+    } catch {
+      // Non-blocking — we still proceed
+    }
+
+    // Update local counts and proceed with scan
+    const updatedCounts = { ...coffretCounts, [productId]: count };
+    setCoffretCounts(updatedCounts);
+    const state = prodStates.get(productId);
+    await submitCoffretScan(productId, pendingProduct, count, state);
+    setPendingProduct(null);
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -125,9 +254,9 @@ export default function RassemblementPage() {
         if (scanInput.trim()) {
           void handleProductScan(scanInput.trim());
         } else {
-          // TAB without scan = next order
           setOrder(null);
-          setProdOkIds(new Set());
+          setProdStates(new Map());
+          setCoffretCounts({});
           setMessage("");
           setPhase("order");
         }
@@ -160,9 +289,9 @@ export default function RassemblementPage() {
           <h1 className="text-lg font-bold tracking-widest uppercase text-zinc-400">
             Rassemblement
           </h1>
-          {order && phase !== "error" && (
+          {order && phase !== "error" && phase !== "coffret-count" && (
             <button
-              onClick={() => { setOrder(null); setProdOkIds(new Set()); setMessage(""); setPhase("order"); }}
+              onClick={() => { setOrder(null); setProdStates(new Map()); setCoffretCounts({}); setMessage(""); setPhase("order"); }}
               className="text-xs text-zinc-500 hover:text-zinc-300"
             >
               ✕ annuler
@@ -170,12 +299,46 @@ export default function RassemblementPage() {
           )}
         </div>
 
+        {/* Coffret count prompt */}
+        {phase === "coffret-count" && pendingProduct && (
+          <div className="rounded-lg bg-zinc-900 border border-amber-700 p-4 space-y-3">
+            <p className="text-sm text-amber-300 font-bold">Combien d&apos;éléments dans ce coffret ?</p>
+            <p className="text-sm text-zinc-300">{pendingProduct.title}</p>
+            <input
+              ref={coffretCountRef}
+              type="number"
+              min={1}
+              value={coffretCountInput}
+              onChange={(e) => setCoffretCountInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); void handleCoffretCountConfirm(); }
+                if (e.key === "Escape") { setPendingProduct(null); setPhase("items"); }
+              }}
+              className="w-full bg-zinc-800 border border-zinc-600 focus:border-amber-400 rounded-lg px-4 py-3 text-lg font-mono outline-none caret-white"
+              placeholder="ex : 3"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => void handleCoffretCountConfirm()}
+                className="flex-1 py-2 rounded-lg bg-amber-700 hover:bg-amber-600 text-sm font-bold"
+              >
+                Confirmer
+              </button>
+              <button
+                onClick={() => { setPendingProduct(null); setPhase("items"); }}
+                className="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-400"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Order info */}
-        {order && phase === "items" && (
+        {order && (phase === "items" || phase === "submitting") && (
           <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 space-y-3">
             <div className="text-xl font-bold">{order.orderName}</div>
 
-            {/* Pending items */}
             {pending.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs text-zinc-500 uppercase tracking-widest">En attente</p>
@@ -183,13 +346,13 @@ export default function RassemblementPage() {
                   <LineItemRow
                     key={li.lineItemId}
                     item={li}
-                    prodOk={prodOkIds.has(li.productId)}
+                    state={prodStates.get(li.productId)}
+                    coffretTotal={isCoffret(li.title) ? (coffretCounts[li.productId] ?? null) : null}
                   />
                 ))}
               </div>
             )}
 
-            {/* Fulfilled items */}
             {fulfilled.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs text-zinc-500 uppercase tracking-widest">Déjà livré</p>
@@ -197,7 +360,8 @@ export default function RassemblementPage() {
                   <LineItemRow
                     key={li.lineItemId}
                     item={li}
-                    prodOk={false}
+                    state={undefined}
+                    coffretTotal={null}
                     fulfilled
                   />
                 ))}
@@ -248,8 +412,8 @@ export default function RassemblementPage() {
           </div>
         )}
 
-        {/* Status message */}
-        {message && (
+        {/* Status */}
+        {message && phase !== "coffret-count" && (
           <div className={`rounded-lg px-4 py-3 text-sm font-medium ${
             phase === "error" ? "bg-red-900 text-red-200 border border-red-700" :
             "bg-zinc-800 text-zinc-300"
@@ -258,17 +422,15 @@ export default function RassemblementPage() {
           </div>
         )}
 
-        {/* Error retry */}
         {phase === "error" && (
           <button
-            onClick={() => { setOrder(null); setProdOkIds(new Set()); setMessage(""); setPhase("order"); }}
+            onClick={() => { setOrder(null); setProdStates(new Map()); setCoffretCounts({}); setMessage(""); setPhase("order"); }}
             className="w-full py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-300"
           >
             ← Recommencer
           </button>
         )}
 
-        {/* Submitting */}
         {phase === "submitting" && (
           <div className="text-zinc-500 text-sm animate-pulse">{message || "En cours…"}</div>
         )}
@@ -279,36 +441,60 @@ export default function RassemblementPage() {
 
 function LineItemRow({
   item,
-  prodOk,
+  state,
+  coffretTotal,
   fulfilled = false,
 }: {
   item: FulfillmentLineItemData;
-  prodOk: boolean;
+  state: ProdState | undefined;
+  coffretTotal: number | null;
   fulfilled?: boolean;
 }) {
-  const state = fulfilled ? "fulfilled" : prodOk ? "prodok" : "pending";
+  // Determine visual state
+  const isCoffretItem = coffretTotal !== null || (state?.type === "coffret");
+  const coffretCurrent = state?.type === "coffret" ? state.current : 0;
+  const total = coffretTotal ?? (state?.type === "coffret" ? state.total : null);
+  const coffretDone = isCoffretItem && total !== null && coffretCurrent >= total;
+
+  const isDone = fulfilled || state?.type === "done" || coffretDone;
+  const isPartial = isCoffretItem && coffretCurrent > 0 && !coffretDone;
+
   return (
     <div className={`rounded px-3 py-2 flex items-center gap-3 ${
-      state === "fulfilled" ? "opacity-40" :
-      state === "prodok" ? "bg-blue-900/40 border border-blue-700" :
+      fulfilled ? "opacity-40" :
+      isDone ? "bg-blue-900/40 border border-blue-700" :
+      isPartial ? "bg-amber-900/30 border border-amber-800" :
       "bg-zinc-800/30 border border-transparent"
     }`}>
       <span className={`w-4 h-4 rounded-sm border flex-shrink-0 flex items-center justify-center text-xs ${
-        state === "fulfilled" ? "border-zinc-600 bg-zinc-700 text-zinc-400" :
-        state === "prodok" ? "bg-blue-500 border-blue-400 text-white" :
+        fulfilled ? "border-zinc-600 bg-zinc-700 text-zinc-400" :
+        isDone ? "bg-blue-500 border-blue-400 text-white" :
+        isPartial ? "bg-amber-600 border-amber-500 text-white" :
         "border-zinc-600 bg-zinc-800"
       }`}>
-        {state === "fulfilled" ? "✓" : state === "prodok" ? "★" : ""}
+        {fulfilled ? "✓" : isDone ? "★" : isPartial ? "…" : ""}
       </span>
-      <span className={`flex-1 text-sm ${state === "pending" ? "text-zinc-400" : "text-zinc-200"}`}>
+
+      <span className={`flex-1 text-sm ${fulfilled || isDone ? "text-zinc-200" : isPartial ? "text-amber-200" : "text-zinc-400"}`}>
         {item.title}
         {item.variantTitle && item.variantTitle !== "Default Title" && (
           <span className="text-zinc-500 ml-1">— {item.variantTitle}</span>
         )}
-        {state === "prodok" && <span className="ml-2 text-xs text-blue-400">prod-ok</span>}
-        {state === "fulfilled" && <span className="ml-2 text-xs text-zinc-500">livré</span>}
       </span>
-      <span className="text-xs text-zinc-600">×{item.quantity}</span>
+
+      <span className="text-xs text-zinc-500 text-right whitespace-nowrap">
+        {fulfilled && <span className="text-zinc-500">livré</span>}
+        {!fulfilled && isDone && !isCoffretItem && <span className="text-blue-400">prod-ok</span>}
+        {!fulfilled && isCoffretItem && total !== null && (
+          <span className={coffretDone ? "text-blue-400" : coffretCurrent > 0 ? "text-amber-400" : "text-zinc-500"}>
+            {coffretCurrent}/{total}
+          </span>
+        )}
+        {!fulfilled && isCoffretItem && total === null && (
+          <span className="text-amber-500">? éléments</span>
+        )}
+        {!fulfilled && !isCoffretItem && !isDone && <span className="text-zinc-600">×{item.quantity}</span>}
+      </span>
     </div>
   );
 }
