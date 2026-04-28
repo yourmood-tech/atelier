@@ -155,7 +155,7 @@ async function callClaude(prompt: string): Promise<{ subject: string; body: stri
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 600,
+    max_tokens: 800,
     messages: [{ role: "user", content: prompt }],
   });
   const text = response.content[0].type === "text" ? response.content[0].text : "";
@@ -315,9 +315,15 @@ export async function generateProductionEmail(
     ? `approximately ${step.lead_time_min} ${step.lead_time_unit}`
     : null;
 
+  const signOff = locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
+    : locale === "it" ? "Il team di produzione Mood"
+    : locale === "es" ? "El equipo de producción Mood"
+    : "L'équipe de production Mood";
+
   const prompt = direction === "IN"
     ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief email to a customer informing them that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
+Write a short email to a customer informing them that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
 
 Purpose: inform the customer their piece is now being actively worked on, and give an estimated duration for this step.
 
@@ -328,11 +334,13 @@ Tone guidelines:
 
 Rules:
 - Write entirely in ${language}
-- 2-3 sentences maximum
-- Address by first name only — no "Madame/Monsieur"
-- No sign-off or signature — body text only
+- 2 short paragraphs separated by a blank line
+- First paragraph: address the customer by first name and give the status update with estimated duration
+- Second paragraph: one reassuring sentence about the piece moving forward
+- End with a sign-off line on its own line: "${signOff}"
+- Separate each paragraph and the sign-off with a blank line (\\n\\n)
 - Always mention the product name (${product.productTitle}) in the email body
-- Return JSON: { "subject": "...", "body": "..." }
+- Return JSON: { "subject": "...", "body": "..." } where body uses \\n\\n between paragraphs
 
 Customer info:
 - First name: ${order.customer.firstName}
@@ -341,7 +349,7 @@ Customer info:
 - Step: ${stepName}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
 
     : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief email to a customer informing them that their order has just completed the "${stepName}" production stage and is moving forward.
+Write a short email to a customer informing them that their order has just completed the "${stepName}" production stage and is moving forward.
 
 Purpose: confirm this step is done, signal progress — do not announce delivery date.
 
@@ -352,11 +360,13 @@ Tone guidelines:
 
 Rules:
 - Write entirely in ${language}
-- 2 sentences maximum
-- Address by first name only — no "Madame/Monsieur"
-- No sign-off or signature — body text only
+- 2 short paragraphs separated by a blank line
+- First paragraph: address the customer by first name and confirm the step is complete
+- Second paragraph: one brief sentence indicating the order continues moving forward
+- End with a sign-off line on its own line: "${signOff}"
+- Separate each paragraph and the sign-off with a blank line (\\n\\n)
 - Always mention the product name (${product.productTitle}) in the email body
-- Return JSON: { "subject": "...", "body": "..." }
+- Return JSON: { "subject": "...", "body": "..." } where body uses \\n\\n between paragraphs
 
 Customer info:
 - First name: ${order.customer.firstName}
@@ -365,7 +375,11 @@ Customer info:
 - Completed step: ${stepName}`;
 
   const result = await callClaude(prompt);
-  return { subject: result.subject, emailBody: result.body };
+  const emailBody = result.body
+    .split(/\n\n+/)
+    .map(p => `<p>${p.trim()}</p>`)
+    .join('');
+  return { subject: result.subject, emailBody };
 }
 
 // ── Gorgias — detect delay inquiry + extract order number ────────────────────
