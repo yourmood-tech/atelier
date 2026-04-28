@@ -5,6 +5,25 @@ import type { OrderFulfillmentData, FulfillmentLineItemData } from "@/lib/types"
 
 type Phase = "order" | "items" | "tracking" | "submitting" | "done" | "error";
 
+type HistoryEntry = {
+  orderName: string;
+  orderId: number;
+  fulfilledAt: string;
+  itemCount: number;
+};
+
+const HISTORY_KEY = "fulfillment_history";
+
+function loadHistory(): HistoryEntry[] {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? "[]") as HistoryEntry[];
+  } catch { return []; }
+}
+
+function saveHistory(entries: HistoryEntry[]) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 3)));
+}
+
 export default function FulfillmentPage() {
   const [phase, setPhase] = useState<Phase>("order");
   const [scanInput, setScanInput] = useState("");
@@ -12,7 +31,12 @@ export default function FulfillmentPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [trackingNumber, setTrackingNumber] = useState("");
   const [message, setMessage] = useState("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setHistory(loadHistory());
+  }, []);
 
   // Auto-focus input on every phase change
   useEffect(() => {
@@ -77,6 +101,17 @@ export default function FulfillmentPage() {
       });
       const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
+
+      const itemCount = lineItemIds.length === 0 ? totalUnfulfilled : lineItemIds.length;
+      const entry: HistoryEntry = {
+        orderName: order.orderName,
+        orderId: order.orderId,
+        fulfilledAt: new Date().toISOString(),
+        itemCount,
+      };
+      const updated = [entry, ...loadHistory().filter(h => h.orderId !== order.orderId)];
+      saveHistory(updated);
+      setHistory(updated.slice(0, 3));
 
       const msg = tracking
         ? `✓ ${order.orderName} fulfillé — tracking ${tracking}`
@@ -231,6 +266,30 @@ export default function FulfillmentPage() {
                 "scan tracking…"
               }
             />
+          </div>
+        )}
+
+        {/* History — last 3 fulfilled orders */}
+        {phase === "order" && history.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-600 uppercase tracking-widest">Récent</p>
+            {history.map((h) => {
+              const t = new Date(h.fulfilledAt);
+              const time = t.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+              const date = t.toLocaleDateString("fr-CH", { day: "2-digit", month: "2-digit" });
+              return (
+                <button
+                  key={h.orderId}
+                  onClick={() => void handleOrderScan(h.orderName)}
+                  className="w-full text-left rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 px-4 py-3 flex items-center justify-between transition-colors"
+                >
+                  <span className="font-bold text-zinc-200">{h.orderName}</span>
+                  <span className="text-xs text-zinc-500">
+                    {h.itemCount} art. · {date} {time}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         )}
 
