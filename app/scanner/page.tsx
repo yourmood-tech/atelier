@@ -73,6 +73,7 @@ export default function ScannerPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingMin, setEditingMin] = useState<string>("");
   const [editingMax, setEditingMax] = useState<string>("");
+  const [manualInput, setManualInput] = useState("");
 
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
   const submitScanRef = useRef<(raw: string) => Promise<void>>(async () => {});
@@ -557,6 +558,38 @@ export default function ScannerPage() {
         <div className="mb-6 rounded-2xl border p-4">
           <div className="mb-2 text-sm opacity-70">Buffer scanner</div>
           <div className="font-mono text-lg">{buffer || "—"}</div>
+        </div>
+      )}
+
+      {mode !== "suppliers" && !(mode === "production" && productionView === "steps") && (
+        <div className="mb-6 rounded-2xl border p-4">
+          <div className="mb-2 text-sm opacity-70">Saisie manuelle ID produit</div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={manualInput}
+              onChange={(e) => setManualInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const val = manualInput.trim();
+                  if (val) { void submitScan(val); setManualInput(""); }
+                }
+              }}
+              className="flex-1 rounded-xl border px-4 py-2 font-mono text-lg outline-none focus:ring-2 focus:ring-black"
+              placeholder="ex : 7291837492"
+            />
+            <button
+              onClick={() => {
+                const val = manualInput.trim();
+                if (val) { void submitScan(val); setManualInput(""); }
+              }}
+              className="rounded-xl bg-black px-5 py-2 text-white font-semibold"
+            >
+              ↵
+            </button>
+          </div>
         </div>
       )}
 
