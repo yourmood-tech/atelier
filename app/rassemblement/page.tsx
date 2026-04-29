@@ -33,7 +33,7 @@ function skuKey(sku: string): string {
 
 function isCoffret(title: string) {
   const t = title.toLowerCase();
-  return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
+  return t.includes("pack") || t.startsWith("coffret");
 }
 
 // Map keyed by SKU
@@ -159,8 +159,7 @@ export default function RassemblementPage() {
       const total = coffretCounts[productId] ?? null;
 
       if (state?.type === "coffret" && state.current >= state.total) {
-        setMessage(`${item.title} — tous les éléments déjà scannés (${state.total}/${state.total})`);
-        setTimeout(() => setMessage(""), 2500);
+        await handleDeselect(item);
         return;
       }
 
@@ -173,8 +172,7 @@ export default function RassemblementPage() {
       await submitCoffretScan(productId, item, total, state);
     } else {
       if (state?.type === "done") {
-        setMessage(`Produit déjà marqué prod-ok`);
-        setTimeout(() => setMessage(""), 2000);
+        await handleDeselect(item);
         return;
       }
       await submitRegularScan(productId, item.sku);
@@ -232,6 +230,28 @@ export default function RassemblementPage() {
         : `✓ ${item.title} — ${n}/${total} enregistré`;
       setMessage(msg);
       setTimeout(() => setMessage(""), 2500);
+      setPhase("items");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Erreur");
+      setPhase("error");
+    }
+  }
+
+  async function handleDeselect(item: FulfillmentLineItemData) {
+    if (!order) return;
+    setPhase("submitting");
+    setMessage("Annulation…");
+    try {
+      const res = await fetch("/api/rassemblement", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.orderId, sku: item.sku }),
+      });
+      const json = await res.json() as { ok: boolean; error?: string };
+      if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
+      setProdStates(prev => { const next = new Map(prev); next.delete(skuKey(item.sku)); return next; });
+      setMessage(`↩ ${item.title} — annulé`);
+      setTimeout(() => setMessage(""), 2000);
       setPhase("items");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Erreur");
@@ -506,8 +526,8 @@ function LineItemRow({
         onSelect ? "cursor-pointer active:opacity-70" : ""
       } ${
         fulfilled ? "bg-green-900/30 border border-green-800" :
-        isDone ? "bg-blue-900/40 border border-blue-700" :
-        isPartial ? "bg-amber-900/30 border border-amber-800" :
+        isDone ? "bg-blue-900/40 border border-blue-700 hover:bg-red-900/30 hover:border-red-700/60 group" :
+        isPartial ? "bg-amber-900/30 border border-amber-800 hover:bg-red-900/30 hover:border-red-700/60 group" :
         onSelect ? "bg-zinc-800/30 border border-transparent hover:border-zinc-600 hover:bg-zinc-800/60" :
         "bg-zinc-800/30 border border-transparent"
       }`}
@@ -518,7 +538,7 @@ function LineItemRow({
         isPartial ? "bg-amber-600 border-amber-500 text-white" :
         "border-zinc-600 bg-zinc-800"
       }`}>
-        {fulfilled ? "✓" : isDone ? "★" : isPartial ? "…" : ""}
+        {fulfilled ? "✓" : isDone ? <><span className="group-hover:hidden">★</span><span className="hidden group-hover:inline">↩</span></> : isPartial ? <><span className="group-hover:hidden">…</span><span className="hidden group-hover:inline">↩</span></> : ""}
       </span>
 
       <span className={`flex-1 text-sm ${

@@ -178,6 +178,17 @@ export async function addOrderTag(orderId: number, tag: string): Promise<void> {
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
+export async function removeOrderTagsBySkuKey(orderId: number, skuKey: string): Promise<void> {
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string)
+    .split(",")
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+  const newTags = existing.filter(t => !(t.startsWith("prod-ok-") && t.endsWith(`-${skuKey}`)));
+  if (newTags.length === existing.length) return;
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags.join(", ") } });
+}
+
 // Returns a tag string like "Rupture 17.04.26 10:30"
 export function makeOrderTag(reason: string): string {
   const now = new Date();

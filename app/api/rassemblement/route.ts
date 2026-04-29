@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getOrderFulfillmentData,
   addOrderTag,
+  removeOrderTagsBySkuKey,
   getProductCoffretCount,
   setProductCoffretCount,
 } from "@/lib/shopify";
 
 function isCoffret(title: string) {
   const t = title.toLowerCase();
-  return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
+  return t.includes("pack") || t.startsWith("coffret");
 }
 
 function fmtDate(d: Date): string {
@@ -67,6 +68,22 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erreur";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  }
+}
+
+// DELETE /api/rassemblement
+// { orderId, sku } → retire tous les tags prod-ok-*-{skuKey} de la commande
+export async function DELETE(req: NextRequest) {
+  try {
+    const { orderId, sku } = await req.json() as { orderId: number; sku: string };
+    if (!orderId || !sku) {
+      return NextResponse.json({ ok: false, error: "orderId et sku requis" }, { status: 400 });
+    }
+    const key = sku.replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 10);
+    await removeOrderTagsBySkuKey(orderId, key);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
   }
 }
 
