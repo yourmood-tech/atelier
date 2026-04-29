@@ -363,6 +363,12 @@ export default function RecipesPage() {
                 <button style={s.clearBtn} onClick={() => removeIngredient(ing.localId)}>✕</button>
               </div>
 
+              {/* Debug */}
+              <div style={{ fontSize: 10, color: "#f90", marginTop: 6 }}>
+                debug: {product ? `${product.options.length} opts, non-size: ${getNonSizeOptions(product).map(o => o.name).join(", ") || "aucune"}` : "no product"}
+                {" | filter keys: "}{Object.keys(ing.productOptionFilter).join(", ") || "vide"}
+              </div>
+
               {/* Non-size product option filter */}
               {product && getNonSizeOptions(product).map((opt) => {
                 const allValues = opt.values;
