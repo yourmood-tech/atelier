@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
     }
 
-    const skuPart = (sku ?? String(productId)).replace(/[^a-zA-Z0-9-_]/g, "");
+    const skuPart = (sku ?? String(productId)).replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 40);
     const tag = (n !== undefined && total !== undefined)
       ? `prod-ok-${n}-sur-${total}-${skuPart}`
       : `prod-ok:${fmtDate(new Date())}:${skuPart}`;
