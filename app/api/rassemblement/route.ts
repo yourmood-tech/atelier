@@ -12,7 +12,11 @@ function isCoffret(title: string) {
 }
 
 function sanitizeTitle(title: string): string {
-  return title.replace(/,/g, " ").trim();
+  return title
+    .replace(/[,:/\\()'"`<>&+=#@!?]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
 }
 
 // GET /api/rassemblement?order=394907

@@ -28,7 +28,11 @@ function saveHistory(entries: HistoryEntry[]) {
 }
 
 function sanitizeTitle(title: string): string {
-  return title.replace(/,/g, " ").trim();
+  return title
+    .replace(/[,:/\\()'"`<>&+=#@!?]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
 }
 
 function isCoffret(title: string) {
