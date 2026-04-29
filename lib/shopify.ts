@@ -164,42 +164,17 @@ export async function lookupOrderByName(name: string): Promise<{ id: number; nam
   return { id: order.id, name: order.name };
 }
 
-// ── Shopify GraphQL — add a tag to an order (non-destructive, merges with existing tags) ──
+// ── Shopify REST — add a tag to an order (non-destructive, merges with existing tags) ──
 
 export async function addOrderTag(orderId: number, tag: string): Promise<void> {
-  const gid = `gid://shopify/Order/${orderId}`;
-  const query = `
-    mutation tagsAdd($id: ID!, $tags: [String!]!) {
-      tagsAdd(id: $id, tags: $tags) {
-        node { id }
-        userErrors { field message }
-      }
-    }
-  `;
-
-  const res = await fetch(
-    `https://${STORE}/admin/api/${API_VERSION}/graphql.json`,
-    {
-      method: "POST",
-      headers: {
-        "X-Shopify-Access-Token": TOKEN,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query, variables: { id: gid, tags: [tag] } }),
-    }
-  );
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Shopify GraphQL ${res.status}: ${text.slice(0, 200)}`);
-  }
-
-  const json = await res.json() as { data?: { tagsAdd?: { userErrors?: { field: string; message: string }[] } } };
-  const errors = json.data?.tagsAdd?.userErrors;
-  if (errors?.length) {
-    console.error(`[tagsAdd] tag="${tag}" field="${errors[0].field}" message="${errors[0].message}"`);
-    throw new Error(`Shopify tagsAdd: ${errors[0].message} (field: ${errors[0].field}, tag: "${tag}")`);
-  }
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string)
+    .split(",")
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+  if (existing.includes(tag)) return;
+  const newTags = [...existing, tag].join(", ");
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
 // Returns a tag string like "Rupture 17.04.26 10:30"
