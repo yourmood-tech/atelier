@@ -11,12 +11,11 @@ function isCoffret(title: string) {
   return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
 }
 
-function sanitizeTitle(title: string): string {
-  return title
-    .replace(/[,:/\\()'"`<>&+=#@!?]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 100);
+function fmtDate(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = String(d.getFullYear()).slice(2);
+  return `${dd}${mm}${yy}`;
 }
 
 // GET /api/rassemblement?order=394907
@@ -47,22 +46,21 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/rassemblement
-// Regular item:   { orderId, productId, title }               → tag prod-ok:YYYY-MM-DD:name
-// Coffret item:   { orderId, productId, n, total }            → tag prod-ok-N-sur-TOTAL
+// Regular item:   { orderId, productId, sku }          → tag prod-ok:ddmmyy:SKU
+// Coffret item:   { orderId, productId, sku, n, total } → tag prod-ok-N-sur-TOTAL-SKU
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { orderId: number; productId: number; title?: string; n?: number; total?: number };
-    const { orderId, productId, title, n, total } = body;
+    const body = await req.json() as { orderId: number; productId: number; sku?: string; n?: number; total?: number };
+    const { orderId, productId, sku, n, total } = body;
 
     if (!orderId || !productId) {
       return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
     }
 
-    const today = new Date().toISOString().slice(0, 10);
-    const namePart = sanitizeTitle(title ?? "").slice(0, 20).trim();
+    const skuPart = (sku ?? String(productId)).replace(/[^a-zA-Z0-9-_]/g, "");
     const tag = (n !== undefined && total !== undefined)
-      ? `prod-ok-${n}-sur-${total}${namePart ? `-${namePart}` : ""}`
-      : `prod-ok:${today}:${sanitizeTitle(title ?? String(productId))}`;
+      ? `prod-ok-${n}-sur-${total}-${skuPart}`
+      : `prod-ok:${fmtDate(new Date())}:${skuPart}`;
 
     await addOrderTag(orderId, tag);
     return NextResponse.json({ ok: true, tag });
