@@ -187,11 +187,11 @@ export default function RassemblementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: order.orderId, productId, sku }),
       });
-      const json = await res.json() as { ok: boolean; error?: string };
+      const json = await res.json() as { ok: boolean; tag?: string; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
       setProdStates(prev => new Map(prev).set(sku, { type: "done" }));
-      setMessage("✓ prod-ok enregistré");
+      setMessage(`✓ ${json.tag ?? "prod-ok enregistré"}`);
       setTimeout(() => setMessage(""), 2000);
       setPhase("items");
     } catch (err) {
