@@ -194,10 +194,11 @@ export async function addOrderTag(orderId: number, tag: string): Promise<void> {
     throw new Error(`Shopify GraphQL ${res.status}: ${text.slice(0, 200)}`);
   }
 
-  const json = await res.json() as { data?: { tagsAdd?: { userErrors?: { message: string }[] } } };
+  const json = await res.json() as { data?: { tagsAdd?: { userErrors?: { field: string; message: string }[] } } };
   const errors = json.data?.tagsAdd?.userErrors;
   if (errors?.length) {
-    throw new Error(`Shopify tagsAdd: ${errors[0].message}`);
+    console.error(`[tagsAdd] tag="${tag}" field="${errors[0].field}" message="${errors[0].message}"`);
+    throw new Error(`Shopify tagsAdd: ${errors[0].message} (field: ${errors[0].field}, tag: "${tag}")`);
   }
 }
 
