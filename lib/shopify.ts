@@ -174,6 +174,7 @@ export async function addOrderTag(orderId: number, tag: string): Promise<void> {
     .filter(Boolean);
   if (existing.includes(tag)) return;
   const newTags = [...existing, tag].join(", ");
+  console.log(`[addOrderTag] orderId=${orderId} existingCount=${existing.length} existingLen=${current.order.tags.length} newLen=${newTags.length} tag="${tag}"`);
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
