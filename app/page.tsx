@@ -14,10 +14,10 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
     summary: "Production, impression des bons, rassemblement des commandes et ordres d'achat Icelea.",
     tools: [
       {
-        href: "/stock",
-        emoji: "📊",
-        title: "Scanner stock",
-        description: "Inventaire rapide par scan : comptez les unités, suivez les batches de production, gérez les délais fournisseurs.",
+        href: "/scanner",
+        emoji: "📦",
+        title: "Scanner atelier",
+        description: "Scannez un produit Shopify pour voir sa recette Katana et lancer une production.",
       },
       {
         href: "/reprint",
@@ -42,12 +42,6 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         emoji: "🛒",
         title: "Commande Icelea",
         description: "Créez un ordre d'achat Icelea depuis Katana : scan produit, choix taille, confirmation ingrédients.",
-      },
-      {
-        href: "/scanner",
-        emoji: "📦",
-        title: "Scanner de recettes",
-        description: "Scannez un produit Shopify pour voir sa recette Katana et lancer une production.",
       },
     ],
   },
