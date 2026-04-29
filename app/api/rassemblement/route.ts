@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     const skuPart = (sku || String(productId)).replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 40);
     const tag = (n !== undefined && total !== undefined)
       ? `prod-ok-${n}-sur-${total}-${skuPart}`
-      : `prod-ok:${fmtDate(new Date())}:${skuPart}`;
+      : `prod-ok-${fmtDate(new Date())}-${skuPart}`;
 
     await addOrderTag(orderId, tag);
     return NextResponse.json({ ok: true, tag });

@@ -40,10 +40,10 @@ function parseProdStates(
 ): Map<string, ProdState> {
   const states = new Map<string, ProdState>();
 
-  // Regular: prod-ok:ddmmyy:SKU
+  // Regular: prod-ok-ddmmyy-SKU
   for (const tag of tags) {
-    const regular = tag.match(/^prod-ok:[\d]+:(.+)$/);
-    if (regular) states.set(regular[1], { type: "done" });
+    const regular = tag.match(/^prod-ok-(\d{6})-(.+)$/);
+    if (regular) states.set(regular[2], { type: "done" });
   }
 
   // Coffret: prod-ok-N-sur-TOTAL-SKU — match to line items via coffretCounts
