@@ -27,6 +27,10 @@ function saveHistory(entries: HistoryEntry[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 3)));
 }
 
+function skuKey(sku: string): string {
+  return sku.replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 10);
+}
+
 function isCoffret(title: string) {
   const t = title.toLowerCase();
   return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
@@ -65,7 +69,7 @@ function parseProdStates(
     const total = coffretCounts[li.productId];
     if (!total) continue;
     const found = coffretTags.find(t => t.total === total);
-    if (found) states.set(li.sku, { type: "coffret", current: found.n, total: found.total });
+    if (found) states.set(skuKey(li.sku), { type: "coffret", current: found.n, total: found.total });
   }
 
   return states;
@@ -149,7 +153,7 @@ export default function RassemblementPage() {
     }
 
     const item = matches[0];
-    const state = prodStates.get(item.sku);
+    const state = prodStates.get(skuKey(item.sku));
 
     if (isCoffret(item.title)) {
       const total = coffretCounts[productId] ?? null;
@@ -190,7 +194,7 @@ export default function RassemblementPage() {
       const json = await res.json() as { ok: boolean; tag?: string; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdStates(prev => new Map(prev).set(sku, { type: "done" }));
+      setProdStates(prev => new Map(prev).set(skuKey(sku), { type: "done" }));
       setMessage(`✓ ${json.tag ?? "prod-ok enregistré"}`);
       setTimeout(() => setMessage(""), 2000);
       setPhase("items");
@@ -222,7 +226,7 @@ export default function RassemblementPage() {
       const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdStates(prev => new Map(prev).set(item.sku, { type: "coffret", current: n, total }));
+      setProdStates(prev => new Map(prev).set(skuKey(item.sku), { type: "coffret", current: n, total }));
       const msg = n >= total
         ? `✓ ${item.title} — ${n}/${total} complet !`
         : `✓ ${item.title} — ${n}/${total} enregistré`;
@@ -255,7 +259,7 @@ export default function RassemblementPage() {
 
     const updatedCounts = { ...coffretCounts, [productId]: count };
     setCoffretCounts(updatedCounts);
-    const state = prodStates.get(pendingProduct.sku);
+    const state = prodStates.get(skuKey(pendingProduct.sku));
     await submitCoffretScan(productId, pendingProduct, count, state, readyCount);
     setPendingProduct(null);
   }
@@ -380,7 +384,7 @@ export default function RassemblementPage() {
                   <LineItemRow
                     key={li.lineItemId}
                     item={li}
-                    state={prodStates.get(li.sku)}
+                    state={prodStates.get(skuKey(li.sku))}
                     coffretTotal={isCoffret(li.title) ? (coffretCounts[li.productId] ?? null) : null}
                   />
                 ))}
