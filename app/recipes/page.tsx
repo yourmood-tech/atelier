@@ -36,14 +36,27 @@ type IngredientEntry = {
   localId: string;
   material: KatanaMaterial;
   quantity: number;
-  // Selected variant (when hasTaille=false and multiple non-size variants)
   selectedVariantId: number | null;
+  // For each non-size product option: which values this ingredient applies to (all = all values)
+  productOptionFilter: Record<string, string[]>;
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function isTailleOption(name: string): boolean {
   return ["taille", "size", "ring size"].includes(name.toLowerCase());
+}
+
+function getNonSizeOptions(product: ShopifyProduct): { name: string; values: string[] }[] {
+  return product.options.filter((o) => !isTailleOption(o.name));
+}
+
+function variantMatchesFilter(variant: ShopifyVariant, filter: Record<string, string[]>): boolean {
+  for (const [optName, selected] of Object.entries(filter)) {
+    const val = variant.options[optName];
+    if (val !== undefined && !selected.includes(val)) return false;
+  }
+  return true;
 }
 
 function hasTailleOption(product: ShopifyProduct): boolean {
@@ -90,6 +103,7 @@ function generateCSV(
     const productSize = getTailleValue(variant) ?? variant.title;
 
     for (const ing of ingredients) {
+      if (!variantMatchesFilter(variant, ing.productOptionFilter)) continue;
       const ingVariant = findIngredientVariant(ing.material, productSize, ing.selectedVariantId);
       if (!ingVariant?.sku) {
         warnings.push(
@@ -162,6 +176,12 @@ export default function RecipesPage() {
   }
 
   function addIngredient(material: KatanaMaterial) {
+    const filter: Record<string, string[]> = {};
+    if (product) {
+      for (const opt of getNonSizeOptions(product)) {
+        filter[opt.name] = [...opt.values];
+      }
+    }
     setIngredients((prev) => [
       ...prev,
       {
@@ -169,12 +189,26 @@ export default function RecipesPage() {
         material,
         quantity: 1,
         selectedVariantId: material.hasTaille ? null : (material.variants[0]?.id ?? null),
+        productOptionFilter: filter,
       },
     ]);
     setIngResults([]);
     setIngQuery("");
     setWarnings([]);
     setTimeout(() => ingInputRef.current?.focus(), 50);
+  }
+
+  function toggleOptionValue(localId: string, optName: string, value: string) {
+    setIngredients((prev) => prev.map((ing) => {
+      if (ing.localId !== localId) return ing;
+      const current = ing.productOptionFilter[optName] ?? [];
+      const next = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      if (next.length === 0) return ing; // ne pas désélectionner tout
+      return { ...ing, productOptionFilter: { ...ing.productOptionFilter, [optName]: next } };
+    }));
+    setWarnings([]);
   }
 
   function updateQty(localId: string, qty: number) {
@@ -325,6 +359,39 @@ export default function RecipesPage() {
                 </div>
                 <button style={s.clearBtn} onClick={() => removeIngredient(ing.localId)}>✕</button>
               </div>
+
+              {/* Non-size product option filter */}
+              {product && getNonSizeOptions(product).map((opt) => {
+                const allValues = opt.values;
+                const selected = ing.productOptionFilter[opt.name] ?? allValues;
+                const allSelected = selected.length === allValues.length;
+                return (
+                  <div key={opt.name} style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>
+                      {opt.name} {allSelected ? <span style={{ color: "#27ae60" }}>· toutes</span> : <span style={{ color: "#e67e22" }}>· {selected.length}/{allValues.length}</span>}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {allValues.map((val) => {
+                        const isOn = selected.includes(val);
+                        return (
+                          <button
+                            key={val}
+                            style={{
+                              ...s.optBtn,
+                              background: isOn ? "#111" : "#f5f5f5",
+                              color: isOn ? "#fff" : "#999",
+                              borderColor: isOn ? "#111" : "#e0e0e0",
+                            }}
+                            onClick={() => toggleOptionValue(ing.localId, opt.name, val)}
+                          >
+                            {val}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
 
               {/* Variant picker when not size-mapped */}
               {!ing.material.hasTaille && ing.material.variants.length > 1 && (
