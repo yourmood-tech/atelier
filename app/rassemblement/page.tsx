@@ -27,31 +27,34 @@ function saveHistory(entries: HistoryEntry[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, 3)));
 }
 
-function isCoffret(title: string) {
-  const t = title.toLowerCase();
-  return t.startsWith("pack") || t.startsWith("coffret");
+function sanitizeTitle(title: string): string {
+  return title.replace(/,/g, " ").trim();
 }
 
-// Parse prod states from existing order tags
-function parseProdStates(tags: string[]): Map<number, ProdState> {
-  const states = new Map<number, ProdState>();
+function isCoffret(title: string) {
+  const t = title.toLowerCase();
+  return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
+}
+
+// Map keyed by sanitized title (more readable than productId in tags)
+function parseProdStates(tags: string[]): Map<string, ProdState> {
+  const states = new Map<string, ProdState>();
   for (const tag of tags) {
-    // Regular: prod-ok:YYYY-MM-DD:productId
-    const regular = tag.match(/^prod-ok:[\d-]+:(\d+)$/);
+    // Regular: prod-ok:YYYY-MM-DD:name
+    const regular = tag.match(/^prod-ok:[\d-]+:(.+)$/);
     if (regular) {
-      states.set(Number(regular[1]), { type: "done" });
+      states.set(regular[1], { type: "done" });
       continue;
     }
-    // Coffret: prod-ok-N/TOTAL:YYYY-MM-DD:productId
-    const coffret = tag.match(/^prod-ok-(\d+)\/(\d+):[\d-]+:(\d+)$/);
+    // Coffret: prod-ok-N/TOTAL:YYYY-MM-DD:name
+    const coffret = tag.match(/^prod-ok-(\d+)\/(\d+):[\d-]+:(.+)$/);
     if (coffret) {
       const n = Number(coffret[1]);
       const total = Number(coffret[2]);
-      const pid = Number(coffret[3]);
-      const existing = states.get(pid);
-      // Keep highest N seen
+      const name = coffret[3];
+      const existing = states.get(name);
       if (!existing || existing.type !== "coffret" || existing.current < n) {
-        states.set(pid, { type: "coffret", current: n, total });
+        states.set(name, { type: "coffret", current: n, total });
       }
     }
   }
@@ -63,16 +66,18 @@ export default function RassemblementPage() {
   const [scanInput, setScanInput] = useState("");
   const [order, setOrder] = useState<OrderFulfillmentData | null>(null);
   const [coffretCounts, setCoffretCounts] = useState<Record<number, number | null>>({});
-  const [prodStates, setProdStates] = useState<Map<number, ProdState>>(new Map());
+  const [prodStates, setProdStates] = useState<Map<string, ProdState>>(new Map());
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   // Coffret count prompt state
   const [pendingProduct, setPendingProduct] = useState<FulfillmentLineItemData | null>(null);
   const [coffretCountInput, setCoffretCountInput] = useState("");
+  const [coffretReadyInput, setCoffretReadyInput] = useState("1");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const coffretCountRef = useRef<HTMLInputElement>(null);
+  const coffretReadyRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setHistory(loadHistory()); }, []);
 
@@ -82,6 +87,7 @@ export default function RassemblementPage() {
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setCoffretCountInput("");
+      setCoffretReadyInput("1");
       setTimeout(() => coffretCountRef.current?.focus(), 50);
     }
   }, [phase]);
@@ -133,39 +139,36 @@ export default function RassemblementPage() {
     }
 
     const item = matches[0];
-    const state = prodStates.get(productId);
+    const key = sanitizeTitle(item.title);
+    const state = prodStates.get(key);
 
     if (isCoffret(item.title)) {
       const total = coffretCounts[productId] ?? null;
 
-      // Already fully done
       if (state?.type === "coffret" && state.current >= state.total) {
         setMessage(`${item.title} — tous les éléments déjà scannés (${state.total}/${state.total})`);
         setTimeout(() => setMessage(""), 2500);
         return;
       }
 
-      // Need to ask for count
       if (total === null) {
         setPendingProduct(item);
         setPhase("coffret-count");
         return;
       }
 
-      // Proceed with coffret scan
       await submitCoffretScan(productId, item, total, state);
     } else {
-      // Regular item
       if (state?.type === "done") {
         setMessage(`Produit déjà marqué prod-ok`);
         setTimeout(() => setMessage(""), 2000);
         return;
       }
-      await submitRegularScan(productId);
+      await submitRegularScan(productId, item.title);
     }
   }
 
-  async function submitRegularScan(productId: number) {
+  async function submitRegularScan(productId: number, title: string) {
     if (!order) return;
     setPhase("submitting");
     setMessage("Enregistrement…");
@@ -173,12 +176,12 @@ export default function RassemblementPage() {
       const res = await fetch("/api/rassemblement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, productId }),
+        body: JSON.stringify({ orderId: order.orderId, productId, title }),
       });
       const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdStates(prev => new Map(prev).set(productId, { type: "done" }));
+      setProdStates(prev => new Map(prev).set(sanitizeTitle(title), { type: "done" }));
       setMessage("✓ prod-ok enregistré");
       setTimeout(() => setMessage(""), 2000);
       setPhase("items");
@@ -192,11 +195,12 @@ export default function RassemblementPage() {
     productId: number,
     item: FulfillmentLineItemData,
     total: number,
-    currentState: ProdState | undefined
+    currentState: ProdState | undefined,
+    markCount: number = 1
   ) {
     if (!order) return;
-    const currentN = (currentState?.type === "coffret" ? currentState.current : 0);
-    const n = currentN + 1;
+    const currentN = currentState?.type === "coffret" ? currentState.current : 0;
+    const n = Math.min(currentN + markCount, total);
 
     setPhase("submitting");
     setMessage("Enregistrement…");
@@ -204,12 +208,12 @@ export default function RassemblementPage() {
       const res = await fetch("/api/rassemblement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, productId, n, total }),
+        body: JSON.stringify({ orderId: order.orderId, productId, title: item.title, n, total }),
       });
       const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdStates(prev => new Map(prev).set(productId, { type: "coffret", current: n, total }));
+      setProdStates(prev => new Map(prev).set(sanitizeTitle(item.title), { type: "coffret", current: n, total }));
       const msg = n >= total
         ? `✓ ${item.title} — ${n}/${total} complet !`
         : `✓ ${item.title} — ${n}/${total} enregistré`;
@@ -227,23 +231,23 @@ export default function RassemblementPage() {
     if (!pendingProduct || isNaN(count) || count < 1) return;
 
     const productId = pendingProduct.productId;
+    const readyCount = Math.min(
+      Math.max(1, parseInt(coffretReadyInput.trim(), 10) || 1),
+      count
+    );
 
-    // Save to Shopify metafield
     try {
       await fetch("/api/rassemblement", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productId, count }),
       });
-    } catch {
-      // Non-blocking — we still proceed
-    }
+    } catch { /* non-blocking */ }
 
-    // Update local counts and proceed with scan
     const updatedCounts = { ...coffretCounts, [productId]: count };
     setCoffretCounts(updatedCounts);
-    const state = prodStates.get(productId);
-    await submitCoffretScan(productId, pendingProduct, count, state);
+    const state = prodStates.get(sanitizeTitle(pendingProduct.title));
+    await submitCoffretScan(productId, pendingProduct, count, state, readyCount);
     setPendingProduct(null);
   }
 
@@ -302,21 +306,42 @@ export default function RassemblementPage() {
         {/* Coffret count prompt */}
         {phase === "coffret-count" && pendingProduct && (
           <div className="rounded-lg bg-zinc-900 border border-amber-700 p-4 space-y-3">
-            <p className="text-sm text-amber-300 font-bold">Combien d&apos;éléments dans ce coffret ?</p>
-            <p className="text-sm text-zinc-300">{pendingProduct.title}</p>
-            <input
-              ref={coffretCountRef}
-              type="number"
-              min={1}
-              value={coffretCountInput}
-              onChange={(e) => setCoffretCountInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") { e.preventDefault(); void handleCoffretCountConfirm(); }
-                if (e.key === "Escape") { setPendingProduct(null); setPhase("items"); }
-              }}
-              className="w-full bg-zinc-800 border border-zinc-600 focus:border-amber-400 rounded-lg px-4 py-3 text-lg font-mono outline-none caret-white"
-              placeholder="ex : 3"
-            />
+            <p className="text-sm text-zinc-300 font-medium">{pendingProduct.title}</p>
+
+            <div className="space-y-1">
+              <label className="text-xs text-amber-400 uppercase tracking-widest">Nb d&apos;éléments dans ce coffret</label>
+              <input
+                ref={coffretCountRef}
+                type="number"
+                min={1}
+                value={coffretCountInput}
+                onChange={(e) => setCoffretCountInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); coffretReadyRef.current?.focus(); }
+                  if (e.key === "Escape") { setPendingProduct(null); setPhase("items"); }
+                }}
+                className="w-full bg-zinc-800 border border-zinc-600 focus:border-amber-400 rounded-lg px-4 py-3 text-lg font-mono outline-none caret-white"
+                placeholder="ex : 3"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs text-amber-400 uppercase tracking-widest">Combien sont prêts maintenant ?</label>
+              <input
+                ref={coffretReadyRef}
+                type="number"
+                min={1}
+                value={coffretReadyInput}
+                onChange={(e) => setCoffretReadyInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); void handleCoffretCountConfirm(); }
+                  if (e.key === "Escape") { setPendingProduct(null); setPhase("items"); }
+                }}
+                className="w-full bg-zinc-800 border border-zinc-600 focus:border-amber-400 rounded-lg px-4 py-3 text-lg font-mono outline-none caret-white"
+                placeholder="1"
+              />
+            </div>
+
             <div className="flex gap-2">
               <button
                 onClick={() => void handleCoffretCountConfirm()}
@@ -346,7 +371,7 @@ export default function RassemblementPage() {
                   <LineItemRow
                     key={li.lineItemId}
                     item={li}
-                    state={prodStates.get(li.productId)}
+                    state={prodStates.get(sanitizeTitle(li.title))}
                     coffretTotal={isCoffret(li.title) ? (coffretCounts[li.productId] ?? null) : null}
                   />
                 ))}
@@ -450,8 +475,7 @@ function LineItemRow({
   coffretTotal: number | null;
   fulfilled?: boolean;
 }) {
-  // Determine visual state
-  const isCoffretItem = coffretTotal !== null || (state?.type === "coffret");
+  const isCoffretItem = coffretTotal !== null || state?.type === "coffret";
   const coffretCurrent = state?.type === "coffret" ? state.current : 0;
   const total = coffretTotal ?? (state?.type === "coffret" ? state.total : null);
   const coffretDone = isCoffretItem && total !== null && coffretCurrent >= total;

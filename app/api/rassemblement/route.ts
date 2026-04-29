@@ -8,7 +8,11 @@ import {
 
 function isCoffret(title: string) {
   const t = title.toLowerCase();
-  return t.startsWith("pack") || t.startsWith("coffret");
+  return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
+}
+
+function sanitizeTitle(title: string): string {
+  return title.replace(/,/g, " ").trim();
 }
 
 // GET /api/rassemblement?order=394907
@@ -39,21 +43,22 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/rassemblement
-// Regular item:   { orderId, productId }               → tag prod-ok:YYYY-MM-DD:productId
-// Coffret item:   { orderId, productId, n, total }      → tag prod-ok-N/TOTAL:YYYY-MM-DD:productId
+// Regular item:   { orderId, productId, title }               → tag prod-ok:YYYY-MM-DD:name
+// Coffret item:   { orderId, productId, title, n, total }     → tag prod-ok-N/TOTAL:YYYY-MM-DD:name
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { orderId: number; productId: number; n?: number; total?: number };
-    const { orderId, productId, n, total } = body;
+    const body = await req.json() as { orderId: number; productId: number; title?: string; n?: number; total?: number };
+    const { orderId, productId, title, n, total } = body;
 
     if (!orderId || !productId) {
       return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
     }
 
+    const name = sanitizeTitle(title ?? String(productId));
     const today = new Date().toISOString().slice(0, 10);
     const tag = (n !== undefined && total !== undefined)
-      ? `prod-ok-${n}/${total}:${today}:${productId}`
-      : `prod-ok:${today}:${productId}`;
+      ? `prod-ok-${n}/${total}:${today}:${name}`
+      : `prod-ok:${today}:${name}`;
 
     await addOrderTag(orderId, tag);
     return NextResponse.json({ ok: true, tag });
