@@ -575,15 +575,18 @@ export default function ScannerPage() {
                   e.preventDefault();
                   const val = manualInput.trim();
                   if (val) { void submitScan(val); setManualInput(""); }
+                  e.currentTarget.blur();
                 }
               }}
               className="flex-1 rounded-xl border px-4 py-2 font-mono text-lg outline-none focus:ring-2 focus:ring-black"
               placeholder="ex : 7291837492"
             />
             <button
-              onClick={() => {
+              onClick={(e) => {
                 const val = manualInput.trim();
                 if (val) { void submitScan(val); setManualInput(""); }
+                e.currentTarget.blur();
+                (e.currentTarget.previousElementSibling as HTMLInputElement | null)?.blur();
               }}
               className="rounded-xl bg-black px-5 py-2 text-white font-semibold"
             >
