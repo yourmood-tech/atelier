@@ -59,8 +59,9 @@ export async function POST(req: NextRequest) {
     }
 
     const today = new Date().toISOString().slice(0, 10);
+    const namePart = sanitizeTitle(title ?? "").slice(0, 20).trim();
     const tag = (n !== undefined && total !== undefined)
-      ? `prod-ok-${n}-sur-${total}`
+      ? `prod-ok-${n}-sur-${total}${namePart ? `-${namePart}` : ""}`
       : `prod-ok:${today}:${sanitizeTitle(title ?? String(productId))}`;
 
     await addOrderTag(orderId, tag);

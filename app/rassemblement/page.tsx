@@ -58,7 +58,7 @@ function parseProdStates(
   // Coffret: prod-ok-N-sur-TOTAL — match to line items via coffretCounts
   const coffretTags: { n: number; total: number }[] = [];
   for (const tag of tags) {
-    const m = tag.match(/^prod-ok-(\d+)-sur-(\d+)$/);
+    const m = tag.match(/^prod-ok-(\d+)-sur-(\d+)/);
     if (m) {
       const n = Number(m[1]), total = Number(m[2]);
       const existing = coffretTags.find(t => t.total === total);
