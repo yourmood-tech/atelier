@@ -7,15 +7,17 @@ type Tool = {
   description: string;
 };
 
-const sections: { title: string; tools: Tool[] }[] = [
+const sections: { id: string; title: string; summary: string; tools: Tool[] }[] = [
   {
+    id: "atelier",
     title: "Outils Atelier",
+    summary: "Production, impression des bons, rassemblement des commandes et ordres d'achat Icelea.",
     tools: [
       {
         href: "/stock",
         emoji: "📊",
         title: "Scanner stock",
-        description: "Inventaire rapide par scan : comptez les unités en stock, suivez les batches de production, gérez les délais fournisseurs.",
+        description: "Inventaire rapide par scan : comptez les unités, suivez les batches de production, gérez les délais fournisseurs.",
       },
       {
         href: "/reprint",
@@ -27,59 +29,63 @@ const sections: { title: string; tools: Tool[] }[] = [
         href: "/rassemblement",
         emoji: "🗂️",
         title: "Rassemblement",
-        description: "Préparez une commande article par article. Scannez ou sélectionnez chaque produit prêt — les coffrets et packs sont gérés avec compteur progressif.",
+        description: "Préparez une commande article par article. Coffrets et packs gérés avec compteur progressif.",
       },
       {
         href: "/fulfillment",
         emoji: "✅",
         title: "Fulfillment",
-        description: "Fulfillment rapide par scanner : sélectionnez les articles expédiés, ajoutez un numéro de suivi Swiss Post, validez en quelques secondes.",
+        description: "Fulfillment rapide par scanner : articles expédiés, numéro de suivi Swiss Post, validation en quelques secondes.",
       },
       {
         href: "/icelea-po",
         emoji: "🛒",
         title: "Commande Icelea",
-        description: "Créez un ordre d'achat Icelea directement depuis Katana : scannez le produit Shopify, choisissez la taille, confirmez les ingrédients et soumettez.",
+        description: "Créez un ordre d'achat Icelea depuis Katana : scan produit, choix taille, confirmation ingrédients.",
       },
       {
         href: "/scanner",
         emoji: "📦",
         title: "Scanner de recettes",
-        description: "Scannez un produit Shopify pour voir sa recette Katana, lancer une production ou enregistrer un mouvement de stock.",
+        description: "Scannez un produit Shopify pour voir sa recette Katana et lancer une production.",
       },
     ],
   },
   {
-    title: "Outils création de produits",
+    id: "creation",
+    title: "Création de produits",
+    summary: "Génération de bundles CSV pour Simple Bundles & Kits et édition des recettes de fabrication Katana.",
     tools: [
       {
         href: "/bundles",
         emoji: "🎁",
         title: "Générateur de bundles",
-        description: "Créez les fichiers CSV d'import pour Simple Bundles & Kits. Associez un produit bundle à ses composants variant par variant, filtrez par option.",
+        description: "Créez les CSV d'import pour Simple Bundles & Kits, variant par variant, avec filtre par option.",
       },
       {
         href: "/recipes",
         emoji: "⚗️",
         title: "Éditeur de recettes",
-        description: "Consultez et éditez les recettes de fabrication Katana depuis l'interface web, sans passer par l'application Katana.",
+        description: "Consultez et éditez les recettes de fabrication Katana sans passer par l'application.",
       },
     ],
   },
   {
-    title: "Outils pour les boutiques",
+    id: "boutiques",
+    title: "Outils Boutiques",
+    summary: "Inventaire en boutique et correction de fulfillments pour les équipes en point de vente.",
     tools: [
       {
         href: "/stock",
         emoji: "📊",
         title: "Scanner stock",
-        description: "Inventaire rapide par scan : comptez les unités en stock, suivez les batches de production, gérez les délais fournisseurs.",
+        description: "Inventaire rapide par scan : comptez les unités, suivez les batches de production, gérez les délais fournisseurs.",
       },
       {
         href: "/unfulfill",
         emoji: "↩️",
         title: "Unfulfill",
-        description: "Annulez un fulfillment Shopify existant pour corriger une erreur d'expédition ou relancer la production d'un article.",
+        description: "Annulez un fulfillment pour corriger une erreur d'expédition ou relancer la production d'un article.",
       },
     ],
   },
@@ -89,18 +95,18 @@ function ToolCard({ tool }: { tool: Tool }) {
   return (
     <Link
       href={tool.href}
-      className="group flex items-start gap-4 rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-4 transition-colors hover:border-zinc-600 hover:bg-zinc-800"
+      className="group flex items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 transition-colors hover:border-zinc-600 hover:bg-zinc-800"
     >
-      <span className="text-2xl leading-none mt-0.5 shrink-0">{tool.emoji}</span>
+      <span className="text-xl leading-none mt-0.5 shrink-0">{tool.emoji}</span>
       <div className="min-w-0">
-        <p className="font-semibold text-zinc-100 group-hover:text-white mb-0.5">
+        <p className="font-semibold text-zinc-100 group-hover:text-white text-sm mb-0.5">
           {tool.title}
         </p>
-        <p className="text-sm text-zinc-400 leading-relaxed">
+        <p className="text-xs text-zinc-400 leading-relaxed">
           {tool.description}
         </p>
       </div>
-      <span className="ml-auto text-zinc-600 group-hover:text-zinc-400 transition-colors shrink-0 self-center text-lg">
+      <span className="ml-auto text-zinc-700 group-hover:text-zinc-400 transition-colors shrink-0 self-center">
         →
       </span>
     </Link>
@@ -110,8 +116,10 @@ function ToolCard({ tool }: { tool: Tool }) {
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-12">
-      <div className="max-w-3xl mx-auto">
-        <header className="mb-12">
+      <div className="max-w-7xl mx-auto">
+
+        {/* Header */}
+        <header className="mb-10 max-w-2xl">
           <p className="text-xs font-bold tracking-widest uppercase text-zinc-500 mb-2">
             Mood Collection — Atelier
           </p>
@@ -123,20 +131,40 @@ export default function Home() {
           </p>
         </header>
 
-        <div className="flex flex-col gap-10">
+        {/* Table des matières */}
+        <nav className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {sections.map((s) => (
+            <a
+              key={s.id}
+              href={`#${s.id}`}
+              className="group rounded-xl border border-zinc-800 bg-zinc-900/50 px-4 py-3 transition-colors hover:border-zinc-600 hover:bg-zinc-900"
+            >
+              <p className="text-xs font-bold tracking-widest uppercase text-zinc-500 mb-1">
+                {s.title}
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                {s.summary}
+              </p>
+            </a>
+          ))}
+        </nav>
+
+        {/* Sections — 3 colonnes sur grand écran */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {sections.map((section) => (
-            <section key={section.title}>
+            <section key={section.id} id={section.id} className="scroll-mt-8">
               <h2 className="text-xs font-bold tracking-widest uppercase text-zinc-500 mb-3">
                 {section.title}
               </h2>
-              <nav className="grid gap-3">
+              <div className="flex flex-col gap-2.5">
                 {section.tools.map((tool) => (
                   <ToolCard key={tool.href + tool.title} tool={tool} />
                 ))}
-              </nav>
+              </div>
             </section>
           ))}
         </div>
+
       </div>
     </div>
   );
