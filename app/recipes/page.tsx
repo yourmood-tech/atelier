@@ -258,6 +258,9 @@ export default function RecipesPage() {
                   <span style={{ color: "#e67e22" }}> · ⚠ pas d'option Taille détectée</span>
                 )}
               </div>
+              <div style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>
+                Options : {product.options.map(o => `${o.name} (${o.values.length})`).join(" · ")}
+              </div>
             </div>
             <button
               style={s.clearBtn}
