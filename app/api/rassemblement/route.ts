@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/rassemblement
 // Regular item:   { orderId, productId, title }               → tag prod-ok:YYYY-MM-DD:name
-// Coffret item:   { orderId, productId, title, n, total }     → tag prod-ok-N/TOTAL:YYYY-MM-DD:name
+// Coffret item:   { orderId, productId, n, total }            → tag prod-ok-N-sur-TOTAL
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as { orderId: number; productId: number; title?: string; n?: number; total?: number };
@@ -58,11 +58,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
     }
 
-    const name = sanitizeTitle(title ?? String(productId));
     const today = new Date().toISOString().slice(0, 10);
     const tag = (n !== undefined && total !== undefined)
-      ? `prod-ok-${n}/${total}:${today}:${name}`
-      : `prod-ok:${today}:${name}`;
+      ? `prod-ok-${n}-sur-${total}`
+      : `prod-ok:${today}:${sanitizeTitle(title ?? String(productId))}`;
 
     await addOrderTag(orderId, tag);
     return NextResponse.json({ ok: true, tag });

@@ -40,28 +40,43 @@ function isCoffret(title: string) {
   return t.startsWith("pack") || t.startsWith("coffret") || t.includes("starter pack");
 }
 
-// Map keyed by sanitized title (more readable than productId in tags)
-function parseProdStates(tags: string[]): Map<string, ProdState> {
+// Regular items keyed by sanitized title
+// Coffret items keyed by sanitized title, matched via coffretCounts total
+function parseProdStates(
+  tags: string[],
+  lineItems: FulfillmentLineItemData[] = [],
+  coffretCounts: Record<number, number | null> = {}
+): Map<string, ProdState> {
   const states = new Map<string, ProdState>();
+
+  // Regular: prod-ok:YYYY-MM-DD:name
   for (const tag of tags) {
-    // Regular: prod-ok:YYYY-MM-DD:name
     const regular = tag.match(/^prod-ok:[\d-]+:(.+)$/);
-    if (regular) {
-      states.set(regular[1], { type: "done" });
-      continue;
-    }
-    // Coffret: prod-ok-N/TOTAL:YYYY-MM-DD:name
-    const coffret = tag.match(/^prod-ok-(\d+)\/(\d+):[\d-]+:(.+)$/);
-    if (coffret) {
-      const n = Number(coffret[1]);
-      const total = Number(coffret[2]);
-      const name = coffret[3];
-      const existing = states.get(name);
-      if (!existing || existing.type !== "coffret" || existing.current < n) {
-        states.set(name, { type: "coffret", current: n, total });
+    if (regular) states.set(regular[1], { type: "done" });
+  }
+
+  // Coffret: prod-ok-N-sur-TOTAL — match to line items via coffretCounts
+  const coffretTags: { n: number; total: number }[] = [];
+  for (const tag of tags) {
+    const m = tag.match(/^prod-ok-(\d+)-sur-(\d+)$/);
+    if (m) {
+      const n = Number(m[1]), total = Number(m[2]);
+      const existing = coffretTags.find(t => t.total === total);
+      if (!existing || existing.n < n) {
+        const idx = coffretTags.findIndex(t => t.total === total);
+        if (idx >= 0) coffretTags[idx] = { n, total };
+        else coffretTags.push({ n, total });
       }
     }
   }
+  for (const li of lineItems) {
+    if (!isCoffret(li.title)) continue;
+    const total = coffretCounts[li.productId];
+    if (!total) continue;
+    const found = coffretTags.find(t => t.total === total);
+    if (found) states.set(sanitizeTitle(li.title), { type: "coffret", current: found.n, total: found.total });
+  }
+
   return states;
 }
 
@@ -122,7 +137,7 @@ export default function RassemblementPage() {
 
       setOrder(json.data);
       setCoffretCounts(json.coffretCounts ?? {});
-      setProdStates(parseProdStates(json.data.tags));
+      setProdStates(parseProdStates(json.data.tags, json.data.lineItems, json.coffretCounts ?? {}));
       setMessage("");
       setPhase("items");
     } catch (err) {
