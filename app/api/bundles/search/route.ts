@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
         node {
           id title status
           options { name values }
-          variants(first: 50) {
+          variants(first: 250) {
             edges {
               node {
                 id sku title

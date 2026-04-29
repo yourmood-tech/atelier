@@ -23,12 +23,11 @@ type ComponentEntry = {
   localId: string;
   product: ShopifyProduct;
   quantity: number;
-  // Non-Taille option selections chosen by user
   selectedOptions: Record<string, string>;
-  // Whether a Taille option was detected
   hasTaille: boolean;
-  // Non-Taille option names that need user input
   extraOptionNames: string[];
+  // Which values of each non-Taille BUNDLE option this component applies to (all = all)
+  bundleOptionFilter: Record<string, string[]>;
 };
 
 type Phase = "bundle" | "ingredients";
@@ -69,6 +68,17 @@ function findComponentVariant(
   );
 }
 
+function variantMatchesBundleFilter(
+  bundleVariant: ShopifyVariant,
+  filter: Record<string, string[]>
+): boolean {
+  for (const [optName, selected] of Object.entries(filter)) {
+    const val = bundleVariant.options[optName];
+    if (val !== undefined && !selected.includes(val)) return false;
+  }
+  return true;
+}
+
 function generateCSV(
   bundleProduct: ShopifyProduct,
   components: ComponentEntry[]
@@ -81,6 +91,8 @@ function generateCSV(
     const bundleSize = getTailleValue(bundleVariant) ?? bundleVariant.title;
 
     for (const comp of components) {
+      if (!variantMatchesBundleFilter(bundleVariant, comp.bundleOptionFilter)) continue;
+
       const itemVariant = comp.hasTaille
         ? findComponentVariant(comp, bundleSize)
         : comp.product.variants.find((v) => {
@@ -163,6 +175,12 @@ export default function BundlesPage() {
       const opt = product.options.find((o) => o.name === optName);
       if (opt?.values[0]) defaultSelected[optName] = opt.values[0];
     }
+    const bundleFilter: Record<string, string[]> = {};
+    if (bundleProduct) {
+      for (const opt of bundleProduct.options.filter((o) => !isTailleOption(o.name))) {
+        bundleFilter[opt.name] = [...opt.values];
+      }
+    }
     setComponents((prev) => [
       ...prev,
       {
@@ -172,12 +190,24 @@ export default function BundlesPage() {
         selectedOptions: defaultSelected,
         hasTaille,
         extraOptionNames,
+        bundleOptionFilter: bundleFilter,
       },
     ]);
     setIngResults([]);
     setIngQuery("");
     setWarnings([]);
     setTimeout(() => ingInputRef.current?.focus(), 50);
+  }
+
+  function toggleBundleOption(localId: string, optName: string, value: string) {
+    setComponents((prev) => prev.map((c) => {
+      if (c.localId !== localId) return c;
+      const current = c.bundleOptionFilter[optName] ?? [];
+      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      if (next.length === 0) return c;
+      return { ...c, bundleOptionFilter: { ...c.bundleOptionFilter, [optName]: next } };
+    }));
+    setWarnings([]);
   }
 
   function updateOption(localId: string, optName: string, value: string) {
@@ -321,6 +351,42 @@ export default function BundlesPage() {
                 </div>
                 <button style={s.clearBtn} onClick={() => removeComponent(comp.localId)}>✕</button>
               </div>
+
+              {/* Bundle option filter — which bundle variants this component applies to */}
+              {bundleProduct && bundleProduct.options.filter((o) => !isTailleOption(o.name)).map((opt) => {
+                const allValues = opt.values;
+                const selected = comp.bundleOptionFilter[opt.name] ?? allValues;
+                const allSelected = selected.length === allValues.length;
+                return (
+                  <div key={opt.name} style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>
+                      {opt.name} du bundle&nbsp;
+                      {allSelected
+                        ? <span style={{ color: "#27ae60" }}>· toutes</span>
+                        : <span style={{ color: "#e67e22" }}>· {selected.length}/{allValues.length}</span>}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {allValues.map((val) => {
+                        const isOn = selected.includes(val);
+                        return (
+                          <button
+                            key={val}
+                            style={{
+                              ...s.optBtn,
+                              background: isOn ? "#111" : "#f5f5f5",
+                              color: isOn ? "#fff" : "#999",
+                              borderColor: isOn ? "#111" : "#e0e0e0",
+                            }}
+                            onClick={() => toggleBundleOption(comp.localId, opt.name, val)}
+                          >
+                            {val}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
 
               {/* Extra option selectors (non-Taille) */}
               {comp.extraOptionNames.length > 0 && (
