@@ -386,6 +386,7 @@ export default function RassemblementPage() {
                     item={li}
                     state={prodStates.get(skuKey(li.sku))}
                     coffretTotal={isCoffret(li.title) ? (coffretCounts[li.productId] ?? null) : null}
+                    onSelect={phase === "items" ? () => void handleProductScan(String(li.productId)) : undefined}
                   />
                 ))}
               </div>
@@ -482,11 +483,13 @@ function LineItemRow({
   state,
   coffretTotal,
   fulfilled = false,
+  onSelect,
 }: {
   item: FulfillmentLineItemData;
   state: ProdState | undefined;
   coffretTotal: number | null;
   fulfilled?: boolean;
+  onSelect?: () => void;
 }) {
   const isCoffretItem = coffretTotal !== null || state?.type === "coffret";
   const coffretCurrent = state?.type === "coffret" ? state.current : 0;
@@ -497,14 +500,20 @@ function LineItemRow({
   const isPartial = isCoffretItem && coffretCurrent > 0 && !coffretDone;
 
   return (
-    <div className={`rounded px-3 py-2 flex items-center gap-3 ${
-      fulfilled ? "opacity-40" :
-      isDone ? "bg-blue-900/40 border border-blue-700" :
-      isPartial ? "bg-amber-900/30 border border-amber-800" :
-      "bg-zinc-800/30 border border-transparent"
-    }`}>
+    <div
+      onClick={onSelect}
+      className={`rounded px-3 py-2 flex items-center gap-3 transition-colors ${
+        onSelect ? "cursor-pointer active:opacity-70" : ""
+      } ${
+        fulfilled ? "bg-green-900/30 border border-green-800" :
+        isDone ? "bg-blue-900/40 border border-blue-700" :
+        isPartial ? "bg-amber-900/30 border border-amber-800" :
+        onSelect ? "bg-zinc-800/30 border border-transparent hover:border-zinc-600 hover:bg-zinc-800/60" :
+        "bg-zinc-800/30 border border-transparent"
+      }`}
+    >
       <span className={`w-4 h-4 rounded-sm border flex-shrink-0 flex items-center justify-center text-xs ${
-        fulfilled ? "border-zinc-600 bg-zinc-700 text-zinc-400" :
+        fulfilled ? "border-green-600 bg-green-800 text-green-300" :
         isDone ? "bg-blue-500 border-blue-400 text-white" :
         isPartial ? "bg-amber-600 border-amber-500 text-white" :
         "border-zinc-600 bg-zinc-800"
@@ -512,15 +521,20 @@ function LineItemRow({
         {fulfilled ? "✓" : isDone ? "★" : isPartial ? "…" : ""}
       </span>
 
-      <span className={`flex-1 text-sm ${fulfilled || isDone ? "text-zinc-200" : isPartial ? "text-amber-200" : "text-zinc-400"}`}>
+      <span className={`flex-1 text-sm ${
+        fulfilled ? "text-green-300" :
+        isDone ? "text-zinc-200" :
+        isPartial ? "text-amber-200" :
+        "text-zinc-400"
+      }`}>
         {item.title}
         {item.variantTitle && item.variantTitle !== "Default Title" && (
-          <span className="text-zinc-500 ml-1">— {item.variantTitle}</span>
+          <span className={`ml-1 ${fulfilled ? "text-green-600" : "text-zinc-500"}`}>— {item.variantTitle}</span>
         )}
       </span>
 
-      <span className="text-xs text-zinc-500 text-right whitespace-nowrap">
-        {fulfilled && <span className="text-zinc-500">livré</span>}
+      <span className="text-xs text-right whitespace-nowrap">
+        {fulfilled && <span className="text-green-600">livré</span>}
         {!fulfilled && isDone && !isCoffretItem && <span className="text-blue-400">prod-ok</span>}
         {!fulfilled && isCoffretItem && total !== null && (
           <span className={coffretDone ? "text-blue-400" : coffretCurrent > 0 ? "text-amber-400" : "text-zinc-500"}>
