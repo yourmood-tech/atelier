@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
     const step = stepResult.data as ProductionStep;
     const tagReason = body.direction === "IN" ? `${step.name} Entrée` : `${step.name} Sortie`;
 
-    // 2. Tag the order in all cases
-    void addOrderTag(order.id, makeOrderTag(tagReason)).catch(console.error);
+    // 2. Tag the order in all cases (awaited — fire-and-forget gets killed by Vercel before completing)
+    await addOrderTag(order.id, makeOrderTag(tagReason));
 
     // 3. Tag-only path (no product scanned)
     if (!productResult) {

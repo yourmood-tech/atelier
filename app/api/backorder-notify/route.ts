@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     if (body.orderNumericId) {
       const tagReason = body.supplierName ? `Rupture ${body.supplierName}` : "Rupture";
-      void addOrderTag(body.orderNumericId, makeOrderTag(tagReason)).catch(console.error);
+      await addOrderTag(body.orderNumericId, makeOrderTag(tagReason));
     }
 
     return NextResponse.json({ ok: true });
