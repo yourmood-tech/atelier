@@ -37,19 +37,14 @@ export async function POST(req: NextRequest) {
     // 2. Tag the order in all cases (awaited — fire-and-forget gets killed by Vercel before completing)
     await addOrderTag(order.id, makeOrderTag(tagReason));
 
-    // 3. Tag-only path (no product scanned)
-    if (!productResult) {
-      const analysis: ProductionAnalysis = { order, step, direction: body.direction, emailDraft: null };
-      return NextResponse.json<ProductionNotifyApiResponse>({ ok: true, result: analysis });
-    }
-
-    // 4. Full path — override locale from Klaviyo, generate email, send
+    // 3. Override locale from Klaviyo — more reliable than Shopify REST
     const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
     if (klaviyoLocale) order.customer.locale = klaviyoLocale;
 
+    // 4. Generate email (with or without product) + send to Klaviyo
     const analysis: ProductionAnalysis = {
       order,
-      product: productResult,
+      product: productResult ?? undefined,
       step,
       direction: body.direction,
       emailDraft: null,
@@ -66,7 +61,7 @@ export async function POST(req: NextRequest) {
       body: emailBody,
       sign_off,
       orderId: order.name,
-      productTitle: productResult.productTitle,
+      productTitle: productResult?.productTitle ?? "",
       stepName: step.name,
       direction: body.direction,
       leadTimeMin: step.lead_time_min,

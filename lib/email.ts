@@ -302,7 +302,7 @@ export async function generateProductionEmail(
   analysis: ProductionAnalysis
 ): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
   const { order, step, direction } = analysis;
-  const product = analysis.product!;
+  const product = analysis.product ?? null;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
 
@@ -331,6 +331,11 @@ export async function generateProductionEmail(
     : locale === "es" ? "El equipo de producción Mood"
     : "L'équipe de production Mood";
 
+  const productLine = product ? `\n- Product: ${product.productTitle}` : "";
+  const mentionProduct = product
+    ? `- Always mention the product name (${product.productTitle})`
+    : "- Do NOT mention a specific product name — refer to \"your order\" only";
+
   const prompt = direction === "IN"
     ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
 Write the body of a short email informing a customer that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
@@ -346,12 +351,11 @@ Rules:
 - Write entirely in ${language}
 - 2 short paragraphs separated by a blank line
 - Do NOT include a greeting or sign-off — body only
-- Always mention the product name (${product.productTitle})
+- ${mentionProduct}
 - Return JSON: { "subject": "...", "body": "..." } where body uses \\n\\n between paragraphs
 
 Context:
-- Order number: ${order.name}
-- Product: ${product.productTitle}
+- Order number: ${order.name}${productLine}
 - Step: ${stepName}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
 
     : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
@@ -368,12 +372,11 @@ Rules:
 - Write entirely in ${language}
 - 2 short paragraphs separated by a blank line
 - Do NOT include a greeting or sign-off — body only
-- Always mention the product name (${product.productTitle})
+- ${mentionProduct}
 - Return JSON: { "subject": "...", "body": "..." } where body uses \\n\\n between paragraphs
 
 Context:
-- Order number: ${order.name}
-- Product: ${product.productTitle}
+- Order number: ${order.name}${productLine}
 - Completed step: ${stepName}`;
 
   const result = await callClaude(prompt);
