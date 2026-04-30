@@ -154,7 +154,7 @@ export type ProductionDirection = "IN" | "OUT";
 
 export type ProductionAnalysis = {
   order: ShopifyOrder;
-  product: ShopifyVariantInfo;
+  product?: ShopifyVariantInfo;
   step: ProductionStep;
   direction: ProductionDirection;
   emailDraft: string | null;

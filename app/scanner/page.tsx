@@ -383,7 +383,12 @@ export default function ScannerPage() {
       const res = await fetch("/api/production-notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order_id: orderId, product_id: productId, step_key: stepKey, direction }),
+        body: JSON.stringify({
+          order_id: orderId,
+          ...(productId ? { product_id: productId } : {}),
+          step_key: stepKey,
+          direction,
+        }),
       });
       const data = await res.json() as ProductionNotifyApiResponse;
       if (!res.ok || !data.ok) throw new Error(data.error || "Erreur API");
@@ -425,6 +430,30 @@ export default function ScannerPage() {
     setStatus(`${step.name} ${productionDirection === "IN" ? "▶ Entrée" : "◀ Sortie"} — scannez suivant`);
     playBeep();
     void analyzeProductionItem(localId, productionOrderId, id, selectedStepKey, productionDirection);
+  }
+
+  function skipProductScan() {
+    if (!productionOrderId) return;
+    const step = productionSteps.find((s) => s.step_key === selectedStepKey);
+    if (!step) return;
+
+    const localId = crypto.randomUUID();
+    setProductionBatch((prev) => [{
+      localId,
+      orderId: productionOrderId,
+      productId: "",
+      stepKey: selectedStepKey,
+      stepName: step.name,
+      direction: productionDirection,
+      status: "analyzing",
+      result: null,
+      error: null,
+    }, ...prev]);
+    setProductionScanStep("order");
+    setProductionOrderId(null);
+    setStatus(`${step.name} ${productionDirection === "IN" ? "▶ Entrée" : "◀ Sortie"} (tag seul) — scannez suivant`);
+    playBeep();
+    void analyzeProductionItem(localId, productionOrderId, "", selectedStepKey, productionDirection);
   }
 
   async function loadSuppliers() {
@@ -780,15 +809,25 @@ export default function ScannerPage() {
               </div>
 
               {/* Scan steps indicator */}
-              <div className="flex gap-3 text-sm">
+              <div className="flex items-center gap-3 text-sm">
                 <span className={`rounded-full px-3 py-1 border ${productionScanStep === "order" ? "font-bold ring-2" : "opacity-40"}`}>1 · Commande</span>
-                <span className={`rounded-full px-3 py-1 border ${productionScanStep === "product" ? "font-bold ring-2" : "opacity-40"}`}>2 · Produit</span>
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-full px-3 py-1 border ${productionScanStep === "product" ? "font-bold ring-2" : "opacity-40"}`}>2 · Produit</span>
+                  {productionScanStep === "product" && (
+                    <button
+                      onClick={skipProductScan}
+                      className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-500 hover:border-zinc-500 hover:text-zinc-800 transition-colors"
+                    >
+                      Suivant →
+                    </button>
+                  )}
+                </div>
               </div>
 
               <p className="text-sm opacity-60">
                 {productionScanStep === "order"
                   ? "Scannez le numéro de commande Shopify"
-                  : <span>Commande <span className="font-mono font-semibold text-black">{productionOrderId}</span> — scannez le produit</span>
+                  : <span>Commande <span className="font-mono font-semibold text-black">{productionOrderId}</span> — scannez le produit ou cliquez <em>Suivant</em></span>
                 }
               </p>
 
@@ -816,9 +855,13 @@ export default function ScannerPage() {
                               <span className="font-semibold">{item.result.order.name}</span>
                               <span className="opacity-60"> · {item.result.order.customer.firstName} {item.result.order.customer.lastName}</span>
                             </div>
-                            <span className="text-xs text-green-600 font-semibold">Envoyé ✓</span>
+                            <span className="text-xs text-green-600 font-semibold">
+                              {item.result.product ? "Envoyé ✓" : "Tag ajouté ✓"}
+                            </span>
                           </div>
-                          <div className="text-xs opacity-40">{item.result.product.productTitle} · {item.result.order.customer.email}</div>
+                          <div className="text-xs opacity-40">
+                            {item.result.product ? item.result.product.productTitle : "— sans produit"} · {item.result.order.customer.email}
+                          </div>
                         </div>
                       )}
                     </div>

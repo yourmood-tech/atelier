@@ -8,27 +8,23 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as {
       order_id: string;
-      product_id: string;
+      product_id?: string;
       step_key: string;
       direction: ProductionDirection;
     };
 
-    if (!body.order_id || !body.product_id || !body.step_key || !body.direction) {
+    if (!body.order_id || !body.step_key || !body.direction) {
       return NextResponse.json<ProductionNotifyApiResponse>(
-        { ok: false, error: "order_id, product_id, step_key et direction requis" },
+        { ok: false, error: "order_id, step_key et direction requis" },
         { status: 400 }
       );
     }
 
-    // 1. Fetch Shopify order + product + production step in parallel
-    const [order, product, stepResult] = await Promise.all([
+    // 1. Fetch order + step (+ product if provided) in parallel
+    const [order, stepResult, productResult] = await Promise.all([
       getOrderById(body.order_id),
-      lookupShopifyId(body.product_id),
-      supabaseAdmin
-        .from("production_steps")
-        .select("*")
-        .eq("step_key", body.step_key)
-        .single(),
+      supabaseAdmin.from("production_steps").select("*").eq("step_key", body.step_key).single(),
+      body.product_id ? lookupShopifyId(body.product_id) : Promise.resolve(null),
     ]);
 
     if (stepResult.error || !stepResult.data) {
@@ -36,15 +32,24 @@ export async function POST(req: NextRequest) {
     }
 
     const step = stepResult.data as ProductionStep;
+    const tagReason = body.direction === "IN" ? `${step.name} Entrée` : `${step.name} Sortie`;
 
-    // 2. Override locale from Klaviyo — more reliable than Shopify REST for multilingual customers
+    // 2. Tag the order in all cases
+    void addOrderTag(order.id, makeOrderTag(tagReason)).catch(console.error);
+
+    // 3. Tag-only path (no product scanned)
+    if (!productResult) {
+      const analysis: ProductionAnalysis = { order, step, direction: body.direction, emailDraft: null };
+      return NextResponse.json<ProductionNotifyApiResponse>({ ok: true, result: analysis });
+    }
+
+    // 4. Full path — override locale from Klaviyo, generate email, send
     const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
     if (klaviyoLocale) order.customer.locale = klaviyoLocale;
 
-    // 3. Generate email
     const analysis: ProductionAnalysis = {
       order,
-      product,
+      product: productResult,
       step,
       direction: body.direction,
       emailDraft: null,
@@ -53,7 +58,6 @@ export async function POST(req: NextRequest) {
     const { subject, greeting, body: emailBody, sign_off } = await generateProductionEmail(analysis);
     analysis.emailDraft = `Subject: ${subject}\n\n${greeting}\n\n${emailBody}\n\n${sign_off}`;
 
-    // 3. Send via Klaviyo
     await sendProductionEventToKlaviyo({
       email: order.customer.email,
       firstName: order.customer.firstName,
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
       body: emailBody,
       sign_off,
       orderId: order.name,
-      productTitle: product.productTitle,
+      productTitle: productResult.productTitle,
       stepName: step.name,
       direction: body.direction,
       leadTimeMin: step.lead_time_min,
@@ -70,11 +74,6 @@ export async function POST(req: NextRequest) {
       leadTimeUnit: step.lead_time_unit,
       customerLocale: order.customer.locale,
     });
-
-    const tagReason = body.direction === "IN"
-      ? `${step.name} Entrée`
-      : `${step.name} Sortie`;
-    void addOrderTag(order.id, makeOrderTag(tagReason)).catch(console.error);
 
     return NextResponse.json<ProductionNotifyApiResponse>({ ok: true, result: analysis });
   } catch (error) {

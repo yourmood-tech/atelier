@@ -301,7 +301,8 @@ export async function sendProductionEventToKlaviyo(params: {
 export async function generateProductionEmail(
   analysis: ProductionAnalysis
 ): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
-  const { order, product, step, direction } = analysis;
+  const { order, step, direction } = analysis;
+  const product = analysis.product!;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
 
