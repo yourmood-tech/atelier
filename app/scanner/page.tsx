@@ -94,6 +94,13 @@ export default function ScannerPage() {
     submitScanRef.current = submitScan;
   });
 
+  // Auto-load production steps when entering production mode
+  useEffect(() => {
+    if (mode === "production" && productionSteps.length === 0) {
+      void loadProductionSteps();
+    }
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Document-level keydown — blocked only when a free-text field (INPUT/TEXTAREA) has focus
   // SELECT is intentionally NOT blocked: scanner works even when the step selector is active
   useEffect(() => {
@@ -411,7 +418,7 @@ export default function ScannerPage() {
     }
     if (!productionOrderId) return;
     const step = productionSteps.find((s) => s.step_key === selectedStepKey);
-    if (!step) return;
+    if (!step) { setStatus("Étapes non chargées — patientez et rescannez"); return; }
 
     const localId = crypto.randomUUID();
     setProductionBatch((prev) => [{
