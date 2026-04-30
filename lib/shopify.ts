@@ -193,8 +193,9 @@ export async function removeOrderTagsBySkuKey(orderId: number, skuKey: string): 
 export function makeOrderTag(reason: string): string {
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
-  const ts = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${String(now.getFullYear()).slice(2)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  return `${reason} ${ts}`;
+  const ts = `${pad(now.getDate())}${pad(now.getMonth() + 1)}${String(now.getFullYear()).slice(2)}-${pad(now.getHours())}h${pad(now.getMinutes())}`;
+  const safeReason = reason.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  return `${safeReason}-${ts}`;
 }
 
 // Map billing/shipping country code → language when customer_locale is absent

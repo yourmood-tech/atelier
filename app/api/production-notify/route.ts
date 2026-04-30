@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const step = stepResult.data as ProductionStep;
-    const tagReason = body.direction === "IN" ? `${step.name} Entrée` : `${step.name} Sortie`;
+    const tagReason = `${step.step_key}-${body.direction === "IN" ? "in" : "out"}`;
 
     // 2. Tag the order in all cases (awaited — fire-and-forget gets killed by Vercel before completing)
     await addOrderTag(order.id, makeOrderTag(tagReason));
