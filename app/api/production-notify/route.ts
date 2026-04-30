@@ -50,15 +50,17 @@ export async function POST(req: NextRequest) {
       emailDraft: null,
     };
 
-    const { subject, emailBody } = await generateProductionEmail(analysis);
-    analysis.emailDraft = `Subject: ${subject}\n\n${emailBody}`;
+    const { subject, greeting, body: emailBody, sign_off } = await generateProductionEmail(analysis);
+    analysis.emailDraft = `Subject: ${subject}\n\n${greeting}\n\n${emailBody}\n\n${sign_off}`;
 
     // 3. Send via Klaviyo
     await sendProductionEventToKlaviyo({
       email: order.customer.email,
       firstName: order.customer.firstName,
       subject,
+      greeting,
       body: emailBody,
+      sign_off,
       orderId: order.name,
       productTitle: product.productTitle,
       stepName: step.name,

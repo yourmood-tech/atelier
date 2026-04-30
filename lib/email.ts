@@ -232,7 +232,9 @@ export async function sendProductionEventToKlaviyo(params: {
   email: string;
   firstName: string;
   subject: string;
+  greeting: string;
   body: string;
+  sign_off: string;
   orderId: string;
   productTitle: string;
   stepName: string;
@@ -270,7 +272,9 @@ export async function sendProductionEventToKlaviyo(params: {
           },
           properties: {
             email_subject: params.subject,
+            email_greeting: params.greeting,
             email_body: params.body,
+            email_sign_off: params.sign_off,
             order_id: params.orderId,
             product_title: params.productTitle,
             step_name: params.stepName,
@@ -296,12 +300,11 @@ export async function sendProductionEventToKlaviyo(params: {
 
 export async function generateProductionEmail(
   analysis: ProductionAnalysis
-): Promise<{ subject: string; emailBody: string }> {
+): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
   const { order, product, step, direction } = analysis;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
 
-  // Pick translated step name/description based on customer locale
   const stepName = locale === "de" ? (step.name_de ?? step.name)
     : locale === "en" ? (step.name_en ?? step.name)
     : step.name;
@@ -315,7 +318,13 @@ export async function generateProductionEmail(
     ? `approximately ${step.lead_time_min} ${step.lead_time_unit}`
     : null;
 
-  const signOff = locale === "de" ? "Das Produktionsteam von Mood"
+  const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
+    : locale === "en" ? `Dear ${order.customer.firstName},`
+    : locale === "it" ? `Cara ${order.customer.firstName},`
+    : locale === "es" ? `Estimada ${order.customer.firstName},`
+    : `Chère ${order.customer.firstName},`;
+
+  const sign_off = locale === "de" ? "Das Produktionsteam von Mood"
     : locale === "en" ? "The Mood production team"
     : locale === "it" ? "Il team di produzione Mood"
     : locale === "es" ? "El equipo de producción Mood"
@@ -323,7 +332,7 @@ export async function generateProductionEmail(
 
   const prompt = direction === "IN"
     ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a short email to a customer informing them that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
+Write the body of a short email informing a customer that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
 
 Purpose: inform the customer their piece is now being actively worked on, and give an estimated duration for this step.
 
@@ -335,21 +344,17 @@ Tone guidelines:
 Rules:
 - Write entirely in ${language}
 - 2 short paragraphs separated by a blank line
-- First paragraph: address the customer by first name and give the status update with estimated duration
-- Second paragraph: one reassuring sentence about the piece moving forward
-- End with a sign-off line on its own line: "${signOff}"
-- Separate each paragraph and the sign-off with a blank line (\\n\\n)
-- Always mention the product name (${product.productTitle}) in the email body
+- Do NOT include a greeting or sign-off — body only
+- Always mention the product name (${product.productTitle})
 - Return JSON: { "subject": "...", "body": "..." } where body uses \\n\\n between paragraphs
 
-Customer info:
-- First name: ${order.customer.firstName}
+Context:
 - Order number: ${order.name}
 - Product: ${product.productTitle}
 - Step: ${stepName}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
 
     : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a short email to a customer informing them that their order has just completed the "${stepName}" production stage and is moving forward.
+Write the body of a short email informing a customer that their order has just completed the "${stepName}" production stage and is moving forward.
 
 Purpose: confirm this step is done, signal progress — do not announce delivery date.
 
@@ -361,25 +366,17 @@ Tone guidelines:
 Rules:
 - Write entirely in ${language}
 - 2 short paragraphs separated by a blank line
-- First paragraph: address the customer by first name and confirm the step is complete
-- Second paragraph: one brief sentence indicating the order continues moving forward
-- End with a sign-off line on its own line: "${signOff}"
-- Separate each paragraph and the sign-off with a blank line (\\n\\n)
-- Always mention the product name (${product.productTitle}) in the email body
+- Do NOT include a greeting or sign-off — body only
+- Always mention the product name (${product.productTitle})
 - Return JSON: { "subject": "...", "body": "..." } where body uses \\n\\n between paragraphs
 
-Customer info:
-- First name: ${order.customer.firstName}
+Context:
 - Order number: ${order.name}
 - Product: ${product.productTitle}
 - Completed step: ${stepName}`;
 
   const result = await callClaude(prompt);
-  const emailBody = result.body
-    .split(/\n\n+/)
-    .map(p => `<p>${p.trim()}</p>`)
-    .join('');
-  return { subject: result.subject, emailBody };
+  return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
 // ── Gorgias — detect delay inquiry + extract order number ────────────────────
