@@ -247,6 +247,7 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
   return {
     id: o.id as number,
     name: o.name as string,
+    createdAt: (o.created_at as string) ?? new Date().toISOString(),
     customer: {
       id: (customer.id as number) ?? 0,
       firstName: (customer.first_name as string) ?? "",

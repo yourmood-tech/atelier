@@ -298,13 +298,11 @@ export default function ScannerPage() {
 
   async function sendBatchEmail(localId: string) {
     const item = batchItems.find((i) => i.localId === localId);
-    if (!item?.result?.emailDraft || !item.result.order.customer.email) return;
+    if (!item?.result || !item.result.order.customer.email) return;
 
     setBatchItems((prev) =>
       prev.map((i) => (i.localId === localId ? { ...i, status: "sent" } : i))
     );
-
-    const { subject, greeting, body, sign_off } = item.result.emailDraft;
 
     try {
       const res = await fetch("/api/backorder-notify", {
@@ -313,10 +311,11 @@ export default function ScannerPage() {
         body: JSON.stringify({
           to: item.result.order.customer.email,
           firstName: item.result.order.customer.firstName,
-          subject,
-          greeting,
-          body,
-          sign_off,
+          tagOnly: item.result.tagOnly,
+          subject: item.result.emailDraft?.subject,
+          greeting: item.result.emailDraft?.greeting,
+          body: item.result.emailDraft?.body,
+          sign_off: item.result.emailDraft?.sign_off,
           orderId: item.result.order.name,
           orderNumericId: item.result.order.id,
           productTitle: item.result.product.productTitle,
@@ -729,21 +728,23 @@ export default function ScannerPage() {
                         <div className="text-xs opacity-40">{item.result.order.customer.email} · {item.result.order.customer.locale.toUpperCase()}</div>
                       </div>
                       <div className="flex shrink-0 items-center gap-3">
-                        {item.result.estimatedDelivery ? (
+                        {item.result.tagOnly ? (
+                          <span className="text-sm text-orange-600">Pas d'ingrédient — tag seul</span>
+                        ) : item.result.estimatedDelivery ? (
                           <span className="text-sm font-semibold text-green-700">
                             {new Date(item.result.estimatedDelivery).toLocaleDateString("fr-CH")}
                           </span>
                         ) : (
-                          <span className="text-sm opacity-40">Pas de PO</span>
+                          <span className="text-sm opacity-40">Délai fournisseur</span>
                         )}
                         {item.status === "sent" ? (
-                          <span className="text-sm text-blue-600">Envoyé ✓</span>
+                          <span className="text-sm text-blue-600">{item.result.tagOnly ? "Tagué ✓" : "Envoyé ✓"}</span>
                         ) : (
                           <button
                             onClick={() => sendBatchEmail(item.localId)}
-                            className="rounded-lg bg-black px-3 py-1 text-sm text-white"
+                            className={`rounded-lg px-3 py-1 text-sm text-white ${item.result.tagOnly ? "bg-orange-600" : "bg-black"}`}
                           >
-                            Envoyer
+                            {item.result.tagOnly ? "Tagger" : "Envoyer"}
                           </button>
                         )}
                       </div>
@@ -762,7 +763,14 @@ export default function ScannerPage() {
             >
               {batchSendingAll
                 ? "Envoi en cours..."
-                : `Envoyer tous les emails prêts (${batchItems.filter((i) => i.status === "ready").length})`
+                : (() => {
+                    const ready = batchItems.filter((i) => i.status === "ready");
+                    const tagCount = ready.filter((i) => i.result?.tagOnly).length;
+                    const emailCount = ready.length - tagCount;
+                    if (tagCount > 0 && emailCount > 0) return `Envoyer ${emailCount} email(s) + tagger ${tagCount}`;
+                    if (tagCount > 0) return `Tagger ${tagCount} commande(s) sans email`;
+                    return `Envoyer tous les emails prêts (${emailCount})`;
+                  })()
               }
             </button>
           )}

@@ -395,13 +395,26 @@ async function fetchAllOpenPos(): Promise<Record<string, unknown>[]> {
 // Find the first open PO that contains any of the given ingredient variant IDs.
 // Works even when materials have no default_supplier_id set in Katana.
 export async function getOpenPurchaseOrderForVariants(
-  ingredientVariantIds: number[]
+  ingredientVariantIds: number[],
+  afterDate?: string // only consider POs created after this ISO date (e.g. order.createdAt)
 ): Promise<KatanaPurchaseOrder | null> {
   if (!ingredientVariantIds.length) return null;
 
   const pos = await fetchAllOpenPos();
 
-  for (const po of pos) {
+  // Sort by estimated delivery ascending — prefer earliest delivery date
+  const sorted = [...pos].sort((a, b) => {
+    const dA = (a.expected_arrival_date as string | null) ?? "";
+    const dB = (b.expected_arrival_date as string | null) ?? "";
+    return dA.localeCompare(dB);
+  });
+
+  for (const po of sorted) {
+    if (afterDate) {
+      const poCreatedAt = (po.created_at as string | null) ?? "";
+      if (poCreatedAt && poCreatedAt <= afterDate) continue;
+    }
+
     const rows = (po.purchase_order_rows as Record<string, unknown>[]) ?? [];
     const hasMatch = rows.some((row) =>
       ingredientVariantIds.includes(row.variant_id as number)

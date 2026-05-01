@@ -93,6 +93,7 @@ export type ShopifyOrderLineItem = {
 export type ShopifyOrder = {
   id: number;
   name: string; // e.g. "#12345"
+  createdAt: string; // ISO date
   customer: ShopifyCustomer;
   lineItems: ShopifyOrderLineItem[];
 };
@@ -131,6 +132,7 @@ export type BackorderAnalysis = {
   estimatedDelivery: string | null;
   leadTimeMin: number | null;
   leadTimeMax: number | null;
+  tagOnly: boolean; // true when no ingredients found — tag Shopify but no email
   emailDraft: BackorderEmailDraft | null;
   followUpEmailDraft: BackorderEmailDraft | null; // generated when lead time > 12 days
 };

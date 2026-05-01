@@ -36,23 +36,37 @@ export async function GET(req: NextRequest) {
     const recipe = variantSku ? await getRecipeWithSuppliers(variantSku) : null;
     const materials = recipe?.ingredients ?? [];
 
-    // 3. Find open PO — search directly by ingredient variant ID across all open POs.
-    //    This works even when materials have no default_supplier_id set in Katana.
+    // 4. No ingredients found — tag only, no email
+    if (!materials.length) {
+      const analysis: BackorderAnalysis = {
+        order,
+        product,
+        materials: [],
+        purchaseOrder: null,
+        estimatedDelivery: null,
+        leadTimeMin: null,
+        leadTimeMax: null,
+        tagOnly: true,
+        emailDraft: null,
+        followUpEmailDraft: null,
+      };
+      return NextResponse.json<BackorderApiResponse>({ ok: true, result: analysis });
+    }
+
+    // 5. Find open PO created after the customer's order — prefer earliest delivery date
     let purchaseOrder = null;
     let estimatedDelivery: string | null = null;
     let leadTimeMin: number | null = null;
     let leadTimeMax: number | null = null;
 
-    if (materials.length) {
-      const allVariantIds = materials.map((m) => m.id);
-      purchaseOrder = await getOpenPurchaseOrderForVariants(allVariantIds);
-      if (purchaseOrder?.estimatedDelivery && new Date(purchaseOrder.estimatedDelivery) > new Date()) {
-        estimatedDelivery = purchaseOrder.estimatedDelivery;
-      }
+    const allVariantIds = materials.map((m) => m.id);
+    purchaseOrder = await getOpenPurchaseOrderForVariants(allVariantIds, order.createdAt);
+    if (purchaseOrder?.estimatedDelivery && new Date(purchaseOrder.estimatedDelivery) > new Date()) {
+      estimatedDelivery = purchaseOrder.estimatedDelivery;
     }
 
-    // 4. Fallback to default supplier lead time from Supabase
-    if (!estimatedDelivery && materials.length) {
+    // 6. Fallback to default supplier lead time from Supabase
+    if (!estimatedDelivery) {
       const supplierIds = materials
         .filter((m) => m.supplier !== null)
         .map((m) => m.supplier!.id);
@@ -73,12 +87,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 5. Determine if a follow-up is needed (lead time > 12 days)
+    // 7. Determine if a follow-up is needed (lead time > 12 days)
     const needsFollowUp = estimatedDelivery
       ? Math.ceil((new Date(estimatedDelivery).getTime() - Date.now()) / 86_400_000) > 12
       : (leadTimeMin ?? 0) > 12;
 
-    // 6. Generate email drafts (initial + optional follow-up) in parallel
+    // 8. Generate email drafts (initial + optional follow-up) in parallel
     const analysis: BackorderAnalysis = {
       order,
       product,
@@ -87,6 +101,7 @@ export async function GET(req: NextRequest) {
       estimatedDelivery,
       leadTimeMin,
       leadTimeMax,
+      tagOnly: false,
       emailDraft: null,
       followUpEmailDraft: null,
     };
@@ -116,9 +131,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as {
       to: string;
       firstName?: string;
-      subject: string;
+      tagOnly?: boolean;
+      subject?: string;
       greeting?: string;
-      body: string;
+      body?: string;
       sign_off?: string;
       orderId?: string;
       orderNumericId?: number;
@@ -131,29 +147,31 @@ export async function POST(req: NextRequest) {
       followupSignOff?: string | null;
     };
 
-    if (!body.to || !body.subject || !body.body) {
+    if (!body.to) {
       return NextResponse.json(
-        { ok: false, error: "Champs to, subject et body requis" },
+        { ok: false, error: "Champ to requis" },
         { status: 400 }
       );
     }
 
-    await sendViaKlaviyo({
-      email: body.to,
-      firstName: body.firstName ?? "",
-      subject: body.subject,
-      greeting: body.greeting ?? "",
-      body: body.body,
-      sign_off: body.sign_off ?? "",
-      orderId: body.orderId ?? "",
-      productTitle: body.productTitle ?? "",
-      estimatedDelivery: body.estimatedDelivery ?? null,
-      supplierName: body.supplierName ?? null,
-      followupSubject: body.followupSubject ?? null,
-      followupGreeting: body.followupGreeting ?? null,
-      followupBody: body.followupBody ?? null,
-      followupSignOff: body.followupSignOff ?? null,
-    });
+    if (!body.tagOnly && body.subject && body.body) {
+      await sendViaKlaviyo({
+        email: body.to,
+        firstName: body.firstName ?? "",
+        subject: body.subject,
+        greeting: body.greeting ?? "",
+        body: body.body,
+        sign_off: body.sign_off ?? "",
+        orderId: body.orderId ?? "",
+        productTitle: body.productTitle ?? "",
+        estimatedDelivery: body.estimatedDelivery ?? null,
+        supplierName: body.supplierName ?? null,
+        followupSubject: body.followupSubject ?? null,
+        followupGreeting: body.followupGreeting ?? null,
+        followupBody: body.followupBody ?? null,
+        followupSignOff: body.followupSignOff ?? null,
+      });
+    }
 
     if (body.orderNumericId) {
       const tagReason = body.supplierName ? `Rupture ${body.supplierName}` : "Rupture";
