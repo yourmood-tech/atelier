@@ -304,9 +304,7 @@ export default function ScannerPage() {
       prev.map((i) => (i.localId === localId ? { ...i, status: "sent" } : i))
     );
 
-    const lines = item.result.emailDraft.split("\n");
-    const subject = lines[0].replace(/^Subject:\s*/i, "");
-    const body = lines.slice(2).join("\n");
+    const { subject, greeting, body, sign_off } = item.result.emailDraft;
 
     try {
       const res = await fetch("/api/backorder-notify", {
@@ -316,18 +314,18 @@ export default function ScannerPage() {
           to: item.result.order.customer.email,
           firstName: item.result.order.customer.firstName,
           subject,
+          greeting,
           body,
+          sign_off,
           orderId: item.result.order.name,
           orderNumericId: item.result.order.id,
           productTitle: item.result.product.productTitle,
           estimatedDelivery: item.result.estimatedDelivery,
           supplierName: item.result.purchaseOrder?.supplierName ?? null,
-          followupSubject: item.result.followUpEmailDraft
-            ? item.result.followUpEmailDraft.split("\n")[0].replace(/^Subject:\s*/i, "")
-            : null,
-          followupBody: item.result.followUpEmailDraft
-            ? item.result.followUpEmailDraft.split("\n").slice(2).join("\n")
-            : null,
+          followupSubject: item.result.followUpEmailDraft?.subject ?? null,
+          followupGreeting: item.result.followUpEmailDraft?.greeting ?? null,
+          followupBody: item.result.followUpEmailDraft?.body ?? null,
+          followupSignOff: item.result.followUpEmailDraft?.sign_off ?? null,
         }),
       });
       const data = await res.json() as { ok: boolean; error?: string };

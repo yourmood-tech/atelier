@@ -96,9 +96,9 @@ export async function GET(req: NextRequest) {
       needsFollowUp ? generateFollowUpEmail(analysis) : Promise.resolve(null),
     ]);
 
-    analysis.emailDraft = `Subject: ${initial.subject}\n\n${initial.body}`;
+    analysis.emailDraft = { subject: initial.subject, greeting: initial.greeting, body: initial.body, sign_off: initial.sign_off };
     if (followUp) {
-      analysis.followUpEmailDraft = `Subject: ${followUp.subject}\n\n${followUp.body}`;
+      analysis.followUpEmailDraft = { subject: followUp.subject, greeting: followUp.greeting, body: followUp.body, sign_off: followUp.sign_off };
     }
 
     return NextResponse.json<BackorderApiResponse>({ ok: true, result: analysis });
@@ -117,14 +117,18 @@ export async function POST(req: NextRequest) {
       to: string;
       firstName?: string;
       subject: string;
+      greeting?: string;
       body: string;
+      sign_off?: string;
       orderId?: string;
       orderNumericId?: number;
       productTitle?: string;
       estimatedDelivery?: string | null;
       supplierName?: string | null;
       followupSubject?: string | null;
+      followupGreeting?: string | null;
       followupBody?: string | null;
+      followupSignOff?: string | null;
     };
 
     if (!body.to || !body.subject || !body.body) {
@@ -138,13 +142,17 @@ export async function POST(req: NextRequest) {
       email: body.to,
       firstName: body.firstName ?? "",
       subject: body.subject,
+      greeting: body.greeting ?? "",
       body: body.body,
+      sign_off: body.sign_off ?? "",
       orderId: body.orderId ?? "",
       productTitle: body.productTitle ?? "",
       estimatedDelivery: body.estimatedDelivery ?? null,
       supplierName: body.supplierName ?? null,
       followupSubject: body.followupSubject ?? null,
+      followupGreeting: body.followupGreeting ?? null,
       followupBody: body.followupBody ?? null,
+      followupSignOff: body.followupSignOff ?? null,
     });
 
     if (body.orderNumericId) {

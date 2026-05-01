@@ -37,13 +37,17 @@ export async function sendViaKlaviyo(params: {
   email: string;
   firstName: string;
   subject: string;
+  greeting: string;
   body: string;
+  sign_off: string;
   orderId: string;
   productTitle: string;
   estimatedDelivery: string | null;
   supplierName: string | null;
   followupSubject?: string | null;
+  followupGreeting?: string | null;
   followupBody?: string | null;
+  followupSignOff?: string | null;
 }): Promise<void> {
   const apiKey = process.env.KLAVIYO_API_KEY!;
 
@@ -75,14 +79,18 @@ export async function sendViaKlaviyo(params: {
           },
           properties: {
             email_subject: params.subject,
+            email_greeting: params.greeting,
             email_body: params.body,
+            email_sign_off: params.sign_off,
             order_id: params.orderId,
             product_title: params.productTitle,
             estimated_delivery: params.estimatedDelivery ?? "À confirmer",
             supplier_name: params.supplierName ?? "",
             needs_followup: !!(params.followupSubject && params.followupBody),
             followup_subject: params.followupSubject ?? "",
+            followup_greeting: params.followupGreeting ?? "",
             followup_body: params.followupBody ?? "",
+            followup_sign_off: params.followupSignOff ?? "",
           },
           time: new Date().toISOString(),
         },
@@ -110,9 +118,22 @@ const LOCALE_LABELS: Record<string, string> = {
 
 export async function generateBackorderEmail(
   analysis: BackorderAnalysis
-): Promise<{ subject: string; body: string }> {
+): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
   const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
-  const language = LOCALE_LABELS[order.customer.locale] ?? "French";
+  const locale = order.customer.locale;
+  const language = LOCALE_LABELS[locale] ?? "French";
+
+  const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
+    : locale === "en" ? `Dear ${order.customer.firstName},`
+    : locale === "it" ? `Cara ${order.customer.firstName},`
+    : locale === "es" ? `Estimada ${order.customer.firstName},`
+    : `Chère ${order.customer.firstName},`;
+
+  const sign_off = locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
+    : locale === "it" ? "Il team di produzione Mood"
+    : locale === "es" ? "El equipo de producción Mood"
+    : "L'équipe de production Mood";
 
   const etaText = estimatedDelivery
     ? `approximate delivery window based on supplier PO: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
@@ -123,7 +144,7 @@ export async function generateBackorderEmail(
     : "no confirmed date yet — we will inform you as soon as possible";
 
   const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand known for precision and intentional production.
-Write a clear, professional email informing a customer that one item in their order requires additional production time before it can be delivered.
+Write the body of a clear, professional email informing a customer that one item in their order requires additional production time before it can be delivered.
 
 Tone guidelines:
 - Professional and direct — not overly warm, not cold
@@ -136,8 +157,7 @@ Tone guidelines:
 Rules:
 - Write entirely in ${language}
 - Be concise: 3-4 sentences maximum
-- Address the customer by first name only — no "Madame/Monsieur"
-- Do NOT add a sign-off or signature — body text only
+- Do NOT include a greeting or sign-off — body text only
 - Use "livrer" / "deliver" — not "proposer" / "offer"
 - Return JSON with two fields: "subject" (email subject line) and "body" (email body text)
 
@@ -147,7 +167,8 @@ Customer info:
 - Product: ${product.productTitle}
 - Delivery situation: ${etaText}`;
 
-  return callClaude(prompt);
+  const result = await callClaude(prompt);
+  return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
 async function callClaude(prompt: string): Promise<{ subject: string; body: string }> {
@@ -166,9 +187,22 @@ async function callClaude(prompt: string): Promise<{ subject: string; body: stri
 
 export async function generateFollowUpEmail(
   analysis: BackorderAnalysis
-): Promise<{ subject: string; body: string }> {
+): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
   const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
-  const language = LOCALE_LABELS[order.customer.locale] ?? "French";
+  const locale = order.customer.locale;
+  const language = LOCALE_LABELS[locale] ?? "French";
+
+  const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
+    : locale === "en" ? `Dear ${order.customer.firstName},`
+    : locale === "it" ? `Cara ${order.customer.firstName},`
+    : locale === "es" ? `Estimada ${order.customer.firstName},`
+    : `Chère ${order.customer.firstName},`;
+
+  const sign_off = locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
+    : locale === "it" ? "Il team di produzione Mood"
+    : locale === "es" ? "El equipo de producción Mood"
+    : "L'équipe de production Mood";
 
   // This email is sent 15 days after the first — compute remaining time from that point
   const FOLLOWUP_DELAY_DAYS = 15;
@@ -212,8 +246,7 @@ Tone guidelines:
 Rules:
 - Write entirely in ${language}
 - 3 sentences maximum
-- Address by first name only — no "Madame/Monsieur"
-- No sign-off or signature — body text only
+- Do NOT include a greeting or sign-off — body text only
 - Use "livrer" / "deliver" — not "proposer" / "offer"
 - Return JSON: { "subject": "...", "body": "..." }
 
@@ -223,7 +256,8 @@ Customer info:
 - Product: ${product.productTitle}
 - Current status: ${remainingText}`;
 
-  return callClaude(prompt);
+  const result = await callClaude(prompt);
+  return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
 // ── Klaviyo — production step events ──────────────────────────────────────────

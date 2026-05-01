@@ -116,6 +116,13 @@ export type KatanaPurchaseOrder = {
   rows: KatanaPurchaseOrderRow[];
 };
 
+export type BackorderEmailDraft = {
+  subject: string;
+  greeting: string;
+  body: string;
+  sign_off: string;
+};
+
 export type BackorderAnalysis = {
   order: ShopifyOrder;
   product: ShopifyVariantInfo;
@@ -124,8 +131,8 @@ export type BackorderAnalysis = {
   estimatedDelivery: string | null;
   leadTimeMin: number | null;
   leadTimeMax: number | null;
-  emailDraft: string | null;
-  followUpEmailDraft: string | null; // generated when lead time > 12 days
+  emailDraft: BackorderEmailDraft | null;
+  followUpEmailDraft: BackorderEmailDraft | null; // generated when lead time > 12 days
 };
 
 export type BackorderApiResponse = {
