@@ -539,7 +539,7 @@ export default function ScannerPage() {
           className={`rounded-xl border px-5 py-3 ${mode === "backorder" ? "font-bold ring-2" : ""}`}
           onClick={() => { setMode("backorder"); setBackorderStep("order"); setBackorderOrderId(null); setStatus("Scannez le numéro de commande"); }}
         >
-          Mode Suivi
+          Out of Stock
         </button>
         <button
           className={`rounded-xl border px-5 py-3 ${mode === "suppliers" ? "font-bold ring-2" : ""}`}
@@ -671,7 +671,7 @@ export default function ScannerPage() {
       {mode === "backorder" && (
         <section className="rounded-2xl border p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Mode Suivi — Batch</h2>
+            <h2 className="text-xl font-semibold">Out of Stock — Batch</h2>
             {batchItems.length > 0 && (
               <button
                 className="text-sm opacity-40 hover:opacity-80"
