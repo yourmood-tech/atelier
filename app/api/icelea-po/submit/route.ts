@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createKatanaPOWithRows } from "@/lib/katana";
-import { addOrderTag } from "@/lib/shopify";
+import { addOrderTag, getOrderById } from "@/lib/shopify";
+import { getKlaviyoProfileLocale, generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
+import type { BackorderAnalysis, ShopifyVariantInfo } from "@/lib/types";
 
 function formatDeliveryDate(dateStr: string | null | undefined): string {
   const d = dateStr ? new Date(dateStr) : (() => { const n = new Date(); n.setDate(n.getDate() + 21); return n; })();
@@ -18,14 +20,17 @@ type SubmitItem = {
 
 export async function POST(req: NextRequest) {
   try {
+    type ScannedPair = { orderId: number; productId: number; productName: string };
+
     const body = await req.json() as {
       supplierId: number;
       supplierName: string;
       items: SubmitItem[];
       shopifyOrderIds?: number[];
+      scannedPairs?: ScannedPair[];
     };
 
-    const { supplierId, supplierName, items, shopifyOrderIds } = body;
+    const { supplierId, supplierName, items, shopifyOrderIds, scannedPairs } = body;
 
     if (!supplierId || !items?.length) {
       return NextResponse.json({ error: "supplierId et items requis" }, { status: 400 });
@@ -110,6 +115,81 @@ export async function POST(req: NextRequest) {
           addOrderTag(orderId, `Icelea-PO:${po.number}`),
           addOrderTag(orderId, `Icelea-livraison:${deliveryFormatted}`),
         ])
+      );
+    }
+
+    // Send OOS emails to customers for each scanned order+product pair
+    if (scannedPairs?.length) {
+      const uniqueOrderIds = [...new Set(scannedPairs.map((p) => p.orderId))];
+
+      const orderResults = await Promise.allSettled(
+        uniqueOrderIds.map((id) => getOrderById(String(id)))
+      );
+      const orderMap = new Map<number, Awaited<ReturnType<typeof getOrderById>>>();
+      orderResults.forEach((result, i) => {
+        if (result.status === "fulfilled") orderMap.set(uniqueOrderIds[i], result.value);
+      });
+
+      // Override locales from Klaviyo for accuracy
+      await Promise.allSettled(
+        Array.from(orderMap.values()).map(async (order) => {
+          const locale = await getKlaviyoProfileLocale(order.customer.email);
+          if (locale) order.customer.locale = locale;
+        })
+      );
+
+      const needsFollowUp = po.deliveryDate
+        ? Math.ceil((new Date(po.deliveryDate).getTime() - Date.now()) / 86_400_000) > 12
+        : false;
+
+      await Promise.allSettled(
+        scannedPairs.map(async (pair) => {
+          const order = orderMap.get(pair.orderId);
+          if (!order) return;
+
+          const product: ShopifyVariantInfo = {
+            variantId: 0,
+            productId: pair.productId,
+            productTitle: pair.productName,
+            variantTitle: "",
+            sku: "",
+          };
+
+          const analysis: BackorderAnalysis = {
+            order,
+            product,
+            materials: [],
+            purchaseOrder: null,
+            estimatedDelivery: po.deliveryDate ?? null,
+            leadTimeMin: null,
+            leadTimeMax: null,
+            tagOnly: false,
+            emailDraft: null,
+            followUpEmailDraft: null,
+          };
+
+          const [email, followUp] = await Promise.all([
+            generateBackorderEmail(analysis),
+            needsFollowUp ? generateFollowUpEmail(analysis) : Promise.resolve(null),
+          ]);
+
+          await sendViaKlaviyo({
+            email: order.customer.email,
+            firstName: order.customer.firstName,
+            subject: email.subject,
+            greeting: email.greeting,
+            body: email.body,
+            sign_off: email.sign_off,
+            orderId: order.name,
+            productTitle: pair.productName,
+            estimatedDelivery: po.deliveryDate ?? null,
+            supplierName,
+            followupSubject: followUp?.subject ?? null,
+            followupGreeting: followUp?.greeting ?? null,
+            followupBody: followUp?.body ?? null,
+            followupSignOff: followUp?.sign_off ?? null,
+          });
+        })
       );
     }
 

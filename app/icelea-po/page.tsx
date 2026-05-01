@@ -15,6 +15,8 @@ type ScannedVariant = { title: string; sku: string };
 
 type ScannedItem = {
   localId: string;
+  productId: number | null;     // Shopify product ID — for OOS email
+  linkedOrderId: number | null; // Shopify order this item was scanned for
   productName: string;
   productSku: string | null;
   variants: ScannedVariant[];
@@ -203,7 +205,7 @@ export default function IceleaPOPage() {
         setLastStatus(`Recherche ${barcode}…`);
 
         setItems((prev) => [
-          { localId, productName: barcode, productSku: null, variants: [], icelea: [], excludedVariantIds: [], quantity: 1, status: "loading" },
+          { localId, productId: null, linkedOrderId: currentOrderRef.current?.id ?? null, productName: barcode, productSku: null, variants: [], icelea: [], excludedVariantIds: [], quantity: 1, status: "loading" },
           ...prev,
         ]);
 
@@ -216,6 +218,7 @@ export default function IceleaPOPage() {
           const data = await res.json() as {
             ok?: boolean;
             type?: "product" | "variant";
+            productId?: number;
             productName?: string;
             variants?: ScannedVariant[];
             variantTitle?: string;
@@ -229,7 +232,7 @@ export default function IceleaPOPage() {
             setItems((prev) =>
               prev.map((i) =>
                 i.localId === localId
-                  ? { ...i, status: "selecting_size", productName: data.productName ?? barcode, variants: data.variants ?? [] }
+                  ? { ...i, status: "selecting_size", productId: data.productId ?? null, productName: data.productName ?? barcode, variants: data.variants ?? [] }
                   : i
               )
             );
@@ -238,7 +241,7 @@ export default function IceleaPOPage() {
             setItems((prev) =>
               prev.map((i) =>
                 i.localId === localId
-                  ? { ...i, productName: data.productName ?? barcode, productSku: data.sku ?? null, variants: [] }
+                  ? { ...i, productId: data.productId ?? null, productName: data.productName ?? barcode, productSku: data.sku ?? null, variants: [] }
                   : i
               )
             );
@@ -333,6 +336,22 @@ export default function IceleaPOPage() {
     setSubmitting(true);
     setClosedError(null);
     try {
+      // Build deduped (orderId, productId) pairs for OOS emails
+      const seen = new Set<string>();
+      const scannedPairs = items
+        .filter(i =>
+          i.status === "ok" &&
+          i.linkedOrderId !== null &&
+          i.productId !== null &&
+          i.icelea.filter(x => !i.excludedVariantIds.includes(x.variantId)).length > 0
+        )
+        .flatMap(i => {
+          const key = `${i.linkedOrderId}-${i.productId}`;
+          if (seen.has(key)) return [];
+          seen.add(key);
+          return [{ orderId: i.linkedOrderId!, productId: i.productId!, productName: i.productName }];
+        });
+
       const res = await fetch("/api/icelea-po/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -341,6 +360,7 @@ export default function IceleaPOPage() {
           supplierName: supplier.name,
           items: poItems,
           shopifyOrderIds: linkedOrders.map((o) => o.id),
+          scannedPairs,
         }),
       });
       const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
