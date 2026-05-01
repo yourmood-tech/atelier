@@ -157,12 +157,13 @@ Tone guidelines:
 Rules:
 - Write entirely in ${language}
 - Be concise: 3-4 sentences maximum
-- Do NOT include a greeting or sign-off — body text only
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
+- Do NOT include a sign-off or signature
 - Use "livrer" / "deliver" — not "proposer" / "offer"
-- Return JSON with two fields: "subject" (email subject line) and "body" (email body text)
+- Return JSON with two fields: "subject" (email subject line) and "body" (email body text, starting with the first sentence)
 
 Customer info:
-- First name: ${order.customer.firstName}
+- First name: ${order.customer.firstName} (used for personalization in subject only if relevant — NOT in body)
 - Order number: ${order.name}
 - Product: ${product.productTitle}
 - Delivery situation: ${etaText}`;
@@ -246,12 +247,13 @@ Tone guidelines:
 Rules:
 - Write entirely in ${language}
 - 3 sentences maximum
-- Do NOT include a greeting or sign-off — body text only
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
+- Do NOT include a sign-off or signature
 - Use "livrer" / "deliver" — not "proposer" / "offer"
-- Return JSON: { "subject": "...", "body": "..." }
+- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
 
 Customer info:
-- First name: ${order.customer.firstName}
+- First name: ${order.customer.firstName} (used for personalization in subject only if relevant — NOT in body)
 - Order number: ${order.name}
 - Product: ${product.productTitle}
 - Current status: ${remainingText}`;
