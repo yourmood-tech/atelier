@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { OrderFulfillmentData, FulfillmentLineItemData } from "@/lib/types";
 
-type Phase = "order" | "items" | "coffret-count" | "submitting" | "error";
+type Phase = "order" | "items" | "coffret-count" | "disambiguate" | "submitting" | "error";
 
 type ProdState =
   | { type: "done" }
@@ -87,6 +87,7 @@ export default function RassemblementPage() {
   const [order, setOrder] = useState<OrderFulfillmentData | null>(null);
   const [coffretCounts, setCoffretCounts] = useState<Record<string, number>>({});
   const [prodStates, setProdStates] = useState<Map<string, ProdState>>(new Map());
+  const [pendingMatches, setPendingMatches] = useState<FulfillmentLineItemData[]>([]);
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
@@ -158,6 +159,15 @@ export default function RassemblementPage() {
     }
   }
 
+  // Appelé depuis un clic direct sur une ligne — lineItemId connu, pas d'ambiguïté
+  async function handleLineItemSelect(lineItemId: number) {
+    if (!order) return;
+    const item = order.lineItems.find(li => li.lineItemId === lineItemId);
+    if (!item) return;
+    await processItem(item);
+  }
+
+  // Appelé depuis le scan barcode — productId seulement, peut matcher plusieurs variantes
   async function handleProductScan(value: string) {
     const productId = Number(value.trim());
     if (!productId || !order) return;
@@ -169,14 +179,25 @@ export default function RassemblementPage() {
       return;
     }
 
-    // Pick first non-done item — chaque lineItemId est unique, immune aux collisions SKU
-    const item = matches.find(li => {
+    const nonDone = matches.filter(li => {
       const s = prodStates.get(String(li.lineItemId));
-      if (!s) return true;
-      if (s.type === "coffret") return s.current < s.total;
-      return false;
-    }) ?? matches[matches.length - 1];
+      return !s || (s.type === "coffret" && s.current < s.total);
+    });
 
+    // Plusieurs variantes non-faites → demander laquelle a été préparée
+    if (nonDone.length > 1) {
+      setPendingMatches(nonDone);
+      setPhase("disambiguate");
+      return;
+    }
+
+    const item = nonDone[0] ?? matches[matches.length - 1];
+    await processItem(item);
+  }
+
+  async function processItem(item: FulfillmentLineItemData) {
+    if (!order) return;
+    const productId = item.productId;
     const state = prodStates.get(String(item.lineItemId));
 
     if (isCoffret(item.title)) {
@@ -318,6 +339,7 @@ export default function RassemblementPage() {
           setOrder(null);
           setProdStates(new Map());
           setCoffretCounts({});
+          setPendingMatches([]);
           setMessage("");
           setPhase("order");
         }
@@ -352,7 +374,7 @@ export default function RassemblementPage() {
           </h1>
           {order && phase !== "error" && phase !== "coffret-count" && (
             <button
-              onClick={() => { setOrder(null); setProdStates(new Map()); setCoffretCounts({}); setMessage(""); setPhase("order"); }}
+              onClick={() => { setOrder(null); setProdStates(new Map()); setCoffretCounts({}); setPendingMatches([]); setMessage(""); setPhase("order"); }}
               className="text-xs text-zinc-500 hover:text-zinc-300"
             >
               ✕ annuler
@@ -416,6 +438,34 @@ export default function RassemblementPage() {
           </div>
         )}
 
+        {/* Disambiguation — plusieurs variantes non-faites pour le même produit */}
+        {phase === "disambiguate" && pendingMatches.length > 0 && (
+          <div className="rounded-lg bg-zinc-900 border border-blue-700 p-4 space-y-3">
+            <p className="text-xs text-blue-400 uppercase tracking-widest">Quelle variante avez-vous préparée ?</p>
+            <div className="space-y-2">
+              {pendingMatches.map(li => (
+                <button
+                  key={li.lineItemId}
+                  onClick={() => { setPendingMatches([]); setPhase("items"); void processItem(li); }}
+                  className="w-full text-left rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 hover:border-blue-500 px-4 py-3 transition-colors"
+                >
+                  <span className="font-bold text-zinc-200">{li.title}</span>
+                  {li.variantTitle && li.variantTitle !== "Default Title" && (
+                    <span className="ml-2 text-zinc-400">— {li.variantTitle}</span>
+                  )}
+                  {li.sku && <p className="text-xs text-zinc-500 mt-1">{li.sku}</p>}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => { setPendingMatches([]); setPhase("items"); }}
+              className="w-full py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-500"
+            >
+              Annuler
+            </button>
+          </div>
+        )}
+
         {/* Order info */}
         {order && (phase === "items" || phase === "submitting") && (
           <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4 space-y-3">
@@ -430,7 +480,7 @@ export default function RassemblementPage() {
                     item={li}
                     state={prodStates.get(String(li.lineItemId))}
                     coffretTotal={isCoffret(li.title) ? (coffretCounts[String(li.lineItemId)] ?? null) : null}
-                    onSelect={phase === "items" ? () => void handleProductScan(String(li.productId)) : undefined}
+                    onSelect={phase === "items" ? () => void handleLineItemSelect(li.lineItemId) : undefined}
                   />
                 ))}
               </div>
@@ -507,7 +557,7 @@ export default function RassemblementPage() {
 
         {phase === "error" && (
           <button
-            onClick={() => { setOrder(null); setProdStates(new Map()); setCoffretCounts({}); setMessage(""); setPhase("order"); }}
+            onClick={() => { setOrder(null); setProdStates(new Map()); setCoffretCounts({}); setPendingMatches([]); setMessage(""); setPhase("order"); }}
             className="w-full py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-300"
           >
             ← Recommencer
