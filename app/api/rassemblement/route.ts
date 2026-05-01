@@ -3,14 +3,8 @@ import {
   getOrderFulfillmentData,
   addOrderTag,
   removeOrderTagsBySkuKey,
-  getProductCoffretCount,
-  setProductCoffretCount,
+  setOrderCoffretCountTag,
 } from "@/lib/shopify";
-
-function isCoffret(title: string) {
-  const t = title.toLowerCase();
-  return t.includes("pack") || t.startsWith("coffret");
-}
 
 function fmtDate(d: Date): string {
   const dd = String(d.getDate()).padStart(2, "0");
@@ -28,19 +22,7 @@ export async function GET(req: NextRequest) {
   }
   try {
     const data = await getOrderFulfillmentData(orderParam);
-
-    // Fetch coffret counts for Pack/Coffret items (deduplicated by productId)
-    const coffretProductIds = [
-      ...new Set(data.lineItems.filter(li => isCoffret(li.title)).map(li => li.productId)),
-    ];
-    const coffretCounts: Record<number, number | null> = {};
-    await Promise.all(
-      coffretProductIds.map(async (pid) => {
-        coffretCounts[pid] = await getProductCoffretCount(pid);
-      })
-    );
-
-    return NextResponse.json({ ok: true, data, coffretCounts });
+    return NextResponse.json({ ok: true, data });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
   }
@@ -58,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
     }
 
-    const skuPart = (sku || String(productId)).replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 10);
+    const skuPart = (sku || String(productId)).replace(/[^a-zA-Z0-9-_]/g, "");
     const tag = (n !== undefined && total !== undefined)
       ? `prod-ok-${n}-sur-${total}-${skuPart}`
       : `prod-ok-${fmtDate(new Date())}-${skuPart}`;
@@ -71,6 +53,22 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PATCH /api/rassemblement
+// { orderId, sku, count } → saves coffret-count-SKUPART-N tag on order
+export async function PATCH(req: NextRequest) {
+  try {
+    const { orderId, sku, count } = await req.json() as { orderId: number; sku: string; count: number };
+    if (!orderId || !sku || !count || count < 1) {
+      return NextResponse.json({ ok: false, error: "orderId, sku et count requis" }, { status: 400 });
+    }
+    const skuPart = sku.replace(/[^a-zA-Z0-9-_]/g, "");
+    await setOrderCoffretCountTag(orderId, skuPart, count);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
+  }
+}
+
 // DELETE /api/rassemblement
 // { orderId, sku } → retire tous les tags prod-ok-*-{skuKey} de la commande
 export async function DELETE(req: NextRequest) {
@@ -79,7 +77,7 @@ export async function DELETE(req: NextRequest) {
     if (!orderId || !sku) {
       return NextResponse.json({ ok: false, error: "orderId et sku requis" }, { status: 400 });
     }
-    const key = sku.replace(/[^a-zA-Z0-9-_]/g, "").slice(0, 10);
+    const key = sku.replace(/[^a-zA-Z0-9-_]/g, "");
     await removeOrderTagsBySkuKey(orderId, key);
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -87,17 +85,3 @@ export async function DELETE(req: NextRequest) {
   }
 }
 
-// PATCH /api/rassemblement
-// { productId, count } → saves coffret_count metafield on product
-export async function PATCH(req: NextRequest) {
-  try {
-    const { productId, count } = await req.json() as { productId: number; count: number };
-    if (!productId || !count || count < 1) {
-      return NextResponse.json({ ok: false, error: "productId et count requis" }, { status: 400 });
-    }
-    await setProductCoffretCount(productId, count);
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
-  }
-}

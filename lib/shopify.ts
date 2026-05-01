@@ -189,6 +189,18 @@ export async function removeOrderTagsBySkuKey(orderId: number, skuKey: string): 
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags.join(", ") } });
 }
 
+export async function setOrderCoffretCountTag(orderId: number, skuPart: string, count: number): Promise<void> {
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string)
+    .split(",")
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+  const prefix = `coffret-count-${skuPart}-`;
+  const filtered = existing.filter(t => !t.startsWith(prefix));
+  const newTags = [...filtered, `${prefix}${count}`].join(", ");
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
+}
+
 // Returns a tag string like "Rupture 17.04.26 10:30"
 export function makeOrderTag(reason: string): string {
   const now = new Date();
