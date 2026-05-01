@@ -33,17 +33,16 @@ export async function GET(req: NextRequest) {
 // Coffret item:   { orderId, productId, sku, n, total } → tag prod-ok-N-sur-TOTAL-SKU
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { orderId: number; productId: number; sku?: string; n?: number; total?: number };
-    const { orderId, productId, sku, n, total } = body;
+    const body = await req.json() as { orderId: number; productId: number; sku?: string; lineItemId: number; n?: number; total?: number };
+    const { orderId, productId, lineItemId, n, total } = body;
 
-    if (!orderId || !productId) {
-      return NextResponse.json({ ok: false, error: "orderId et productId requis" }, { status: 400 });
+    if (!orderId || !productId || !lineItemId) {
+      return NextResponse.json({ ok: false, error: "orderId, productId et lineItemId requis" }, { status: 400 });
     }
 
-    const skuPart = (sku || String(productId)).replace(/[^a-zA-Z0-9-_]/g, "");
     const tag = (n !== undefined && total !== undefined)
-      ? `prod-ok-${n}-sur-${total}-${skuPart}`
-      : `prod-ok-${fmtDate(new Date())}-${skuPart}`;
+      ? `prod-ok-${n}-sur-${total}-${lineItemId}`
+      : `prod-ok-${fmtDate(new Date())}-${lineItemId}`;
 
     await addOrderTag(orderId, tag);
     return NextResponse.json({ ok: true, tag });
@@ -57,12 +56,11 @@ export async function POST(req: NextRequest) {
 // { orderId, sku, count } → saves coffret-count-SKUPART-N tag on order
 export async function PATCH(req: NextRequest) {
   try {
-    const { orderId, sku, count } = await req.json() as { orderId: number; sku: string; count: number };
-    if (!orderId || !sku || !count || count < 1) {
-      return NextResponse.json({ ok: false, error: "orderId, sku et count requis" }, { status: 400 });
+    const { orderId, lineItemId, count } = await req.json() as { orderId: number; lineItemId: number; count: number };
+    if (!orderId || !lineItemId || !count || count < 1) {
+      return NextResponse.json({ ok: false, error: "orderId, lineItemId et count requis" }, { status: 400 });
     }
-    const skuPart = sku.replace(/[^a-zA-Z0-9-_]/g, "");
-    await setOrderCoffretCountTag(orderId, skuPart, count);
+    await setOrderCoffretCountTag(orderId, String(lineItemId), count);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
@@ -73,12 +71,11 @@ export async function PATCH(req: NextRequest) {
 // { orderId, sku } → retire tous les tags prod-ok-*-{skuKey} de la commande
 export async function DELETE(req: NextRequest) {
   try {
-    const { orderId, sku } = await req.json() as { orderId: number; sku: string };
-    if (!orderId || !sku) {
-      return NextResponse.json({ ok: false, error: "orderId et sku requis" }, { status: 400 });
+    const { orderId, lineItemId } = await req.json() as { orderId: number; lineItemId: number };
+    if (!orderId || !lineItemId) {
+      return NextResponse.json({ ok: false, error: "orderId et lineItemId requis" }, { status: 400 });
     }
-    const key = sku.replace(/[^a-zA-Z0-9-_]/g, "");
-    await removeOrderTagsBySkuKey(orderId, key);
+    await removeOrderTagsBySkuKey(orderId, String(lineItemId));
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });

@@ -36,24 +36,46 @@ function isCoffret(title: string) {
   return t.includes("pack") || t.startsWith("coffret");
 }
 
-// Map keyed by skuKey — parses prod-ok tags directly
-function parseProdStates(tags: string[]): Map<string, ProdState> {
+// Map keyed by String(lineItemId) — unique per line, immune aux collisions SKU
+function parseProdStates(tags: string[], lineItems: FulfillmentLineItemData[]): Map<string, ProdState> {
   const states = new Map<string, ProdState>();
 
+  // lineItemId set for new-format tag detection
+  const lineItemIdSet = new Set(lineItems.map(li => String(li.lineItemId)));
+  // skuPart → lineItemIds pour rétrocompat avec anciens tags SKU-based
+  const skuToIds = new Map<string, number[]>();
+  for (const li of lineItems) {
+    const k = skuKey(li.sku);
+    if (!skuToIds.has(k)) skuToIds.set(k, []);
+    skuToIds.get(k)!.push(li.lineItemId);
+  }
+
   for (const tag of tags) {
-    // Coffret: prod-ok-N-sur-TOTAL-SKUPART (check first — no "-sur-" in regular tags)
+    // Coffret: prod-ok-N-sur-TOTAL-PART
     const coffret = tag.match(/^prod-ok-(\d+)-sur-(\d+)-(.+)$/);
     if (coffret) {
-      const n = Number(coffret[1]), total = Number(coffret[2]), skuPart = coffret[3];
-      const existing = states.get(skuPart);
-      if (!existing || (existing.type === "coffret" && n > existing.current)) {
-        states.set(skuPart, { type: "coffret", current: n, total });
+      const n = Number(coffret[1]), total = Number(coffret[2]), part = coffret[3];
+      const ids = lineItemIdSet.has(part) ? [Number(part)] : (skuToIds.get(part) ?? []);
+      for (const id of ids) {
+        const key = String(id);
+        const existing = states.get(key);
+        if (!existing || (existing.type === "coffret" && n > existing.current))
+          states.set(key, { type: "coffret", current: n, total });
       }
       continue;
     }
-    // Regular: prod-ok-ddmmyy-SKUPART
+    // Regular: prod-ok-ddmmyy-PART
     const regular = tag.match(/^prod-ok-(\d{6})-(.+)$/);
-    if (regular) states.set(regular[2], { type: "done" });
+    if (regular) {
+      const part = regular[2];
+      if (lineItemIdSet.has(part)) {
+        // Nouveau format : PART = lineItemId
+        states.set(part, { type: "done" });
+      } else {
+        // Rétrocompat : PART = skuPart
+        for (const id of skuToIds.get(part) ?? []) states.set(String(id), { type: "done" });
+      }
+    }
   }
 
   return states;
@@ -114,20 +136,20 @@ export default function RassemblementPage() {
       setHistory(updated.slice(0, 3));
 
       setOrder(json.data);
-      // Restore coffret counts from order tags (coffret-count-SKUPART-N)
+      // Restore coffret counts from order tags (coffret-count-LINEID-N)
       const savedCounts: Record<string, number> = {};
       for (const li of json.data.lineItems) {
         if (isCoffret(li.title)) {
-          const skPart = skuKey(li.sku);
-          const countTag = json.data.tags.find(t => t.startsWith(`coffret-count-${skPart}-`));
+          const prefix = `coffret-count-${li.lineItemId}-`;
+          const countTag = json.data.tags.find(t => t.startsWith(prefix));
           if (countTag) {
-            const n = Number(countTag.slice(`coffret-count-${skPart}-`.length));
-            if (n > 0) savedCounts[li.sku] = n;
+            const n = Number(countTag.slice(prefix.length));
+            if (n > 0) savedCounts[String(li.lineItemId)] = n;
           }
         }
       }
       setCoffretCounts(savedCounts);
-      setProdStates(parseProdStates(json.data.tags));
+      setProdStates(parseProdStates(json.data.tags, json.data.lineItems));
       setMessage("");
       setPhase("items");
     } catch (err) {
@@ -147,19 +169,18 @@ export default function RassemblementPage() {
       return;
     }
 
-    // Pick first non-done item — handles same productId in multiple sizes
+    // Pick first non-done item — chaque lineItemId est unique, immune aux collisions SKU
     const item = matches.find(li => {
-      const s = prodStates.get(skuKey(li.sku));
+      const s = prodStates.get(String(li.lineItemId));
       if (!s) return true;
       if (s.type === "coffret") return s.current < s.total;
       return false;
     }) ?? matches[matches.length - 1];
 
-    const state = prodStates.get(skuKey(item.sku));
+    const state = prodStates.get(String(item.lineItemId));
 
     if (isCoffret(item.title)) {
-      // Fallback: if a prior prod-ok tag already encoded the total, use it
-      const total = coffretCounts[item.sku] ?? (state?.type === "coffret" ? state.total : null);
+      const total = coffretCounts[String(item.lineItemId)] ?? (state?.type === "coffret" ? state.total : null);
 
       if (state?.type === "coffret" && state.current >= state.total) {
         await handleDeselect(item);
@@ -178,11 +199,11 @@ export default function RassemblementPage() {
         await handleDeselect(item);
         return;
       }
-      await submitRegularScan(productId, item.sku);
+      await submitRegularScan(productId, item.sku, item.lineItemId);
     }
   }
 
-  async function submitRegularScan(productId: number, sku: string) {
+  async function submitRegularScan(productId: number, sku: string, lineItemId: number) {
     if (!order) return;
     setPhase("submitting");
     setMessage("Enregistrement…");
@@ -190,12 +211,12 @@ export default function RassemblementPage() {
       const res = await fetch("/api/rassemblement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, productId, sku }),
+        body: JSON.stringify({ orderId: order.orderId, productId, sku, lineItemId }),
       });
       const json = await res.json() as { ok: boolean; tag?: string; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdStates(prev => new Map(prev).set(skuKey(sku), { type: "done" }));
+      setProdStates(prev => new Map(prev).set(String(lineItemId), { type: "done" }));
       setMessage(`✓ ${json.tag ?? "prod-ok enregistré"}`);
       setTimeout(() => setMessage(""), 2000);
       setPhase("items");
@@ -222,12 +243,12 @@ export default function RassemblementPage() {
       const res = await fetch("/api/rassemblement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, productId, sku: item.sku, n, total }),
+        body: JSON.stringify({ orderId: order.orderId, productId, sku: item.sku, lineItemId: item.lineItemId, n, total }),
       });
       const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
 
-      setProdStates(prev => new Map(prev).set(skuKey(item.sku), { type: "coffret", current: n, total }));
+      setProdStates(prev => new Map(prev).set(String(item.lineItemId), { type: "coffret", current: n, total }));
       const msg = n >= total
         ? `✓ ${item.title} — ${n}/${total} complet !`
         : `✓ ${item.title} — ${n}/${total} enregistré`;
@@ -248,11 +269,11 @@ export default function RassemblementPage() {
       const res = await fetch("/api/rassemblement", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, sku: item.sku }),
+        body: JSON.stringify({ orderId: order.orderId, lineItemId: item.lineItemId }),
       });
       const json = await res.json() as { ok: boolean; error?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
-      setProdStates(prev => { const next = new Map(prev); next.delete(skuKey(item.sku)); return next; });
+      setProdStates(prev => { const next = new Map(prev); next.delete(String(item.lineItemId)); return next; });
       setMessage(`↩ ${item.title} — annulé`);
       setTimeout(() => setMessage(""), 2000);
       setPhase("items");
@@ -272,17 +293,17 @@ export default function RassemblementPage() {
       count
     );
 
-    // Persist on the order (Shopify tag coffret-count-SKUPART-N) — survives cross-device, cross-session
+    // Persist on the order (Shopify tag coffret-count-LINEID-N) — survives cross-device, cross-session
     if (order) {
       fetch("/api/rassemblement", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.orderId, sku: pendingProduct.sku, count }),
+        body: JSON.stringify({ orderId: order.orderId, lineItemId: pendingProduct.lineItemId, count }),
       }).catch(() => {});
     }
-    const updatedCounts = { ...coffretCounts, [pendingProduct.sku]: count };
+    const updatedCounts = { ...coffretCounts, [String(pendingProduct.lineItemId)]: count };
     setCoffretCounts(updatedCounts);
-    const state = prodStates.get(skuKey(pendingProduct.sku));
+    const state = prodStates.get(String(pendingProduct.lineItemId));
     await submitCoffretScan(productId, pendingProduct, count, state, readyCount);
     setPendingProduct(null);
   }
@@ -407,8 +428,8 @@ export default function RassemblementPage() {
                   <LineItemRow
                     key={li.lineItemId}
                     item={li}
-                    state={prodStates.get(skuKey(li.sku))}
-                    coffretTotal={isCoffret(li.title) ? (coffretCounts[li.sku] ?? null) : null}
+                    state={prodStates.get(String(li.lineItemId))}
+                    coffretTotal={isCoffret(li.title) ? (coffretCounts[String(li.lineItemId)] ?? null) : null}
                     onSelect={phase === "items" ? () => void handleProductScan(String(li.productId)) : undefined}
                   />
                 ))}
