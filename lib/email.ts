@@ -264,22 +264,21 @@ export async function generateFollowUpEmail(
 
   const prompt = isIcelea
     ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification about a made-to-order item.
+Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification.
 
 Purpose of this email:
-- Confirm the item is being produced and the delivery timeline has not changed
-- Remind briefly that this item is produced after order to guarantee choice and quality (one short sentence, stated as a fact)
-- NOT announce any delay or problem — everything is on schedule
+- Confirm that production is still ongoing and the delivery timeline has not changed
+- Restate the estimated delivery date
+- Nothing else — do NOT mention again that the item is made-to-order or any production philosophy
 
 Tone guidelines:
-- Professional and factual — this is an update, not an apology
-- Confident: the production is progressing as planned
+- Professional and factual — one or two sentences, no padding
 - No emotional language, no "magic", no "special", no "worth the wait"
-- Do NOT use words like "magie", "spécial", "ça vaut l'attente"
+- When a delivery date is given, ALWAYS frame it as an estimate — never as confirmed or guaranteed
 
 Rules:
 - Write entirely in ${language}
-- 3 sentences maximum
+- 2 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
