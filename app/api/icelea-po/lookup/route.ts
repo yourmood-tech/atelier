@@ -78,6 +78,18 @@ export async function POST(req: NextRequest) {
           return a.title.localeCompare(b.title);
         });
 
+      // Single variant (e.g. earrings with no size) — skip size selection
+      if (variants.length === 1) {
+        return NextResponse.json({
+          ok: true,
+          type: "variant",
+          productId: product.id,
+          productName: product.title,
+          variantTitle: variants[0].title,
+          sku: variants[0].sku,
+        });
+      }
+
       return NextResponse.json({
         ok: true,
         type: "product",
