@@ -164,6 +164,7 @@ export async function POST(req: NextRequest) {
             leadTimeMin: null,
             leadTimeMax: null,
             tagOnly: false,
+            supplierName,
             emailDraft: null,
             followUpEmailDraft: null,
           };

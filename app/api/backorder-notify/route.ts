@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
       leadTimeMin,
       leadTimeMax,
       tagOnly: false,
+      supplierName: purchaseOrder?.supplierName ?? null,
       emailDraft: null,
       followUpEmailDraft: null,
     };

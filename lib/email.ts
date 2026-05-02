@@ -119,9 +119,10 @@ const LOCALE_LABELS: Record<string, string> = {
 export async function generateBackorderEmail(
   analysis: BackorderAnalysis
 ): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
-  const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
+  const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax, supplierName } = analysis;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
+  const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
 
   const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
     : locale === "en" ? `Dear ${order.customer.firstName},`
@@ -136,34 +137,64 @@ export async function generateBackorderEmail(
     : "L'équipe de production Mood";
 
   const etaText = estimatedDelivery
-    ? `approximate delivery window based on supplier PO: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
+    ? `approximate delivery window: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
     : (leadTimeMin && leadTimeMax)
     ? `estimated lead time: between ${leadTimeMin} and ${leadTimeMax} days from today`
     : leadTimeMin
     ? `estimated lead time: approximately ${leadTimeMin} days from today`
     : "no confirmed date yet — we will inform you as soon as possible";
 
-  const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand known for precision and intentional production.
-Write the body of a clear, professional email informing a customer that one item in their order requires additional production time before it can be delivered.
+  const prompt = isIcelea
+    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write the body of a clear, professional email informing a customer that one item in their order is produced in small quantities, mostly made-to-order.
+
+Key message to convey (state as facts, not marketing):
+- This type of item is produced in small quantities, for the most part after the order is placed
+- This approach allows Mood Collection to offer the widest possible choice of models and sizes
+- It guarantees the best quality and avoids overproduction
+- Include the estimated delivery date as an estimate
 
 Tone guidelines:
-- Professional and direct — not overly warm, not cold
-- Honest and confident, not apologetic or overly compensatory
-- One brief mention that pieces are produced in small quantities by design (anti-overproduction), stated as a fact, not as a marketing pitch
-- No emotional language, no "cheesy" reassurances
-- NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente" — state facts, not feelings
-- When a delivery date is given, ALWAYS frame it as an estimate ("aux alentours du", "around", "etwa um den") — never as a confirmed or guaranteed date
+- Professional and factual — not apologetic, not effusive
+- State the production approach as a deliberate, positive choice — not as an excuse
+- NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente"
+- When a delivery date is given, ALWAYS frame it as an estimate ("aux alentours du", "around", "etwa um den") — never as confirmed or guaranteed
 
 Rules:
 - Write entirely in ${language}
 - Be concise: 3-4 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
 - Do NOT include a sign-off or signature
-- Use "livrer" / "deliver" — not "proposer" / "offer"
-- Return JSON with two fields: "subject" (email subject line) and "body" (email body text, starting with the first sentence)
+- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
 
 Customer info:
-- First name: ${order.customer.firstName} (used for personalization in subject only if relevant — NOT in body)
+- First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
+- Order number: ${order.name}
+- Product: ${product.productTitle}
+- Delivery situation: ${etaText}`
+
+    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write the body of a clear, professional email informing a customer that one item in their order is currently affected by a raw materials stock shortage at the supplier.
+
+Key message to convey:
+- There is unfortunately a current raw materials stock shortage affecting this item
+- Include the estimated delivery date as an estimate
+
+Tone guidelines:
+- Professional and direct — honest about the situation, not overly apologetic
+- No emotional language, no "cheesy" reassurances
+- NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente"
+- When a delivery date is given, ALWAYS frame it as an estimate ("aux alentours du", "around", "etwa um den") — never as confirmed or guaranteed
+
+Rules:
+- Write entirely in ${language}
+- Be concise: 2-3 sentences maximum
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
+- Do NOT include a sign-off or signature
+- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
+
+Customer info:
+- First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
 - Order number: ${order.name}
 - Product: ${product.productTitle}
 - Delivery situation: ${etaText}`;
@@ -189,7 +220,8 @@ async function callClaude(prompt: string): Promise<{ subject: string; body: stri
 export async function generateFollowUpEmail(
   analysis: BackorderAnalysis
 ): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
-  const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax } = analysis;
+  const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax, supplierName } = analysis;
+  const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
 
@@ -230,30 +262,56 @@ export async function generateFollowUpEmail(
     remainingText = "delivery timing confirmed — no change to original estimate";
   }
 
-  const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
-Write a brief reassurance email to a customer. Their order is in production and on track — this is a proactive status update sent 15 days after their initial backorder notification.
+  const prompt = isIcelea
+    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification about a made-to-order item.
 
 Purpose of this email:
-- Confirm the order is still in production and the delivery timeline has not changed
-- Give the customer the remaining estimated time before delivery
+- Confirm the item is being produced and the delivery timeline has not changed
+- Remind briefly that this item is produced after order to guarantee choice and quality (one short sentence, stated as a fact)
 - NOT announce any delay or problem — everything is on schedule
 
 Tone guidelines:
 - Professional and factual — this is an update, not an apology
-- Confident: the order is progressing as planned
+- Confident: the production is progressing as planned
 - No emotional language, no "magic", no "special", no "worth the wait"
 - Do NOT use words like "magie", "spécial", "ça vaut l'attente"
 
 Rules:
 - Write entirely in ${language}
 - 3 sentences maximum
-- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
 - Do NOT include a sign-off or signature
-- Use "livrer" / "deliver" — not "proposer" / "offer"
 - Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
 
 Customer info:
-- First name: ${order.customer.firstName} (used for personalization in subject only if relevant — NOT in body)
+- First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
+- Order number: ${order.name}
+- Product: ${product.productTitle}
+- Current status: ${remainingText}`
+
+    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification about a raw materials stock shortage.
+
+Purpose of this email:
+- Confirm the situation is being handled and the delivery timeline has not changed
+- Give the customer the remaining estimated time before delivery
+- NOT announce any new delay or problem — everything is on track
+
+Tone guidelines:
+- Professional and factual — this is an update, not an apology
+- Honest and straightforward
+- No emotional language, no "magic", no "special", no "worth the wait"
+
+Rules:
+- Write entirely in ${language}
+- 2-3 sentences maximum
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- Do NOT include a sign-off or signature
+- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
+
+Customer info:
+- First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
 - Order number: ${order.name}
 - Product: ${product.productTitle}
 - Current status: ${remainingText}`;

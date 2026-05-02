@@ -133,6 +133,7 @@ export type BackorderAnalysis = {
   leadTimeMin: number | null;
   leadTimeMax: number | null;
   tagOnly: boolean; // true when no ingredients found — tag Shopify but no email
+  supplierName?: string | null; // used to select email template (Icelea vs others)
   emailDraft: BackorderEmailDraft | null;
   followUpEmailDraft: BackorderEmailDraft | null; // generated when lead time > 12 days
 };
