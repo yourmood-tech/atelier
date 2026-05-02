@@ -108,13 +108,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Tag all linked Shopify orders with PO number and estimated delivery date
+    // Tags are added sequentially per order to avoid read-modify-write race condition
     if (shopifyOrderIds?.length) {
       const deliveryFormatted = formatDeliveryDate(po.deliveryDate);
       await Promise.allSettled(
-        shopifyOrderIds.flatMap((orderId) => [
-          addOrderTag(orderId, `Icelea-PO:${po.number}`),
-          addOrderTag(orderId, `Icelea-livraison:${deliveryFormatted}`),
-        ])
+        shopifyOrderIds.map(async (orderId) => {
+          await addOrderTag(orderId, `Icelea-PO:${po.number}`);
+          await addOrderTag(orderId, `Icelea-livraison:${deliveryFormatted}`);
+        })
       );
     }
 
@@ -181,10 +182,12 @@ export async function POST(req: NextRequest) {
             followUpEmailDraft: null,
           };
 
+          console.log(`[icelea-po/submit] generating email for ${pairKey} locale=${order.customer.locale} supplier=${supplierName}`);
           const [email, followUp] = await Promise.all([
             generateBackorderEmail(analysis),
             needsFollowUp ? generateFollowUpEmail(analysis) : Promise.resolve(null),
           ]);
+          console.log(`[icelea-po/submit] email generated for ${pairKey}: subject="${email.subject}"`);
 
           await sendViaKlaviyo({
             email: order.customer.email,
