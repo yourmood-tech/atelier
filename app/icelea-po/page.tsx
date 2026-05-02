@@ -58,6 +58,7 @@ export default function IceleaPOPage() {
   const [submitting, setSubmitting] = useState(false);
   const [closedPONumber, setClosedPONumber] = useState<string | null>(null);
   const [closedError, setClosedError] = useState<string | null>(null);
+  const [expectedArrival, setExpectedArrival] = useState<string>("");
 
   // Multi-order linking
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
@@ -361,6 +362,7 @@ export default function IceleaPOPage() {
           items: poItems,
           shopifyOrderIds: linkedOrders.map((o) => o.id),
           scannedPairs,
+          expectedArrival: expectedArrival || null,
         }),
       });
       const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
@@ -651,7 +653,24 @@ export default function IceleaPOPage() {
           </select>
         )}
       </div>
-      <div style={{ color: "#888", fontSize: 12, marginTop: 24, lineHeight: 1.5 }}>
+      <div style={{ marginTop: 24 }}>
+        <label style={s.label}>Date d&apos;arrivée estimée (optionnel)</label>
+        <input
+          type="date"
+          style={{ ...s.select, width: "auto", minWidth: 160 }}
+          value={expectedArrival}
+          onChange={(e) => setExpectedArrival(e.target.value)}
+        />
+        {expectedArrival && (
+          <button
+            style={{ marginLeft: 8, fontSize: 12, color: "#888", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}
+            onClick={() => setExpectedArrival("")}
+          >
+            Effacer
+          </button>
+        )}
+      </div>
+      <div style={{ color: "#888", fontSize: 12, marginTop: 16, lineHeight: 1.5 }}>
         Flux : scanner la commande client → scanner les articles → Tab pour la commande suivante → Clore le PO
       </div>
       <button

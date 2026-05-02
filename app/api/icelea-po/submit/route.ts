@@ -28,9 +28,10 @@ export async function POST(req: NextRequest) {
       items: SubmitItem[];
       shopifyOrderIds?: number[];
       scannedPairs?: ScannedPair[];
+      expectedArrival?: string | null;
     };
 
-    const { supplierId, supplierName, items, shopifyOrderIds, scannedPairs } = body;
+    const { supplierId, supplierName, items, shopifyOrderIds, scannedPairs, expectedArrival } = body;
 
     if (!supplierId || !items?.length) {
       return NextResponse.json({ error: "supplierId et items requis" }, { status: 400 });
@@ -38,7 +39,8 @@ export async function POST(req: NextRequest) {
 
     const po = await createKatanaPOWithRows(
       supplierId,
-      items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit }))
+      items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit })),
+      expectedArrival
     );
 
     const apiKey = process.env.RESEND_API_KEY;
