@@ -122,6 +122,8 @@ export async function generateBackorderEmail(
   const { order, product, estimatedDelivery, leadTimeMin, leadTimeMax, supplierName } = analysis;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
+  // Strip double-quotes from product title — Claude recopies them unescaped into JSON strings
+  const safeProductTitle = product.productTitle.replace(/"/g, "'");
   const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
 
   const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
@@ -170,7 +172,7 @@ Rules:
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
 - Order number: ${order.name}
-- Product: ${product.productTitle}
+- Product: ${safeProductTitle}
 - Delivery situation: ${etaText}`
 
     : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
@@ -196,7 +198,7 @@ Rules:
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
 - Order number: ${order.name}
-- Product: ${product.productTitle}
+- Product: ${safeProductTitle}
 - Delivery situation: ${etaText}`;
 
   const result = await callClaude(prompt);
@@ -215,11 +217,13 @@ async function callClaude(prompt: string): Promise<{ subject: string; body: stri
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Claude did not return valid JSON");
 
-  // Escape literal newlines inside JSON string values — Claude sometimes outputs raw \n in strings
-  const fixed = jsonMatch[0].replace(/("(?:[^"\\]|\\.)*")/g, (match) =>
-    match.replace(/\n/g, "\\n").replace(/\r/g, "")
-  );
-  return JSON.parse(fixed) as { subject: string; body: string };
+  // Try direct parse first; fall back to replacing literal newlines with spaces
+  // (Claude occasionally outputs unescaped control characters inside JSON string values)
+  try {
+    return JSON.parse(jsonMatch[0]) as { subject: string; body: string };
+  } catch {
+    return JSON.parse(jsonMatch[0].replace(/\r?\n/g, " ")) as { subject: string; body: string };
+  }
 }
 
 export async function generateFollowUpEmail(
@@ -229,6 +233,7 @@ export async function generateFollowUpEmail(
   const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
   const locale = order.customer.locale;
   const language = LOCALE_LABELS[locale] ?? "French";
+  const safeProductTitle = product.productTitle.replace(/"/g, "'");
 
   const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
     : locale === "en" ? `Dear ${order.customer.firstName},`
@@ -291,7 +296,7 @@ Rules:
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
 - Order number: ${order.name}
-- Product: ${product.productTitle}
+- Product: ${safeProductTitle}
 - Current status: ${remainingText}`
 
     : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
@@ -317,7 +322,7 @@ Rules:
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
 - Order number: ${order.name}
-- Product: ${product.productTitle}
+- Product: ${safeProductTitle}
 - Current status: ${remainingText}`;
 
   const result = await callClaude(prompt);
