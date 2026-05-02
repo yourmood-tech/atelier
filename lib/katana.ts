@@ -546,11 +546,12 @@ export async function createKatanaPOWithRows(
 
   const poId = result.id as number;
 
-  // Katana ignores expected_arrival_date on POST — update it with a PATCH
+  // Katana ignores expected_arrival_date on POST — update it with a PATCH.
+  // Field name is arrivalDate, format is ISO 8601 datetime.
   if (expectedArrival) {
     await katanaFetch(`/v1/purchase_orders/${poId}`, {
       method: "PATCH",
-      body: JSON.stringify({ expected_arrival_date: expectedArrival }),
+      body: JSON.stringify({ arrivalDate: `${expectedArrival}T00:00:00.000Z` }),
     });
   }
 
