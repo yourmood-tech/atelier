@@ -165,7 +165,7 @@ Rules:
 - Be concise: 3-4 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
 - Do NOT include a sign-off or signature
-- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
@@ -191,7 +191,7 @@ Rules:
 - Be concise: 2-3 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
 - Do NOT include a sign-off or signature
-- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
@@ -214,7 +214,12 @@ async function callClaude(prompt: string): Promise<{ subject: string; body: stri
   const text = response.content[0].type === "text" ? response.content[0].text : "";
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error("Claude did not return valid JSON");
-  return JSON.parse(jsonMatch[0]) as { subject: string; body: string };
+
+  // Escape literal newlines inside JSON string values — Claude sometimes outputs raw \n in strings
+  const fixed = jsonMatch[0].replace(/("(?:[^"\\]|\\.)*")/g, (match) =>
+    match.replace(/\n/g, "\\n").replace(/\r/g, "")
+  );
+  return JSON.parse(fixed) as { subject: string; body: string };
 }
 
 export async function generateFollowUpEmail(
@@ -281,7 +286,7 @@ Rules:
 - 2 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
 - Do NOT include a sign-off or signature
-- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
@@ -307,7 +312,7 @@ Rules:
 - 2-3 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
 - Do NOT include a sign-off or signature
-- Return JSON: { "subject": "...", "body": "..." } where body starts with the first sentence
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
 Customer info:
 - First name: ${order.customer.firstName} (for subject personalization only — NOT in body)
