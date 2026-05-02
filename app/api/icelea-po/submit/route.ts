@@ -119,6 +119,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Send OOS emails to customers for each scanned order+product pair
+    const emailDiagnostics: { pair: string; status: string; error?: string }[] = [];
+
+    console.log(`[icelea-po/submit] scannedPairs: ${scannedPairs?.length ?? 0}`, JSON.stringify(scannedPairs ?? []));
+
     if (scannedPairs?.length) {
       const uniqueOrderIds = [...new Set(scannedPairs.map((p) => p.orderId))];
 
@@ -127,7 +131,11 @@ export async function POST(req: NextRequest) {
       );
       const orderMap = new Map<number, Awaited<ReturnType<typeof getOrderById>>>();
       orderResults.forEach((result, i) => {
-        if (result.status === "fulfilled") orderMap.set(uniqueOrderIds[i], result.value);
+        if (result.status === "fulfilled") {
+          orderMap.set(uniqueOrderIds[i], result.value);
+        } else {
+          console.error(`[icelea-po/submit] getOrderById(${uniqueOrderIds[i]}) failed:`, result.reason);
+        }
       });
 
       // Override locales from Klaviyo for accuracy
@@ -142,10 +150,14 @@ export async function POST(req: NextRequest) {
         ? Math.ceil((new Date(po.deliveryDate).getTime() - Date.now()) / 86_400_000) > 12
         : false;
 
-      await Promise.allSettled(
+      const emailResults = await Promise.allSettled(
         scannedPairs.map(async (pair) => {
+          const pairKey = `order:${pair.orderId} product:${pair.productId}`;
           const order = orderMap.get(pair.orderId);
-          if (!order) return;
+          if (!order) {
+            emailDiagnostics.push({ pair: pairKey, status: "skipped", error: "order not found in orderMap" });
+            return;
+          }
 
           const product: ShopifyVariantInfo = {
             variantId: 0,
@@ -190,11 +202,31 @@ export async function POST(req: NextRequest) {
             followupBody: followUp?.body ?? null,
             followupSignOff: followUp?.sign_off ?? null,
           });
+
+          emailDiagnostics.push({ pair: pairKey, status: "sent" });
         })
       );
+
+      emailResults.forEach((result, i) => {
+        if (result.status === "rejected") {
+          const pairKey = `order:${scannedPairs[i].orderId} product:${scannedPairs[i].productId}`;
+          const errMsg = result.reason instanceof Error ? result.reason.message : String(result.reason);
+          console.error(`[icelea-po/submit] email failed for ${pairKey}:`, errMsg);
+          emailDiagnostics.push({ pair: pairKey, status: "error", error: errMsg });
+        }
+      });
     }
 
-    return NextResponse.json({ ok: true, poId: po.id, poNumber: po.number, deliveryDate: po.deliveryDate });
+    console.log(`[icelea-po/submit] emailDiagnostics:`, JSON.stringify(emailDiagnostics));
+
+    return NextResponse.json({
+      ok: true,
+      poId: po.id,
+      poNumber: po.number,
+      deliveryDate: po.deliveryDate,
+      emailsSent: emailDiagnostics.filter(d => d.status === "sent").length,
+      emailDiagnostics,
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur" },
