@@ -544,11 +544,21 @@ export async function createKatanaPOWithRows(
     body: JSON.stringify(payload),
   })) as Record<string, unknown>;
 
+  const poId = result.id as number;
+
+  // Katana ignores expected_arrival_date on POST — update it with a PATCH
+  if (expectedArrival) {
+    await katanaFetch(`/v1/purchase_orders/${poId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ expected_arrival_date: expectedArrival }),
+    });
+  }
+
   const katanaDate = result.expected_arrival_date as string | null | undefined;
   return {
-    id: result.id as number,
-    number: (result.order_no ?? String(result.id)) as string,
-    deliveryDate: katanaDate ?? null,
+    id: poId,
+    number: (result.order_no ?? String(poId)) as string,
+    deliveryDate: expectedArrival ?? katanaDate ?? null,
   };
 }
 
