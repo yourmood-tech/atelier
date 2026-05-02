@@ -551,7 +551,7 @@ export async function createKatanaPOWithRows(
   if (expectedArrival) {
     await katanaFetch(`/v1/purchase_orders/${poId}`, {
       method: "PATCH",
-      body: JSON.stringify({ arrivalDate: `${expectedArrival}T00:00:00.000Z` }),
+      body: JSON.stringify({ expected_arrival_date: `${expectedArrival}T00:00:00.000Z` }),
     });
   }
 
