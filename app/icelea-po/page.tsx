@@ -441,9 +441,14 @@ export default function IceleaPOPage() {
     setItems((prev) =>
       prev.map((i) => {
         if (i.localId !== localId) return i;
-        // Skip if already present
         if (i.icelea.some((x) => x.variantId === ing.variantId)) return i;
-        return { ...i, icelea: [...i.icelea, ing] };
+        return {
+          ...i,
+          icelea: [...i.icelea, ing],
+          // Recover error items — they become valid once they have at least one ingredient
+          status: i.status === "error" ? "ok" : i.status,
+          error: i.status === "error" ? undefined : i.error,
+        };
       })
     );
     closeIngSearch();
@@ -645,20 +650,23 @@ export default function IceleaPOPage() {
                           </button>
                         );
                       })}
-                      {/* Add ingredient button */}
-                      {ingSearch?.localId !== item.localId && (
-                        <button
-                          onClick={() => openIngSearch(item.localId)}
-                          style={{ padding: "4px 10px", border: "1px dashed #bbb", borderRadius: 20, background: "none", color: "#888", fontSize: 12, cursor: "pointer" }}
-                        >
-                          + ingrédient
-                        </button>
-                      )}
                     </div>
+                  </>
+                )}
 
-                    {/* Inline ingredient search panel */}
+                {/* + ingrédient button + search panel — available for ok and error states */}
+                {(item.status === "ok" || item.status === "error") && (
+                  <div style={{ marginTop: item.status === "ok" ? 6 : 8 }}>
+                    {ingSearch?.localId !== item.localId && (
+                      <button
+                        onClick={() => openIngSearch(item.localId)}
+                        style={{ padding: "4px 10px", border: "1px dashed #bbb", borderRadius: 20, background: "none", color: "#888", fontSize: 12, cursor: "pointer" }}
+                      >
+                        + ingrédient
+                      </button>
+                    )}
                     {ingSearch?.localId === item.localId && (
-                      <div style={{ marginTop: 8, background: "#f9f9f9", border: "1px solid #e0e0e0", borderRadius: 8, padding: "10px 12px" }}>
+                      <div style={{ background: "#f9f9f9", border: "1px solid #e0e0e0", borderRadius: 8, padding: "10px 12px" }}>
                         <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
                           <input
                             autoFocus
@@ -690,7 +698,7 @@ export default function IceleaPOPage() {
                         ))}
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
 
               </div>
