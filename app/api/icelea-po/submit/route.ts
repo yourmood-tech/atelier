@@ -2,6 +2,7 @@ import { NextRequest, NextResponse, after } from "next/server";
 import { createKatanaPOWithRows } from "@/lib/katana";
 import { addOrderTag, getOrderById } from "@/lib/shopify";
 import { getKlaviyoProfileLocale, generateBackorderEmailMulti, generateFollowUpEmailMulti, sendViaKlaviyo } from "@/lib/email";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // Concurrency limiter — runs tasks with at most `limit` in parallel
 async function pLimit<T>(
@@ -147,6 +148,20 @@ export async function POST(req: NextRequest) {
     const supplierNameSnapshot = supplierName;
 
     console.log(`[icelea-po/submit] scannedPairs: ${pairsSnapshot.length}`, JSON.stringify(pairsSnapshot));
+
+    // Persist pairs to Supabase so they can be resent later without rescanning
+    if (pairsSnapshot.length) {
+      const { error: insertError } = await supabaseAdmin.from("icelea_po_pairs").insert(
+        pairsSnapshot.map((p) => ({
+          po_number: po.number,
+          po_id: po.id,
+          order_id: p.orderId,
+          product_id: p.productId,
+          product_name: p.productName,
+        }))
+      );
+      if (insertError) console.error("[icelea-po/submit] Supabase insert failed:", insertError.message);
+    }
 
     if (pairsSnapshot.length) {
       after(async () => {

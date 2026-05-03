@@ -57,7 +57,10 @@ export default function IceleaPOPage() {
   const [lastStatus, setLastStatus] = useState("Scannez une commande client");
   const [submitting, setSubmitting] = useState(false);
   const [closedPONumber, setClosedPONumber] = useState<string | null>(null);
+  const [closedDeliveryDate, setClosedDeliveryDate] = useState<string | null>(null);
   const [closedError, setClosedError] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState<number | null>(null);
   const [expectedArrival, setExpectedArrival] = useState<string>("");
 
   // Manual ingredient lookup by SKU
@@ -370,9 +373,11 @@ export default function IceleaPOPage() {
           expectedArrival: expectedArrival || null,
         }),
       });
-      const data = await res.json() as { ok?: boolean; poNumber?: string; error?: string };
+      const data = await res.json() as { ok?: boolean; poNumber?: string; deliveryDate?: string | null; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur création PO");
       setClosedPONumber(data.poNumber ?? "—");
+      setClosedDeliveryDate(data.deliveryDate ?? null);
+      setResendDone(null);
       setClosedLinkedOrders(linkedOrders);
       setPhase("closed");
     } catch (err) {
@@ -487,7 +492,43 @@ export default function IceleaPOPage() {
             </div>
           )}
           <p style={{ color: "#888", fontSize: 13, marginTop: 12 }}>Email envoyé à philippe@yourmood.net</p>
-          <button style={{ ...s.btn, marginTop: 32 }} onClick={resetAll}>
+
+          {resendDone === null ? (
+            <button
+              style={{ ...s.btn, marginTop: 20, background: "#555" }}
+              disabled={resending}
+              onClick={async () => {
+                if (!closedPONumber) return;
+                setResending(true);
+                try {
+                  const res = await fetch("/api/icelea-po/resend", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      poNumber: closedPONumber,
+                      supplierName: selectedSupplier?.name ?? "",
+                      deliveryDate: closedDeliveryDate,
+                    }),
+                  });
+                  const data = await res.json() as { ok?: boolean; queued?: number; error?: string };
+                  if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur");
+                  setResendDone(data.queued ?? 0);
+                } catch (err) {
+                  alert(err instanceof Error ? err.message : "Erreur renvoi");
+                } finally {
+                  setResending(false);
+                }
+              }}
+            >
+              {resending ? "Envoi en cours…" : "Renvoyer les emails clients"}
+            </button>
+          ) : (
+            <p style={{ color: "#2e7d32", fontSize: 13, marginTop: 16 }}>
+              ✓ {resendDone} paire(s) en cours d'envoi
+            </p>
+          )}
+
+          <button style={{ ...s.btn, marginTop: 16 }} onClick={resetAll}>
             Nouveau PO
           </button>
         </div>
