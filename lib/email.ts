@@ -329,6 +329,201 @@ Customer info:
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
+// ── Multi-product backorder emails (one email per customer across all orders) ─
+
+type MultiProduct = { productTitle: string; orderId: string };
+
+function buildGreeting(firstName: string, locale: string): string {
+  return locale === "de" ? `Liebe ${firstName},`
+    : locale === "en" ? `Dear ${firstName},`
+    : locale === "it" ? `Cara ${firstName},`
+    : locale === "es" ? `Estimada ${firstName},`
+    : `Chère ${firstName},`;
+}
+
+function buildSignOff(locale: string): string {
+  return locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
+    : locale === "it" ? "Il team di produzione Mood"
+    : locale === "es" ? "El equipo de producción Mood"
+    : "L'équipe de production Mood";
+}
+
+export async function generateBackorderEmailMulti(params: {
+  firstName: string;
+  locale: string;
+  products: MultiProduct[];
+  estimatedDelivery: string | null;
+  supplierName: string | null;
+}): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
+  const { firstName, locale, products, estimatedDelivery, supplierName } = params;
+  const language = LOCALE_LABELS[locale] ?? "French";
+  const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
+
+  const etaText = estimatedDelivery
+    ? `approximate delivery window: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
+    : "no confirmed date yet — we will inform you as soon as possible";
+
+  const safeProducts = products.map((p) => ({
+    ...p,
+    productTitle: p.productTitle.replace(/"/g, "'"),
+  }));
+
+  const productLines = safeProducts.length === 1
+    ? `- ${safeProducts[0].productTitle} (order ${safeProducts[0].orderId})`
+    : safeProducts.map((p) => `- ${p.productTitle} (order ${p.orderId})`).join("\n");
+
+  const multiNote = safeProducts.length > 1
+    ? "IMPORTANT: the customer has MULTIPLE affected items across one or more orders — mention all of them briefly in the body."
+    : "";
+
+  const prompt = isIcelea
+    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write the body of a clear, professional email informing a customer that one or more items in their order(s) are produced in small quantities, mostly made-to-order.
+${multiNote}
+
+Key message to convey (state as facts, not marketing):
+- This type of item is produced in small quantities, for the most part after the order is placed
+- This approach allows Mood Collection to offer the widest possible choice of models and sizes
+- It guarantees the best quality and avoids overproduction
+- Include the estimated delivery date as an estimate
+
+Tone guidelines:
+- Professional and factual — not apologetic, not effusive
+- State the production approach as a deliberate, positive choice — not as an excuse
+- NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente"
+- When a delivery date is given, ALWAYS frame it as an estimate — never as confirmed or guaranteed
+
+Rules:
+- Write entirely in ${language}
+- Be concise: 3-5 sentences maximum
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- Do NOT include a sign-off or signature
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
+
+Customer info:
+- First name: ${firstName} (for subject personalization only — NOT in body)
+- Affected item(s):
+${productLines}
+- Delivery situation: ${etaText}`
+
+    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write the body of a clear, professional email informing a customer that one or more items in their order(s) are currently affected by a raw materials stock shortage at the supplier.
+${multiNote}
+
+Key message to convey:
+- There is unfortunately a current raw materials stock shortage affecting this item / these items
+- Include the estimated delivery date as an estimate
+
+Tone guidelines:
+- Professional and direct — honest about the situation, not overly apologetic
+- No emotional language, no "cheesy" reassurances
+- NEVER use words like "magic", "magie", "special", "spécial", "worth the wait", "ça vaut l'attente"
+- When a delivery date is given, ALWAYS frame it as an estimate — never as confirmed or guaranteed
+
+Rules:
+- Write entirely in ${language}
+- Be concise: 2-4 sentences maximum
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- Do NOT include a sign-off or signature
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
+
+Customer info:
+- First name: ${firstName} (for subject personalization only — NOT in body)
+- Affected item(s):
+${productLines}
+- Delivery situation: ${etaText}`;
+
+  const result = await callClaude(prompt);
+  return { subject: result.subject, greeting: buildGreeting(firstName, locale), body: result.body, sign_off: buildSignOff(locale) };
+}
+
+export async function generateFollowUpEmailMulti(params: {
+  firstName: string;
+  locale: string;
+  products: MultiProduct[];
+  estimatedDelivery: string | null;
+  supplierName: string | null;
+}): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
+  const { firstName, locale, products, estimatedDelivery, supplierName } = params;
+  const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
+  const language = LOCALE_LABELS[locale] ?? "French";
+
+  const FOLLOWUP_DELAY_DAYS = 15;
+  let remainingText: string;
+  if (estimatedDelivery) {
+    const daysFromNow = Math.ceil((new Date(estimatedDelivery).getTime() - Date.now()) / 86_400_000);
+    const daysRemaining = daysFromNow - FOLLOWUP_DELAY_DAYS;
+    const deliveryDate = new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    remainingText = daysRemaining > 0
+      ? `delivery still estimated around ${deliveryDate} — approximately ${daysRemaining} days remaining from the date this email is sent — phrase as estimate, not a guarantee`
+      : `delivery still estimated around ${deliveryDate} — phrase as estimate, not a guarantee`;
+  } else {
+    remainingText = "delivery timing confirmed — no change to original estimate";
+  }
+
+  const safeProducts = products.map((p) => ({ ...p, productTitle: p.productTitle.replace(/"/g, "'") }));
+  const productLines = safeProducts.length === 1
+    ? `- ${safeProducts[0].productTitle} (order ${safeProducts[0].orderId})`
+    : safeProducts.map((p) => `- ${p.productTitle} (order ${p.orderId})`).join("\n");
+
+  const prompt = isIcelea
+    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification.
+
+Purpose of this email:
+- Confirm that production is still ongoing and the delivery timeline has not changed
+- Restate the estimated delivery date
+- Nothing else — do NOT mention again that the item is made-to-order or any production philosophy
+
+Tone guidelines:
+- Professional and factual — one or two sentences, no padding
+- No emotional language, no "magic", no "special", no "worth the wait"
+- When a delivery date is given, ALWAYS frame it as an estimate — never as confirmed or guaranteed
+
+Rules:
+- Write entirely in ${language}
+- 2 sentences maximum
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- Do NOT include a sign-off or signature
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
+
+Customer info:
+- First name: ${firstName} (for subject personalization only — NOT in body)
+- Affected item(s):
+${productLines}
+- Current status: ${remainingText}`
+
+    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification about a raw materials stock shortage.
+
+Purpose of this email:
+- Confirm the situation is being handled and the delivery timeline has not changed
+- Give the customer the remaining estimated time before delivery
+- NOT announce any new delay or problem — everything is on track
+
+Tone guidelines:
+- Professional and factual — this is an update, not an apology
+- Honest and straightforward
+- No emotional language, no "magic", no "special", no "worth the wait"
+
+Rules:
+- Write entirely in ${language}
+- 2-3 sentences maximum
+- CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- Do NOT include a sign-off or signature
+- Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
+
+Customer info:
+- First name: ${firstName} (for subject personalization only — NOT in body)
+- Affected item(s):
+${productLines}
+- Current status: ${remainingText}`;
+
+  const result = await callClaude(prompt);
+  return { subject: result.subject, greeting: buildGreeting(firstName, locale), body: result.body, sign_off: buildSignOff(locale) };
+}
+
 // ── Klaviyo — production step events ──────────────────────────────────────────
 
 export async function sendProductionEventToKlaviyo(params: {

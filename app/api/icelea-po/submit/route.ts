@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { createKatanaPOWithRows } from "@/lib/katana";
 import { addOrderTag, getOrderById } from "@/lib/shopify";
-import { getKlaviyoProfileLocale, generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
-import type { BackorderAnalysis, ShopifyVariantInfo } from "@/lib/types";
+import { getKlaviyoProfileLocale, generateBackorderEmailMulti, generateFollowUpEmailMulti, sendViaKlaviyo } from "@/lib/email";
 
 // Concurrency limiter — runs tasks with at most `limit` in parallel
 async function pLimit<T>(
@@ -181,53 +180,72 @@ export async function POST(req: NextRequest) {
           ? Math.ceil((new Date(poSnapshot.deliveryDate).getTime() - Date.now()) / 86_400_000) > 12
           : false;
 
-        // Process emails 3 at a time (each involves Claude + Klaviyo calls)
-        await pLimit(
-          pairsSnapshot.map((pair) => async () => {
-            const pairKey = `order:${pair.orderId} product:${pair.productId}`;
-            const order = orderMap.get(pair.orderId);
-            if (!order) {
-              console.warn(`[icelea-po/submit] skipped ${pairKey} — order not in orderMap`);
-              return;
-            }
+        // Group by customer email — one email per customer regardless of how many orders/products
+        type CustomerGroup = {
+          email: string;
+          firstName: string;
+          locale: string;
+          products: Array<{ productTitle: string; orderId: string }>;
+        };
+        const customerGroups = new Map<string, CustomerGroup>();
 
-            const product: ShopifyVariantInfo = {
-              variantId: 0,
-              productId: pair.productId,
-              productTitle: pair.productName,
-              variantTitle: "",
-              sku: "",
-            };
-
-            const analysis: BackorderAnalysis = {
-              order,
-              product,
-              materials: [],
-              purchaseOrder: null,
-              estimatedDelivery: poSnapshot.deliveryDate ?? null,
-              leadTimeMin: null,
-              leadTimeMax: null,
-              tagOnly: false,
-              supplierName: supplierNameSnapshot,
-              emailDraft: null,
-              followUpEmailDraft: null,
-            };
-
-            console.log(`[icelea-po/submit] generating email for ${pairKey} locale=${order.customer.locale}`);
-            const [email, followUp] = await Promise.all([
-              generateBackorderEmail(analysis),
-              needsFollowUp ? generateFollowUpEmail(analysis) : Promise.resolve(null),
-            ]);
-
-            await sendViaKlaviyo({
+        for (const pair of pairsSnapshot) {
+          const order = orderMap.get(pair.orderId);
+          if (!order) {
+            console.warn(`[icelea-po/submit] skipped order:${pair.orderId} — not in orderMap`);
+            continue;
+          }
+          const key = order.customer.email.toLowerCase();
+          if (!customerGroups.has(key)) {
+            customerGroups.set(key, {
               email: order.customer.email,
               firstName: order.customer.firstName,
+              locale: order.customer.locale,
+              products: [],
+            });
+          }
+          customerGroups.get(key)!.products.push({
+            productTitle: pair.productName,
+            orderId: order.name,
+          });
+        }
+
+        const customerList = Array.from(customerGroups.values());
+        console.log(`[icelea-po/submit] ${customerList.length} customer(s) to notify (grouped from ${pairsSnapshot.length} pairs)`);
+
+        // Process 3 customers at a time (each involves Claude + Klaviyo calls)
+        await pLimit(
+          customerList.map((cust) => async () => {
+            console.log(`[icelea-po/submit] generating email for ${cust.email} (${cust.products.length} product(s))`);
+            const [email, followUp] = await Promise.all([
+              generateBackorderEmailMulti({
+                firstName: cust.firstName,
+                locale: cust.locale,
+                products: cust.products,
+                estimatedDelivery: poSnapshot.deliveryDate ?? null,
+                supplierName: supplierNameSnapshot,
+              }),
+              needsFollowUp ? generateFollowUpEmailMulti({
+                firstName: cust.firstName,
+                locale: cust.locale,
+                products: cust.products,
+                estimatedDelivery: poSnapshot.deliveryDate ?? null,
+                supplierName: supplierNameSnapshot,
+              }) : Promise.resolve(null),
+            ]);
+
+            const allProductTitles = cust.products.map((p) => p.productTitle).join(", ");
+            const allOrderIds = [...new Set(cust.products.map((p) => p.orderId))].join(", ");
+
+            await sendViaKlaviyo({
+              email: cust.email,
+              firstName: cust.firstName,
               subject: email.subject,
               greeting: email.greeting,
               body: email.body,
               sign_off: email.sign_off,
-              orderId: order.name,
-              productTitle: pair.productName,
+              orderId: allOrderIds,
+              productTitle: allProductTitles,
               estimatedDelivery: poSnapshot.deliveryDate ?? null,
               supplierName: supplierNameSnapshot,
               followupSubject: followUp?.subject ?? null,
@@ -235,7 +253,7 @@ export async function POST(req: NextRequest) {
               followupBody: followUp?.body ?? null,
               followupSignOff: followUp?.sign_off ?? null,
             });
-            console.log(`[icelea-po/submit] sent email for ${pairKey}`);
+            console.log(`[icelea-po/submit] sent email for ${cust.email}`);
           }),
           3
         );
