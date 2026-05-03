@@ -60,10 +60,13 @@ export default function IceleaPOPage() {
   const [closedError, setClosedError] = useState<string | null>(null);
   const [expectedArrival, setExpectedArrival] = useState<string>("");
 
-  // Manual ingredient search
-  type IngSearchState = { localId: string; query: string; results: IceleaIngredient[]; loading: boolean };
+  // Icelea ingredient catalog — loaded once when scanning starts
+  const [iceleaCatalog, setIceleaCatalog] = useState<IceleaIngredient[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+
+  // Manual ingredient search (client-side filter on catalog)
+  type IngSearchState = { localId: string; query: string };
   const [ingSearch, setIngSearch] = useState<IngSearchState | null>(null);
-  const ingSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Multi-order linking
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
@@ -310,6 +313,18 @@ export default function IceleaPOPage() {
     setLastStatus("Scannez une commande client");
     setBuffer("");
     setPhase("scanning");
+
+    // Load full Icelea ingredient catalog once for client-side search
+    if (iceleaCatalog.length === 0) {
+      setCatalogLoading(true);
+      fetch("/api/icelea-po/search-ingredient")
+        .then((r) => r.json())
+        .then((d: { ok?: boolean; results?: IceleaIngredient[] }) => {
+          setIceleaCatalog(d.results ?? []);
+        })
+        .catch(() => {})
+        .finally(() => setCatalogLoading(false));
+    }
   }
 
   function buildPoItems(scannedItems: ScannedItem[]): SubmitItem[] {
@@ -414,27 +429,26 @@ export default function IceleaPOPage() {
   }
 
   function openIngSearch(localId: string) {
-    setIngSearch({ localId, query: "", results: [], loading: false });
+    setIngSearch({ localId, query: "" });
   }
 
   function closeIngSearch() {
-    if (ingSearchTimer.current) clearTimeout(ingSearchTimer.current);
     setIngSearch(null);
   }
 
   function handleIngQuery(query: string) {
-    setIngSearch((prev) => prev ? { ...prev, query, results: [], loading: query.length >= 2 } : null);
-    if (ingSearchTimer.current) clearTimeout(ingSearchTimer.current);
-    if (query.length < 2) return;
-    ingSearchTimer.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/icelea-po/search-ingredient?q=${encodeURIComponent(query)}`);
-        const data = await res.json() as { ok?: boolean; results?: IceleaIngredient[] };
-        setIngSearch((prev) => prev ? { ...prev, loading: false, results: data.results ?? [] } : null);
-      } catch {
-        setIngSearch((prev) => prev ? { ...prev, loading: false } : null);
-      }
-    }, 350);
+    setIngSearch((prev) => prev ? { ...prev, query } : null);
+  }
+
+  // Client-side filter on the loaded catalog
+  function getIngSearchResults(query: string): IceleaIngredient[] {
+    if (query.length < 2) return [];
+    const q = query.toLowerCase();
+    return iceleaCatalog.filter(
+      (ing) =>
+        ing.name.toLowerCase().includes(q) ||
+        (ing.sku?.toLowerCase().includes(q) ?? false)
+    ).slice(0, 20);
   }
 
   function addManualIngredient(localId: string, ing: IceleaIngredient) {
@@ -671,7 +685,8 @@ export default function IceleaPOPage() {
                           <input
                             autoFocus
                             type="text"
-                            placeholder="Rechercher un ingrédient Icelea…"
+                            placeholder={catalogLoading ? "Chargement du catalogue…" : "Rechercher un ingrédient Icelea…"}
+                            disabled={catalogLoading}
                             value={ingSearch.query}
                             onChange={(e) => handleIngQuery(e.target.value)}
                             onKeyDown={(e) => { if (e.key === "Escape") closeIngSearch(); }}
@@ -679,23 +694,25 @@ export default function IceleaPOPage() {
                           />
                           <button onClick={closeIngSearch} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 16, padding: "0 4px" }}>✕</button>
                         </div>
-                        {ingSearch.loading && <div style={{ fontSize: 12, color: "#888" }}>Recherche…</div>}
-                        {!ingSearch.loading && ingSearch.query.length >= 2 && ingSearch.results.length === 0 && (
-                          <div style={{ fontSize: 12, color: "#aaa" }}>Aucun résultat</div>
-                        )}
-                        {ingSearch.results.map((ing) => (
-                          <button
-                            key={ing.variantId}
-                            onClick={() => addManualIngredient(item.localId, ing)}
-                            style={{ display: "block", width: "100%", textAlign: "left", padding: "6px 8px", background: "none", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, marginBottom: 2 }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f0f0")}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-                          >
-                            <span style={{ fontWeight: 600 }}>{ing.name}</span>
-                            {ing.sku && <span style={{ color: "#888", marginLeft: 6 }}>{ing.sku}</span>}
-                            <span style={{ color: "#888", marginLeft: 6 }}>CHF {ing.purchasePrice.toFixed(2)}</span>
-                          </button>
-                        ))}
+                        {(() => {
+                          const results = getIngSearchResults(ingSearch.query);
+                          if (ingSearch.query.length >= 2 && results.length === 0) {
+                            return <div style={{ fontSize: 12, color: "#aaa" }}>Aucun résultat</div>;
+                          }
+                          return results.map((ing) => (
+                            <button
+                              key={ing.variantId}
+                              onClick={() => addManualIngredient(item.localId, ing)}
+                              style={{ display: "block", width: "100%", textAlign: "left", padding: "6px 8px", background: "none", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, marginBottom: 2 }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f0f0")}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                            >
+                              <span style={{ fontWeight: 600 }}>{ing.name}</span>
+                              {ing.sku && <span style={{ color: "#888", marginLeft: 6 }}>{ing.sku}</span>}
+                              <span style={{ color: "#888", marginLeft: 6 }}>CHF {ing.purchasePrice.toFixed(2)}</span>
+                            </button>
+                          ));
+                        })()}
                       </div>
                     )}
                   </div>
