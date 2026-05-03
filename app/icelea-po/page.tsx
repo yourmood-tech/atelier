@@ -60,6 +60,11 @@ export default function IceleaPOPage() {
   const [closedError, setClosedError] = useState<string | null>(null);
   const [expectedArrival, setExpectedArrival] = useState<string>("");
 
+  // Manual ingredient search
+  type IngSearchState = { localId: string; query: string; results: IceleaIngredient[]; loading: boolean };
+  const [ingSearch, setIngSearch] = useState<IngSearchState | null>(null);
+  const ingSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Multi-order linking
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderName, setCurrentOrderName] = useState<string | null>(null);
@@ -408,6 +413,42 @@ export default function IceleaPOPage() {
     );
   }
 
+  function openIngSearch(localId: string) {
+    setIngSearch({ localId, query: "", results: [], loading: false });
+  }
+
+  function closeIngSearch() {
+    if (ingSearchTimer.current) clearTimeout(ingSearchTimer.current);
+    setIngSearch(null);
+  }
+
+  function handleIngQuery(query: string) {
+    setIngSearch((prev) => prev ? { ...prev, query, results: [], loading: query.length >= 2 } : null);
+    if (ingSearchTimer.current) clearTimeout(ingSearchTimer.current);
+    if (query.length < 2) return;
+    ingSearchTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/icelea-po/search-ingredient?q=${encodeURIComponent(query)}`);
+        const data = await res.json() as { ok?: boolean; results?: IceleaIngredient[] };
+        setIngSearch((prev) => prev ? { ...prev, loading: false, results: data.results ?? [] } : null);
+      } catch {
+        setIngSearch((prev) => prev ? { ...prev, loading: false } : null);
+      }
+    }, 350);
+  }
+
+  function addManualIngredient(localId: string, ing: IceleaIngredient) {
+    setItems((prev) =>
+      prev.map((i) => {
+        if (i.localId !== localId) return i;
+        // Skip if already present
+        if (i.icelea.some((x) => x.variantId === ing.variantId)) return i;
+        return { ...i, icelea: [...i.icelea, ing] };
+      })
+    );
+    closeIngSearch();
+  }
+
   const poItems = buildPoItems(items);
   const totalQty = poItems.reduce((s, i) => s + i.quantity, 0);
   const totalCost = poItems.reduce((s, i) => s + i.quantity * i.pricePerUnit, 0);
@@ -580,7 +621,7 @@ export default function IceleaPOPage() {
                     <div style={{ fontSize: 12, color: "#888", marginBottom: 6 }}>
                       {item.productName}{item.productSku ? ` · ${item.productSku}` : ""}
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                       {item.icelea.map((ing) => {
                         const excluded = item.excludedVariantIds.includes(ing.variantId);
                         return (
@@ -604,7 +645,51 @@ export default function IceleaPOPage() {
                           </button>
                         );
                       })}
+                      {/* Add ingredient button */}
+                      {ingSearch?.localId !== item.localId && (
+                        <button
+                          onClick={() => openIngSearch(item.localId)}
+                          style={{ padding: "4px 10px", border: "1px dashed #bbb", borderRadius: 20, background: "none", color: "#888", fontSize: 12, cursor: "pointer" }}
+                        >
+                          + ingrédient
+                        </button>
+                      )}
                     </div>
+
+                    {/* Inline ingredient search panel */}
+                    {ingSearch?.localId === item.localId && (
+                      <div style={{ marginTop: 8, background: "#f9f9f9", border: "1px solid #e0e0e0", borderRadius: 8, padding: "10px 12px" }}>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                          <input
+                            autoFocus
+                            type="text"
+                            placeholder="Rechercher un ingrédient Icelea…"
+                            value={ingSearch.query}
+                            onChange={(e) => handleIngQuery(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Escape") closeIngSearch(); }}
+                            style={{ flex: 1, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, outline: "none" }}
+                          />
+                          <button onClick={closeIngSearch} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 16, padding: "0 4px" }}>✕</button>
+                        </div>
+                        {ingSearch.loading && <div style={{ fontSize: 12, color: "#888" }}>Recherche…</div>}
+                        {!ingSearch.loading && ingSearch.query.length >= 2 && ingSearch.results.length === 0 && (
+                          <div style={{ fontSize: 12, color: "#aaa" }}>Aucun résultat</div>
+                        )}
+                        {ingSearch.results.map((ing) => (
+                          <button
+                            key={ing.variantId}
+                            onClick={() => addManualIngredient(item.localId, ing)}
+                            style={{ display: "block", width: "100%", textAlign: "left", padding: "6px 8px", background: "none", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13, marginBottom: 2 }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f0f0")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                          >
+                            <span style={{ fontWeight: 600 }}>{ing.name}</span>
+                            {ing.sku && <span style={{ color: "#888", marginLeft: 6 }}>{ing.sku}</span>}
+                            <span style={{ color: "#888", marginLeft: 6 }}>CHF {ing.purchasePrice.toFixed(2)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
 
