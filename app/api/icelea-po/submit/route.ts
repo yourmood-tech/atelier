@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { createKatanaPOWithRows } from "@/lib/katana";
-import { addOrderTag, getOrderById } from "@/lib/shopify";
+import { setIceleaTags, getOrderById } from "@/lib/shopify";
 import { getKlaviyoProfileLocale, generateBackorderEmailMulti, generateFollowUpEmailMulti, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -135,10 +135,7 @@ export async function POST(req: NextRequest) {
     if (shopifyOrderIds?.length) {
       const deliveryFormatted = formatDeliveryDate(po.deliveryDate);
       await Promise.allSettled(
-        shopifyOrderIds.map(async (orderId) => {
-          await addOrderTag(orderId, `Icelea-PO:${po.number}`);
-          await addOrderTag(orderId, `Icelea-livraison:${deliveryFormatted}`);
-        })
+        shopifyOrderIds.map((orderId) => setIceleaTags(orderId, po.number, deliveryFormatted))
       );
     }
 

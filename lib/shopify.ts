@@ -201,6 +201,18 @@ export async function setOrderCoffretCountTag(orderId: number, skuPart: string, 
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
+// Replace Icelea-PO and Icelea-livraison tags in one read+write (removes previous PO tags if any)
+export async function setIceleaTags(orderId: number, poNumber: string, deliveryFormatted: string): Promise<void> {
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string)
+    .split(",")
+    .map((t: string) => t.trim())
+    .filter(Boolean);
+  const filtered = existing.filter(t => !t.startsWith("Icelea-PO:") && !t.startsWith("Icelea-livraison:"));
+  const newTags = [...filtered, `Icelea-PO:${poNumber}`, `Icelea-livraison:${deliveryFormatted}`].join(", ");
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
+}
+
 // Returns a tag string like "Rupture 17.04.26 10:30"
 export function makeOrderTag(reason: string): string {
   const now = new Date();
