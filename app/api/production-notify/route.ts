@@ -37,11 +37,6 @@ export async function POST(req: NextRequest) {
     // 2. Tag the order in all cases (awaited — fire-and-forget gets killed by Vercel before completing)
     await addOrderTag(order.id, makeOrderTag(tagReason));
 
-    // 3. Override locale from Klaviyo — more reliable than Shopify REST
-    const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
-    if (klaviyoLocale) order.customer.locale = klaviyoLocale;
-
-    // 4. Generate email (with or without product) + send to Klaviyo
     const analysis: ProductionAnalysis = {
       order,
       product: productResult ?? undefined,
@@ -50,25 +45,31 @@ export async function POST(req: NextRequest) {
       emailDraft: null,
     };
 
-    const { subject, greeting, body: emailBody, sign_off } = await generateProductionEmail(analysis);
-    analysis.emailDraft = `Subject: ${subject}\n\n${greeting}\n\n${emailBody}\n\n${sign_off}`;
+    // 3. Klaviyo — only if send_klaviyo is enabled for this step
+    if (step.send_klaviyo) {
+      const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
+      if (klaviyoLocale) order.customer.locale = klaviyoLocale;
 
-    await sendProductionEventToKlaviyo({
-      email: order.customer.email,
-      firstName: order.customer.firstName,
-      subject,
-      greeting,
-      body: emailBody,
-      sign_off,
-      orderId: order.name,
-      productTitle: productResult?.productTitle ?? "",
-      stepName: step.name,
-      direction: body.direction,
-      leadTimeMin: step.lead_time_min,
-      leadTimeMax: step.lead_time_max,
-      leadTimeUnit: step.lead_time_unit,
-      customerLocale: order.customer.locale,
-    });
+      const { subject, greeting, body: emailBody, sign_off } = await generateProductionEmail(analysis);
+      analysis.emailDraft = `Subject: ${subject}\n\n${greeting}\n\n${emailBody}\n\n${sign_off}`;
+
+      await sendProductionEventToKlaviyo({
+        email: order.customer.email,
+        firstName: order.customer.firstName,
+        subject,
+        greeting,
+        body: emailBody,
+        sign_off,
+        orderId: order.name,
+        productTitle: productResult?.productTitle ?? "",
+        stepName: step.name,
+        direction: body.direction,
+        leadTimeMin: step.lead_time_min,
+        leadTimeMax: step.lead_time_max,
+        leadTimeUnit: step.lead_time_unit,
+        customerLocale: order.customer.locale,
+      });
+    }
 
     return NextResponse.json<ProductionNotifyApiResponse>({ ok: true, result: analysis });
   } catch (error) {

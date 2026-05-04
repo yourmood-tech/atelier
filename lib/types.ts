@@ -157,6 +157,7 @@ export type ProductionStep = {
   lead_time_max: number | null;
   lead_time_unit: "hours" | "days";
   sort_order: number;
+  send_klaviyo: boolean;
   updated_at: string | null;
 };
 
