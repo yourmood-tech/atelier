@@ -109,6 +109,7 @@ export async function sendViaKlaviyo(params: {
 const LOCALE_LABELS: Record<string, string> = {
   fr: "French",
   de: "German",
+  en: "English",
   it: "Italian",
   es: "Spanish",
   nl: "Dutch",
@@ -126,11 +127,13 @@ export async function generateBackorderEmail(
   const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
 
   const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
+    : locale === "en" ? `Dear ${order.customer.firstName},`
     : locale === "it" ? `Cara ${order.customer.firstName},`
     : locale === "es" ? `Estimada ${order.customer.firstName},`
     : `Chère ${order.customer.firstName},`;
 
   const sign_off = locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
     : locale === "it" ? "Il team di produzione Mood"
     : locale === "es" ? "El equipo de producción Mood"
     : "L'équipe de production Mood";
@@ -233,11 +236,13 @@ export async function generateFollowUpEmail(
   const safeProductTitle = product.productTitle.replace(/"/g, "'");
 
   const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
+    : locale === "en" ? `Dear ${order.customer.firstName},`
     : locale === "it" ? `Cara ${order.customer.firstName},`
     : locale === "es" ? `Estimada ${order.customer.firstName},`
     : `Chère ${order.customer.firstName},`;
 
   const sign_off = locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
     : locale === "it" ? "Il team di produzione Mood"
     : locale === "es" ? "El equipo de producción Mood"
     : "L'équipe de production Mood";
@@ -330,6 +335,7 @@ type MultiProduct = { productTitle: string; orderId: string };
 
 function buildGreeting(firstName: string, locale: string): string {
   return locale === "de" ? `Liebe ${firstName},`
+    : locale === "en" ? `Dear ${firstName},`
     : locale === "it" ? `Cara ${firstName},`
     : locale === "es" ? `Estimada ${firstName},`
     : `Chère ${firstName},`;
@@ -337,6 +343,7 @@ function buildGreeting(firstName: string, locale: string): string {
 
 function buildSignOff(locale: string): string {
   return locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
     : locale === "it" ? "Il team di produzione Mood"
     : locale === "es" ? "El equipo de producción Mood"
     : "L'équipe de production Mood";
@@ -607,11 +614,13 @@ export async function generateProductionEmail(
     : null;
 
   const greeting = locale === "de" ? `Liebe ${order.customer.firstName},`
+    : locale === "en" ? `Dear ${order.customer.firstName},`
     : locale === "it" ? `Cara ${order.customer.firstName},`
     : locale === "es" ? `Estimada ${order.customer.firstName},`
     : `Chère ${order.customer.firstName},`;
 
   const sign_off = locale === "de" ? "Das Produktionsteam von Mood"
+    : locale === "en" ? "The Mood production team"
     : locale === "it" ? "Il team di produzione Mood"
     : locale === "es" ? "El equipo de producción Mood"
     : "L'équipe de production Mood";

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
 import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
-import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo, getKlaviyoProfileLocale } from "@/lib/email";
+import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
 
@@ -24,11 +24,7 @@ export async function GET(req: NextRequest) {
       lookupShopifyId(productId),
     ]);
 
-    // 2. Override locale from Klaviyo — more reliable than Shopify REST for multilingual customers
-    const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
-    if (klaviyoLocale) order.customer.locale = klaviyoLocale;
-
-    // 3. Extract actual ordered variant SKU from the order's line items
+    // 2. Extract actual ordered variant SKU from the order's line items
     const lineItem = order.lineItems.find((li) => String(li.productId) === productId);
     const variantSku = lineItem?.sku ?? product.sku;
 

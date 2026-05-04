@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
-import { generateProductionEmail, sendProductionEventToKlaviyo, getKlaviyoProfileLocale } from "@/lib/email";
+import { generateProductionEmail, sendProductionEventToKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { ProductionNotifyApiResponse, ProductionAnalysis, ProductionDirection, ProductionStep } from "@/lib/types";
 
@@ -47,8 +47,6 @@ export async function POST(req: NextRequest) {
 
     // 3. Klaviyo — only if send_klaviyo is enabled for this step
     if (step.send_klaviyo) {
-      const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
-      if (klaviyoLocale) order.customer.locale = klaviyoLocale;
 
       const { subject, greeting, body: emailBody, sign_off } = await generateProductionEmail(analysis);
       analysis.emailDraft = `Subject: ${subject}\n\n${greeting}\n\n${emailBody}\n\n${sign_off}`;
