@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const words = q.split(/\s+/).filter((w) => w.length > 0);
   const titleFilter =
     fuzzy && words.length > 1
-      ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" OR ")
+      ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" AND ")
       : `title:*${q.replace(/"/g, "")}*`;
 
   const gql = `{

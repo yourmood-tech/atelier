@@ -50,15 +50,14 @@ const STOP_WORDS = new Set([
 function extractKeywords(name: string): string[] {
   return name
     .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/[^a-z0-9À-ž\s]/g, " ")
     .split(/\s+/)
-    .filter((w) => w.length > 0 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+    .filter((w) => w.length > 1 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
 }
 
 function scoreTitle(title: string, keywords: string[]): number {
   if (!keywords.length) return 0;
-  const t = title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const t = title.toLowerCase();
   return keywords.filter((kw) => t.includes(kw)).length / keywords.length;
 }
 
