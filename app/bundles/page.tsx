@@ -41,6 +41,27 @@ type Phase = "bundle" | "ingredients";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+const STOP_WORDS = new Set([
+  "de","la","le","les","du","des","et","avec","pour","un","une","en","sur","par",
+  "ou","au","aux","dans","d","l","x","pcs","a","à","y","ce","qu","que","qui",
+  "pièce","pièces","piece","pieces",
+]);
+
+function extractKeywords(name: string): string[] {
+  return name
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && !STOP_WORDS.has(w) && !/^\d+$/.test(w));
+}
+
+function scoreTitle(title: string, keywords: string[]): number {
+  if (!keywords.length) return 0;
+  const t = title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return keywords.filter((kw) => t.includes(kw)).length / keywords.length;
+}
+
 function extractNamesFromHtml(html: string): string[] {
   const text = html
     .replace(/<[^>]+>/g, "\n")
@@ -210,11 +231,20 @@ export default function BundlesPage() {
     setSuggestions(initial);
 
     names.forEach((name, i) => {
-      fetch(`/api/bundles/search?q=${encodeURIComponent(name)}`)
+      const keywords = extractKeywords(name);
+      const query = keywords.length ? keywords.join(" ") : name;
+      fetch(`/api/bundles/search?q=${encodeURIComponent(query)}`)
         .then((r) => r.json() as Promise<{ products?: ShopifyProduct[] }>)
         .then(({ products }) => {
+          const list = products ?? [];
+          let best: ShopifyProduct | null = null;
+          if (list.length > 0) {
+            const scored = list.map((p) => ({ p, score: scoreTitle(p.title, keywords.length ? keywords : [name]) }));
+            scored.sort((a, b) => b.score - a.score);
+            best = scored[0].score > 0 ? scored[0].p : list[0];
+          }
           setSuggestions((prev) => prev.map((s, idx) =>
-            idx === i ? { ...s, searching: false, product: products?.[0] ?? null } : s
+            idx === i ? { ...s, searching: false, product: best } : s
           ));
         })
         .catch(() => {

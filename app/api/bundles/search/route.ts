@@ -12,8 +12,14 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ products: [] });
 
+  const words = q.split(/\s+/).filter((w) => w.length > 0);
+  const titleFilter =
+    words.length > 1
+      ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" OR ")
+      : `title:*${q.replace(/"/g, "")}*`;
+
   const gql = `{
-    products(first: 10, query: "title:*${q.replace(/"/g, "")}*") {
+    products(first: 10, query: "${titleFilter}") {
       edges {
         node {
           id title status descriptionHtml
