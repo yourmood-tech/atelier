@@ -233,7 +233,7 @@ export default function BundlesPage() {
     names.forEach((name, i) => {
       const keywords = extractKeywords(name);
       const query = keywords.length ? keywords.join(" ") : name;
-      fetch(`/api/bundles/search?q=${encodeURIComponent(query)}`)
+      fetch(`/api/bundles/search?q=${encodeURIComponent(query)}&fuzzy=1`)
         .then((r) => r.json() as Promise<{ products?: ShopifyProduct[] }>)
         .then(({ products }) => {
           const list = products ?? [];

@@ -12,9 +12,10 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ products: [] });
 
+  const fuzzy = req.nextUrl.searchParams.get("fuzzy") === "1";
   const words = q.split(/\s+/).filter((w) => w.length > 0);
   const titleFilter =
-    words.length > 1
+    fuzzy && words.length > 1
       ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" OR ")
       : `title:*${q.replace(/"/g, "")}*`;
 
