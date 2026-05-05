@@ -15,8 +15,15 @@ type ShopifyProduct = {
   id: number;
   title: string;
   status: string;
+  descriptionHtml?: string;
   options: { name: string; values: string[] }[];
   variants: ShopifyVariant[];
+};
+
+type Suggestion = {
+  name: string;
+  product: ShopifyProduct | null;
+  searching: boolean;
 };
 
 type ComponentEntry = {
@@ -33,6 +40,15 @@ type ComponentEntry = {
 type Phase = "bundle" | "ingredients";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+function extractNamesFromHtml(html: string): string[] {
+  const text = html
+    .replace(/<[^>]+>/g, "\n")
+    .replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+  return [...new Set(
+    text.split("\n").map((l) => l.trim()).filter((l) => l.length > 4 && l.length < 120 && !/^https?:/.test(l))
+  )];
+}
 
 function isTailleOption(name: string): boolean {
   return ["taille", "size", "ring size"].includes(name.toLowerCase());
@@ -138,6 +154,7 @@ export default function BundlesPage() {
   const [ingResults, setIngResults] = useState<ShopifyProduct[]>([]);
   const [ingSearching, setIngSearching] = useState(false);
   const [components, setComponents] = useState<ComponentEntry[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   const [warnings, setWarnings] = useState<string[]>([]);
 
@@ -164,7 +181,29 @@ export default function BundlesPage() {
     setBundleQuery("");
     setComponents([]);
     setWarnings([]);
+    setSuggestions([]);
     setPhase("ingredients");
+
+    const names = product.descriptionHtml ? extractNamesFromHtml(product.descriptionHtml) : [];
+    if (!names.length) return;
+
+    const initial: Suggestion[] = names.map((name) => ({ name, product: null, searching: true }));
+    setSuggestions(initial);
+
+    names.forEach((name, i) => {
+      fetch(`/api/bundles/search?q=${encodeURIComponent(name)}`)
+        .then((r) => r.json() as Promise<{ products?: ShopifyProduct[] }>)
+        .then(({ products }) => {
+          setSuggestions((prev) => prev.map((s, idx) =>
+            idx === i ? { ...s, searching: false, product: products?.[0] ?? null } : s
+          ));
+        })
+        .catch(() => {
+          setSuggestions((prev) => prev.map((s, idx) =>
+            idx === i ? { ...s, searching: false } : s
+          ));
+        });
+    });
   }
 
   function addComponent(product: ShopifyProduct) {
@@ -300,6 +339,35 @@ export default function BundlesPage() {
       {phase === "ingredients" && bundleProduct && (
         <div style={s.section}>
           <div style={s.stepLabel}>2 — Composants</div>
+
+          {/* Suggested components from description */}
+          {suggestions.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 8, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Trouvé dans la description
+              </div>
+              {suggestions.map((sg, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid #f0f0f0" }}>
+                  {sg.searching ? (
+                    <span style={{ fontSize: 13, color: "#aaa", flex: 1 }}>⏳ {sg.name}</span>
+                  ) : sg.product ? (
+                    <>
+                      <span style={{ fontSize: 13, flex: 1 }}>{sg.product.title}</span>
+                      {components.some((c) => c.product.id === sg.product!.id) ? (
+                        <span style={{ fontSize: 11, color: "#27ae60" }}>✓ Ajouté</span>
+                      ) : (
+                        <button style={{ ...s.btn, padding: "4px 12px", fontSize: 12 }} onClick={() => addComponent(sg.product!)}>
+                          Ajouter
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 13, color: "#bbb", flex: 1 }}>✗ {sg.name} — non trouvé</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div style={{ display: "flex", gap: 8 }}>
             <input

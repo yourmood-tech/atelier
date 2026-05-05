@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     products(first: 10, query: "title:*${q.replace(/"/g, "")}*") {
       edges {
         node {
-          id title status
+          id title status descriptionHtml
           options { name values }
           variants(first: 250) {
             edges {
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
         products?: {
           edges: {
             node: {
-              id: string; title: string; status: string;
+              id: string; title: string; status: string; descriptionHtml: string;
               options: { name: string; values: string[] }[];
               variants: {
                 edges: {
@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
       id: gidToId(p.id),
       title: p.title,
       status: p.status,
+      descriptionHtml: p.descriptionHtml,
       options: p.options,
       variants: p.variants.edges.map(({ node: v }) => ({
         id: gidToId(v.id),
