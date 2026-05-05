@@ -45,9 +45,28 @@ function extractNamesFromHtml(html: string): string[] {
   const text = html
     .replace(/<[^>]+>/g, "\n")
     .replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
-  return [...new Set(
-    text.split("\n").map((l) => l.trim()).filter((l) => l.length > 4 && l.length < 120 && !/^https?:/.test(l))
-  )];
+
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+
+  // Find "Composé de :" or similar anchor, then take the lines that follow
+  const anchorIdx = lines.findIndex((l) =>
+    /compos[eé]\s*de\s*:?/i.test(l) || /composants?\s*:?/i.test(l) || /contenu\s*:?/i.test(l)
+  );
+
+  if (anchorIdx !== -1) {
+    const afterAnchor = lines.slice(anchorIdx + 1);
+    // Take lines until we hit an empty-ish section or a line that looks like a new paragraph (very long)
+    const items: string[] = [];
+    for (const l of afterAnchor) {
+      if (l.length > 120) break; // long line = new paragraph, stop
+      if (/^(https?:|[0-9]{2,})/.test(l)) continue; // skip URLs and standalone numbers
+      items.push(l);
+    }
+    if (items.length) return [...new Set(items)];
+  }
+
+  // Fallback: all short lines
+  return [...new Set(lines.filter((l) => l.length > 4 && l.length < 120 && !/^https?:/.test(l)))];
 }
 
 function isTailleOption(name: string): boolean {
