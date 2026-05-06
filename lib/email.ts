@@ -116,6 +116,27 @@ const LOCALE_LABELS: Record<string, string> = {
   pt: "Portuguese",
 };
 
+function buildEtaText(
+  estimatedDelivery: string | null,
+  leadTimeMin: number | null | undefined,
+  leadTimeMax: number | null | undefined,
+): string {
+  if (estimatedDelivery) {
+    const date = new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    return `approximate delivery window: around ${date} — phrase this as an estimate, not a guarantee`;
+  }
+  if (leadTimeMin && leadTimeMax) {
+    const minDate = new Date(Date.now() + leadTimeMin * 86400000).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    const maxDate = new Date(Date.now() + leadTimeMax * 86400000).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    return `estimated delivery window: between ${minDate} and ${maxDate} — phrase this as an estimate, not a guarantee`;
+  }
+  if (leadTimeMin) {
+    const date = new Date(Date.now() + leadTimeMin * 86400000).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    return `estimated delivery: around ${date} — phrase this as an estimate, not a guarantee`;
+  }
+  return "no confirmed date yet — we will inform you as soon as possible";
+}
+
 export async function generateBackorderEmail(
   analysis: BackorderAnalysis
 ): Promise<{ subject: string; greeting: string; body: string; sign_off: string }> {
@@ -138,13 +159,7 @@ export async function generateBackorderEmail(
     : locale === "es" ? "El equipo de producción Mood"
     : "L'équipe de production Mood";
 
-  const etaText = estimatedDelivery
-    ? `approximate delivery window: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
-    : (leadTimeMin && leadTimeMax)
-    ? `estimated lead time: between ${leadTimeMin} and ${leadTimeMax} days from today`
-    : leadTimeMin
-    ? `estimated lead time: approximately ${leadTimeMin} days from today`
-    : "no confirmed date yet — we will inform you as soon as possible";
+  const etaText = buildEtaText(estimatedDelivery, leadTimeMin, leadTimeMax);
 
   const prompt = isIcelea
     ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
@@ -166,6 +181,7 @@ Rules:
 - Write entirely in ${language}
 - Be concise: 3-4 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
+- CRITICAL: reproduce the product name '${safeProductTitle}' EXACTLY as written — never translate, paraphrase, or modify it in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -192,6 +208,7 @@ Rules:
 - Write entirely in ${language}
 - Be concise: 2-3 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation ("Chère", "Liebe", "Dear", the customer's name, etc.)
+- CRITICAL: reproduce the product name '${safeProductTitle}' EXACTLY as written — never translate, paraphrase, or modify it in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -265,9 +282,13 @@ export async function generateFollowUpEmail(
   } else if (leadTimeMin) {
     const remMin = Math.max(0, leadTimeMin - FOLLOWUP_DELAY_DAYS);
     const remMax = leadTimeMax ? Math.max(0, leadTimeMax - FOLLOWUP_DELAY_DAYS) : null;
-    remainingText = remMax
-      ? `approximately ${remMin}–${remMax} days remaining from the date this email is sent`
-      : `approximately ${remMin} days remaining from the date this email is sent`;
+    const minDate = new Date(Date.now() + remMin * 86400000).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+    if (remMax) {
+      const maxDate = new Date(Date.now() + remMax * 86400000).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" });
+      remainingText = `delivery estimated between ${minDate} and ${maxDate} — phrase as estimate, not a guarantee`;
+    } else {
+      remainingText = `delivery estimated around ${minDate} — phrase as estimate, not a guarantee`;
+    }
   } else {
     remainingText = "delivery timing confirmed — no change to original estimate";
   }
@@ -290,6 +311,7 @@ Rules:
 - Write entirely in ${language}
 - 2 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- CRITICAL: reproduce the product name '${safeProductTitle}' EXACTLY as written — never translate, paraphrase, or modify it in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -316,6 +338,7 @@ Rules:
 - Write entirely in ${language}
 - 2-3 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- CRITICAL: reproduce the product name '${safeProductTitle}' EXACTLY as written — never translate, paraphrase, or modify it in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -360,9 +383,7 @@ export async function generateBackorderEmailMulti(params: {
   const language = LOCALE_LABELS[locale] ?? "French";
   const isIcelea = supplierName?.toLowerCase().includes("icelea") ?? false;
 
-  const etaText = estimatedDelivery
-    ? `approximate delivery window: around ${new Date(estimatedDelivery).toLocaleDateString("fr-CH", { day: "numeric", month: "long", year: "numeric" })} — phrase this as an estimate, not a guarantee`
-    : "no confirmed date yet — we will inform you as soon as possible";
+  const etaText = buildEtaText(estimatedDelivery, null, null);
 
   const safeProducts = products.map((p) => ({
     ...p,
@@ -398,6 +419,7 @@ Rules:
 - Write entirely in ${language}
 - Be concise: 3-5 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- CRITICAL: reproduce all product names EXACTLY as written in the list below — never translate, paraphrase, or modify them in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -425,6 +447,7 @@ Rules:
 - Write entirely in ${language}
 - Be concise: 2-4 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- CRITICAL: reproduce all product names EXACTLY as written in the list below — never translate, paraphrase, or modify them in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -485,6 +508,7 @@ Rules:
 - Write entirely in ${language}
 - 2 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- CRITICAL: reproduce all product names EXACTLY as written in the list below — never translate, paraphrase, or modify them in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
@@ -511,6 +535,7 @@ Rules:
 - Write entirely in ${language}
 - 2-3 sentences maximum
 - CRITICAL: start the body DIRECTLY with the first sentence — do NOT open with any salutation
+- CRITICAL: reproduce all product names EXACTLY as written in the list below — never translate, paraphrase, or modify them in any way
 - Do NOT include a sign-off or signature
 - Return JSON: { "subject": "...", "body": "..." } — body is a single paragraph, NO newlines inside string values
 
