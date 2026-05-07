@@ -157,10 +157,25 @@
     <div id="resultat-cof" class="resultat hidden"></div>
 
     <div style="margin-top:1.5rem;padding:1rem;background:#f9f5f1;border-radius:8px;">
-      <p style="margin:0 0 0.6rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du coffret</strong></p>
-      <label for="cof-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Choisir des photos</label>
-      <input id="cof-photos" type="file" accept="image/*" multiple style="display:none">
-      <span id="cof-photos-info" style="margin-left:0.8rem;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</span>
+      <p style="margin:0 0 0.8rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du coffret</strong></p>
+
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button type="button" id="btn-cof-recherche-dash" style="margin:0;width:auto;padding:0.6rem 1rem;background:var(--or);font-size:0.9rem;">🔍 Chercher dans Dash</button>
+        <label for="cof-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Photos depuis mon Mac</label>
+        <input id="cof-photos" type="file" accept="image/*" multiple style="display:none">
+      </div>
+      <p id="cof-photos-info" style="margin:0.6rem 0 0 0;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</p>
+
+      <!-- Zone recherche Dash -->
+      <div id="zone-cof-dash" class="hidden" style="margin-top:1rem;padding:1rem;background:white;border:1px solid var(--or);border-radius:8px;">
+        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.8rem;">
+          <input id="cof-dash-keyword" type="text" placeholder="Mots-clés (ex: nirvana, argent, deux tiers...)" style="flex:1;font-size:0.9rem;padding:0.5rem 0.7rem;">
+          <button type="button" id="btn-cof-dash-go" style="margin:0;width:auto;padding:0.5rem 1rem;font-size:0.85rem;">Chercher</button>
+          <button type="button" id="btn-cof-dash-fermer" style="margin:0;width:auto;padding:0.5rem 0.8rem;font-size:0.85rem;background:#eee;color:var(--noir);">Fermer</button>
+        </div>
+        <p id="cof-dash-info" style="margin:0;font-size:0.8rem;color:var(--gris);min-height:1em;"></p>
+        <div id="cof-dash-resultats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.5rem;margin-top:0.8rem;max-height:400px;overflow-y:auto;"></div>
+      </div>
     </div>
   </div>
 
@@ -201,10 +216,25 @@
     <div id="resultat-pak" class="resultat hidden"></div>
 
     <div style="margin-top:1.5rem;padding:1rem;background:#f9f5f1;border-radius:8px;">
-      <p style="margin:0 0 0.6rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du pack</strong></p>
-      <label for="pak-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Choisir des photos</label>
-      <input id="pak-photos" type="file" accept="image/*" multiple style="display:none">
-      <span id="pak-photos-info" style="margin-left:0.8rem;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</span>
+      <p style="margin:0 0 0.8rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du pack</strong></p>
+
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button type="button" id="btn-pak-recherche-dash" style="margin:0;width:auto;padding:0.6rem 1rem;background:var(--or);font-size:0.9rem;">🔍 Chercher dans Dash</button>
+        <label for="pak-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Photos depuis mon Mac</label>
+        <input id="pak-photos" type="file" accept="image/*" multiple style="display:none">
+      </div>
+      <p id="pak-photos-info" style="margin:0.6rem 0 0 0;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</p>
+
+      <!-- Zone recherche Dash -->
+      <div id="zone-pak-dash" class="hidden" style="margin-top:1rem;padding:1rem;background:white;border:1px solid var(--or);border-radius:8px;">
+        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.8rem;">
+          <input id="pak-dash-keyword" type="text" placeholder="Mots-clés (ex: nirvana, argent, deux tiers...)" style="flex:1;font-size:0.9rem;padding:0.5rem 0.7rem;">
+          <button type="button" id="btn-pak-dash-go" style="margin:0;width:auto;padding:0.5rem 1rem;font-size:0.85rem;">Chercher</button>
+          <button type="button" id="btn-pak-dash-fermer" style="margin:0;width:auto;padding:0.5rem 0.8rem;font-size:0.85rem;background:#eee;color:var(--noir);">Fermer</button>
+        </div>
+        <p id="pak-dash-info" style="margin:0;font-size:0.8rem;color:var(--gris);min-height:1em;"></p>
+        <div id="pak-dash-resultats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.5rem;margin-top:0.8rem;max-height:400px;overflow-y:auto;"></div>
+      </div>
     </div>
   </div>
 
@@ -659,88 +689,118 @@
     }
   });
 
-  // ====== Photos : depuis Mac OU depuis Dash ======
-  let imagesDashSelectionnees = [];
+  // ====== Photos : depuis Mac OU depuis Dash (multi-contexte produit/coffret/pack) ======
+  const dashContexts = {};
 
-  function majInfoPhotos() {
-    const fichiers = $('f-photos').files;
-    const nFichiers = fichiers ? fichiers.length : 0;
-    const nDash = imagesDashSelectionnees.length;
-    const total = nFichiers + nDash;
-    const info = $('photos-info');
-    if (total === 0) {
-      info.textContent = 'aucune photo sélectionnée';
+  function creerContexteDash(cfg) {
+    const state = { selectionnees: [] };
+    dashContexts[cfg.prefix] = state;
+
+    function majInfoPhotos() {
+      const fichiers = $(cfg.fileInput).files;
+      const nFichiers = fichiers ? fichiers.length : 0;
+      const nDash = state.selectionnees.length;
+      const total = nFichiers + nDash;
+      const info = $(cfg.photosInfo);
+      if (total === 0) {
+        info.textContent = 'aucune photo sélectionnée';
+        info.style.color = 'var(--gris)';
+      } else {
+        const parts = [];
+        if (nDash > 0) parts.push(`${nDash} de Dash`);
+        if (nFichiers > 0) parts.push(`${nFichiers} depuis Mac`);
+        info.textContent = `✅ ${total} photo${total>1?'s':''} sélectionnée${total>1?'s':''} (${parts.join(' + ')})`;
+        info.style.color = 'var(--vert)';
+      }
+    }
+    state.majInfoPhotos = majInfoPhotos;
+
+    $(cfg.fileInput).addEventListener('change', majInfoPhotos);
+    $(cfg.btnRecherche).addEventListener('click', () => {
+      $(cfg.zone).classList.remove('hidden');
+      setTimeout(() => $(cfg.keyword).focus(), 50);
+    });
+    $(cfg.btnFermer).addEventListener('click', () => $(cfg.zone).classList.add('hidden'));
+    $(cfg.keyword).addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); rechercher(); } });
+    $(cfg.btnGo).addEventListener('click', rechercher);
+
+    async function rechercher() {
+      const keyword = $(cfg.keyword).value.trim();
+      const info = $(cfg.info);
+      const grille = $(cfg.resultats);
+      info.textContent = '⏳ Recherche en cours...';
       info.style.color = 'var(--gris)';
-    } else {
-      const parts = [];
-      if (nDash > 0) parts.push(`${nDash} de Dash`);
-      if (nFichiers > 0) parts.push(`${nFichiers} depuis Mac`);
-      info.textContent = `✅ ${total} photo${total>1?'s':''} sélectionnée${total>1?'s':''} (${parts.join(' + ')})`;
-      info.style.color = 'var(--vert)';
-    }
-  }
-
-  $('f-photos').addEventListener('change', majInfoPhotos);
-
-  // ====== Recherche Dash ======
-  $('btn-recherche-dash').addEventListener('click', () => {
-    $('zone-dash').classList.remove('hidden');
-    setTimeout(() => $('dash-keyword').focus(), 50);
-  });
-  $('btn-dash-fermer').addEventListener('click', () => $('zone-dash').classList.add('hidden'));
-  $('dash-keyword').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); rechercheDash(); } });
-  $('btn-dash-go').addEventListener('click', rechercheDash);
-
-  async function rechercheDash() {
-    const keyword = $('dash-keyword').value.trim();
-    const info = $('dash-info');
-    const grille = $('dash-resultats');
-    info.textContent = '⏳ Recherche en cours...';
-    info.style.color = 'var(--gris)';
-    grille.innerHTML = '';
-    try {
-      const r = await fetch('/api/produits/dash-search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, pageSize: 30, from: 0 })
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        info.textContent = '❌ Erreur : ' + (data.error || JSON.stringify(data));
-        info.style.color = 'var(--rouge)';
-        return;
-      }
-      info.innerHTML = `${data.totalResults} image${data.totalResults>1?'s':''} trouvée${data.totalResults>1?'s':''} — clique pour sélectionner (déjà ${imagesDashSelectionnees.length} ajoutée${imagesDashSelectionnees.length>1?'s':''})`;
-      info.style.color = 'var(--vert)';
       grille.innerHTML = '';
-      if (data.results.length === 0) {
-        grille.innerHTML = '<p style="grid-column:1/-1;color:var(--gris);text-align:center;">Aucun résultat. Essaie d\'autres mots-clés.</p>';
-        return;
-      }
-      data.results.forEach(img => {
-        const dejaSelectionnee = imagesDashSelectionnees.some(i => i.id === img.id);
-        const wrap = document.createElement('div');
-        wrap.style.cssText = `position:relative;cursor:pointer;border-radius:6px;overflow:hidden;border:3px solid ${dejaSelectionnee?'var(--vert)':'transparent'};`;
-        wrap.dataset.id = img.id;
-        wrap.innerHTML = `
-          <img src="${img.previewUrl}" alt="${img.filename}" style="width:100%;height:110px;object-fit:cover;display:block;${dejaSelectionnee?'opacity:0.7;':''}">
-          ${dejaSelectionnee ? '<div style="position:absolute;top:4px;right:4px;background:var(--vert);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">✓</div>' : ''}
-          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.65rem;padding:0.2rem 0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${img.filename}</div>
-        `;
-        wrap.addEventListener('click', () => {
-          const idx = imagesDashSelectionnees.findIndex(i => i.id === img.id);
-          if (idx >= 0) imagesDashSelectionnees.splice(idx, 1);
-          else imagesDashSelectionnees.push(img);
-          rechercheDash(); // Re-render pour reflet visuel
-          majInfoPhotos();
+      try {
+        const r = await fetch('/api/produits/dash-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword, pageSize: 30, from: 0 })
         });
-        grille.appendChild(wrap);
-      });
-    } catch (e) {
-      info.textContent = '❌ Erreur réseau : ' + e.message;
-      info.style.color = 'var(--rouge)';
+        const data = await r.json();
+        if (!r.ok) {
+          info.textContent = '❌ Erreur : ' + (data.error || JSON.stringify(data));
+          info.style.color = 'var(--rouge)';
+          return;
+        }
+        info.innerHTML = `${data.totalResults} image${data.totalResults>1?'s':''} trouvée${data.totalResults>1?'s':''} — clique pour sélectionner (déjà ${state.selectionnees.length} ajoutée${state.selectionnees.length>1?'s':''})`;
+        info.style.color = 'var(--vert)';
+        grille.innerHTML = '';
+        if (data.results.length === 0) {
+          grille.innerHTML = '<p style="grid-column:1/-1;color:var(--gris);text-align:center;">Aucun résultat. Essaie d\'autres mots-clés.</p>';
+          return;
+        }
+        data.results.forEach(img => {
+          const dejaSelectionnee = state.selectionnees.some(i => i.id === img.id);
+          const wrap = document.createElement('div');
+          wrap.style.cssText = `position:relative;cursor:pointer;border-radius:6px;overflow:hidden;border:3px solid ${dejaSelectionnee?'var(--vert)':'transparent'};`;
+          wrap.dataset.id = img.id;
+          wrap.innerHTML = `
+            <img src="${img.previewUrl}" alt="${img.filename}" style="width:100%;height:110px;object-fit:cover;display:block;${dejaSelectionnee?'opacity:0.7;':''}">
+            ${dejaSelectionnee ? '<div style="position:absolute;top:4px;right:4px;background:var(--vert);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">✓</div>' : ''}
+            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.65rem;padding:0.2rem 0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${img.filename}</div>
+          `;
+          wrap.addEventListener('click', () => {
+            const idx = state.selectionnees.findIndex(i => i.id === img.id);
+            if (idx >= 0) state.selectionnees.splice(idx, 1);
+            else state.selectionnees.push(img);
+            rechercher();
+            majInfoPhotos();
+          });
+          grille.appendChild(wrap);
+        });
+      } catch (e) {
+        info.textContent = '❌ Erreur réseau : ' + e.message;
+        info.style.color = 'var(--rouge)';
+      }
     }
   }
+
+  creerContexteDash({
+    prefix: 'produit',
+    btnRecherche: 'btn-recherche-dash', zone: 'zone-dash',
+    keyword: 'dash-keyword', btnGo: 'btn-dash-go', btnFermer: 'btn-dash-fermer',
+    info: 'dash-info', resultats: 'dash-resultats',
+    fileInput: 'f-photos', photosInfo: 'photos-info',
+  });
+  creerContexteDash({
+    prefix: 'coffret',
+    btnRecherche: 'btn-cof-recherche-dash', zone: 'zone-cof-dash',
+    keyword: 'cof-dash-keyword', btnGo: 'btn-cof-dash-go', btnFermer: 'btn-cof-dash-fermer',
+    info: 'cof-dash-info', resultats: 'cof-dash-resultats',
+    fileInput: 'cof-photos', photosInfo: 'cof-photos-info',
+  });
+  creerContexteDash({
+    prefix: 'pack',
+    btnRecherche: 'btn-pak-recherche-dash', zone: 'zone-pak-dash',
+    keyword: 'pak-dash-keyword', btnGo: 'btn-pak-dash-go', btnFermer: 'btn-pak-dash-fermer',
+    info: 'pak-dash-info', resultats: 'pak-dash-resultats',
+    fileInput: 'pak-photos', photosInfo: 'pak-photos-info',
+  });
+
+  // Compat ancien code de l'écran produit (variables/fonctions globales)
+  const imagesDashSelectionnees = dashContexts.produit.selectionnees;
+  function majInfoPhotos() { dashContexts.produit.majInfoPhotos(); }
 
   // Convertir un fichier en base64 (sans le préfixe data:)
   function fichierEnBase64(file) {
@@ -1013,13 +1073,38 @@
         erreur.textContent = (data.etape ? `[${data.etape}] ` : '') + JSON.stringify(data.erreur || data.error || data);
         erreur.classList.remove('hidden'); return;
       }
-      // Upload photos
+      // === UPLOAD DES PHOTOS — Dash (par URL) PUIS Mac (base64) ===
       const fichiers = $('pak-photos').files;
-      let photosOk = 0;
+      const dashImgs = dashContexts.pack.selectionnees;
+      const totalPhotos = (dashImgs?.length || 0) + (fichiers?.length || 0);
+      let photosOk = 0, photosFail = 0, position = 1;
       const baseFilename = `pack-${infos.nom.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}`;
       const baseAlt = `${infos.nom} — Mood Collection`;
+
+      if (totalPhotos > 0) btn.textContent = `Upload des photos (0/${totalPhotos})…`;
+
+      if (Array.isArray(dashImgs) && dashImgs.length > 0) {
+        for (let i = 0; i < dashImgs.length; i++) {
+          const img = dashImgs[i];
+          const seoAlt = position === 1 ? baseAlt : `${baseAlt} (vue ${position})`;
+          try {
+            const upRes = await fetch('/api/produits/upload-image', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: data.idProduit,
+                src: img.previewUrl,
+                position,
+                alt: seoAlt
+              })
+            });
+            if (upRes.ok) photosOk++; else photosFail++;
+          } catch { photosFail++; }
+          position++;
+          btn.textContent = `Upload des photos (${position-1}/${totalPhotos})…`;
+        }
+      }
+
       if (fichiers && fichiers.length > 0) {
-        btn.textContent = `Upload des photos (0/${fichiers.length})…`;
         for (let i = 0; i < fichiers.length; i++) {
           const f = fichiers[i];
           const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1029,16 +1114,22 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 productId: data.idProduit, base64,
-                filename: `${baseFilename}-${i+1}.${ext}`,
-                position: i+1,
-                alt: i === 0 ? baseAlt : `${baseAlt} (vue ${i+1})`
+                filename: `${baseFilename}-${position}.${ext}`,
+                position,
+                alt: position === 1 ? baseAlt : `${baseAlt} (vue ${position})`
               })
             });
-            if (upRes.ok) photosOk++;
-          } catch {}
-          btn.textContent = `Upload des photos (${i+1}/${fichiers.length})…`;
+            if (upRes.ok) photosOk++; else photosFail++;
+          } catch { photosFail++; }
+          position++;
+          btn.textContent = `Upload des photos (${position-1}/${totalPhotos})…`;
         }
-        data.etapes.photos = `${photosOk}/${fichiers.length} uploadées`;
+      }
+
+      if (totalPhotos > 0) {
+        data.etapes.photos = `${photosOk}/${totalPhotos} uploadées` +
+          (dashImgs.length > 0 ? ` (${dashImgs.length} Dash + ${fichiers.length} Mac)` : '') +
+          (photosFail ? ` — ${photosFail} échouées` : '');
       }
       succes.textContent = `✅ Pack "${data.titre}" créé en brouillon dans Shopify`;
       succes.classList.remove('hidden');
@@ -1086,12 +1177,7 @@
       }
     }
   });
-  $('cof-photos').addEventListener('change', e => {
-    const n = e.target.files.length;
-    const info = $('cof-photos-info');
-    if (n === 0) { info.textContent = 'aucune photo sélectionnée'; info.style.color = 'var(--gris)'; }
-    else { info.textContent = `${n} photo${n>1?'s':''} sélectionnée${n>1?'s':''}`; info.style.color = 'var(--vert)'; }
-  });
+  // Compteur cof-photos géré par creerContexteDash('coffret')
   $('btn-generer-cof').addEventListener('click', async () => {
     const motsCles = $('cof-motsCles').value.trim();
     const erreur = $('erreur-cof');
@@ -1182,13 +1268,39 @@
         erreur.classList.remove('hidden'); return;
       }
 
-      // Upload photos avec noms SEO coffret
+      // === UPLOAD DES PHOTOS — Dash (par URL) PUIS Mac (base64) ===
       const fichiers = $('cof-photos').files;
-      let photosOk = 0, photosFail = 0;
+      const dashImgs = dashContexts.coffret.selectionnees;
+      const totalPhotos = (dashImgs?.length || 0) + (fichiers?.length || 0);
+      let photosOk = 0, photosFail = 0, position = 1;
       const baseFilename = `coffret-${infos.nom.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}`;
       const baseAlt = `${infos.nom} — Mood Collection`;
+
+      if (totalPhotos > 0) btn.textContent = `Upload des photos (0/${totalPhotos})…`;
+
+      if (Array.isArray(dashImgs) && dashImgs.length > 0) {
+        for (let i = 0; i < dashImgs.length; i++) {
+          const img = dashImgs[i];
+          const seoAlt = position === 1 ? baseAlt : `${baseAlt} (vue ${position})`;
+          try {
+            const upRes = await fetch('/api/produits/upload-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: data.idProduit,
+                src: img.previewUrl,
+                position,
+                alt: seoAlt
+              })
+            });
+            if (upRes.ok) photosOk++; else photosFail++;
+          } catch { photosFail++; }
+          position++;
+          btn.textContent = `Upload des photos (${position-1}/${totalPhotos})…`;
+        }
+      }
+
       if (fichiers && fichiers.length > 0) {
-        btn.textContent = `Upload des photos (0/${fichiers.length})…`;
         for (let i = 0; i < fichiers.length; i++) {
           const f = fichiers[i];
           const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
@@ -1199,16 +1311,22 @@
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 productId: data.idProduit, base64,
-                filename: `${baseFilename}-${i+1}.${ext}`,
-                position: i+1,
-                alt: i === 0 ? baseAlt : `${baseAlt} (vue ${i+1})`
+                filename: `${baseFilename}-${position}.${ext}`,
+                position,
+                alt: position === 1 ? baseAlt : `${baseAlt} (vue ${position})`
               })
             });
             if (upRes.ok) photosOk++; else photosFail++;
           } catch { photosFail++; }
-          btn.textContent = `Upload des photos (${i+1}/${fichiers.length})…`;
+          position++;
+          btn.textContent = `Upload des photos (${position-1}/${totalPhotos})…`;
         }
-        data.etapes.photos = `${photosOk}/${fichiers.length} uploadées`;
+      }
+
+      if (totalPhotos > 0) {
+        data.etapes.photos = `${photosOk}/${totalPhotos} uploadées` +
+          (dashImgs.length > 0 ? ` (${dashImgs.length} Dash + ${fichiers.length} Mac)` : '') +
+          (photosFail ? ` — ${photosFail} échouées` : '');
       }
 
       succes.textContent = `✅ Coffret "${data.titre}" créé en brouillon dans Shopify`;
