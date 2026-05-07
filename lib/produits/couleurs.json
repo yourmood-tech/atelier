@@ -1,0 +1,39 @@
+{
+  "_note": "Couleurs disponibles par matière chez Mood Collection. Source : Amila S29 + analyse produits réels (Hanami, À l'infini). Polymère vide = texte libre car beaucoup de variations.",
+  "couleurs": {
+    "aluminium": [
+      "noir", "rouge", "émeraude", "aubergine",
+      "rose pastel", "belipastel", "ocre", "jaune pastel",
+      "vert pastel", "bleu pastel", "lilas cashmere", "bleu marine",
+      "violet", "noisette", "abricot", "pêche"
+    ],
+    "acier": [
+      "rose gold", "noir", "yellow gold", "neutre"
+    ],
+    "argent": [
+      "neutre", "oxydé"
+    ],
+    "titane": [
+      "neutre", "nacré", "violet", "bleu", "brun", "dégradé"
+    ],
+    "polymère": [],
+    "or": [
+      "or jaune", "or rose", "or blanc", "or gris"
+    ],
+    "bois": [
+      "noyer", "ébène", "olivier", "padouk"
+    ],
+    "céramique": [
+      "noir", "blanc", "rose"
+    ],
+    "carbone": [
+      "noir full", "noir fibre"
+    ],
+    "bronze": [
+      "neutre"
+    ],
+    "tantale": [
+      "neutre"
+    ]
+  }
+}

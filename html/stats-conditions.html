@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mood — Stats & Conditions</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --rose: #f5e6e0; --or: #c9a87c; --noir: #2a2a2a; --gris: #8a8a8a;
+    --vert: #6f9b6e; --rouge: #c75a5a; --orange: #d99155; --jaune: #d9b455;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; background: var(--rose); color: var(--noir); margin: 0; padding: 0; line-height: 1.5; }
+  .container { max-width: 760px; margin: 2rem auto; padding: 1rem; }
+  h1 { font-weight: 300; letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+  h1 strong { font-weight: 600; color: var(--or); }
+  .subtitle { color: var(--gris); margin-bottom: 2rem; }
+  .card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+  label { display: block; font-size: 0.85rem; font-weight: 500; margin-top: 1rem; margin-bottom: 0.4rem; }
+  label .opt { color: var(--gris); font-weight: 400; }
+  input, select, textarea { width: 100%; padding: 0.7rem 0.9rem; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.95rem; background: white; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--or); }
+  textarea { resize: vertical; min-height: 100px; }
+  button { background: var(--noir); color: white; border: none; padding: 0.9rem 1.8rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; margin-top: 1.5rem; width: 100%; transition: background 0.2s; }
+  button:hover { background: var(--or); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .hidden { display: none; }
+  .alert { padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+  .alert-error { background: #fce8e8; color: var(--rouge); }
+  .alert-success { background: #eaf3e9; color: var(--vert); }
+  .grille-cat { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  .carte-cat { padding: 1.4rem 1rem; background: white; border: 2px solid var(--or); border-radius: 12px; cursor: pointer; text-align: center; width: auto; margin: 0; transition: background 0.2s; }
+  .carte-cat:hover { background: #fff8f0; }
+  .carte-cat .emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+  .carte-cat .nom { font-weight: 600; color: var(--noir); font-size: 1rem; margin-bottom: 0.3rem; }
+  .carte-cat .desc { font-size: 0.78rem; color: var(--gris); font-weight: 400; }
+  .retour { background: transparent; color: var(--gris); border: none; padding: 0; margin: 0 0 1rem 0; width: auto; font-size: 0.85rem; cursor: pointer; }
+  .resultat { background: white; padding: 1.5rem; border-radius: 12px; margin-top: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+  .resultat h3 { margin-top: 1.5rem; margin-bottom: 0.6rem; }
+  .resultat h3:first-child { margin-top: 0; }
+  .pilule { display: inline-block; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 1.1rem; }
+  .table-stat { width: 100%; border-collapse: collapse; margin: 0.6rem 0; font-size: 0.85rem; }
+  .table-stat td { padding: 0.4rem 0.8rem; border-bottom: 1px solid #eee; }
+  .table-stat td:last-child { text-align: right; font-weight: 600; }
+  .markdown { line-height: 1.7; }
+  .markdown h1, .markdown h2, .markdown h3 { font-weight: 700; margin: 1.2rem 0 0.5rem; color: var(--noir); }
+  .markdown h2 { font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.3rem; }
+  .markdown h3 { font-size: 1rem; }
+  .markdown ul, .markdown ol { margin: 0.4rem 0 0.8rem 1.2rem; }
+  .markdown li { margin-bottom: 0.3rem; }
+  .markdown p { margin: 0.4rem 0; }
+  .markdown strong { font-weight: 700; }
+  .btn-imprimer { background: var(--or); margin-top: 1rem; }
+
+  /* Tableau Battle Plan — scrollable horizontalement si nécessaire */
+  .bp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1rem -0.5rem; padding: 0 0.5rem; }
+  .bp-table { width: 100%; min-width: 800px; border-collapse: collapse; font-size: 0.75rem; }
+  .bp-table th, .bp-table td { border: 1px solid #ddd; padding: 0.4rem 0.4rem; vertical-align: top; }
+  .bp-table th { background: var(--noir); color: white; text-align: center; font-size: 0.72rem; padding: 0.5rem 0.3rem; }
+  .bp-table th.creneau { background: #f5f1ec; color: var(--noir); width: 70px; min-width: 70px; font-weight: 600; }
+  .bp-table td { width: 100px; min-width: 100px; max-width: 110px; word-wrap: break-word; }
+  .bp-table td ul { margin: 0; padding-left: 0.9rem; }
+  .bp-table td li { margin-bottom: 0.25rem; line-height: 1.25; font-size: 0.72rem; }
+  .bp-table td.vide { background: #fafafa; text-align: center; color: #ccc; }
+
+  /* Grille cases à cocher BP */
+  .bp-grille { display: grid; grid-template-columns: 90px repeat(7, 1fr); gap: 4px; margin: 0.6rem 0; font-size: 0.75rem; }
+  .bp-grille .header { background: var(--noir); color: white; padding: 0.4rem 0.2rem; text-align: center; font-weight: 600; border-radius: 4px; }
+  .bp-grille .creneau-label { background: #f5f1ec; padding: 0.4rem 0.3rem; text-align: center; font-weight: 600; border-radius: 4px; }
+  .bp-grille .case-creneau { display: flex; align-items: center; justify-content: center; padding: 0.4rem; background: white; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+  .bp-grille .case-creneau input { width: auto; margin: 0; }
+  @media print {
+    body { background: white; }
+    .container { max-width: 100%; margin: 0; }
+    h1, .subtitle, #ecran-login, #ecran-choix, .retour, button:not(.btn-imprimer) { display: none !important; }
+    .btn-imprimer { display: none !important; }
+    #ecran-analyse, .resultat { box-shadow: none; padding: 0; background: white; }
+    #ecran-analyse > *:not(#resultat-analyse):not(#image-preview):not(#titre-categorie) { display: none !important; }
+    h2#titre-categorie { display: block !important; margin-bottom: 1rem; }
+    #image-preview { display: block !important; max-width: 70%; margin: 0.5rem auto; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><strong>mood</strong> · stats & conditions</h1>
+  <p class="subtitle">Analyse ta stat hebdomadaire et obtiens la condition + plan d'action.</p>
+
+  <!-- ============ CHOIX CATÉGORIE ============ -->
+  <div id="ecran-choix" class="card">
+    <h2 style="margin-top:0;text-align:center;" id="bienvenue-titre">Quelle stat tu veux analyser ?</h2>
+    <p style="text-align:center;color:var(--gris);margin-bottom:1.5rem;">Choisis la catégorie pour démarrer une analyse</p>
+    <div class="grille-cat" id="grille-categories"></div>
+
+    <hr style="margin:2rem 0 1.5rem;border:none;border-top:1px solid #eee;">
+
+    <h2 style="margin-top:0;font-size:1.2rem;">📅 Mes Battle Plans</h2>
+    <p style="color:var(--gris);font-size:0.9rem;margin-bottom:1rem;">Tes BP sauvegardés — clique pour rouvrir et cocher tes actions.</p>
+    <div id="liste-mes-bp"></div>
+  </div>
+
+  <!-- ============ ÉCRAN BP SAUVEGARDÉ ============ -->
+  <div id="ecran-bp-sauve" class="card hidden">
+    <button type="button" id="btn-retour-bp-liste" class="retour">← Retour à la liste</button>
+    <div id="contenu-bp-sauve"></div>
+  </div>
+
+  <!-- ============ ANALYSE ============ -->
+  <div id="ecran-analyse" class="card hidden">
+    <button type="button" id="btn-retour-choix" class="retour">← Retour aux catégories</button>
+    <h2 id="titre-categorie" style="margin-top:0;"></h2>
+
+    <label>Nom de la stat *</label>
+    <input id="f-nomStat" placeholder="ex : Ventes Joaillerie — Amila / Mood Store Zurich / etc.">
+
+    <label>📷 Capture d'écran de la stat MasterTech *</label>
+    <label for="f-image" style="display:inline-block;padding:0.7rem 1.2rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Choisir une image</label>
+    <input id="f-image" type="file" accept="image/*" style="display:none">
+    <span id="image-info" style="margin-left:0.8rem;font-size:0.85rem;color:var(--gris)">aucune image sélectionnée</span>
+    <img id="image-preview" class="hidden" style="margin-top:1rem;max-width:100%;border-radius:8px;border:1px solid #ddd;" alt="Preview de la stat">
+    <input type="hidden" id="image-base64-cache">
+    <input type="hidden" id="image-mime-cache">
+
+    <label>📝 Notes / indices clés <span class="opt">(plus tu donnes d'infos, plus l'analyse est précise)</span></label>
+    <textarea id="f-notes" placeholder="ex :&#10;6 nouveaux clients cette semaine, 0 ont acheté&#10;1 vente joaillerie via pub Insta&#10;Beaucoup de coffrets de mai vendus&#10;3 addons vendus seulement, etc."></textarea>
+
+    <button id="btn-analyser">Analyser ma stat</button>
+
+    <div id="erreur-analyse" class="alert alert-error hidden"></div>
+    <div id="resultat-analyse" class="hidden"></div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  const CATEGORIES = [
+    { id: 'vente-en-ligne', nom: 'Vente en ligne', emoji: '🌐', desc: 'CA Shopify, ventes web' },
+    { id: 'vente-globale',  nom: 'Vente globale',  emoji: '💰', desc: 'CA total tous canaux confondus' },
+    { id: 'vente-boutique', nom: 'Vente boutique', emoji: '🏪', desc: 'CA boutiques physiques' },
+    { id: 'nouveaute',      nom: 'Nouveauté',      emoji: '✨', desc: 'Lancements, game changers' },
+    { id: 'nouveau-client', nom: 'Nouveau client', emoji: '👋', desc: 'Acquisition, premières commandes' },
+    { id: 'production',     nom: 'Production',     emoji: '🛠️', desc: 'Atelier, fabrication, pièces produites' },
+    { id: 'comptabilite',   nom: 'Comptabilité',   emoji: '📊', desc: 'Chiffres comptables, marges' },
+    { id: 'fournisseur',    nom: 'Fournisseur',    emoji: '📦', desc: 'Achats, délais, qualité fournisseurs' },
+    { id: 'delivrance',     nom: 'Délivrance',     emoji: '🚚', desc: 'Commandes expédiées, livraisons' }
+  ];
+
+  // Auth gérée par Google OAuth — initialiser directement
+  const sessionUser = (window.__MOOD_USER__ || '');
+  if (sessionUser && !localStorage.getItem('mood_nom_complet')) {
+    localStorage.setItem('mood_nom_complet', sessionUser);
+  }
+  afficherCategories();
+  afficherMesBp();
+
+  function getNomComplet() { return localStorage.getItem('mood_nom_complet') || window.__MOOD_USER__ || ''; }
+  function getNomSlug() { return getNomComplet().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '_'); }
+
+  // ====== Mes BP — stockage localStorage ======
+  function getBps() {
+    try { return JSON.parse(localStorage.getItem(`mood_bps_${getNomSlug()}`) || '[]'); }
+    catch { return []; }
+  }
+  function setBps(arr) {
+    localStorage.setItem(`mood_bps_${getNomSlug()}`, JSON.stringify(arr));
+  }
+  function sauvegarderBp(bpData) {
+    const all = getBps();
+    bpData.id = Date.now();
+    bpData.date_creation = new Date().toISOString();
+    bpData.actions_state = bpData.actions_state || {};
+    all.unshift(bpData);
+    setBps(all);
+    return bpData.id;
+  }
+  function getBpById(id) { return getBps().find(b => b.id == id); }
+  function updateBp(id, patch) {
+    const all = getBps();
+    const idx = all.findIndex(b => b.id == id);
+    if (idx >= 0) { all[idx] = { ...all[idx], ...patch }; setBps(all); }
+  }
+  function supprimerBp(id) { setBps(getBps().filter(b => b.id != id)); }
+
+  function calculerProgressionBp(bp) {
+    let total = 0, faites = 0;
+    JOURS_BP.forEach(j => CRENEAUX_BP.forEach(c => {
+      const actions = bp.planning?.[j]?.[c] || [];
+      actions.forEach((_, i) => {
+        total++;
+        if (bp.actions_state?.[`${j}-${c}-${i}`]) faites++;
+      });
+    }));
+    return { total, faites, pct: total > 0 ? Math.round(faites/total*100) : 0 };
+  }
+
+  function afficherMesBp() {
+    const conteneur = $('liste-mes-bp');
+    const bps = getBps();
+    // Personnaliser titre bienvenue avec prénom
+    const nomComplet = getNomComplet();
+    if (nomComplet) {
+      const prenom = nomComplet.split(' ')[0];
+      $('bienvenue-titre').textContent = `Bonjour ${prenom} 👋 — quelle stat aujourd'hui ?`;
+    }
+    if (bps.length === 0) {
+      conteneur.innerHTML = '<p style="color:var(--gris);font-size:0.9rem;font-style:italic;">Aucun BP encore. Commence par analyser une stat plus haut, puis génère ton premier Battle Plan.</p>';
+      return;
+    }
+    const couleurCondition = {
+      'Puissance':'var(--vert)','Affluence':'var(--vert)','Normal (Opération)':'var(--jaune)',
+      'Urgence':'var(--orange)','Danger':'var(--rouge)','Non-Existence':'var(--noir)'
+    };
+    conteneur.innerHTML = bps.map(b => {
+      const prog = calculerProgressionBp(b);
+      const date = new Date(b.date_creation);
+      const dateTxt = date.toLocaleDateString('fr-CH', { day:'numeric', month:'short' });
+      const couleur = couleurCondition[b.condition_nom] || 'var(--gris)';
+      return `
+        <div class="bp-item" data-id="${b.id}" style="display:flex;align-items:center;gap:0.8rem;padding:0.8rem 1rem;background:white;border:1px solid #eee;border-radius:8px;margin-bottom:0.5rem;cursor:pointer;transition:background 0.15s;">
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:0.95rem;">${b.stat_titre || 'Stat sans titre'}</div>
+            <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.3rem;font-size:0.8rem;color:var(--gris);">
+              <span style="background:${couleur};color:white;padding:0.15rem 0.5rem;border-radius:10px;font-weight:600;">${b.condition_emoji||''} ${b.condition_nom||''}</span>
+              <span>${dateTxt}</span>
+              <span>· ${prog.faites}/${prog.total} actions (${prog.pct}%)</span>
+            </div>
+            <div style="background:#eee;height:4px;border-radius:2px;margin-top:0.4rem;overflow:hidden;">
+              <div style="background:${couleur};height:100%;width:${prog.pct}%;transition:width 0.3s;"></div>
+            </div>
+          </div>
+          <button type="button" class="bp-supprimer" data-id="${b.id}" style="margin:0;padding:0.3rem 0.6rem;width:auto;background:#f5e6e0;color:var(--rouge);font-size:0.8rem;">✕</button>
+        </div>
+      `;
+    }).join('');
+
+    // Listeners
+    conteneur.querySelectorAll('.bp-item').forEach(it => {
+      it.addEventListener('click', e => {
+        if (e.target.classList.contains('bp-supprimer')) return;
+        ouvrirBpSauve(it.dataset.id);
+      });
+      it.addEventListener('mouseenter', () => it.style.background = '#fff8f0');
+      it.addEventListener('mouseleave', () => it.style.background = 'white');
+    });
+    conteneur.querySelectorAll('.bp-supprimer').forEach(b => {
+      b.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm('Supprimer ce Battle Plan ?')) { supprimerBp(b.dataset.id); afficherMesBp(); }
+      });
+    });
+  }
+
+  // ====== Ouvrir un BP sauvegardé ======
+  function ouvrirBpSauve(id) {
+    const bp = getBpById(id);
+    if (!bp) return;
+    $('ecran-choix').classList.add('hidden');
+    $('ecran-bp-sauve').classList.remove('hidden');
+    renduBpSauve(bp);
+    window.scrollTo(0, 0);
+  }
+  $('btn-retour-bp-liste').addEventListener('click', () => {
+    $('ecran-bp-sauve').classList.add('hidden');
+    $('ecran-choix').classList.remove('hidden');
+    afficherMesBp();
+  });
+
+  function renduBpSauve(bp) {
+    const prog = calculerProgressionBp(bp);
+    const couleurCondition = {
+      'Puissance':'var(--vert)','Affluence':'var(--vert)','Normal (Opération)':'var(--jaune)',
+      'Urgence':'var(--orange)','Danger':'var(--rouge)','Non-Existence':'var(--noir)'
+    };
+    const couleur = couleurCondition[bp.condition_nom] || 'var(--gris)';
+    const nomComplet = getNomComplet();
+    const prenom = (bp.prenom) || (nomComplet ? nomComplet.split(' ')[0] : '');
+
+    // Mini-objectif du jour
+    const aujd = miniObjectifDuJour(bp);
+
+    let html = `
+      <h2 style="margin-top:0;">📅 Battle Plan de ${prenom}</h2>
+      <p style="color:var(--gris);font-size:0.85rem;">Stat : <strong>${bp.stat_titre}</strong> · <span style="background:${couleur};color:white;padding:0.15rem 0.6rem;border-radius:10px;font-size:0.75rem;font-weight:600;">${bp.condition_emoji||''} ${bp.condition_nom}</span></p>
+
+      <div style="background:#fff8f0;padding:0.8rem 1rem;border-radius:8px;margin:1rem 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+          <strong>Progression</strong>
+          <span style="font-size:0.95rem;color:${couleur};font-weight:600;">${prog.faites}/${prog.total} actions · ${prog.pct}%</span>
+        </div>
+        <div style="background:#eee;height:8px;border-radius:4px;overflow:hidden;">
+          <div style="background:${couleur};height:100%;width:${prog.pct}%;transition:width 0.4s;"></div>
+        </div>
+      </div>
+    `;
+    if (aujd) {
+      html += `
+        <div style="background:linear-gradient(135deg, #fff8f0, #f5e6e0);padding:1rem 1.2rem;border-radius:12px;margin:1rem 0;border-left:4px solid var(--or);">
+          <div style="font-size:0.85rem;color:var(--or);font-weight:600;margin-bottom:0.3rem;">🎯 Aujourd'hui — ${aujd.jour} ${aujd.creneau}</div>
+          <div style="font-size:1.05rem;font-weight:600;">${aujd.action}</div>
+          <div style="font-size:0.8rem;color:var(--gris);margin-top:0.3rem;">Concentre-toi sur celle-ci en priorité. Les autres actions sont dans le tableau ci-dessous.</div>
+        </div>
+      `;
+    }
+    if (bp.objectif_semaine) {
+      html += `<div style="margin-bottom:0.8rem;padding:0.8rem 1rem;background:#fff8f0;border-left:3px solid var(--or);border-radius:4px;">🎯 <strong>${bp.objectif_semaine}</strong></div>`;
+    }
+
+    html += '<div class="bp-table-wrap"><table class="bp-table"><thead><tr><th class="creneau">Créneau</th>';
+    JOURS_BP.forEach(j => html += `<th>${j}</th>`);
+    html += '</tr></thead><tbody>';
+    CRENEAUX_BP.forEach(c => {
+      html += `<tr><th class="creneau">${CRENEAUX_LABEL[c]}</th>`;
+      JOURS_BP.forEach(j => {
+        const actions = bp.planning?.[j]?.[c] || [];
+        if (actions.length === 0) {
+          html += '<td class="vide">—</td>';
+        } else {
+          html += '<td>';
+          actions.forEach((a, i) => {
+            const key = `${j}-${c}-${i}`;
+            const checked = bp.actions_state?.[key] ? 'checked' : '';
+            html += `<label style="display:flex;align-items:flex-start;gap:0.3rem;margin-bottom:0.3rem;cursor:pointer;font-size:0.72rem;line-height:1.3;${checked?'opacity:0.55;text-decoration:line-through;':''}">
+              <input type="checkbox" data-bp-id="${bp.id}" data-key="${key}" ${checked} style="width:auto;margin:0.15rem 0 0;flex-shrink:0;">
+              <span>${a}</span>
+            </label>`;
+          });
+          html += '</td>';
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    if (Array.isArray(bp.ligne_de_conduite) && bp.ligne_de_conduite.length > 0) {
+      html += '<div style="margin-top:1rem;"><h4 style="margin-bottom:0.4rem;">🚀 Ligne de conduite</h4><ul>';
+      bp.ligne_de_conduite.forEach(p => html += `<li>${p}</li>`);
+      html += '</ul></div>';
+    }
+
+    html += `
+      <div style="display:flex;gap:0.6rem;margin-top:1.5rem;flex-wrap:wrap;">
+        <button type="button" class="btn-imprimer" onclick="window.print()" style="margin:0;width:auto;padding:0.7rem 1.4rem;">🖨️ Imprimer (PDF)</button>
+      </div>
+    `;
+    $('contenu-bp-sauve').innerHTML = html;
+
+    // Brancher les checkboxes
+    $('contenu-bp-sauve').querySelectorAll('input[type=checkbox][data-key]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.bpId;
+        const key = cb.dataset.key;
+        const bpCur = getBpById(id);
+        const newState = { ...(bpCur.actions_state || {}) };
+        if (cb.checked) newState[key] = true; else delete newState[key];
+        updateBp(id, { actions_state: newState });
+        // Re-rendre pour mettre à jour la progression
+        const refreshed = getBpById(id);
+        renduBpSauve(refreshed);
+      });
+    });
+  }
+
+  // Mini-objectif du jour (selon jour courant + créneau actuel)
+  function miniObjectifDuJour(bp) {
+    const jourSemaine = new Date().getDay(); // 0=dimanche, 1=lundi...
+    const mapJour = { 4:'jeudi', 5:'vendredi', 6:'samedi', 0:'dimanche', 1:'lundi', 2:'mardi', 3:'mercredi' };
+    const jour = mapJour[jourSemaine];
+    if (!jour) return null;
+    const heure = new Date().getHours();
+    const creneau = heure < 12 ? 'matin' : (heure < 18 ? 'apres-midi' : 'soir');
+    const actions = bp.planning?.[jour]?.[creneau] || [];
+    // Première action non cochée
+    for (let i = 0; i < actions.length; i++) {
+      const key = `${jour}-${creneau}-${i}`;
+      if (!bp.actions_state?.[key]) {
+        return { jour, creneau: CRENEAUX_LABEL[creneau], action: actions[i] };
+      }
+    }
+    return null;
+  }
+
+  // ====== Choix catégorie ======
+  function afficherCategories() {
+    const grille = $('grille-categories');
+    grille.innerHTML = '';
+    CATEGORIES.forEach(c => {
+      const carte = document.createElement('button');
+      carte.type = 'button';
+      carte.className = 'carte-cat';
+      carte.dataset.id = c.id;
+      carte.innerHTML = `<div class="emoji">${c.emoji}</div><div class="nom">${c.nom}</div><div class="desc">${c.desc}</div>`;
+      carte.addEventListener('click', () => ouvrirAnalyse(c));
+      grille.appendChild(carte);
+    });
+  }
+  let categorieActive = null;
+  function ouvrirAnalyse(c) {
+    categorieActive = c;
+    $('titre-categorie').innerHTML = `${c.emoji} Analyser ${c.nom.toLowerCase()}`;
+    $('ecran-choix').classList.add('hidden');
+    $('ecran-analyse').classList.remove('hidden');
+    // Reset
+    $('f-nomStat').value = '';
+    $('f-image').value = '';
+    $('f-notes').value = '';
+    $('image-info').textContent = 'aucune image sélectionnée';
+    $('image-info').style.color = 'var(--gris)';
+    $('resultat-analyse').classList.add('hidden');
+    $('erreur-analyse').classList.add('hidden');
+  }
+  $('btn-retour-choix').addEventListener('click', () => {
+    $('ecran-analyse').classList.add('hidden');
+    $('ecran-choix').classList.remove('hidden');
+    afficherMesBp();
+  });
+
+  $('f-image').addEventListener('change', e => {
+    const f = e.target.files[0];
+    const preview = $('image-preview');
+    if (f) {
+      $('image-info').textContent = `✅ ${f.name} (${(f.size/1024).toFixed(0)} Ko)`;
+      $('image-info').style.color = 'var(--vert)';
+      // Afficher la preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        preview.classList.remove('hidden');
+      };
+      reader.readAsDataURL(f);
+    } else {
+      $('image-info').textContent = 'aucune image sélectionnée';
+      $('image-info').style.color = 'var(--gris)';
+      preview.classList.add('hidden');
+    }
+  });
+
+  function fichierEnBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({
+        base64: reader.result.split(',')[1],
+        mimeType: file.type || 'image/png'
+      });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ====== Analyser ======
+  $('btn-analyser').addEventListener('click', analyser);
+
+  async function analyser() {
+    const erreur = $('erreur-analyse');
+    const resultat = $('resultat-analyse');
+    erreur.classList.add('hidden');
+    resultat.classList.add('hidden');
+
+    const fichier = $('f-image').files[0];
+    if (!fichier) {
+      erreur.textContent = 'Choisis une image de ta stat MasterTech d\'abord.';
+      erreur.classList.remove('hidden'); return;
+    }
+    const nomStat = $('f-nomStat').value.trim();
+    const notes = $('f-notes').value.trim();
+
+    const btn = $('btn-analyser');
+    btn.disabled = true;
+    btn.textContent = '⏳ Lecture de la stat…';
+
+    try {
+      const { base64, mimeType } = await fichierEnBase64(fichier);
+      btn.textContent = '⏳ Analyse en cours…';
+      const r = await fetch('/api/stats/analyser', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categorie: categorieActive.id,
+          nomStat,
+          imageBase64: base64,
+          mimeType,
+          notes
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = 'Erreur : ' + (data.error || JSON.stringify(data));
+        erreur.classList.remove('hidden'); return;
+      }
+      afficherResultat(data);
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Analyser ma stat';
+    }
+  }
+
+  function afficherResultat(data) {
+    const couleurCondition = {
+      'Puissance': 'var(--vert)',
+      'Affluence': 'var(--vert)',
+      'Normal (Opération)': 'var(--jaune)',
+      'Urgence': 'var(--orange)',
+      'Danger': 'var(--rouge)',
+      'Non-Existence': 'var(--noir)'
+    };
+    const couleur = couleurCondition[data.condition.nom] || 'var(--gris)';
+    const html = `
+      <div style="background:${couleur}1a;border-left:4px solid ${couleur};padding:1rem 1.2rem;border-radius:8px;margin-bottom:1.2rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
+          <span class="pilule" style="background:${couleur};color:white;">${data.condition.emoji} ${data.condition.nom}</span>
+          <span style="font-size:0.85rem;color:var(--gris);">Variation S-1 → S : <strong>${data.variation_pct > 0 ? '+' : ''}${data.variation_pct}%</strong></span>
+        </div>
+        <p style="margin:0;font-size:0.95rem;line-height:1.5;">${data.resume || ''}</p>
+      </div>
+
+      <h3>📊 Stat lue</h3>
+      <p style="font-size:0.9rem;color:var(--gris);margin:0.2rem 0;"><strong>${data.titre || '?'}</strong>${data.designer ? ' · ' + data.designer : ''}</p>
+      <table class="table-stat">${data.valeurs.map(v => `<tr><td>${v.date}</td><td>${Number(v.valeur).toLocaleString('fr-CH')}</td></tr>`).join('')}</table>
+
+      <h3>📋 Formule générale</h3>
+      <p style="margin:0.4rem 0;color:var(--gris);font-size:0.9rem;">${data.condition.description}</p>
+      <ol>${data.condition.formule.map(e => `<li>${e}</li>`).join('')}</ol>
+
+      <h3>✨ Plan d'action personnalisé Mood</h3>
+      <div class="markdown">${marked.parse(data.plan_action || '')}</div>
+
+      <div id="zone-strategie" class="hidden" style="margin-top:1.5rem;padding:1.2rem;background:#fff8f0;border:1px solid var(--or);border-radius:12px;">
+        <h3 style="margin-top:0;">💡 Idées à explorer</h3>
+        <p style="font-size:0.8rem;color:var(--gris);margin-top:-0.4rem;font-style:italic;">À utiliser comme inspiration — toutes ne seront pas pertinentes pour toi. Trie selon ton expertise.</p>
+        <div id="contenu-strategie" class="markdown"></div>
+      </div>
+
+      <div id="zone-bp" class="hidden" style="margin-top:1.5rem;padding:1.2rem;background:#f5f1ec;border:1px solid var(--noir);border-radius:12px;">
+        <h3 style="margin-top:0;">📅 Battle Plan de la semaine</h3>
+        <p style="font-size:0.85rem;color:var(--gris);margin-top:-0.4rem;">Décris ton poste + coche les créneaux où tu travailles. La semaine commence le jeudi.</p>
+
+        <label>Ton prénom *</label>
+        <input id="bp-prenom" type="text" placeholder="ex : Amila">
+
+        <label>Mon poste / mon métier <span class="opt">(plus tu détailles, mieux c'est)</span></label>
+        <textarea id="bp-poste" rows="5" placeholder="Décris :
+• Ton rôle (ex : vendeuse boutique Zurich / designer / atelier sertissage / digital ads...)
+• Tes tâches habituelles (ex : accueil clientes / création visuels / mise en ligne / sertir argent / poster Insta...)
+• Tes contraintes (ex : boutique = pas de temps quand il y a du monde / atelier = matin pour produire, aprem pour finitions / je suis seule / etc.)
+• Tes outils (ex : Klaviyo / Shopify / Photoshop / instagram / Katana / etc.)"></textarea>
+
+        <label>Créneaux travaillés cette semaine</label>
+        <div id="bp-grille-creneaux"></div>
+
+        <button type="button" id="btn-generer-bp" style="margin-top:1rem;background:var(--or);">📅 Générer mon Battle Plan</button>
+
+        <div id="resultat-bp" class="hidden" style="margin-top:1.5rem;"></div>
+      </div>
+
+      <div style="display:flex;gap:0.6rem;margin-top:1rem;flex-wrap:wrap;">
+        <button type="button" id="btn-strategie" style="margin:0;width:auto;padding:0.7rem 1.4rem;background:var(--or);">💡 Donner des idées de stratégie</button>
+        <button type="button" id="btn-bp" style="margin:0;width:auto;padding:0.7rem 1.4rem;background:var(--noir);">📅 Faire mon Battle Plan</button>
+        <button type="button" class="btn-imprimer" onclick="window.print()" style="margin:0;width:auto;padding:0.7rem 1.4rem;">🖨️ Télécharger / Imprimer (PDF)</button>
+      </div>
+    `;
+    $('resultat-analyse').innerHTML = html;
+    $('resultat-analyse').classList.remove('hidden');
+    $('resultat-analyse').scrollIntoView({ behavior: 'smooth' });
+
+    // Brancher le bouton stratégie après rendu
+    const btnStrat = $('btn-strategie');
+    if (btnStrat) {
+      btnStrat.addEventListener('click', async () => {
+        btnStrat.disabled = true;
+        btnStrat.textContent = '⏳ Génération des idées…';
+        try {
+          const r = await fetch('/api/stats/strategie', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              categorie: categorieActive.id,
+              titreStat: data.titre,
+              valeurs: data.valeurs,
+              condition: data.condition.nom,
+              notes: $('f-notes').value,
+              planAction: data.plan_action
+            })
+          });
+          const stratData = await r.json();
+          if (!r.ok) {
+            $('contenu-strategie').innerHTML = `<p style="color:var(--rouge)">Erreur : ${stratData.error || JSON.stringify(stratData)}</p>`;
+          } else {
+            $('contenu-strategie').innerHTML = marked.parse(stratData.strategie || '');
+          }
+          $('zone-strategie').classList.remove('hidden');
+          $('zone-strategie').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+          $('contenu-strategie').innerHTML = `<p style="color:var(--rouge)">Erreur réseau : ${e.message}</p>`;
+          $('zone-strategie').classList.remove('hidden');
+        } finally {
+          btnStrat.disabled = false;
+          btnStrat.textContent = '💡 Donner des idées de stratégie';
+        }
+      });
+    }
+
+    // ====== Battle Plan ======
+    const btnBp = $('btn-bp');
+    if (btnBp) {
+      btnBp.addEventListener('click', () => {
+        $('zone-bp').classList.toggle('hidden');
+        $('zone-bp').scrollIntoView({ behavior: 'smooth' });
+        construireGrilleCreneaux();
+        // Restaurer prénom + poste sauvegardés
+        const prenomSave = localStorage.getItem('mood_bp_prenom');
+        if (prenomSave) $('bp-prenom').value = prenomSave;
+        const posteSave = localStorage.getItem('mood_bp_poste');
+        if (posteSave) $('bp-poste').value = posteSave;
+      });
+    }
+
+    const btnGenererBp = $('btn-generer-bp');
+    if (btnGenererBp) {
+      btnGenererBp.addEventListener('click', async () => {
+        const prenom = $('bp-prenom').value.trim();
+        const poste = $('bp-poste').value.trim();
+        if (!prenom) {
+          alert('Donne ton prénom d\'abord.');
+          return;
+        }
+        if (!poste) {
+          alert('Décris ton poste/métier d\'abord (au moins 2-3 lignes).');
+          return;
+        }
+        localStorage.setItem('mood_bp_prenom', prenom);
+        localStorage.setItem('mood_bp_poste', poste);
+
+        // Collecter les créneaux cochés
+        const creneauxTravailles = {};
+        document.querySelectorAll('.case-creneau input[type=checkbox]').forEach(cb => {
+          if (cb.checked) creneauxTravailles[cb.dataset.key] = true;
+        });
+
+        btnGenererBp.disabled = true;
+        btnGenererBp.textContent = '⏳ Génération en cours…';
+        try {
+          const r = await fetch('/api/stats/generer-bp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prenom,
+              titreStat: data.titre,
+              condition: data.condition.nom,
+              formule: data.condition.formule,
+              planAction: data.plan_action,
+              notes: $('f-notes').value,
+              poste,
+              creneauxTravailles
+            })
+          });
+          const bp = await r.json();
+          if (!r.ok) {
+            $('resultat-bp').innerHTML = `<p style="color:var(--rouge)">Erreur : ${bp.error || JSON.stringify(bp)}</p>`;
+          } else {
+            // Sauvegarder le BP dans localStorage pour le retrouver dans "Mes BP"
+            const idBp = sauvegarderBp({
+              prenom,
+              stat_titre: data.titre,
+              condition_nom: data.condition.nom,
+              condition_emoji: data.condition.emoji,
+              formule: data.condition.formule,
+              objectif_semaine: bp.objectif_semaine,
+              planning: bp.planning,
+              ligne_de_conduite: bp.ligne_de_conduite
+            });
+            $('resultat-bp').innerHTML = `
+              <div style="background:#eaf3e9;padding:1rem 1.2rem;border-radius:8px;margin-bottom:1rem;">
+                ✅ <strong>BP sauvegardé !</strong> Tu le retrouveras dans <em>Mes Battle Plans</em> sur la page d'accueil — avec les cases à cocher pour suivre ta progression.
+                <button type="button" id="btn-ouvrir-bp-direct" style="margin-top:0.6rem;width:auto;padding:0.5rem 1rem;background:var(--or);font-size:0.85rem;">📅 Ouvrir mon BP avec cases à cocher →</button>
+              </div>
+              ${renduTableauBp(bp)}
+            `;
+            $('btn-ouvrir-bp-direct').addEventListener('click', () => {
+              $('ecran-analyse').classList.add('hidden');
+              $('ecran-bp-sauve').classList.remove('hidden');
+              const bpComplet = getBpById(idBp);
+              renduBpSauve(bpComplet);
+              window.scrollTo(0, 0);
+            });
+          }
+          $('resultat-bp').classList.remove('hidden');
+          $('resultat-bp').scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+          $('resultat-bp').innerHTML = `<p style="color:var(--rouge)">Erreur réseau : ${e.message}</p>`;
+          $('resultat-bp').classList.remove('hidden');
+        } finally {
+          btnGenererBp.disabled = false;
+          btnGenererBp.textContent = '📅 Générer mon Battle Plan';
+        }
+      });
+    }
+  }
+
+  // ====== Grille créneaux (cases à cocher) ======
+  const JOURS_BP = ['jeudi','vendredi','samedi','dimanche','lundi','mardi','mercredi'];
+  const CRENEAUX_BP = ['matin','apres-midi','soir'];
+  const CRENEAUX_LABEL = { 'matin': 'matin', 'apres-midi': 'aprem', 'soir': 'soir' };
+
+  function construireGrilleCreneaux() {
+    const grille = $('bp-grille-creneaux');
+    if (!grille || grille.dataset.built) return;
+    grille.dataset.built = '1';
+    grille.className = 'bp-grille';
+    grille.innerHTML = '';
+    // Header vide + 7 jours
+    grille.appendChild(creerCell('', 'header-vide', ''));
+    JOURS_BP.forEach(j => grille.appendChild(creerCell(j, 'header', '')));
+    // 3 lignes (matin / aprem / soir) avec label + 7 cases
+    CRENEAUX_BP.forEach(c => {
+      grille.appendChild(creerCell(CRENEAUX_LABEL[c], 'creneau-label', ''));
+      JOURS_BP.forEach(j => {
+        const cell = document.createElement('label');
+        cell.className = 'case-creneau';
+        cell.innerHTML = `<input type="checkbox" data-key="${j}-${c}">`;
+        grille.appendChild(cell);
+      });
+    });
+  }
+  function creerCell(text, cls, key) {
+    const d = document.createElement('div');
+    d.className = cls;
+    d.textContent = text;
+    return d;
+  }
+
+  // ====== Rendu du tableau Battle Plan résultat ======
+  function renduTableauBp(bp) {
+    if (!bp.planning) return '<p>Pas de données.</p>';
+    let html = '';
+    // En-tête avec prénom
+    const prenom = $('bp-prenom').value.trim();
+    if (prenom) {
+      html += `<h3 style="margin-top:0;margin-bottom:0.4rem;">📅 Battle Plan de ${prenom}</h3>`;
+    }
+    if (bp.objectif_semaine) {
+      html += `<div style="margin-bottom:0.8rem;padding:0.8rem 1rem;background:#fff8f0;border-left:3px solid var(--or);border-radius:4px;">🎯 <strong>${bp.objectif_semaine}</strong></div>`;
+    }
+    html += '<div class="bp-table-wrap"><table class="bp-table"><thead><tr><th class="creneau">Créneau</th>';
+    JOURS_BP.forEach(j => html += `<th>${j}</th>`);
+    html += '</tr></thead><tbody>';
+    CRENEAUX_BP.forEach(c => {
+      html += `<tr><th class="creneau">${CRENEAUX_LABEL[c]}</th>`;
+      JOURS_BP.forEach(j => {
+        const actions = bp.planning?.[j]?.[c] || [];
+        if (actions.length === 0) {
+          html += '<td class="vide">—</td>';
+        } else {
+          html += `<td><ul>${actions.map(a => `<li>${a}</li>`).join('')}</ul></td>`;
+        }
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    if (Array.isArray(bp.ligne_de_conduite) && bp.ligne_de_conduite.length > 0) {
+      html += '<div style="margin-top:1rem;"><h4 style="margin-bottom:0.4rem;">🚀 Ligne de conduite</h4><ul>';
+      bp.ligne_de_conduite.forEach(p => html += `<li>${p}</li>`);
+      html += '</ul></div>';
+    }
+    return html;
+  }
+</script>
+</body>
+</html>

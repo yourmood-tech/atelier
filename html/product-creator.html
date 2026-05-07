@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mood — Créer un produit</title>
+<style>
+  :root {
+    --rose: #f5e6e0;
+    --or: #c9a87c;
+    --noir: #2a2a2a;
+    --gris: #8a8a8a;
+    --vert: #6f9b6e;
+    --rouge: #c75a5a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--rose);
+    color: var(--noir);
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+  }
+  .container { max-width: 720px; margin: 2rem auto; padding: 1rem; }
+  h1 { font-weight: 300; letter-spacing: 0.04em; margin-bottom: 0.2rem; }
+  h1 strong { font-weight: 600; color: var(--or); }
+  .subtitle { color: var(--gris); margin-bottom: 2rem; }
+  .card { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+  label { display: block; font-size: 0.85rem; font-weight: 500; margin-top: 1rem; margin-bottom: 0.4rem; color: var(--noir); }
+  label .opt { color: var(--gris); font-weight: 400; }
+  input, select, textarea {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: white;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--or);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  button {
+    background: var(--noir);
+    color: white;
+    border: none;
+    padding: 0.9rem 1.8rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    margin-top: 1.5rem;
+    width: 100%;
+    transition: background 0.2s;
+  }
+  button:hover { background: var(--or); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+  .hidden { display: none; }
+  .alert { padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+  .alert-error { background: #fce8e8; color: var(--rouge); }
+  .alert-success { background: #eaf3e9; color: var(--vert); }
+  .resultat { background: #f9f9f9; padding: 1rem; border-radius: 8px; font-size: 0.85rem; margin-top: 1rem; }
+  .resultat dt { font-weight: 500; margin-top: 0.5rem; }
+  .resultat dd { margin: 0; color: var(--gris); }
+  .resultat a { color: var(--or); text-decoration: none; word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><strong>mood</strong> · créer un produit</h1>
+  <p class="subtitle">Application interne — tu remplis, ça part dans Shopify en brouillon.</p>
+
+  <!-- ============== ÉCRAN CHOIX TYPE ============== -->
+  <div id="ecran-choix" class="card">
+    <h2 style="margin-top:0;text-align:center;">Que veux-tu créer ?</h2>
+    <p style="text-align:center;color:var(--gris);margin-bottom:1.5rem;">Choisis le type de produit Mood à mettre en ligne</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+      <button type="button" data-type="produit" class="carte-choix" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">💍</div>
+        <div style="font-weight:600;color:var(--noir);font-size:1rem;margin-bottom:0.3rem;">Produit seul</div>
+        <div style="font-size:0.8rem;color:var(--gris);font-weight:400;">addon, deux tiers, medium, mini, base, open mood</div>
+      </button>
+      <button type="button" data-type="coffret" class="carte-choix" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">🎁</div>
+        <div style="font-weight:600;color:var(--noir);font-size:1rem;margin-bottom:0.3rem;">Coffret</div>
+        <div style="font-size:0.8rem;color:var(--gris);font-weight:400;">1 base + 1 ou plusieurs addons (avec/sans base, avec/sans boîte)</div>
+      </button>
+      <button type="button" data-type="pack" class="carte-choix" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">
+        <div style="font-size:2rem;margin-bottom:0.5rem;">📦</div>
+        <div style="font-weight:600;color:var(--noir);font-size:1rem;margin-bottom:0.3rem;">Pack</div>
+        <div style="font-size:0.8rem;color:var(--gris);font-weight:400;">plusieurs addons (matières / formats / couleurs variés)</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============== ÉCRAN COFFRET ============== -->
+  <div id="ecran-coffret" class="card hidden">
+    <button type="button" id="btn-retour-choix-coffret" style="background:transparent;color:var(--gris);border:none;padding:0;margin:0 0 1rem 0;width:auto;font-size:0.85rem;cursor:pointer;text-align:left;">← Retour au choix</button>
+    <h2 style="margin-top:0">🎁 Nouveau coffret</h2>
+
+    <label>Nom du coffret *</label>
+    <input id="cof-nom" placeholder="ex : Coffret de mai - Soft Gold">
+
+    <label>Composé de <span class="opt">(description visible — une ligne par composant)</span></label>
+    <textarea id="cof-composants" placeholder="ex :&#10;1 base extra small gravée carrée polie&#10;1 deux tiers en acier rose gold gravé poli&#10;1 deux tiers en acier rose gold gravé froissé"></textarea>
+
+    <label style="margin-top:1rem;">💰 Composants pour calcul auto du prix <span class="opt">(usage interne — invisible côté client)</span></label>
+    <div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;">
+      <div id="cof-comp-liste"></div>
+      <button type="button" id="btn-ajouter-comp" style="margin:0.6rem 0 0 0;width:auto;padding:0.5rem 1rem;background:var(--noir);font-size:0.85rem;">+ Ajouter un composant</button>
+      <div id="cof-comp-total" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid #eee;font-size:0.9rem;color:var(--gris);">Aucun composant — ajoute au moins 1 ligne pour calculer</div>
+    </div>
+
+    <label>Mots-clés pour le texte d'inspiration <span class="opt">(2-4 mots)</span></label>
+    <div style="display:flex;gap:0.5rem;align-items:stretch">
+      <input id="cof-motsCles" type="text" placeholder="ex : printemps, douceur, lumière dorée" style="flex:1">
+      <button type="button" id="btn-generer-cof" style="margin-top:0;width:auto;padding:0.7rem 1rem;white-space:nowrap;background:var(--or)">✨ Générer le texte</button>
+    </div>
+
+    <label>Texte d'inspiration <span class="opt">(modifiable)</span></label>
+    <textarea id="cof-texteInspiration" placeholder="Tape les mots-clés ci-dessus et clique sur Générer, ou écris directement..."></textarea>
+
+    <h3 style="margin-top:1.5rem;margin-bottom:0.6rem;font-weight:500;">Prix</h3>
+    <div class="row">
+      <div>
+        <label>Prix sans base (CHF) *</label>
+        <input id="cof-prixSansBase" type="number" step="0.01" placeholder="ex : 109.00">
+      </div>
+      <div>
+        <label>Prix avec base (CHF) * <span class="opt">(auto = +250 CHF)</span></label>
+        <input id="cof-prixAvecBase" type="number" step="0.01" placeholder="auto-calculé">
+      </div>
+    </div>
+
+    <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;margin-top:1rem;cursor:pointer;">
+      <input type="checkbox" id="cof-optionBoite" style="width:auto;margin:0;"> Ajouter une option <strong>boîte mood</strong> <span class="opt">(supplément +59 CHF auto)</span>
+    </label>
+    <div id="cof-zone-boite" class="hidden" style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;margin-top:0.5rem;">
+      <div class="row">
+        <div>
+          <label>Prix sans boîte (CHF) <span class="opt">(= prix sans base)</span></label>
+          <input id="cof-prixSansBoite" type="number" step="0.01">
+        </div>
+        <div>
+          <label>Prix avec boîte (CHF) <span class="opt">(= +59 auto)</span></label>
+          <input id="cof-prixAvecBoite" type="number" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-creer-cof" style="margin-top:1.5rem;">Créer le coffret dans Shopify</button>
+
+    <div id="erreur-cof" class="alert alert-error hidden"></div>
+    <div id="succes-cof" class="alert alert-success hidden"></div>
+    <div id="resultat-cof" class="resultat hidden"></div>
+
+    <div style="margin-top:1.5rem;padding:1rem;background:#f9f5f1;border-radius:8px;">
+      <p style="margin:0 0 0.6rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du coffret</strong></p>
+      <label for="cof-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Choisir des photos</label>
+      <input id="cof-photos" type="file" accept="image/*" multiple style="display:none">
+      <span id="cof-photos-info" style="margin-left:0.8rem;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</span>
+    </div>
+  </div>
+
+  <!-- ============== ÉCRAN PACK ============== -->
+  <div id="ecran-pack" class="card hidden">
+    <button type="button" id="btn-retour-choix-pack" style="background:transparent;color:var(--gris);border:none;padding:0;margin:0 0 1rem 0;width:auto;font-size:0.85rem;cursor:pointer;text-align:left;">← Retour au choix</button>
+    <h2 style="margin-top:0">📦 Nouveau pack</h2>
+
+    <label>Nom du pack *</label>
+    <input id="pak-nom" placeholder="ex : Le pack Violetty pour ta garde-mood 💜">
+
+    <label>Composé de <span class="opt">(description visible — une ligne par composant)</span></label>
+    <textarea id="pak-composants" placeholder="ex :&#10;1 medium en polymère blanc sablé&#10;1 medium en aluminium lilas cashmere&#10;1 medium en polymère translucide sablé violet clair&#10;1 medium en acier mat"></textarea>
+
+    <label style="margin-top:1rem;">💰 Composants pour calcul auto du prix <span class="opt">(usage interne — invisible côté client)</span></label>
+    <div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;">
+      <div id="pak-comp-liste"></div>
+      <button type="button" id="btn-pak-ajouter-comp" style="margin:0.6rem 0 0 0;width:auto;padding:0.5rem 1rem;background:var(--noir);font-size:0.85rem;">+ Ajouter un composant</button>
+      <div id="pak-comp-total" style="margin-top:0.8rem;padding-top:0.6rem;border-top:1px solid #eee;font-size:0.9rem;color:var(--gris);">Aucun composant — ajoute au moins 1 ligne pour calculer</div>
+    </div>
+
+    <label>Mots-clés pour le texte d'inspiration <span class="opt">(2-4 mots)</span></label>
+    <div style="display:flex;gap:0.5rem;align-items:stretch">
+      <input id="pak-motsCles" type="text" placeholder="ex : violet, douceur, harmonie" style="flex:1">
+      <button type="button" id="btn-generer-pak" style="margin-top:0;width:auto;padding:0.7rem 1rem;white-space:nowrap;background:var(--or)">✨ Générer le texte</button>
+    </div>
+
+    <label>Texte d'inspiration <span class="opt">(modifiable)</span></label>
+    <textarea id="pak-texteInspiration" placeholder="Tape les mots-clés ci-dessus et clique sur Générer, ou écris directement..."></textarea>
+
+    <label>Prix (CHF) *</label>
+    <input id="pak-prix" type="number" step="0.01" placeholder="ex : 67.00">
+
+    <button id="btn-creer-pak" style="margin-top:1.5rem;">Créer le pack dans Shopify</button>
+
+    <div id="erreur-pak" class="alert alert-error hidden"></div>
+    <div id="succes-pak" class="alert alert-success hidden"></div>
+    <div id="resultat-pak" class="resultat hidden"></div>
+
+    <div style="margin-top:1.5rem;padding:1rem;background:#f9f5f1;border-radius:8px;">
+      <p style="margin:0 0 0.6rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du pack</strong></p>
+      <label for="pak-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Choisir des photos</label>
+      <input id="pak-photos" type="file" accept="image/*" multiple style="display:none">
+      <span id="pak-photos-info" style="margin-left:0.8rem;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</span>
+    </div>
+  </div>
+
+  <!-- ============== ÉCRAN FORMULAIRE PRODUIT ============== -->
+  <div id="ecran-form" class="card hidden">
+    <button type="button" id="btn-retour-choix-produit" style="background:transparent;color:var(--gris);border:none;padding:0;margin:0 0 1rem 0;width:auto;font-size:0.85rem;cursor:pointer;text-align:left;">← Retour au choix</button>
+    <h2 style="margin-top:0">💍 Nouveau produit</h2>
+
+    <div class="row">
+      <div>
+        <label>Nom du produit *</label>
+        <input id="f-nom" placeholder="ex : Nirvana">
+      </div>
+      <div>
+        <label>Format *</label>
+        <select id="f-format">
+          <option value="">— choisir —</option>
+          <option value="addon">addon</option>
+          <option value="deux tiers">deux tiers</option>
+          <option value="medium">medium</option>
+          <option value="mini">minis (2)</option>
+          <option value="open mood">open mood</option>
+          <option value="base large">base large</option>
+          <option value="base small">base small</option>
+          <option value="base extra small">base extra small</option>
+          <option value="multi format">multi format</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Matière *</label>
+        <select id="f-matiere">
+          <option value="">— choisir —</option>
+          <option value="argent">argent</option>
+          <option value="or">or</option>
+          <option value="aluminium">aluminium</option>
+          <option value="polymère">polymère</option>
+          <option value="titane">titane</option>
+          <option value="acier">acier</option>
+          <option value="bronze">bronze</option>
+          <option value="bois">bois</option>
+          <option value="céramique">céramique</option>
+          <option value="carbone">carbone</option>
+          <option value="tantale">tantale</option>
+        </select>
+      </div>
+      <div>
+        <label>Finition <span class="opt">(optionnel)</span></label>
+        <select id="f-finition">
+          <option value="aucune">aucune</option>
+          <option value="poli">poli</option>
+          <option value="brossé">brossé</option>
+          <option value="mat">mat</option>
+          <option value="satiné">satiné</option>
+          <option value="martelé">martelé</option>
+          <option value="gravé">gravé</option>
+          <option value="oxydé">oxydé</option>
+          <option value="sablé opaque">sablé opaque</option>
+          <option value="translucide sablé">translucide sablé</option>
+          <option value="autre">autre (texte libre)</option>
+        </select>
+        <input id="f-finition-autre" type="text" placeholder="Tape la finition personnalisée" class="hidden" style="margin-top:0.5rem;">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Couleur exacte <span class="opt">(si 1 seule couleur)</span></label>
+        <input id="f-couleur" placeholder="ex : turquoise">
+      </div>
+      <div>
+        <label>Groupe couleur <span class="opt">(optionnel)</span></label>
+        <input id="f-groupeCouleur" placeholder="ex : bleu">
+      </div>
+    </div>
+
+    <div id="zone-formats-multiples" class="hidden" style="margin-bottom:1rem;">
+      <label>Formats multiples <span class="opt">(coche tous les formats que ce produit propose — le prix sera calculé automatiquement par format)</span></label>
+      <div id="palette-formats" style="display:flex;flex-wrap:wrap;gap:0.4rem;padding:0.6rem;background:#fafafa;border:1px solid #ddd;border-radius:8px;">
+        <!-- chips générés en JS -->
+      </div>
+    </div>
+
+    <div id="zone-options-base" class="hidden" style="margin-bottom:1rem;background:#f9f5f1;border:1px solid var(--or);border-radius:8px;padding:1rem;">
+      <p style="margin:0 0 0.6rem 0;font-size:0.9rem;color:var(--or);font-weight:600;">⚙️ Options de la base</p>
+      <label>Forme *</label>
+      <select id="f-formeBase">
+        <option value="">— choisir —</option>
+        <option value="arrondie">arrondie</option>
+        <option value="carrée">carrée</option>
+      </select>
+      <p style="margin:0.6rem 0 0 0;font-size:0.8rem;color:var(--gris);">💡 Les bases mood existent uniquement en <strong>acier</strong> ou <strong>titane</strong>. La finition se renseigne dans le champ <em>Finition</em> plus haut. Le nom est facultatif pour les bases — le titre est généré automatiquement.</p>
+    </div>
+
+    <div id="zone-couleurs-wrap">
+      <label>Couleurs multiples <span class="opt">(si le produit a plusieurs couleurs au choix — palette selon la matière)</span></label>
+      <div id="zone-couleurs" style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;">
+        <div id="palette-couleurs" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.6rem;">
+          <span style="font-size:0.85rem;color:var(--gris)">Choisis d'abord une matière pour voir la palette</span>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;border-top:1px solid #eee;padding-top:0.6rem;">
+          <input id="f-couleur-custom" type="text" placeholder="Couleur custom (pour polymère, etc.)" style="flex:1;font-size:0.85rem;padding:0.4rem 0.6rem;">
+          <button type="button" id="btn-ajouter-couleur" style="margin:0;width:auto;padding:0.4rem 0.8rem;font-size:0.85rem;background:var(--noir);">+ Ajouter</button>
+        </div>
+        <div id="info-variantes" style="margin-top:0.6rem;font-size:0.8rem;color:var(--gris);"></div>
+      </div>
+    </div>
+
+    <label>Collection <span class="opt">(nom du tag de collection)</span></label>
+    <input id="f-collection" placeholder="ex : test, aura, signature, droits-des-femmes">
+
+    <div class="row">
+      <div>
+        <label>Prix de vente (CHF) * <span id="badge-vente" class="opt"></span></label>
+        <input id="f-prixVente" type="number" step="0.01" placeholder="ex : 219.00">
+      </div>
+      <div>
+        <label>Coût d'achat (CHF) <span id="badge-achat" class="opt"></span></label>
+        <input id="f-coutAchat" type="number" step="0.01" placeholder="ex : 33.00">
+      </div>
+    </div>
+
+    <label>Caractéristiques particulières <span class="opt">(coche ce qui s'applique au produit pour ajouter les bons tags)</span></label>
+    <div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;display:flex;flex-wrap:wrap;gap:0.6rem;margin-bottom:1rem;">
+      <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-zircon" style="width:auto;margin:0;"> serti de zircons</label>
+      <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-email" style="width:auto;margin:0;"> revêtement émail</label>
+      <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-glitter" style="width:auto;margin:0;"> glitter / paillettes</label>
+      <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-acier-decoupe" style="width:auto;margin:0;"> acier découpé</label>
+      <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-rangement" style="width:auto;margin:0;"> boîte de rangement</label>
+      <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-auraoct" style="width:auto;margin:0;"> medium aura seul (auraoct)</label>
+    </div>
+
+    <label>Mots-clés pour le texte <span class="opt">(2-4 mots qui décrivent l'esprit du produit)</span></label>
+    <div style="display:flex;gap:0.5rem;align-items:stretch">
+      <input id="f-motsCles" type="text" placeholder="ex : ciel, pureté, sérénité, miroir d'eau" style="flex:1">
+      <button type="button" id="btn-generer" style="margin-top:0;width:auto;padding:0.7rem 1rem;white-space:nowrap;background:var(--or)">✨ Générer le texte</button>
+    </div>
+
+    <label>Texte d'inspiration <span class="opt">(apparaît sous le titre du produit — modifiable)</span></label>
+    <textarea id="f-texteInspiration" placeholder="Tape les mots-clés ci-dessus et clique sur Générer, ou écris directement ton texte ici..."></textarea>
+
+    <button id="btn-creer">Créer dans Shopify</button>
+
+    <div style="margin-top:1.5rem;padding:1rem;background:#f9f5f1;border-radius:8px;">
+      <p style="margin:0 0 0.8rem 0;font-size:0.9rem;color:var(--gris)">📸 <strong>Photos du produit</strong></p>
+
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button type="button" id="btn-recherche-dash" style="margin:0;width:auto;padding:0.6rem 1rem;background:var(--or);font-size:0.9rem;">🔍 Chercher dans Dash</button>
+        <label for="f-photos" style="display:inline-block;padding:0.6rem 1rem;background:white;border:1px solid #ddd;color:var(--noir);border-radius:8px;cursor:pointer;font-size:0.9rem;font-weight:500;margin:0;">📁 Photos depuis mon Mac</label>
+        <input id="f-photos" type="file" accept="image/*" multiple style="display:none">
+      </div>
+      <p id="photos-info" style="margin:0.6rem 0 0 0;font-size:0.85rem;color:var(--gris)">aucune photo sélectionnée</p>
+
+      <!-- Zone recherche Dash -->
+      <div id="zone-dash" class="hidden" style="margin-top:1rem;padding:1rem;background:white;border:1px solid var(--or);border-radius:8px;">
+        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.8rem;">
+          <input id="dash-keyword" type="text" placeholder="Mots-clés (ex: nirvana, argent, deux tiers...)" style="flex:1;font-size:0.9rem;padding:0.5rem 0.7rem;">
+          <button type="button" id="btn-dash-go" style="margin:0;width:auto;padding:0.5rem 1rem;font-size:0.85rem;">Chercher</button>
+          <button type="button" id="btn-dash-fermer" style="margin:0;width:auto;padding:0.5rem 0.8rem;font-size:0.85rem;background:#eee;color:var(--noir);">Fermer</button>
+        </div>
+        <p id="dash-info" style="margin:0;font-size:0.8rem;color:var(--gris);min-height:1em;"></p>
+        <div id="dash-resultats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:0.5rem;margin-top:0.8rem;max-height:400px;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <div id="erreur-form" class="alert alert-error hidden"></div>
+    <div id="succes-form" class="alert alert-success hidden"></div>
+    <div id="resultat" class="resultat hidden"></div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // ====== TABLEAU DES PRIX (extrait du tableur Mood, gid=1479864721) ======
+  const PRIX = {
+    'aluminium': { 'addon':{achat:6.05,vente:85}, 'deux tiers':{achat:5.40,vente:75}, 'medium':{achat:4.45,vente:65}, 'mini':{achat:5.60,vente:60}, '2 minis':{achat:11.20,vente:120} },
+    'polymère':  { 'addon':{achat:2.36,vente:35}, 'deux tiers':{achat:2.36,vente:25}, 'medium':{achat:1.18,vente:15} },
+    'titane':    { 'addon':{achat:12.00,vente:189}, 'deux tiers':{achat:10.00,vente:129}, 'medium':{achat:6.00,vente:109} },
+    'bois':      { 'addon':{achat:18.40,vente:null} },
+    'acier':     { 'addon':{achat:15.00,vente:189}, 'deux tiers':{achat:9.00,vente:129}, 'medium':{achat:4.50,vente:109}, 'mini':{achat:null,vente:60}, '2 minis':{achat:null,vente:120} },
+    'base':      { 'base mood':{achat:24,vente:250} },
+    'bronze':    { 'addon':{achat:48.00,vente:null}, 'deux tiers':{achat:47.00,vente:null}, 'medium':{achat:16.00,vente:null} },
+    'céramique': { 'addon':{achat:54.00,vente:null}, 'medium':{achat:80.00,vente:null} },
+    'carbone':   { 'addon':{achat:62.40,vente:109}, 'medium':{achat:31.20,vente:null} },
+    'argent':    { 'addon':{achat:40.00,vente:249}, 'deux tiers':{achat:33.00,vente:219}, 'medium':{achat:26.00,vente:169} },
+    'or':        { 'addon':{achat:350.00,vente:null}, 'deux tiers':{achat:320.00,vente:null}, 'medium':{achat:310.00,vente:null} },
+    'tantale':   { 'addon':{achat:390.00,vente:null}, 'deux tiers':{achat:290.00,vente:null}, 'medium':{achat:190.00,vente:null} },
+    'icelea':    { 'addon':{achat:40,vente:295}, 'deux tiers':{achat:40,vente:269}, 'medium':{achat:40,vente:169}, 'pack 2 minis':{achat:40,vente:225} },
+    'aura':      { 'medium':{achat:25,vente:199}, 'mini aura (x2)':{achat:32,vente:225}, 'mini aura (x1)':{achat:16,vente:114.50} },
+    'émail':     { 'addon':{achat:40,vente:225}, 'deux tiers':{achat:40,vente:169}, 'medium':{achat:40,vente:169}, 'minis':{achat:40,vente:225} }
+  };
+
+  // ====== PALETTE DES FORMATS (n'apparaît QUE si "multi format" sélectionné dans le menu déroulant) ======
+  const FORMATS_DISPO = ['addon', 'deux tiers', 'medium', 'mini', 'open mood', 'base large', 'base small', 'base extra small'];
+  const formatsSelectionnes = new Set();
+
+  function rendrePaletteFormats() {
+    const palette = $('palette-formats');
+    palette.innerHTML = '';
+    FORMATS_DISPO.forEach(f => {
+      const actif = formatsSelectionnes.has(f);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.textContent = f === 'mini' ? 'minis (2)' : f;
+      chip.style.cssText = `padding:0.4rem 0.8rem;border-radius:20px;border:1px solid ${actif?'var(--vert)':'#ddd'};background:${actif?'#eaf3e9':'white'};color:${actif?'var(--vert)':'var(--noir)'};font-size:0.85rem;cursor:pointer;font-weight:${actif?'600':'400'};margin:0;width:auto;`;
+      chip.addEventListener('click', () => {
+        if (formatsSelectionnes.has(f)) formatsSelectionnes.delete(f);
+        else formatsSelectionnes.add(f);
+        rendrePaletteFormats();
+        // Afficher la zone "Options de la base" si au moins une base sélectionnée
+        const aUneBase = Array.from(formatsSelectionnes).some(x => x.startsWith('base'));
+        $('zone-options-base').classList.toggle('hidden', !aUneBase);
+        majPrix();
+        majInfoVariantes();
+      });
+      palette.appendChild(chip);
+    });
+  }
+
+  // Toggle visibilité des zones spéciales selon la valeur du menu déroulant
+  $('f-format').addEventListener('change', () => {
+    const v = $('f-format').value;
+    const zoneMulti = $('zone-formats-multiples');
+    const zoneBase = $('zone-options-base');
+
+    const zoneCouleurs = $('zone-couleurs-wrap');
+    if (v === 'multi format') {
+      zoneMulti.classList.remove('hidden');
+      zoneBase.classList.add('hidden');
+      zoneCouleurs.classList.remove('hidden');
+      rendrePaletteFormats();
+    } else if (v.startsWith('base')) {
+      zoneMulti.classList.add('hidden');
+      zoneBase.classList.remove('hidden');
+      zoneCouleurs.classList.remove('hidden'); // les bases peuvent avoir plusieurs couleurs (rose gold, black, etc.)
+      formatsSelectionnes.clear();
+    } else {
+      zoneMulti.classList.add('hidden');
+      zoneBase.classList.add('hidden');
+      zoneCouleurs.classList.remove('hidden');
+      formatsSelectionnes.clear();
+    }
+    majPrix();
+    majInfoVariantes();
+  });
+
+
+  // ====== PALETTES DE COULEURS par matière ======
+  const COULEURS = {
+    'aluminium': ['noir','rouge','émeraude','aubergine','rose pastel','belipastel','ocre','jaune pastel','vert pastel','bleu pastel','lilas cashmere','bleu marine','violet','noisette','abricot','pêche'],
+    'acier':     ['rose gold','noir','yellow gold','neutre'],
+    'argent':    ['neutre','oxydé'],
+    'titane':    ['neutre','nacré','violet','bleu','brun','dégradé'],
+    'polymère':  [],
+    'or':        ['or jaune','or rose','or blanc','or gris'],
+    'bois':      ['noyer','ébène','olivier','padouk'],
+    'céramique': ['noir','blanc','rose'],
+    'carbone':   ['noir full','noir fibre'],
+    'bronze':    ['neutre'],
+    'tantale':   ['neutre']
+  };
+  // Palette spécifique aux bases (revêtements)
+  const COULEURS_BASES = ['rose gold','black','yellow gold','chocolat','émeraude','rosé','vieux rose','piquetée','neutre'];
+
+  // État : couleurs actuellement sélectionnées
+  const couleursSelectionnees = new Set();
+
+  function rendrePaletteCouleurs() {
+    const matiere = $('f-matiere').value;
+    const formatChoisi = $('f-format').value;
+    const enModeBase = formatChoisi.startsWith('base') || (formatChoisi === 'multi format' && Array.from(formatsSelectionnes).some(f => f.startsWith('base')));
+    const palette = $('palette-couleurs');
+    palette.innerHTML = '';
+    // Pour les bases : utiliser la palette des bases (revêtements)
+    const dispo = enModeBase ? COULEURS_BASES : (COULEURS[matiere] || []);
+    if (!matiere && !enModeBase) {
+      palette.innerHTML = '<span style="font-size:0.85rem;color:var(--gris)">Choisis d\'abord une matière pour voir la palette</span>';
+      return;
+    }
+    if (dispo.length === 0) {
+      palette.innerHTML = '<span style="font-size:0.85rem;color:var(--gris)">Pas de palette prédéfinie pour cette matière — utilise le champ ci-dessous pour ajouter les couleurs</span>';
+    } else {
+      dispo.forEach(c => palette.appendChild(faireChip(c, false)));
+    }
+    // Re-afficher les couleurs custom déjà ajoutées (qui ne sont pas dans la palette)
+    couleursSelectionnees.forEach(c => {
+      if (!dispo.includes(c)) palette.appendChild(faireChip(c, true));
+    });
+    majInfoVariantes();
+  }
+
+  function faireChip(couleur, isCustom) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.dataset.couleur = couleur;
+    chip.textContent = isCustom ? `${couleur} ✕` : couleur;
+    const actif = couleursSelectionnees.has(couleur);
+    chip.style.cssText = `padding:0.35rem 0.7rem;border-radius:20px;border:1px solid ${actif?'var(--vert)':'#ddd'};background:${actif?'#eaf3e9':'white'};color:${actif?'var(--vert)':'var(--noir)'};font-size:0.8rem;cursor:pointer;font-weight:${actif?'600':'400'};margin:0;width:auto;`;
+    chip.addEventListener('click', () => {
+      if (couleursSelectionnees.has(couleur)) {
+        couleursSelectionnees.delete(couleur);
+      } else {
+        couleursSelectionnees.add(couleur);
+      }
+      rendrePaletteCouleurs();
+    });
+    return chip;
+  }
+
+  function majInfoVariantes() {
+    const info = $('info-variantes');
+    const formatChoisi = $('f-format').value;
+    const nC = couleursSelectionnees.size;
+    // Nombre de formats selon le mode
+    let nF;
+    if (formatChoisi === 'multi format') nF = formatsSelectionnes.size;
+    else if (formatChoisi) nF = 1;
+    else nF = 0;
+
+    if (nF === 0) {
+      info.textContent = '— choisis d\'abord un format dans le menu déroulant';
+      info.style.color = 'var(--gris)';
+      return;
+    }
+    const totalCouleurs = nC || 1;
+    const total = 13 * nF * totalCouleurs;
+    const parts = ['13 tailles'];
+    if (nF > 1) parts.push(`${nF} formats`);
+    if (nC > 0) parts.push(`${nC} couleur${nC>1?'s':''}`);
+    info.innerHTML = `${total} variantes au total (${parts.join(' × ')})`;
+    info.style.color = total > 100 ? 'var(--rouge)' : 'var(--vert)';
+    if (total > 100) {
+      info.innerHTML += ' <span style="color:var(--rouge)">⚠️ Au-delà de 100 — Shopify Plus accepte jusqu\'à 2000</span>';
+    }
+  }
+
+  $('f-matiere').addEventListener('change', rendrePaletteCouleurs);
+
+  $('btn-ajouter-couleur').addEventListener('click', () => {
+    const c = $('f-couleur-custom').value.trim().toLowerCase();
+    if (!c) return;
+    couleursSelectionnees.add(c);
+    $('f-couleur-custom').value = '';
+    rendrePaletteCouleurs();
+  });
+  $('f-couleur-custom').addEventListener('keypress', e => {
+    if (e.key === 'Enter') { e.preventDefault(); $('btn-ajouter-couleur').click(); }
+  });
+
+  // ====== AUTO-REMPLISSAGE DES PRIX selon matière + format ======
+  function majPrix() {
+    const matiere = $('f-matiere').value;
+    const formatChoisi = $('f-format').value;
+    const badgeVente = $('badge-vente');
+    const badgeAchat = $('badge-achat');
+
+    // Mode multi-format : prix calculé par variante côté backend
+    if (formatChoisi === 'multi format') {
+      if (formatsSelectionnes.size > 1) {
+        badgeVente.textContent = '(prix calculé automatiquement par format depuis le tableur)';
+        badgeVente.style.color = 'var(--vert)';
+        badgeAchat.textContent = '(coût calculé par format)';
+        badgeAchat.style.color = 'var(--vert)';
+        $('f-prixVente').value = '';
+        $('f-coutAchat').value = '';
+      } else {
+        badgeVente.textContent = '(coche au moins 2 formats dans la zone ci-dessus)';
+        badgeVente.style.color = 'var(--rouge)';
+        badgeAchat.textContent = '';
+      }
+      return;
+    }
+
+    // Mode mono-format : on lit la valeur du select directement
+    const format = formatChoisi;
+    if (!matiere || !format) {
+      badgeVente.textContent = '';
+      badgeAchat.textContent = '';
+      return;
+    }
+    const entry = PRIX[matiere]?.[format];
+    if (entry) {
+      if (entry.vente !== null) {
+        $('f-prixVente').value = entry.vente;
+        badgeVente.textContent = '(prix standard appliqué — modifiable)';
+        badgeVente.style.color = 'var(--vert)';
+      } else {
+        $('f-prixVente').value = '';
+        badgeVente.textContent = '(pas de prix standard — à saisir)';
+        badgeVente.style.color = 'var(--rouge)';
+      }
+      if (entry.achat !== null) {
+        $('f-coutAchat').value = entry.achat;
+        badgeAchat.textContent = '(coût standard appliqué — modifiable)';
+        badgeAchat.style.color = 'var(--vert)';
+      } else {
+        $('f-coutAchat').value = '';
+        badgeAchat.textContent = '(pas de coût standard — à saisir)';
+        badgeAchat.style.color = 'var(--rouge)';
+      }
+    } else {
+      badgeVente.textContent = '(combinaison non répertoriée — à saisir manuellement)';
+      badgeVente.style.color = 'var(--rouge)';
+      badgeAchat.textContent = '';
+    }
+  }
+  $('f-matiere').addEventListener('change', majPrix);
+
+  // ====== GÉNÉRATION du texte d'inspiration via Gemini ======
+  $('btn-generer').addEventListener('click', async () => {
+    const motsCles = $('f-motsCles').value.trim();
+    const erreur = $('erreur-form');
+    erreur.classList.add('hidden');
+    if (!motsCles) {
+      erreur.textContent = 'Tape d\'abord 2-3 mots-clés dans le champ au-dessus.';
+      erreur.classList.remove('hidden');
+      return;
+    }
+    const btn = $('btn-generer');
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération…';
+    try {
+      const r = await fetch('/api/produits/generer-texte', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          motsCles,
+          nom: $('f-nom').value,
+          format: $('f-format').value,
+          matiere: $('f-matiere').value,
+          finition: $('f-finition').value === 'autre' ? $('f-finition-autre').value : $('f-finition').value,
+          couleur: $('f-couleur').value
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = 'Erreur génération : ' + (data.error || JSON.stringify(data));
+        erreur.classList.remove('hidden');
+        return;
+      }
+      $('f-texteInspiration').value = data.texte;
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+
+  // ====== Photos : depuis Mac OU depuis Dash ======
+  let imagesDashSelectionnees = [];
+
+  function majInfoPhotos() {
+    const fichiers = $('f-photos').files;
+    const nFichiers = fichiers ? fichiers.length : 0;
+    const nDash = imagesDashSelectionnees.length;
+    const total = nFichiers + nDash;
+    const info = $('photos-info');
+    if (total === 0) {
+      info.textContent = 'aucune photo sélectionnée';
+      info.style.color = 'var(--gris)';
+    } else {
+      const parts = [];
+      if (nDash > 0) parts.push(`${nDash} de Dash`);
+      if (nFichiers > 0) parts.push(`${nFichiers} depuis Mac`);
+      info.textContent = `✅ ${total} photo${total>1?'s':''} sélectionnée${total>1?'s':''} (${parts.join(' + ')})`;
+      info.style.color = 'var(--vert)';
+    }
+  }
+
+  $('f-photos').addEventListener('change', majInfoPhotos);
+
+  // ====== Recherche Dash ======
+  $('btn-recherche-dash').addEventListener('click', () => {
+    $('zone-dash').classList.remove('hidden');
+    setTimeout(() => $('dash-keyword').focus(), 50);
+  });
+  $('btn-dash-fermer').addEventListener('click', () => $('zone-dash').classList.add('hidden'));
+  $('dash-keyword').addEventListener('keypress', e => { if (e.key === 'Enter') { e.preventDefault(); rechercheDash(); } });
+  $('btn-dash-go').addEventListener('click', rechercheDash);
+
+  async function rechercheDash() {
+    const keyword = $('dash-keyword').value.trim();
+    const info = $('dash-info');
+    const grille = $('dash-resultats');
+    info.textContent = '⏳ Recherche en cours...';
+    info.style.color = 'var(--gris)';
+    grille.innerHTML = '';
+    try {
+      const r = await fetch('/api/produits/dash-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keyword, pageSize: 30, from: 0 })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        info.textContent = '❌ Erreur : ' + (data.error || JSON.stringify(data));
+        info.style.color = 'var(--rouge)';
+        return;
+      }
+      info.innerHTML = `${data.totalResults} image${data.totalResults>1?'s':''} trouvée${data.totalResults>1?'s':''} — clique pour sélectionner (déjà ${imagesDashSelectionnees.length} ajoutée${imagesDashSelectionnees.length>1?'s':''})`;
+      info.style.color = 'var(--vert)';
+      grille.innerHTML = '';
+      if (data.results.length === 0) {
+        grille.innerHTML = '<p style="grid-column:1/-1;color:var(--gris);text-align:center;">Aucun résultat. Essaie d\'autres mots-clés.</p>';
+        return;
+      }
+      data.results.forEach(img => {
+        const dejaSelectionnee = imagesDashSelectionnees.some(i => i.id === img.id);
+        const wrap = document.createElement('div');
+        wrap.style.cssText = `position:relative;cursor:pointer;border-radius:6px;overflow:hidden;border:3px solid ${dejaSelectionnee?'var(--vert)':'transparent'};`;
+        wrap.dataset.id = img.id;
+        wrap.innerHTML = `
+          <img src="${img.previewUrl}" alt="${img.filename}" style="width:100%;height:110px;object-fit:cover;display:block;${dejaSelectionnee?'opacity:0.7;':''}">
+          ${dejaSelectionnee ? '<div style="position:absolute;top:4px;right:4px;background:var(--vert);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">✓</div>' : ''}
+          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.6);color:white;font-size:0.65rem;padding:0.2rem 0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${img.filename}</div>
+        `;
+        wrap.addEventListener('click', () => {
+          const idx = imagesDashSelectionnees.findIndex(i => i.id === img.id);
+          if (idx >= 0) imagesDashSelectionnees.splice(idx, 1);
+          else imagesDashSelectionnees.push(img);
+          rechercheDash(); // Re-render pour reflet visuel
+          majInfoPhotos();
+        });
+        grille.appendChild(wrap);
+      });
+    } catch (e) {
+      info.textContent = '❌ Erreur réseau : ' + e.message;
+      info.style.color = 'var(--rouge)';
+    }
+  }
+
+  // Convertir un fichier en base64 (sans le préfixe data:)
+  function fichierEnBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ====== TOGGLE finition "autre" ======
+  $('f-finition').addEventListener('change', e => {
+    const champLibre = $('f-finition-autre');
+    if (e.target.value === 'autre') {
+      champLibre.classList.remove('hidden');
+      champLibre.focus();
+    } else {
+      champLibre.classList.add('hidden');
+      champLibre.value = '';
+    }
+  });
+
+  // Auth gérée par Google OAuth — écran choix visible directement
+
+  // ====== NAVIGATION entre écrans ======
+  function afficherEcran(id) {
+    ['ecran-choix','ecran-form','ecran-coffret','ecran-pack'].forEach(e => $(e).classList.add('hidden'));
+    $(id).classList.remove('hidden');
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.carte-choix').forEach(carte => {
+    carte.addEventListener('click', () => {
+      const type = carte.dataset.type;
+      if (type === 'produit') afficherEcran('ecran-form');
+      if (type === 'coffret') afficherEcran('ecran-coffret');
+      if (type === 'pack')    afficherEcran('ecran-pack');
+    });
+    // Effet hover
+    carte.addEventListener('mouseenter', () => carte.style.background = '#fff8f0');
+    carte.addEventListener('mouseleave', () => carte.style.background = 'white');
+  });
+  ['btn-retour-choix-produit','btn-retour-choix-coffret','btn-retour-choix-pack'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('click', () => afficherEcran('ecran-choix'));
+  });
+
+  // ====== COFFRET — composants pour calcul prix ======
+  // Liste des matières disponibles avec leurs formats (extraite de PRIX)
+  function formatsDispoPour(matiere) {
+    const m = PRIX[matiere];
+    return m ? Object.keys(m) : [];
+  }
+  const MATIERES_COFFRET = ['base','argent','aluminium','polymère','acier','titane','icelea','aura','émail','or','bois','céramique','carbone','bronze'];
+  let compIdCounter = 0;
+  function ajouterLigneComp() {
+    const id = ++compIdCounter;
+    const liste = $('cof-comp-liste');
+    const ligne = document.createElement('div');
+    ligne.className = 'comp-ligne';
+    ligne.dataset.id = id;
+    ligne.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto auto;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+    ligne.innerHTML = `
+      <select class="comp-matiere" style="font-size:0.85rem;padding:0.4rem 0.6rem;">
+        <option value="">— matière —</option>
+        ${MATIERES_COFFRET.map(m => `<option value="${m}">${m}</option>`).join('')}
+      </select>
+      <select class="comp-format" style="font-size:0.85rem;padding:0.4rem 0.6rem;">
+        <option value="">— format —</option>
+      </select>
+      <span class="comp-prix" style="font-size:0.85rem;color:var(--gris);min-width:60px;">— CHF</span>
+      <button type="button" class="comp-supprimer" style="margin:0;padding:0.3rem 0.6rem;font-size:0.75rem;background:#f5e6e0;color:var(--rouge);width:auto;">✕</button>
+    `;
+    liste.appendChild(ligne);
+    const matSelect = ligne.querySelector('.comp-matiere');
+    const fmtSelect = ligne.querySelector('.comp-format');
+    const prixSpan = ligne.querySelector('.comp-prix');
+    matSelect.addEventListener('change', () => {
+      const dispo = formatsDispoPour(matSelect.value);
+      fmtSelect.innerHTML = '<option value="">— format —</option>' + dispo.map(f => `<option value="${f}">${f}</option>`).join('');
+      prixSpan.textContent = '— CHF';
+      majTotalComposants();
+    });
+    fmtSelect.addEventListener('change', () => {
+      const entry = PRIX[matSelect.value]?.[fmtSelect.value];
+      prixSpan.textContent = entry?.vente != null ? `${entry.vente} CHF` : '— (pas de prix)';
+      prixSpan.style.color = entry?.vente != null ? 'var(--vert)' : 'var(--rouge)';
+      majTotalComposants();
+    });
+    ligne.querySelector('.comp-supprimer').addEventListener('click', () => {
+      ligne.remove();
+      majTotalComposants();
+    });
+  }
+  function majTotalComposants() {
+    let total = 0;
+    let nb = 0;
+    let baseIntegree = false;
+    document.querySelectorAll('.comp-ligne').forEach(ligne => {
+      const mat = ligne.querySelector('.comp-matiere').value;
+      const fmt = ligne.querySelector('.comp-format').value;
+      if (mat === 'base') baseIntegree = true;
+      const entry = PRIX[mat]?.[fmt];
+      if (entry?.vente != null) {
+        total += Number(entry.vente);
+        nb++;
+      }
+    });
+
+    // Si la base est dans les composants → désactiver l'option "avec/sans base"
+    const champPrixAvecBase = $('cof-prixAvecBase');
+    const labelAvecBase = champPrixAvecBase.previousElementSibling;
+    if (baseIntegree) {
+      champPrixAvecBase.value = '';
+      champPrixAvecBase.disabled = true;
+      champPrixAvecBase.placeholder = 'désactivé (base intégrée dans les composants)';
+      if (labelAvecBase && labelAvecBase.tagName === 'LABEL') {
+        labelAvecBase.style.opacity = '0.4';
+      }
+    } else {
+      champPrixAvecBase.disabled = false;
+      champPrixAvecBase.placeholder = 'auto-calculé';
+      if (labelAvecBase && labelAvecBase.tagName === 'LABEL') {
+        labelAvecBase.style.opacity = '1';
+      }
+    }
+
+    const div = $('cof-comp-total');
+    if (nb === 0) {
+      div.textContent = 'Aucun composant chiffré — ajoute des lignes pour calculer';
+      div.style.color = 'var(--gris)';
+    } else {
+      const noteBase = baseIntegree ? ' <span style="color:var(--or)">(base intégrée — pas d\'option avec/sans)</span>' : '';
+      div.innerHTML = `💰 <strong>${nb} composant${nb>1?'s':''}</strong> → prix calculé : <strong>${total.toFixed(2)} CHF</strong>${noteBase} <button type="button" id="btn-appliquer-prix-cof" style="margin-left:0.6rem;padding:0.3rem 0.6rem;font-size:0.75rem;background:var(--or);width:auto;">Appliquer dans "Prix${baseIntegree ? '' : ' sans base'}"</button>`;
+      div.style.color = 'var(--vert)';
+      $('btn-appliquer-prix-cof').addEventListener('click', () => {
+        $('cof-prixSansBase').value = total.toFixed(2);
+        // Si base intégrée, ne déclenche pas le calcul +250 (champ avec base désactivé)
+        if (!baseIntegree) {
+          $('cof-prixSansBase').dispatchEvent(new Event('input'));
+        }
+      });
+    }
+  }
+  $('btn-ajouter-comp').addEventListener('click', ajouterLigneComp);
+
+  // ====== PACK — composants pour calcul prix ======
+  let pakCompIdCounter = 0;
+  function pakAjouterLigneComp() {
+    const id = ++pakCompIdCounter;
+    const liste = $('pak-comp-liste');
+    const ligne = document.createElement('div');
+    ligne.className = 'pak-comp-ligne';
+    ligne.dataset.id = id;
+    ligne.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto auto;gap:0.5rem;align-items:center;margin-bottom:0.5rem;';
+    ligne.innerHTML = `
+      <select class="pak-comp-matiere" style="font-size:0.85rem;padding:0.4rem 0.6rem;">
+        <option value="">— matière —</option>
+        ${MATIERES_COFFRET.map(m => `<option value="${m}">${m}</option>`).join('')}
+      </select>
+      <select class="pak-comp-format" style="font-size:0.85rem;padding:0.4rem 0.6rem;">
+        <option value="">— format —</option>
+      </select>
+      <span class="pak-comp-prix" style="font-size:0.85rem;color:var(--gris);min-width:60px;">— CHF</span>
+      <button type="button" class="pak-comp-supprimer" style="margin:0;padding:0.3rem 0.6rem;font-size:0.75rem;background:#f5e6e0;color:var(--rouge);width:auto;">✕</button>
+    `;
+    liste.appendChild(ligne);
+    const matSelect = ligne.querySelector('.pak-comp-matiere');
+    const fmtSelect = ligne.querySelector('.pak-comp-format');
+    const prixSpan = ligne.querySelector('.pak-comp-prix');
+    matSelect.addEventListener('change', () => {
+      const dispo = formatsDispoPour(matSelect.value);
+      fmtSelect.innerHTML = '<option value="">— format —</option>' + dispo.map(f => `<option value="${f}">${f}</option>`).join('');
+      prixSpan.textContent = '— CHF';
+      pakMajTotal();
+    });
+    fmtSelect.addEventListener('change', () => {
+      const entry = PRIX[matSelect.value]?.[fmtSelect.value];
+      prixSpan.textContent = entry?.vente != null ? `${entry.vente} CHF` : '— (pas de prix)';
+      prixSpan.style.color = entry?.vente != null ? 'var(--vert)' : 'var(--rouge)';
+      pakMajTotal();
+    });
+    ligne.querySelector('.pak-comp-supprimer').addEventListener('click', () => {
+      ligne.remove();
+      pakMajTotal();
+    });
+  }
+  function pakMajTotal() {
+    let total = 0; let nb = 0;
+    document.querySelectorAll('.pak-comp-ligne').forEach(ligne => {
+      const mat = ligne.querySelector('.pak-comp-matiere').value;
+      const fmt = ligne.querySelector('.pak-comp-format').value;
+      const entry = PRIX[mat]?.[fmt];
+      if (entry?.vente != null) { total += Number(entry.vente); nb++; }
+    });
+    const div = $('pak-comp-total');
+    if (nb === 0) {
+      div.textContent = 'Aucun composant chiffré — ajoute des lignes pour calculer';
+      div.style.color = 'var(--gris)';
+    } else {
+      div.innerHTML = `💰 <strong>${nb} composant${nb>1?'s':''}</strong> → prix calculé : <strong>${total.toFixed(2)} CHF</strong> <button type="button" id="btn-appliquer-prix-pak" style="margin-left:0.6rem;padding:0.3rem 0.6rem;font-size:0.75rem;background:var(--or);width:auto;">Appliquer dans "Prix"</button>`;
+      div.style.color = 'var(--vert)';
+      $('btn-appliquer-prix-pak').addEventListener('click', () => {
+        $('pak-prix').value = total.toFixed(2);
+      });
+    }
+  }
+  $('btn-pak-ajouter-comp').addEventListener('click', pakAjouterLigneComp);
+
+  // ====== PACK — formulaire ======
+  $('pak-photos').addEventListener('change', e => {
+    const n = e.target.files.length;
+    const info = $('pak-photos-info');
+    if (n === 0) { info.textContent = 'aucune photo sélectionnée'; info.style.color = 'var(--gris)'; }
+    else { info.textContent = `${n} photo${n>1?'s':''} sélectionnée${n>1?'s':''}`; info.style.color = 'var(--vert)'; }
+  });
+  $('btn-generer-pak').addEventListener('click', async () => {
+    const motsCles = $('pak-motsCles').value.trim();
+    const erreur = $('erreur-pak');
+    erreur.classList.add('hidden');
+    if (!motsCles) {
+      erreur.textContent = 'Tape d\'abord 2-3 mots-clés.'; erreur.classList.remove('hidden'); return;
+    }
+    const btn = $('btn-generer-pak');
+    btn.disabled = true; const original = btn.textContent;
+    btn.textContent = '⏳ Génération…';
+    try {
+      const r = await fetch('/api/produits/generer-texte', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motsCles, nom: $('pak-nom').value, format: 'pack', matiere: 'mood', finition: '', couleur: '' })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = 'Erreur génération : ' + (data.error || JSON.stringify(data));
+        erreur.classList.remove('hidden'); return;
+      }
+      $('pak-texteInspiration').value = data.texte;
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message; erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false; btn.textContent = original;
+    }
+  });
+  $('btn-creer-pak').addEventListener('click', async () => {
+    const erreur = $('erreur-pak');
+    const succes = $('succes-pak');
+    const resultat = $('resultat-pak');
+    erreur.classList.add('hidden'); succes.classList.add('hidden'); resultat.classList.add('hidden');
+
+    const infos = {
+      nom: $('pak-nom').value.trim(),
+      composants: $('pak-composants').value,
+      texteInspiration: $('pak-texteInspiration').value,
+      prix: $('pak-prix').value
+    };
+    if (!infos.nom || !infos.prix) {
+      erreur.textContent = 'Champs obligatoires : nom et prix.';
+      erreur.classList.remove('hidden'); return;
+    }
+    const btn = $('btn-creer-pak');
+    btn.disabled = true;
+    btn.textContent = 'Création en cours…';
+    try {
+      const r = await fetch('/api/produits/create-pack', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(infos)
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = (data.etape ? `[${data.etape}] ` : '') + JSON.stringify(data.erreur || data.error || data);
+        erreur.classList.remove('hidden'); return;
+      }
+      // Upload photos
+      const fichiers = $('pak-photos').files;
+      let photosOk = 0;
+      const baseFilename = `pack-${infos.nom.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}`;
+      const baseAlt = `${infos.nom} — Mood Collection`;
+      if (fichiers && fichiers.length > 0) {
+        btn.textContent = `Upload des photos (0/${fichiers.length})…`;
+        for (let i = 0; i < fichiers.length; i++) {
+          const f = fichiers[i];
+          const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+          try {
+            const base64 = await fichierEnBase64(f);
+            const upRes = await fetch('/api/produits/upload-image', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: data.idProduit, base64,
+                filename: `${baseFilename}-${i+1}.${ext}`,
+                position: i+1,
+                alt: i === 0 ? baseAlt : `${baseAlt} (vue ${i+1})`
+              })
+            });
+            if (upRes.ok) photosOk++;
+          } catch {}
+          btn.textContent = `Upload des photos (${i+1}/${fichiers.length})…`;
+        }
+        data.etapes.photos = `${photosOk}/${fichiers.length} uploadées`;
+      }
+      succes.textContent = `✅ Pack "${data.titre}" créé en brouillon dans Shopify`;
+      succes.classList.remove('hidden');
+      resultat.innerHTML = `
+        <dl>
+          <dt>ID Shopify</dt><dd>${data.idProduit}</dd>
+          <dt>Identifiant URL</dt><dd>${data.handle}</dd>
+          <dt>Variantes</dt><dd>${data.variantes}</dd>
+          <dt>Étiquettes</dt><dd>${data.etiquettes}</dd>
+          <dt>Étapes</dt><dd>${Object.entries(data.etapes).map(([k,v]) => `${k} : ${v}`).join(' · ')}</dd>
+          <dt>Voir dans Shopify</dt><dd><a href="${data.urlAdmin}" target="_blank">${data.urlAdmin}</a></dd>
+        </dl>
+      `;
+      resultat.classList.remove('hidden');
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Créer le pack dans Shopify';
+    }
+  });
+
+  // ====== COFFRET — formulaire ======
+  // Auto-calcul prix avec base = prix sans base + 250
+  $('cof-prixSansBase').addEventListener('input', () => {
+    const sansBase = parseFloat($('cof-prixSansBase').value);
+    if (!isNaN(sansBase)) {
+      $('cof-prixAvecBase').value = (sansBase + 250).toFixed(2);
+      // Si option boîte active, mettre à jour aussi
+      if ($('cof-optionBoite').checked) {
+        $('cof-prixSansBoite').value = sansBase.toFixed(2);
+        $('cof-prixAvecBoite').value = (sansBase + 59).toFixed(2);
+      }
+    }
+  });
+  $('cof-optionBoite').addEventListener('change', e => {
+    $('cof-zone-boite').classList.toggle('hidden', !e.target.checked);
+    // Auto-remplir si on coche
+    if (e.target.checked) {
+      const sansBase = parseFloat($('cof-prixSansBase').value);
+      if (!isNaN(sansBase)) {
+        $('cof-prixSansBoite').value = sansBase.toFixed(2);
+        $('cof-prixAvecBoite').value = (sansBase + 59).toFixed(2);
+      }
+    }
+  });
+  $('cof-photos').addEventListener('change', e => {
+    const n = e.target.files.length;
+    const info = $('cof-photos-info');
+    if (n === 0) { info.textContent = 'aucune photo sélectionnée'; info.style.color = 'var(--gris)'; }
+    else { info.textContent = `${n} photo${n>1?'s':''} sélectionnée${n>1?'s':''}`; info.style.color = 'var(--vert)'; }
+  });
+  $('btn-generer-cof').addEventListener('click', async () => {
+    const motsCles = $('cof-motsCles').value.trim();
+    const erreur = $('erreur-cof');
+    erreur.classList.add('hidden');
+    if (!motsCles) {
+      erreur.textContent = 'Tape d\'abord 2-3 mots-clés dans le champ au-dessus.';
+      erreur.classList.remove('hidden');
+      return;
+    }
+    const btn = $('btn-generer-cof');
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = '⏳ Génération…';
+    try {
+      const r = await fetch('/api/produits/generer-texte', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          motsCles,
+          nom: $('cof-nom').value,
+          format: 'coffret',
+          matiere: 'mood',
+          finition: '',
+          couleur: ''
+        })
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = 'Erreur génération : ' + (data.error || JSON.stringify(data));
+        erreur.classList.remove('hidden');
+        return;
+      }
+      $('cof-texteInspiration').value = data.texte;
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+  $('btn-creer-cof').addEventListener('click', async () => {
+    const erreur = $('erreur-cof');
+    const succes = $('succes-cof');
+    const resultat = $('resultat-cof');
+    erreur.classList.add('hidden'); succes.classList.add('hidden'); resultat.classList.add('hidden');
+
+    const infos = {
+      nom: $('cof-nom').value.trim(),
+      composants: $('cof-composants').value,
+      texteInspiration: $('cof-texteInspiration').value,
+      prixSansBase: $('cof-prixSansBase').value,
+      prixAvecBase: $('cof-prixAvecBase').value,
+      optionBoite: $('cof-optionBoite').checked,
+      prixSansBoite: $('cof-prixSansBoite').value,
+      prixAvecBoite: $('cof-prixAvecBoite').value
+    };
+    if (!infos.nom) {
+      erreur.textContent = 'Champ obligatoire : nom du coffret.';
+      erreur.classList.remove('hidden'); return;
+    }
+    if (!infos.prixSansBase) {
+      erreur.textContent = 'Prix obligatoire.';
+      erreur.classList.remove('hidden'); return;
+    }
+    // Si "Prix avec base" est désactivé (base intégrée dans composants), on n'exige pas
+    if (!$('cof-prixAvecBase').disabled && !infos.prixAvecBase) {
+      erreur.textContent = 'Prix avec base obligatoire (ou ajoute "base" dans les composants pour désactiver l\'option).';
+      erreur.classList.remove('hidden'); return;
+    }
+    if (infos.optionBoite && (!infos.prixSansBoite || !infos.prixAvecBoite)) {
+      erreur.textContent = 'Si option boîte cochée, prix sans/avec boîte obligatoires.';
+      erreur.classList.remove('hidden'); return;
+    }
+
+    const btn = $('btn-creer-cof');
+    btn.disabled = true;
+    btn.textContent = 'Création en cours…';
+    try {
+      const r = await fetch('/api/produits/create-coffret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(infos)
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = (data.etape ? `[${data.etape}] ` : '') + JSON.stringify(data.erreur || data.error || data);
+        erreur.classList.remove('hidden'); return;
+      }
+
+      // Upload photos avec noms SEO coffret
+      const fichiers = $('cof-photos').files;
+      let photosOk = 0, photosFail = 0;
+      const baseFilename = `coffret-${infos.nom.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}`;
+      const baseAlt = `${infos.nom} — Mood Collection`;
+      if (fichiers && fichiers.length > 0) {
+        btn.textContent = `Upload des photos (0/${fichiers.length})…`;
+        for (let i = 0; i < fichiers.length; i++) {
+          const f = fichiers[i];
+          const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+          try {
+            const base64 = await fichierEnBase64(f);
+            const upRes = await fetch('/api/produits/upload-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: data.idProduit, base64,
+                filename: `${baseFilename}-${i+1}.${ext}`,
+                position: i+1,
+                alt: i === 0 ? baseAlt : `${baseAlt} (vue ${i+1})`
+              })
+            });
+            if (upRes.ok) photosOk++; else photosFail++;
+          } catch { photosFail++; }
+          btn.textContent = `Upload des photos (${i+1}/${fichiers.length})…`;
+        }
+        data.etapes.photos = `${photosOk}/${fichiers.length} uploadées`;
+      }
+
+      succes.textContent = `✅ Coffret "${data.titre}" créé en brouillon dans Shopify`;
+      succes.classList.remove('hidden');
+      resultat.innerHTML = `
+        <dl>
+          <dt>ID Shopify</dt><dd>${data.idProduit}</dd>
+          <dt>Identifiant URL</dt><dd>${data.handle}</dd>
+          <dt>Variantes</dt><dd>${data.variantes}</dd>
+          <dt>Étiquettes</dt><dd>${data.etiquettes}</dd>
+          <dt>Étapes</dt><dd>${Object.entries(data.etapes).map(([k,v]) => `${k} : ${v}`).join(' · ')}</dd>
+          <dt>Voir dans Shopify</dt><dd><a href="${data.urlAdmin}" target="_blank">${data.urlAdmin}</a></dd>
+        </dl>
+      `;
+      resultat.classList.remove('hidden');
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Créer le coffret dans Shopify';
+    }
+  });
+
+  // ====== CRÉATION PRODUIT ======
+  $('btn-creer').addEventListener('click', creerProduit);
+
+  async function creerProduit() {
+    const champs = ['nom','matiere','finition','couleur','groupeCouleur','collection','prixVente','coutAchat','texteInspiration'];
+    const infos = {};
+    for (const c of champs) infos[c] = $('f-' + c).value;
+
+    // Format(s) — selon le mode (menu déroulant ou multi-format chips)
+    const formatChoisi = $('f-format').value;
+    if (formatChoisi === 'multi format') {
+      infos.formats = Array.from(formatsSelectionnes);
+      infos.format = infos.formats[0] || '';
+    } else {
+      infos.format = formatChoisi;
+      infos.formats = formatChoisi ? [formatChoisi] : [];
+    }
+
+    // Options de base — appliquées si format = base*, ou si multi format inclut au moins une base
+    const isBase = formatChoisi.startsWith('base');
+    const multiAvecBase = formatChoisi === 'multi format' && infos.formats.some(f => f.startsWith('base'));
+    if (isBase || multiAvecBase) {
+      infos.formeBase = $('f-formeBase').value;
+      // La finition de base = champ finition générique (ou "neutre" si aucune)
+      infos.finitionBase = (infos.finition && infos.finition !== 'aucune') ? infos.finition : 'neutre';
+    }
+
+    // Si finition = "autre", utiliser le texte libre
+    if (infos.finition === 'autre') {
+      const texteAutre = $('f-finition-autre').value.trim();
+      if (!texteAutre) {
+        const erreur = $('erreur-form');
+        erreur.textContent = 'Tu as choisi "autre" pour la finition — précise laquelle dans le champ texte.';
+        erreur.classList.remove('hidden');
+        return;
+      }
+      infos.finition = texteAutre;
+    }
+
+    // Couleurs multiples sélectionnées (Set → Array)
+    if (couleursSelectionnees.size > 0) {
+      infos.couleurs = Array.from(couleursSelectionnees);
+    }
+
+    // Caractéristiques particulières (cases cochées → tags additionnels)
+    const tagsParticuliers = [];
+    if ($('opt-zircon').checked) tagsParticuliers.push('Zircon');
+    if ($('opt-email').checked) tagsParticuliers.push('émail');
+    if ($('opt-glitter').checked) tagsParticuliers.push('glitter');
+    if ($('opt-acier-decoupe').checked) tagsParticuliers.push('acier découpé');
+    if ($('opt-rangement').checked) tagsParticuliers.push('rangement');
+    if ($('opt-auraoct').checked) tagsParticuliers.push('auraoct');
+    if (tagsParticuliers.length > 0) infos.tagsParticuliers = tagsParticuliers;
+
+    const erreur = $('erreur-form');
+    const succes = $('succes-form');
+    const resultat = $('resultat');
+    erreur.classList.add('hidden');
+    succes.classList.add('hidden');
+    resultat.classList.add('hidden');
+
+    // Validation : pour les bases, le nom est facultatif (titre généré auto), mais forme + finition requis
+    if (!infos.format || !infos.matiere) {
+      erreur.textContent = 'Champs obligatoires manquants : format, matière.';
+      erreur.classList.remove('hidden');
+      return;
+    }
+    if (isBase || multiAvecBase) {
+      if (!infos.formeBase) {
+        erreur.textContent = 'Pour une base : la forme est obligatoire.';
+        erreur.classList.remove('hidden');
+        return;
+      }
+      if (!['acier','titane'].includes(infos.matiere)) {
+        erreur.textContent = 'Les bases mood sont disponibles uniquement en acier ou titane.';
+        erreur.classList.remove('hidden');
+        return;
+      }
+    }
+    if (isBase) {
+      // pas besoin du nom pour les bases
+    } else {
+      if (!infos.nom) {
+        erreur.textContent = 'Champ obligatoire manquant : nom du produit.';
+        erreur.classList.remove('hidden');
+        return;
+      }
+    }
+    if (formatChoisi === 'multi format' && infos.formats.length < 2) {
+      erreur.textContent = 'Tu as choisi "multi format" — coche au moins 2 formats dans la zone "Formats multiples".';
+      erreur.classList.remove('hidden');
+      return;
+    }
+    // Le prix de vente n'est obligatoire que si mono-format (en multi, calculé auto)
+    if (infos.formats.length === 1 && !infos.prixVente) {
+      erreur.textContent = 'Champ obligatoire manquant : prix de vente.';
+      erreur.classList.remove('hidden');
+      return;
+    }
+
+    const btn = $('btn-creer');
+    btn.disabled = true;
+    btn.textContent = 'Création en cours…';
+
+    try {
+      const r = await fetch('/api/produits/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(infos)
+      });
+      const data = await r.json();
+
+      if (!r.ok) {
+        erreur.textContent = (data.etape ? `[${data.etape}] ` : '') + JSON.stringify(data.erreur || data.error || data);
+        erreur.classList.remove('hidden');
+        return;
+      }
+
+      // === UPLOAD DES PHOTOS — Dash (par URL) PUIS Mac (base64) ===
+      const photosInput = $('f-photos');
+      const fichiers = photosInput.files;
+      const dashImgs = imagesDashSelectionnees;
+      const totalPhotos = (dashImgs?.length || 0) + (fichiers?.length || 0);
+      let photosOk = 0, photosFail = 0, position = 1;
+      const slug = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const finitionSlug = (infos.finition && infos.finition !== 'aucune') ? `-${slug(infos.finition)}` : '';
+      const baseFilename = ['bague-mood', slug(infos.nom), slug(infos.format), slug(infos.matiere) + finitionSlug].filter(Boolean).join('-');
+      const baseAlt = `Bague mood ${infos.nom} ${infos.format} en ${infos.matiere}${(infos.finition && infos.finition !== 'aucune') ? ' ' + infos.finition : ''} — Mood Collection`;
+
+      if (totalPhotos > 0) {
+        btn.textContent = `Upload des photos (0/${totalPhotos})…`;
+      }
+
+      // 1. Upload images Dash via URL (Shopify les télécharge directement depuis Dash)
+      if (Array.isArray(dashImgs) && dashImgs.length > 0) {
+        for (let i = 0; i < dashImgs.length; i++) {
+          const img = dashImgs[i];
+          const seoAlt = position === 1 ? baseAlt : `${baseAlt} (vue ${position})`;
+          try {
+            const upRes = await fetch('/api/produits/upload-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: data.idProduit,
+                src: img.previewUrl,
+                position,
+                alt: seoAlt
+              })
+            });
+            if (upRes.ok) photosOk++; else photosFail++;
+          } catch { photosFail++; }
+          position++;
+          btn.textContent = `Upload des photos (${position-1}/${totalPhotos})…`;
+        }
+      }
+
+      // 2. Upload fichiers locaux Mac via base64
+      if (fichiers && fichiers.length > 0) {
+        for (let i = 0; i < fichiers.length; i++) {
+          const f = fichiers[i];
+          const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+          const seoFilename = `${baseFilename}-${position}.${ext}`;
+          const seoAlt = position === 1 ? baseAlt : `${baseAlt} (vue ${position})`;
+          try {
+            const base64 = await fichierEnBase64(f);
+            const upRes = await fetch('/api/produits/upload-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: data.idProduit,
+                base64,
+                filename: seoFilename,
+                position,
+                alt: seoAlt
+              })
+            });
+            if (upRes.ok) photosOk++; else photosFail++;
+          } catch (e) {
+            photosFail++;
+          }
+          position++;
+          btn.textContent = `Upload des photos (${position-1}/${totalPhotos})…`;
+        }
+      }
+
+      if (totalPhotos > 0) {
+        data.etapes.photos = `${photosOk}/${totalPhotos} uploadées` +
+          (dashImgs.length > 0 ? ` (${dashImgs.length} Dash + ${fichiers.length} Mac)` : '') +
+          (photosFail ? ` — ${photosFail} échouées` : '');
+      }
+
+      succes.textContent = `✅ Produit "${data.titre}" créé en brouillon dans Shopify`;
+      succes.classList.remove('hidden');
+
+      resultat.innerHTML = `
+        <dl>
+          <dt>ID Shopify</dt><dd>${data.idProduit}</dd>
+          <dt>Identifiant URL</dt><dd>${data.handle}</dd>
+          <dt>Variantes</dt><dd>${data.variantes}</dd>
+          <dt>Étiquettes</dt><dd>${data.etiquettes}</dd>
+          <dt>Étapes</dt><dd>${Object.entries(data.etapes).map(([k,v]) => `${k} : ${v}`).join(' · ')}</dd>
+          <dt>Voir dans Shopify</dt><dd><a href="${data.urlAdmin}" target="_blank">${data.urlAdmin}</a></dd>
+        </dl>
+        <div style="margin-top:1rem;padding:0.8rem;background:#f9f5f1;border:1px solid var(--or);border-radius:8px;text-align:center;">
+          <p style="margin:0 0 0.6rem 0;font-size:0.9rem;color:var(--noir);">📦 Préparer l'import dans Katana :</p>
+          <button type="button" id="btn-katana" style="margin:0;width:auto;padding:0.6rem 1.2rem;background:var(--or);">📥 Télécharger fichiers Katana</button>
+          <p id="katana-status" style="margin:0.6rem 0 0 0;font-size:0.8rem;color:var(--gris);"></p>
+        </div>
+      `;
+      resultat.classList.remove('hidden');
+
+      // Brancher le bouton de téléchargement Katana
+      $('btn-katana').addEventListener('click', async () => {
+        const btnK = $('btn-katana');
+        const statut = $('katana-status');
+        btnK.disabled = true;
+        btnK.textContent = '⏳ Génération…';
+        try {
+          const r = await fetch('/api/produits/generer-katana', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              product: data.productPourKatana,
+              infosForm: data.infosFormPourKatana
+            })
+          });
+          if (!r.ok) {
+            const errData = await r.json().catch(() => ({}));
+            statut.textContent = '❌ Erreur : ' + (errData.error || r.statusText);
+            statut.style.color = 'var(--rouge)';
+            return;
+          }
+          // Téléchargement du zip
+          const blob = await r.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `katana-${data.handle}.zip`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          statut.textContent = '✅ 2 fichiers téléchargés (dans le .zip) — décompresse et importe dans Katana';
+          statut.style.color = 'var(--vert)';
+        } catch (e) {
+          statut.textContent = '❌ Erreur réseau : ' + e.message;
+          statut.style.color = 'var(--rouge)';
+        } finally {
+          btnK.disabled = false;
+          btnK.textContent = '📥 Télécharger fichiers Katana';
+        }
+      });
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Créer dans Shopify';
+    }
+  }
+</script>
+</body>
+</html>

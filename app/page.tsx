@@ -48,8 +48,14 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
   {
     id: "creation",
     title: "Création de produits",
-    summary: "Génération de bundles CSV pour Simple Bundles & Kits et édition des recettes de fabrication Katana.",
+    summary: "Mise en ligne Shopify, bundles CSV et édition des recettes Katana.",
     tools: [
+      {
+        href: "/product-creator",
+        emoji: "💍",
+        title: "Créer un produit Shopify",
+        description: "Créez un produit, un coffret ou un pack directement dans Shopify : SKU, variantes, SEO et photos en un formulaire.",
+      },
       {
         href: "/bundles",
         emoji: "🎁",
@@ -80,6 +86,19 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         emoji: "↩️",
         title: "Unfulfill",
         description: "Annulez un fulfillment pour corriger une erreur d'expédition ou relancer la production d'un article.",
+      },
+    ],
+  },
+  {
+    id: "stats",
+    title: "Stats & Conditions",
+    summary: "Analyse des stats hebdomadaires MasterTech, identification de condition et Battle Plan personnalisé.",
+    tools: [
+      {
+        href: "/stats-conditions",
+        emoji: "📈",
+        title: "Analyser mes stats",
+        description: "Uploadez une capture MasterTech, obtenez la condition (Affluence, Urgence…), le plan d'action et un Battle Plan jeudi→mercredi.",
       },
     ],
   },
@@ -115,13 +134,13 @@ export default function Home() {
         {/* Header */}
         <header className="mb-10 max-w-2xl">
           <p className="text-xs font-bold tracking-widest uppercase text-zinc-500 mb-2">
-            Mood Collection — Atelier
+            Mood Collection
           </p>
           <h1 className="text-3xl font-semibold text-zinc-50 mb-3">
-            Outils de production
+            Mood Dashboard
           </h1>
           <p className="text-zinc-400 text-base">
-            Tous les outils opérationnels de l&apos;atelier, du fulfillment et de la gestion Katana.
+            Tous les outils internes — atelier, produits Shopify, stats et conditions.
           </p>
         </header>
 

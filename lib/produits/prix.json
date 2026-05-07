@@ -1,0 +1,57 @@
+{
+  "_note": "Prix achat + vente extraits du tableur Mood (gid=1479864721). Si une cellule est vide, l'utilisatrice complétera manuellement.",
+  "prix": {
+    "aluminium": {
+      "addon":      { "achat": 6.05,  "vente": 85 },
+      "deux tiers": { "achat": 5.40,  "vente": 75 },
+      "medium":     { "achat": 4.45,  "vente": 65 },
+      "mini":       { "achat": 11.20, "vente": 60 }
+    },
+    "polymère": {
+      "addon":      { "achat": 2.36,  "vente": null },
+      "deux tiers": { "achat": 2.36,  "vente": 25 },
+      "medium":     { "achat": 1.18,  "vente": null }
+    },
+    "titane": {
+      "addon":      { "achat": 12.00, "vente": 189 },
+      "deux tiers": { "achat": 10.00, "vente": 129 },
+      "medium":     { "achat": 6.00,  "vente": 109 }
+    },
+    "bois": {
+      "addon":      { "achat": 18.40, "vente": null }
+    },
+    "acier": {
+      "addon":      { "achat": 15.00, "vente": 189 },
+      "deux tiers": { "achat": 9.00,  "vente": 129 },
+      "medium":     { "achat": 4.50,  "vente": 109 }
+    },
+    "bronze": {
+      "addon":      { "achat": 48.00, "vente": null },
+      "deux tiers": { "achat": 47.00, "vente": null },
+      "medium":     { "achat": 16.00, "vente": null }
+    },
+    "céramique": {
+      "addon":      { "achat": 54.00, "vente": null },
+      "medium":     { "achat": 80.00, "vente": null }
+    },
+    "carbone": {
+      "addon":      { "achat": 62.40, "vente": 109 },
+      "medium":     { "achat": 31.20, "vente": null }
+    },
+    "argent": {
+      "addon":      { "achat": 40.00, "vente": 249 },
+      "deux tiers": { "achat": 33.00, "vente": 219 },
+      "medium":     { "achat": 26.00, "vente": 169 }
+    },
+    "or": {
+      "addon":      { "achat": 350.00, "vente": null, "_note": "or rose/jaune 9K" },
+      "deux tiers": { "achat": 320.00, "vente": null, "_note": "or rose/jaune 9K" },
+      "medium":     { "achat": 310.00, "vente": null, "_note": "or rose/jaune 9K" }
+    },
+    "tantale": {
+      "addon":      { "achat": 390.00, "vente": null },
+      "deux tiers": { "achat": 290.00, "vente": null },
+      "medium":     { "achat": 190.00, "vente": null }
+    }
+  }
+}
