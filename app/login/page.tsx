@@ -8,7 +8,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }) {
   const session = await auth();
-  if (session) redirect("/scanner");
+  if (session) redirect("/");
 
   const params = await searchParams;
   const error = params.error;
@@ -34,7 +34,7 @@ export default async function LoginPage({
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/scanner" });
+            await signIn("google", { redirectTo: "/" });
           }}
           className="w-full"
         >
