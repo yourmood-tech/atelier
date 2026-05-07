@@ -70,7 +70,9 @@ function extractNamesFromHtml(html: string): string[] {
 
   // Find "Composé de :" or similar anchor, then take the lines that follow
   const anchorIdx = lines.findIndex((l) =>
-    /compos[eé]\s*de\s*:?/i.test(l) || /composants?\s*:?/i.test(l) || /contenu\s*:?/i.test(l)
+    /compos[eé]\s*de\s*:?/i.test(l) || /composants?\s*:?/i.test(l) || /contenu\s*:?/i.test(l) ||
+    /coffret\s+comprend\s*:?/i.test(l) || /comprend\s*:?/i.test(l) || /contient\s*:?/i.test(l) ||
+    /inclus\s*:?/i.test(l) || /inclut\s*:?/i.test(l)
   );
 
   if (anchorIdx !== -1) {
