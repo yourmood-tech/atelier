@@ -1,8 +1,4 @@
-import { redirect } from "next/navigation";
-
-export default function Home() {
-  redirect("/scanner");
-}
+import Link from "next/link";
 
 type Tool = {
   href: string;
