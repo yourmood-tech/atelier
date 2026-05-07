@@ -4,6 +4,60 @@ export const DASH_AUTHORIZE_URL = "https://login.dash.app/authorize";
 export const DASH_AUDIENCE = "https://assetplatform.io";
 export const DASH_SUBDOMAIN = "yourmood";
 
+export function getRedirectUri(host: string | null | undefined): string {
+  const baseUrl = host
+    ? host.startsWith("localhost")
+      ? `http://${host}`
+      : `https://${host}`
+    : "https://katana-scanner-mvp.vercel.app";
+  return `${baseUrl}/api/produits/dash-callback`;
+}
+
+export function getAuthorizeUrl(host: string | null | undefined): string {
+  const clientId = process.env.DASH_CLIENT_ID;
+  if (!clientId) throw new Error("DASH_CLIENT_ID manquant");
+  const params = new URLSearchParams({
+    response_type: "code",
+    audience: DASH_AUDIENCE,
+    client_id: clientId,
+    redirect_uri: getRedirectUri(host),
+    scope: `offline_access subdomain:${DASH_SUBDOMAIN}`,
+  });
+  return `${DASH_AUTHORIZE_URL}?${params.toString()}`;
+}
+
+export async function echangerCodeContreTokens(
+  code: string,
+  host: string | null | undefined
+): Promise<{
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  [k: string]: unknown;
+}> {
+  const clientId = process.env.DASH_CLIENT_ID;
+  const clientSecret = process.env.DASH_CLIENT_SECRET;
+  if (!clientId || !clientSecret)
+    throw new Error("DASH_CLIENT_ID ou DASH_CLIENT_SECRET manquant");
+
+  const r = await fetch(DASH_OAUTH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "authorization_code",
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      redirect_uri: getRedirectUri(host),
+    }),
+  });
+  if (!r.ok) {
+    const detail = await r.text();
+    throw new Error(`Échange code Dash ${r.status} : ${detail.slice(0, 400)}`);
+  }
+  return await r.json();
+}
+
 let tokenCache: { token: string | null; expiresAt: number } = {
   token: null,
   expiresAt: 0,
