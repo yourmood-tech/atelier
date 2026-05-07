@@ -76,12 +76,20 @@ function extractNamesFromHtml(html: string): string[] {
   );
 
   if (anchorIdx !== -1) {
-    const afterAnchor = lines.slice(anchorIdx + 1);
-    // Take lines until we hit an empty-ish section or a line that looks like a new paragraph (very long)
+    const afterAnchor = lines.slice(anchorIdx + 1, anchorIdx + 25);
+    // If the section uses list markers (- • * ·), only take those lines
+    const hasList = afterAnchor.some((l) => /^[-•·*]/.test(l));
+    if (hasList) {
+      const items = afterAnchor.filter(
+        (l) => /^[-•·*]/.test(l) && l.length < 120 && !/^https?:/.test(l)
+      );
+      if (items.length) return [...new Set(items)];
+    }
+    // Fallback: plain prose — take short lines until a long one breaks the flow
     const items: string[] = [];
     for (const l of afterAnchor) {
-      if (l.length > 120) break; // long line = new paragraph, stop
-      if (/^(https?:|[0-9]{2,})/.test(l)) continue; // skip URLs and standalone numbers
+      if (l.length > 100) break;
+      if (/^(https?:|[0-9]{2,})/.test(l)) continue;
       items.push(l);
     }
     if (items.length) return [...new Set(items)];
