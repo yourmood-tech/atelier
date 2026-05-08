@@ -1,13 +1,11 @@
 import { calculerCaratsTotal } from "./sertissage";
 
 export type JoaillerieCategorie =
-  | 'addon-serti'
-  | 'coffret'
-  | 'projet-unique'
-  | 'exception'
-  | 'alliance'
-  | 'compagnon'
-  | 'base-sertie';
+  | 'medium-base-serti'  // Medium et base entièrement sertis (full/semi/1côté/2côtés)
+  | 'piece-serie'        // Pièces uniques + d'exception + serties spéciales
+  | 'coffret'            // Coffret joaillerie ou cadeau d'exception (peut contenir mediums sertis, base sertie, pièce d'exception)
+  | 'alliance'           // Alliances (par 2 bagues)
+  | 'compagnon';         // Compagnon (bague sans base mood)
 
 export interface PierreItem {
   type: string;
@@ -176,22 +174,20 @@ function resumePierres(pierres: PierreItem[]): string {
 export function genererTitreJoaillerie(infos: JoaillerieInfos): string {
   const matiereLabel = infos.matiere + (infos.carat ? ` ${infos.carat}` : '');
   switch (infos.categorie) {
-    case 'addon-serti':
+    case 'medium-base-serti':
       return infos.pierres && infos.pierres.length > 0
         ? `${infos.nom} — ${matiereLabel} serti ${resumePierres(infos.pierres)}`
         : `${infos.nom} — ${matiereLabel} serti`;
-    case 'exception':
-      return `${infos.nom} — Pièce d'exception Mood Joaillerie`;
+    case 'piece-serie':
+      return infos.nom_client
+        ? `${infos.nom} — Projet unique ${matiereLabel} · ${infos.nom_client}`
+        : `${infos.nom} — Pièce d'exception Mood Joaillerie`;
     case 'alliance':
       return `Alliance ${matiereLabel}${infos.finition ? ' ' + infos.finition : ''}`;
     case 'coffret':
       return `Coffret ${infos.nom} — Mood Joaillerie`;
-    case 'projet-unique':
-      return `${infos.nom} — Projet unique ${matiereLabel}${infos.nom_client ? ' · ' + infos.nom_client : ''}`;
     case 'compagnon':
       return `${infos.nom} — ${matiereLabel}`;
-    case 'base-sertie':
-      return `${infos.nom} — Base sertie ${matiereLabel}`;
     default:
       return `${infos.nom} — ${matiereLabel}`;
   }
@@ -199,13 +195,11 @@ export function genererTitreJoaillerie(infos: JoaillerieInfos): string {
 
 // ============ PAYLOAD SHOPIFY ============
 const PRODUCT_TYPE_MAP: Record<JoaillerieCategorie, string> = {
-  'addon-serti': 'addon serti',
+  'medium-base-serti': 'medium et base entièrement sertis',
+  'piece-serie': 'pièce d\'exception et série',
   'coffret': 'coffret joaillerie',
-  'projet-unique': 'projet unique',
-  'exception': 'pièce d\'exception',
   'alliance': 'alliance',
   'compagnon': 'compagnon',
-  'base-sertie': 'base sertie',
 };
 
 function construireBodyHtml(infos: JoaillerieInfos): string {

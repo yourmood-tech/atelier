@@ -426,13 +426,11 @@
       <h2 style="margin-top:0;text-align:center;">💎 Mood Joaillerie</h2>
       <p style="text-align:center;color:var(--gris);margin-bottom:1.5rem;">Quelle catégorie de produit ?</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
-        <button type="button" class="carte-choix-j" data-cat="addon-serti" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">💍 Addon serti<br><small style="color:var(--gris);font-weight:400">addon / DT / medium / mini avec sertissage</small></button>
-        <button type="button" class="carte-choix-j" data-cat="coffret" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🎁 Coffret joaillerie<br><small style="color:var(--gris);font-weight:400">composants + coffret premium</small></button>
-        <button type="button" class="carte-choix-j" data-cat="projet-unique" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">⭐ Projet unique<br><small style="color:var(--gris);font-weight:400">commande sur mesure — prix calculé auto</small></button>
-        <button type="button" class="carte-choix-j" data-cat="exception" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">✨ Pièce d'exception<br><small style="color:var(--gris);font-weight:400">séries limitées signature Amila</small></button>
-        <button type="button" class="carte-choix-j" data-cat="alliance" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">💒 Alliance<br><small style="color:var(--gris);font-weight:400">bagues d'alliance</small></button>
+        <button type="button" class="carte-choix-j" data-cat="medium-base-serti" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">💍 Medium et base sertis<br><small style="color:var(--gris);font-weight:400">medium full/semi serti · base 1 ou 2 côtés</small></button>
+        <button type="button" class="carte-choix-j" data-cat="piece-serie" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">✨ Pièces uniques et d'exception<br><small style="color:var(--gris);font-weight:400">projet unique · pièce signature · pièce sertie spéciale</small></button>
+        <button type="button" class="carte-choix-j" data-cat="coffret" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🎁 Coffret joaillerie<br><small style="color:var(--gris);font-weight:400">coffret ou cadeau d'exception (peut contenir mediums sertis, bases serties, pièces)</small></button>
+        <button type="button" class="carte-choix-j" data-cat="alliance" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">💒 Alliance<br><small style="color:var(--gris);font-weight:400">par 2 bagues</small></button>
         <button type="button" class="carte-choix-j" data-cat="compagnon" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🌸 Compagnon<br><small style="color:var(--gris);font-weight:400">bague sans base mood</small></button>
-        <button type="button" class="carte-choix-j" data-cat="base-sertie" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🪨 Base sertie<br><small style="color:var(--gris);font-weight:400">base small/large/XS sertie</small></button>
       </div>
     </div>
 
@@ -1852,22 +1850,18 @@
 
   // ============ JOAILLERIE NAVIGATION ============
   const MJ_CAT_FIELDS = {
-    'addon-serti':    ['format','sertissage','pierres','tailles'],
-    'coffret':        ['composants','sous-style-cadeau','tailles'],
-    'projet-unique':  ['format','pierres','sertissage','tailles','nom-client'],
-    'exception':      ['format','pierres','sertissage','tailles','num-serie','sous-style-yarrow'],
-    'alliance':       ['tailles','gravure'],
-    'compagnon':      ['tailles'],
-    'base-sertie':    ['format-base','pierres','sertissage','tailles'],
+    'medium-base-serti':  ['format-medium-base','sertissage','pierres','tailles'],
+    'piece-serie':        ['format','pierres','sertissage','tailles','nom-client','num-serie','sous-style-yarrow'],
+    'coffret':            ['composants','sous-style-cadeau','tailles'],
+    'alliance':           ['tailles','gravure'],
+    'compagnon':          ['tailles','pierres'],
   };
   const MJ_CAT_LABELS = {
-    'addon-serti': '💍 Addon serti',
+    'medium-base-serti': '💍 Medium et base sertis',
+    'piece-serie': '✨ Pièces uniques et d\'exception',
     'coffret': '🎁 Coffret joaillerie',
-    'projet-unique': '⭐ Projet unique',
-    'exception': '✨ Pièce d\'exception',
     'alliance': '💒 Alliance',
     'compagnon': '🌸 Compagnon',
-    'base-sertie': '🪨 Base sertie',
   };
   let mjCategorie = '';
   let mjDashSelectionnees = [];
@@ -1904,9 +1898,9 @@
       if (el) el.classList.remove('hidden');
     });
 
-    // Prix calculé auto pour projet-unique
+    // Prix calculé auto pour piece-serie (projets uniques + pièces serties spéciales)
     document.getElementById('j-prix-calcule')?.classList.add('hidden');
-    if (cat === 'projet-unique') {
+    if (cat === 'piece-serie') {
       document.getElementById('j-prix')?.setAttribute('readonly', 'true');
       document.getElementById('j-prix')?.setAttribute('placeholder', 'calculé automatiquement');
       mjMettreAJourPrixProjet();
@@ -1925,7 +1919,7 @@
       const couleur = this.value.replace('or ', '');
       document.getElementById('j-couleur').value = couleur;
     }
-    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+    if (mjCategorie === 'piece-serie') mjMettreAJourPrixProjet();
   });
 
   // ============ TAILLES CHECKBOXES ============
@@ -1969,7 +1963,7 @@
   document.getElementById('btn-ajouter-pierre')?.addEventListener('click', () => {
     mjPierres.push({ type: 'diamant', taille: '1.6', quantite: 1 });
     mjRendrePierres();
-    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+    if (mjCategorie === 'piece-serie') mjMettreAJourPrixProjet();
   });
 
   function mjRendrePierres() {
@@ -2003,13 +1997,13 @@
       const sel = document.getElementById(`j-taille-pierre-${idx}`);
       if (sel) sel.innerHTML = tailles.map(t => `<option value="${t}">${t}mm</option>`).join('');
     }
-    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+    if (mjCategorie === 'piece-serie') mjMettreAJourPrixProjet();
   }
 
   function mjSupprimerPierre(idx) {
     mjPierres.splice(idx, 1);
     mjRendrePierres();
-    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+    if (mjCategorie === 'piece-serie') mjMettreAJourPrixProjet();
   }
 
   // ============ CALCUL PRIX PROJET UNIQUE ============
@@ -2023,7 +2017,7 @@
   };
 
   function mjMettreAJourPrixProjet() {
-    if (mjCategorie !== 'projet-unique') return;
+    if (mjCategorie !== 'piece-serie') return;
     const matiere = document.getElementById('j-matiere')?.value || '';
     const format = document.getElementById('j-format')?.value || '';
     const nbPierres = mjPierres.reduce((s, p) => s + (p.quantite || 1), 0);
@@ -2036,7 +2030,7 @@
   }
 
   document.getElementById('j-format')?.addEventListener('change', () => {
-    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+    if (mjCategorie === 'piece-serie') mjMettreAJourPrixProjet();
   });
 
   // ============ DASH JOAILLERIE ============
