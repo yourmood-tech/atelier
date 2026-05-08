@@ -2087,7 +2087,6 @@
   };
 
   // Prix d'ACHAT de la matière pour medium et base (source : Amila Pousaz 2026-05-08)
-  // Note : pour les BASES, on prend le prix du medium en acier comme référence (15 CHF).
   const PRIX_ACHAT_MATIERE_SERTI = {
     'argent':       { 'medium': 26, 'base': 15 },
     'argent-glitter':{ 'medium': 40, 'base': 15 },
@@ -2095,7 +2094,7 @@
     'or jaune':     { 'medium': 310, 'base': 15 },
     'or gris':      { 'medium': 190, 'base': 15 },
     'tantale':      { 'medium': 190, 'base': 15 },
-    'carbone':      { 'medium': 31.20, 'base': 15 },     // full carbon
+    'carbone':      { 'medium': 31.20, 'base': 15 },
     'carbone-fibre':{ 'medium': 9.50, 'base': 15 },
     'acier':        { 'medium': 4.50, 'base': 15 },
     'titane':       { 'medium': 6, 'base': 15 },
@@ -2103,9 +2102,24 @@
     'polymere':     { 'medium': 1.18, 'base': 15 },
     'bronze':       { 'medium': 16, 'base': 15 },
     'ceramique':    { 'medium': 80, 'base': 15 },
-    'damasse':      { 'medium': 80, 'base': 15 },         // estimation
-    'mokume-gane':  { 'medium': 100, 'base': 15 },        // estimation pièces uniques
+    'damasse':      { 'medium': 80, 'base': 15 },
+    'mokume-gane':  { 'medium': 100, 'base': 15 },
     'revetement':   { 'medium': 40, 'base': 15 },
+  };
+
+  // Prix de VENTE catalogue de la matière (utilisé directement si dispo, sinon achat × 3.8)
+  // Source : tableau fourni par Amila Pousaz 2026-05-08
+  const PRIX_VENTE_MATIERE_SERTI = {
+    'argent':       { 'medium': 169 },
+    'argent-glitter':{ 'medium': 169 },
+    'or rose':      { 'medium': 1178 },
+    'or jaune':     { 'medium': 1178 },
+    'or gris':      { 'medium': 722 },
+    'acier':        { 'medium': 109 },
+    'titane':       { 'medium': 109 },
+    'aluminium':    { 'medium': 65 },
+    'polymere':     { 'medium': 15 },
+    'revetement':   { 'medium': 169 },
   };
 
   // Nombre de pierres pour 1 côté/face — table calculée depuis la longueur d'anneau
@@ -2137,8 +2151,13 @@
     const sertissage = document.getElementById('j-sertissage')?.value || '';
     const tailles = jGetTaillesSelectionnees();
 
-    if (!sertissage || !mjPierres.length || !tailles.length) {
-      content.innerHTML = 'Choisis le nombre de pierres + au moins 1 pierre + au moins 1 taille de bague';
+    // Guide pas-à-pas selon ce qui manque
+    const manqueArr = [];
+    if (!sertissage) manqueArr.push("✏️ choisir le <strong>nombre de pierres</strong> (medium full / partiel / base 1 ou 2 côtés)");
+    if (!mjPierres.length) manqueArr.push("💎 ajouter au moins <strong>1 pierre</strong> (bouton + Ajouter une pierre)");
+    if (!tailles.length) manqueArr.push("📏 cocher au moins <strong>1 taille de bague</strong>");
+    if (manqueArr.length) {
+      content.innerHTML = '<div style="font-size:0.85rem;">Pour voir le tableau, il manque :</div><ul style="margin:0.4rem 0 0 0;padding-left:1.2rem;font-size:0.85rem;">' + manqueArr.map(s => `<li>${s}</li>`).join('') + '</ul>';
       return;
     }
     // Multiplicateur selon le sertissage
@@ -2157,10 +2176,15 @@
         <th style="text-align:right;padding:0.3rem;">Prix CHF</th>
       </tr></thead><tbody>`;
 
-    // Prix achat matière selon contexte (medium ou base)
+    // Prix de la matière selon contexte (medium ou base)
+    // - Si on a un PRIX DE VENTE catalogue → on l'utilise directement
+    // - Sinon → on calcule depuis le prix d'achat × 3.8
     const matiere = document.getElementById('j-matiere')?.value || '';
     const contexte = sertissage.startsWith('base-') ? 'base' : 'medium';
+    const prixVenteCat = (PRIX_VENTE_MATIERE_SERTI[matiere] || {})[contexte];
     const prixAchatMatiere = (PRIX_ACHAT_MATIERE_SERTI[matiere] || {})[contexte] || 0;
+    // Prix matière "intégré" au calcul
+    const prixMatiereIntegre = prixVenteCat !== undefined ? prixVenteCat : prixAchatMatiere * 3.8;
 
     // Toutes les pierres partagent la MÊME taille (ex: medium serti 1.6mm avec
     // diamants blancs + diamants noirs alignés). On prend la taille de la 1ère pierre.
@@ -2185,8 +2209,8 @@
         const achatUnit = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
         totalAchatPierres += achatUnit * nbPierre;
       }
-      // Formule : (achat_matière + achat_pierres) × 3.8 + 4 × nb_pierres
-      const prix = Math.round((prixAchatMatiere + totalAchatPierres) * 3.8 + 4 * totalNb);
+      // Prix = prix matière catalogue (ou achat × 3.8) + (achat pierres × 3.8) + (4 × nb pierres serties)
+      const prix = Math.round(prixMatiereIntegre + totalAchatPierres * 3.8 + 4 * totalNb);
       if (manque) {
         rows += `<tr><td style="padding:0.3rem;">${t}</td><td colspan="3" style="text-align:right;padding:0.3rem;color:var(--rouge);">Taille de pierre non gérée pour cette table</td></tr>`;
       } else {
@@ -2198,7 +2222,10 @@
       }
     }
     rows += '</tbody></table>';
-    rows += `<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--gris);">Formule : (achat matière + achat pierres) × 3.8 + 4 CHF par pierre sertie</div>`;
+    const sourceMatiere = prixVenteCat !== undefined
+      ? `Prix matière (${matiere} ${contexte}) : ${prixVenteCat} CHF (catalogue)`
+      : `Prix matière (${matiere} ${contexte}) : ${prixAchatMatiere}.- × 3.8 = ${(prixAchatMatiere * 3.8).toFixed(0)} CHF`;
+    rows += `<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--gris);">${sourceMatiere}<br>+ achat pierres × 3.8 + 4 CHF par pierre sertie</div>`;
 
     // Auto-remplir le champ Prix de vente avec la moyenne des prix calculés
     if (prixCalcules.length > 0) {
