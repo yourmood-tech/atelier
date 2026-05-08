@@ -22,11 +22,12 @@ export interface JoaillerieInfos {
   finition?: string;
   couleur?: string;
   pierres?: PierreItem[];
-  sertissage?: string;       // medium-full | medium-partiel | base-1-cote | base-2-cotes
-  type_sertissage?: string;  // invisible | grain | neige | 2-grains | (texte libre)
-  nb_serie?: number;         // nombre de pièces produites dans la série
-  description_ia?: string;   // texte poétique généré par Gemini
-  mots_cles?: string;        // mots-clés utilisés pour la génération IA
+  sertissage?: string;          // medium-full | medium-partiel | base-1-cote | base-2-cotes
+  type_sertissage?: string;     // invisible | grain | neige | 2-grains | (texte libre)
+  nb_serie?: number;            // nombre de pièces produites dans la série
+  description_ia?: string;      // texte poétique généré par Gemini
+  mots_cles?: string;           // mots-clés utilisés pour la génération IA
+  sous_type_piece?: 'projet-unique' | 'piece-exception';  // pour catégorie piece-serie
   tailles?: string[];
   taille_bague?: string[];
   gravure?: string;
@@ -113,40 +114,73 @@ export function genererTagsJoaillerie(infos: JoaillerieInfos): string {
   // 1. Joaillerie
   tags.push('Joaillerie');
 
-  // 2. Matière (avec carat si or)
-  const matiereSlug = toSlug(infos.matiere);
+  // 2. Nom du produit (utile pour recherche)
+  if (infos.nom) {
+    tags.push(infos.nom.toLowerCase());
+  }
+
+  // 3. Matière (avec carat si or)
   const isOr = infos.matiere.startsWith('or ');
+  tags.push(infos.matiere.toLowerCase());
+  if (isOr && infos.carat) {
+    tags.push(infos.carat.toLowerCase());
+  }
+  // Garde aussi le tag structuré pour le configurateur
+  const matiereSlug = toSlug(infos.matiere);
   if (isOr && infos.carat) {
     tags.push(`materiaux:${matiereSlug}-${infos.carat.toLowerCase()}`);
   } else {
     tags.push(`materiaux:${matiereSlug}`);
   }
 
-  // 3. Pierres
+  // 4. Pierres : juste le nom (pas de préfixe), une seule fois par type
   if (infos.pierres && infos.pierres.length > 0) {
     const typesSeen = new Set<string>();
+    const taillesSeen = new Set<string>();
     for (const p of infos.pierres) {
       const typeSlug = toSlug(p.type);
       if (!typesSeen.has(typeSlug)) {
-        tags.push(`pierre:${typeSlug}`);
+        tags.push(typeSlug);  // ex: 'saphir', 'diamant', 'topaze'
         typesSeen.add(typeSlug);
       }
-      tags.push(`taille-pierre:${p.taille}mm`);
+      const tailleTag = `${p.taille}mm`;
+      if (!taillesSeen.has(tailleTag)) {
+        tags.push(tailleTag);  // ex: '1.6mm'
+        taillesSeen.add(tailleTag);
+      }
     }
   }
 
-  // 4. Format
+  // 5. Type de sertissage (joaillier : invisible / grain / neige / 2-grains / autre)
+  if (infos.type_sertissage) {
+    tags.push(`sertissage-${toSlug(infos.type_sertissage)}`);
+  }
+
+  // 6. Carats total (arrondi à 2 décimales)
+  if (infos.pierres && infos.pierres.length > 0) {
+    const carats = calculerCaratsTotal(
+      infos.pierres.map(p => ({ taille: p.taille, quantite: p.quantite }))
+    );
+    if (carats !== null && carats > 0) {
+      tags.push(`${carats.toFixed(2)}ct`);
+    }
+  }
+
+  // 7. Format
   if (infos.format) {
     tags.push(`format:${toSlug(infos.format)}`);
   }
 
-  // 5. Catégorie + sous-style
+  // 8. Catégorie + sous-style
   tags.push(`categorie:${toSlug(infos.categorie)}`);
+  if (infos.sous_type_piece) {
+    tags.push(`sous-type:${infos.sous_type_piece}`);
+  }
   if (infos.sous_style) {
     tags.push(`style:${toSlug(infos.sous_style)}`);
   }
 
-  // 6. Tag prix
+  // 9. Tag prix
   if (infos.prix && infos.prix > 0) {
     tags.push(tagPrixRange(infos.prix));
   }
@@ -176,16 +210,21 @@ function resumePierres(pierres: PierreItem[]): string {
 }
 
 export function genererTitreJoaillerie(infos: JoaillerieInfos): string {
-  const matiereLabel = infos.matiere + (infos.carat ? ` ${infos.carat}` : '');
+  // Carat uniquement si or (ne pas l'afficher pour argent / acier / titane / etc.)
+  const isOr = infos.matiere.startsWith('or ');
+  const matiereLabel = infos.matiere + (isOr && infos.carat ? ` ${infos.carat}` : '');
+
   switch (infos.categorie) {
     case 'medium-base-serti':
       return infos.pierres && infos.pierres.length > 0
         ? `${infos.nom} — ${matiereLabel} serti ${resumePierres(infos.pierres)}`
         : `${infos.nom} — ${matiereLabel} serti`;
-    case 'piece-serie':
-      return infos.nom_client
-        ? `${infos.nom} — Projet unique ${matiereLabel} · ${infos.nom_client}`
-        : `${infos.nom} — Pièce d'exception Mood Joaillerie`;
+    case 'piece-serie': {
+      const sousTypeTxt = infos.sous_type_piece === 'projet-unique'
+        ? 'projet unique'
+        : 'pièce d\'exception';
+      return `${infos.nom} - ${sousTypeTxt} mood joaillerie`;
+    }
     case 'alliance':
       return `Alliance ${matiereLabel}${infos.finition ? ' ' + infos.finition : ''}`;
     case 'coffret':
@@ -235,7 +274,10 @@ function construireBodyHtml(infos: JoaillerieInfos): string {
   return html;
 }
 
-export function construirePayloadJoaillerie(infos: JoaillerieInfos): unknown {
+export function construirePayloadJoaillerie(
+  infos: JoaillerieInfos,
+  seoOverride?: { title: string; description: string } | null,
+): unknown {
   const tailles = infos.tailles && infos.tailles.length > 0 ? infos.tailles : TAILLES_STANDARD;
   const prix = infos.prix ? String(infos.prix) : "0";
 
@@ -247,16 +289,21 @@ export function construirePayloadJoaillerie(infos: JoaillerieInfos): unknown {
     inventory_policy: "deny",
   }));
 
-  return {
-    product: {
-      title: genererTitreJoaillerie(infos),
-      vendor: "Mood Joaillerie",
-      product_type: PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie,
-      status: "draft",
-      tags: genererTagsJoaillerie(infos),
-      body_html: construireBodyHtml(infos),
-      options: [{ name: "Taille" }],
-      variants,
-    },
+  const product: Record<string, unknown> = {
+    title: genererTitreJoaillerie(infos),
+    vendor: "Mood Joaillerie",
+    product_type: PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie,
+    status: "draft",
+    tags: genererTagsJoaillerie(infos),
+    body_html: construireBodyHtml(infos),
+    options: [{ name: "Taille" }],
+    variants,
   };
+
+  if (seoOverride) {
+    product.metafields_global_title_tag = seoOverride.title;
+    product.metafields_global_description_tag = seoOverride.description;
+  }
+
+  return { product };
 }

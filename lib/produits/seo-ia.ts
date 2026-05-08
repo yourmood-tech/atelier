@@ -11,21 +11,72 @@ interface SeoInfos {
   couleur?: string;
   collection?: string;
   texteInspiration?: string;
+  // Champs supplémentaires pour Mood Joaillerie
+  mode?: 'collection' | 'joaillerie';
+  pierres?: Array<{ type?: string; taille?: string; quantite?: number }>;
+  carat?: string;
+  type_sertissage?: string;
+  sous_type_piece?: string;
 }
 
 function buildPrompt(infos: SeoInfos, motsClesFR: string[]) {
-  const { nom, format, matiere, finition, couleur, collection, texteInspiration } = infos;
+  const { nom, format, matiere, finition, couleur, collection, texteInspiration,
+          mode, pierres, carat, type_sertissage, sous_type_piece } = infos;
+  const isJoaillerie = mode === 'joaillerie';
+
+  const pierresTxt = Array.isArray(pierres) && pierres.length > 0
+    ? pierres.map(p => `${p.quantite || 1}× ${p.type || ''} ${p.taille || ''}mm`).join(', ')
+    : '';
+
   const contexte = [
     nom && `Nom du produit : ${nom}`,
     format && `Format : ${format}`,
-    matiere && `Matière : ${matiere}`,
+    matiere && `Matière : ${matiere}${carat && matiere.startsWith('or ') ? ' ' + carat : ''}`,
     finition && finition !== "aucune" && `Finition : ${finition}`,
     couleur && `Couleur : ${couleur}`,
     collection && `Collection : ${collection}`,
+    pierresTxt && `Pierres serties : ${pierresTxt}`,
+    type_sertissage && `Type de sertissage : ${type_sertissage}`,
+    sous_type_piece && `Sous-type : ${sous_type_piece === 'projet-unique' ? 'projet unique' : 'pièce d\'exception'}`,
     texteInspiration && `Esprit du produit : ${texteInspiration.substring(0, 250)}`,
   ]
     .filter(Boolean)
     .join("\n");
+
+  if (isJoaillerie) {
+    return `Tu es expert SEO pour Mood Joaillerie (gamme haute joaillerie suisse de Mood Collection, basée à Orbe / Suisse).
+
+OBJECTIF : générer un méta-titre + une méta-description qui maximisent le référencement Google pour cette pièce de joaillerie.
+
+POOL DE MOTS-CLÉS PRIORITAIRES (intègre les 3-5 plus pertinents) :
+${motsClesFR.map((k) => `- ${k}`).join("\n")}
+- haute joaillerie suisse
+- bague joaillerie
+- bague sertie
+- pierre précieuse
+- design suisse
+- mood joaillerie
+
+CONTRAINTES STRICTES :
+- Méta-titre : 50 à 60 caractères MAX
+- Méta-description : 140 à 155 caractères MAX
+- Inclure obligatoirement : nom du produit, type de pierre principale (si présente), "mood joaillerie"
+- Mentionner les caratages si or, taille mm si pierres
+- Pas de superlatifs creux ("incroyable", "magnifique"), pas de point d'exclamation
+- Français impeccable
+
+EXEMPLE DE QUALITÉ ATTENDUE (medium serti d'émeraudes 1.6mm en or rose 18K) :
+{
+  "title": "Medium serti émeraudes 1.6mm or rose 18K | mood joaillerie",
+  "description": "Medium en or rose 18K serti d'émeraudes 1.6mm sertissage grain. Pièce signée mood joaillerie, design suisse. Sertissage joaillier."
+}
+
+PRODUIT À RÉFÉRENCER :
+${contexte}
+
+RÉPONSE OBLIGATOIRE — JSON STRICT, RIEN D'AUTRE :
+{"title": "...", "description": "..."}`;
+  }
 
   return `Tu es expert SEO pour Mood Collection (marque suisse de bagues mood interchangeables, design contemporain minimaliste, basée à Orbe / Suisse).
 

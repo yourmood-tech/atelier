@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { construirePayloadJoaillerie, JoaillerieInfos } from "@/lib/produits/joaillerie-rules";
 import { makeShopifyClient } from "@/lib/produits/shopify";
 import { getStore } from "@/lib/stores";
+import { genererSeoViaIA } from "@/lib/produits/seo-ia";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -16,7 +17,22 @@ export async function POST(request: Request) {
     const storeConfig = getStore(storeKey);
     const client = makeShopifyClient(storeConfig.shopifyDomain, storeConfig.shopifyToken);
 
-    const payload = construirePayloadJoaillerie(infos as JoaillerieInfos);
+    // Génération SEO via IA (mode joaillerie)
+    const seoIA = await genererSeoViaIA({
+      nom: infos.nom,
+      format: infos.format,
+      matiere: infos.matiere,
+      finition: infos.finition,
+      couleur: infos.couleur,
+      mode: 'joaillerie',
+      pierres: infos.pierres,
+      carat: infos.carat,
+      type_sertissage: infos.type_sertissage,
+      sous_type_piece: infos.sous_type_piece,
+      texteInspiration: infos.description_ia,
+    });
+
+    const payload = construirePayloadJoaillerie(infos as JoaillerieInfos, seoIA);
     const creation = await client.creerProduit(payload);
     if (!creation.ok)
       return NextResponse.json(

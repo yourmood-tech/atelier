@@ -628,6 +628,19 @@
         <input id="j-num-serie" placeholder="ex : 015">
       </div>
 
+      <!-- Sous-type pour catégorie piece-serie -->
+      <div id="j-field-sous-type-piece" class="hidden">
+        <label>Type de pièce</label>
+        <div style="display:flex;gap:0.8rem;margin-top:0.3rem;">
+          <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:400;margin:0;">
+            <input type="radio" name="j-sous-type" value="projet-unique" checked style="width:auto;margin:0;"> Projet unique
+          </label>
+          <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:400;margin:0;">
+            <input type="radio" name="j-sous-type" value="piece-exception" style="width:auto;margin:0;"> Pièce d'exception
+          </label>
+        </div>
+      </div>
+
       <!-- Nombre dans la série (catégorie piece-serie) -->
       <div id="j-field-nb-serie" class="hidden">
         <label>Nombre de pièces produites</label>
@@ -1907,7 +1920,7 @@
   // ============ JOAILLERIE NAVIGATION ============
   const MJ_CAT_FIELDS = {
     'medium-base-serti':  ['format-medium-base','sertissage','type-sertissage','pierres','tailles','description-ia'],
-    'piece-serie':        ['format','pierres','type-sertissage','nb-serie','tailles','sous-style-yarrow','description-ia'],
+    'piece-serie':        ['sous-type-piece','format','pierres','type-sertissage','nb-serie','tailles','sous-style-yarrow','description-ia'],
     'coffret':            ['composants','sous-style-cadeau','tailles','description-ia'],
     'alliance':           ['tailles','gravure','description-ia'],
     'compagnon':          ['tailles','pierres','description-ia'],
@@ -1942,7 +1955,8 @@
 
     // Masquer tous les champs conditionnels
     ['format','format-base','carat','couleur','pierres','sertissage','type-sertissage','tailles','gravure',
-     'sous-style-yarrow','sous-style-cadeau','composants','nom-client','num-serie','nb-serie','description-ia'].forEach(f => {
+     'sous-style-yarrow','sous-style-cadeau','composants','nom-client','num-serie','nb-serie','description-ia',
+     'sous-type-piece'].forEach(f => {
       const el = document.getElementById(`j-field-${f}`) || document.getElementById(`j-section-${f}`);
       if (el) el.classList.add('hidden');
     });
@@ -2426,6 +2440,7 @@
       nb_serie: parseInt(document.getElementById('j-nb-serie')?.value || '1', 10) || 1,
       description_ia: document.getElementById('j-description-ia')?.value || '',
       mots_cles: document.getElementById('j-mots-cles')?.value || '',
+      sous_type_piece: document.querySelector('input[name="j-sous-type"]:checked')?.value || 'projet-unique',
       sertissage: document.getElementById('j-sertissage')?.value || '',
       type_sertissage: (() => {
         const sel = document.getElementById('j-type-sertissage')?.value || '';
