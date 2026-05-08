@@ -108,55 +108,56 @@ function tagPrixRange(prix: number): string {
   return 'P1500.x';
 }
 
+/** Mapping catégorie → label tag lisible (FR, sans préfixe) */
+const CATEGORIE_TAG_LABEL: Record<JoaillerieCategorie, string> = {
+  'medium-base-serti': 'pièce sertie',
+  'piece-serie':       'pièce sertie',  // affiné par sous_type_piece
+  'coffret':           'coffret',
+  'alliance':          'alliance',
+  'compagnon':         'compagnon',
+};
+
 export function genererTagsJoaillerie(infos: JoaillerieInfos): string {
   const tags: string[] = [];
+  const isOr = infos.matiere.startsWith('or ');
 
-  // 1. Joaillerie
+  // 1. Marque
   tags.push('Joaillerie');
 
-  // 2. Nom du produit (utile pour recherche)
-  if (infos.nom) {
-    tags.push(infos.nom.toLowerCase());
-  }
+  // 2. Nom du produit
+  if (infos.nom) tags.push(infos.nom.toLowerCase());
 
-  // 3. Matière (avec carat si or)
-  const isOr = infos.matiere.startsWith('or ');
+  // 3. Matière (sans préfixe). Carat séparé si or.
   tags.push(infos.matiere.toLowerCase());
-  if (isOr && infos.carat) {
-    tags.push(infos.carat.toLowerCase());
-  }
-  // Garde aussi le tag structuré pour le configurateur
-  const matiereSlug = toSlug(infos.matiere);
-  if (isOr && infos.carat) {
-    tags.push(`materiaux:${matiereSlug}-${infos.carat.toLowerCase()}`);
-  } else {
-    tags.push(`materiaux:${matiereSlug}`);
-  }
+  if (isOr && infos.carat) tags.push(infos.carat.toLowerCase());
 
-  // 4. Pierres : juste le nom (pas de préfixe), une seule fois par type
+  // 4. Format (sans préfixe)
+  if (infos.format) tags.push(infos.format.toLowerCase());
+
+  // 5. Pierres : nom de chaque type (sans préfixe) + tailles mm
   if (infos.pierres && infos.pierres.length > 0) {
     const typesSeen = new Set<string>();
     const taillesSeen = new Set<string>();
     for (const p of infos.pierres) {
-      const typeSlug = toSlug(p.type);
-      if (!typesSeen.has(typeSlug)) {
-        tags.push(typeSlug);  // ex: 'saphir', 'diamant', 'topaze'
-        typesSeen.add(typeSlug);
+      const t = (p.type || '').toLowerCase().trim();
+      if (t && !typesSeen.has(t)) {
+        tags.push(t);
+        typesSeen.add(t);
       }
       const tailleTag = `${p.taille}mm`;
       if (!taillesSeen.has(tailleTag)) {
-        tags.push(tailleTag);  // ex: '1.6mm'
+        tags.push(tailleTag);
         taillesSeen.add(tailleTag);
       }
     }
   }
 
-  // 5. Type de sertissage (joaillier : invisible / grain / neige / 2-grains / autre)
+  // 6. Type de sertissage joaillier (juste le nom)
   if (infos.type_sertissage) {
-    tags.push(`sertissage-${toSlug(infos.type_sertissage)}`);
+    tags.push(infos.type_sertissage.toLowerCase());
   }
 
-  // 6. Carats total (arrondi à 2 décimales)
+  // 7. Carats total
   if (infos.pierres && infos.pierres.length > 0) {
     const carats = calculerCaratsTotal(
       infos.pierres.map(p => ({ taille: p.taille, quantite: p.quantite }))
@@ -166,21 +167,20 @@ export function genererTagsJoaillerie(infos: JoaillerieInfos): string {
     }
   }
 
-  // 7. Format
-  if (infos.format) {
-    tags.push(`format:${toSlug(infos.format)}`);
+  // 8. Catégorie (label lisible, sans préfixe)
+  if (infos.categorie === 'piece-serie') {
+    // Affiner selon sous_type_piece
+    if (infos.sous_type_piece === 'projet-unique') tags.push('projet unique');
+    else tags.push("pièce d'exception");
+  } else {
+    tags.push(CATEGORIE_TAG_LABEL[infos.categorie] || infos.categorie);
   }
 
-  // 8. Catégorie + sous-style
-  tags.push(`categorie:${toSlug(infos.categorie)}`);
-  if (infos.sous_type_piece) {
-    tags.push(`sous-type:${infos.sous_type_piece}`);
-  }
-  if (infos.sous_style) {
-    tags.push(`style:${toSlug(infos.sous_style)}`);
-  }
+  // 9. Sous-style (Yarrow / bague-cadeau-exception)
+  if (infos.sous_style === 'yarrow') tags.push('yarrow');
+  if (infos.sous_style === 'bague-cadeau-exception') tags.push("cadeau d'exception");
 
-  // 9. Tag prix
+  // 10. Tag prix range
   if (infos.prix && infos.prix > 0) {
     tags.push(tagPrixRange(infos.prix));
   }
@@ -246,31 +246,61 @@ const PRODUCT_TYPE_MAP: Record<JoaillerieCategorie, string> = {
 };
 
 function construireBodyHtml(infos: JoaillerieInfos): string {
-  const matiereLabel = infos.matiere + (infos.carat ? ` ${infos.carat}` : '');
-  let html = `<p><strong>${infos.nom}</strong></p>`;
-  // Description IA (poétique) en haut, avant les détails techniques
+  const isOr = infos.matiere.startsWith('or ');
+  const matiereLabel = infos.matiere + (isOr && infos.carat ? ` ${infos.carat}` : '');
+  let html = '';
+
+  // Description IA (poétique / technique) en intro
   if (infos.description_ia && infos.description_ia.trim()) {
     const paragraphs = infos.description_ia.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
     for (const para of paragraphs) {
       html += `<p>${para.replace(/\n/g, '<br>')}</p>`;
     }
   }
-  html += `<p>Matière : ${matiereLabel}</p>`;
-  if (infos.finition) html += `<p>Finition : ${infos.finition}</p>`;
+
+  // Caractéristiques techniques (titre en gras + bullets)
+  html += `<p><strong>Caractéristiques</strong></p>`;
+  html += `<ul>`;
+  html += `<li><strong>Matière :</strong> ${matiereLabel}</li>`;
+  if (infos.finition) html += `<li><strong>Finition :</strong> ${infos.finition}</li>`;
+  if (infos.format) html += `<li><strong>Format :</strong> ${infos.format}</li>`;
+  if (infos.nb_serie && infos.nb_serie > 1) html += `<li><strong>Série :</strong> ${infos.nb_serie} pièces produites</li>`;
+  html += `</ul>`;
+
+  // Pierres + carats
   if (infos.pierres && infos.pierres.length > 0) {
-    html += `<p>Pierres : ${resumePierres(infos.pierres)}</p>`;
+    html += `<p><strong>Pierres serties</strong></p>`;
+    html += `<ul>`;
+    html += `<li>${resumePierres(infos.pierres)}</li>`;
     const carats = calculerCaratsTotal(infos.pierres);
     if (carats !== null && carats > 0) {
-      html += `<p>Poids total : ${carats} carats</p>`;
+      html += `<li><strong>Poids total :</strong> ${carats} carats</li>`;
     }
+    html += `</ul>`;
   }
-  if (infos.sertissage) html += `<p>Sertissage : ${infos.sertissage}</p>`;
-  if (infos.type_sertissage) html += `<p>Type de sertissage : ${infos.type_sertissage}</p>`;
-  if (infos.nb_serie && infos.nb_serie > 1) html += `<p>Série de ${infos.nb_serie} pièces</p>`;
-  if (infos.composants) html += `<p>Composants :<br>${infos.composants.replace(/\n/g, '<br>')}</p>`;
-  if (infos.gravure) html += `<p>Gravure intérieure : ${infos.gravure}</p>`;
-  html += `<p>Catégorie : ${PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie}</p>`;
-  html += `<p>Créé par Mood Joaillerie — Orbe, Suisse.</p>`;
+
+  // Sertissage
+  if (infos.sertissage || infos.type_sertissage) {
+    html += `<p><strong>Sertissage</strong></p>`;
+    html += `<ul>`;
+    if (infos.sertissage) html += `<li><strong>Type de pose :</strong> ${infos.sertissage}</li>`;
+    if (infos.type_sertissage) html += `<li><strong>Sertissage joaillier :</strong> ${infos.type_sertissage}</li>`;
+    html += `</ul>`;
+  }
+
+  // Composants (coffret)
+  if (infos.composants) {
+    html += `<p><strong>Composants du coffret</strong></p>`;
+    html += `<p>${infos.composants.replace(/\n/g, '<br>')}</p>`;
+  }
+
+  // Gravure
+  if (infos.gravure) {
+    html += `<p><strong>Gravure intérieure :</strong> ${infos.gravure}</p>`;
+  }
+
+  // Signature finale
+  html += `<p><em>Pièce signée mood joaillerie — Orbe, Suisse.</em></p>`;
   return html;
 }
 
