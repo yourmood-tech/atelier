@@ -65,6 +65,9 @@
   .resultat dt { font-weight: 500; margin-top: 0.5rem; }
   .resultat dd { margin: 0; color: var(--gris); }
   .resultat a { color: var(--or); text-decoration: none; word-break: break-all; }
+  .store-selector { display:flex; gap:0.5rem; margin-bottom:1.5rem; }
+  .store-btn { flex:1; padding:0.7rem; border:2px solid #ddd; border-radius:8px; background:white; color:var(--gris); font-size:0.9rem; cursor:pointer; margin:0; width:auto; transition:all 0.2s; }
+  .store-btn.active { border-color:var(--or); color:var(--or); background:#fffaf6; font-weight:600; }
 </style>
 </head>
 <body>
@@ -72,6 +75,13 @@
   <h1><strong>mood</strong> · créer un produit</h1>
   <p class="subtitle">Application interne — tu remplis, ça part dans Shopify en brouillon.</p>
 
+  <!-- ============== SÉLECTEUR STORE ============== -->
+  <div class="store-selector" id="store-selector">
+    <button type="button" id="btn-store-mc" class="store-btn active" onclick="setStore('mood-collection')">💍 Mood Collection</button>
+    <button type="button" id="btn-store-mj" class="store-btn" onclick="setStore('mood-joaillerie')">💎 Mood Joaillerie</button>
+  </div>
+
+  <div id="mc-screens">
   <!-- ============== ÉCRAN CHOIX TYPE ============== -->
   <div id="ecran-choix" class="card">
     <h2 style="margin-top:0;text-align:center;">Que veux-tu créer ?</h2>
@@ -406,6 +416,210 @@
     <div id="succes-form" class="alert alert-success hidden"></div>
     <div id="resultat" class="resultat hidden"></div>
   </div>
+  </div><!-- fin mc-screens -->
+
+  <!-- ============== ÉCRANS MOOD JOAILLERIE ============== -->
+  <div id="mj-screens" class="hidden">
+
+    <!-- Choix catégorie joaillerie -->
+    <div id="mj-ecran-choix" class="card">
+      <h2 style="margin-top:0;text-align:center;">💎 Mood Joaillerie</h2>
+      <p style="text-align:center;color:var(--gris);margin-bottom:1.5rem;">Quelle catégorie de produit ?</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+        <button type="button" class="carte-choix-j" data-cat="addon-serti" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">💍 Addon serti<br><small style="color:var(--gris);font-weight:400">addon / DT / medium / mini avec sertissage</small></button>
+        <button type="button" class="carte-choix-j" data-cat="coffret" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🎁 Coffret joaillerie<br><small style="color:var(--gris);font-weight:400">composants + coffret premium</small></button>
+        <button type="button" class="carte-choix-j" data-cat="projet-unique" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">⭐ Projet unique<br><small style="color:var(--gris);font-weight:400">commande sur mesure — prix calculé auto</small></button>
+        <button type="button" class="carte-choix-j" data-cat="exception" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">✨ Pièce d'exception<br><small style="color:var(--gris);font-weight:400">séries limitées signature Amila</small></button>
+        <button type="button" class="carte-choix-j" data-cat="alliance" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">💒 Alliance<br><small style="color:var(--gris);font-weight:400">bagues d'alliance</small></button>
+        <button type="button" class="carte-choix-j" data-cat="compagnon" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🌸 Compagnon<br><small style="color:var(--gris);font-weight:400">bague sans base mood</small></button>
+        <button type="button" class="carte-choix-j" data-cat="base-sertie" style="padding:1.5rem 1rem;background:white;border:2px solid var(--or);border-radius:12px;cursor:pointer;text-align:center;width:auto;margin:0;">🪨 Base sertie<br><small style="color:var(--gris);font-weight:400">base small/large/XS sertie</small></button>
+      </div>
+    </div>
+
+    <!-- Formulaire joaillerie -->
+    <div id="mj-ecran-form" class="card hidden">
+      <button type="button" id="btn-retour-mj" style="background:transparent;color:var(--gris);border:none;padding:0;margin:0 0 1rem 0;width:auto;font-size:0.85rem;cursor:pointer;text-align:left;">← Retour au choix</button>
+      <h2 id="mj-titre-form" style="margin-top:0">💎 Nouveau produit Joaillerie</h2>
+
+      <label>Nom du produit *</label>
+      <input id="j-nom" placeholder="ex : Luna, Aurora, Andarta…">
+
+      <!-- Format (catégories 1, 3, 4) -->
+      <div id="j-field-format" class="hidden">
+        <label>Format *</label>
+        <select id="j-format">
+          <option value="">— choisir —</option>
+          <option value="addon">Addon</option>
+          <option value="deux-tiers">Deux tiers</option>
+          <option value="medium">Medium</option>
+          <option value="mini">Mini</option>
+          <option value="base">Base</option>
+        </select>
+      </div>
+
+      <!-- Format base sertie (catégorie 7 uniquement) -->
+      <div id="j-field-format-base" class="hidden">
+        <label>Format de base *</label>
+        <select id="j-format-base">
+          <option value="small">Small (S)</option>
+          <option value="large">Large (L)</option>
+          <option value="extra-small">Extra Small (XS)</option>
+        </select>
+      </div>
+
+      <!-- Matière -->
+      <label>Matière *</label>
+      <select id="j-matiere">
+        <option value="">— choisir —</option>
+        <option value="argent">Argent 925</option>
+        <option value="or rose">Or rose</option>
+        <option value="or jaune">Or jaune</option>
+        <option value="or gris">Or gris (blanc)</option>
+        <option value="tantale">Tantale</option>
+        <option value="carbone">Carbone</option>
+        <option value="damasse">Damassé</option>
+        <option value="mokume-gane">Mokume gane</option>
+        <option value="ceramique">Céramique</option>
+        <option value="acier">Acier 316L</option>
+        <option value="titane">Titane</option>
+        <option value="aluminium">Aluminium</option>
+        <option value="polymere">Polymère</option>
+      </select>
+
+      <!-- Carat (conditionnel = or) -->
+      <div id="j-field-carat" class="hidden">
+        <label>Carat *</label>
+        <select id="j-carat">
+          <option value="9K">9K</option>
+          <option value="18K" selected>18K</option>
+        </select>
+      </div>
+
+      <!-- Finition -->
+      <label>Finition <span class="opt">(optionnel)</span></label>
+      <select id="j-finition">
+        <option value="">— aucune / à préciser —</option>
+        <option value="poli">Poli miroir</option>
+        <option value="martele">Martelé</option>
+        <option value="brosse">Brossé</option>
+        <option value="froisse">Froissé</option>
+        <option value="cocon">Cocon de soie</option>
+        <option value="cire">Cire perdue</option>
+        <option value="creuse">Creusé</option>
+        <option value="glitter">Glitter</option>
+        <option value="piquete">Piqué</option>
+        <option value="neutre">Neutre</option>
+      </select>
+
+      <!-- Couleur (conditionnel = or) -->
+      <div id="j-field-couleur" class="hidden">
+        <label>Couleur or</label>
+        <input id="j-couleur" placeholder="ex : rose, jaune, gris — rempli auto selon matière">
+      </div>
+
+      <!-- Section pierres (catégories 1, 3, 4, 7) -->
+      <div id="j-section-pierres" class="hidden">
+        <label style="margin-top:1.5rem;">Pierres serties</label>
+        <div id="j-pierres-liste" style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;">
+          <p style="margin:0;color:var(--gris);font-size:0.85rem;" id="j-pierres-vide">Aucune pierre ajoutée</p>
+        </div>
+        <button type="button" id="btn-ajouter-pierre" style="margin-top:0.6rem;width:auto;padding:0.5rem 1rem;background:var(--or);font-size:0.85rem;margin-top:0.6rem;">+ Ajouter une pierre</button>
+      </div>
+
+      <!-- Type sertissage (catégories 1, 3, 4, 7) -->
+      <div id="j-field-sertissage" class="hidden">
+        <label>Type de sertissage</label>
+        <select id="j-sertissage">
+          <option value="">— choisir —</option>
+          <option value="full">Full serti</option>
+          <option value="semi">Semi serti</option>
+          <option value="etoile">Sertissage étoile</option>
+          <option value="un-cote">Un côté</option>
+          <option value="deux-cotes">Deux côtés</option>
+        </select>
+      </div>
+
+      <!-- Tailles de bague (checkboxes) -->
+      <div id="j-field-tailles" class="hidden">
+        <label>Tailles de bague *</label>
+        <div style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;">
+          <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:0.5rem;">
+            <button type="button" onclick="jSelectAllTailles(true)" style="margin:0;width:auto;padding:0.3rem 0.7rem;font-size:0.8rem;background:var(--gris)">Tout sélectionner</button>
+            <button type="button" onclick="jSelectAllTailles(false)" style="margin:0;width:auto;padding:0.3rem 0.7rem;font-size:0.8rem;background:var(--gris)">Désélectionner</button>
+          </div>
+          <div id="j-tailles-checkboxes" style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+            <!-- Checkboxes générées par JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Gravure (catégorie 5 alliance) -->
+      <div id="j-field-gravure" class="hidden">
+        <label>Gravure intérieure <span class="opt">(optionnel)</span></label>
+        <input id="j-gravure" placeholder="ex : Initiales, date…">
+      </div>
+
+      <!-- Sous-style Yarrow (catégories 2 et 4) -->
+      <div id="j-field-sous-style-yarrow" class="hidden">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;cursor:pointer;">
+          <input type="checkbox" id="j-yarrow" style="width:auto;margin:0;"> Sous-style <strong>Yarrow</strong> (collection signature Mood)
+        </label>
+      </div>
+      <div id="j-field-sous-style-cadeau" class="hidden">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-weight:400;cursor:pointer;">
+          <input type="checkbox" id="j-cadeau" style="width:auto;margin:0;"> Style <strong>Bague cadeau d'exception</strong>
+        </label>
+      </div>
+
+      <!-- Composants coffret (catégorie 2) -->
+      <div id="j-field-composants" class="hidden">
+        <label>Composants du coffret</label>
+        <textarea id="j-composants" placeholder="ex :&#10;1 base extra small gravée&#10;1 addon or rose serti diamants&#10;1 boîte joaillerie"></textarea>
+      </div>
+
+      <!-- Nom client (catégorie 3 projet unique) -->
+      <div id="j-field-nom-client" class="hidden">
+        <label>Nom du client <span class="opt">(usage interne)</span></label>
+        <input id="j-nom-client" placeholder="ex : Mme Durand">
+      </div>
+
+      <!-- Numéro de série (catégorie 4 exception) -->
+      <div id="j-field-num-serie" class="hidden">
+        <label>Numéro de série <span class="opt">(ex : 015 pour pièce 15/100)</span></label>
+        <input id="j-num-serie" placeholder="ex : 015">
+      </div>
+
+      <!-- Prix -->
+      <div id="j-field-prix">
+        <label>Prix de vente CHF *</label>
+        <input id="j-prix" type="number" step="0.01" placeholder="ex : 249.00">
+        <div id="j-prix-calcule" class="hidden" style="margin-top:0.5rem;padding:0.7rem;background:#eaf3e9;border-radius:8px;color:var(--vert);font-size:0.9rem;">
+          Prix calculé auto : <strong id="j-prix-valeur">—</strong> CHF
+        </div>
+      </div>
+
+      <!-- Photos Dash + Mac -->
+      <label style="margin-top:1.5rem;">Photos <span class="opt">(optionnel)</span></label>
+      <div style="background:#fafafa;border:1px dashed #ccc;border-radius:8px;padding:0.8rem;margin-bottom:0.5rem;">
+        <div style="display:flex;gap:0.5rem;align-items:stretch;margin-bottom:0.5rem;">
+          <input id="j-dash-search" type="text" placeholder="🔍 Chercher dans Dash…" style="flex:1;margin:0;">
+          <button type="button" id="j-btn-dash-search" style="margin:0;width:auto;padding:0.7rem 1rem;background:var(--or)">Chercher</button>
+        </div>
+        <div id="j-dash-resultats" class="hidden" style="max-height:180px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;background:white;padding:0.5rem;">
+          <p id="j-dash-msg" style="margin:0;color:var(--gris);font-size:0.85rem;text-align:center;"></p>
+          <div id="j-dash-liste" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+        </div>
+        <div id="j-dash-selectionnees" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;"></div>
+      </div>
+      <input id="j-photos" type="file" accept="image/*" multiple style="margin-bottom:0.5rem;">
+
+      <!-- Bouton créer -->
+      <div id="j-erreur" class="alert alert-error hidden"></div>
+      <button type="button" id="btn-creer-j">💎 Créer le produit Joaillerie</button>
+      <div id="j-resultat" class="hidden"></div>
+    </div>
+
+  </div><!-- fin mj-screens -->
 </div>
 
 <script>
@@ -1617,6 +1831,379 @@
       btn.textContent = 'Créer dans Shopify';
     }
   }
+
+  // ============ MULTI-STORE ============
+  let currentStore = localStorage.getItem('mood-store') || 'mood-collection';
+
+  function setStore(store) {
+    currentStore = store;
+    localStorage.setItem('mood-store', store);
+    document.getElementById('btn-store-mc').classList.toggle('active', store === 'mood-collection');
+    document.getElementById('btn-store-mj').classList.toggle('active', store === 'mood-joaillerie');
+    document.getElementById('mc-screens').classList.toggle('hidden', store === 'mood-joaillerie');
+    document.getElementById('mj-screens').classList.toggle('hidden', store !== 'mood-joaillerie');
+  }
+
+  // Appliquer au chargement
+  document.addEventListener('DOMContentLoaded', () => {
+    setStore(currentStore);
+    jInitTaillesCheckboxes();
+  });
+
+  // ============ JOAILLERIE NAVIGATION ============
+  const MJ_CAT_FIELDS = {
+    'addon-serti':    ['format','sertissage','pierres','tailles'],
+    'coffret':        ['composants','sous-style-cadeau','tailles'],
+    'projet-unique':  ['format','pierres','sertissage','tailles','nom-client'],
+    'exception':      ['format','pierres','sertissage','tailles','num-serie','sous-style-yarrow'],
+    'alliance':       ['tailles','gravure'],
+    'compagnon':      ['tailles'],
+    'base-sertie':    ['format-base','pierres','sertissage','tailles'],
+  };
+  const MJ_CAT_LABELS = {
+    'addon-serti': '💍 Addon serti',
+    'coffret': '🎁 Coffret joaillerie',
+    'projet-unique': '⭐ Projet unique',
+    'exception': '✨ Pièce d\'exception',
+    'alliance': '💒 Alliance',
+    'compagnon': '🌸 Compagnon',
+    'base-sertie': '🪨 Base sertie',
+  };
+  let mjCategorie = '';
+  let mjDashSelectionnees = [];
+
+  document.querySelectorAll('.carte-choix-j').forEach(btn => {
+    btn.addEventListener('click', () => {
+      mjCategorie = btn.dataset.cat;
+      mjAfficherForm(mjCategorie);
+    });
+  });
+
+  document.getElementById('btn-retour-mj')?.addEventListener('click', () => {
+    document.getElementById('mj-ecran-form').classList.add('hidden');
+    document.getElementById('mj-ecran-choix').classList.remove('hidden');
+    mjCategorie = '';
+  });
+
+  function mjAfficherForm(cat) {
+    document.getElementById('mj-ecran-choix').classList.add('hidden');
+    document.getElementById('mj-ecran-form').classList.remove('hidden');
+    document.getElementById('mj-titre-form').textContent = MJ_CAT_LABELS[cat] || '💎 Produit Joaillerie';
+
+    // Masquer tous les champs conditionnels
+    ['format','format-base','carat','couleur','pierres','sertissage','tailles','gravure',
+     'sous-style-yarrow','sous-style-cadeau','composants','nom-client','num-serie'].forEach(f => {
+      const el = document.getElementById(`j-field-${f}`) || document.getElementById(`j-section-${f}`);
+      if (el) el.classList.add('hidden');
+    });
+
+    // Afficher les champs de cette catégorie
+    const fields = MJ_CAT_FIELDS[cat] || [];
+    fields.forEach(f => {
+      const el = document.getElementById(`j-field-${f}`) || document.getElementById(`j-section-${f}`);
+      if (el) el.classList.remove('hidden');
+    });
+
+    // Prix calculé auto pour projet-unique
+    document.getElementById('j-prix-calcule')?.classList.add('hidden');
+    if (cat === 'projet-unique') {
+      document.getElementById('j-prix')?.setAttribute('readonly', 'true');
+      document.getElementById('j-prix')?.setAttribute('placeholder', 'calculé automatiquement');
+      mjMettreAJourPrixProjet();
+    } else {
+      document.getElementById('j-prix')?.removeAttribute('readonly');
+      document.getElementById('j-prix')?.setAttribute('placeholder', 'ex : 249.00');
+    }
+  }
+
+  // Carat conditionnel selon matière
+  document.getElementById('j-matiere')?.addEventListener('change', function() {
+    const isOr = this.value.startsWith('or ');
+    document.getElementById('j-field-carat')?.classList.toggle('hidden', !isOr);
+    document.getElementById('j-field-couleur')?.classList.toggle('hidden', !isOr);
+    if (isOr) {
+      const couleur = this.value.replace('or ', '');
+      document.getElementById('j-couleur').value = couleur;
+    }
+    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+  });
+
+  // ============ TAILLES CHECKBOXES ============
+  const TAILLES_J = ["50","52","54","56","58","60","62","64","66","68","70","72","taille inconnue"];
+  function jInitTaillesCheckboxes() {
+    const container = document.getElementById('j-tailles-checkboxes');
+    if (!container) return;
+    container.innerHTML = TAILLES_J.map(t =>
+      `<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;font-weight:400;margin:0;">
+        <input type="checkbox" value="${t}" style="width:auto;margin:0;"> ${t}
+      </label>`
+    ).join('');
+  }
+  function jSelectAllTailles(val) {
+    document.querySelectorAll('#j-tailles-checkboxes input[type=checkbox]').forEach(cb => cb.checked = val);
+  }
+  function jGetTaillesSelectionnees() {
+    return [...document.querySelectorAll('#j-tailles-checkboxes input:checked')].map(cb => cb.value);
+  }
+
+  // ============ PIERRES ============
+  let mjPierres = [];
+  const TYPES_PIERRES = ['diamant','diamant-noir','diamant-brun','diamant-ice-gris','diamant-pur-rose','c-diams','saphir','emeraude','rubis','amethyste','grenat','topaze','tsavorite','cabochon'];
+  const TAILLES_PAR_PIERRE = {
+    'diamant': ['0.8','0.9','1.3','1.6','1.9','2.1'],
+    'diamant-noir': ['0.8','1.3','1.6','1.9'],
+    'diamant-brun': ['1.6','1.9'],
+    'diamant-ice-gris': ['1.6','1.9'],
+    'diamant-pur-rose': ['2.1'],
+    'c-diams': ['1.9','2.1'],
+    'saphir': ['0.9','1.3','1.6','1.9'],
+    'emeraude': ['0.9','1.6','1.9'],
+    'rubis': ['0.9','1.6','1.9'],
+    'amethyste': ['1.6','1.9'],
+    'grenat': ['1.3','1.6','1.9'],
+    'topaze': ['1.75'],
+    'tsavorite': ['1.6'],
+    'cabochon': ['2.5'],
+  };
+
+  document.getElementById('btn-ajouter-pierre')?.addEventListener('click', () => {
+    mjPierres.push({ type: 'diamant', taille: '1.6', quantite: 1 });
+    mjRendrePierres();
+    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+  });
+
+  function mjRendrePierres() {
+    const liste = document.getElementById('j-pierres-liste');
+    const vide = document.getElementById('j-pierres-vide');
+    if (!mjPierres.length) {
+      if (vide) vide.classList.remove('hidden');
+      return;
+    }
+    if (vide) vide.classList.add('hidden');
+    const rows = mjPierres.map((p, i) => {
+      const taillesOpts = (TAILLES_PAR_PIERRE[p.type] || ['1.6']).map(t =>
+        `<option value="${t}" ${p.taille===t?'selected':''}>${t}mm</option>`).join('');
+      const typesOpts = TYPES_PIERRES.map(t =>
+        `<option value="${t}" ${p.type===t?'selected':''}>${t}</option>`).join('');
+      return `<div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.4rem;">
+        <select onchange="mjUpdatePierre(${i},'type',this.value)" style="flex:2;margin:0;">${typesOpts}</select>
+        <select onchange="mjUpdatePierre(${i},'taille',this.value)" style="flex:1;margin:0;" id="j-taille-pierre-${i}">${taillesOpts}</select>
+        <input type="number" min="1" value="${p.quantite}" onchange="mjUpdatePierre(${i},'quantite',+this.value)" style="width:60px;margin:0;" title="Quantité">
+        <button type="button" onclick="mjSupprimerPierre(${i})" style="margin:0;width:auto;padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--rouge)">✕</button>
+      </div>`;
+    }).join('');
+    liste.innerHTML = rows;
+  }
+
+  function mjUpdatePierre(idx, champ, val) {
+    mjPierres[idx][champ] = champ === 'quantite' ? +val : val;
+    if (champ === 'type') {
+      const tailles = TAILLES_PAR_PIERRE[val] || ['1.6'];
+      mjPierres[idx].taille = tailles[0];
+      const sel = document.getElementById(`j-taille-pierre-${idx}`);
+      if (sel) sel.innerHTML = tailles.map(t => `<option value="${t}">${t}mm</option>`).join('');
+    }
+    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+  }
+
+  function mjSupprimerPierre(idx) {
+    mjPierres.splice(idx, 1);
+    mjRendrePierres();
+    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+  }
+
+  // ============ CALCUL PRIX PROJET UNIQUE ============
+  const PRIX_ACHAT_JOAILLERIE = {
+    'argent': { 'addon': 40, 'deux-tiers': 33, 'medium': 26 },
+    'or rose': { 'addon': 350, 'deux-tiers': 320, 'medium': 310 },
+    'or jaune': { 'addon': 350, 'deux-tiers': 320, 'medium': 310 },
+    'or gris': { 'addon': 739, 'deux-tiers': 490, 'medium': 190 },
+    'tantale': { 'addon': 390, 'deux-tiers': 290, 'medium': 190 },
+    'carbone': { 'addon': 62, 'medium': 31 },
+  };
+
+  function mjMettreAJourPrixProjet() {
+    if (mjCategorie !== 'projet-unique') return;
+    const matiere = document.getElementById('j-matiere')?.value || '';
+    const format = document.getElementById('j-format')?.value || '';
+    const nbPierres = mjPierres.reduce((s, p) => s + (p.quantite || 1), 0);
+    const prixAchat = (PRIX_ACHAT_JOAILLERIE[matiere] || {})[format] || 0;
+    if (!prixAchat) { document.getElementById('j-prix-calcule')?.classList.add('hidden'); return; }
+    const prix = Math.round(prixAchat * 3.8 + 4 * nbPierres);
+    document.getElementById('j-prix').value = prix;
+    document.getElementById('j-prix-valeur').textContent = prix.toString();
+    document.getElementById('j-prix-calcule')?.classList.remove('hidden');
+  }
+
+  document.getElementById('j-format')?.addEventListener('change', () => {
+    if (mjCategorie === 'projet-unique') mjMettreAJourPrixProjet();
+  });
+
+  // ============ DASH JOAILLERIE ============
+  document.getElementById('j-btn-dash-search')?.addEventListener('click', async () => {
+    const q = document.getElementById('j-dash-search').value.trim();
+    if (!q) return;
+    const resultatsDiv = document.getElementById('j-dash-resultats');
+    const msg = document.getElementById('j-dash-msg');
+    const liste = document.getElementById('j-dash-liste');
+    resultatsDiv.classList.remove('hidden');
+    msg.textContent = 'Recherche en cours…';
+    liste.innerHTML = '';
+    try {
+      const r = await fetch(`/api/produits/dash-search?q=${encodeURIComponent(q)}`);
+      const data = await r.json();
+      if (!data.items?.length) { msg.textContent = 'Aucun résultat.'; return; }
+      msg.textContent = '';
+      liste.innerHTML = data.items.map(item =>
+        `<img src="${item.thumbUrl || item.url}" style="width:60px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;border:2px solid transparent;"
+          title="${item.title || ''}" data-url="${item.url}" data-title="${item.title || ''}"
+          onclick="jToggleDashImg(this)">`
+      ).join('');
+    } catch(e) { msg.textContent = 'Erreur réseau.'; }
+  });
+
+  function jToggleDashImg(img) {
+    const url = img.dataset.url;
+    const idx = mjDashSelectionnees.findIndex(i => i.url === url);
+    if (idx === -1) {
+      mjDashSelectionnees.push({ url, title: img.dataset.title });
+      img.style.border = '2px solid var(--or)';
+    } else {
+      mjDashSelectionnees.splice(idx, 1);
+      img.style.border = '2px solid transparent';
+    }
+    jRendreDashSelectionnees();
+  }
+
+  function jRendreDashSelectionnees() {
+    const div = document.getElementById('j-dash-selectionnees');
+    div.innerHTML = mjDashSelectionnees.map((img, i) =>
+      `<div style="position:relative;display:inline-block;">
+        <img src="${img.url}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;border:2px solid var(--or);">
+        <button type="button" onclick="jRetirerDash(${i})" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;padding:0;font-size:10px;margin:0;background:var(--rouge);line-height:1;">✕</button>
+      </div>`
+    ).join('');
+  }
+
+  function jRetirerDash(i) {
+    mjDashSelectionnees.splice(i, 1);
+    jRendreDashSelectionnees();
+  }
+
+  // ============ SUBMIT JOAILLERIE ============
+  document.getElementById('btn-creer-j')?.addEventListener('click', async () => {
+    const erreur = document.getElementById('j-erreur');
+    erreur.classList.add('hidden');
+    document.getElementById('j-resultat').classList.add('hidden');
+
+    const nom = document.getElementById('j-nom').value.trim();
+    const matiere = document.getElementById('j-matiere').value;
+    const prix = document.getElementById('j-prix').value;
+
+    if (!nom) { erreur.textContent = 'Champ obligatoire : nom du produit.'; erreur.classList.remove('hidden'); return; }
+    if (!matiere) { erreur.textContent = 'Champ obligatoire : matière.'; erreur.classList.remove('hidden'); return; }
+
+    const tailles = jGetTaillesSelectionnees();
+    const infos = {
+      store: 'mood-joaillerie',
+      categorie: mjCategorie,
+      nom,
+      format: document.getElementById('j-format')?.value || document.getElementById('j-format-base')?.value || '',
+      matiere,
+      carat: document.getElementById('j-carat')?.value || '',
+      finition: document.getElementById('j-finition')?.value || '',
+      couleur: document.getElementById('j-couleur')?.value || '',
+      pierres: mjPierres,
+      sertissage: document.getElementById('j-sertissage')?.value || '',
+      tailles: tailles.length ? tailles : ['taille inconnue'],
+      gravure: document.getElementById('j-gravure')?.value || '',
+      sous_style: document.getElementById('j-yarrow')?.checked ? 'yarrow' : document.getElementById('j-cadeau')?.checked ? 'bague-cadeau-exception' : '',
+      composants: document.getElementById('j-composants')?.value || '',
+      nom_client: document.getElementById('j-nom-client')?.value || '',
+      num_serie: document.getElementById('j-num-serie')?.value || '',
+      prix: prix ? parseFloat(prix) : null,
+    };
+
+    const btn = document.getElementById('btn-creer-j');
+    btn.disabled = true;
+    btn.textContent = 'Création en cours…';
+
+    try {
+      const r = await fetch('/api/produits/create-joaillerie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(infos),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        erreur.textContent = (data.etape ? `[${data.etape}] ` : '') + JSON.stringify(data.erreur || data.error || data) + (data.detail ? ' — ' + data.detail : '');
+        erreur.classList.remove('hidden');
+        return;
+      }
+
+      // Upload photos (Dash d'abord, puis fichiers locaux)
+      const fichiers = document.getElementById('j-photos').files;
+      const totalPhotos = (mjDashSelectionnees?.length || 0) + (fichiers?.length || 0);
+      let photosOk = 0, position = 1;
+      const baseFilename = `joaillerie-${infos.nom.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}`;
+      const baseAlt = `${infos.nom} — Mood Joaillerie`;
+
+      if (totalPhotos > 0) btn.textContent = `Upload des photos (0/${totalPhotos})…`;
+
+      for (const img of (mjDashSelectionnees || [])) {
+        const seoAlt = position === 1 ? baseAlt : `${baseAlt} (vue ${position})`;
+        try {
+          await fetch('/api/produits/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ store: 'mood-joaillerie', productId: data.idProduit, src: img.url, position, alt: seoAlt, filename: `${baseFilename}-${position}.jpg` }),
+          });
+          photosOk++;
+        } catch {}
+        position++;
+        btn.textContent = `Upload des photos (${photosOk}/${totalPhotos})…`;
+      }
+
+      for (let i = 0; i < (fichiers?.length || 0); i++) {
+        const f = fichiers[i];
+        const seoAlt = position === 1 ? baseAlt : `${baseAlt} (vue ${position})`;
+        try {
+          const b64 = await new Promise(res => { const fr = new FileReader(); fr.onload = e => res(e.target.result.split(',')[1]); fr.readAsDataURL(f); });
+          await fetch('/api/produits/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ store: 'mood-joaillerie', productId: data.idProduit, base64: b64, position, alt: seoAlt, filename: `${baseFilename}-${position}.jpg` }),
+          });
+          photosOk++;
+        } catch {}
+        position++;
+        btn.textContent = `Upload des photos (${photosOk}/${totalPhotos})…`;
+      }
+
+      // Afficher résultat
+      const resultat = document.getElementById('j-resultat');
+      resultat.classList.remove('hidden');
+      resultat.innerHTML = `<div class="alert alert-success">✅ Produit Joaillerie créé (brouillon) — <a href="${data.urlAdmin}" target="_blank">Voir dans Shopify Joaillerie</a></div>
+        <div class="resultat"><dl>
+          <dt>Nom</dt><dd>${data.titre}</dd>
+          <dt>Variantes</dt><dd>${data.variantes}</dd>
+          <dt>Tags</dt><dd style="word-break:break-all">${data.etiquettes}</dd>
+          ${totalPhotos > 0 ? `<dt>Photos</dt><dd>${photosOk}/${totalPhotos} uploadées</dd>` : ''}
+        </dl></div>`;
+      btn.textContent = '💎 Créer le produit Joaillerie';
+      // Reset pierres et dash
+      mjPierres = [];
+      mjDashSelectionnees = [];
+      mjRendrePierres();
+      jRendreDashSelectionnees();
+    } catch (e) {
+      erreur.textContent = 'Erreur réseau : ' + e.message;
+      erreur.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      if (btn.textContent.startsWith('Upload')) btn.textContent = '💎 Créer le produit Joaillerie';
+    }
+  });
 </script>
 </body>
 </html>
