@@ -2257,16 +2257,24 @@
       const finition = finitionVal === 'autre'
         ? document.getElementById('j-finition-autre')?.value || ''
         : finitionVal;
+      const typeSertissageVal = document.getElementById('j-type-sertissage')?.value || '';
+      const typeSertissageFinal = typeSertissageVal === 'autre'
+        ? document.getElementById('j-type-sertissage-autre')?.value || ''
+        : typeSertissageVal;
       const r = await fetch('/api/produits/generer-texte', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          mode: 'joaillerie',
           motsCles,
           nom: document.getElementById('j-nom')?.value || '',
           format: document.getElementById('j-format')?.value || document.getElementById('j-format-base')?.value || '',
           matiere: document.getElementById('j-matiere')?.value || '',
           finition,
           couleur: document.getElementById('j-couleur')?.value || '',
+          pierres: mjPierres,
+          sertissage: document.getElementById('j-sertissage')?.value || '',
+          type_sertissage: typeSertissageFinal,
         }),
       });
       const data = await r.json();
