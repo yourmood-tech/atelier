@@ -2,16 +2,15 @@ export const SHOPIFY_API_VERSION = "2025-01";
 
 function getCredentials(shop: string): { clientId: string; clientSecret: string } {
   const isMarketplace = shop.includes("moodmarketplace") || shop.includes("mood-market-place");
-  const clientId = isMarketplace
+  // Marketplace-specific credentials optionnels — fallback sur les credentials katana-scanner-mvp
+  const clientId = (isMarketplace && process.env.MOODMARKETPLACE_SHOPIFY_CLIENT_ID)
     ? process.env.MOODMARKETPLACE_SHOPIFY_CLIENT_ID
     : process.env.SHOPIFY_CLIENT_ID;
-  const clientSecret = isMarketplace
+  const clientSecret = (isMarketplace && process.env.MOODMARKETPLACE_SHOPIFY_CLIENT_SECRET)
     ? process.env.MOODMARKETPLACE_SHOPIFY_CLIENT_SECRET
     : process.env.SHOPIFY_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    const prefix = isMarketplace ? "MOODMARKETPLACE_" : "";
-    throw new Error(`${prefix}SHOPIFY_CLIENT_ID ou ${prefix}SHOPIFY_CLIENT_SECRET manquant`);
-  }
+  if (!clientId || !clientSecret)
+    throw new Error("SHOPIFY_CLIENT_ID ou SHOPIFY_CLIENT_SECRET manquant");
   return { clientId, clientSecret };
 }
 
