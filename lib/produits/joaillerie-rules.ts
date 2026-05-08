@@ -24,6 +24,9 @@ export interface JoaillerieInfos {
   pierres?: PierreItem[];
   sertissage?: string;       // medium-full | medium-partiel | base-1-cote | base-2-cotes
   type_sertissage?: string;  // invisible | grain | neige | 2-grains | (texte libre)
+  nb_serie?: number;         // nombre de pièces produites dans la série
+  description_ia?: string;   // texte poétique généré par Gemini
+  mots_cles?: string;        // mots-clés utilisés pour la génération IA
   tailles?: string[];
   taille_bague?: string[];
   gravure?: string;
@@ -206,6 +209,13 @@ const PRODUCT_TYPE_MAP: Record<JoaillerieCategorie, string> = {
 function construireBodyHtml(infos: JoaillerieInfos): string {
   const matiereLabel = infos.matiere + (infos.carat ? ` ${infos.carat}` : '');
   let html = `<p><strong>${infos.nom}</strong></p>`;
+  // Description IA (poétique) en haut, avant les détails techniques
+  if (infos.description_ia && infos.description_ia.trim()) {
+    const paragraphs = infos.description_ia.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+    for (const para of paragraphs) {
+      html += `<p>${para.replace(/\n/g, '<br>')}</p>`;
+    }
+  }
   html += `<p>Matière : ${matiereLabel}</p>`;
   if (infos.finition) html += `<p>Finition : ${infos.finition}</p>`;
   if (infos.pierres && infos.pierres.length > 0) {
@@ -217,6 +227,7 @@ function construireBodyHtml(infos: JoaillerieInfos): string {
   }
   if (infos.sertissage) html += `<p>Sertissage : ${infos.sertissage}</p>`;
   if (infos.type_sertissage) html += `<p>Type de sertissage : ${infos.type_sertissage}</p>`;
+  if (infos.nb_serie && infos.nb_serie > 1) html += `<p>Série de ${infos.nb_serie} pièces</p>`;
   if (infos.composants) html += `<p>Composants :<br>${infos.composants.replace(/\n/g, '<br>')}</p>`;
   if (infos.gravure) html += `<p>Gravure intérieure : ${infos.gravure}</p>`;
   html += `<p>Catégorie : ${PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie}</p>`;

@@ -515,7 +515,7 @@
 
       <!-- Finition -->
       <label>Finition <span class="opt">(optionnel)</span></label>
-      <select id="j-finition">
+      <select id="j-finition" onchange="mjToggleFinitionAutre()">
         <option value="">— aucune / à préciser —</option>
         <option value="poli">Poli miroir</option>
         <option value="martele">Martelé</option>
@@ -527,7 +527,9 @@
         <option value="glitter">Glitter</option>
         <option value="piquete">Piqué</option>
         <option value="neutre">Neutre</option>
+        <option value="autre">Autre…</option>
       </select>
+      <input id="j-finition-autre" placeholder="Précise la finition" class="hidden" style="margin-top:0.4rem;">
 
       <!-- Couleur (conditionnel = or) -->
       <div id="j-field-couleur" class="hidden">
@@ -624,6 +626,21 @@
       <div id="j-field-num-serie" class="hidden">
         <label>Numéro de série <span class="opt">(ex : 015 pour pièce 15/100)</span></label>
         <input id="j-num-serie" placeholder="ex : 015">
+      </div>
+
+      <!-- Nombre dans la série (catégorie piece-serie) -->
+      <div id="j-field-nb-serie" class="hidden">
+        <label>Nombre de pièces produites</label>
+        <input id="j-nb-serie" type="number" min="1" max="10" value="1" placeholder="ex : 3 mediums identiques, 6 minis…">
+        <div style="font-size:0.75rem;color:var(--gris);margin-top:0.3rem;">Medium → max 3 · Mini → max 6</div>
+      </div>
+
+      <!-- Description IA (toutes catégories) -->
+      <div id="j-field-description-ia" class="hidden">
+        <label>Description (IA Mood)</label>
+        <input id="j-mots-cles" placeholder="2-3 mots-clés (ex : printemps, soleil doré, douceur)">
+        <button type="button" id="btn-generer-j" style="margin-top:0.5rem;width:auto;padding:0.5rem 1rem;font-size:0.85rem;background:var(--or);">✨ Générer description Mood</button>
+        <textarea id="j-description-ia" placeholder="Le texte généré apparaîtra ici (modifiable)" style="margin-top:0.5rem;min-height:120px;"></textarea>
       </div>
 
       <!-- Prix -->
@@ -1889,11 +1906,11 @@
 
   // ============ JOAILLERIE NAVIGATION ============
   const MJ_CAT_FIELDS = {
-    'medium-base-serti':  ['format-medium-base','sertissage','type-sertissage','pierres','tailles'],
-    'piece-serie':        ['format','pierres','sertissage','type-sertissage','tailles','nom-client','num-serie','sous-style-yarrow'],
-    'coffret':            ['composants','sous-style-cadeau','tailles'],
-    'alliance':           ['tailles','gravure'],
-    'compagnon':          ['tailles','pierres'],
+    'medium-base-serti':  ['format-medium-base','sertissage','type-sertissage','pierres','tailles','description-ia'],
+    'piece-serie':        ['format','pierres','type-sertissage','nb-serie','tailles','sous-style-yarrow','description-ia'],
+    'coffret':            ['composants','sous-style-cadeau','tailles','description-ia'],
+    'alliance':           ['tailles','gravure','description-ia'],
+    'compagnon':          ['tailles','pierres','description-ia'],
   };
   const MJ_CAT_LABELS = {
     'medium-base-serti': '💍 Medium et base sertis',
@@ -1925,7 +1942,7 @@
 
     // Masquer tous les champs conditionnels
     ['format','format-base','carat','couleur','pierres','sertissage','type-sertissage','tailles','gravure',
-     'sous-style-yarrow','sous-style-cadeau','composants','nom-client','num-serie'].forEach(f => {
+     'sous-style-yarrow','sous-style-cadeau','composants','nom-client','num-serie','nb-serie','description-ia'].forEach(f => {
       const el = document.getElementById(`j-field-${f}`) || document.getElementById(`j-section-${f}`);
       if (el) el.classList.add('hidden');
     });
@@ -2205,6 +2222,74 @@
   }
   window.mjToggleSertissageAutre = mjToggleSertissageAutre;
 
+  // Toggle du champ texte libre pour "Autre" finition
+  function mjToggleFinitionAutre() {
+    const sel = document.getElementById('j-finition');
+    const inp = document.getElementById('j-finition-autre');
+    if (!sel || !inp) return;
+    if (sel.value === 'autre') {
+      inp.classList.remove('hidden');
+      inp.focus();
+    } else {
+      inp.classList.add('hidden');
+      inp.value = '';
+    }
+  }
+  window.mjToggleFinitionAutre = mjToggleFinitionAutre;
+
+  // Génération description IA Mood (réutilise endpoint /api/produits/generer-texte)
+  document.getElementById('btn-generer-j')?.addEventListener('click', async () => {
+    const motsCles = document.getElementById('j-mots-cles')?.value.trim() || '';
+    const erreur = document.getElementById('mj-erreur');
+    if (!motsCles) {
+      if (erreur) {
+        erreur.textContent = 'Tape d\'abord 2-3 mots-clés.';
+        erreur.classList.remove('hidden');
+      }
+      return;
+    }
+    const btn = document.getElementById('btn-generer-j');
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération…';
+    try {
+      const finitionVal = document.getElementById('j-finition')?.value || '';
+      const finition = finitionVal === 'autre'
+        ? document.getElementById('j-finition-autre')?.value || ''
+        : finitionVal;
+      const r = await fetch('/api/produits/generer-texte', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          motsCles,
+          nom: document.getElementById('j-nom')?.value || '',
+          format: document.getElementById('j-format')?.value || document.getElementById('j-format-base')?.value || '',
+          matiere: document.getElementById('j-matiere')?.value || '',
+          finition,
+          couleur: document.getElementById('j-couleur')?.value || '',
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        if (erreur) {
+          erreur.textContent = 'Erreur génération : ' + (data.error || JSON.stringify(data));
+          erreur.classList.remove('hidden');
+        }
+        return;
+      }
+      const ta = document.getElementById('j-description-ia');
+      if (ta) ta.value = data.texte || '';
+    } catch (e) {
+      if (erreur) {
+        erreur.textContent = 'Erreur réseau : ' + e.message;
+        erreur.classList.remove('hidden');
+      }
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
+
   // ============ CALCUL PRIX PROJET UNIQUE ============
   const PRIX_ACHAT_JOAILLERIE = {
     'argent': { 'addon': 40, 'deux-tiers': 33, 'medium': 26 },
@@ -2297,6 +2382,10 @@
     if (!matiere) { erreur.textContent = 'Champ obligatoire : matière.'; erreur.classList.remove('hidden'); return; }
 
     const tailles = jGetTaillesSelectionnees();
+    const finitionVal = document.getElementById('j-finition')?.value || '';
+    const finitionFinale = finitionVal === 'autre'
+      ? document.getElementById('j-finition-autre')?.value || ''
+      : finitionVal;
     const infos = {
       store: 'mood-joaillerie',
       categorie: mjCategorie,
@@ -2304,9 +2393,12 @@
       format: document.getElementById('j-format')?.value || document.getElementById('j-format-base')?.value || '',
       matiere,
       carat: document.getElementById('j-carat')?.value || '',
-      finition: document.getElementById('j-finition')?.value || '',
+      finition: finitionFinale,
       couleur: document.getElementById('j-couleur')?.value || '',
       pierres: mjPierres,
+      nb_serie: parseInt(document.getElementById('j-nb-serie')?.value || '1', 10) || 1,
+      description_ia: document.getElementById('j-description-ia')?.value || '',
+      mots_cles: document.getElementById('j-mots-cles')?.value || '',
       sertissage: document.getElementById('j-sertissage')?.value || '',
       type_sertissage: (() => {
         const sel = document.getElementById('j-type-sertissage')?.value || '';
