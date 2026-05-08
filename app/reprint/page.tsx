@@ -14,6 +14,12 @@ const PROCESSES = [
   { key: "picking",     label: "Picking" },
 ];
 
+const STORES = [
+  { key: "yourmood",       label: "Mood Collection" },
+  { key: "moodjoaillerie", label: "Mood Joaillerie" },
+  { key: "moodmarketplace",label: "Mood Marketplace" },
+];
+
 type PrintResult = {
   order: string;
   copies?: number;
@@ -23,6 +29,7 @@ type PrintResult = {
 
 export default function ReprintPage() {
   const [orders, setOrders] = useState("");
+  const [store, setStore] = useState("yourmood");
   const [mode, setMode] = useState<"complete" | "process">("complete");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -48,7 +55,7 @@ export default function ReprintPage() {
       const res = await fetch("/api/reprint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orders, processes }),
+        body: JSON.stringify({ orders, processes, store }),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -83,6 +90,27 @@ export default function ReprintPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+          {/* Store selector */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">Boutique</p>
+            <div className="grid grid-cols-3 gap-2">
+              {STORES.map(s => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setStore(s.key)}
+                  className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
+                    store === s.key
+                      ? "border-white bg-white text-black"
+                      : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Mode toggle */}
           <div>

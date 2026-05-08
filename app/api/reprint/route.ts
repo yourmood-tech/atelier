@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAtelierTunnelUrl } from "@/lib/shopify";
 
 export async function POST(req: NextRequest) {
-  const { orders, processes } = await req.json() as { orders: string; processes: string[] };
+  const { orders, processes, store } = await req.json() as { orders: string; processes: string[]; store?: string };
 
   const tunnelUrl = await getAtelierTunnelUrl();
   if (!tunnelUrl) {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const printRes = await fetch(`${tunnelUrl}/reprint`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ orders, processes }),
+    body: JSON.stringify({ orders, processes, store }),
     signal: AbortSignal.timeout(10_000),
   }).catch(() => null);
 
