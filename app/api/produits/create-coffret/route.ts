@@ -71,6 +71,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(journal);
   } catch (e) {
+    console.error("[create-coffret] erreur:", e);
     return NextResponse.json(
       { error: "erreur serveur", detail: String((e as Error)?.message || e) },
       { status: 500 }
