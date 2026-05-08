@@ -2096,7 +2096,8 @@
         <th style="text-align:right;padding:0.3rem;">Prix CHF</th>
       </tr></thead><tbody>`;
 
-    for (const t of tailles.sort((a,b)=>+a-+b)) {
+    const taillesNumeriques = tailles.filter(t => /^\d+$/.test(t)).sort((a,b)=>+a-+b);
+    for (const t of taillesNumeriques) {
       let totalNb = 0, totalCarats = 0, totalPrix = 0;
       let manque = false;
       for (const p of mjPierres) {
