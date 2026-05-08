@@ -2023,7 +2023,7 @@
       return `<div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.4rem;">
         <select onchange="mjUpdatePierre(${i},'type',this.value)" style="flex:2;margin:0;">${typesOpts}</select>
         <select onchange="mjUpdatePierre(${i},'taille',this.value)" style="flex:1;margin:0;" id="j-taille-pierre-${i}">${taillesOpts}</select>
-        <input type="number" min="1" value="${p.quantite}" onchange="mjUpdatePierre(${i},'quantite',+this.value)" style="width:60px;margin:0;" title="Quantité">
+        <input type="number" min="1" value="${p.quantite}" onchange="mjUpdatePierre(${i},'quantite',+this.value)" style="width:60px;margin:0;" title="Quantité (sert aussi de ratio si plusieurs pierres : 1+1 = 50/50, 2+1 = 66/33)">
         <button type="button" onclick="mjSupprimerPierre(${i})" style="margin:0;width:auto;padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--rouge)">✕</button>
       </div>`;
     }).join('');
@@ -2136,20 +2136,28 @@
     const contexte = sertissage.startsWith('base-') ? 'base' : 'medium';
     const prixAchatMatiere = (PRIX_ACHAT_MATIERE_SERTI[matiere] || {})[contexte] || 0;
 
+    // Toutes les pierres partagent la MÊME taille (ex: medium serti 1.6mm avec
+    // diamants blancs + diamants noirs alignés). On prend la taille de la 1ère pierre.
+    // Le champ "quantité" devient un RATIO de répartition (par défaut 1 = équitable).
+    const tailleCommune = mjPierres[0].taille;
+    const sommeQuantites = mjPierres.reduce((s, p) => s + (p.quantite || 1), 0) || 1;
+
     const taillesNumeriques = tailles.filter(t => /^\d+$/.test(t)).sort((a,b)=>+a-+b);
     const prixCalcules = [];
     for (const t of taillesNumeriques) {
-      let totalNb = 0, totalCarats = 0, totalAchatPierres = 0;
-      let manque = false;
+      const nbBase = (NB_PIERRES_PAR_COTE[tailleCommune] || {})[+t];
+      let manque = nbBase === undefined;
+      const totalNb = manque ? 0 : Math.round(nbBase * facteur);
+      const poids = POIDS_CARAT[tailleCommune] || 0;
+      const totalCarats = poids * totalNb;
+
+      // Répartir le total entre les types de pierres selon ratio quantités
+      let totalAchatPierres = 0;
       for (const p of mjPierres) {
-        const nbBase = (NB_PIERRES_PAR_COTE[p.taille] || {})[+t];
-        if (nbBase === undefined) { manque = true; break; }
-        const nb = Math.round(nbBase * facteur);
-        const poids = POIDS_CARAT[p.taille] || 0;
+        const ratio = (p.quantite || 1) / sommeQuantites;
+        const nbPierre = Math.round(totalNb * ratio);
         const achatUnit = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
-        totalNb += nb;
-        totalCarats += poids * nb;
-        totalAchatPierres += achatUnit * nb;
+        totalAchatPierres += achatUnit * nbPierre;
       }
       // Formule : (achat_matière + achat_pierres) × 3.8 + 4 × nb_pierres
       const prix = Math.round((prixAchatMatiere + totalAchatPierres) * 3.8 + 4 * totalNb);
