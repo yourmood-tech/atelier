@@ -1,3 +1,5 @@
+import { calculerCaratsTotal } from "./sertissage";
+
 export type JoaillerieCategorie =
   | 'addon-serti'
   | 'coffret'
@@ -213,6 +215,10 @@ function construireBodyHtml(infos: JoaillerieInfos): string {
   if (infos.finition) html += `<p>Finition : ${infos.finition}</p>`;
   if (infos.pierres && infos.pierres.length > 0) {
     html += `<p>Pierres : ${resumePierres(infos.pierres)}</p>`;
+    const carats = calculerCaratsTotal(infos.pierres);
+    if (carats !== null && carats > 0) {
+      html += `<p>Poids total : ${carats} carats</p>`;
+    }
   }
   if (infos.sertissage) html += `<p>Sertissage : ${infos.sertissage}</p>`;
   if (infos.composants) html += `<p>Composants :<br>${infos.composants.replace(/\n/g, '<br>')}</p>`;

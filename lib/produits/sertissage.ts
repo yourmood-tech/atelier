@@ -16,8 +16,9 @@
 
 // Poids approximatif d'une pierre selon sa taille (en carats)
 // Pour diamants : FACT depuis BASES SERTIES.pdf
-// Pour topazes : estimation par interpolation volumique (densité topaze ≈ diamant)
+// Pour autres pierres : estimation par volume (densité quasi identique aux diamants)
 export const POIDS_PIERRE_CARAT: Record<string, number> = {
+  "0.9mm": 0.003,    // estimation — extrapolation volumique depuis 1.6mm
   "1.3mm": 0.010,    // estimation
   "1.6mm": 0.018,    // FACT — 0.648 / 36 (diamant)
   "1.75mm": 0.023,   // estimation — interpolation entre 1.6 et 1.9
@@ -27,10 +28,36 @@ export const POIDS_PIERRE_CARAT: Record<string, number> = {
 };
 
 /**
+ * Longueur de circonférence externe de l'anneau, en mm, par taille de bague.
+ * Source : Amila Pousaz 2026-05-08 (table dimensions anneaux Mood).
+ */
+export const LONGUEUR_ANNEAU_MM: Record<number, number> = {
+  50: 63.10,
+  52: 64.99,
+  54: 67.19,
+  56: 69.08,
+  58: 70.96,
+  60: 73.16,
+  62: 75.05,
+  64: 76.93,
+  66: 79.13,
+  68: 81.01,
+  70: 82.89,
+  72: 84.78, // interpolé (manquait dans la table d'origine)
+};
+
+/**
  * Nombre de pierres pour 1 côté/face, selon (taille_pierre, taille_bague).
  * Pour 2 côtés/full serti : multiplier par 2.
+ *
+ * Pour 0.9mm : calculé à partir de la longueur d'anneau (ratio ~0.99 mm/pierre).
  */
 export const NB_PIERRES_PAR_COTE: Record<string, Record<number, number>> = {
+  "0.9mm": {
+    50: 64, 52: 66, 54: 68, 56: 70, 58: 72,
+    60: 74, 62: 76, 64: 78, 66: 80, 68: 82,
+    70: 84, 72: 86,
+  },
   "1.6mm": {
     50: 36, 52: 38, 54: 40, 56: 42, 58: 42,
     60: 44, 62: 46, 64: 46, 66: 48, 68: 48,
@@ -52,6 +79,46 @@ export const NB_PIERRES_PAR_COTE: Record<string, Record<number, number>> = {
     70: 44, 72: 46,
   },
 };
+
+/**
+ * Compatibilité d'une taille de pierre avec une largeur de base.
+ * - Base large (BL) : accepte UNIQUEMENT 2.1mm OU 0.9mm
+ * - Base small (BS) ou extra small (BXS) : accepte toutes les pierres SAUF 2.1mm
+ *
+ * @param largeurBase "xs" | "s" | "l"
+ * @param taillePierre "0.9mm" | "1.6mm" | etc.
+ * @returns true si compatible
+ */
+export function pierreCompatibleAvecBase(largeurBase: string, taillePierre: string): boolean {
+  const lb = largeurBase.toLowerCase();
+  if (lb === "l") {
+    return taillePierre === "2.1mm" || taillePierre === "0.9mm";
+  }
+  if (lb === "xs" || lb === "s") {
+    return taillePierre !== "2.1mm";
+  }
+  return false;
+}
+
+/**
+ * Calcule le poids total en carats d'un produit avec plusieurs pierres.
+ * Utilise POIDS_PIERRE_CARAT pour chaque taille.
+ *
+ * @param pierres tableau d'objets { taille: "1.6mm", quantite: 36 }
+ * @returns poids total en carats (arrondi à 4 décimales), ou null si une taille n'a pas de poids défini
+ */
+export function calculerCaratsTotal(
+  pierres: Array<{ taille: string; quantite: number }>
+): number | null {
+  if (!pierres || pierres.length === 0) return null;
+  let total = 0;
+  for (const p of pierres) {
+    const poidsUnit = POIDS_PIERRE_CARAT[p.taille];
+    if (poidsUnit === undefined) return null;
+    total += poidsUnit * (p.quantite || 0);
+  }
+  return +total.toFixed(4);
+}
 
 export type TypeSertissage =
   | "medium-full"
