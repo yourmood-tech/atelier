@@ -22,7 +22,8 @@ export interface JoaillerieInfos {
   finition?: string;
   couleur?: string;
   pierres?: PierreItem[];
-  sertissage?: string;
+  sertissage?: string;       // medium-full | medium-partiel | base-1-cote | base-2-cotes
+  type_sertissage?: string;  // invisible | grain | neige | 2-grains | (texte libre)
   tailles?: string[];
   taille_bague?: string[];
   gravure?: string;
@@ -215,6 +216,7 @@ function construireBodyHtml(infos: JoaillerieInfos): string {
     }
   }
   if (infos.sertissage) html += `<p>Sertissage : ${infos.sertissage}</p>`;
+  if (infos.type_sertissage) html += `<p>Type de sertissage : ${infos.type_sertissage}</p>`;
   if (infos.composants) html += `<p>Composants :<br>${infos.composants.replace(/\n/g, '<br>')}</p>`;
   if (infos.gravure) html += `<p>Gravure intérieure : ${infos.gravure}</p>`;
   html += `<p>Catégorie : ${PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie}</p>`;

@@ -544,23 +544,36 @@
         <button type="button" id="btn-ajouter-pierre" style="margin-top:0.6rem;width:auto;padding:0.5rem 1rem;background:var(--or);font-size:0.85rem;margin-top:0.6rem;">+ Ajouter une pierre</button>
       </div>
 
-      <!-- Type sertissage (catégories 1, 3, 4, 7) -->
+      <!-- Nombre de pierres (catégories 1, 3, 4, 7) -->
       <div id="j-field-sertissage" class="hidden">
-        <label>Type de sertissage</label>
+        <label>Nombre de pierres</label>
         <select id="j-sertissage">
           <option value="">— choisir —</option>
-          <option value="medium-full">Medium entièrement serti (2 côtés)</option>
-          <option value="medium-semi">Medium semi-serti (1 côté)</option>
-          <option value="base-2-cotes">Base sertie sur 2 côtés</option>
-          <option value="base-1-cote">Base sertie sur 1 côté</option>
-          <option value="etoile">Sertissage étoile (autre)</option>
+          <option value="medium-full">Medium full serti</option>
+          <option value="medium-partiel">Medium partiellement serti (moitié)</option>
+          <option value="base-1-cote">Base sertie d'un côté</option>
+          <option value="base-2-cotes">Base sertie des deux côtés</option>
         </select>
+      </div>
+
+      <!-- Type de sertissage (style joaillier) -->
+      <div id="j-field-type-sertissage" class="hidden">
+        <label>Type de sertissage</label>
+        <select id="j-type-sertissage" onchange="mjToggleSertissageAutre()">
+          <option value="">— choisir —</option>
+          <option value="invisible">Invisible</option>
+          <option value="grain">Grain</option>
+          <option value="neige">Neige</option>
+          <option value="2-grains">2 grains</option>
+          <option value="autre">Autre…</option>
+        </select>
+        <input id="j-type-sertissage-autre" placeholder="Précise le type de sertissage" class="hidden" style="margin-top:0.4rem;">
       </div>
 
       <!-- Récap auto (catégorie medium-base-serti uniquement) -->
       <div id="j-recap-sertissage" class="hidden" style="margin-top:1rem;background:#fff8e7;border:1px solid var(--or);border-radius:8px;padding:0.8rem;">
         <div style="font-weight:600;margin-bottom:0.5rem;">📊 Récap automatique par taille de bague</div>
-        <div id="j-recap-content" style="font-size:0.85rem;color:var(--gris);">Choisis sertissage + au moins 1 pierre + au moins 1 taille de bague</div>
+        <div id="j-recap-content" style="font-size:0.85rem;color:var(--gris);">Choisis le nombre de pierres + au moins 1 pierre + au moins 1 taille de bague</div>
       </div>
 
       <!-- Tailles de bague (checkboxes) -->
@@ -1876,8 +1889,8 @@
 
   // ============ JOAILLERIE NAVIGATION ============
   const MJ_CAT_FIELDS = {
-    'medium-base-serti':  ['format-medium-base','sertissage','pierres','tailles'],
-    'piece-serie':        ['format','pierres','sertissage','tailles','nom-client','num-serie','sous-style-yarrow'],
+    'medium-base-serti':  ['format-medium-base','sertissage','type-sertissage','pierres','tailles'],
+    'piece-serie':        ['format','pierres','sertissage','type-sertissage','tailles','nom-client','num-serie','sous-style-yarrow'],
     'coffret':            ['composants','sous-style-cadeau','tailles'],
     'alliance':           ['tailles','gravure'],
     'compagnon':          ['tailles','pierres'],
@@ -1911,7 +1924,7 @@
     document.getElementById('mj-titre-form').textContent = MJ_CAT_LABELS[cat] || '💎 Produit Joaillerie';
 
     // Masquer tous les champs conditionnels
-    ['format','format-base','carat','couleur','pierres','sertissage','tailles','gravure',
+    ['format','format-base','carat','couleur','pierres','sertissage','type-sertissage','tailles','gravure',
      'sous-style-yarrow','sous-style-cadeau','composants','nom-client','num-serie'].forEach(f => {
       const el = document.getElementById(`j-field-${f}`) || document.getElementById(`j-section-${f}`);
       if (el) el.classList.add('hidden');
@@ -2099,10 +2112,16 @@
     const tailles = jGetTaillesSelectionnees();
 
     if (!sertissage || !mjPierres.length || !tailles.length) {
-      content.innerHTML = 'Choisis sertissage + au moins 1 pierre + au moins 1 taille de bague';
+      content.innerHTML = 'Choisis le nombre de pierres + au moins 1 pierre + au moins 1 taille de bague';
       return;
     }
-    const nbCotes = (sertissage === 'medium-full' || sertissage === 'base-2-cotes') ? 2 : 1;
+    // Multiplicateur selon le sertissage
+    // - medium-full       = 1 côté entier        → ×1
+    // - medium-partiel    = 1 côté moitié        → ×0.5
+    // - base-1-cote       = 1 côté entier        → ×1
+    // - base-2-cotes      = 2 côtés entiers      → ×2
+    const facteursMjp = { 'medium-full': 1, 'medium-partiel': 0.5, 'base-1-cote': 1, 'base-2-cotes': 2 };
+    const facteur = facteursMjp[sertissage] || 1;
 
     let rows = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
       <thead><tr style="border-bottom:1px solid var(--or);">
@@ -2118,13 +2137,14 @@
     const prixAchatMatiere = (PRIX_ACHAT_MATIERE_SERTI[matiere] || {})[contexte] || 0;
 
     const taillesNumeriques = tailles.filter(t => /^\d+$/.test(t)).sort((a,b)=>+a-+b);
+    const prixCalcules = [];
     for (const t of taillesNumeriques) {
       let totalNb = 0, totalCarats = 0, totalAchatPierres = 0;
       let manque = false;
       for (const p of mjPierres) {
         const nbBase = (NB_PIERRES_PAR_COTE[p.taille] || {})[+t];
         if (nbBase === undefined) { manque = true; break; }
-        const nb = nbBase * nbCotes;
+        const nb = Math.round(nbBase * facteur);
         const poids = POIDS_CARAT[p.taille] || 0;
         const achatUnit = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
         totalNb += nb;
@@ -2136,6 +2156,7 @@
       if (manque) {
         rows += `<tr><td style="padding:0.3rem;">${t}</td><td colspan="3" style="text-align:right;padding:0.3rem;color:var(--rouge);">Taille de pierre non gérée pour cette table</td></tr>`;
       } else {
+        prixCalcules.push(prix);
         rows += `<tr><td style="padding:0.3rem;">${t}</td>
           <td style="text-align:right;padding:0.3rem;">${totalNb}</td>
           <td style="text-align:right;padding:0.3rem;">${totalCarats.toFixed(3)}</td>
@@ -2144,14 +2165,50 @@
     }
     rows += '</tbody></table>';
     rows += `<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--gris);">Formule : (achat matière + achat pierres) × 3.8 + 4 CHF par pierre sertie</div>`;
+
+    // Auto-remplir le champ Prix de vente avec la moyenne des prix calculés
+    if (prixCalcules.length > 0) {
+      const prixMoyen = Math.round(prixCalcules.reduce((s, p) => s + p, 0) / prixCalcules.length);
+      const prixInput = document.getElementById('j-prix');
+      if (prixInput && (!prixInput.value || prixInput.dataset.autoFilled === 'true')) {
+        prixInput.value = prixMoyen;
+        prixInput.dataset.autoFilled = 'true';
+      }
+      rows += `<div style="margin-top:0.3rem;font-size:0.75rem;color:var(--gris);">💡 Prix moyen pré-rempli : <strong>${prixMoyen.toLocaleString('fr-CH')}.- CHF</strong> (modifiable)</div>`;
+    }
     content.innerHTML = rows;
   }
 
   // Re-render à chaque changement
-  document.getElementById('j-sertissage')?.addEventListener('change', mjRendreRecapSertissage);
+  document.getElementById('j-sertissage')?.addEventListener('change', () => {
+    // L'utilisateur change manuellement le sertissage → reset le flag autoFilled
+    const prixInput = document.getElementById('j-prix');
+    if (prixInput) prixInput.dataset.autoFilled = 'true';
+    mjRendreRecapSertissage();
+  });
   document.getElementById('j-matiere')?.addEventListener('change', () => {
     if (typeof mjRendreRecapSertissage === 'function') mjRendreRecapSertissage();
   });
+
+  // Si l'utilisateur saisit manuellement un prix, on arrête de l'écraser
+  document.getElementById('j-prix')?.addEventListener('input', (e) => {
+    e.target.dataset.autoFilled = 'false';
+  });
+
+  // Toggle du champ texte libre pour "Autre" type de sertissage
+  function mjToggleSertissageAutre() {
+    const sel = document.getElementById('j-type-sertissage');
+    const inp = document.getElementById('j-type-sertissage-autre');
+    if (!sel || !inp) return;
+    if (sel.value === 'autre') {
+      inp.classList.remove('hidden');
+      inp.focus();
+    } else {
+      inp.classList.add('hidden');
+      inp.value = '';
+    }
+  }
+  window.mjToggleSertissageAutre = mjToggleSertissageAutre;
 
   // ============ CALCUL PRIX PROJET UNIQUE ============
   const PRIX_ACHAT_JOAILLERIE = {
@@ -2256,6 +2313,11 @@
       couleur: document.getElementById('j-couleur')?.value || '',
       pierres: mjPierres,
       sertissage: document.getElementById('j-sertissage')?.value || '',
+      type_sertissage: (() => {
+        const sel = document.getElementById('j-type-sertissage')?.value || '';
+        if (sel === 'autre') return document.getElementById('j-type-sertissage-autre')?.value || '';
+        return sel;
+      })(),
       tailles: tailles.length ? tailles : ['taille inconnue'],
       gravure: document.getElementById('j-gravure')?.value || '',
       sous_style: document.getElementById('j-yarrow')?.checked ? 'yarrow' : document.getElementById('j-cadeau')?.checked ? 'bague-cadeau-exception' : '',
