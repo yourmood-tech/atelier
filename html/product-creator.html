@@ -1983,22 +1983,9 @@
   // ============ PIERRES ============
   let mjPierres = [];
   const TYPES_PIERRES = ['diamant','diamant-noir','diamant-brun','diamant-ice-gris','diamant-pur-rose','c-diams','saphir','emeraude','rubis','amethyste','grenat','topaze','tsavorite','cabochon'];
-  const TAILLES_PAR_PIERRE = {
-    'diamant': ['0.8','0.9','1.3','1.6','1.9','2.1'],
-    'diamant-noir': ['0.8','1.3','1.6','1.9'],
-    'diamant-brun': ['1.6','1.9'],
-    'diamant-ice-gris': ['1.6','1.9'],
-    'diamant-pur-rose': ['2.1'],
-    'c-diams': ['1.9','2.1'],
-    'saphir': ['0.9','1.3','1.6','1.9'],
-    'emeraude': ['0.9','1.6','1.9'],
-    'rubis': ['0.9','1.6','1.9'],
-    'amethyste': ['1.6','1.9'],
-    'grenat': ['1.3','1.6','1.9'],
-    'topaze': ['1.75'],
-    'tsavorite': ['1.6'],
-    'cabochon': ['2.5'],
-  };
+  // Toutes les tailles disponibles pour chaque pierre (Amila peut sertir n'importe quelle pierre dans n'importe quelle taille)
+  const TOUTES_TAILLES_PIERRE = ['0.8','0.9','1.3','1.6','1.75','1.9','2.1','2.5'];
+  const TAILLES_PAR_PIERRE = Object.fromEntries(TYPES_PIERRES.map(t => [t, TOUTES_TAILLES_PIERRE]));
 
   document.getElementById('btn-ajouter-pierre')?.addEventListener('click', () => {
     mjPierres.push({ type: 'diamant', taille: '1.6', quantite: 1 });
