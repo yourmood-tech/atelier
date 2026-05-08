@@ -10,17 +10,25 @@ function gidToId(gid: string): number {
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
-  if (!q) return NextResponse.json({ products: [] });
+  const idParam = req.nextUrl.searchParams.get("id")?.trim();
+
+  if (!q && !idParam) return NextResponse.json({ products: [] });
 
   const fuzzy = req.nextUrl.searchParams.get("fuzzy") === "1";
-  const words = q.split(/\s+/).filter((w) => w.length > 0);
-  const titleFilter =
-    fuzzy && words.length > 1
-      ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" ")
-      : `title:*${q.replace(/"/g, "")}*`;
+
+  let queryFilter: string;
+  if (idParam) {
+    queryFilter = `id:${idParam}`;
+  } else {
+    const words = q!.split(/\s+/).filter((w) => w.length > 0);
+    queryFilter =
+      fuzzy && words.length > 1
+        ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" ")
+        : `title:*${q!.replace(/"/g, "")}*`;
+  }
 
   const gql = `{
-    products(first: 10, query: "${titleFilter}") {
+    products(first: 10, query: "${queryFilter}") {
       edges {
         node {
           id title status descriptionHtml

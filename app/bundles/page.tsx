@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -191,7 +192,16 @@ function downloadCSV(csv: string, filename: string) {
 
 // ── Component ──────────────────────────────────────────────────────────────
 
-export default function BundlesPage() {
+export default function BundlesPageWrapper() {
+  return (
+    <Suspense>
+      <BundlesPage />
+    </Suspense>
+  );
+}
+
+function BundlesPage() {
+  const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>("bundle");
 
   const [bundleQuery, setBundleQuery] = useState("");
@@ -208,6 +218,21 @@ export default function BundlesPage() {
   const [warnings, setWarnings] = useState<string[]>([]);
 
   const ingInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-load bundle product when ?id= param is present (handoff from product-creator)
+  useEffect(() => {
+    const productId = searchParams.get("id");
+    if (!productId || bundleProduct) return;
+    setBundleSearching(true);
+    fetch(`/api/bundles/search?id=${encodeURIComponent(productId)}`)
+      .then((r) => r.json() as Promise<{ products?: ShopifyProduct[] }>)
+      .then(({ products }) => {
+        if (products?.[0]) selectBundle(products[0]);
+      })
+      .catch(() => {})
+      .finally(() => setBundleSearching(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function search(
     q: string,

@@ -1142,6 +1142,9 @@
           <dt>Étapes</dt><dd>${Object.entries(data.etapes).map(([k,v]) => `${k} : ${v}`).join(' · ')}</dd>
           <dt>Voir dans Shopify</dt><dd><a href="${data.urlAdmin}" target="_blank">${data.urlAdmin}</a></dd>
         </dl>
+        <a href="/bundles?id=${data.idProduit}" target="_blank" style="display:inline-block;margin-top:1rem;padding:0.7rem 1.2rem;background:#111;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;font-weight:600;">
+          🧩 Configurer le bundle Simple Bundles →
+        </a>
       `;
       resultat.classList.remove('hidden');
     } catch (e) {
@@ -1340,6 +1343,9 @@
           <dt>Étapes</dt><dd>${Object.entries(data.etapes).map(([k,v]) => `${k} : ${v}`).join(' · ')}</dd>
           <dt>Voir dans Shopify</dt><dd><a href="${data.urlAdmin}" target="_blank">${data.urlAdmin}</a></dd>
         </dl>
+        <a href="/bundles?id=${data.idProduit}" target="_blank" style="display:inline-block;margin-top:1rem;padding:0.7rem 1.2rem;background:#111;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;font-weight:600;">
+          🧩 Configurer le bundle Simple Bundles →
+        </a>
       `;
       resultat.classList.remove('hidden');
     } catch (e) {
