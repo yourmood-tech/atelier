@@ -238,17 +238,30 @@ export function genererTitreJoaillerie(infos: JoaillerieInfos): string {
 
 // ============ PAYLOAD SHOPIFY ============
 const PRODUCT_TYPE_MAP: Record<JoaillerieCategorie, string> = {
-  'medium-base-serti': 'medium et base entièrement sertis',
+  'medium-base-serti': 'pièce sertie',  // sera affiné par sertissage (medium serti / base sertie)
   'piece-serie': 'pièce d\'exception et série',
   'coffret': 'coffret joaillerie',
   'alliance': 'alliance',
   'compagnon': 'compagnon',
 };
 
+/** Calcule le product_type final selon catégorie + sertissage */
+function resoudreProductType(infos: JoaillerieInfos): string {
+  if (infos.categorie === 'medium-base-serti') {
+    if (infos.sertissage?.startsWith('base-')) return 'base sertie';
+    if (infos.sertissage?.startsWith('medium-')) return 'medium serti';
+    return 'pièce sertie';
+  }
+  return PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie;
+}
+
 function construireBodyHtml(infos: JoaillerieInfos): string {
   const isOr = infos.matiere.startsWith('or ');
   const matiereLabel = infos.matiere + (isOr && infos.carat ? ` ${infos.carat}` : '');
   let html = '';
+
+  // Titre du produit en majuscule, grand, en haut de la description
+  html += `<h2 style="text-transform:uppercase;font-size:1.4em;margin:0 0 0.5em 0;">${infos.nom}</h2>`;
 
   // Description IA (poétique / technique) en intro
   if (infos.description_ia && infos.description_ia.trim()) {
@@ -322,7 +335,7 @@ export function construirePayloadJoaillerie(
   const product: Record<string, unknown> = {
     title: genererTitreJoaillerie(infos),
     vendor: "Mood Joaillerie",
-    product_type: PRODUCT_TYPE_MAP[infos.categorie] || infos.categorie,
+    product_type: resoudreProductType(infos),
     status: "draft",
     tags: genererTagsJoaillerie(infos),
     body_html: construireBodyHtml(infos),
