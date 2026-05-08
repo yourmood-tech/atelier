@@ -32,6 +32,12 @@ export async function POST(request: Request) {
       variants: Array<{ inventory_item_id: number }>;
     } }).product;
 
+    if (!product) {
+      const preview = JSON.stringify(creation.data).slice(0, 300);
+      console.error("[create-coffret] product absent, creation.data:", preview);
+      return NextResponse.json({ error: "Shopify n'a pas retourné le produit créé", detail: preview }, { status: 500 });
+    }
+
     const journal: Record<string, unknown> = {
       idProduit: product.id,
       handle: product.handle,
