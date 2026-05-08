@@ -239,6 +239,42 @@ export function genererTags({
     }
   });
 
+  // Tags configurateur (côté app /configurator)
+  const aBase = formatsToTag.some((f) => estBase(f));
+  const aAddon = formatsToTag.some((f) => f && !estBase(f));
+
+  if (aBase) {
+    tags.push("configurateur:base");
+    tags.push(`matiere:${matiere.toLowerCase()}`);
+    formatsToTag.forEach((f) => {
+      const lf = (f || "").toLowerCase();
+      if (lf === "base extra small") tags.push("largeur:xs");
+      else if (lf === "base small") tags.push("largeur:s");
+      else if (lf === "base large") tags.push("largeur:l");
+    });
+  }
+
+  if (aAddon) {
+    tags.push("configurateur:addon");
+    // Compatibilité par défaut : les "addon" classiques se clipsent uniquement
+    // sur base S et L (pas XS). Tous les autres formats clipsables (deux tiers,
+    // medium, mini, open mood, pack) se clipsent sur les 3 largeurs.
+    const compat = new Set<string>();
+    formatsToTag.forEach((f) => {
+      const lf = (f || "").toLowerCase();
+      if (estBase(f) || !lf) return;
+      if (lf === "addon") {
+        compat.add("s");
+        compat.add("l");
+      } else {
+        compat.add("xs");
+        compat.add("s");
+        compat.add("l");
+      }
+    });
+    compat.forEach((c) => tags.push(`compatible:${c}`));
+  }
+
   if (formeBase) tags.push(formeBase.toLowerCase());
   if (finitionBase) tags.push(finitionBase.toLowerCase());
 
