@@ -126,10 +126,18 @@ function mtrlMoab(taille: string, format_: string) {
   return null;
 }
 
+function mtrlDentsArgent(taille: string, format_: string) {
+  // Disponible uniquement en medium pour l'instant
+  const f = format_.toLowerCase();
+  if (f === "medium") return `MTRL-MD-RI-240-dents-d'argent-wht-cz-${taille}`;
+  return null;
+}
+
 function detecter3dSpecial(sku: string) {
   const s = (sku || "").toUpperCase();
   if (s.includes("MARIPOSA")) return "mariposa";
   if (s.includes("MOAB")) return "moab";
+  if (s.includes("DENTS") && s.includes("ARGENT")) return "dents-argent";
   return null;
 }
 
@@ -155,6 +163,7 @@ export function getMtrl({
   const special = detecter3dSpecial(sku);
   if (special === "mariposa") return mtrlMariposa(taille, format);
   if (special === "moab") return mtrlMoab(taille, format);
+  if (special === "dents-argent") return mtrlDentsArgent(taille, format);
 
   if (!matiere) return null;
   const m = matiere.toLowerCase();
