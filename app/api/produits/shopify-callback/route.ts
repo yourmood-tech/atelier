@@ -23,11 +23,15 @@ export async function GET(request: Request) {
     const tokens = await echangerCodeContreShopifyToken(code, shop);
     const varName = shop.includes("moodjoaillerie")
       ? "MOODJOAILLERIE_SHOPIFY_ACCESS_TOKEN"
+      : shop.includes("moodmarketplace") || shop.includes("mood-market-place")
+      ? "MOODMARKETPLACE_SHOPIFY_ACCESS_TOKEN"
       : shop.includes("yourmood")
       ? "MOOD_SHOPIFY_ACCESS_TOKEN"
       : "SHOPIFY_ACCESS_TOKEN";
     const domainName = shop.includes("moodjoaillerie")
       ? "MOODJOAILLERIE_SHOPIFY_DOMAIN"
+      : shop.includes("moodmarketplace") || shop.includes("mood-market-place")
+      ? "MOODMARKETPLACE_SHOPIFY_DOMAIN"
       : shop.includes("yourmood")
       ? "MOOD_SHOPIFY_DOMAIN"
       : "SHOPIFY_DOMAIN";
