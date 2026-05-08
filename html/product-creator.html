@@ -2072,18 +2072,26 @@
     'cabochon':         { '2.5': 3 },
   };
 
-  // Prix d'ACHAT de la matière pour medium et base
+  // Prix d'ACHAT de la matière pour medium et base (source : Amila Pousaz 2026-05-08)
+  // Note : pour les BASES, on prend le prix du medium en acier comme référence (15 CHF).
   const PRIX_ACHAT_MATIERE_SERTI = {
-    'argent':    { 'medium': 26, 'base': 15 }, // base = acier (référence)
-    'or rose':   { 'medium': 310, 'base': 15 },
-    'or jaune':  { 'medium': 310, 'base': 15 },
-    'or gris':   { 'medium': 190, 'base': 15 },
-    'tantale':   { 'medium': 190, 'base': 15 },
-    'carbone':   { 'medium': 31, 'base': 15 },
-    'acier':     { 'medium': 4.50, 'base': 15 },
-    'titane':    { 'medium': 6, 'base': 15 },
-    'aluminium': { 'medium': 4.45, 'base': 15 },
-    'polymere':  { 'medium': 1.18, 'base': 15 },
+    'argent':       { 'medium': 26, 'base': 15 },
+    'argent-glitter':{ 'medium': 40, 'base': 15 },
+    'or rose':      { 'medium': 310, 'base': 15 },
+    'or jaune':     { 'medium': 310, 'base': 15 },
+    'or gris':      { 'medium': 190, 'base': 15 },
+    'tantale':      { 'medium': 190, 'base': 15 },
+    'carbone':      { 'medium': 31.20, 'base': 15 },     // full carbon
+    'carbone-fibre':{ 'medium': 9.50, 'base': 15 },
+    'acier':        { 'medium': 4.50, 'base': 15 },
+    'titane':       { 'medium': 6, 'base': 15 },
+    'aluminium':    { 'medium': 4.45, 'base': 15 },
+    'polymere':     { 'medium': 1.18, 'base': 15 },
+    'bronze':       { 'medium': 16, 'base': 15 },
+    'ceramique':    { 'medium': 80, 'base': 15 },
+    'damasse':      { 'medium': 80, 'base': 15 },         // estimation
+    'mokume-gane':  { 'medium': 100, 'base': 15 },        // estimation pièces uniques
+    'revetement':   { 'medium': 40, 'base': 15 },
   };
 
   // Nombre de pierres pour 1 côté/face — table calculée depuis la longueur d'anneau
@@ -2299,13 +2307,24 @@
   });
 
   // ============ CALCUL PRIX PROJET UNIQUE ============
+  // Prix d'ACHAT par matière × format (source : Amila Pousaz 2026-05-08)
   const PRIX_ACHAT_JOAILLERIE = {
-    'argent': { 'addon': 40, 'deux-tiers': 33, 'medium': 26 },
-    'or rose': { 'addon': 350, 'deux-tiers': 320, 'medium': 310 },
-    'or jaune': { 'addon': 350, 'deux-tiers': 320, 'medium': 310 },
-    'or gris': { 'addon': 739, 'deux-tiers': 490, 'medium': 190 },
-    'tantale': { 'addon': 390, 'deux-tiers': 290, 'medium': 190 },
-    'carbone': { 'addon': 62, 'medium': 31 },
+    'aluminium':      { 'addon': 6.05, 'deux-tiers': 5.40, 'medium': 4.45, 'mini': 11.20 },
+    'polymere':       { 'addon': 2.36, 'deux-tiers': 2.36, 'medium': 1.18 },
+    'titane':         { 'addon': 12, 'deux-tiers': 10, 'medium': 6 },
+    'bois':           { 'addon': 18.40 },
+    'acier':          { 'addon': 15, 'deux-tiers': 9, 'medium': 4.50 },
+    'bronze':         { 'addon': 48, 'deux-tiers': 47, 'medium': 16 },
+    'ceramique':      { 'addon': 54, 'medium': 80 },
+    'carbone':        { 'addon': 62.40, 'medium': 31.20 },        // full carbon
+    'carbone-fibre':  { 'addon': 19, 'medium': 9.50 },
+    'argent':         { 'addon': 40, 'deux-tiers': 33, 'medium': 26 },
+    'or rose':        { 'addon': 350, 'deux-tiers': 320, 'medium': 310 },
+    'or jaune':       { 'addon': 350, 'deux-tiers': 320, 'medium': 310 },
+    'or gris':        { 'addon': 739, 'deux-tiers': 490, 'medium': 190 },
+    'tantale':        { 'addon': 390, 'deux-tiers': 290, 'medium': 190 },
+    'argent-glitter': { 'addon': 40, 'deux-tiers': 40, 'medium': 40, 'mini': 40 },
+    'revetement':     { 'addon': 40, 'deux-tiers': 40, 'medium': 40, 'mini': 40 },
   };
 
   function mjMettreAJourPrixProjet() {
