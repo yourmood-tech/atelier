@@ -124,14 +124,24 @@ export function genererTagsJoaillerie(infos: JoaillerieInfos): string {
   // 1. Marque
   tags.push('Joaillerie');
 
-  // 2. Nom du produit
-  if (infos.nom) tags.push(infos.nom.toLowerCase());
+  // 2. Nom du produit (retiré du format s'il y est collé)
+  if (infos.nom) {
+    let nomTag = infos.nom.toLowerCase().trim();
+    // Si le format est dans le nom, on l'enlève (ex: "test medium" + format=medium → "test")
+    const formatsConnus = ['addon', 'deux tiers', 'medium', 'mini', 'open mood', 'base small', 'base large', 'base extra small'];
+    for (const f of formatsConnus) {
+      const re = new RegExp(`\\b${f}\\b`, 'gi');
+      nomTag = nomTag.replace(re, '').trim();
+    }
+    nomTag = nomTag.replace(/\s+/g, ' ').trim();  // collapse spaces
+    if (nomTag) tags.push(nomTag);
+  }
 
   // 3. Matière (sans préfixe). Carat séparé si or.
   tags.push(infos.matiere.toLowerCase());
   if (isOr && infos.carat) tags.push(infos.carat.toLowerCase());
 
-  // 4. Format (sans préfixe)
+  // 4. Format (sans préfixe) — toujours en tag séparé
   if (infos.format) tags.push(infos.format.toLowerCase());
 
   // 5. Pierres : nom de chaque type (sans préfixe) + tailles mm
@@ -209,16 +219,63 @@ function resumePierres(pierres: PierreItem[]): string {
   return pierres.map(p => `${p.quantite}x ${p.type} ${p.taille}mm`).join(', ');
 }
 
+/** Met une pierre au pluriel ("diamant" → "diamants", "rubis" → "rubis"). */
+function pluraliserPierre(type: string): string {
+  if (!type) return '';
+  // Cas particuliers Mood Joaillerie
+  const cas: Record<string, string> = {
+    'diamant': 'diamants',
+    'diamant-noir': 'diamants noirs',
+    'diamant-brun': 'diamants bruns',
+    'diamant-ice-gris': 'diamants ice gris',
+    'diamant-pur-rose': 'diamants pur rose',
+    'c-diams': 'champagne diamants',
+    'saphir': 'saphirs',
+    'emeraude': 'émeraudes',
+    'rubis': 'rubis',
+    'amethyste': 'améthystes',
+    'grenat': 'grenats',
+    'topaze': 'topazes',
+    'tsavorite': 'tsavorites',
+    'cabochon': 'cabochons',
+  };
+  return cas[type.toLowerCase()] || type;
+}
+
+/** Formate les pierres pour le titre : "diamants 1.6mm" ou "diamants et saphirs 1.6mm". */
+function pierresPourTitre(pierres: PierreItem[]): string {
+  if (!pierres || pierres.length === 0) return '';
+  const taille = pierres[0].taille;
+  const types = [...new Set(pierres.map(p => pluraliserPierre(p.type)))];
+  if (types.length === 1) return `${types[0]} ${taille}mm`;
+  if (types.length === 2) return `${types[0]} et ${types[1]} ${taille}mm`;
+  return `${types.slice(0, -1).join(', ')} et ${types[types.length - 1]} ${taille}mm`;
+}
+
+/** Sertissage narratif pour le titre. */
+function sertissageNarratif(sertissage: string): string {
+  switch (sertissage) {
+    case 'medium-full': return 'medium entièrement serti';
+    case 'medium-partiel': return 'medium partiellement serti';
+    case 'base-1-cote': return "base sertie d'un côté";
+    case 'base-2-cotes': return 'base sertie des deux côtés';
+    default: return 'serti';
+  }
+}
+
 export function genererTitreJoaillerie(infos: JoaillerieInfos): string {
   // Carat uniquement si or (ne pas l'afficher pour argent / acier / titane / etc.)
   const isOr = infos.matiere.startsWith('or ');
   const matiereLabel = infos.matiere + (isOr && infos.carat ? ` ${infos.carat}` : '');
 
   switch (infos.categorie) {
-    case 'medium-base-serti':
-      return infos.pierres && infos.pierres.length > 0
-        ? `${infos.nom} — ${matiereLabel} serti ${resumePierres(infos.pierres)}`
-        : `${infos.nom} — ${matiereLabel} serti`;
+    case 'medium-base-serti': {
+      const sertNarratif = sertissageNarratif(infos.sertissage || '');
+      const pierresLabel = infos.pierres && infos.pierres.length > 0
+        ? ` de ${pierresPourTitre(infos.pierres)}`
+        : '';
+      return `${infos.nom} ${sertNarratif}${pierresLabel}`;
+    }
     case 'piece-serie': {
       const sousTypeTxt = infos.sous_type_piece === 'projet-unique'
         ? 'projet unique'
