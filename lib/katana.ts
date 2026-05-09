@@ -723,21 +723,30 @@ export async function pushRecipesToKatana(
 
   if (!newRows.length) return { created: 0, skipped, errors: [] };
 
-  try {
-    await katanaFetch("/v1/recipes", {
-      method: "POST",
-      body: JSON.stringify({
-        rows: newRows.map((r) => ({
-          product_variant_id: r.productVariantId,
-          ingredient_variant_id: r.ingredientVariantId,
-          quantity: r.quantity,
-        })),
-      }),
-    });
-    return { created: newRows.length, skipped, errors: [] };
-  } catch (e) {
-    return { created: 0, skipped, errors: [e instanceof Error ? e.message : String(e)] };
+  const BATCH = 150;
+  const errors: string[] = [];
+  let created = 0;
+
+  for (let i = 0; i < newRows.length; i += BATCH) {
+    const batch = newRows.slice(i, i + BATCH);
+    try {
+      await katanaFetch("/v1/recipes", {
+        method: "POST",
+        body: JSON.stringify({
+          rows: batch.map((r) => ({
+            product_variant_id: r.productVariantId,
+            ingredient_variant_id: r.ingredientVariantId,
+            quantity: r.quantity,
+          })),
+        }),
+      });
+      created += batch.length;
+    } catch (e) {
+      errors.push(e instanceof Error ? e.message : String(e));
+    }
   }
+
+  return { created, skipped, errors };
 }
 
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
