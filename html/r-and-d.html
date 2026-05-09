@@ -249,6 +249,7 @@
       <option value="2026" selected>2026</option>
       <option value="2027">2027</option>
     </select>
+    <button onclick="ouvrirBrainstorm()">✨ Idées Mood (IA)</button>
     <button class="outline" onclick="exporterJSON()">📥 Export JSON</button>
     <button class="outline" onclick="importerJSON()">📤 Import JSON</button>
     <button class="danger outline" onclick="reset()">🗑️ Reset</button>
@@ -343,6 +344,30 @@
 </div>
 
 <input type="file" id="file-import" accept="application/json" style="display:none" onchange="lireFichierImport(event)">
+
+<!-- Modal brainstorm IA -->
+<div class="modal-overlay" id="modal-brainstorm">
+  <div class="modal" style="max-width:680px;">
+    <h3>✨ Brainstorm Idées Mood</h3>
+    <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">Donne-moi un thème ou une inspiration, et je te propose 5 pépites créatives calibrées sur l'ADN Mood.</p>
+
+    <label>Thème ou inspiration *</label>
+    <input id="bs-theme" placeholder="ex : printemps doré · forêt nordique · empreintes lumineuses · St-Valentin minimaliste">
+
+    <label>Saison / période <span style="color:var(--gris);font-weight:400">(optionnel)</span></label>
+    <input id="bs-saison" placeholder="ex : été 2026 · St-Valentin · fête des mères">
+
+    <label>Contraintes ou préférences <span style="color:var(--gris);font-weight:400">(optionnel)</span></label>
+    <input id="bs-contraintes" placeholder="ex : pas d'or, format mini uniquement, prix < 100 CHF">
+
+    <div class="modal-actions">
+      <button class="outline" onclick="fermerBrainstorm()">Fermer</button>
+      <button onclick="lancerBrainstorm()" id="btn-brainstorm">✨ Générer 5 idées</button>
+    </div>
+
+    <div id="bs-resultats" style="margin-top:1rem;"></div>
+  </div>
+</div>
 
 <script>
 const STORAGE_KEY = 'mood-rd-pipeline';
@@ -640,9 +665,105 @@ function reset() {
   rendreCalendrier();
 }
 
+// ============ BRAINSTORM IA ============
+function ouvrirBrainstorm() {
+  document.getElementById('bs-resultats').innerHTML = '';
+  document.getElementById('modal-brainstorm').classList.add('show');
+}
+function fermerBrainstorm() {
+  document.getElementById('modal-brainstorm').classList.remove('show');
+}
+
+async function lancerBrainstorm() {
+  const theme = document.getElementById('bs-theme').value.trim();
+  if (!theme) { alert('Donne-moi au moins un thème ou une inspiration.'); return; }
+  const saison = document.getElementById('bs-saison').value.trim();
+  const contraintes = document.getElementById('bs-contraintes').value.trim();
+  const btn = document.getElementById('btn-brainstorm');
+  const zone = document.getElementById('bs-resultats');
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération…';
+  zone.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;">Gemini réfléchit… (5-15 sec)</div>';
+  try {
+    const r = await fetch('/api/r-and-d/brainstorm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme, saison, contraintes }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.idees) {
+      zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur : ${data.error || JSON.stringify(data)}</div>`;
+      return;
+    }
+    afficherIdees(data.idees);
+  } catch (e) {
+    zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur réseau : ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Générer 5 idées';
+  }
+}
+
+function afficherIdees(idees) {
+  const zone = document.getElementById('bs-resultats');
+  let html = `<div style="font-size:0.85rem;color:var(--gris);margin-bottom:0.5rem;">${idees.length} pépites proposées :</div>`;
+  for (let i = 0; i < idees.length; i++) {
+    const idee = idees[i];
+    const stars = '⭐'.repeat(idee.potentiel || 3);
+    html += `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:0.7rem;margin-bottom:0.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;flex-wrap:wrap;">
+        <strong style="font-size:1rem;">${escapeHtml(idee.nom || 'Sans nom')}</strong>
+        <span style="font-size:0.85rem;">${stars}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--gris);margin:0.3rem 0;">
+        ${[idee.type, idee.matiere, idee.couleur, idee.pierre].filter(Boolean).map(escapeHtml).join(' · ')}
+      </div>
+      <div style="font-size:0.85rem;margin-bottom:0.4rem;">${escapeHtml(idee.description || '')}</div>
+      <div style="font-size:0.75rem;color:var(--gris);font-style:italic;margin-bottom:0.5rem;">💡 ${escapeHtml(idee.raisonnement || '')}</div>
+      <button onclick='ajouterIdeeAuPlanning(${JSON.stringify(idee).replace(/'/g, "&apos;")})' style="font-size:0.8rem;padding:0.3rem 0.7rem;">+ Ajouter au planning</button>
+    </div>`;
+  }
+  zone.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function ajouterIdeeAuPlanning(idee) {
+  // Demander à quelle date la mettre (par défaut = jeudi prochain)
+  const today = new Date();
+  while (today.getDay() !== 4) today.setDate(today.getDate() + 1);  // prochain jeudi
+  const defaut = dateISOLocal(today);
+  const dateChoisie = prompt(`Date de planification (YYYY-MM-DD) ?\n\nProposition : ${defaut} (prochain jeudi)`, defaut);
+  if (!dateChoisie) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateChoisie)) { alert('Format invalide. Utilise YYYY-MM-DD.'); return; }
+
+  const noteIA = `[Idée IA] ${idee.description || ''}\n\n💡 ${idee.raisonnement || ''}\nPotentiel : ${idee.potentiel || '?'}/5`;
+  donnees.produits.push({
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    nom: idee.nom,
+    type: idee.type || 'addon',
+    etape: 1,
+    fournisseur: '',
+    objectifCA: null,
+    notes: noteIA,
+    image: null,
+    date: dateChoisie,
+    creAt: new Date().toISOString(),
+    majAt: new Date().toISOString(),
+  });
+  sauverDonnees();
+  rendreCalendrier();
+  fermerBrainstorm();
+}
+
 document.getElementById('annee').addEventListener('change', rendreCalendrier);
 document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal') fermerModal();
+});
+document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-brainstorm') fermerBrainstorm();
 });
 
 rendreCalendrier();
