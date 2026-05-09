@@ -25,10 +25,10 @@ export async function GET(req: NextRequest) {
     // For multi-word queries, AND-join per-word wildcards so each word is matched
     // independently — avoids exact-phrase mismatch when the title still has a hyphen.
     const sanitized = q!.replace(/"/g, "").replace(/\s*-\s*/g, " ").trim();
-    const words = sanitized.split(/\s+/).filter((w) => w.length > 2);
+    const sigWords = [...new Set(sanitized.split(/\s+/).filter((w) => w.length > 2))];
     queryFilter =
-      words.length > 1
-        ? [...new Set(words)].map((w) => `title:*${w}*`).join(" ")
+      sigWords.length > 1
+        ? sigWords.map((w) => `title:*${w}*`).join(" ")
         : `title:*${sanitized}*`;
   }
 
