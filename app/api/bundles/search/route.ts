@@ -21,12 +21,14 @@ export async function GET(req: NextRequest) {
     queryFilter = `id:${idParam}`;
   } else {
     const words = q!.split(/\s+/).filter((w) => w.length > 0);
-    // Strip " - " separators and quotes — "-" is a NOT operator in Shopify search syntax
+    // Strip quotes and hyphens ("-" = NOT operator in Shopify search syntax).
+    // For multi-word queries, AND-join per-word wildcards so each word is matched
+    // independently — avoids exact-phrase mismatch when the title still has a hyphen.
     const sanitized = q!.replace(/"/g, "").replace(/\s*-\s*/g, " ").trim();
-    const sanitizedWords = sanitized.split(/\s+/).filter((w) => w.length > 0);
+    const words = sanitized.split(/\s+/).filter((w) => w.length > 2);
     queryFilter =
-      fuzzy && sanitizedWords.length > 1
-        ? sanitizedWords.map((w) => `title:*${w}*`).join(" ")
+      words.length > 1
+        ? [...new Set(words)].map((w) => `title:*${w}*`).join(" ")
         : `title:*${sanitized}*`;
   }
 
