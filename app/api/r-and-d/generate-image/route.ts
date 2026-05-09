@@ -33,7 +33,11 @@ Pas de mannequin, pas de doigt — la bague seule sur fond uni.
 Pas de texte, pas de logo, pas de watermark.
 Aspect : précieux, minimaliste, contemporain, réaliste (photo, pas illustration).
 
-Les images de référence ci-dessous montrent EXACTEMENT le format demandé. Reproduis fidèlement leur PROPORTION (largeur de l'anneau central) ainsi que leur style photographique (texture, finition, éclairage, cadrage).`;
+📋 LES 2 PREMIÈRES IMAGES DE RÉFÉRENCE sont CRITIQUES :
+- Image 1 : combinaisons base × addons (montre les 3 tailles de base : extra small / small / large + comment minis et mediums se combinent dessus)
+- Image 2 : TABLEAU de comparaison des 4 formats côte à côte (Addon mini / Addon medium / Addon deux tiers / Addon) sur 3 tailles de base. RÉFÈRE-TOI à cette image pour identifier la PROPORTION EXACTE du format demandé.
+
+Les images suivantes (3+) sont des exemples du format demandé en photo réelle. Reproduis fidèlement leur style photographique (texture, finition, éclairage, cadrage) ET la proportion vue dans le tableau de comparaison (Image 2).`;
 
 const FORMAT_DESCRIPTION: Record<string, string> = {
   'addon': "FORMAT DEMANDÉ = ADDON. Anneau central LARGE (~7mm), occupant environ 75% de la largeur de la bague. Visible et imposant entre les 2 anneaux extérieurs.",
@@ -54,7 +58,7 @@ export async function POST(request: Request) {
   if (!idee || !idee.nom)
     return NextResponse.json({ error: 'champ "idee" requis avec au moins un nom' }, { status: 400 });
 
-  // Charger les refs Mood pertinentes : 2-3 images de FORMAT + 1-2 de MATIÈRE
+  // Charger les refs Mood pertinentes : refs CRITIQUES + format + matière
   const refsDir = path.join(process.cwd(), "public/refs-mood");
   const refsBase64: { mimeType: string; data: string }[] = [];
 
@@ -72,6 +76,11 @@ export async function POST(request: Request) {
       /* dossier inexistant ou vide, on skip */
     }
   }
+
+  // 0. RÉFÉRENCES CRITIQUES (toujours en 1ère position) :
+  //    - Combinaisons bases × addons (Mood lifestyle)
+  //    - Tableau de comparaison des 4 formats côte à côte (addon mini / medium / deux tiers / addon)
+  chargerRefs('_critique', 2);
 
   // 1. FORMAT — 2 ou 3 refs du bon format (priorité absolue)
   const typeNorm = (idee.type || '').toLowerCase().trim();
