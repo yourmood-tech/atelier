@@ -185,7 +185,7 @@ export default function RecipesPage() {
 
     const variants = missing.map((r) => {
       const sv = p.variants.find((v) => v.sku === r.sku)!;
-      return { sku: r.sku, variantName: getTailleValue(sv) ?? sv.title };
+      return { sku: r.sku, variantName: getTailleValue(sv) ?? sv.title, options: sv.options };
     });
 
     // Use katanaProductId from any already-existing variant to patch the right product

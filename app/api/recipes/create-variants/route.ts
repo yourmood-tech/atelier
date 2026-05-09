@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const { productTitle, variants, katanaProductId } = (await req.json()) as {
       productTitle: string;
-      variants: { sku: string; variantName: string }[];
+      variants: { sku: string; variantName: string; options?: Record<string, string> }[];
       katanaProductId?: number;
     };
     if (!productTitle || !Array.isArray(variants) || !variants.length) {

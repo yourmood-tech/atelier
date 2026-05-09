@@ -591,7 +591,7 @@ export async function checkKatanaVariants(
 
 export async function ensureKatanaVariantsExist(
   productTitle: string,
-  missingVariants: { sku: string; variantName: string }[],
+  missingVariants: { sku: string; variantName: string; options?: Record<string, string> }[],
   katanaProductId?: number
 ): Promise<{ sku: string; created: boolean; error?: string }[]> {
   if (!missingVariants.length) return [];
@@ -614,12 +614,28 @@ export async function ensureKatanaVariantsExist(
   }
 
   if (productId) {
-    // Product exists — create each missing variant via POST /v1/variants
+    // Fetch product configs once to build config_attributes for each variant
+    let katanaConfigs: { name: string }[] = [];
+    try {
+      const productData = (await katanaFetch(`/v1/products/${productId}`, { method: "GET" })) as {
+        configs?: { id: number; name: string; values: string[] }[];
+      };
+      katanaConfigs = productData?.configs ?? [];
+    } catch { /* proceed without configs */ }
+
     for (const v of missingVariants) {
       try {
+        const config_attributes = katanaConfigs
+          .filter((c) => v.options?.[c.name] !== undefined)
+          .map((c) => ({ config_name: c.name, config_value: v.options![c.name] }));
+
         await katanaFetch("/v1/variants", {
           method: "POST",
-          body: JSON.stringify({ product_id: productId, sku: v.sku }),
+          body: JSON.stringify({
+            product_id: productId,
+            sku: v.sku,
+            ...(config_attributes.length ? { config_attributes } : {}),
+          }),
         });
         results.push({ sku: v.sku, created: true });
       } catch (e) {
