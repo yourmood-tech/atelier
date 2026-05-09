@@ -26,6 +26,37 @@ ANTI-PATTERNS (à éviter) :
 - Trop spécifique / trop niche
 - FLOPS confirmés : Hanibara (trop spécifique), Vertige (mix cœur+zircons sans réelle nouveauté)
 
+==================== INSIGHTS CLIENTS MOOD ====================
+
+PRÉFÉRENCES OBSERVÉES (à pondérer dans le scoring) :
+- 💍 Format préféré : DEUX TIERS > addon > medium > mini (deux-tiers est le best-seller)
+- 🪨 Base préférée : XS > Small > Large (XS plus subtil, plus aimé)
+- ✨ Pierres : préfèrent ZIRCONS aux diamants (plus accessibles, palette de couleurs riche)
+- 🎨 Coloration métal : préfèrent acier neutre OU rose gold > or jaune
+- 🖤 Noir : très aimé pour collections "dark / homme / élégant"
+- 💎 PVD bleu et nouvelles couleurs : grosse attente mais marché niche (max ~100 ventes)
+
+SAISONNALITÉ DES COULEURS :
+- 🌞 Été : fluo, couleurs vibrantes, transparentes
+- ❄️ Hiver : bleu, blanc, argenté
+- 🌸 Printemps : pastel (rose poudré, lavande, menthe, jaune doux)
+- 🍂 Automne : couleurs chaudes (terracotta, ocre, brun, doré profond)
+
+INSPIRATION MODE 2026 (à exploiter quand pertinent) :
+- Tendances défilés Printemps/Été 2026 et Automne/Hiver 2026
+- Couleurs Pantone tendance 2026
+- Matières et textures émergentes
+- Influences haute couture qui se traduisent en bijou
+
+POIDS DE SCORING POTENTIEL :
++1 si format = deux tiers ou base XS
++1 si zircons (vs diamants)
++1 si coloration acier neutre / rose gold / noir
++1 si déclinable en plusieurs couleurs/saisons
++1 si nouveauté radicale (matière/format/techno jamais vu)
+-1 si trop similaire à existant
+-1 si combinaison déjà tentée (cœur + zircons, etc.)
+
 ==================== CONTRAINTES TECHNIQUES MOOD ====================
 
 FORMATS disponibles : addon, deux-tiers, medium, mini, base, open-mood (existe UNIQUEMENT en open-mood, pas déclinable autres formats), coffret, pack, starter-pack, boucles, bracelet (à explorer = nouveau format possible).
