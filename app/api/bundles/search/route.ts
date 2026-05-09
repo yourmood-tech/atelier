@@ -21,10 +21,13 @@ export async function GET(req: NextRequest) {
     queryFilter = `id:${idParam}`;
   } else {
     const words = q!.split(/\s+/).filter((w) => w.length > 0);
+    // Strip " - " separators and quotes — "-" is a NOT operator in Shopify search syntax
+    const sanitized = q!.replace(/"/g, "").replace(/\s*-\s*/g, " ").trim();
+    const sanitizedWords = sanitized.split(/\s+/).filter((w) => w.length > 0);
     queryFilter =
-      fuzzy && words.length > 1
-        ? words.map((w) => `title:*${w.replace(/"/g, "")}*`).join(" ")
-        : `title:*${q!.replace(/"/g, "")}*`;
+      fuzzy && sanitizedWords.length > 1
+        ? sanitizedWords.map((w) => `title:*${w}*`).join(" ")
+        : `title:*${sanitized}*`;
   }
 
   const gql = `{
