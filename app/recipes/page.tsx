@@ -37,6 +37,7 @@ type VariantCheckResult = {
   exists: boolean;
   katanaId?: number;
   katanaProductId?: number;
+  configMissing?: boolean;
 };
 
 type VariantCheckState = {
@@ -44,6 +45,8 @@ type VariantCheckState = {
   results: VariantCheckResult[];
   creating: boolean;
   createErrors: string[];
+  fixing: boolean;
+  fixErrors: string[];
 };
 
 type IngredientEntry = {
@@ -162,7 +165,7 @@ export default function RecipesPage() {
   async function checkVariants(p: ShopifyProduct) {
     const skus = p.variants.map((v) => v.sku).filter(Boolean) as string[];
     if (!skus.length) return;
-    setVariantCheck({ status: "checking", results: [], creating: false, createErrors: [] });
+    setVariantCheck({ status: "checking", results: [], creating: false, createErrors: [], fixing: false, fixErrors: [] });
     try {
       const res = await fetch("/api/recipes/check-variants", {
         method: "POST",
@@ -170,7 +173,7 @@ export default function RecipesPage() {
         body: JSON.stringify({ skus }),
       });
       const data = (await res.json()) as { results?: VariantCheckResult[] };
-      setVariantCheck({ status: "done", results: data.results ?? [], creating: false, createErrors: [] });
+      setVariantCheck({ status: "done", results: data.results ?? [], creating: false, createErrors: [], fixing: false, fixErrors: [] });
     } catch {
       setVariantCheck(null);
     }
@@ -181,7 +184,7 @@ export default function RecipesPage() {
     const missing = variantCheck.results.filter((r) => !r.exists);
     if (!missing.length) return;
 
-    setVariantCheck((prev) => prev ? { ...prev, creating: true, createErrors: [] } : null);
+    setVariantCheck((prev) => prev ? { ...prev, creating: true, createErrors: [], fixErrors: [] } : null);
 
     const variants = missing.map((r) => {
       const sv = p.variants.find((v) => v.sku === r.sku)!;
@@ -207,6 +210,37 @@ export default function RecipesPage() {
       }
     } catch (e) {
       setVariantCheck((prev) => prev ? { ...prev, creating: false, createErrors: [e instanceof Error ? e.message : "Erreur réseau"] } : null);
+    }
+  }
+
+  async function fixVariantConfigs(p: ShopifyProduct) {
+    if (!variantCheck) return;
+    const toFix = variantCheck.results.filter((r) => r.exists && r.configMissing && r.katanaId && r.katanaProductId);
+    if (!toFix.length) return;
+
+    const katanaProductId = toFix[0].katanaProductId!;
+    setVariantCheck((prev) => prev ? { ...prev, fixing: true, fixErrors: [] } : null);
+
+    const variants = toFix.map((r) => {
+      const sv = p.variants.find((v) => v.sku === r.sku)!;
+      return { katanaId: r.katanaId!, sku: r.sku, options: sv.options };
+    });
+
+    try {
+      const res = await fetch("/api/recipes/fix-variant-configs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ katanaProductId, variants }),
+      });
+      const data = (await res.json()) as { results?: { sku: string; fixed: boolean; error?: string }[] };
+      const errors = (data.results ?? []).filter((r) => !r.fixed).map((r) => `${r.sku} : ${r.error ?? "erreur"}`);
+      if (errors.length) {
+        setVariantCheck((prev) => prev ? { ...prev, fixing: false, fixErrors: errors } : null);
+      } else {
+        await checkVariants(p);
+      }
+    } catch (e) {
+      setVariantCheck((prev) => prev ? { ...prev, fixing: false, fixErrors: [e instanceof Error ? e.message : "Erreur réseau"] } : null);
     }
   }
 
@@ -381,7 +415,9 @@ export default function RecipesPage() {
             </div>
           );
         }
-        if (missing.length === 0) {
+        const noConfig = variantCheck.results.filter((r) => r.exists && r.configMissing);
+
+        if (missing.length === 0 && noConfig.length === 0) {
           return (
             <div style={{ ...s.section, fontSize: 13, color: "#27ae60", fontWeight: 500 }}>
               ✓ Toutes les variantes sont dans Katana ({total}/{total})
@@ -389,33 +425,63 @@ export default function RecipesPage() {
           );
         }
         return (
-          <div style={{ ...s.section }}>
-            <div style={{ background: "#fff8f0", border: "1px solid #e67e22", borderRadius: 8, padding: "12px 14px" }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#e67e22", marginBottom: 8 }}>
-                ⚠ {missing.length} variante{missing.length > 1 ? "s" : ""} manquante{missing.length > 1 ? "s" : ""} dans Katana ({total - missing.length}/{total} présentes)
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
-                {missing.map((r) => (
-                  <span key={r.sku} style={{ fontSize: 11, background: "#fde8d0", color: "#c0392b", padding: "2px 8px", borderRadius: 4 }}>
-                    {r.sku}
-                  </span>
-                ))}
-              </div>
-              {variantCheck.createErrors.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  {variantCheck.createErrors.map((err, i) => (
-                    <div key={i} style={{ fontSize: 12, color: "#c0392b" }}>✗ {err}</div>
+          <div style={{ ...s.section, display: "flex", flexDirection: "column", gap: 10 }}>
+            {missing.length > 0 && (
+              <div style={{ background: "#fff8f0", border: "1px solid #e67e22", borderRadius: 8, padding: "12px 14px" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#e67e22", marginBottom: 8 }}>
+                  ⚠ {missing.length} variante{missing.length > 1 ? "s" : ""} manquante{missing.length > 1 ? "s" : ""} dans Katana ({total - missing.length}/{total} présentes)
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+                  {missing.map((r) => (
+                    <span key={r.sku} style={{ fontSize: 11, background: "#fde8d0", color: "#c0392b", padding: "2px 8px", borderRadius: 4 }}>
+                      {r.sku}
+                    </span>
                   ))}
                 </div>
-              )}
-              <button
-                style={{ ...s.btn, background: variantCheck.creating ? "#ccc" : "#e67e22", fontSize: 13, padding: "8px 16px", cursor: variantCheck.creating ? "not-allowed" : "pointer" }}
-                disabled={variantCheck.creating}
-                onClick={() => void createMissingVariants(product)}
-              >
-                {variantCheck.creating ? "Création en cours…" : `Créer les ${missing.length} variantes dans Katana`}
-              </button>
-            </div>
+                {variantCheck.createErrors.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    {variantCheck.createErrors.map((err, i) => (
+                      <div key={i} style={{ fontSize: 12, color: "#c0392b" }}>✗ {err}</div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  style={{ ...s.btn, background: variantCheck.creating ? "#ccc" : "#e67e22", fontSize: 13, padding: "8px 16px", cursor: variantCheck.creating ? "not-allowed" : "pointer" }}
+                  disabled={variantCheck.creating}
+                  onClick={() => void createMissingVariants(product)}
+                >
+                  {variantCheck.creating ? "Création en cours…" : `Créer les ${missing.length} variantes dans Katana`}
+                </button>
+              </div>
+            )}
+            {noConfig.length > 0 && (
+              <div style={{ background: "#fffbf0", border: "1px solid #f0a500", borderRadius: 8, padding: "12px 14px" }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#b07800", marginBottom: 8 }}>
+                  ⚙ {noConfig.length} variante{noConfig.length > 1 ? "s" : ""} sans Taille/Pack dans Katana
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+                  {noConfig.map((r) => (
+                    <span key={r.sku} style={{ fontSize: 11, background: "#fef3cc", color: "#7a5500", padding: "2px 8px", borderRadius: 4 }}>
+                      {r.sku}
+                    </span>
+                  ))}
+                </div>
+                {variantCheck.fixErrors.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    {variantCheck.fixErrors.map((err, i) => (
+                      <div key={i} style={{ fontSize: 12, color: "#c0392b" }}>✗ {err}</div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  style={{ ...s.btn, background: variantCheck.fixing ? "#ccc" : "#f0a500", fontSize: 13, padding: "8px 16px", cursor: variantCheck.fixing ? "not-allowed" : "pointer" }}
+                  disabled={variantCheck.fixing}
+                  onClick={() => void fixVariantConfigs(product)}
+                >
+                  {variantCheck.fixing ? "Correction en cours…" : `Corriger les ${noConfig.length} variantes`}
+                </button>
+              </div>
+            )}
           </div>
         );
       })()}

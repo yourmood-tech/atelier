@@ -571,16 +571,22 @@ export async function createKatanaPOWithRows(
 
 export async function checkKatanaVariants(
   skus: string[]
-): Promise<{ sku: string; exists: boolean; katanaId?: number; katanaProductId?: number }[]> {
+): Promise<{ sku: string; exists: boolean; katanaId?: number; katanaProductId?: number; configMissing?: boolean }[]> {
   return Promise.all(
     skus.map(async (sku) => {
       try {
         const data = (await katanaFetch(
           `/v1/variants?sku=${encodeURIComponent(sku)}&limit=1`,
           { method: "GET" }
-        )) as { data?: { id: number; product_id?: number }[] };
+        )) as { data?: { id: number; product_id?: number; config_attributes?: unknown[] }[] };
         const v = data?.data?.[0];
-        if (v) return { sku, exists: true, katanaId: v.id, katanaProductId: v.product_id ?? undefined };
+        if (v) return {
+          sku,
+          exists: true,
+          katanaId: v.id,
+          katanaProductId: v.product_id ?? undefined,
+          configMissing: (v.config_attributes ?? []).length === 0,
+        };
         return { sku, exists: false };
       } catch {
         return { sku, exists: false };
@@ -661,6 +667,39 @@ export async function ensureKatanaVariantsExist(
   }
 
   return results;
+}
+
+export async function fixKatanaVariantConfigs(
+  katanaProductId: number,
+  variants: { katanaId: number; sku: string; options: Record<string, string> }[]
+): Promise<{ sku: string; fixed: boolean; error?: string }[]> {
+  if (!variants.length) return [];
+
+  let katanaConfigs: { name: string }[] = [];
+  try {
+    const productData = (await katanaFetch(`/v1/products/${katanaProductId}`, { method: "GET" })) as {
+      configs?: { id: number; name: string; values: string[] }[];
+    };
+    katanaConfigs = productData?.configs ?? [];
+  } catch { /* proceed without configs */ }
+
+  return Promise.all(
+    variants.map(async (v) => {
+      try {
+        const config_attributes = katanaConfigs
+          .filter((c) => v.options[c.name] !== undefined)
+          .map((c) => ({ config_name: c.name, config_value: v.options[c.name] }));
+
+        await katanaFetch(`/v1/variants/${v.katanaId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ config_attributes }),
+        });
+        return { sku: v.sku, fixed: true };
+      } catch (e) {
+        return { sku: v.sku, fixed: false, error: e instanceof Error ? e.message : String(e) };
+      }
+    })
+  );
 }
 
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
