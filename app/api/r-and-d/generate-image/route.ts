@@ -35,21 +35,67 @@ export async function POST(request: Request) {
   if (!idee || !idee.nom)
     return NextResponse.json({ error: 'champ "idee" requis avec au moins un nom' }, { status: 400 });
 
-  // Charger jusqu'à 4 images de référence Mood (style)
+  // Charger les refs Mood pertinentes : 2-3 images de FORMAT + 1-2 de MATIÈRE
   const refsDir = path.join(process.cwd(), "public/refs-mood");
-  let refsBase64: { mimeType: string; data: string }[] = [];
-  try {
-    const files = readdirSync(refsDir).filter(f => /\.(jpe?g|png)$/i.test(f));
-    // Sélectionner aléatoirement 4 images pour montrer la diversité du style
-    const shuffled = files.sort(() => Math.random() - 0.5).slice(0, 4);
-    for (const f of shuffled) {
-      const buf = readFileSync(path.join(refsDir, f));
-      const mimeType = f.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
-      refsBase64.push({ mimeType, data: buf.toString("base64") });
+  const refsBase64: { mimeType: string; data: string }[] = [];
+
+  function chargerRefs(sousDir: string, n: number) {
+    try {
+      const dir = path.join(refsDir, sousDir);
+      const files = readdirSync(dir).filter(f => /\.(jpe?g|png)$/i.test(f));
+      const shuffled = files.sort(() => Math.random() - 0.5).slice(0, n);
+      for (const f of shuffled) {
+        const buf = readFileSync(path.join(dir, f));
+        const mimeType = f.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg";
+        refsBase64.push({ mimeType, data: buf.toString("base64") });
+      }
+    } catch {
+      /* dossier inexistant ou vide, on skip */
     }
-  } catch (e) {
-    console.warn("Pas de refs Mood disponibles", e);
   }
+
+  // 1. FORMAT — 2 ou 3 refs du bon format (priorité absolue)
+  const typeNorm = (idee.type || '').toLowerCase().trim();
+  const formatMap: Record<string, string> = {
+    'addon': 'addon',
+    'deux-tiers': 'deux-tiers',
+    'deux tiers': 'deux-tiers',
+    'medium': 'medium',
+    'mini': 'mini',
+    'open-mood': 'open-mood',
+    'open mood': 'open-mood',
+    'coffret': 'coffret',
+    'starter-pack': 'starter-pack',
+    'pack': 'starter-pack',
+    'boucles': 'clip-drop',
+    'clip-drop': 'clip-drop',
+  };
+  const formatDir = formatMap[typeNorm];
+  if (formatDir) {
+    chargerRefs(formatDir, 3);
+  } else if (typeNorm === 'base') {
+    // Base : utiliser sub-folder selon largeur (par défaut small)
+    chargerRefs('base/small', 2);
+    chargerRefs('base/large', 1);
+  } else {
+    // Format inconnu — fallback sur addons + deux-tiers
+    chargerRefs('addon', 2);
+    chargerRefs('deux-tiers', 1);
+  }
+
+  // 2. MATIÈRE — 1 ref de la matière dominante
+  const mat = (idee.matiere || '').toLowerCase();
+  if (mat.includes('or ')) chargerRefs('matiere/or', 1);
+  else if (mat.includes('argent')) chargerRefs('matiere/argent', 1);
+  else if (mat.includes('acier')) chargerRefs('matiere/acier', 1);
+  else if (mat.includes('titane')) chargerRefs('matiere/titane', 1);
+  else if (mat.includes('aluminium') || mat.includes('alu')) chargerRefs('matiere/aluminium', 1);
+  else if (mat.includes('polymère') || mat.includes('polymere')) chargerRefs('matiere/polymere', 1);
+
+  // 3. PIERRES — si zircons, 1 ref zircons
+  const pierre = (idee.pierre || '').toLowerCase();
+  if (pierre.includes('zircon')) chargerRefs('matiere/zircons', 1);
+  else if (pierre.includes('email') || mat.includes('email') || pierre.includes('émail')) chargerRefs('matiere/email', 1);
 
   // Description précise du format
   const formatDesc = FORMAT_DESCRIPTION[idee.type] || `Format : ${idee.type}.`;
