@@ -159,6 +159,26 @@
     font-size: 0.72rem;
   }
   .product-stage { width: 14px; height: 14px; font-size: 9px; }
+  .product-thumb {
+    width: 22px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .image-zone {
+    margin-top: 0.4rem;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  .image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+  }
 
   /* Modal */
   .modal-overlay {
@@ -289,6 +309,15 @@
     <label>Objectif CA (CHF) <span style="color:var(--gris);font-weight:400">— optionnel</span></label>
     <input id="produit-ca" type="number" placeholder="ex : 5000">
 
+    <label>Image <span style="color:var(--gris);font-weight:400">— dessin, photo proto, référence visuelle</span></label>
+    <div class="image-zone">
+      <img id="produit-image-preview" class="image-preview" style="display:none">
+      <input type="file" id="produit-image-input" accept="image/*" style="display:none" onchange="onImageChosen(event)">
+      <button type="button" class="outline" onclick="document.getElementById('produit-image-input').click()" style="font-size:0.8rem;">📷 Choisir une image</button>
+      <button type="button" class="outline" id="btn-retirer-image" onclick="retirerImage()" style="font-size:0.8rem;display:none;margin-left:0.4rem;">✕ Retirer</button>
+      <input type="hidden" id="produit-image">
+    </div>
+
     <label>Notes <span style="color:var(--gris);font-weight:400">— inspiration, contraintes, idées</span></label>
     <textarea id="produit-notes" placeholder="ex : test sertissage diamants 0.9mm sur medium argent, voir Aura authentique pour ref…"></textarea>
 
@@ -396,8 +425,10 @@ function rendreCalendrier() {
 
         let cardsHtml = '';
         for (const p of produitsDuJour) {
+          const thumbHtml = p.image ? `<img class="product-thumb" src="${p.image}" alt="">` : '';
           cardsHtml += `<div class="product-card" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}">
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
+            ${thumbHtml}
             <div class="product-name">${p.nom}</div>
           </div>`;
         }
@@ -431,6 +462,8 @@ function ouvrirModalAjout(date) {
   document.getElementById('produit-fournisseur').value = '';
   document.getElementById('produit-ca').value = '';
   document.getElementById('produit-notes').value = '';
+  document.getElementById('produit-image').value = '';
+  setImagePreview('');
   document.getElementById('btn-supprimer').style.display = 'none';
   document.getElementById('modal').classList.add('show');
 }
@@ -447,8 +480,59 @@ function ouvrirModalEdit(id) {
   document.getElementById('produit-fournisseur').value = p.fournisseur || '';
   document.getElementById('produit-ca').value = p.objectifCA || '';
   document.getElementById('produit-notes').value = p.notes || '';
+  document.getElementById('produit-image').value = p.image || '';
+  setImagePreview(p.image || '');
   document.getElementById('btn-supprimer').style.display = 'inline-block';
   document.getElementById('modal').classList.add('show');
+}
+
+function setImagePreview(dataUrl) {
+  const img = document.getElementById('produit-image-preview');
+  const btn = document.getElementById('btn-retirer-image');
+  if (dataUrl) {
+    img.src = dataUrl;
+    img.style.display = 'block';
+    btn.style.display = 'inline-block';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    btn.style.display = 'none';
+  }
+}
+
+function onImageChosen(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (!f.type.startsWith('image/')) { alert('Seules les images sont acceptées.'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    // Compression : redimensionner à max 600px de côté
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 600;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('produit-image').value = compressed;
+      setImagePreview(compressed);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+  e.target.value = ''; // reset pour pouvoir re-choisir le même fichier
+}
+
+function retirerImage() {
+  document.getElementById('produit-image').value = '';
+  setImagePreview('');
 }
 
 function formaterDate(iso) {
@@ -473,6 +557,7 @@ function sauverProduit() {
     fournisseur: document.getElementById('produit-fournisseur').value,
     objectifCA: parseInt(document.getElementById('produit-ca').value, 10) || null,
     notes: document.getElementById('produit-notes').value,
+    image: document.getElementById('produit-image').value || null,
     date: modalContexte.date,
     majAt: new Date().toISOString(),
   };
