@@ -67,16 +67,41 @@
   }
   .month-title { font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .month-objective { font-size: 0.85rem; color: var(--gris); }
-  .weeks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; }
+  .weeks { display: flex; flex-direction: column; gap: 0.8rem; }
   .week {
     background: var(--gris-clair);
     border-radius: 8px;
     padding: 0.6rem;
-    min-height: 120px;
     border-left: 3px solid var(--or);
   }
-  .week-header { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.4rem; font-weight: 600; }
+  .week-header { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; font-weight: 600; }
   .week-objective { font-size: 0.7rem; color: var(--gris); margin-top: 0.3rem; }
+  .week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; }
+  .day {
+    background: white;
+    border-radius: 6px;
+    padding: 0.4rem;
+    min-height: 80px;
+    border: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+  }
+  .day-header {
+    font-size: 0.7rem;
+    color: var(--gris);
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .day-name { text-transform: uppercase; letter-spacing: 0.05em; }
+  .day-number { font-size: 0.85rem; color: var(--noir); font-weight: 700; }
+  .day.today { background: #fff8e7; border-color: var(--or); }
+  .day-content { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+  @media (max-width: 900px) {
+    .week-days { grid-template-columns: repeat(2, 1fr); }
+  }
 
   /* Produits */
   .product-card {
@@ -120,15 +145,20 @@
 
   .add-product-btn {
     width: 100%;
-    text-align: left;
+    text-align: center;
     background: transparent;
     border: 1px dashed #aaa;
     color: var(--gris);
-    padding: 0.4rem;
-    font-size: 0.75rem;
-    margin-top: 0.3rem;
+    padding: 0.25rem 0.3rem;
+    font-size: 0.7rem;
+    margin-top: auto;
   }
   .add-product-btn:hover { border-color: var(--or); color: var(--or); }
+  .product-card {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.72rem;
+  }
+  .product-stage { width: 14px; height: 14px; font-size: 9px; }
 
   /* Modal */
   .modal-overlay {
@@ -328,10 +358,16 @@ function calculerSemainesMois(annee, mois) {
   return semaines;
 }
 
+const NOMS_JOURS_COURT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+// Ordre semaine Mood : jeudi → mercredi (jours JS : 4,5,6,0,1,2,3)
+const ORDRE_JOURS_SEMAINE = [4, 5, 6, 0, 1, 2, 3];
+
 function rendreCalendrier() {
   const annee = parseInt(document.getElementById('annee').value, 10);
   const cal = document.getElementById('calendrier');
   cal.innerHTML = '';
+
+  const today = new Date().toISOString().slice(0, 10);
 
   for (let mois = 0; mois < 12; mois++) {
     const semaines = calculerSemainesMois(annee, mois);
@@ -344,19 +380,38 @@ function rendreCalendrier() {
     <div class="weeks">`;
 
     for (const sem of semaines) {
-      const produitsDansSem = donnees.produits.filter(p => p.semaineDebut === sem.debut);
-      let cardsHtml = '';
-      for (const p of produitsDansSem) {
-        cardsHtml += `<div class="product-card" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}">
-          <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
-          <div class="product-name">${p.nom}</div>
-          ${p.objectifCA ? `<div class="product-ca">${p.objectifCA}.-</div>` : ''}
+      // Construire les 7 jours de la semaine (jeudi → mercredi)
+      const debutDate = new Date(sem.debut + 'T00:00:00');
+      let joursHtml = '';
+      for (let i = 0; i < 7; i++) {
+        const jour = new Date(debutDate);
+        jour.setDate(jour.getDate() + i);
+        const jourISO = jour.toISOString().slice(0, 10);
+        const nomJour = NOMS_JOURS_COURT[jour.getDay()];
+        const numJour = jour.getDate();
+        const estAujourdhui = jourISO === today;
+
+        // Produits sur ce jour précis
+        const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
+
+        let cardsHtml = '';
+        for (const p of produitsDuJour) {
+          cardsHtml += `<div class="product-card" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}">
+            <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
+            <div class="product-name">${p.nom}</div>
+          </div>`;
+        }
+
+        joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}">
+          <div class="day-header"><span class="day-name">${nomJour}</span><span class="day-number">${numJour}</span></div>
+          <div class="day-content">${cardsHtml}</div>
+          <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')">+</button>
         </div>`;
       }
+
       html += `<div class="week">
         <div class="week-header">${sem.label}</div>
-        ${cardsHtml}
-        <button class="add-product-btn" onclick="ouvrirModalAjout('${sem.debut}')">+ Ajouter</button>
+        <div class="week-days">${joursHtml}</div>
       </div>`;
     }
 
@@ -366,9 +421,9 @@ function rendreCalendrier() {
   }
 }
 
-function ouvrirModalAjout(semaineDebut) {
-  modalContexte = { mode: 'ajout', semaineDebut };
-  document.getElementById('modal-title').textContent = 'Nouveau produit';
+function ouvrirModalAjout(date) {
+  modalContexte = { mode: 'ajout', date };
+  document.getElementById('modal-title').textContent = `Nouveau produit — ${formaterDate(date)}`;
   document.getElementById('produit-id').value = '';
   document.getElementById('produit-nom').value = '';
   document.getElementById('produit-type').value = 'addon';
@@ -383,8 +438,8 @@ function ouvrirModalAjout(semaineDebut) {
 function ouvrirModalEdit(id) {
   const p = donnees.produits.find(x => x.id === id);
   if (!p) return;
-  modalContexte = { mode: 'edit', semaineDebut: p.semaineDebut };
-  document.getElementById('modal-title').textContent = 'Éditer le produit';
+  modalContexte = { mode: 'edit', date: p.date };
+  document.getElementById('modal-title').textContent = `Éditer — ${formaterDate(p.date)}`;
   document.getElementById('produit-id').value = p.id;
   document.getElementById('produit-nom').value = p.nom || '';
   document.getElementById('produit-type').value = p.type || 'addon';
@@ -394,6 +449,12 @@ function ouvrirModalEdit(id) {
   document.getElementById('produit-notes').value = p.notes || '';
   document.getElementById('btn-supprimer').style.display = 'inline-block';
   document.getElementById('modal').classList.add('show');
+}
+
+function formaterDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const noms = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  return `${noms[d.getDay()]} ${d.getDate()} ${NOMS_MOIS[d.getMonth()].toLowerCase()} ${d.getFullYear()}`;
 }
 
 function fermerModal() {
@@ -412,7 +473,7 @@ function sauverProduit() {
     fournisseur: document.getElementById('produit-fournisseur').value,
     objectifCA: parseInt(document.getElementById('produit-ca').value, 10) || null,
     notes: document.getElementById('produit-notes').value,
-    semaineDebut: modalContexte.semaineDebut,
+    date: modalContexte.date,
     majAt: new Date().toISOString(),
   };
   if (id) {
