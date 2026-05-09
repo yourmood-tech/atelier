@@ -5,24 +5,43 @@ import path from "path";
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
 
-const STYLE_MOOD_VISUEL = `STYLE PHOTOGRAPHIQUE MOOD COLLECTION (à reproduire exactement) :
-- Bague mood : SYSTÈME modulaire à clic = un anneau central (l'addon ou medium ou deux-tiers ou mini) clipsé entre deux anneaux extérieurs (la base en acier ou titane). La base est OBLIGATOIRE pour montrer le système. Pas une bague joaillerie classique solo.
-- Cadrage : vue 3/4 légère, focus net sur la bague, posée sur un support neutre.
-- Fond : uni clair (blanc cassé, beige neutre, gris très clair).
-- Lumière : douce, naturelle, légèrement directionnelle (style studio joaillerie suisse).
-- Pas de mannequin, pas de doigt — la bague seule sur fond uni.
-- Pas de texte, pas de logo, pas de watermark.
-- Aspect : précieux, minimaliste, contemporain, réaliste (photo, pas illustration).
+const STYLE_MOOD_VISUEL = `STYLE PHOTOGRAPHIQUE MOOD COLLECTION (à reproduire EXACTEMENT) :
 
-Les images de référence ci-dessous montrent le STYLE EXACT à reproduire (texture, finition, éclairage, cadrage).`;
+🔑 CRITÈRE #1 LE PLUS IMPORTANT : LA LARGEUR DE L'ANNEAU CENTRAL.
+La bague mood est un système modulaire à clic : un anneau central (l'addon, deux tiers, medium ou mini) est clipsé entre les 2 anneaux extérieurs de la base.
+
+PROPORTIONS RELATIVES À RESPECTER ABSOLUMENT (la largeur de l'anneau central par rapport à la largeur totale de la bague) :
+
+ADDON       = anneau central LARGE       (~7mm = ≈75% de la largeur totale visible)
+              ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌
+
+DEUX TIERS  = anneau central MOYEN-LARGE (~4.6mm = ≈55% de la largeur totale)
+              ▌▌▌▌▌▌▌▌▌▌▌▌
+
+MEDIUM      = anneau central FIN         (~2.3mm = ≈30% de la largeur totale)
+              ▌▌▌▌▌▌
+
+MINI        = anneau central TRÈS FIN    (~1-2mm = ≈15% de la largeur totale)
+              ▌▌▌
+
+ATTENTION : NE CONFONDS PAS un addon avec un medium. Si on te demande un MEDIUM, l'anneau central doit être visiblement FIN par rapport aux 2 anneaux extérieurs de la base. Si on te demande un ADDON, il doit être visiblement LARGE.
+
+Cadrage : vue 3/4 légère, focus net sur la bague, posée sur un support neutre.
+Fond : uni clair (blanc cassé, beige neutre, gris très clair).
+Lumière : douce, naturelle, légèrement directionnelle (style studio joaillerie suisse).
+Pas de mannequin, pas de doigt — la bague seule sur fond uni.
+Pas de texte, pas de logo, pas de watermark.
+Aspect : précieux, minimaliste, contemporain, réaliste (photo, pas illustration).
+
+Les images de référence ci-dessous montrent EXACTEMENT le format demandé. Reproduis fidèlement leur PROPORTION (largeur de l'anneau central) ainsi que leur style photographique (texture, finition, éclairage, cadrage).`;
 
 const FORMAT_DESCRIPTION: Record<string, string> = {
-  'addon': "ADDON = anneau central de largeur ~7mm, large, clipsé entre les 2 anneaux extérieurs de la base.",
-  'deux-tiers': "DEUX TIERS = anneau central de largeur ~4.6mm (medium et 2/3 de l'addon), entre les 2 anneaux extérieurs de la base.",
-  'medium': "MEDIUM = anneau central FIN de largeur ~2.3mm, plus discret, entre les 2 anneaux extérieurs de la base.",
-  'mini': "MINI = anneau central très fin (~1-2mm), encore plus discret. Souvent en pack de 2 ou 4 minis empilés.",
-  'base': "BASE seule = anneau extérieur en acier ou titane, sans addon clipsé. Largeur de base small (S) = 11mm, large (L) = 13mm, extra small (XS) = 9mm.",
-  'open-mood': "OPEN MOOD = format spécifique large (10mm), pas un addon clipsable mais un anneau autonome.",
+  'addon': "FORMAT DEMANDÉ = ADDON. Anneau central LARGE (~7mm), occupant environ 75% de la largeur de la bague. Visible et imposant entre les 2 anneaux extérieurs.",
+  'deux-tiers': "FORMAT DEMANDÉ = DEUX TIERS. Anneau central de largeur MOYENNE (~4.6mm), occupant environ 55% de la largeur. Plus fin que l'addon, plus large que le medium.",
+  'medium': "FORMAT DEMANDÉ = MEDIUM. Anneau central FIN (~2.3mm), occupant seulement environ 30% de la largeur. Beaucoup plus DISCRET et FIN que l'addon. ⚠️ NE PAS générer un addon ou un deux tiers — le medium doit être nettement plus fin.",
+  'mini': "FORMAT DEMANDÉ = MINI. Anneau central TRÈS FIN (~1-2mm), occupant ~15% de la largeur. Très discret, parfois empilé en pack de 2 ou 4 minis.",
+  'base': "FORMAT DEMANDÉ = BASE seule. Anneau extérieur en acier ou titane, SANS addon clipsé au milieu. Largeur de base small (S) = 11mm, large (L) = 13mm, extra small (XS) = 9mm.",
+  'open-mood': "FORMAT DEMANDÉ = OPEN MOOD. Format spécifique large (10mm), pas un addon clipsable mais un anneau autonome avec ouverture.",
 };
 
 export async function POST(request: Request) {
@@ -72,7 +91,7 @@ export async function POST(request: Request) {
   };
   const formatDir = formatMap[typeNorm];
   if (formatDir) {
-    chargerRefs(formatDir, 3);
+    chargerRefs(formatDir, 5);  // 5 refs format (au lieu de 3) pour mieux ancrer la proportion
   } else if (typeNorm === 'base') {
     // Base : utiliser sub-folder selon largeur (par défaut small)
     chargerRefs('base/small', 2);
@@ -117,7 +136,9 @@ ${formatDesc}
 PRODUIT À VISUALISER :
 - ${composantes}
 
-Génère UNE image photoréaliste de cette bague mood dans le style des références, vue 3/4 légère, fond uni neutre clair. La bague doit montrer le système Mood (addon clipsé sur la base avec les 2 anneaux extérieurs visibles).`;
+⚠️ RAPPEL CRITIQUE : reproduis EXACTEMENT la proportion de l'anneau central des images de référence ci-dessus. Si tu vois un anneau fin dans les refs, génère un anneau fin. NE GÉNÈRE PAS un addon (large) si on te demande un medium (fin) ou un mini (très fin).
+
+Génère UNE image photoréaliste de cette bague mood dans le style des références, vue 3/4 légère, fond uni neutre clair, montrant le système Mood (anneau central clipsé sur la base avec les 2 anneaux extérieurs visibles).`;
 
   // Construire les parts : images de référence d'abord, puis prompt texte
   const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
