@@ -608,7 +608,7 @@ export async function ensureKatanaVariantsExist(
         await katanaFetch(`/v1/products/${exactMatch.id}`, {
           method: "PATCH",
           body: JSON.stringify({
-            variants: [{ name: v.variantName, sku: v.sku }],
+            variants: [{ sku: v.sku }],
           }),
         });
         results.push({ sku: v.sku, created: true });
@@ -624,7 +624,7 @@ export async function ensureKatanaVariantsExist(
         body: JSON.stringify({
           name: productTitle,
           is_sellable: true,
-          variants: missingVariants.map((v) => ({ name: v.variantName, sku: v.sku })),
+          variants: missingVariants.map((v) => ({ sku: v.sku })),
         }),
       });
       for (const v of missingVariants) results.push({ sku: v.sku, created: true });
