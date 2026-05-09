@@ -16,6 +16,14 @@ function looksLikeSize(s: string): boolean {
   return /^\d{2,3}$/.test(s.trim());
 }
 
+// If the SKU ends with a taille (-50, -52 etc.), return the color prefix before it.
+// MTRL-ALU-NOIR-50 → "MTRL-ALU-NOIR"   MTRL-CHAIN-GOLD-LONG-50 → "MTRL-CHAIN-GOLD-LONG"
+// Returns null when no taille suffix is detected (no filtering needed).
+function skuColorPrefix(sku: string): string | null {
+  const m = sku.match(/^(.+)-\d{2,3}$/);
+  return m ? m[1] : null;
+}
+
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ materials: [] });
@@ -51,7 +59,13 @@ export async function GET(req: NextRequest) {
   const name = parent?.name ?? q;
   const allVariants = parent?.variants ?? [found];
 
-  const mapped = allVariants.map((v) => {
+  // Filter to matching color when the searched SKU has a taille suffix
+  const colorPrefix = skuColorPrefix(q);
+  const scopedVariants = colorPrefix
+    ? allVariants.filter((v) => v.sku === null || v.sku.startsWith(colorPrefix + "-"))
+    : allVariants;
+
+  const mapped = scopedVariants.map((v) => {
     const attrs = v.config_attributes ?? [];
     const taille = attrs.find(
       (a) => ["taille", "size", "ring size"].includes(a.config_name.toLowerCase())
