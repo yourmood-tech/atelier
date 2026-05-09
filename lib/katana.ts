@@ -563,6 +563,80 @@ export async function createKatanaPOWithRows(
   };
 }
 
+export async function checkKatanaVariants(
+  skus: string[]
+): Promise<{ sku: string; exists: boolean; katanaId?: number; katanaProductId?: number }[]> {
+  return Promise.all(
+    skus.map(async (sku) => {
+      try {
+        const data = (await katanaFetch(
+          `/v1/variants?sku=${encodeURIComponent(sku)}&limit=1`,
+          { method: "GET" }
+        )) as { data?: { id: number; product_id?: number }[] };
+        const v = data?.data?.[0];
+        if (v) return { sku, exists: true, katanaId: v.id, katanaProductId: v.product_id ?? undefined };
+        return { sku, exists: false };
+      } catch {
+        return { sku, exists: false };
+      }
+    })
+  );
+}
+
+export async function ensureKatanaVariantsExist(
+  productTitle: string,
+  missingVariants: { sku: string; variantName: string }[]
+): Promise<{ sku: string; created: boolean; error?: string }[]> {
+  if (!missingVariants.length) return [];
+
+  // Try to find existing Katana product by exact name
+  const searchData = (await katanaFetch(
+    `/v1/products?search=${encodeURIComponent(productTitle)}&limit=20`,
+    { method: "GET" }
+  )) as { data?: { id: number; name: string }[] };
+
+  const exactMatch = (searchData?.data ?? []).find(
+    (p) => p.name.toLowerCase().trim() === productTitle.toLowerCase().trim()
+  );
+
+  const results: { sku: string; created: boolean; error?: string }[] = [];
+
+  if (exactMatch) {
+    // Product exists in Katana — add each missing variant individually
+    for (const v of missingVariants) {
+      try {
+        await katanaFetch(`/v1/products/${exactMatch.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            variants: [{ name: v.variantName, sku: v.sku }],
+          }),
+        });
+        results.push({ sku: v.sku, created: true });
+      } catch (e) {
+        results.push({ sku: v.sku, created: false, error: e instanceof Error ? e.message : String(e) });
+      }
+    }
+  } else {
+    // No product found — create it with all missing variants at once
+    try {
+      await katanaFetch("/v1/products", {
+        method: "POST",
+        body: JSON.stringify({
+          name: productTitle,
+          is_sellable: true,
+          variants: missingVariants.map((v) => ({ name: v.variantName, sku: v.sku })),
+        }),
+      });
+      for (const v of missingVariants) results.push({ sku: v.sku, created: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      for (const v of missingVariants) results.push({ sku: v.sku, created: false, error: msg });
+    }
+  }
+
+  return results;
+}
+
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
   const variant = await findVariantByBarcode(input.barcode);
   const variantLabel = await resolveVariantLabel(variant);

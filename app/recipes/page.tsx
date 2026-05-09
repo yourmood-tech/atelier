@@ -32,6 +32,20 @@ type KatanaMaterial = {
   hasTaille: boolean;
 };
 
+type VariantCheckResult = {
+  sku: string;
+  exists: boolean;
+  katanaId?: number;
+  katanaProductId?: number;
+};
+
+type VariantCheckState = {
+  status: "checking" | "done";
+  results: VariantCheckResult[];
+  creating: boolean;
+  createErrors: string[];
+};
+
 type IngredientEntry = {
   localId: string;
   material: KatanaMaterial;
@@ -142,7 +156,56 @@ export default function RecipesPage() {
   const [ingredients, setIngredients] = useState<IngredientEntry[]>([]);
 
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [variantCheck, setVariantCheck] = useState<VariantCheckState | null>(null);
   const ingInputRef = useRef<HTMLInputElement>(null);
+
+  async function checkVariants(p: ShopifyProduct) {
+    const skus = p.variants.map((v) => v.sku).filter(Boolean) as string[];
+    if (!skus.length) return;
+    setVariantCheck({ status: "checking", results: [], creating: false, createErrors: [] });
+    try {
+      const res = await fetch("/api/recipes/check-variants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skus }),
+      });
+      const data = (await res.json()) as { results?: VariantCheckResult[] };
+      setVariantCheck({ status: "done", results: data.results ?? [], creating: false, createErrors: [] });
+    } catch {
+      setVariantCheck(null);
+    }
+  }
+
+  async function createMissingVariants(p: ShopifyProduct) {
+    if (!variantCheck) return;
+    const missing = variantCheck.results.filter((r) => !r.exists);
+    if (!missing.length) return;
+
+    setVariantCheck((prev) => prev ? { ...prev, creating: true, createErrors: [] } : null);
+
+    const variants = missing.map((r) => {
+      const sv = p.variants.find((v) => v.sku === r.sku)!;
+      return { sku: r.sku, variantName: getTailleValue(sv) ?? sv.title };
+    });
+
+    try {
+      const res = await fetch("/api/recipes/create-variants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productTitle: p.title, variants }),
+      });
+      const data = (await res.json()) as { results?: { sku: string; created: boolean; error?: string }[] };
+      const errors = (data.results ?? []).filter((r) => !r.created).map((r) => `${r.sku} : ${r.error ?? "erreur"}`);
+      if (errors.length) {
+        setVariantCheck((prev) => prev ? { ...prev, creating: false, createErrors: errors } : null);
+      } else {
+        // Re-check after successful creation
+        await checkVariants(p);
+      }
+    } catch (e) {
+      setVariantCheck((prev) => prev ? { ...prev, creating: false, createErrors: [e instanceof Error ? e.message : "Erreur réseau"] } : null);
+    }
+  }
 
   async function searchProduct(q: string) {
     if (!q.trim()) { setProductResults([]); return; }
@@ -172,6 +235,8 @@ export default function RecipesPage() {
     setProductQuery("");
     setIngredients([]);
     setWarnings([]);
+    setVariantCheck(null);
+    void checkVariants(p);
     setTimeout(() => ingInputRef.current?.focus(), 50);
   }
 
@@ -302,6 +367,56 @@ export default function RecipesPage() {
         )}
       </div>
 
+      {/* ── Vérification variantes Katana ─────────────────────────────── */}
+      {product && variantCheck && (() => {
+        const missing = variantCheck.results.filter((r) => !r.exists);
+        const total = variantCheck.results.length;
+        if (variantCheck.status === "checking") {
+          return (
+            <div style={{ ...s.section, fontSize: 13, color: "#888" }}>
+              ⏳ Vérification des variantes dans Katana ({total} SKU{total > 1 ? "s" : ""})…
+            </div>
+          );
+        }
+        if (missing.length === 0) {
+          return (
+            <div style={{ ...s.section, fontSize: 13, color: "#27ae60", fontWeight: 500 }}>
+              ✓ Toutes les variantes sont dans Katana ({total}/{total})
+            </div>
+          );
+        }
+        return (
+          <div style={{ ...s.section }}>
+            <div style={{ background: "#fff8f0", border: "1px solid #e67e22", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#e67e22", marginBottom: 8 }}>
+                ⚠ {missing.length} variante{missing.length > 1 ? "s" : ""} manquante{missing.length > 1 ? "s" : ""} dans Katana ({total - missing.length}/{total} présentes)
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 12 }}>
+                {missing.map((r) => (
+                  <span key={r.sku} style={{ fontSize: 11, background: "#fde8d0", color: "#c0392b", padding: "2px 8px", borderRadius: 4 }}>
+                    {r.sku}
+                  </span>
+                ))}
+              </div>
+              {variantCheck.createErrors.length > 0 && (
+                <div style={{ marginBottom: 10 }}>
+                  {variantCheck.createErrors.map((err, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#c0392b" }}>✗ {err}</div>
+                  ))}
+                </div>
+              )}
+              <button
+                style={{ ...s.btn, background: variantCheck.creating ? "#ccc" : "#e67e22", fontSize: 13, padding: "8px 16px", cursor: variantCheck.creating ? "not-allowed" : "pointer" }}
+                disabled={variantCheck.creating}
+                onClick={() => void createMissingVariants(product)}
+              >
+                {variantCheck.creating ? "Création en cours…" : `Créer les ${missing.length} variantes dans Katana`}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── Step 2 — Ingrédients ──────────────────────────────────────── */}
       {product && (
         <div style={s.section}>
@@ -361,12 +476,6 @@ export default function RecipesPage() {
                   <button style={s.qtyBtn} onClick={() => updateQty(ing.localId, ing.quantity + 1)}>+</button>
                 </div>
                 <button style={s.clearBtn} onClick={() => removeIngredient(ing.localId)}>✕</button>
-              </div>
-
-              {/* Debug */}
-              <div style={{ fontSize: 10, color: "#f90", marginTop: 6 }}>
-                debug: {product ? `${product.options.length} opts, non-size: ${getNonSizeOptions(product).map(o => o.name).join(", ") || "aucune"}` : "no product"}
-                {" | filter keys: "}{Object.keys(ing.productOptionFilter).join(", ") || "vide"}
               </div>
 
               {/* Non-size product option filter */}
