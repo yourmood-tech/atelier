@@ -159,12 +159,25 @@
     font-size: 0.72rem;
   }
   .product-stage { width: 14px; height: 14px; font-size: 9px; }
-  .product-thumb {
-    width: 22px;
-    height: 22px;
-    object-fit: cover;
-    border-radius: 3px;
-    flex-shrink: 0;
+  /* Quand la card a une image en background : layout overlay */
+  .product-card-image {
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 0.3rem;
+    border: none;
+    position: relative;
+  }
+  .product-card-image .product-stage {
+    align-self: flex-start;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .product-card-image .product-name {
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    padding: 0.4rem 0.3rem 0.2rem 0.3rem;
+    margin: 0 -0.3rem -0.3rem -0.3rem;
+    border-radius: 0 0 6px 6px;
+    font-weight: 600;
   }
   .image-zone {
     margin-top: 0.4rem;
@@ -349,26 +362,26 @@ function sauverDonnees() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
 }
 
+/** Date locale en string YYYY-MM-DD (pas d'UTC, pour éviter les décalages de timezone). */
+function dateISOLocal(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 /** Renvoie les semaines J-M d'un mois. Une semaine = jeudi → mercredi. */
 function calculerSemainesMois(annee, mois) {
   const semaines = [];
-  // Premier jour du mois
-  const debut = new Date(annee, mois, 1);
   const fin = new Date(annee, mois + 1, 0);
 
-  // Trouver le 1er jeudi du mois (ou avant si le mois commence par jeudi)
-  // Une semaine appartient au mois si elle CONTIENT au moins 4 jours du mois
-  // Mais plus simple : on liste toutes les semaines J-M qui touchent ce mois.
   let cursor = new Date(annee, mois, 1);
-  // Reculer jusqu'au jeudi précédent
   while (cursor.getDay() !== 4) cursor.setDate(cursor.getDate() - 1);
 
-  // Avancer en collectant les semaines tant qu'elles touchent ce mois
   while (cursor <= fin) {
     const jeudi = new Date(cursor);
     const mercredi = new Date(cursor);
     mercredi.setDate(mercredi.getDate() + 6);
-    // La semaine appartient à ce mois si MAJORITÉ des jours dans ce mois
     let joursDansMois = 0;
     for (let i = 0; i < 7; i++) {
       const j = new Date(jeudi);
@@ -377,8 +390,8 @@ function calculerSemainesMois(annee, mois) {
     }
     if (joursDansMois >= 4) {
       semaines.push({
-        debut: jeudi.toISOString().slice(0, 10),
-        fin: mercredi.toISOString().slice(0, 10),
+        debut: dateISOLocal(jeudi),
+        fin: dateISOLocal(mercredi),
         label: `${jeudi.getDate()} ${NOMS_MOIS[jeudi.getMonth()].slice(0, 3).toLowerCase()}. → ${mercredi.getDate()} ${NOMS_MOIS[mercredi.getMonth()].slice(0, 3).toLowerCase()}.`
       });
     }
@@ -409,26 +422,26 @@ function rendreCalendrier() {
     <div class="weeks">`;
 
     for (const sem of semaines) {
-      // Construire les 7 jours de la semaine (jeudi → mercredi)
       const debutDate = new Date(sem.debut + 'T00:00:00');
       let joursHtml = '';
       for (let i = 0; i < 7; i++) {
         const jour = new Date(debutDate);
         jour.setDate(jour.getDate() + i);
-        const jourISO = jour.toISOString().slice(0, 10);
+        const jourISO = dateISOLocal(jour);
         const nomJour = NOMS_JOURS_COURT[jour.getDay()];
         const numJour = jour.getDate();
         const estAujourdhui = jourISO === today;
 
-        // Produits sur ce jour précis
         const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
 
         let cardsHtml = '';
         for (const p of produitsDuJour) {
-          const thumbHtml = p.image ? `<img class="product-thumb" src="${p.image}" alt="">` : '';
-          cardsHtml += `<div class="product-card" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}">
+          const hasImage = !!p.image;
+          const cardStyle = hasImage
+            ? `style="background-image:url('${p.image}');background-size:cover;background-position:center;min-height:100px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.7);"`
+            : '';
+          cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
-            ${thumbHtml}
             <div class="product-name">${p.nom}</div>
           </div>`;
         }
