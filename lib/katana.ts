@@ -614,12 +614,12 @@ export async function ensureKatanaVariantsExist(
   }
 
   if (productId) {
-    // Product exists — patch each missing variant onto it
+    // Product exists — create each missing variant via POST /v1/variants
     for (const v of missingVariants) {
       try {
-        await katanaFetch(`/v1/products/${productId}`, {
-          method: "PATCH",
-          body: JSON.stringify({ variants: [{ sku: v.sku }] }),
+        await katanaFetch("/v1/variants", {
+          method: "POST",
+          body: JSON.stringify({ product_id: productId, sku: v.sku }),
         });
         results.push({ sku: v.sku, created: true });
       } catch (e) {
