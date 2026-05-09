@@ -49,6 +49,20 @@ type VariantCheckState = {
   fixErrors: string[];
 };
 
+type RecipeRow = {
+  productVariantId: number;
+  ingredientVariantId: number;
+  quantity: number;
+};
+
+type PushState = {
+  status: "idle" | "pushing" | "done";
+  created: number;
+  skipped: number;
+  errors: string[];
+  warnings: string[];
+};
+
 type IngredientEntry = {
   localId: string;
   material: KatanaMaterial;
@@ -135,6 +149,39 @@ function generateCSV(
   return { csv: rows.join("\n"), warnings };
 }
 
+function buildRecipeRows(
+  product: ShopifyProduct,
+  ingredients: IngredientEntry[],
+  checkResults: VariantCheckResult[]
+): { rows: RecipeRow[]; warnings: string[] } {
+  const rows: RecipeRow[] = [];
+  const warnings: string[] = [];
+
+  for (const variant of product.variants) {
+    if (!variant.sku) { warnings.push(`Variante "${variant.title}" sans SKU — ignorée`); continue; }
+
+    const katanaVariantId = checkResults.find((r) => r.sku === variant.sku)?.katanaId;
+    if (!katanaVariantId) {
+      warnings.push(`"${variant.sku}" absent de Katana — créez les variantes d'abord`);
+      continue;
+    }
+
+    const productSize = getTailleValue(variant) ?? variant.title;
+
+    for (const ing of ingredients) {
+      if (!variantMatchesFilter(variant, ing.productOptionFilter)) continue;
+      const ingVariant = findIngredientVariant(ing.material, productSize, ing.selectedVariantId);
+      if (!ingVariant?.id) {
+        warnings.push(`Pas d'ingrédient pour "${ing.material.name}" — taille ${productSize}`);
+        continue;
+      }
+      rows.push({ productVariantId: katanaVariantId, ingredientVariantId: ingVariant.id, quantity: ing.quantity });
+    }
+  }
+
+  return { rows, warnings };
+}
+
 function downloadCSV(csv: string, filename: string) {
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -160,6 +207,7 @@ export default function RecipesPage() {
 
   const [warnings, setWarnings] = useState<string[]>([]);
   const [variantCheck, setVariantCheck] = useState<VariantCheckState | null>(null);
+  const [pushState, setPushState] = useState<PushState>({ status: "idle", created: 0, skipped: 0, errors: [], warnings: [] });
   const ingInputRef = useRef<HTMLInputElement>(null);
 
   async function checkVariants(p: ShopifyProduct) {
@@ -273,8 +321,13 @@ export default function RecipesPage() {
     setIngredients([]);
     setWarnings([]);
     setVariantCheck(null);
+    setPushState({ status: "idle", created: 0, skipped: 0, errors: [], warnings: [] });
     void checkVariants(p);
     setTimeout(() => ingInputRef.current?.focus(), 50);
+  }
+
+  function resetPush() {
+    setPushState({ status: "idle", created: 0, skipped: 0, errors: [], warnings: [] });
   }
 
   function addIngredient(material: KatanaMaterial) {
@@ -297,6 +350,7 @@ export default function RecipesPage() {
     setIngResults([]);
     setIngQuery("");
     setWarnings([]);
+    resetPush();
     setTimeout(() => ingInputRef.current?.focus(), 50);
   }
 
@@ -336,6 +390,40 @@ export default function RecipesPage() {
     setWarnings(w);
     const slug = product.title.replace(/[^a-z0-9]/gi, "_").toLowerCase().slice(0, 40);
     downloadCSV(csv, `recipe_${slug}.csv`);
+  }
+
+  async function handlePushToKatana() {
+    if (!product || !ingredients.length || !variantCheck) return;
+    const katanaProductId = variantCheck.results.find((r) => r.katanaProductId)?.katanaProductId;
+    if (!katanaProductId) {
+      setPushState({ status: "done", created: 0, skipped: 0, errors: ["Aucune variante trouvée dans Katana — créez-les d'abord"], warnings: [] });
+      return;
+    }
+
+    const { rows, warnings: w } = buildRecipeRows(product, ingredients, variantCheck.results);
+    if (!rows.length) {
+      setPushState({ status: "done", created: 0, skipped: 0, errors: [], warnings: w.length ? w : ["Aucune ligne à créer"] });
+      return;
+    }
+
+    setPushState({ status: "pushing", created: 0, skipped: 0, errors: [], warnings: w });
+    try {
+      const res = await fetch("/api/recipes/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ katanaProductId, rows }),
+      });
+      const data = (await res.json()) as { created?: number; skipped?: number; errors?: string[] };
+      setPushState({
+        status: "done",
+        created: data.created ?? 0,
+        skipped: data.skipped ?? 0,
+        errors: data.errors ?? [],
+        warnings: w,
+      });
+    } catch (e) {
+      setPushState({ status: "done", created: 0, skipped: 0, errors: [e instanceof Error ? e.message : "Erreur réseau"], warnings: w });
+    }
   }
 
   const variantCount = product?.variants.length ?? 0;
@@ -607,21 +695,47 @@ export default function RecipesPage() {
             </div>
           ))}
 
-          {/* Generate button */}
+          {/* Action buttons */}
           {ingredients.length > 0 && (
             <div style={{ marginTop: 20 }}>
-              <button
-                style={{ ...s.btn, width: "100%", fontSize: 15, padding: "13px 0" }}
-                onClick={handleGenerate}
-              >
-                ⬇ Télécharger le CSV ({skuCount} variantes × {ingredients.length} ingrédient{ingredients.length > 1 ? "s" : ""})
-              </button>
-              {warnings.length > 0 && (
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  style={{ ...s.btn, flex: 1, fontSize: 14, padding: "12px 0", background: pushState.status === "pushing" ? "#ccc" : "#111", cursor: pushState.status === "pushing" ? "not-allowed" : "pointer" }}
+                  disabled={pushState.status === "pushing"}
+                  onClick={() => void handlePushToKatana()}
+                >
+                  {pushState.status === "pushing" ? "Publication…" : "→ Publier dans Katana"}
+                </button>
+                <button
+                  style={{ ...s.btn, background: "#f5f5f5", color: "#333", border: "1px solid #ddd", fontSize: 13, padding: "12px 16px" }}
+                  onClick={handleGenerate}
+                >
+                  ⬇ CSV
+                </button>
+              </div>
+
+              {/* Push result */}
+              {pushState.status === "done" && (
+                <div style={{ marginTop: 10, padding: "10px 12px", borderRadius: 6, background: pushState.errors.length ? "#fff0f0" : "#f0fff4", border: `1px solid ${pushState.errors.length ? "#e74c3c" : "#27ae60"}` }}>
+                  {pushState.errors.length ? (
+                    pushState.errors.map((e, i) => <div key={i} style={{ fontSize: 12, color: "#c0392b" }}>✗ {e}</div>)
+                  ) : (
+                    <div style={{ fontSize: 13, color: "#27ae60", fontWeight: 500 }}>
+                      ✓ {pushState.created} ligne{pushState.created > 1 ? "s" : ""} créée{pushState.created > 1 ? "s" : ""} dans Katana
+                      {pushState.skipped > 0 && <span style={{ color: "#888", fontWeight: 400 }}> · {pushState.skipped} déjà présente{pushState.skipped > 1 ? "s" : ""}</span>}
+                    </div>
+                  )}
+                  {pushState.warnings.map((w, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#e67e22", marginTop: 4 }}>⚠ {w}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* CSV warnings */}
+              {warnings.length > 0 && pushState.status === "idle" && (
                 <div style={{ marginTop: 10 }}>
                   {warnings.map((w, i) => (
-                    <div key={i} style={{ fontSize: 12, color: "#e67e22", padding: "3px 0" }}>
-                      ⚠ {w}
-                    </div>
+                    <div key={i} style={{ fontSize: 12, color: "#e67e22", padding: "3px 0" }}>⚠ {w}</div>
                   ))}
                 </div>
               )}

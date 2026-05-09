@@ -702,6 +702,44 @@ export async function fixKatanaVariantConfigs(
   );
 }
 
+export async function pushRecipesToKatana(
+  katanaProductId: number,
+  rows: { productVariantId: number; ingredientVariantId: number; quantity: number }[]
+): Promise<{ created: number; skipped: number; errors: string[] }> {
+  if (!rows.length) return { created: 0, skipped: 0, errors: [] };
+
+  // Fetch existing recipes to avoid duplicates
+  const existing = (await katanaFetch(
+    `/v1/recipes?product_id=${katanaProductId}&limit=500`,
+    { method: "GET" }
+  )) as { data?: { product_variant_id: number; ingredient_variant_id: number }[] };
+
+  const existingKeys = new Set(
+    (existing?.data ?? []).map((r) => `${r.product_variant_id}-${r.ingredient_variant_id}`)
+  );
+
+  const newRows = rows.filter((r) => !existingKeys.has(`${r.productVariantId}-${r.ingredientVariantId}`));
+  const skipped = rows.length - newRows.length;
+
+  if (!newRows.length) return { created: 0, skipped, errors: [] };
+
+  try {
+    await katanaFetch("/v1/recipes", {
+      method: "POST",
+      body: JSON.stringify({
+        rows: newRows.map((r) => ({
+          product_variant_id: r.productVariantId,
+          ingredient_variant_id: r.ingredientVariantId,
+          quantity: r.quantity,
+        })),
+      }),
+    });
+    return { created: newRows.length, skipped, errors: [] };
+  } catch (e) {
+    return { created: 0, skipped, errors: [e instanceof Error ? e.message : String(e)] };
+  }
+}
+
 export async function sendStockMovementToKatana(input: KatanaMovementInput) {
   const variant = await findVariantByBarcode(input.barcode);
   const variantLabel = await resolveVariantLabel(variant);
