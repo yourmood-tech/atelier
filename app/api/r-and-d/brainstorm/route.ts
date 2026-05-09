@@ -146,12 +146,17 @@ NOUVEAUTÉS POSSIBLES À EXPLORER :
 - Nouvelle technologie / matière émergente
 
 FOURNISSEURS À RECOMMANDER (selon le type d'idée) :
-- icelea : pièces 3D, émail, zircons couleurs spéciales
-- bijouterie interne : argent, or, gravure, sertissage classique
-- sertissage interne : pierres précieuses (5-6 sem)
+- icelea : pièces 3D, émail, **TOUS LES SERTISSAGES ZIRCONS** (la bijouterie interne ne fait PAS le sertissage zircons)
+- bijouterie interne : argent, or, gravure, sertissage de PIERRES PRÉCIEUSES (diamants, saphirs, émeraudes, rubis, topazes, améthystes, grenats, tsavorites, cabochons)
+- sertissage interne : pierres précieuses uniquement, 5-6 sem (PAS de zircons)
 - gravure interne : Gravograph laser/mécanique (1 sem)
 - fournisseur PVD : pour coloration argent/acier
 - fournisseur extérieur : nouvelles matières / technologies à sourcer
+
+⚠️ RÈGLE STRICTE FOURNISSEUR :
+- Si SERTISSAGE ZIRCONS → fournisseur OBLIGATOIRE = icelea
+- Si sertissage pierres précieuses (diamants, saphirs, émeraudes, rubis…) → bijouterie interne ou sertissage interne
+- Si pas de sertissage → bijouterie interne (argent/or) ou pvd (coloration) ou icelea (3D, émail)
 
 ==================== RÈGLES DE GÉNÉRATION ====================
 
