@@ -591,31 +591,35 @@ export async function checkKatanaVariants(
 
 export async function ensureKatanaVariantsExist(
   productTitle: string,
-  missingVariants: { sku: string; variantName: string }[]
+  missingVariants: { sku: string; variantName: string }[],
+  katanaProductId?: number
 ): Promise<{ sku: string; created: boolean; error?: string }[]> {
   if (!missingVariants.length) return [];
 
-  // Try to find existing Katana product by exact name
-  const searchData = (await katanaFetch(
-    `/v1/products?search=${encodeURIComponent(productTitle)}&limit=20`,
-    { method: "GET" }
-  )) as { data?: { id: number; name: string }[] };
-
-  const exactMatch = (searchData?.data ?? []).find(
-    (p) => p.name.toLowerCase().trim() === productTitle.toLowerCase().trim()
-  );
-
   const results: { sku: string; created: boolean; error?: string }[] = [];
 
-  if (exactMatch) {
-    // Product exists in Katana — add each missing variant individually
+  // Prefer known product ID (from existing variants) over name search
+  let productId = katanaProductId;
+
+  if (!productId) {
+    const searchData = (await katanaFetch(
+      `/v1/products?search=${encodeURIComponent(productTitle)}&limit=20`,
+      { method: "GET" }
+    )) as { data?: { id: number; name: string }[] };
+
+    const exactMatch = (searchData?.data ?? []).find(
+      (p) => p.name.toLowerCase().trim() === productTitle.toLowerCase().trim()
+    );
+    productId = exactMatch?.id;
+  }
+
+  if (productId) {
+    // Product exists — patch each missing variant onto it
     for (const v of missingVariants) {
       try {
-        await katanaFetch(`/v1/products/${exactMatch.id}`, {
+        await katanaFetch(`/v1/products/${productId}`, {
           method: "PATCH",
-          body: JSON.stringify({
-            variants: [{ sku: v.sku }],
-          }),
+          body: JSON.stringify({ variants: [{ sku: v.sku }] }),
         });
         results.push({ sku: v.sku, created: true });
       } catch (e) {
@@ -623,7 +627,7 @@ export async function ensureKatanaVariantsExist(
       }
     }
   } else {
-    // No product found — create it with all missing variants at once
+    // No product in Katana at all — create it with all missing variants
     try {
       await katanaFetch("/v1/products", {
         method: "POST",

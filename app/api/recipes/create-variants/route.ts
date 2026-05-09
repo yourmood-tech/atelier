@@ -3,14 +3,15 @@ import { ensureKatanaVariantsExist } from "@/lib/katana";
 
 export async function POST(req: NextRequest) {
   try {
-    const { productTitle, variants } = (await req.json()) as {
+    const { productTitle, variants, katanaProductId } = (await req.json()) as {
       productTitle: string;
       variants: { sku: string; variantName: string }[];
+      katanaProductId?: number;
     };
     if (!productTitle || !Array.isArray(variants) || !variants.length) {
       return NextResponse.json({ error: "productTitle et variants requis" }, { status: 400 });
     }
-    const results = await ensureKatanaVariantsExist(productTitle, variants);
+    const results = await ensureKatanaVariantsExist(productTitle, variants, katanaProductId);
     return NextResponse.json({ results });
   } catch (e) {
     return NextResponse.json(

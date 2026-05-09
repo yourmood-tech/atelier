@@ -188,11 +188,14 @@ export default function RecipesPage() {
       return { sku: r.sku, variantName: getTailleValue(sv) ?? sv.title };
     });
 
+    // Use katanaProductId from any already-existing variant to patch the right product
+    const katanaProductId = variantCheck.results.find((r) => r.exists && r.katanaProductId)?.katanaProductId;
+
     try {
       const res = await fetch("/api/recipes/create-variants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productTitle: p.title, variants }),
+        body: JSON.stringify({ productTitle: p.title, variants, katanaProductId }),
       });
       const data = (await res.json()) as { results?: { sku: string; created: boolean; error?: string }[] };
       const errors = (data.results ?? []).filter((r) => !r.created).map((r) => `${r.sku} : ${r.error ?? "erreur"}`);
