@@ -102,6 +102,19 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
       },
     ],
   },
+  {
+    id: "rd",
+    title: "R&D & Création",
+    summary: "Pipeline de création produits, planning annuel et brainstorm IA.",
+    tools: [
+      {
+        href: "/r-and-d",
+        emoji: "🎨",
+        title: "Pipeline R&D",
+        description: "Calendrier annuel jeudi→mercredi pour planifier les nouveautés. Suivi des 9 étapes (idée → mise en ligne) + objectifs CA mensuels par produit.",
+      },
+    ],
+  },
 ];
 
 function ToolCard({ tool }: { tool: Tool }) {

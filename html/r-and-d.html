@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R&D Pipeline — Mood Joaillerie</title>
+<style>
+  :root {
+    --or: #c9a96e;
+    --noir: #1a1a1a;
+    --gris: #6b6b6b;
+    --gris-clair: #f5f5f5;
+    --vert: #2d8a4e;
+    --orange: #d97706;
+    --rouge: #c0392b;
+    --bleu: #2563eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--noir);
+    background: #fafafa;
+    line-height: 1.5;
+    padding: 1rem;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  h1 { font-size: 1.5rem; font-weight: 600; }
+  h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem 0; color: var(--or); }
+  .controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  button {
+    background: var(--or);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  button.outline { background: white; color: var(--noir); border: 1px solid #ccc; }
+  button.danger { background: var(--rouge); }
+  button:hover { opacity: 0.9; }
+  select, input { padding: 0.4rem 0.7rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+
+  /* Calendrier */
+  .month {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--or);
+  }
+  .month-title { font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .month-objective { font-size: 0.85rem; color: var(--gris); }
+  .weeks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem; }
+  .week {
+    background: var(--gris-clair);
+    border-radius: 8px;
+    padding: 0.6rem;
+    min-height: 120px;
+    border-left: 3px solid var(--or);
+  }
+  .week-header { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.4rem; font-weight: 600; }
+  .week-objective { font-size: 0.7rem; color: var(--gris); margin-top: 0.3rem; }
+
+  /* Produits */
+  .product-card {
+    background: white;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: border-color 0.2s;
+  }
+  .product-card:hover { border-color: var(--or); }
+  .product-stage {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+  }
+  .product-name { flex: 1; font-weight: 500; }
+  .product-ca { font-size: 0.7rem; color: var(--gris); }
+
+  /* Couleurs par étape */
+  .stage-1 { background: #94a3b8; } /* idée */
+  .stage-2 { background: #60a5fa; } /* dessin */
+  .stage-3 { background: #f59e0b; } /* commande test */
+  .stage-4 { background: #fbbf24; } /* réception */
+  .stage-5 { background: #f97316; } /* validation */
+  .stage-6 { background: #84cc16; } /* OK */
+  .stage-7 { background: #22c55e; } /* photos */
+  .stage-8 { background: #16a34a; } /* mise en ligne */
+  .stage-9 { background: #15803d; } /* visuels */
+
+  .add-product-btn {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 1px dashed #aaa;
+    color: var(--gris);
+    padding: 0.4rem;
+    font-size: 0.75rem;
+    margin-top: 0.3rem;
+  }
+  .add-product-btn:hover { border-color: var(--or); color: var(--or); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+  .modal label { display: block; font-size: 0.8rem; font-weight: 500; margin: 0.8rem 0 0.3rem 0; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .modal textarea { min-height: 80px; resize: vertical; }
+  .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
+
+  .stage-legend {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--gris);
+    margin-bottom: 1rem;
+    padding: 0.6rem;
+    background: white;
+    border-radius: 8px;
+  }
+  .stage-legend-item { display: flex; align-items: center; gap: 0.3rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 R&D Pipeline — Mood</h1>
+  <div class="controls">
+    <select id="annee">
+      <option value="2026" selected>2026</option>
+      <option value="2027">2027</option>
+    </select>
+    <button class="outline" onclick="exporterJSON()">📥 Export JSON</button>
+    <button class="outline" onclick="importerJSON()">📤 Import JSON</button>
+    <button class="danger outline" onclick="reset()">🗑️ Reset</button>
+    <a href="/" style="font-size:0.85rem;color:var(--gris);text-decoration:none;">← Atelier</a>
+  </div>
+</header>
+
+<div class="stage-legend">
+  <div class="stage-legend-item"><div class="product-stage stage-1">1</div> Idée</div>
+  <div class="stage-legend-item"><div class="product-stage stage-2">2</div> Dessin</div>
+  <div class="stage-legend-item"><div class="product-stage stage-3">3</div> Commande test</div>
+  <div class="stage-legend-item"><div class="product-stage stage-4">4</div> Réception</div>
+  <div class="stage-legend-item"><div class="product-stage stage-5">5</div> Validation proto</div>
+  <div class="stage-legend-item"><div class="product-stage stage-6">6</div> OK</div>
+  <div class="stage-legend-item"><div class="product-stage stage-7">7</div> Photos</div>
+  <div class="stage-legend-item"><div class="product-stage stage-8">8</div> M.E.L. + Katana</div>
+  <div class="stage-legend-item"><div class="product-stage stage-9">9</div> Visuels</div>
+</div>
+
+<div id="calendrier"></div>
+
+<!-- Modal édition produit -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Nouveau produit</h3>
+    <input type="hidden" id="produit-id">
+
+    <label>Nom du produit *</label>
+    <input id="produit-nom" placeholder="ex : Aura Émeraude, Coffret Printemps…">
+
+    <label>Type</label>
+    <select id="produit-type">
+      <option value="addon">Addon</option>
+      <option value="medium">Medium</option>
+      <option value="deux-tiers">Deux tiers</option>
+      <option value="mini">Mini</option>
+      <option value="base">Base</option>
+      <option value="open-mood">Open mood</option>
+      <option value="coffret">Coffret</option>
+      <option value="pack">Pack</option>
+      <option value="starter-pack">Starter pack</option>
+      <option value="boucles">Boucles d'oreilles</option>
+      <option value="boite">Boîte</option>
+      <option value="couleur-alu">Nouvelle couleur alu</option>
+      <option value="autre">Autre</option>
+    </select>
+
+    <label>Étape actuelle</label>
+    <select id="produit-etape">
+      <option value="1">1. Idée</option>
+      <option value="2">2. Dessin</option>
+      <option value="3">3. Commande test</option>
+      <option value="4">4. Réception</option>
+      <option value="5">5. Validation proto</option>
+      <option value="6">6. OK</option>
+      <option value="7">7. Photos</option>
+      <option value="8">8. M.E.L. + Katana</option>
+      <option value="9">9. Visuels</option>
+    </select>
+
+    <label>Fournisseur (si commande test)</label>
+    <select id="produit-fournisseur">
+      <option value="">— aucun —</option>
+      <option value="icelea">Icelea (5 sem)</option>
+      <option value="bijouterie">Bijouterie (1-2 sem)</option>
+      <option value="sertissage">Sertissage (5-6 sem)</option>
+      <option value="gravure">Gravure (1 sem)</option>
+      <option value="autre">Autre</option>
+    </select>
+
+    <label>Objectif CA (CHF) <span style="color:var(--gris);font-weight:400">— optionnel</span></label>
+    <input id="produit-ca" type="number" placeholder="ex : 5000">
+
+    <label>Notes <span style="color:var(--gris);font-weight:400">— inspiration, contraintes, idées</span></label>
+    <textarea id="produit-notes" placeholder="ex : test sertissage diamants 0.9mm sur medium argent, voir Aura authentique pour ref…"></textarea>
+
+    <div class="modal-actions">
+      <button class="outline" onclick="fermerModal()">Annuler</button>
+      <button class="danger" id="btn-supprimer" onclick="supprimerProduit()" style="display:none">Supprimer</button>
+      <button onclick="sauverProduit()">Sauver</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file-import" accept="application/json" style="display:none" onchange="lireFichierImport(event)">
+
+<script>
+const STORAGE_KEY = 'mood-rd-pipeline';
+const NOMS_MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+let donnees = chargerDonnees();
+let modalContexte = null;
+
+function chargerDonnees() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { produits: [] };
+  } catch { return { produits: [] }; }
+}
+
+function sauverDonnees() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
+}
+
+/** Renvoie les semaines J-M d'un mois. Une semaine = jeudi → mercredi. */
+function calculerSemainesMois(annee, mois) {
+  const semaines = [];
+  // Premier jour du mois
+  const debut = new Date(annee, mois, 1);
+  const fin = new Date(annee, mois + 1, 0);
+
+  // Trouver le 1er jeudi du mois (ou avant si le mois commence par jeudi)
+  // Une semaine appartient au mois si elle CONTIENT au moins 4 jours du mois
+  // Mais plus simple : on liste toutes les semaines J-M qui touchent ce mois.
+  let cursor = new Date(annee, mois, 1);
+  // Reculer jusqu'au jeudi précédent
+  while (cursor.getDay() !== 4) cursor.setDate(cursor.getDate() - 1);
+
+  // Avancer en collectant les semaines tant qu'elles touchent ce mois
+  while (cursor <= fin) {
+    const jeudi = new Date(cursor);
+    const mercredi = new Date(cursor);
+    mercredi.setDate(mercredi.getDate() + 6);
+    // La semaine appartient à ce mois si MAJORITÉ des jours dans ce mois
+    let joursDansMois = 0;
+    for (let i = 0; i < 7; i++) {
+      const j = new Date(jeudi);
+      j.setDate(j.getDate() + i);
+      if (j.getMonth() === mois && j.getFullYear() === annee) joursDansMois++;
+    }
+    if (joursDansMois >= 4) {
+      semaines.push({
+        debut: jeudi.toISOString().slice(0, 10),
+        fin: mercredi.toISOString().slice(0, 10),
+        label: `${jeudi.getDate()} ${NOMS_MOIS[jeudi.getMonth()].slice(0, 3).toLowerCase()}. → ${mercredi.getDate()} ${NOMS_MOIS[mercredi.getMonth()].slice(0, 3).toLowerCase()}.`
+      });
+    }
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return semaines;
+}
+
+function rendreCalendrier() {
+  const annee = parseInt(document.getElementById('annee').value, 10);
+  const cal = document.getElementById('calendrier');
+  cal.innerHTML = '';
+
+  for (let mois = 0; mois < 12; mois++) {
+    const semaines = calculerSemainesMois(annee, mois);
+    const moisDiv = document.createElement('div');
+    moisDiv.className = 'month';
+
+    let html = `<div class="month-header">
+      <div class="month-title">${NOMS_MOIS[mois]} ${annee}</div>
+    </div>
+    <div class="weeks">`;
+
+    for (const sem of semaines) {
+      const produitsDansSem = donnees.produits.filter(p => p.semaineDebut === sem.debut);
+      let cardsHtml = '';
+      for (const p of produitsDansSem) {
+        cardsHtml += `<div class="product-card" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}">
+          <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
+          <div class="product-name">${p.nom}</div>
+          ${p.objectifCA ? `<div class="product-ca">${p.objectifCA}.-</div>` : ''}
+        </div>`;
+      }
+      html += `<div class="week">
+        <div class="week-header">${sem.label}</div>
+        ${cardsHtml}
+        <button class="add-product-btn" onclick="ouvrirModalAjout('${sem.debut}')">+ Ajouter</button>
+      </div>`;
+    }
+
+    html += `</div>`;
+    moisDiv.innerHTML = html;
+    cal.appendChild(moisDiv);
+  }
+}
+
+function ouvrirModalAjout(semaineDebut) {
+  modalContexte = { mode: 'ajout', semaineDebut };
+  document.getElementById('modal-title').textContent = 'Nouveau produit';
+  document.getElementById('produit-id').value = '';
+  document.getElementById('produit-nom').value = '';
+  document.getElementById('produit-type').value = 'addon';
+  document.getElementById('produit-etape').value = '1';
+  document.getElementById('produit-fournisseur').value = '';
+  document.getElementById('produit-ca').value = '';
+  document.getElementById('produit-notes').value = '';
+  document.getElementById('btn-supprimer').style.display = 'none';
+  document.getElementById('modal').classList.add('show');
+}
+
+function ouvrirModalEdit(id) {
+  const p = donnees.produits.find(x => x.id === id);
+  if (!p) return;
+  modalContexte = { mode: 'edit', semaineDebut: p.semaineDebut };
+  document.getElementById('modal-title').textContent = 'Éditer le produit';
+  document.getElementById('produit-id').value = p.id;
+  document.getElementById('produit-nom').value = p.nom || '';
+  document.getElementById('produit-type').value = p.type || 'addon';
+  document.getElementById('produit-etape').value = p.etape || '1';
+  document.getElementById('produit-fournisseur').value = p.fournisseur || '';
+  document.getElementById('produit-ca').value = p.objectifCA || '';
+  document.getElementById('produit-notes').value = p.notes || '';
+  document.getElementById('btn-supprimer').style.display = 'inline-block';
+  document.getElementById('modal').classList.add('show');
+}
+
+function fermerModal() {
+  document.getElementById('modal').classList.remove('show');
+  modalContexte = null;
+}
+
+function sauverProduit() {
+  const nom = document.getElementById('produit-nom').value.trim();
+  if (!nom) { alert('Le nom est obligatoire'); return; }
+  const id = document.getElementById('produit-id').value;
+  const data = {
+    nom,
+    type: document.getElementById('produit-type').value,
+    etape: parseInt(document.getElementById('produit-etape').value, 10),
+    fournisseur: document.getElementById('produit-fournisseur').value,
+    objectifCA: parseInt(document.getElementById('produit-ca').value, 10) || null,
+    notes: document.getElementById('produit-notes').value,
+    semaineDebut: modalContexte.semaineDebut,
+    majAt: new Date().toISOString(),
+  };
+  if (id) {
+    const idx = donnees.produits.findIndex(p => p.id === id);
+    if (idx >= 0) donnees.produits[idx] = { ...donnees.produits[idx], ...data };
+  } else {
+    data.id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    data.creAt = data.majAt;
+    donnees.produits.push(data);
+  }
+  sauverDonnees();
+  fermerModal();
+  rendreCalendrier();
+}
+
+function supprimerProduit() {
+  const id = document.getElementById('produit-id').value;
+  if (!confirm('Supprimer ce produit du planning ?')) return;
+  donnees.produits = donnees.produits.filter(p => p.id !== id);
+  sauverDonnees();
+  fermerModal();
+  rendreCalendrier();
+}
+
+function exporterJSON() {
+  const blob = new Blob([JSON.stringify(donnees, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mood-rd-pipeline-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importerJSON() {
+  document.getElementById('file-import').click();
+}
+
+function lireFichierImport(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.produits && Array.isArray(data.produits)) {
+        if (confirm(`Importer ${data.produits.length} produits ? Cela remplacera le contenu actuel.`)) {
+          donnees = data;
+          sauverDonnees();
+          rendreCalendrier();
+        }
+      } else {
+        alert('Format invalide — manque la clé "produits".');
+      }
+    } catch (err) {
+      alert('Erreur parsing JSON : ' + err.message);
+    }
+  };
+  reader.readAsText(f);
+}
+
+function reset() {
+  if (!confirm('Effacer tous les produits du planning ? Cette action est irréversible (sauf si tu as fait un export avant).')) return;
+  donnees = { produits: [] };
+  sauverDonnees();
+  rendreCalendrier();
+}
+
+document.getElementById('annee').addEventListener('change', rendreCalendrier);
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') fermerModal();
+});
+
+rendreCalendrier();
+</script>
+</body>
+</html>
