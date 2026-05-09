@@ -76,7 +76,7 @@ function setCachedValue<T>(
   });
 }
 
-async function katanaFetch(path: string, init?: RequestInit) {
+async function katanaFetch(path: string, init?: RequestInit, retries = 3) {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -87,6 +87,12 @@ async function katanaFetch(path: string, init?: RequestInit) {
     },
     cache: "no-store",
   });
+
+  if (res.status === 429 && retries > 0) {
+    const retryAfter = Number(res.headers.get("Retry-After") ?? 1);
+    await new Promise((r) => setTimeout(r, (retryAfter || 1) * 1000));
+    return katanaFetch(path, init, retries - 1);
+  }
 
   const rawText = await res.text();
 
