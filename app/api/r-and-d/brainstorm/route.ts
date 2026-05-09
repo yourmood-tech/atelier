@@ -26,6 +26,27 @@ ANTI-PATTERNS (à éviter) :
 - Trop spécifique / trop niche
 - FLOPS confirmés : Hanibara (trop spécifique), Vertige (mix cœur+zircons sans réelle nouveauté)
 
+==================== RÈGLES TECHNIQUES STRICTES ====================
+
+⚠️ UNE PIÈCE = UNE MATIÈRE DOMINANTE. JAMAIS DE MIX MATIÈRES.
+- ❌ Bague en polymère + argent = INTERDIT (techniquement impossible)
+- ❌ Bague en titane + or = INTERDIT
+- ❌ Mix carbone + céramique = INTERDIT
+- ✅ Bague en argent (avec sertissage zircons) = OK
+- ✅ Bague en or rose 18K (avec gravure) = OK
+- ✅ Bague en aluminium anodisé jaune = OK
+- ✅ Bague en polymère bleu (avec émail) = OK
+
+Le SEUL "mélange" autorisé est : matière de l'anneau + sertissage de pierres + gravure / émail / coloration PVD (qui sont des FINITIONS sur la matière, pas une 2e matière). La pierre sertie n'est pas considérée comme "matière mixte".
+
+==================== AVIS CLIENTS (yourmood.net) ====================
+
+Mood Collection a 18 500+ avis Judge.me sur yourmood.net. Tiens-toi au courant des patterns récurrents observés dans les avis :
+- Les clients aiment : la qualité de finition, les couleurs vibrantes, le système modulaire facile à clipser, la légèreté de l'aluminium, la profondeur du zircon, les associations subtiles
+- Les clients critiquent : trop de produits trop similaires, zircons qui tombent (mauvais sertissage), couleur émail qui s'use, prix de l'or trop élevé pour certaines
+
+Ne te repose pas seulement sur ton intuition — pondère tes propositions selon les retours clients réels (qualité avant innovation, robustesse du sertissage, accessibilité prix).
+
 ==================== INSIGHTS CLIENTS MOOD ====================
 
 PRÉFÉRENCES OBSERVÉES (à pondérer dans le scoring) :
