@@ -16,12 +16,31 @@ function looksLikeSize(s: string): boolean {
   return /^\d{2,3}$/.test(s.trim());
 }
 
-// If the SKU ends with a taille (-50, -52 etc.), return the color prefix before it.
-// MTRL-ALU-NOIR-50 → "MTRL-ALU-NOIR"   MTRL-CHAIN-GOLD-LONG-50 → "MTRL-CHAIN-GOLD-LONG"
-// Returns null when no taille suffix is detected (no filtering needed).
-function skuColorPrefix(sku: string): string | null {
-  const m = sku.match(/^(.+)-\d{2,3}$/);
-  return m ? m[1] : null;
+// Returns a filter function that keeps only variants with the same color as the searched SKU.
+//
+// Two formats:
+//   taille at end   → MTRL-MD-RI-113-Infinity CZ-50 : filter by prefix "MTRL-MD-RI-113-Infinity CZ"
+//   taille in middle → MTRL-ALU-50-ROUGE : replace taille with \d{2,3} → regex MTRL-ALU-\d{2,3}-ROUGE
+//
+// Returns null when no taille is found (no filtering applied).
+function buildSkuVariantFilter(sku: string): ((s: string) => boolean) | null {
+  // Case 1: numeric last segment → taille at the end
+  if (/^(.+)-\d{2,3}$/.test(sku)) {
+    const prefix = sku.replace(/-\d{2,3}$/, "");
+    return (s) => s.startsWith(prefix + "-");
+  }
+  // Case 2: non-numeric last segment → color at the end, taille somewhere in the middle
+  const parts = sku.split("-");
+  let tailleIdx = -1;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (/^\d{2,3}$/.test(parts[i])) { tailleIdx = i; break; }
+  }
+  if (tailleIdx === -1) return null;
+  const escaped = parts
+    .map((p, i) => i === tailleIdx ? "\\d{2,3}" : p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("-");
+  const re = new RegExp(`^${escaped}$`);
+  return (s) => re.test(s);
 }
 
 export async function GET(req: NextRequest) {
@@ -59,10 +78,10 @@ export async function GET(req: NextRequest) {
   const name = parent?.name ?? q;
   const allVariants = parent?.variants ?? [found];
 
-  // Filter to matching color when the searched SKU has a taille suffix
-  const colorPrefix = skuColorPrefix(q);
-  const scopedVariants = colorPrefix
-    ? allVariants.filter((v) => v.sku === null || v.sku.startsWith(colorPrefix + "-"))
+  // Filter to the same color when the searched SKU contains a taille segment
+  const variantFilter = buildSkuVariantFilter(q);
+  const scopedVariants = variantFilter
+    ? allVariants.filter((v) => v.sku === null || variantFilter(v.sku))
     : allVariants;
 
   const mapped = scopedVariants.map((v) => {
