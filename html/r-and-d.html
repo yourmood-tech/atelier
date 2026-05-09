@@ -704,26 +704,70 @@ async function lancerBrainstorm() {
   }
 }
 
+let ideesEnCours = [];
+
 function afficherIdees(idees) {
+  ideesEnCours = idees;
   const zone = document.getElementById('bs-resultats');
   let html = `<div style="font-size:0.85rem;color:var(--gris);margin-bottom:0.5rem;">${idees.length} pépites proposées :</div>`;
   for (let i = 0; i < idees.length; i++) {
     const idee = idees[i];
     const stars = '⭐'.repeat(idee.potentiel || 3);
-    html += `<div style="border:1px solid #e5e5e5;border-radius:8px;padding:0.7rem;margin-bottom:0.5rem;">
+    const tags = [idee.type, idee.matiere, idee.couleur, idee.pvd ? `PVD ${idee.pvd}` : null, idee.pierre]
+      .filter(Boolean).map(escapeHtml).join(' · ');
+    html += `<div id="idee-${i}" style="border:1px solid #e5e5e5;border-radius:8px;padding:0.7rem;margin-bottom:0.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;flex-wrap:wrap;">
         <strong style="font-size:1rem;">${escapeHtml(idee.nom || 'Sans nom')}</strong>
         <span style="font-size:0.85rem;">${stars}</span>
       </div>
-      <div style="font-size:0.8rem;color:var(--gris);margin:0.3rem 0;">
-        ${[idee.type, idee.matiere, idee.couleur, idee.pierre].filter(Boolean).map(escapeHtml).join(' · ')}
-      </div>
+      <div style="font-size:0.8rem;color:var(--gris);margin:0.3rem 0;">${tags}</div>
       <div style="font-size:0.85rem;margin-bottom:0.4rem;">${escapeHtml(idee.description || '')}</div>
-      <div style="font-size:0.75rem;color:var(--gris);font-style:italic;margin-bottom:0.5rem;">💡 ${escapeHtml(idee.raisonnement || '')}</div>
-      <button onclick='ajouterIdeeAuPlanning(${JSON.stringify(idee).replace(/'/g, "&apos;")})' style="font-size:0.8rem;padding:0.3rem 0.7rem;">+ Ajouter au planning</button>
+      <div style="font-size:0.75rem;color:var(--gris);font-style:italic;margin-bottom:0.4rem;">💡 ${escapeHtml(idee.raisonnement || '')}</div>
+      ${idee.fournisseur ? `<div style="font-size:0.75rem;margin-bottom:0.5rem;"><strong>🏭 Fournisseur :</strong> ${escapeHtml(idee.fournisseur)}</div>` : ''}
+      <div id="idee-image-${i}"></div>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+        <button onclick="genererImageIdee(${i})" id="btn-img-${i}" class="outline" style="font-size:0.8rem;padding:0.3rem 0.7rem;">🎨 Générer image</button>
+        <button onclick="ajouterIdeeAuPlanningParIndex(${i})" style="font-size:0.8rem;padding:0.3rem 0.7rem;">+ Ajouter au planning</button>
+      </div>
     </div>`;
   }
   zone.innerHTML = html;
+}
+
+async function genererImageIdee(idx) {
+  const idee = ideesEnCours[idx];
+  if (!idee) return;
+  const btn = document.getElementById(`btn-img-${idx}`);
+  const zone = document.getElementById(`idee-image-${idx}`);
+  btn.disabled = true;
+  btn.textContent = '⏳ Création image…';
+  zone.innerHTML = '<div style="font-size:0.75rem;color:var(--gris);margin:0.4rem 0;">Génération en cours (15-30 sec)…</div>';
+  try {
+    const r = await fetch('/api/r-and-d/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idee }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.image) {
+      zone.innerHTML = `<div style="font-size:0.75rem;color:var(--rouge);">Erreur : ${data.error || JSON.stringify(data)}</div>`;
+      btn.disabled = false;
+      btn.textContent = '🎨 Réessayer';
+      return;
+    }
+    ideesEnCours[idx].image = data.image;
+    zone.innerHTML = `<img src="${data.image}" style="width:100%;max-width:300px;border-radius:8px;margin:0.4rem 0;">`;
+    btn.textContent = '🔄 Régénérer image';
+    btn.disabled = false;
+  } catch (e) {
+    zone.innerHTML = `<div style="font-size:0.75rem;color:var(--rouge);">Erreur réseau : ${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '🎨 Réessayer';
+  }
+}
+
+function ajouterIdeeAuPlanningParIndex(idx) {
+  ajouterIdeeAuPlanning(ideesEnCours[idx]);
 }
 
 function escapeHtml(s) {
@@ -739,16 +783,30 @@ function ajouterIdeeAuPlanning(idee) {
   if (!dateChoisie) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateChoisie)) { alert('Format invalide. Utilise YYYY-MM-DD.'); return; }
 
-  const noteIA = `[Idée IA] ${idee.description || ''}\n\n💡 ${idee.raisonnement || ''}\nPotentiel : ${idee.potentiel || '?'}/5`;
+  const noteParts = [
+    `[Idée IA] ${idee.description || ''}`,
+    idee.pvd && `PVD : ${idee.pvd}`,
+    idee.couleur && `Couleur : ${idee.couleur}`,
+    idee.pierre && `Pierre : ${idee.pierre}`,
+    idee.fournisseur && `Fournisseur conseillé : ${idee.fournisseur}`,
+    `💡 ${idee.raisonnement || ''}`,
+    `Potentiel : ${idee.potentiel || '?'}/5`,
+  ].filter(Boolean);
+  const noteIA = noteParts.join('\n');
+
+  // Mapper le fournisseur IA vers le sélecteur HTML
+  const fournMap = { 'icelea': 'icelea', 'bijouterie': 'bijouterie', 'sertissage': 'sertissage', 'gravure': 'gravure' };
+  const fournisseurChoisi = fournMap[String(idee.fournisseur || '').toLowerCase()] || '';
+
   donnees.produits.push({
     id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     nom: idee.nom,
     type: idee.type || 'addon',
     etape: 1,
-    fournisseur: '',
+    fournisseur: fournisseurChoisi,
     objectifCA: null,
     notes: noteIA,
-    image: null,
+    image: idee.image || null,
     date: dateChoisie,
     creAt: new Date().toISOString(),
     majAt: new Date().toISOString(),
