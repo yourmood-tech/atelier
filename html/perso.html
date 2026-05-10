@@ -160,6 +160,43 @@
         <div class="info" style="padding:1rem;">— pas d'image uploadée —</div>
       </div>
     </div>
+
+    <div class="card">
+      <h2>🔬 Debug — étapes du pipeline</h2>
+      <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-weight:400;">
+        <input type="checkbox" id="show-debug" style="width:auto;margin:0;" onchange="afficherDebug()"> Afficher les étapes intermédiaires
+      </label>
+      <div id="debug-zone" class="hidden" style="margin-top:0.5rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--gris);margin-bottom:0.2rem;">1. Threshold Otsu (binaire)</div>
+            <canvas id="canvas-binary" style="max-width:100%;border:1px solid #e5e5e5;"></canvas>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--gris);margin-bottom:0.2rem;">2. Squelette Zhang-Suen</div>
+            <canvas id="canvas-skeleton" style="max-width:100%;border:1px solid #e5e5e5;"></canvas>
+          </div>
+        </div>
+        <div style="font-size:0.7rem;color:var(--gris);margin-top:0.4rem;">
+          Si l'image binaire est mauvaise → contraste image source insuffisant.<br>
+          Si le squelette est correct → c'est le tracing qui pose problème.
+        </div>
+      </div>
+
+      <label style="margin-top:0.6rem;">Lissage des traits (smoothing)</label>
+      <select id="smoothing" onchange="if(imageDataUrl) vectoriserPreview()">
+        <option value="0">Aucun (traits droits, pixelés)</option>
+        <option value="0.5">Léger (Douglas-Peucker 0.5)</option>
+        <option value="1.5" selected>Moyen — recommandé empreintes</option>
+        <option value="3">Fort (traits très lissés)</option>
+      </select>
+
+      <label style="margin-top:0.6rem;">Type de tracé</label>
+      <select id="trace-mode" onchange="if(imageDataUrl) vectoriserPreview()">
+        <option value="line" selected>Lignes droites entre points</option>
+        <option value="bezier">Courbes Bézier (organique, ne tremble pas)</option>
+      </select>
+    </div>
   </div>
 </div>
 
@@ -271,14 +308,39 @@ async function vectoriserPreview() {
     // 3. Squelettisation Zhang-Suen (pour empreintes)
     const skeleton = zhangSuen(binary, w, h);
 
-    // 4. Extraire les paths DIRECTEMENT du squelette (suit la connectivité des pixels)
+    // 4a. Debug : afficher l'image binaire et le squelette
+    if (document.getElementById('show-debug')?.checked) {
+      const cvBin = document.getElementById('canvas-binary');
+      cvBin.width = w; cvBin.height = h;
+      const ctxB = cvBin.getContext('2d');
+      const dB = ctxB.createImageData(w, h);
+      for (let i = 0; i < binary.length; i++) {
+        const v = binary[i] === 1 ? 0 : 255;
+        dB.data[i*4]=v; dB.data[i*4+1]=v; dB.data[i*4+2]=v; dB.data[i*4+3]=255;
+      }
+      ctxB.putImageData(dB, 0, 0);
+
+      const cvSk = document.getElementById('canvas-skeleton');
+      cvSk.width = w; cvSk.height = h;
+      const ctxS = cvSk.getContext('2d');
+      const dS = ctxS.createImageData(w, h);
+      for (let i = 0; i < skeleton.length; i++) {
+        const v = skeleton[i] === 1 ? 0 : 255;
+        dS.data[i*4]=v; dS.data[i*4+1]=v; dS.data[i*4+2]=v; dS.data[i*4+3]=255;
+      }
+      ctxS.putImageData(dS, 0, 0);
+    }
+
+    // 4b. Extraire les paths DIRECTEMENT du squelette (suit la connectivité des pixels)
     const polylines = extractPathsFromSkeleton(skeleton, w, h);
-    // Simplifier chaque polyline (Douglas-Peucker) pour réduire le nombre de points
-    const simplified = polylines.map(pl => douglasPeucker(pl, 0.5));
-    // Convertir en strings 'M x y L x y...'
+    // Simplifier chaque polyline (Douglas-Peucker) selon réglage smoothing
+    const eps = parseFloat(document.getElementById('smoothing')?.value || '1.5');
+    const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
+    // Convertir en SVG paths : ligne droite OU courbes Bézier
+    const traceMode = document.getElementById('trace-mode')?.value || 'line';
     vectorPaths = simplified
       .filter(pl => pl.length >= 2)
-      .map(pl => 'M' + pl.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L'));
+      .map(pl => traceMode === 'bezier' ? polylineToBezier(pl) : polylineToLine(pl));
     vectorViewBox = `0 0 ${w} ${h}`;
 
     if (vectorPaths.length === 0) {
@@ -330,6 +392,41 @@ function thresholdOtsu(imageData, w, h) {
   const binary = new Uint8Array(gray.length);
   for (let i = 0; i < gray.length; i++) binary[i] = gray[i] < threshold ? 1 : 0;
   return binary;
+}
+
+function afficherDebug() {
+  const show = document.getElementById('show-debug').checked;
+  document.getElementById('debug-zone').classList.toggle('hidden', !show);
+  if (show && imageDataUrl) vectoriserPreview();
+}
+
+/** Convertit une polyline en path SVG droit (M x y L x y L x y ...). */
+function polylineToLine(pl) {
+  return 'M' + pl.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join('L');
+}
+
+/** Convertit une polyline en path SVG avec courbes Bézier (Catmull-Rom approximé).
+ *  Donne des traits lisses et organiques qui ne tremblent pas.
+ */
+function polylineToBezier(pl) {
+  if (pl.length < 2) return '';
+  if (pl.length === 2) {
+    return `M${pl[0][0].toFixed(2)} ${pl[0][1].toFixed(2)}L${pl[1][0].toFixed(2)} ${pl[1][1].toFixed(2)}`;
+  }
+  // Catmull-Rom → Bézier cubique (tension 0.5)
+  let d = `M${pl[0][0].toFixed(2)} ${pl[0][1].toFixed(2)}`;
+  for (let i = 0; i < pl.length - 1; i++) {
+    const p0 = pl[Math.max(0, i - 1)];
+    const p1 = pl[i];
+    const p2 = pl[i + 1];
+    const p3 = pl[Math.min(pl.length - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += `C${cp1x.toFixed(2)} ${cp1y.toFixed(2)} ${cp2x.toFixed(2)} ${cp2y.toFixed(2)} ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+  }
+  return d;
 }
 
 /** Extrait les paths du squelette en suivant la connectivité des pixels.
