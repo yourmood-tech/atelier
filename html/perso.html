@@ -271,69 +271,24 @@ async function vectoriserPreview() {
     // 3. Squelettisation Zhang-Suen (pour empreintes)
     const skeleton = zhangSuen(binary, w, h);
 
-    // 4. Reconstruire un canvas avec le squelette en blanc sur fond noir (ImageTracer aime bien)
-    const skelData = new ImageData(w, h);
-    for (let i = 0; i < skeleton.length; i++) {
-      const v = skeleton[i] === 1 ? 0 : 255;  // skeleton = 0 (noir), reste = 255 (blanc)
-      skelData.data[i * 4] = v;
-      skelData.data[i * 4 + 1] = v;
-      skelData.data[i * 4 + 2] = v;
-      skelData.data[i * 4 + 3] = 255;
-    }
-    const skelCanvas = document.createElement('canvas');
-    skelCanvas.width = w; skelCanvas.height = h;
-    skelCanvas.getContext('2d').putImageData(skelData, 0, 0);
-    const skelDataUrl = skelCanvas.toDataURL('image/png');
+    // 4. Extraire les paths DIRECTEMENT du squelette (suit la connectivité des pixels)
+    const polylines = extractPathsFromSkeleton(skeleton, w, h);
+    // Simplifier chaque polyline (Douglas-Peucker) pour réduire le nombre de points
+    const simplified = polylines.map(pl => douglasPeucker(pl, 0.5));
+    // Convertir en strings 'M x y L x y...'
+    vectorPaths = simplified
+      .filter(pl => pl.length >= 2)
+      .map(pl => 'M' + pl.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join('L'));
+    vectorViewBox = `0 0 ${w} ${h}`;
 
-    // 5. Vectoriser le squelette via ImageTracer
-    const svgString = await new Promise((resolve, reject) => {
-      ImageTracer.imageToSVG(skelDataUrl, (svg) => resolve(svg), {
-        ltres: 0.5, qtres: 0.5, pathomit: 4,
-        rightangleenhance: false,
-        colorsampling: 0,
-        numberofcolors: 2,
-        mincolorratio: 0,
-        colorquantcycles: 1,
-        scale: 1,
-        roundcoords: 1,
-        viewbox: true,
-        strokewidth: 1,
-        linefilter: false,
-      });
-    });
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svgString, 'image/svg+xml');
-    const svgRoot = doc.querySelector('svg');
-    vectorViewBox = svgRoot.getAttribute('viewBox') || `0 0 ${svgRoot.getAttribute('width')} ${svgRoot.getAttribute('height')}`;
-    const paths = doc.querySelectorAll('path');
-    const darkPaths = [];
-    paths.forEach(p => {
-      const fill = (p.getAttribute('fill') || '').toLowerCase();
-      const m = fill.match(/^#([0-9a-f]{3,6})$/) || fill.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
-      let isDark = false;
-      if (fill === 'black' || fill === '#000' || fill === '#000000') isDark = true;
-      else if (m) {
-        let r, g, b;
-        if (m[1] && m[1].length <= 6) {
-          let hh = m[1];
-          if (hh.length === 3) hh = hh.split('').map(c => c + c).join('');
-          r = parseInt(hh.slice(0,2), 16); g = parseInt(hh.slice(2,4), 16); b = parseInt(hh.slice(4,6), 16);
-        } else {
-          r = +m[1]; g = +m[2]; b = +m[3];
-        }
-        isDark = (r + g + b) / 3 < 128;
-      }
-      if (isDark) darkPaths.push(p.getAttribute('d') || '');
-    });
-    vectorPaths = darkPaths.filter(Boolean);
     if (vectorPaths.length === 0) {
       previewZone.innerHTML = '<div class="erreur" style="padding:1rem;">Aucune ligne détectée. Augmente le contraste de l\'image source.</div>';
       return;
     }
-    const previewSvg = `<svg viewBox="${vectorViewBox}" style="max-height:200px;width:auto;">
-      ${vectorPaths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1"/>`).join('')}
+    const previewSvg = `<svg viewBox="${vectorViewBox}" style="max-height:200px;width:auto;background:white;">
+      ${vectorPaths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
     </svg>
-    <div class="info" style="margin-top:0.4rem;">${vectorPaths.length} traits vectorisés depuis squelette</div>`;
+    <div class="info" style="margin-top:0.4rem;">${vectorPaths.length} traits vectorisés depuis le squelette d'empreinte</div>`;
     previewZone.innerHTML = previewSvg;
   } catch (e) {
     previewZone.innerHTML = `<div class="erreur" style="padding:1rem;">Erreur : ${e.message}</div>`;
@@ -375,6 +330,130 @@ function thresholdOtsu(imageData, w, h) {
   const binary = new Uint8Array(gray.length);
   for (let i = 0; i < gray.length; i++) binary[i] = gray[i] < threshold ? 1 : 0;
   return binary;
+}
+
+/** Extrait les paths du squelette en suivant la connectivité des pixels.
+ *  Retourne un array de polylines : [[[x,y],[x,y],...], ...]
+ */
+function extractPathsFromSkeleton(skeleton, w, h) {
+  const visited = new Uint8Array(skeleton.length);
+  const paths = [];
+
+  function countN(x, y) {
+    let n = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+        if (skeleton[ny * w + nx] === 1) n++;
+      }
+    }
+    return n;
+  }
+
+  function getUnvisitedNeighbors(x, y) {
+    const ns = [];
+    // Privilégier les voisins cardinaux puis diagonaux
+    const order = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+    for (const [dx, dy] of order) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+      const ni = ny * w + nx;
+      if (skeleton[ni] === 1 && !visited[ni]) ns.push([nx, ny]);
+    }
+    return ns;
+  }
+
+  function followFrom(x, y) {
+    const path = [[x, y]];
+    visited[y * w + x] = 1;
+    while (true) {
+      const ns = getUnvisitedNeighbors(x, y);
+      if (ns.length === 0) break;
+      [x, y] = ns[0];
+      path.push([x, y]);
+      visited[y * w + x] = 1;
+      // Si on arrive à une jonction, arrêter (les autres branches seront traitées séparément)
+      if (countN(x, y) > 2) break;
+    }
+    return path;
+  }
+
+  // Pass 1 : démarrer depuis les endpoints (1 voisin)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (skeleton[idx] !== 1 || visited[idx]) continue;
+      if (countN(x, y) === 1) {
+        const path = followFrom(x, y);
+        if (path.length >= 2) paths.push(path);
+      }
+    }
+  }
+
+  // Pass 2 : démarrer depuis les jonctions (3+ voisins) — chaque branche
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (skeleton[idx] !== 1 || visited[idx]) continue;
+      if (countN(x, y) >= 3) {
+        visited[idx] = 1;
+        // Démarrer une branche par voisin non-visité
+        let ns = getUnvisitedNeighbors(x, y);
+        while (ns.length > 0) {
+          const [nx, ny] = ns[0];
+          const path = [[x, y], [nx, ny]];
+          visited[ny * w + nx] = 1;
+          let cx = nx, cy = ny;
+          while (true) {
+            const ns2 = getUnvisitedNeighbors(cx, cy);
+            if (ns2.length === 0) break;
+            [cx, cy] = ns2[0];
+            path.push([cx, cy]);
+            visited[cy * w + cx] = 1;
+            if (countN(cx, cy) >= 3) break;
+          }
+          if (path.length >= 2) paths.push(path);
+          ns = getUnvisitedNeighbors(x, y);
+        }
+      }
+    }
+  }
+
+  // Pass 3 : tout pixel restant (= boucles fermées sans endpoint)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (skeleton[idx] !== 1 || visited[idx]) continue;
+      const path = followFrom(x, y);
+      if (path.length >= 2) paths.push(path);
+    }
+  }
+
+  return paths;
+}
+
+/** Simplification Douglas-Peucker d'une polyline : enlève les points proches d'une ligne droite. */
+function douglasPeucker(points, epsilon) {
+  if (points.length < 3) return points;
+  let maxDist = 0, maxIdx = 0;
+  const [x1, y1] = points[0];
+  const [xN, yN] = points[points.length - 1];
+  for (let i = 1; i < points.length - 1; i++) {
+    const [x, y] = points[i];
+    // Distance perpendiculaire au segment (x1,y1)-(xN,yN)
+    const num = Math.abs((yN - y1) * x - (xN - x1) * y + xN * y1 - yN * x1);
+    const den = Math.hypot(yN - y1, xN - x1);
+    const d = den > 0 ? num / den : 0;
+    if (d > maxDist) { maxDist = d; maxIdx = i; }
+  }
+  if (maxDist > epsilon) {
+    const left = douglasPeucker(points.slice(0, maxIdx + 1), epsilon);
+    const right = douglasPeucker(points.slice(maxIdx), epsilon);
+    return left.slice(0, -1).concat(right);
+  }
+  return [points[0], points[points.length - 1]];
 }
 
 /** Squelettisation Zhang-Suen : réduit chaque trait foreground à 1 pixel d'épaisseur.
