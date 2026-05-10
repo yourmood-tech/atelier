@@ -201,9 +201,10 @@
       <label style="margin-top:0.6rem;">Filtrer les traits courts (bruit)</label>
       <select id="min-length" onchange="if(imageDataUrl) vectoriserPreview()">
         <option value="0">Garder tout</option>
-        <option value="5">Min 5 px (filtre léger)</option>
-        <option value="10" selected>Min 10 px — recommandé</option>
-        <option value="20">Min 20 px (très simplifié)</option>
+        <option value="5">Min 5 px</option>
+        <option value="10">Min 10 px</option>
+        <option value="20" selected>Min 20 px — recommandé</option>
+        <option value="35">Min 35 px (très simplifié)</option>
       </select>
     </div>
   </div>
@@ -485,17 +486,36 @@ function extractPathsFromSkeleton(skeleton, w, h) {
     return ns;
   }
 
-  function followFrom(x, y) {
+  /** Suit le squelette en privilégiant la continuité de direction. */
+  function followFrom(x, y, initDir) {
     const path = [[x, y]];
     visited[y * w + x] = 1;
+    let prevDir = initDir || null;
     while (true) {
       const ns = getUnvisitedNeighbors(x, y);
       if (ns.length === 0) break;
-      [x, y] = ns[0];
+      let next;
+      if (prevDir && ns.length > 1) {
+        // Choisir le voisin le plus aligné avec la direction précédente
+        let bestScore = -Infinity;
+        for (const c of ns) {
+          const dx = c[0] - x;
+          const dy = c[1] - y;
+          const len = Math.hypot(dx, dy);
+          const dot = (dx * prevDir[0] + dy * prevDir[1]) / (len * Math.hypot(prevDir[0], prevDir[1]) + 0.001);
+          if (dot > bestScore) { bestScore = dot; next = c; }
+        }
+      } else {
+        next = ns[0];
+      }
+      const ndx = next[0] - x;
+      const ndy = next[1] - y;
+      prevDir = [ndx, ndy];
+      [x, y] = next;
       path.push([x, y]);
       visited[y * w + x] = 1;
-      // Si on arrive à une jonction, arrêter (les autres branches seront traitées séparément)
-      if (countN(x, y) > 2) break;
+      // À une jonction, ne PAS s'arrêter — continuer dans la direction principale
+      // (les branches divergentes seront prises lors du Pass 2)
     }
     return path;
   }
@@ -512,29 +532,22 @@ function extractPathsFromSkeleton(skeleton, w, h) {
     }
   }
 
-  // Pass 2 : démarrer depuis les jonctions (3+ voisins) — chaque branche
+  // Pass 2 : démarrer depuis les jonctions (3+ voisins) — chaque branche dans sa direction
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const idx = y * w + x;
       if (skeleton[idx] !== 1 || visited[idx]) continue;
       if (countN(x, y) >= 3) {
         visited[idx] = 1;
-        // Démarrer une branche par voisin non-visité
         let ns = getUnvisitedNeighbors(x, y);
         while (ns.length > 0) {
           const [nx, ny] = ns[0];
-          const path = [[x, y], [nx, ny]];
+          const initDir = [nx - x, ny - y];
           visited[ny * w + nx] = 1;
-          let cx = nx, cy = ny;
-          while (true) {
-            const ns2 = getUnvisitedNeighbors(cx, cy);
-            if (ns2.length === 0) break;
-            [cx, cy] = ns2[0];
-            path.push([cx, cy]);
-            visited[cy * w + cx] = 1;
-            if (countN(cx, cy) >= 3) break;
-          }
-          if (path.length >= 2) paths.push(path);
+          const sub = followFrom(nx, ny, initDir);
+          // Préfixer avec le pixel de jonction
+          sub.unshift([x, y]);
+          if (sub.length >= 2) paths.push(sub);
           ns = getUnvisitedNeighbors(x, y);
         }
       }
