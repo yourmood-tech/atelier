@@ -297,7 +297,8 @@
     </div>
     <label style="margin-top:0.5rem;">Un message pour l'équipe ? (optionnel)</label>
     <textarea id="cli-message" rows="2" placeholder="ex : c'est pour notre anniversaire de mariage…" style="width:100%;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;"></textarea>
-    <button onclick="envoyerDemande()" style="margin-top:0.8rem;width:100%;padding:0.7rem;font-size:0.95rem;">✉️ Envoyer ma demande à Mood</button>
+    <button onclick="acheterSurShopify()" style="margin-top:0.8rem;width:100%;padding:0.9rem;font-size:1rem;background:var(--or);font-weight:600;">🛒 Acheter sur yourmood.net</button>
+    <button onclick="envoyerDemande()" class="outline" style="margin-top:0.4rem;width:100%;padding:0.6rem;font-size:0.85rem;">ou envoyer ma demande à l'équipe (devis sur mesure)</button>
     <div class="erreur hidden" id="erreur" style="margin-top:0.5rem;"></div>
     <div class="info hidden" id="confirmation" style="margin-top:0.5rem;color:var(--vert);font-size:0.9rem;font-weight:500;text-align:center;"></div>
   </div>
@@ -1396,6 +1397,56 @@ function genererSvgFinal() {
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${H + 4}">
 ${body}
 </svg>`;
+}
+
+async function acheterSurShopify() {
+  const erreurEl = document.getElementById('erreur');
+  const okEl = document.getElementById('confirmation');
+  erreurEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  const prenom = document.getElementById('cli-prenom').value.trim();
+  const email = document.getElementById('cli-email').value.trim();
+  const tel = document.getElementById('cli-tel').value.trim();
+  const message = document.getElementById('cli-message').value.trim();
+  const format = document.getElementById('format').value;
+  const taille = document.getElementById('taille').value;
+
+  if (!prenom || !email) {
+    erreurEl.textContent = 'Merci de renseigner ton prénom et ton email avant de passer à l\'achat.';
+    erreurEl.classList.remove('hidden');
+    return;
+  }
+  if (elements.length === 0) {
+    erreurEl.textContent = 'Ajoute au moins un élément (empreinte, texte, dessin ou symbole) sur ta bague avant de passer à l\'achat.';
+    erreurEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Préparation de ton panier…'; }
+
+  try {
+    const svg = genererSvgFinal();
+    const r = await fetch('/api/creer-cart-shopify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prenom, email, tel, message,
+        format, taille,
+        couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom,
+        svg, nbElements: elements.length,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.cartUrl) throw new Error(data.error || `Réponse ${r.status}`);
+    // Redirection vers le cart Shopify pré-rempli
+    window.location.href = data.cartUrl;
+  } catch (e) {
+    erreurEl.textContent = 'Erreur lors de la préparation du panier : ' + e.message + '. Tu peux aussi envoyer ta demande à l\'équipe ci-dessous.';
+    erreurEl.classList.remove('hidden');
+    if (btn) { btn.disabled = false; btn.textContent = '🛒 Acheter sur yourmood.net'; }
+  }
 }
 
 async function envoyerDemande() {
