@@ -602,14 +602,17 @@ function init3D() {
   container.innerHTML = '';
   container.appendChild(renderer3D.domElement);
 
-  // Lights : ambient + 2 directionnelles pour effet métal
-  scene3D.add(new THREE.AmbientLight(0xffffff, 0.65));
-  const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
+  // Lights généreuses pour rendu clair (pas trop sombre)
+  scene3D.add(new THREE.AmbientLight(0xffffff, 1.3));
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.6);
   dir1.position.set(3, 4, 5);
   scene3D.add(dir1);
   const dir2 = new THREE.DirectionalLight(0xffffff, 0.4);
   dir2.position.set(-3, 2, 3);
   scene3D.add(dir2);
+  const dir3 = new THREE.DirectionalLight(0xffffff, 0.3);
+  dir3.position.set(0, -3, 4);
+  scene3D.add(dir3);
 
   // Drag to rotate
   let dragStart = null, ringRotStart = 0;
@@ -707,8 +710,8 @@ async function majApercu3D() {
 
   const material = new THREE.MeshStandardMaterial({
     map: texture,
-    metalness: 0.55,
-    roughness: 0.45,
+    metalness: 0.15,    // peu de métal → la couleur reste vive
+    roughness: 0.65,    // mat doux
     side: THREE.DoubleSide,
   });
 
