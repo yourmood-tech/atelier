@@ -216,6 +216,12 @@
         <option value="20" selected>Min 20 px — recommandé</option>
         <option value="35">Min 35 px (très simplifié)</option>
       </select>
+
+      <label style="margin-top:0.8rem;display:flex;align-items:center;gap:0.4rem;font-weight:500;cursor:pointer;">
+        <input type="checkbox" id="enhance" checked onchange="if(imageDataUrl) vectoriserPreview()" style="width:auto;margin:0;">
+        ✨ Améliorer la qualité de l'image avant vectorisation
+      </label>
+      <div class="info">Applique auto-contraste + netteté + anti-bruit. Recommandé pour scans flous ou peu contrastés.</div>
     </div>
   </div>
 </div>
@@ -320,7 +326,12 @@ async function vectoriserPreview() {
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, w, h);
-    const imageData = ctx.getImageData(0, 0, w, h);
+    let imageData = ctx.getImageData(0, 0, w, h);
+
+    // 1.5 (NOUVEAU) Pré-traitement : auto-contraste + sharpen + filtre médian
+    if (document.getElementById('enhance')?.checked) {
+      imageData = enhanceImage(imageData, w, h);
+    }
 
     // 2. Niveaux de gris + threshold Otsu
     const binary = thresholdOtsu(imageData, w, h);
@@ -396,6 +407,69 @@ async function vectoriserPreview() {
     previewZone.innerHTML = `<div class="erreur" style="padding:1rem;">Erreur : ${e.message}</div>`;
     console.error(e);
   }
+}
+
+/** Améliore la qualité d'une image pour la vectorisation :
+ *  1. Convertit en niveaux de gris
+ *  2. Étire le contraste (auto-levels)
+ *  3. Applique un filtre médian 3x3 (anti-bruit)
+ *  4. Sharpening léger (kernel 3x3)
+ *  Retourne nouveau ImageData.
+ */
+function enhanceImage(imageData, w, h) {
+  const src = imageData.data;
+  // 1. Niveaux de gris
+  const gray = new Uint8Array(w * h);
+  for (let i = 0; i < gray.length; i++) {
+    gray[i] = Math.round(0.299 * src[i*4] + 0.587 * src[i*4+1] + 0.114 * src[i*4+2]);
+  }
+  // 2. Auto-contraste : trouve min/max et étire
+  let min = 255, max = 0;
+  for (let i = 0; i < gray.length; i++) { if (gray[i] < min) min = gray[i]; if (gray[i] > max) max = gray[i]; }
+  const range = max - min || 1;
+  for (let i = 0; i < gray.length; i++) {
+    gray[i] = Math.round(((gray[i] - min) / range) * 255);
+  }
+  // 3. Filtre médian 3x3 (anti-bruit ponctuel)
+  const med = new Uint8Array(gray.length);
+  const window = new Array(9);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (y === 0 || y === h-1 || x === 0 || x === w-1) {
+        med[y*w + x] = gray[y*w + x];
+        continue;
+      }
+      let k = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          window[k++] = gray[(y+dy)*w + (x+dx)];
+        }
+      }
+      window.sort((a, b) => a - b);
+      med[y*w + x] = window[4];
+    }
+  }
+  // 4. Sharpening léger : kernel [[0,-1,0],[-1,5,-1],[0,-1,0]]
+  const sharp = new Uint8Array(med.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (y === 0 || y === h-1 || x === 0 || x === w-1) {
+        sharp[y*w + x] = med[y*w + x];
+        continue;
+      }
+      let v = 5 * med[y*w + x]
+            - med[(y-1)*w + x] - med[(y+1)*w + x]
+            - med[y*w + x-1] - med[y*w + x+1];
+      if (v < 0) v = 0; if (v > 255) v = 255;
+      sharp[y*w + x] = v;
+    }
+  }
+  // Reconstruire ImageData
+  const out = new ImageData(w, h);
+  for (let i = 0; i < sharp.length; i++) {
+    out.data[i*4] = sharp[i]; out.data[i*4+1] = sharp[i]; out.data[i*4+2] = sharp[i]; out.data[i*4+3] = 255;
+  }
+  return out;
 }
 
 /** Threshold Otsu : trouve le seuil optimal pour binariser une image en niveaux de gris.
