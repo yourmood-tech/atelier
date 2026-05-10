@@ -299,6 +299,14 @@ setTimeout(() => {
   genererFiltresCouleurs();
   genererSelecteurCouleurs();
   // Pas de filtre par défaut : les photos sont déjà en lilas cashmere (couleur par défaut)
+  // Précharger les 48 photos en cache navigateur (4 formats × 12 couleurs)
+  Object.keys(PHOTOS_DISPO).forEach(fmt => {
+    const photos = PHOTOS_DISPO[fmt];
+    Object.keys(photos).forEach(cId => {
+      const img = new Image();
+      img.src = `/aluminium/${fmt}/${cId}.${photos[cId]}`;
+    });
+  });
 }, 0);
 
 function majDimensions() {
@@ -590,7 +598,7 @@ function genererSelecteurCouleurs() {
     // Photo native = pas de filtre. Sinon = photo lilas teintée par filter (sauf si on est déjà sur lilas).
     const filtre = native || c.id === 'lilas-cashmere' ? '' : `style="filter:url(#tint-${c.id});"`;
     return `<button type="button" class="couleur-btn ${c.id === couleurChoisie.id ? 'active' : ''}" data-couleur="${c.id}" title="${c.nom}" onclick="choisirCouleur('${c.id}')">
-      <img src="${url}" alt="${c.nom}" loading="lazy" ${filtre}>
+      <img src="${url}" alt="${c.nom}" ${filtre}>
     </button>`;
   }).join('');
 }
