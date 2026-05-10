@@ -6,6 +6,7 @@
 <title>Crée ta bague — Mood Collection</title>
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <style>
   :root { --or:#c9a96e; --noir:#1a1a1a; --gris:#6b6b6b; --gris-clair:#f5f5f5; --vert:#2d8a4e; --rouge:#c0392b; --bleu:#2563eb; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,12 +57,8 @@
   .canvas-info { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; text-align: center; }
   .canvas-zone { overflow: hidden; }
   button.outline.mode-actif { background: var(--or); color: white; border-color: var(--or); }
-  .apercu-3d-wrapper { display: flex; justify-content: center; }
-  .apercu-3d { position: relative; width: 100%; max-width: 400px; aspect-ratio: 1; }
-  .apercu-3d img { width: 100%; height: 100%; object-fit: contain; display: block; }
-  .apercu-overlay-wrapper { position: absolute; inset: 0; pointer-events: none; }
-  .apercu-overlay { position: absolute; overflow: hidden; }
-  .apercu-overlay svg { display: block; height: 100%; }
+  #apercu-3d-container canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
+  #apercu-3d-container canvas:active { cursor: grabbing; }
   .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; touch-action: manipulation; }
   .editor-svg .element { cursor: move; }
   .editor-svg .element.selected { outline: 2px dashed var(--bleu); outline-offset: 4px; }
@@ -257,16 +254,9 @@
   <!-- APERÇU RÉALISTE 3D -->
   <div class="card">
     <h2>🔄 Aperçu réaliste sur ta bague</h2>
-    <p class="info" style="margin-bottom:0.6rem;">Voici comment ta gravure apparaîtra sur la bague. Glisse le curseur ou clique le bouton pour la faire tourner.</p>
-    <div class="apercu-3d-wrapper">
-      <div class="apercu-3d" id="apercu-3d">
-        <img id="apercu-photo" alt="Aperçu bague">
-        <div class="apercu-overlay-wrapper">
-          <div class="apercu-overlay" id="apercu-overlay">
-            <svg id="apercu-svg" preserveAspectRatio="none"></svg>
-          </div>
-        </div>
-      </div>
+    <p class="info" style="margin-bottom:0.6rem;">Voici ta bague gravée en 3D. Glisse le curseur ou clique le bouton pour la faire tourner.</p>
+    <div id="apercu-3d-wrapper" style="display:flex;justify-content:center;background:#fafafa;border-radius:12px;padding:1rem;">
+      <div id="apercu-3d-container" style="width:100%;max-width:420px;aspect-ratio:1;"></div>
     </div>
     <input type="range" id="apercu-rotation" min="0" max="360" value="0" step="1" style="width:100%;margin-top:0.8rem;" oninput="rotateApercu(this.value)">
     <button class="outline" onclick="animerRotation()" style="width:100%;margin-top:0.4rem;">▶ Faire tourner la bague (360°)</button>
@@ -585,101 +575,165 @@ const SYMBOLES = {
   note: 'M -1 -7 L 4 -7 L 4 3 C 4 5, 2 6, 0 6 C -2 6, -4 5, -4 3 C -4 1, -2 0, 0 0 C 1 0, 2 0.5, 2 1 L 2 -5 L -1 -5 Z',
 };
 
-// ============ APERÇU 3D RÉALISTE ============
-// Position de la zone gravable visible sur chaque photo (en % de la photo)
-// La face avant de la bague représente ~33% de sa circonférence (360° / ~100° visibles)
-const ZONES_GRAVABLES = {
-  'addon':     { x: 31, y: 32, w: 38, h: 42 }, // bague large 7mm
-  '2-3':       { x: 33, y: 33, w: 35, h: 32 }, // 4.6mm
-  'medium':    { x: 35, y: 36, w: 32, h: 24 }, // 2.3mm fine
-  'open-mood': { x: 28, y: 28, w: 42, h: 50 }, // 10mm très large
-};
+// ============ APERÇU 3D RÉALISTE (Three.js) ============
+let scene3D, camera3D, renderer3D, ringMesh, animationLoopId = null;
+let autoRotation = false;
 let rotationApercu = 0;
 let animationApercuId = null;
 
-function majApercu3D() {
-  // Protection TDZ : PHOTOS_DISPO et COULEURS peuvent être en TDZ au tout premier appel
-  let photosMap;
-  try { photosMap = PHOTOS_DISPO; } catch (e) { return; }
-  if (!photosMap) return;
+function init3D() {
+  if (typeof THREE === 'undefined') return;
+  const container = document.getElementById('apercu-3d-container');
+  if (!container || scene3D) return;
 
-  const photoEl = document.getElementById('apercu-photo');
-  const svgEl = document.getElementById('apercu-svg');
-  const overlay = document.getElementById('apercu-overlay');
-  if (!photoEl || !svgEl || !overlay) return;
+  const w = container.clientWidth || 400;
+  const h = container.clientHeight || 400;
 
-  const fmt = document.getElementById('format')?.value;
-  if (!fmt) return;
-  const photos = photosMap[fmt] || {};
-  const ext = photos[couleurChoisie?.id];
-  if (!ext) return;
-  photoEl.src = `/aluminium/${fmt}/${couleurChoisie.id}.${ext}`;
+  scene3D = new THREE.Scene();
+  scene3D.background = null;
 
-  // Positionner l'overlay sur la zone gravable visible
-  const zone = ZONES_GRAVABLES[fmt];
-  overlay.style.left = zone.x + '%';
-  overlay.style.top = zone.y + '%';
-  overlay.style.width = zone.w + '%';
-  overlay.style.height = zone.h + '%';
+  camera3D = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+  camera3D.position.set(0, 1.5, 7);
+  camera3D.lookAt(0, 0, 0);
 
-  // SVG du design : on étire à 3x la largeur visible (la bague fait ~3x la face visible)
-  // On utilise un viewBox plus large que la circonférence pour permettre la rotation translateX
-  const W = viewLongueur, H = viewLargeur;
-  // viewBox horizontal = 3 × W pour permettre 360° de rotation en translateX
-  // On affiche initialement la zone centrale [W..2W]
-  svgEl.setAttribute('viewBox', `0 0 ${W * 3} ${H}`);
-  svgEl.style.width = '300%';
+  renderer3D = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer3D.setSize(w, h);
+  renderer3D.setPixelRatio(window.devicePixelRatio);
+  container.innerHTML = '';
+  container.appendChild(renderer3D.domElement);
 
-  // Rendre le design 3 fois (gauche, centre, droite) pour effet enroulé continu
-  let html = '';
-  for (const offsetX of [0, W, W * 2]) {
-    html += `<g transform="translate(${offsetX} 0)">`;
-    html += `<rect x="0" y="0" width="${W}" height="${H}" fill="${couleurChoisie.hex}" />`;
-    for (const el of elements) html += elementSvg(el, false);
-    html += `</g>`;
+  // Lights : ambient + 2 directionnelles pour effet métal
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.65));
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir1.position.set(3, 4, 5);
+  scene3D.add(dir1);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.4);
+  dir2.position.set(-3, 2, 3);
+  scene3D.add(dir2);
+
+  // Drag to rotate
+  let dragStart = null, ringRotStart = 0;
+  renderer3D.domElement.addEventListener('mousedown', e => {
+    dragStart = e.clientX;
+    ringRotStart = ringMesh ? ringMesh.rotation.y : 0;
+    autoRotation = false;
+  });
+  window.addEventListener('mousemove', e => {
+    if (dragStart === null || !ringMesh) return;
+    ringMesh.rotation.y = ringRotStart + (e.clientX - dragStart) * 0.01;
+  });
+  window.addEventListener('mouseup', () => { dragStart = null; });
+  // Touch support
+  renderer3D.domElement.addEventListener('touchstart', e => {
+    if (e.touches[0]) { dragStart = e.touches[0].clientX; ringRotStart = ringMesh ? ringMesh.rotation.y : 0; autoRotation = false; }
+  });
+  window.addEventListener('touchmove', e => {
+    if (dragStart === null || !ringMesh || !e.touches[0]) return;
+    ringMesh.rotation.y = ringRotStart + (e.touches[0].clientX - dragStart) * 0.01;
+  });
+  window.addEventListener('touchend', () => { dragStart = null; });
+
+  // Resize
+  window.addEventListener('resize', () => {
+    const nw = container.clientWidth, nh = container.clientHeight;
+    if (nw && nh) renderer3D.setSize(nw, nh);
+  });
+
+  // Loop
+  function loop() {
+    animationLoopId = requestAnimationFrame(loop);
+    if (autoRotation && ringMesh) ringMesh.rotation.y += 0.008;
+    renderer3D.render(scene3D, camera3D);
   }
-  svgEl.innerHTML = html;
-
-  // Appliquer la rotation
-  appliquerRotationApercu();
+  loop();
 }
 
-function appliquerRotationApercu() {
-  const svgEl = document.getElementById('apercu-svg');
-  if (!svgEl) return;
-  // Rotation 0° → le design centré (translateX = -33.3%, montre la zone [W..2W])
-  // Rotation 360° → un tour complet (translateX = -33.3% - 33.3% = -66.6%)
-  const offset = -33.333 - (rotationApercu / 360) * 33.333;
-  svgEl.style.transform = `translateX(${offset}%)`;
+// Construit la texture de la bague (canvas 2D combinant couleur + design SVG)
+async function genererTextureBague() {
+  if (!couleurChoisie) return null;
+  const W = viewLongueur || 67.19, H = viewLargeur || 4.6;
+  // Texture haute résolution pour qualité de rendu
+  const PX_PAR_MM = 30;
+  const tw = Math.round(W * PX_PAR_MM);
+  const th = Math.round(H * PX_PAR_MM);
+  const canvas = document.createElement('canvas');
+  canvas.width = tw;
+  canvas.height = th;
+  const ctx = canvas.getContext('2d');
+  // Fond couleur aluminium
+  ctx.fillStyle = couleurChoisie.hex;
+  ctx.fillRect(0, 0, tw, th);
+  // Léger bruit pour texture aluminium brossé
+  const grain = ctx.createLinearGradient(0, 0, 0, th);
+  grain.addColorStop(0, 'rgba(255,255,255,0.08)');
+  grain.addColorStop(0.5, 'rgba(0,0,0,0)');
+  grain.addColorStop(1, 'rgba(0,0,0,0.08)');
+  ctx.fillStyle = grain;
+  ctx.fillRect(0, 0, tw, th);
+
+  // Construire le SVG des éléments en string
+  let svgInner = '';
+  for (const el of elements) svgInner += elementSvg(el, false);
+  if (!svgInner) return canvas;
+
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${tw}" height="${th}">${svgInner}</svg>`;
+  const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  ctx.drawImage(img, 0, 0, tw, th);
+  URL.revokeObjectURL(url);
+  return canvas;
+}
+
+async function majApercu3D() {
+  let photosMap;
+  try { photosMap = PHOTOS_DISPO; } catch (e) { return; }
+  if (!photosMap || typeof THREE === 'undefined') return;
+  if (!scene3D) init3D();
+  if (!scene3D) return;
+
+  const W = viewLongueur || 67.19, H = viewLargeur || 4.6;
+  // Rayon = circonférence / 2π
+  const rayon = W / (2 * Math.PI) / 8; // div 8 pour adapter à l'échelle de la scène
+  const hauteur = H / 8;
+
+  const canvas = await genererTextureBague();
+  if (!canvas) return;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.anisotropy = 16;
+  texture.needsUpdate = true;
+
+  const material = new THREE.MeshStandardMaterial({
+    map: texture,
+    metalness: 0.55,
+    roughness: 0.45,
+    side: THREE.DoubleSide,
+  });
+
+  // Recréer le mesh avec les bonnes dimensions
+  if (ringMesh) {
+    scene3D.remove(ringMesh);
+    ringMesh.geometry.dispose();
+    if (ringMesh.material.map) ringMesh.material.map.dispose();
+    ringMesh.material.dispose();
+  }
+  const geometry = new THREE.CylinderGeometry(rayon, rayon, hauteur, 96, 1, true);
+  ringMesh = new THREE.Mesh(geometry, material);
+  // Inclinaison légère pour vue 3/4
+  ringMesh.rotation.x = 0.15;
+  scene3D.add(ringMesh);
 }
 
 function rotateApercu(value) {
   rotationApercu = +value;
-  appliquerRotationApercu();
+  if (ringMesh) ringMesh.rotation.y = (rotationApercu / 180) * Math.PI;
+  autoRotation = false;
 }
 
 function animerRotation() {
-  if (animationApercuId) {
-    clearInterval(animationApercuId);
-    animationApercuId = null;
-    return;
-  }
-  const slider = document.getElementById('apercu-rotation');
-  let start = +slider.value;
-  let t = 0;
-  const dur = 5000; // 5s pour un tour
-  const startTime = Date.now();
-  animationApercuId = setInterval(() => {
-    t = (Date.now() - startTime) / dur;
-    if (t >= 1) {
-      clearInterval(animationApercuId);
-      animationApercuId = null;
-      slider.value = (start + 360) % 360;
-    } else {
-      slider.value = (start + t * 360) % 360;
-    }
-    rotateApercu(slider.value);
-  }, 30);
+  autoRotation = !autoRotation;
 }
 
 // ============ COULEURS ALUMINIUM ============
