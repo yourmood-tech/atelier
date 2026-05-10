@@ -203,6 +203,58 @@
     font-weight: 600;
   }
   .product-card-image .ventes-pct { color: white; }
+
+  /* Jauge progression étape (1-9) */
+  .etape-jauge {
+    width: 100%;
+    height: 4px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 3px;
+  }
+  .etape-jauge-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s, background-color 0.3s;
+  }
+  .product-card-image .etape-jauge { background: rgba(255,255,255,0.4); }
+
+  /* Drag & drop */
+  .product-card { cursor: move; user-select: none; }
+  .product-card.dragging { opacity: 0.4; }
+  .day.drop-target { background: #fff8e7; border-color: var(--or); border-style: dashed; }
+
+  /* Récap hebdomadaire */
+  .recap-hebdo {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 0.6rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+  }
+  .recap-hebdo-title { font-weight: 600; color: var(--or); margin-bottom: 0.4rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .recap-table { width: 100%; border-collapse: collapse; }
+  .recap-table th, .recap-table td { padding: 0.2rem 0.4rem; text-align: right; font-size: 0.75rem; }
+  .recap-table th:first-child, .recap-table td:first-child { text-align: left; }
+  .recap-table thead th { border-bottom: 1px solid #e5e5e5; color: var(--gris); font-weight: 500; }
+  .recap-table .reste-vert { color: var(--vert); font-weight: 600; }
+  .recap-table .reste-rouge { color: var(--rouge); font-weight: 600; }
+  .recap-table .total-row { border-top: 1px solid var(--or); font-weight: 600; }
+
+  /* Récap mensuel */
+  .recap-mensuel {
+    background: linear-gradient(135deg, #fff8e7 0%, #fafafa 100%);
+    border: 1px solid var(--or);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  .recap-mensuel-title { font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+  .recap-totals { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .recap-total-item { font-size: 0.75rem; color: var(--gris); }
+  .recap-total-item strong { display: block; font-size: 1.1rem; color: var(--noir); }
   .image-zone {
     margin-top: 0.4rem;
     border: 1px dashed #ccc;
@@ -468,10 +520,34 @@ function rendreCalendrier() {
     const moisDiv = document.createElement('div');
     moisDiv.className = 'month';
 
+    // Récap mensuel : produits dont la date appartient à ce mois
+    const produitsDuMois = donnees.produits.filter(p => {
+      if (!p.date) return false;
+      const d = new Date(p.date + 'T00:00:00');
+      return d.getMonth() === mois && d.getFullYear() === annee;
+    });
+
     let html = `<div class="month-header">
       <div class="month-title">${NOMS_MOIS[mois]} ${annee}</div>
-    </div>
-    <div class="weeks">`;
+    </div>`;
+
+    if (produitsDuMois.length > 0) {
+      const totalObj = produitsDuMois.reduce((s, p) => s + (+p.objectifCA || 0), 0);
+      const totalVentes = produitsDuMois.reduce((s, p) => s + (+p.ventes || 0), 0);
+      const reste = totalObj - totalVentes;
+      const pctMois = totalObj > 0 ? Math.round((totalVentes / totalObj) * 100) : 0;
+      html += `<div class="recap-mensuel">
+        <div class="recap-mensuel-title">📊 Bilan ${NOMS_MOIS[mois]} ${annee}</div>
+        <div class="recap-totals">
+          <div class="recap-total-item">Objectif total<strong>${totalObj.toLocaleString('fr-CH')}.- CHF</strong></div>
+          <div class="recap-total-item">Réalisé<strong>${totalVentes.toLocaleString('fr-CH')}.- CHF (${pctMois}%)</strong></div>
+          <div class="recap-total-item">${reste >= 0 ? 'Manque' : 'Dépassement'}<strong style="color:${reste >= 0 ? 'var(--rouge)' : 'var(--vert)'}">${Math.abs(reste).toLocaleString('fr-CH')}.- CHF</strong></div>
+          <div class="recap-total-item">Nouveautés<strong>${produitsDuMois.length}</strong></div>
+        </div>
+      </div>`;
+    }
+
+    html += `<div class="weeks">`;
 
     for (const sem of semaines) {
       const debutDate = new Date(sem.debut + 'T00:00:00');
@@ -492,31 +568,49 @@ function rendreCalendrier() {
           const cardStyle = hasImage
             ? `style="background-image:url('${p.image}');background-size:cover;background-position:center;min-height:100px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.7);"`
             : '';
+          // Jauge étape (progression 1-9)
+          const etape = p.etape || 1;
+          const etapePct = Math.round((etape / 9) * 100);
+          // Couleur jauge étape : du gris (1) au vert (9)
+          const palette = ['#94a3b8','#60a5fa','#f59e0b','#fbbf24','#f97316','#84cc16','#22c55e','#16a34a','#15803d'];
+          const etapeColor = palette[etape - 1] || palette[0];
+          const etapeJaugeHtml = `<div class="etape-jauge"><div class="etape-jauge-fill" style="width:${etapePct}%;background:${etapeColor};"></div></div>`;
           // Jauge ventes
-          let jaugeHtml = '';
+          let ventesJaugeHtml = '';
           if (p.objectifCA && p.objectifCA > 0) {
             const ventes = +p.ventes || 0;
             const pct = Math.min(100, Math.round((ventes / p.objectifCA) * 100));
             const cls = pct >= 90 ? 'jauge-vert' : pct >= 50 ? 'jauge-orange' : 'jauge-rouge';
-            jaugeHtml = `<div class="ventes-jauge"><div class="ventes-jauge-fill ${cls}" style="width:${pct}%;"></div></div>
+            ventesJaugeHtml = `<div class="ventes-jauge"><div class="ventes-jauge-fill ${cls}" style="width:${pct}%;"></div></div>
               <div class="ventes-pct">${ventes.toLocaleString('fr-CH')}.- / ${p.objectifCA.toLocaleString('fr-CH')}.- (${pct}%)</div>`;
           }
-          cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
+          cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
-            <div class="product-name">${p.nom}${jaugeHtml}</div>
+            <div class="product-name">${p.nom}${etapeJaugeHtml}${ventesJaugeHtml}</div>
           </div>`;
         }
 
-        joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}">
+        joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}" data-day="${jourISO}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${jourISO}')">
           <div class="day-header"><span class="day-name">${nomJour}</span><span class="day-number">${numJour}</span></div>
           <div class="day-content">${cardsHtml}</div>
           <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')">+</button>
         </div>`;
       }
 
+      // Récap hebdomadaire (objectifs + ventes des produits de la semaine)
+      const debutSem = new Date(sem.debut + 'T00:00:00');
+      const finSem = new Date(debutSem); finSem.setDate(finSem.getDate() + 7);
+      const produitsDeSemaine = donnees.produits.filter(p => {
+        if (!p.date) return false;
+        const d = new Date(p.date + 'T00:00:00');
+        return d >= debutSem && d < finSem;
+      });
+      const recapHebdoHtml = construireRecap(produitsDeSemaine, `Semaine ${sem.label}`);
+
       html += `<div class="week">
         <div class="week-header">${sem.label}</div>
         <div class="week-days">${joursHtml}</div>
+        ${recapHebdoHtml}
       </div>`;
     }
 
@@ -855,6 +949,81 @@ function ajouterIdeeAuPlanning(idee) {
   sauverDonnees();
   rendreCalendrier();
   fermerBrainstorm();
+}
+
+// ============ DRAG & DROP ============
+let dragProductId = null;
+
+function onDragStart(e, productId) {
+  dragProductId = productId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', productId);
+  e.target.classList.add('dragging');
+  e.stopPropagation();
+}
+
+function onDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.day.drop-target').forEach(d => d.classList.remove('drop-target'));
+  dragProductId = null;
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drop-target');
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drop-target');
+}
+
+function onDrop(e, jourISO) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+  const id = e.dataTransfer.getData('text/plain') || dragProductId;
+  if (!id) return;
+  const p = donnees.produits.find(x => x.id === id);
+  if (!p) return;
+  if (p.date === jourISO) return;  // pas de changement
+  p.date = jourISO;
+  p.majAt = new Date().toISOString();
+  sauverDonnees();
+  rendreCalendrier();
+}
+
+// ============ RÉCAP HEBDOMADAIRE ============
+function construireRecap(produits, label) {
+  if (!produits || produits.length === 0) return '';
+  const totalObj = produits.reduce((s, p) => s + (+p.objectifCA || 0), 0);
+  const totalVentes = produits.reduce((s, p) => s + (+p.ventes || 0), 0);
+  if (totalObj === 0 && totalVentes === 0) return '';
+  const reste = totalObj - totalVentes;
+  let html = `<div class="recap-hebdo"><div class="recap-hebdo-title">📋 Récap ${escapeHtml(label)}</div>
+    <table class="recap-table">
+      <thead><tr><th>Produit</th><th>Objectif</th><th>Fait</th><th>Reste</th></tr></thead>
+      <tbody>`;
+  for (const p of produits) {
+    const obj = +p.objectifCA || 0;
+    const fait = +p.ventes || 0;
+    const r = obj - fait;
+    if (obj === 0 && fait === 0) continue;
+    const cls = r > 0 ? 'reste-rouge' : r < 0 ? 'reste-vert' : '';
+    html += `<tr>
+      <td>${escapeHtml(p.nom)}</td>
+      <td>${obj > 0 ? obj.toLocaleString('fr-CH') + '.-' : '—'}</td>
+      <td>${fait > 0 ? fait.toLocaleString('fr-CH') + '.-' : '—'}</td>
+      <td class="${cls}">${r !== 0 ? (r > 0 ? r : -r).toLocaleString('fr-CH') + '.-' : '0'}</td>
+    </tr>`;
+  }
+  html += `<tr class="total-row">
+    <td>TOTAL</td>
+    <td>${totalObj.toLocaleString('fr-CH')}.-</td>
+    <td>${totalVentes.toLocaleString('fr-CH')}.-</td>
+    <td class="${reste > 0 ? 'reste-rouge' : 'reste-vert'}">${(reste >= 0 ? reste : -reste).toLocaleString('fr-CH')}.-</td>
+  </tr>`;
+  html += '</tbody></table></div>';
+  return html;
 }
 
 document.getElementById('annee').addEventListener('change', rendreCalendrier);
