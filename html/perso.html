@@ -27,7 +27,8 @@
   .erreur { color: var(--rouge); font-size: 0.8rem; margin-top: 0.4rem; }
   .canvas-zone { background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .canvas-info { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; text-align: center; }
-  .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; width: 100%; height: auto; }
+  .canvas-zone { overflow-x: auto; }
+  .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; }
   .editor-svg .element { cursor: move; }
   .editor-svg .element.selected { outline: 2px dashed var(--bleu); outline-offset: 4px; }
   .toolbar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; justify-content: center; }
@@ -228,6 +229,11 @@ for (const t of Object.keys(LONGUEURS_TAILLES).sort((a,b)=>+a-+b)) {
 taillesSelect.value = '54';
 document.getElementById('format').value = '2-3';
 majDimensions();
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(rendreCanvas, 150);
+});
 genererIcones();
 
 function majDimensions() {
@@ -339,9 +345,13 @@ function rendreCanvas() {
   const W = viewLongueur, H = viewLargeur;
   const margin = 1;
   svg.setAttribute('viewBox', `${-margin} ${-margin} ${W + 2*margin} ${H + 2*margin}`);
-  svg.removeAttribute('width');
-  svg.removeAttribute('height');
-  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  // Calcul dynamique : la bague occupe toute la largeur dispo (avec mini 12px/mm)
+  const dispo = (svg.parentElement?.clientWidth || window.innerWidth - 600) - 16;
+  const scaleX = dispo / (W + 2*margin);
+  const scale = Math.max(scaleX, 12);
+  svg.setAttribute('width', (W + 2*margin) * scale);
+  svg.setAttribute('height', (H + 2*margin) * scale);
+  svg.style.maxWidth = 'none';
 
   let html = '';
   // Bordure (la bande)
