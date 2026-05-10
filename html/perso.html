@@ -241,46 +241,83 @@ function lireImage(f) {
 let vectorPaths = null;
 let vectorViewBox = null;
 
+/** Pipeline de vectorisation pour empreintes :
+ *  1. Image → grayscale + threshold (Otsu) → binaire
+ *  2. Squelettisation Zhang-Suen → lignes 1px d'épaisseur
+ *  3. Vectorisation via ImageTracer → paths SVG fins
+ */
 async function vectoriserPreview() {
   if (!imageDataUrl) return;
   const previewZone = document.getElementById('preview-vector');
-  previewZone.innerHTML = '<div class="info" style="padding:1rem;">⏳ Vectorisation en cours…</div>';
+  previewZone.innerHTML = '<div class="info" style="padding:1rem;">⏳ Vectorisation en cours… (threshold + squelettisation + tracing — peut prendre 5-15 sec)</div>';
   try {
+    // 1. Charger l'image dans un canvas
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageDataUrl; });
+    // Réduire la taille de travail pour aller plus vite
+    const maxSize = 600;
+    const scaleDown = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.round(img.naturalWidth * scaleDown);
+    const h = Math.round(img.naturalHeight * scaleDown);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const imageData = ctx.getImageData(0, 0, w, h);
+
+    // 2. Niveaux de gris + threshold Otsu
+    const binary = thresholdOtsu(imageData, w, h);
+
+    // 3. Squelettisation Zhang-Suen (pour empreintes)
+    const skeleton = zhangSuen(binary, w, h);
+
+    // 4. Reconstruire un canvas avec le squelette en blanc sur fond noir (ImageTracer aime bien)
+    const skelData = new ImageData(w, h);
+    for (let i = 0; i < skeleton.length; i++) {
+      const v = skeleton[i] === 1 ? 0 : 255;  // skeleton = 0 (noir), reste = 255 (blanc)
+      skelData.data[i * 4] = v;
+      skelData.data[i * 4 + 1] = v;
+      skelData.data[i * 4 + 2] = v;
+      skelData.data[i * 4 + 3] = 255;
+    }
+    const skelCanvas = document.createElement('canvas');
+    skelCanvas.width = w; skelCanvas.height = h;
+    skelCanvas.getContext('2d').putImageData(skelData, 0, 0);
+    const skelDataUrl = skelCanvas.toDataURL('image/png');
+
+    // 5. Vectoriser le squelette via ImageTracer
     const svgString = await new Promise((resolve, reject) => {
-      ImageTracer.imageToSVG(imageDataUrl, (svg) => resolve(svg), {
-        // Options pour empreintes : noir/blanc, traits fins
-        ltres: 1, qtres: 1, pathomit: 8,
+      ImageTracer.imageToSVG(skelDataUrl, (svg) => resolve(svg), {
+        ltres: 0.5, qtres: 0.5, pathomit: 4,
         rightangleenhance: false,
         colorsampling: 0,
         numberofcolors: 2,
         mincolorratio: 0,
-        colorquantcycles: 3,
+        colorquantcycles: 1,
         scale: 1,
         roundcoords: 1,
         viewbox: true,
+        strokewidth: 1,
+        linefilter: false,
       });
     });
-    // Extraire les paths du SVG résultant
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgString, 'image/svg+xml');
     const svgRoot = doc.querySelector('svg');
     vectorViewBox = svgRoot.getAttribute('viewBox') || `0 0 ${svgRoot.getAttribute('width')} ${svgRoot.getAttribute('height')}`;
-    // Garde uniquement les paths foncés (= empreinte)
     const paths = doc.querySelectorAll('path');
     const darkPaths = [];
     paths.forEach(p => {
       const fill = (p.getAttribute('fill') || '').toLowerCase();
-      // Estimer si dark (rgb low ou hex low)
       const m = fill.match(/^#([0-9a-f]{3,6})$/) || fill.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
       let isDark = false;
       if (fill === 'black' || fill === '#000' || fill === '#000000') isDark = true;
       else if (m) {
         let r, g, b;
         if (m[1] && m[1].length <= 6) {
-          // hex
-          let h = m[1];
-          if (h.length === 3) h = h.split('').map(c => c + c).join('');
-          r = parseInt(h.slice(0,2), 16); g = parseInt(h.slice(2,4), 16); b = parseInt(h.slice(4,6), 16);
+          let hh = m[1];
+          if (hh.length === 3) hh = hh.split('').map(c => c + c).join('');
+          r = parseInt(hh.slice(0,2), 16); g = parseInt(hh.slice(2,4), 16); b = parseInt(hh.slice(4,6), 16);
         } else {
           r = +m[1]; g = +m[2]; b = +m[3];
         }
@@ -289,18 +326,115 @@ async function vectoriserPreview() {
       if (isDark) darkPaths.push(p.getAttribute('d') || '');
     });
     vectorPaths = darkPaths.filter(Boolean);
-    // Preview (afficher juste l'empreinte vectorisée)
     if (vectorPaths.length === 0) {
-      previewZone.innerHTML = '<div class="erreur" style="padding:1rem;">Aucune ligne foncée détectée. L\'image est-elle assez contrastée ?</div>';
+      previewZone.innerHTML = '<div class="erreur" style="padding:1rem;">Aucune ligne détectée. Augmente le contraste de l\'image source.</div>';
       return;
     }
     const previewSvg = `<svg viewBox="${vectorViewBox}" style="max-height:200px;width:auto;">
-      ${vectorPaths.map(d => `<path d="${d}" fill="black"/>`).join('')}
-    </svg>`;
+      ${vectorPaths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1"/>`).join('')}
+    </svg>
+    <div class="info" style="margin-top:0.4rem;">${vectorPaths.length} traits vectorisés depuis squelette</div>`;
     previewZone.innerHTML = previewSvg;
   } catch (e) {
     previewZone.innerHTML = `<div class="erreur" style="padding:1rem;">Erreur : ${e.message}</div>`;
+    console.error(e);
   }
+}
+
+/** Threshold Otsu : trouve le seuil optimal pour binariser une image en niveaux de gris.
+ *  Retourne un Uint8Array binaire (1 = pixel sombre = empreinte, 0 = fond clair).
+ */
+function thresholdOtsu(imageData, w, h) {
+  // Histogramme niveaux de gris
+  const hist = new Array(256).fill(0);
+  const gray = new Uint8Array(w * h);
+  for (let i = 0; i < gray.length; i++) {
+    const r = imageData.data[i * 4];
+    const g = imageData.data[i * 4 + 1];
+    const b = imageData.data[i * 4 + 2];
+    const v = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    gray[i] = v;
+    hist[v]++;
+  }
+  const total = w * h;
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, max = 0, threshold = 0;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t];
+    if (wB === 0) continue;
+    const wF = total - wB;
+    if (wF === 0) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > max) { max = between; threshold = t; }
+  }
+  // Inversion : empreinte = pixels sombres = 1
+  const binary = new Uint8Array(gray.length);
+  for (let i = 0; i < gray.length; i++) binary[i] = gray[i] < threshold ? 1 : 0;
+  return binary;
+}
+
+/** Squelettisation Zhang-Suen : réduit chaque trait foreground à 1 pixel d'épaisseur.
+ *  Input : Uint8Array binaire (1 = foreground).
+ *  Output : Uint8Array même format mais squelettisé.
+ */
+function zhangSuen(input, w, h) {
+  const data = new Uint8Array(input);
+  let changed = true;
+  let iterations = 0;
+  const maxIter = 50;
+  while (changed && iterations < maxIter) {
+    iterations++;
+    changed = false;
+    // Pass 1
+    let toRemove = [];
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const idx = y * w + x;
+        if (data[idx] !== 1) continue;
+        const p2 = data[(y-1)*w + x],     p3 = data[(y-1)*w + x+1];
+        const p4 = data[y*w + x+1],       p5 = data[(y+1)*w + x+1];
+        const p6 = data[(y+1)*w + x],     p7 = data[(y+1)*w + x-1];
+        const p8 = data[y*w + x-1],       p9 = data[(y-1)*w + x-1];
+        const B = p2+p3+p4+p5+p6+p7+p8+p9;
+        if (B < 2 || B > 6) continue;
+        const seq = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+        let A = 0;
+        for (let k = 0; k < 8; k++) if (seq[k] === 0 && seq[k+1] === 1) A++;
+        if (A !== 1) continue;
+        if (p2 * p4 * p6 !== 0) continue;
+        if (p4 * p6 * p8 !== 0) continue;
+        toRemove.push(idx);
+      }
+    }
+    if (toRemove.length > 0) { for (const i of toRemove) data[i] = 0; changed = true; }
+    // Pass 2
+    toRemove = [];
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const idx = y * w + x;
+        if (data[idx] !== 1) continue;
+        const p2 = data[(y-1)*w + x],     p3 = data[(y-1)*w + x+1];
+        const p4 = data[y*w + x+1],       p5 = data[(y+1)*w + x+1];
+        const p6 = data[(y+1)*w + x],     p7 = data[(y+1)*w + x-1];
+        const p8 = data[y*w + x-1],       p9 = data[(y-1)*w + x-1];
+        const B = p2+p3+p4+p5+p6+p7+p8+p9;
+        if (B < 2 || B > 6) continue;
+        const seq = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+        let A = 0;
+        for (let k = 0; k < 8; k++) if (seq[k] === 0 && seq[k+1] === 1) A++;
+        if (A !== 1) continue;
+        if (p2 * p4 * p8 !== 0) continue;
+        if (p2 * p6 * p8 !== 0) continue;
+        toRemove.push(idx);
+      }
+    }
+    if (toRemove.length > 0) { for (const i of toRemove) data[i] = 0; changed = true; }
+  }
+  return data;
 }
 
 // ============ GÉNÉRATION FICHIER ============
@@ -375,9 +509,10 @@ function construireSVG(opts) {
       elements += placerPaths(x, y, scale, rot, srcX, srcY, srcW, srcH);
     }
   } else if (cat === 'digit' || cat === 'digit-typo') {
-    const empW = vbW * 0.4;
-    const empH = vbH * 0.85;
-    const scale = Math.min(empW / empSrcW, empH / empSrcH);
+    // L'empreinte remplit la HAUTEUR du rectangle (largeur de l'addon)
+    // Sa largeur dans l'image source est ajustée proportionnellement
+    const empH = vbH * 0.95;  // hauteur = quasi toute la largeur de l'addon
+    const scale = empH / empSrcH;  // scale basé sur hauteur, conserve proportions
     if (cat === 'digit-typo' && typo) {
       // empreinte à gauche, typo à droite
       elements += placerPaths(vbW * 0.25, vbH / 2, scale, rot, srcX, srcY, srcW, srcH);
@@ -386,10 +521,9 @@ function construireSVG(opts) {
       elements += placerPaths(vbW / 2, vbH / 2, scale, rot, srcX, srcY, srcW, srcH);
     }
   } else if (cat === 'main-pied') {
-    // Centré, scale max conservant proportions
-    const empW = vbW * 0.6;
-    const empH = vbH * 0.85;
-    const scale = Math.min(empW / empSrcW, empH / empSrcH);
+    // Centré, hauteur = toute la largeur de l'addon
+    const empH = vbH * 0.95;
+    const scale = empH / empSrcH;
     elements += placerPaths(vbW / 2, vbH / 2, scale, rot, srcX, srcY, srcW, srcH);
   }
 
@@ -420,9 +554,11 @@ function construireSVG(opts) {
 
 function placerPaths(cx, cy, scale, rot, srcX, srcY, srcW, srcH) {
   // Centre l'empreinte source à (cx, cy) avec scale et rotation
-  // Translation pour amener le centre source à l'origine, puis scale, puis rotate, puis translate vers (cx, cy)
   const transform = `translate(${cx} ${cy}) rotate(${rot}) scale(${scale}) translate(${-srcX - srcW/2} ${-srcY - srcH/2})`;
-  return vectorPaths.map(d => `<path d="${d}" fill="black" transform="${transform}"/>`).join('\n  ');
+  // Trait fin (stroke) au lieu de silhouette (fill) — les paths viennent du squelette
+  // Stroke-width relatif à scale pour maintenir 0.25mm visuel (= trait gravé)
+  const sw = 0.25 / scale;
+  return vectorPaths.map(d => `<path d="${d}" fill="none" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" transform="${transform}"/>`).join('\n  ');
 }
 
 function escapeXml(s) {
