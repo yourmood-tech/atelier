@@ -27,14 +27,14 @@
   .erreur { color: var(--rouge); font-size: 0.8rem; margin-top: 0.4rem; }
   .canvas-zone { background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .canvas-info { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; text-align: center; }
-  .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; max-width: 100%; }
+  .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; width: 100%; height: auto; }
   .editor-svg .element { cursor: move; }
   .editor-svg .element.selected { outline: 2px dashed var(--bleu); outline-offset: 4px; }
   .toolbar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; justify-content: center; }
   .upload-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 0.8rem; text-align: center; cursor: pointer; font-size: 0.8rem; }
   .upload-zone:hover, .upload-zone.drag-over { border-color: var(--or); background: #fff8e7; }
-  .vector-preview { background: var(--gris-clair); border-radius: 6px; padding: 0.5rem; min-height: 60px; display: flex; align-items: center; justify-content: center; }
-  .vector-preview svg { max-height: 80px; }
+  .vector-preview { background: var(--gris-clair); border-radius: 6px; padding: 0.75rem; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+  .vector-preview svg { max-height: 280px; max-width: 100%; }
   .hidden { display: none !important; }
   .diamant-icon { display: inline-block; width: 24px; height: 24px; flex-shrink: 0; }
   details summary { cursor: pointer; font-size: 0.8rem; padding: 0.3rem 0; }
@@ -293,18 +293,18 @@ function ajouterEmpreinte(paths, srcViewBox, srcImage) {
 }
 
 // ============ SVG SHAPES ============
+// Tout en trait vectoriel uniforme (pas de remplissage) — pour Gravograph
 function diamantSvg(taille, style, mode = 'normal') {
   const r = taille / 2;
+  const sw = 0.15; // trait uniforme 0.15mm
   if (style === 'rond') {
-    return `<circle cx="0" cy="0" r="${r}" fill="black"/>`;
+    return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#1d1e1b" stroke-width="${sw}"/>`;
   }
-  // étoile : rond plein + 4 lignes en croix
-  const lr = taille * 0.85; // longueur des lignes
-  const sw = taille * 0.08;
-  const inner = taille * 0.3;
-  return `<circle cx="0" cy="0" r="${inner}" fill="black"/>
-    <line x1="${-lr}" y1="0" x2="${lr}" y2="0" stroke="black" stroke-width="${sw}" stroke-linecap="round"/>
-    <line x1="0" y1="${-lr}" x2="0" y2="${lr}" stroke="black" stroke-width="${sw}" stroke-linecap="round"/>`;
+  // étoile : cercle outline + 4 lignes en croix
+  const lr = taille * 0.85;
+  return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#1d1e1b" stroke-width="${sw}"/>
+    <line x1="${-lr}" y1="0" x2="${lr}" y2="0" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>
+    <line x1="0" y1="${-lr}" x2="0" y2="${lr}" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>`;
 }
 
 function elementSvg(el, withSelection = false) {
@@ -322,7 +322,7 @@ function elementSvg(el, withSelection = false) {
   }
   if (el.type === 'empreinte') {
     const vb = el.srcViewBox;
-    const stroke = 0.25 / el.scale;
+    const stroke = 0.15 / el.scale; // résultat = 0.15mm uniforme après transform
     const innerTransform = `scale(${el.scale}) translate(${-vb.x - vb.w/2} ${-vb.y - vb.h/2})`;
     return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
       <g transform="${innerTransform}">
@@ -339,8 +339,9 @@ function rendreCanvas() {
   const W = viewLongueur, H = viewLargeur;
   const margin = 1;
   svg.setAttribute('viewBox', `${-margin} ${-margin} ${W + 2*margin} ${H + 2*margin}`);
-  svg.setAttribute('width', (W + 2*margin) * SCALE_AFFICHAGE);
-  svg.setAttribute('height', (H + 2*margin) * SCALE_AFFICHAGE);
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
   let html = '';
   // Bordure (la bande)
