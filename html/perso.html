@@ -581,6 +581,22 @@ function lireImage(f) {
   reader.readAsDataURL(f);
 }
 
+// Extraction du contour : garde uniquement les pixels noirs ayant au moins 1 voisin blanc
+function extractContour(binary, w, h) {
+  const contour = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      if (!binary[i]) continue;
+      if (!binary[i - 1] || !binary[i + 1] || !binary[i - w] || !binary[i + w] ||
+          !binary[i - w - 1] || !binary[i - w + 1] || !binary[i + w - 1] || !binary[i + w + 1]) {
+        contour[i] = 1;
+      }
+    }
+  }
+  return contour;
+}
+
 async function vectoriserImage(dataUrl) {
   const img = new Image();
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
@@ -595,8 +611,17 @@ async function vectoriserImage(dataUrl) {
   let imageData = ctx.getImageData(0, 0, w, h);
   if (document.getElementById('enhance').checked) imageData = enhanceImage(imageData, w, h);
   const binary = thresholdOtsu(imageData, w, h);
-  const skeleton = zhangSuen(binary, w, h);
-  let polylines = extractPathsFromSkeleton(skeleton, w, h);
+
+  // Détection auto silhouette vs empreinte selon le ratio noir/total
+  let nbBlack = 0;
+  for (let i = 0; i < binary.length; i++) if (binary[i]) nbBlack++;
+  const ratio = nbBlack / binary.length;
+  const modeAuto = ratio > 0.15 ? 'silhouette' : 'empreinte';
+
+  // Pipeline adapté
+  const processed = modeAuto === 'silhouette' ? extractContour(binary, w, h) : zhangSuen(binary, w, h);
+  let polylines = extractPathsFromSkeleton(processed, w, h);
+
   const minLen = parseInt(document.getElementById('min-length').value, 10);
   if (minLen > 0) {
     polylines = polylines.filter(pl => {
@@ -611,7 +636,7 @@ async function vectoriserImage(dataUrl) {
   const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
   const traceMode = document.getElementById('trace-mode').value;
   const paths = simplified.filter(pl => pl.length >= 2).map(pl => traceMode === 'bezier' ? polylineToBezier(pl) : polylineToLine(pl));
-  return { paths, w, h };
+  return { paths, w, h, modeAuto };
 }
 
 async function vectoriserEtAjouter() {
@@ -624,9 +649,13 @@ async function vectoriserEtAjouter() {
       previewZone.innerHTML = '<div class="erreur" style="padding:0.5rem;">Aucun trait détecté.</div>';
       return;
     }
-    previewZone.innerHTML = `<svg viewBox="0 0 ${w} ${h}">
-      ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
-    </svg>`;
+    const label = modeAuto === 'silhouette' ? '✂️ Silhouette → contour' : '🖋️ Empreinte → lignes';
+    previewZone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+      <div class="info" style="font-size:0.72rem;">${label}</div>
+      <svg viewBox="0 0 ${w} ${h}">
+        ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+      </svg>
+    </div>`;
     ajouterEmpreinte(paths, `0 0 ${w} ${h}`, imageDataUrl);
   } catch (e) {
     previewZone.innerHTML = `<div class="erreur" style="padding:0.5rem;">Erreur : ${e.message}</div>`;
@@ -641,16 +670,20 @@ async function revectoriserSelection() {
   const el = elements.find(x => x.id === selectedId);
   if (!el || el.type !== 'empreinte' || !el.srcImage) return;
   try {
-    const { paths, w, h } = await vectoriserImage(el.srcImage);
+    const { paths, w, h, modeAuto } = await vectoriserImage(el.srcImage);
     if (paths.length === 0) return;
     el.paths = paths;
     el.srcViewBox = { x: 0, y: 0, w, h };
     rendreCanvas();
     const previewZone = document.getElementById('vector-preview');
     previewZone.classList.remove('hidden');
-    previewZone.innerHTML = `<svg viewBox="0 0 ${w} ${h}">
-      ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
-    </svg>`;
+    const label = modeAuto === 'silhouette' ? '✂️ Silhouette → contour' : '🖋️ Empreinte → lignes';
+    previewZone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+      <div class="info" style="font-size:0.72rem;">${label}</div>
+      <svg viewBox="0 0 ${w} ${h}">
+        ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+      </svg>
+    </div>`;
   } catch (e) { console.error(e); }
 }
 
