@@ -372,8 +372,9 @@ function elementSvg(el, withSelection = false) {
   }
   if (el.type === 'texte') {
     if (el.pathData) {
+      // Texte en aplat noir (fill) — 1 forme par lettre, pas de double contour
       return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
-        <path d="${el.pathData}" fill="none" stroke="#1d1e1b" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${el.pathData}" fill="#1d1e1b" stroke="none" fill-rule="evenodd"/>
       </g>`;
     }
     // Fallback en attendant le chargement de la font
