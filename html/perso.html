@@ -235,6 +235,13 @@ window.addEventListener('resize', () => {
   if (resizeTimer) clearTimeout(resizeTimer);
   resizeTimer = setTimeout(rendreCanvas, 150);
 });
+
+// Précharger toutes les polices en arrière-plan au démarrage (parallèle, non bloquant)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    Object.keys(FONT_URLS).forEach(key => chargerFont(key).catch(() => {}));
+  }, 100);
+});
 genererIcones();
 
 function majDimensions() {
