@@ -93,9 +93,10 @@
     <div class="card">
       <h2>+ Empreinte</h2>
       <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-input').click()">
-        Glisse une image ou clique<br><span class="info">Vectorisation auto</span>
+        Glisse une image ou clique<br><span class="info">Tu peux en ajouter plusieurs (1 par image)</span>
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
+      <p class="info" style="margin-top:0.4rem;font-size:0.72rem;">💡 Sélectionne une empreinte sur la bague puis change les réglages → l'aperçu se met à jour en direct.</p>
 
       <details style="margin-top:0.5rem;">
         <summary>Réglages vectorisation</summary>
@@ -146,6 +147,19 @@
     <div class="card">
       <h2>+ Texte</h2>
       <input id="texte-nouveau" placeholder="ex : Madame & Monsieur">
+      <label style="margin-top:0.4rem;font-size:0.75rem;">Police</label>
+      <select id="texte-font" style="font-size:0.78rem;">
+        <option value="Helvetica, Arial, sans-serif" selected>Helvetica (sans serif)</option>
+        <option value="Georgia, 'Times New Roman', serif">Georgia (serif)</option>
+        <option value="'Courier New', monospace">Courier (mono)</option>
+        <option value="'Brush Script MT', cursive" style="font-family:'Brush Script MT', cursive;">Brush Script (manuscrit)</option>
+        <option value="'Snell Roundhand', cursive" style="font-family:'Snell Roundhand', cursive;">Snell Roundhand (élégant)</option>
+        <option value="'Zapfino', cursive" style="font-family:'Zapfino', cursive;">Zapfino (calligraphie)</option>
+        <option value="Impact, sans-serif" style="font-family:Impact, sans-serif;">Impact (gras)</option>
+        <option value="'Arial Black', sans-serif">Arial Black</option>
+        <option value="Optima, sans-serif">Optima (élégant)</option>
+        <option value="'Avenir Next', sans-serif">Avenir Next (moderne)</option>
+      </select>
       <button onclick="ajouterTexte()" style="margin-top:0.4rem;width:100%;">+ Ajouter ce texte</button>
     </div>
   </div>
@@ -156,10 +170,12 @@
       <div class="canvas-info" id="canvas-info">— configure format et taille —</div>
       <svg id="editor-svg" class="editor-svg" xmlns="http://www.w3.org/2000/svg"></svg>
       <div class="toolbar">
+        <button class="outline" onclick="agrandir()" id="btn-grand" disabled>🔍+ Agrandir</button>
+        <button class="outline" onclick="reduire()" id="btn-petit" disabled>🔍− Rétrécir</button>
+        <button class="outline" onclick="rotation90()" id="btn-rot" disabled>↻ 90°</button>
+        <button class="outline" onclick="centrer()" id="btn-ctr" disabled>⊕ Centrer</button>
         <button class="outline" onclick="dupliquerSelection()" id="btn-dup" disabled>📋 Dupliquer</button>
         <button class="danger" onclick="supprimerSelection()" id="btn-del" disabled>🗑️ Supprimer</button>
-        <button class="outline" onclick="rotation90()">↻ Rotation 90°</button>
-        <button class="outline" onclick="centrer()">⊕ Centrer</button>
       </div>
     </div>
   </div>
@@ -254,21 +270,25 @@ function ajouterDiamant(taille, style) {
 function ajouterTexte() {
   const text = document.getElementById('texte-nouveau').value.trim();
   if (!text) return;
-  elements.push({ id: nextId++, type: 'texte', text, x: viewLongueur / 2, y: viewLargeur / 2, fontSize: viewLargeur * 0.5, rotation: 0 });
+  const font = document.getElementById('texte-font').value;
+  elements.push({ id: nextId++, type: 'texte', text, font, x: viewLongueur / 2, y: viewLargeur / 2, fontSize: viewLargeur * 0.5, rotation: 0 });
   document.getElementById('texte-nouveau').value = '';
   rendreCanvas();
 }
 
-function ajouterEmpreinte(paths, srcViewBox) {
+function ajouterEmpreinte(paths, srcViewBox, srcImage) {
   // Calculer scale pour que l'empreinte fasse ~80% de la largeur de la bague
   const vb = srcViewBox.split(/\s+/).map(Number);
   const srcW = vb[2], srcH = vb[3];
   const scale = (viewLargeur * 0.85) / srcH;
+  const id = nextId++;
   elements.push({
-    id: nextId++, type: 'empreinte',
+    id, type: 'empreinte',
     paths, srcViewBox: { x: vb[0], y: vb[1], w: srcW, h: srcH },
+    srcImage: srcImage || null,
     x: viewLongueur / 2, y: viewLargeur / 2, scale, rotation: 0,
   });
+  selectedId = id;
   rendreCanvas();
 }
 
@@ -295,8 +315,9 @@ function elementSvg(el, withSelection = false) {
     </g>`;
   }
   if (el.type === 'texte') {
+    const fontFamily = el.font || 'Helvetica, Arial, sans-serif';
     return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
-      <text text-anchor="middle" dominant-baseline="middle" font-family="Helvetica, Arial, sans-serif" font-size="${el.fontSize}" fill="black">${escapeXml(el.text)}</text>
+      <text text-anchor="middle" dominant-baseline="middle" font-family="${escapeXml(fontFamily)}" font-size="${el.fontSize}" fill="black">${escapeXml(el.text)}</text>
     </g>`;
   }
   if (el.type === 'empreinte') {
@@ -348,8 +369,34 @@ function rendreCanvas() {
   }
 
   // Boutons toolbar
-  document.getElementById('btn-dup').disabled = !selectedId;
-  document.getElementById('btn-del').disabled = !selectedId;
+  ['btn-dup','btn-del','btn-rot','btn-ctr','btn-grand','btn-petit'].forEach(id => {
+    document.getElementById(id).disabled = !selectedId;
+  });
+  // Pour les éléments non-empreintes, désactiver agrandir/rétrécir aussi (mais utile pour textes/diamants)
+  if (selectedId) {
+    const el = elements.find(x => x.id === selectedId);
+    // On laisse agrandir/rétrécir actifs pour tous types (utile pour textes aussi)
+  }
+}
+
+function agrandir() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el) return;
+  if (el.type === 'empreinte') el.scale = (el.scale || 1) * 1.15;
+  else if (el.type === 'diamant') el.taille = el.taille * 1.15;
+  else if (el.type === 'texte') el.fontSize = el.fontSize * 1.15;
+  rendreCanvas();
+}
+
+function reduire() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el) return;
+  if (el.type === 'empreinte') el.scale = (el.scale || 1) / 1.15;
+  else if (el.type === 'diamant') el.taille = el.taille / 1.15;
+  else if (el.type === 'texte') el.fontSize = el.fontSize / 1.15;
+  rendreCanvas();
 }
 
 // ============ INTERACTION DRAG & DROP ============
@@ -453,55 +500,89 @@ function lireImage(f) {
   reader.readAsDataURL(f);
 }
 
+async function vectoriserImage(dataUrl) {
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
+  const maxSize = 600;
+  const scaleDown = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * scaleDown);
+  const h = Math.round(img.naturalHeight * scaleDown);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  let imageData = ctx.getImageData(0, 0, w, h);
+  if (document.getElementById('enhance').checked) imageData = enhanceImage(imageData, w, h);
+  const binary = thresholdOtsu(imageData, w, h);
+  const skeleton = zhangSuen(binary, w, h);
+  let polylines = extractPathsFromSkeleton(skeleton, w, h);
+  const minLen = parseInt(document.getElementById('min-length').value, 10);
+  if (minLen > 0) {
+    polylines = polylines.filter(pl => {
+      let len = 0;
+      for (let i = 1; i < pl.length; i++) len += Math.hypot(pl[i][0] - pl[i-1][0], pl[i][1] - pl[i-1][1]);
+      return len >= minLen;
+    });
+  }
+  const smoothWin = parseInt(document.getElementById('smooth-window').value, 10);
+  if (smoothWin > 1) polylines = polylines.map(pl => smoothPolyline(pl, smoothWin));
+  const eps = parseFloat(document.getElementById('smoothing').value);
+  const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
+  const traceMode = document.getElementById('trace-mode').value;
+  const paths = simplified.filter(pl => pl.length >= 2).map(pl => traceMode === 'bezier' ? polylineToBezier(pl) : polylineToLine(pl));
+  return { paths, w, h };
+}
+
 async function vectoriserEtAjouter() {
   const previewZone = document.getElementById('vector-preview');
   previewZone.classList.remove('hidden');
   previewZone.innerHTML = '<div class="info" style="padding:0.5rem;">⏳ Vectorisation…</div>';
   try {
-    const img = new Image();
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imageDataUrl; });
-    const maxSize = 600;
-    const scaleDown = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
-    const w = Math.round(img.naturalWidth * scaleDown);
-    const h = Math.round(img.naturalHeight * scaleDown);
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, w, h);
-    let imageData = ctx.getImageData(0, 0, w, h);
-    if (document.getElementById('enhance').checked) imageData = enhanceImage(imageData, w, h);
-    const binary = thresholdOtsu(imageData, w, h);
-    const skeleton = zhangSuen(binary, w, h);
-    let polylines = extractPathsFromSkeleton(skeleton, w, h);
-    const minLen = parseInt(document.getElementById('min-length').value, 10);
-    if (minLen > 0) {
-      polylines = polylines.filter(pl => {
-        let len = 0;
-        for (let i = 1; i < pl.length; i++) len += Math.hypot(pl[i][0] - pl[i-1][0], pl[i][1] - pl[i-1][1]);
-        return len >= minLen;
-      });
-    }
-    const smoothWin = parseInt(document.getElementById('smooth-window').value, 10);
-    if (smoothWin > 1) polylines = polylines.map(pl => smoothPolyline(pl, smoothWin));
-    const eps = parseFloat(document.getElementById('smoothing').value);
-    const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
-    const traceMode = document.getElementById('trace-mode').value;
-    const paths = simplified.filter(pl => pl.length >= 2).map(pl => traceMode === 'bezier' ? polylineToBezier(pl) : polylineToLine(pl));
+    const { paths, w, h } = await vectoriserImage(imageDataUrl);
     if (paths.length === 0) {
       previewZone.innerHTML = '<div class="erreur" style="padding:0.5rem;">Aucun trait détecté.</div>';
       return;
     }
-    // Preview rapide
     previewZone.innerHTML = `<svg viewBox="0 0 ${w} ${h}">
       ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
     </svg>`;
-    // Ajouter dans le canvas
-    ajouterEmpreinte(paths, `0 0 ${w} ${h}`);
+    ajouterEmpreinte(paths, `0 0 ${w} ${h}`, imageDataUrl);
   } catch (e) {
     previewZone.innerHTML = `<div class="erreur" style="padding:0.5rem;">Erreur : ${e.message}</div>`;
     console.error(e);
   }
 }
+
+// Re-vectorise l'empreinte sélectionnée avec les nouveaux réglages
+let revectoriserDebounce = null;
+async function revectoriserSelection() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el || el.type !== 'empreinte' || !el.srcImage) return;
+  try {
+    const { paths, w, h } = await vectoriserImage(el.srcImage);
+    if (paths.length === 0) return;
+    el.paths = paths;
+    el.srcViewBox = { x: 0, y: 0, w, h };
+    rendreCanvas();
+    const previewZone = document.getElementById('vector-preview');
+    previewZone.classList.remove('hidden');
+    previewZone.innerHTML = `<svg viewBox="0 0 ${w} ${h}">
+      ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+    </svg>`;
+  } catch (e) { console.error(e); }
+}
+
+function declencherRevectorisation() {
+  if (revectoriserDebounce) clearTimeout(revectoriserDebounce);
+  revectoriserDebounce = setTimeout(revectoriserSelection, 250);
+}
+
+// Brancher les onchange sur tous les réglages de vectorisation
+['enhance', 'smooth-window', 'smoothing', 'min-length', 'trace-mode'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', declencherRevectorisation);
+});
 
 // ============ EXPORT ============
 function genererSvgFinal() {
