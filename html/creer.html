@@ -242,6 +242,7 @@ const LONGUEURS_TAILLES = {
 
 // État global
 let elements = [];  // { id, type, x, y, scale, rotation, ...données }
+let couleurChoisie = { id: 'noir', nom: 'Noir', hex: '#1a1a1a', img: '/aluminium/noir.jpg' }; // remplacé au load par COULEURS[0]
 let selectedId = null;
 let nextId = 1;
 let viewLongueur = 67.19;  // taille 54 par défaut
@@ -479,7 +480,8 @@ const COULEURS = [
   { id: 'vert-pastel',    nom: 'Vert pastel',     hex: '#99c5a3', img: '/aluminium/vert-pastel.png' },
   { id: 'bleu-pastel',    nom: 'Bleu pastel',     hex: '#a9c8c1', img: '/aluminium/bleu-pastel.png' },
 ];
-let couleurChoisie = COULEURS[0]; // noir par défaut
+// (couleurChoisie déjà déclarée plus haut pour éviter la TDZ au démarrage)
+couleurChoisie = COULEURS[0]; // noir par défaut
 
 function genererSelecteurCouleurs() {
   const grid = document.getElementById('couleurs-grid');
