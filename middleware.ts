@@ -9,7 +9,7 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    // Protect all routes except auth, login, gorgias webhook, shopify callback, and Next.js internals
-    "/((?!api/auth|api/gorgias-webhook|api/produits/shopify-callback|login|_next/static|_next/image|favicon.ico).*)",
+    // Protect all routes except auth, login, gorgias webhook, shopify callback, public client perso pages, and Next.js internals
+    "/((?!api/auth|api/gorgias-webhook|api/produits/shopify-callback|api/creer-demande|creer|login|_next/static|_next/image|favicon.ico).*)",
   ],
 };
