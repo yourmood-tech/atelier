@@ -644,7 +644,7 @@ async function vectoriserEtAjouter() {
   previewZone.classList.remove('hidden');
   previewZone.innerHTML = '<div class="info" style="padding:0.5rem;">⏳ Vectorisation…</div>';
   try {
-    const { paths, w, h } = await vectoriserImage(imageDataUrl);
+    const { paths, w, h, modeAuto } = await vectoriserImage(imageDataUrl);
     if (paths.length === 0) {
       previewZone.innerHTML = '<div class="erreur" style="padding:0.5rem;">Aucun trait détecté.</div>';
       return;
