@@ -980,13 +980,15 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseup', () => {
   if (modeOutil === 'crayon' && pathEnCours) {
     if (pathEnCours.length > 2) {
-      // Simplifier le tracé puis créer un nouvel élément 'dessin'
-      const simplified = douglasPeucker(pathEnCours, 0.3);
+      // Lisser → simplifier légèrement → courbes Bezier (mêmes étapes que vectorisation empreinte)
+      const smoothed = smoothPolyline(pathEnCours, 3);
+      const simplified = douglasPeucker(smoothed, 0.15);
       const xs = simplified.map(p => p[0]);
       const ys = simplified.map(p => p[1]);
       const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
       const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-      const pathData = 'M ' + simplified.map(p => `${(p[0]-cx).toFixed(2)} ${(p[1]-cy).toFixed(2)}`).join(' L ');
+      const centered = simplified.map(p => [p[0] - cx, p[1] - cy]);
+      const pathData = polylineToBezier(centered);
       const id = nextId++;
       elements.push({ id, type: 'dessin', pathData, x: cx, y: cy, scale: 1, rotation: 0 });
       selectedId = id;
