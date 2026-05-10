@@ -47,10 +47,11 @@ async function shopifyPost(path: string, body: unknown) {
 
 async function redisSet(key: string, value: string) {
   if (!REDIS_URL || !REDIS_TOKEN) return;
+  // Body raw : Upstash stocke la value telle quelle (pas de double-encoding JSON)
   await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify(value),
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    body: value,
   });
 }
 
