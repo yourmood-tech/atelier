@@ -451,14 +451,35 @@ function ajouterTexte() {
   regenererPathTexte(el);
 }
 
-// Symboles prédéfinis : path SVG centré sur (0,0), dans une boîte ~10×10 unités
+// Génère un sakura (5 pétales avec encoche caractéristique au bout)
+function genererSakuraPath() {
+  const angles = [0, 72, 144, 216, 288];
+  // Pétale en coords originales (pointe vers le haut), avec encoche au sommet
+  const tpl = [
+    { type: 'M', pts: [[0, 0]] },
+    { type: 'C', pts: [[2, -3], [2.8, -6], [0.6, -6.8]] },
+    { type: 'L', pts: [[0, -5.8]] },          // creux de l'encoche
+    { type: 'L', pts: [[-0.6, -6.8]] },
+    { type: 'C', pts: [[-2.8, -6], [-2, -3], [0, 0]] },
+  ];
+  const parts = [];
+  for (const a of angles) {
+    const r = a * Math.PI / 180;
+    const c = Math.cos(r), s = Math.sin(r);
+    const rot = (x, y) => `${(x * c - y * s).toFixed(2)} ${(x * s + y * c).toFixed(2)}`;
+    parts.push(tpl.map(seg => seg.type + ' ' + seg.pts.map(p => rot(p[0], p[1])).join(' ')).join(' '));
+  }
+  return parts.join(' ');
+}
+
+// Symboles prédéfinis : path SVG centré sur (0,0), dans une boîte ~14×14 unités
 const SYMBOLES = {
   coeur: 'M 0 3 C 0 1, -2 -3, -4 -3 C -6 -3, -7 -1, -7 1 C -7 4, -4 5, 0 9 C 4 5, 7 4, 7 1 C 7 -1, 6 -3, 4 -3 C 2 -3, 0 1, 0 3 Z',
   etoile: 'M 0 -7 L 1.6 -2.2 L 6.7 -2.2 L 2.6 0.8 L 4.1 5.7 L 0 2.6 L -4.1 5.7 L -2.6 0.8 L -6.7 -2.2 L -1.6 -2.2 Z',
-  infini: 'M -7 0 C -7 -3, -4 -3, -2 0 C 0 3, 2 3, 4 0 C 6 -3, 7 -3, 7 0 C 7 3, 6 3, 4 0 C 2 -3, 0 -3, -2 0 C -4 3, -7 3, -7 0 Z',
+  infini: 'M 0 0 C -3 -4, -7 -4, -7 0 C -7 4, -3 4, 0 0 C 3 -4, 7 -4, 7 0 C 7 4, 3 4, 0 0 Z',
   lune: 'M 3 -6 C -2 -6, -5 -3, -5 0 C -5 3, -2 6, 3 6 C 0 6, -2 3, -2 0 C -2 -3, 0 -6, 3 -6 Z',
   soleil: 'M 0 -3 C 1.7 -3, 3 -1.7, 3 0 C 3 1.7, 1.7 3, 0 3 C -1.7 3, -3 1.7, -3 0 C -3 -1.7, -1.7 -3, 0 -3 Z M 0 -7 L 0 -5 M 0 5 L 0 7 M -7 0 L -5 0 M 5 0 L 7 0 M -5 -5 L -3.5 -3.5 M 3.5 3.5 L 5 5 M -5 5 L -3.5 3.5 M 3.5 -3.5 L 5 -5',
-  fleur: 'M 0 -7 C -2 -5, -2 -3, 0 -2 C 2 -3, 2 -5, 0 -7 Z M 7 0 C 5 -2, 3 -2, 2 0 C 3 2, 5 2, 7 0 Z M 0 7 C 2 5, 2 3, 0 2 C -2 3, -2 5, 0 7 Z M -7 0 C -5 2, -3 2, -2 0 C -3 -2, -5 -2, -7 0 Z M 0 0 C 1 0, 1 1, 0 1 C -1 1, -1 0, 0 0 Z',
+  fleur: genererSakuraPath(),
   cercle: 'M 0 -6 C 3.3 -6, 6 -3.3, 6 0 C 6 3.3, 3.3 6, 0 6 C -3.3 6, -6 3.3, -6 0 C -6 -3.3, -3.3 -6, 0 -6 Z',
   triangle: 'M 0 -6 L 6 5 L -6 5 Z',
   losange: 'M 0 -6 L 6 0 L 0 6 L -6 0 Z',
@@ -616,7 +637,7 @@ function elementSvg(el, withSelection = false) {
   const trait = couleurTrait();
   const sel = (withSelection && el.id === selectedId) ? ' element selected' : '';
   if (el.type === 'diamant') {
-    return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
       ${diamantSvg(el.taille, el.style)}
     </g>`;
   }
@@ -625,12 +646,12 @@ function elementSvg(el, withSelection = false) {
       const style = el.isStroke
         ? `fill="none" stroke="${trait}" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"`
         : `fill="${trait}" stroke="none" fill-rule="evenodd"`;
-      return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+      return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
         <path d="${el.pathData}" ${style}/>
       </g>`;
     }
     // Fallback en attendant le chargement de la font
-    return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
       <text text-anchor="middle" dominant-baseline="middle" font-size="${el.fontSize}" fill="#999">${escapeXml(el.text)} (chargement…)</text>
     </g>`;
   }
@@ -638,7 +659,7 @@ function elementSvg(el, withSelection = false) {
     const vb = el.srcViewBox;
     const stroke = 0.15 / el.scale; // résultat = 0.15mm uniforme après transform
     const innerTransform = `scale(${el.scale}) translate(${-vb.x - vb.w/2} ${-vb.y - vb.h/2})`;
-    return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
       <g transform="${innerTransform}">
         ${el.paths.map(d => `<path d="${d}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
       </g>
@@ -646,7 +667,7 @@ function elementSvg(el, withSelection = false) {
   }
   if (el.type === 'symbole') {
     const stroke = 0.15 / el.scale;
-    return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0}) scale(${el.scale})">
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0}) scale(${el.scale})">
       <path d="${el.pathData}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>
     </g>`;
   }
