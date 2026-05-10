@@ -152,13 +152,14 @@
       <label style="margin-top:0.4rem;font-size:0.75rem;">Police</label>
       <select id="texte-font" style="font-size:0.78rem;">
         <optgroup label="Trait simple (gravure)">
-          <option value="hershey:futural" selected>Futural (sans, gravure)</option>
-          <option value="hershey:futuram">Futuram (sans gras, gravure)</option>
-          <option value="hershey:timesr">Times (serif, gravure)</option>
-          <option value="hershey:timesrb">Times bold (serif gras, gravure)</option>
-          <option value="hershey:timesi">Times italique (gravure)</option>
-          <option value="hershey:cursive">Cursive (manuscrit, gravure)</option>
-          <option value="hershey:scripts">Scripts (script, gravure)</option>
+          <option value="hershey:hershey_sans_1" selected>Sans (gravure)</option>
+          <option value="hershey:hershey_sans_med">Sans Medium (gravure)</option>
+          <option value="hershey:hershey_serif_med">Serif (gravure)</option>
+          <option value="hershey:hershey_serif_bold">Serif gras (gravure)</option>
+          <option value="hershey:hershey_serif_med_italic">Serif italique (gravure)</option>
+          <option value="hershey:hershey_script_1">Script manuscrit (gravure)</option>
+          <option value="hershey:ems_allure">Allure élégant (gravure)</option>
+          <option value="hershey:ems_readability">Lisibilité max (gravure)</option>
         </optgroup>
         <optgroup label="Aplat (rempli)">
           <option value="opensans">Open Sans (sans serif)</option>
@@ -251,7 +252,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('load', () => {
   setTimeout(() => {
     Object.keys(FONT_URLS).forEach(key => chargerFont(key).catch(() => {}));
-    chargerHershey().catch(() => {});
+    Object.keys(HERSHEY_SVG_FILES).forEach(key => chargerHershey(key).catch(() => {}));
   }, 100);
 });
 genererIcones();
@@ -317,52 +318,81 @@ async function chargerFont(key) {
   });
 }
 
-// Données Hershey (chargées en arrière-plan, format JSON minifié)
-let HERSHEY_DATA = null;
-const HERSHEY_URL = 'https://cdn.jsdelivr.net/npm/hersheytext@2.0.0/hersheytext.min.json';
-async function chargerHershey() {
-  if (HERSHEY_DATA) return HERSHEY_DATA;
-  const r = await fetch(HERSHEY_URL);
-  HERSHEY_DATA = await r.json();
-  return HERSHEY_DATA;
+// Polices Hershey en format SVG fonts (mapping unicode standard)
+const HERSHEY_SVG_FILES = {
+  hershey_sans_1: 'HersheySans1.svg',
+  hershey_sans_med: 'HersheySansMed.svg',
+  hershey_serif_med: 'HersheySerifMed.svg',
+  hershey_serif_bold: 'HersheySerifBold.svg',
+  hershey_serif_med_italic: 'HersheySerifMedItalic.svg',
+  hershey_script_1: 'HersheyScript1.svg',
+  ems_allure: 'EMSAllure.svg',
+  ems_readability: 'EMSReadability.svg',
+};
+const hersheyCache = {};
+async function chargerHershey(key) {
+  if (hersheyCache[key]) return hersheyCache[key];
+  const url = `https://cdn.jsdelivr.net/npm/hersheytext@2.0.0/svg_fonts/${HERSHEY_SVG_FILES[key]}`;
+  const txt = await fetch(url).then(r => r.text());
+  const doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
+  const ff = doc.querySelector('font-face');
+  const unitsPerEm = parseFloat(ff?.getAttribute('units-per-em') || '1000');
+  const ascent = parseFloat(ff?.getAttribute('ascent') || '800');
+  const descent = parseFloat(ff?.getAttribute('descent') || '-200');
+  const glyphs = {};
+  doc.querySelectorAll('glyph').forEach(g => {
+    const u = g.getAttribute('unicode');
+    if (!u) return;
+    glyphs[u] = { d: g.getAttribute('d') || '', adv: parseFloat(g.getAttribute('horiz-adv-x') || '0') };
+  });
+  hersheyCache[key] = { glyphs, unitsPerEm, ascent, descent };
+  return hersheyCache[key];
 }
 
-// Transforme un path Hershey ("M4,3 L8,5 10,7") en path SVG translaté + scalé
-function transformHersheyPath(d, dx, dy, scale) {
-  const tokens = d.match(/[ML]|-?\d+,-?\d+/g) || [];
+// Transforme un path SVG en appliquant fn(x,y) à chaque paire de coords
+function transformSvgPath(d, fn) {
+  const tokens = d.match(/[a-zA-Z]|-?\d+(?:\.\d+)?/g) || [];
   const out = [];
-  for (const tok of tokens) {
-    if (tok === 'M' || tok === 'L') {
+  let i = 0;
+  while (i < tokens.length) {
+    const tok = tokens[i];
+    if (/[a-zA-Z]/.test(tok)) {
       out.push(tok);
+      i++;
     } else {
-      const [x, y] = tok.split(',').map(Number);
-      out.push(`${((x + dx) * scale).toFixed(3)},${((y + dy) * scale).toFixed(3)}`);
+      const x = parseFloat(tok);
+      const y = parseFloat(tokens[i + 1] || '0');
+      const [nx, ny] = fn(x, y);
+      out.push(nx.toFixed(2));
+      out.push(ny.toFixed(2));
+      i += 2;
     }
   }
   return out.join(' ');
 }
 
-// Rend un texte en path SVG single-line (Hershey)
-function renderHersheyText(text, fontName, fontSize) {
-  const font = HERSHEY_DATA && HERSHEY_DATA[fontName];
+// Rend un texte en path SVG single-line (Hershey SVG fonts)
+function renderHersheyText(text, font, fontSize) {
   if (!font) return null;
-  const HERSHEY_HEIGHT = 32; // hauteur approximative des caractères Hershey
-  const scale = fontSize / HERSHEY_HEIGHT;
-  // Calculer largeur totale pour centrer
+  const scale = fontSize / font.unitsPerEm;
+  // Largeur totale en unités font
   let totalWidth = 0;
   for (const ch of text) {
-    const idx = ch.charCodeAt(0) - 32;
-    if (idx >= 0 && idx < font.chars.length) totalWidth += font.chars[idx].o;
+    const g = font.glyphs[ch];
+    if (g) totalWidth += g.adv;
+    else totalWidth += font.unitsPerEm * 0.3;
   }
-  // Générer les paths translatés
+  // Construire le path final, scalé et flippé verticalement (SVG fonts ont y haut=positif)
   let cursor = -totalWidth / 2;
   const parts = [];
   for (const ch of text) {
-    const idx = ch.charCodeAt(0) - 32;
-    if (idx < 0 || idx >= font.chars.length) { cursor += 8; continue; }
-    const c = font.chars[idx];
-    if (c.d) parts.push(transformHersheyPath(c.d, cursor, -11, scale)); // -11 pour centrer verticalement
-    cursor += c.o;
+    const g = font.glyphs[ch];
+    if (!g) { cursor += font.unitsPerEm * 0.3; continue; }
+    if (g.d) {
+      const cur = cursor;
+      parts.push(transformSvgPath(g.d, (x, y) => [(x + cur) * scale, -y * scale]));
+    }
+    cursor += g.adv;
   }
   return parts.join(' ');
 }
@@ -372,9 +402,9 @@ async function regenererPathTexte(el) {
   if (el.type !== 'texte' || !el.font || !el.text) return;
   try {
     if (el.font.startsWith('hershey:')) {
-      const fontName = el.font.replace('hershey:', '');
-      await chargerHershey();
-      el.pathData = renderHersheyText(el.text, fontName, el.fontSize);
+      const fontKey = el.font.replace('hershey:', '');
+      const font = await chargerHershey(fontKey);
+      el.pathData = renderHersheyText(el.text, font, el.fontSize);
       el.isStroke = true;
       rendreCanvas();
       return;
@@ -524,7 +554,7 @@ function agrandir() {
   if (!el) return;
   if (el.type === 'empreinte') el.scale = (el.scale || 1) * 1.15;
   else if (el.type === 'diamant') el.taille = el.taille * 1.15;
-  else if (el.type === 'texte') el.fontSize = el.fontSize * 1.15;
+  else if (el.type === 'texte') { el.fontSize = el.fontSize * 1.15; regenererPathTexte(el); }
   rendreCanvas();
 }
 
@@ -534,7 +564,7 @@ function reduire() {
   if (!el) return;
   if (el.type === 'empreinte') el.scale = (el.scale || 1) / 1.15;
   else if (el.type === 'diamant') el.taille = el.taille / 1.15;
-  else if (el.type === 'texte') el.fontSize = el.fontSize / 1.15;
+  else if (el.type === 'texte') { el.fontSize = el.fontSize / 1.15; regenererPathTexte(el); }
   rendreCanvas();
 }
 
