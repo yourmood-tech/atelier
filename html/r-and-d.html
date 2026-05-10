@@ -339,6 +339,10 @@
   </div>
 </header>
 
+<div style="text-align:right;margin:-0.8rem 0 0.8rem 0;">
+  <span id="sync-indicator" style="font-size:0.75rem;color:var(--gris);" title="Statut synchro cloud">⏳ Vérification…</span>
+</div>
+
 <div class="stage-legend">
   <div class="stage-legend-item"><div class="product-stage stage-1">1</div> Idée</div>
   <div class="stage-legend-item"><div class="product-stage stage-2">2</div> Dessin</div>
@@ -462,18 +466,83 @@
 const STORAGE_KEY = 'mood-rd-pipeline';
 const NOMS_MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-let donnees = chargerDonnees();
+let donnees = chargerDonneesLocal();
 let modalContexte = null;
+let cloudOK = null;  // null = inconnu, true = synchro OK, false = pas dispo
+let saveTimer = null;
 
-function chargerDonnees() {
+function chargerDonneesLocal() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : { produits: [] };
   } catch { return { produits: [] }; }
 }
 
-function sauverDonnees() {
+function sauverDonneesLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
+}
+
+/** Synchro cloud : tente GET au démarrage, PUT à chaque modif (debounced 1s) */
+async function chargerDonneesCloud() {
+  try {
+    const r = await fetch('/api/r-and-d/produits');
+    if (r.status === 503) { cloudOK = false; majIndicateurSync(); return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (d && Array.isArray(d.produits)) {
+      donnees = d;
+      sauverDonneesLocal();
+      cloudOK = true;
+      majIndicateurSync();
+      rendreCalendrier();
+    }
+  } catch (e) {
+    cloudOK = false;
+    majIndicateurSync();
+    console.warn('Cloud sync indispo, fallback localStorage', e);
+  }
+}
+
+function sauverDonnees() {
+  sauverDonneesLocal();
+  // Debounce 1s avant push cloud
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(pousserDonneesCloud, 1000);
+}
+
+async function pousserDonneesCloud() {
+  if (cloudOK === false) return;  // pas la peine de retenter à chaque save
+  try {
+    const r = await fetch('/api/r-and-d/produits', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(donnees),
+    });
+    if (r.status === 503) { cloudOK = false; majIndicateurSync(); return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    cloudOK = true;
+    majIndicateurSync();
+  } catch (e) {
+    cloudOK = false;
+    majIndicateurSync();
+    console.warn('Push cloud échoué', e);
+  }
+}
+
+function majIndicateurSync() {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (cloudOK === true) {
+    el.textContent = '☁️ Synchro cloud active';
+    el.style.color = 'var(--vert)';
+  } else if (cloudOK === false) {
+    el.textContent = '⚠️ Local seulement (Upstash Redis pas activé)';
+    el.style.color = 'var(--orange)';
+    el.title = 'Active Upstash Redis dans Vercel Storage pour synchroniser entre devices';
+  } else {
+    el.textContent = '⏳ Vérification…';
+    el.style.color = 'var(--gris)';
+  }
 }
 
 /** Date locale en string YYYY-MM-DD (pas d'UTC, pour éviter les décalages de timezone). */
@@ -1200,6 +1269,8 @@ document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
 });
 
 rendreCalendrier();
+// Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
+chargerDonneesCloud();
 </script>
 </body>
 </html>
