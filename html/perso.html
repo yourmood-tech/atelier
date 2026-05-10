@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Personnalisation Mood — Éditeur visuel</title>
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
 <style>
@@ -516,6 +516,15 @@ editorSvg.addEventListener('drop', e => {
 // Empêcher le navigateur d'ouvrir une image lâchée hors zone (= "ça zoome la page")
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
+
+// Bloquer le pinch-zoom du trackpad (Cmd+scroll ou pinch = wheel avec ctrlKey)
+window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+// Bloquer les gestures de zoom Safari Mac
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => {
+  window.addEventListener(ev, e => e.preventDefault());
+});
+// Bloquer le double-clic qui peut déclencher zoom-to-element sur certains navigateurs
+document.addEventListener('dblclick', e => { e.preventDefault(); }, { passive: false });
 
 function lireImage(f) {
   if (!f.type.startsWith('image/')) { alert('Image uniquement'); return; }
