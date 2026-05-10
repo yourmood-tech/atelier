@@ -113,6 +113,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         title: "Pipeline R&D",
         description: "Calendrier annuel jeudi→mercredi pour planifier les nouveautés. Suivi des 9 étapes (idée → mise en ligne) + objectifs CA mensuels par produit.",
       },
+      {
+        href: "/perso",
+        emoji: "🖋️",
+        title: "Personnalisation",
+        description: "Vectorise les empreintes / dessins clients en SVG dimensionné selon format et taille. Génère le fichier prêt pour Illustrator/Gravograph.",
+      },
     ],
   },
 ];

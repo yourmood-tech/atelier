@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personnalisation Mood — Empreintes & Gravure</title>
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+<style>
+  :root { --or:#c9a96e; --noir:#1a1a1a; --gris:#6b6b6b; --gris-clair:#f5f5f5; --vert:#2d8a4e; --rouge:#c0392b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--noir); background: #fafafa; line-height: 1.5; padding: 1rem; max-width: 1100px; margin: 0 auto; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
+  h1 { font-size: 1.5rem; font-weight: 600; }
+  h2 { font-size: 1rem; margin: 1rem 0 0.4rem 0; color: var(--or); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: white; border-radius: 12px; padding: 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 500; margin: 0.6rem 0 0.2rem 0; }
+  input, select, textarea {
+    width: 100%; padding: 0.5rem 0.7rem; border: 1px solid #ccc;
+    border-radius: 6px; font-size: 0.9rem; font-family: inherit;
+  }
+  button {
+    background: var(--or); color: white; border: none; border-radius: 8px;
+    padding: 0.6rem 1.2rem; font-size: 0.9rem; cursor: pointer; font-weight: 500;
+  }
+  button.outline { background: white; color: var(--noir); border: 1px solid #ccc; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .upload-zone {
+    border: 2px dashed #ccc; border-radius: 12px; padding: 2rem; text-align: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--or); background: #fff8e7; }
+  .upload-zone img { max-width: 100%; max-height: 250px; border-radius: 6px; }
+  .preview-svg { background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 0.8rem; overflow-x: auto; }
+  .preview-svg svg { display: block; margin: 0 auto; max-width: 100%; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .info { font-size: 0.75rem; color: var(--gris); margin-top: 0.3rem; }
+  .erreur { color: var(--rouge); font-size: 0.85rem; margin-top: 0.5rem; }
+  .actions-dl { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.8rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🖋️ Personnalisation Mood</h1>
+  <a href="/" style="font-size:0.85rem;color:var(--gris);text-decoration:none;">← Atelier</a>
+</header>
+
+<div class="grid">
+  <!-- COL 1 : INPUTS -->
+  <div>
+    <div class="card">
+      <h2>1. Image source</h2>
+      <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-input').click()">
+        <div id="placeholder">📷 Glisse une image ou clique ici<br><span class="info">PNG, JPG, scan d'empreinte. Le fond doit être clair pour les empreintes (le noir = ce qui sera gravé)</span></div>
+        <img id="preview-img" style="display:none">
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+    </div>
+
+    <div class="card">
+      <h2>2. Commande</h2>
+      <div class="row">
+        <div>
+          <label>N° de commande *</label>
+          <input id="num-cmd" placeholder="ex : 132605">
+        </div>
+        <div>
+          <label>Nom du client *</label>
+          <input id="nom-client" placeholder="ex : Marciano">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Bague</h2>
+      <div class="row">
+        <div>
+          <label>Format *</label>
+          <select id="format">
+            <option value="addon" data-w="7">Addon (7 mm)</option>
+            <option value="2-3" data-w="4.6">Deux tiers (4,6 mm)</option>
+            <option value="medium" data-w="2.3">Medium (2,3 mm)</option>
+            <option value="open-mood" data-w="10">Open mood (10 mm)</option>
+          </select>
+        </div>
+        <div>
+          <label>Taille *</label>
+          <select id="taille"></select>
+        </div>
+      </div>
+      <div class="info" id="dim-info">— sélectionne format et taille —</div>
+    </div>
+
+    <div class="card">
+      <h2>4. Type de personnalisation</h2>
+      <select id="categorie" onchange="onCategorieChange()">
+        <option value="full-digit">Full digit (empreinte multipliée sur tout l'addon)</option>
+        <option value="digit">Digit (1 seule empreinte)</option>
+        <option value="main-pied">Main / pied (centré, sans échelle)</option>
+        <option value="digit-typo">Digit + typo (empreinte + texte)</option>
+      </select>
+
+      <div id="opt-full-digit" class="opt-block">
+        <label>Nombre de fois où l'empreinte est répétée</label>
+        <input id="nb-emp" type="number" value="6" min="1" max="20">
+        <div class="info">Calcul auto : longueur ÷ nb = largeur d'une empreinte</div>
+      </div>
+
+      <div id="opt-typo" class="opt-block hidden">
+        <label>Texte à ajouter (typo)</label>
+        <input id="typo" placeholder="ex : Madame & Monsieur">
+        <div class="info">Sera placé à côté de l'empreinte</div>
+      </div>
+
+      <label style="margin-top:0.6rem;">Sens de l'empreinte</label>
+      <select id="sens">
+        <option value="haut">↑ Haut (par défaut digit)</option>
+        <option value="droite">→ Droite (par défaut full digit)</option>
+        <option value="gauche">← Gauche</option>
+        <option value="bas">↓ Bas</option>
+      </select>
+
+      <label style="margin-top:0.6rem;">Sertissage central <span style="color:var(--gris);font-weight:400">(optionnel)</span></label>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-weight:400;cursor:pointer;">
+        <input type="checkbox" id="serti-central" style="width:auto;margin:0;"> Ajouter une étoile + cercle au centre
+      </label>
+    </div>
+
+    <button onclick="genererFichier()" id="btn-gen" style="width:100%;font-size:1rem;padding:0.8rem;">✨ Générer le fichier</button>
+    <div class="erreur hidden" id="erreur"></div>
+  </div>
+
+  <!-- COL 2 : PREVIEW -->
+  <div>
+    <div class="card">
+      <h2>Preview SVG (s'ouvre dans Illustrator)</h2>
+      <div class="preview-svg" id="preview-svg">
+        <div class="info" style="text-align:center;padding:2rem;">— uploade une image et clique sur Générer pour voir le résultat —</div>
+      </div>
+      <div class="actions-dl hidden" id="actions-dl">
+        <button class="outline" onclick="telechargerSVG()">📥 Télécharger SVG</button>
+        <button class="outline" onclick="telechargerPNG()">🖼️ Télécharger PNG</button>
+        <button onclick="copierSVG()">📋 Copier le SVG</button>
+      </div>
+      <div class="info hidden" id="apres-info">
+        <strong>Étapes suivantes :</strong>
+        <ol style="margin-left:1.2rem;margin-top:0.3rem;">
+          <li>Ouvre le SVG dans Illustrator</li>
+          <li>Save As → Format <strong>Adobe Illustrator (.ai)</strong> → version <strong>Illustrator 3 Japonais</strong></li>
+          <li>Range dans Drive sous <code>PERSO/{N° commande}/{nom_client}_{N°}</code></li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Image source vectorisée (preview)</h2>
+      <div id="preview-vector" class="preview-svg" style="min-height:120px;text-align:center;">
+        <div class="info" style="padding:1rem;">— pas d'image uploadée —</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ CONFIG ============
+// Longueur de bande dépliée par taille de bague (en mm) — source : doc Amila
+const LONGUEURS_TAILLES = {
+  50: 63.10, 52: 64.99, 54: 67.19, 56: 69.08, 58: 70.96,
+  60: 73.16, 62: 75.046, 64: 76.93, 66: 79.130, 68: 81.012, 70: 82.89, 72: 84.78
+};
+const SENS_DEFAUT = { 'full-digit': 'droite', 'digit': 'haut', 'main-pied': 'haut', 'digit-typo': 'haut' };
+
+// ============ INIT TAILLES ============
+const taillesSelect = document.getElementById('taille');
+for (const t of Object.keys(LONGUEURS_TAILLES).sort((a,b)=>+a-+b)) {
+  const opt = document.createElement('option');
+  opt.value = t;
+  opt.textContent = t;
+  taillesSelect.appendChild(opt);
+}
+taillesSelect.value = '54';
+
+// ============ AFFICHAGE DIMENSIONS ============
+function majDimInfo() {
+  const fmt = document.getElementById('format');
+  const t = +document.getElementById('taille').value;
+  const w = +fmt.options[fmt.selectedIndex].dataset.w;
+  const l = LONGUEURS_TAILLES[t];
+  document.getElementById('dim-info').textContent = `Bande dépliée : ${l.toFixed(2)} mm × ${w} mm`;
+}
+document.getElementById('format').addEventListener('change', majDimInfo);
+document.getElementById('taille').addEventListener('change', majDimInfo);
+majDimInfo();
+
+// ============ CATÉGORIE ============
+function onCategorieChange() {
+  const cat = document.getElementById('categorie').value;
+  document.getElementById('opt-full-digit').classList.toggle('hidden', cat !== 'full-digit');
+  document.getElementById('opt-typo').classList.toggle('hidden', cat !== 'digit-typo');
+  document.getElementById('sens').value = SENS_DEFAUT[cat] || 'haut';
+}
+onCategorieChange();
+// CSS hidden helper
+const styleHidden = document.createElement('style');
+styleHidden.textContent = '.hidden{display:none !important}.opt-block{margin-top:0.6rem}';
+document.head.appendChild(styleHidden);
+
+// ============ UPLOAD IMAGE ============
+let imageDataUrl = null;
+const dz = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) lireImage(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files && e.target.files[0]) lireImage(e.target.files[0]);
+});
+
+function lireImage(f) {
+  if (!f.type.startsWith('image/')) { alert('Image uniquement'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imageDataUrl = ev.target.result;
+    document.getElementById('placeholder').style.display = 'none';
+    const img = document.getElementById('preview-img');
+    img.src = imageDataUrl;
+    img.style.display = 'block';
+    // Vectorisation preview en async
+    vectoriserPreview();
+  };
+  reader.readAsDataURL(f);
+}
+
+let vectorPaths = null;
+let vectorViewBox = null;
+
+async function vectoriserPreview() {
+  if (!imageDataUrl) return;
+  const previewZone = document.getElementById('preview-vector');
+  previewZone.innerHTML = '<div class="info" style="padding:1rem;">⏳ Vectorisation en cours…</div>';
+  try {
+    const svgString = await new Promise((resolve, reject) => {
+      ImageTracer.imageToSVG(imageDataUrl, (svg) => resolve(svg), {
+        // Options pour empreintes : noir/blanc, traits fins
+        ltres: 1, qtres: 1, pathomit: 8,
+        rightangleenhance: false,
+        colorsampling: 0,
+        numberofcolors: 2,
+        mincolorratio: 0,
+        colorquantcycles: 3,
+        scale: 1,
+        roundcoords: 1,
+        viewbox: true,
+      });
+    });
+    // Extraire les paths du SVG résultant
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const svgRoot = doc.querySelector('svg');
+    vectorViewBox = svgRoot.getAttribute('viewBox') || `0 0 ${svgRoot.getAttribute('width')} ${svgRoot.getAttribute('height')}`;
+    // Garde uniquement les paths foncés (= empreinte)
+    const paths = doc.querySelectorAll('path');
+    const darkPaths = [];
+    paths.forEach(p => {
+      const fill = (p.getAttribute('fill') || '').toLowerCase();
+      // Estimer si dark (rgb low ou hex low)
+      const m = fill.match(/^#([0-9a-f]{3,6})$/) || fill.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
+      let isDark = false;
+      if (fill === 'black' || fill === '#000' || fill === '#000000') isDark = true;
+      else if (m) {
+        let r, g, b;
+        if (m[1] && m[1].length <= 6) {
+          // hex
+          let h = m[1];
+          if (h.length === 3) h = h.split('').map(c => c + c).join('');
+          r = parseInt(h.slice(0,2), 16); g = parseInt(h.slice(2,4), 16); b = parseInt(h.slice(4,6), 16);
+        } else {
+          r = +m[1]; g = +m[2]; b = +m[3];
+        }
+        isDark = (r + g + b) / 3 < 128;
+      }
+      if (isDark) darkPaths.push(p.getAttribute('d') || '');
+    });
+    vectorPaths = darkPaths.filter(Boolean);
+    // Preview (afficher juste l'empreinte vectorisée)
+    if (vectorPaths.length === 0) {
+      previewZone.innerHTML = '<div class="erreur" style="padding:1rem;">Aucune ligne foncée détectée. L\'image est-elle assez contrastée ?</div>';
+      return;
+    }
+    const previewSvg = `<svg viewBox="${vectorViewBox}" style="max-height:200px;width:auto;">
+      ${vectorPaths.map(d => `<path d="${d}" fill="black"/>`).join('')}
+    </svg>`;
+    previewZone.innerHTML = previewSvg;
+  } catch (e) {
+    previewZone.innerHTML = `<div class="erreur" style="padding:1rem;">Erreur : ${e.message}</div>`;
+  }
+}
+
+// ============ GÉNÉRATION FICHIER ============
+let svgFinal = null;
+
+function showError(msg) {
+  const el = document.getElementById('erreur');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function clearError() {
+  document.getElementById('erreur').classList.add('hidden');
+}
+
+function genererFichier() {
+  clearError();
+  if (!imageDataUrl) return showError('Uploade d\'abord une image');
+  if (!vectorPaths || vectorPaths.length === 0) return showError('Vectorisation pas dispo. Réessaie ou utilise une autre image.');
+  const numCmd = document.getElementById('num-cmd').value.trim();
+  const nomClient = document.getElementById('nom-client').value.trim();
+  if (!numCmd) return showError('N° de commande obligatoire');
+  if (!nomClient) return showError('Nom du client obligatoire');
+  const fmt = document.getElementById('format');
+  const formatVal = fmt.value;
+  const largeur = +fmt.options[fmt.selectedIndex].dataset.w;
+  const taille = +document.getElementById('taille').value;
+  const longueur = LONGUEURS_TAILLES[taille];
+  const cat = document.getElementById('categorie').value;
+  const sens = document.getElementById('sens').value;
+  const sertiCentral = document.getElementById('serti-central').checked;
+  const nbEmp = +document.getElementById('nb-emp').value || 6;
+  const typo = document.getElementById('typo').value.trim();
+
+  // Construire le SVG final
+  svgFinal = construireSVG({
+    longueur, largeur, cat, sens, sertiCentral, nbEmp, typo,
+    numCmd, nomClient, formatVal, taille,
+  });
+
+  document.getElementById('preview-svg').innerHTML = svgFinal;
+  document.getElementById('actions-dl').classList.remove('hidden');
+  document.getElementById('apres-info').classList.remove('hidden');
+}
+
+function construireSVG(opts) {
+  const { longueur, largeur, cat, sens, sertiCentral, nbEmp, typo, numCmd, nomClient } = opts;
+  // viewBox en mm
+  const vbW = longueur;
+  const vbH = largeur;
+  const stroke = 0.25;  // largeur trait en mm
+
+  // Parse vectorViewBox pour avoir les dimensions de l'empreinte source
+  const vbParts = vectorViewBox.split(/\s+/).map(Number);
+  const srcX = vbParts[0] || 0, srcY = vbParts[1] || 0, srcW = vbParts[2] || 100, srcH = vbParts[3] || 100;
+
+  // Rotation selon sens
+  const rotMap = { 'haut': 0, 'droite': 90, 'bas': 180, 'gauche': 270 };
+  const rot = rotMap[sens] || 0;
+  const apresRot = (rot === 90 || rot === 270);  // largeur/hauteur inversées
+  const empSrcW = apresRot ? srcH : srcW;
+  const empSrcH = apresRot ? srcW : srcH;
+
+  let elements = '';
+
+  if (cat === 'full-digit') {
+    const empW = vbW / nbEmp;
+    const empH = vbH * 0.85;  // marge top/bottom
+    for (let i = 0; i < nbEmp; i++) {
+      const x = i * empW + empW / 2;
+      const y = vbH / 2;
+      const scale = Math.min(empW / empSrcW, empH / empSrcH);
+      elements += placerPaths(x, y, scale, rot, srcX, srcY, srcW, srcH);
+    }
+  } else if (cat === 'digit' || cat === 'digit-typo') {
+    const empW = vbW * 0.4;
+    const empH = vbH * 0.85;
+    const scale = Math.min(empW / empSrcW, empH / empSrcH);
+    if (cat === 'digit-typo' && typo) {
+      // empreinte à gauche, typo à droite
+      elements += placerPaths(vbW * 0.25, vbH / 2, scale, rot, srcX, srcY, srcW, srcH);
+      elements += `<text x="${vbW * 0.7}" y="${vbH / 2}" text-anchor="middle" dominant-baseline="middle" font-family="Helvetica, Arial, sans-serif" font-size="${vbH * 0.5}" fill="black">${escapeXml(typo)}</text>`;
+    } else {
+      elements += placerPaths(vbW / 2, vbH / 2, scale, rot, srcX, srcY, srcW, srcH);
+    }
+  } else if (cat === 'main-pied') {
+    // Centré, scale max conservant proportions
+    const empW = vbW * 0.6;
+    const empH = vbH * 0.85;
+    const scale = Math.min(empW / empSrcW, empH / empSrcH);
+    elements += placerPaths(vbW / 2, vbH / 2, scale, rot, srcX, srcY, srcW, srcH);
+  }
+
+  // Sertissage central : étoile + cercle
+  if (sertiCentral) {
+    const cx = vbW / 2;
+    const cy = vbH / 2;
+    const taille = Math.min(vbH * 0.4, 2);
+    elements += `<circle cx="${cx}" cy="${cy}" r="${taille * 0.3}" fill="black"/>`;
+    // étoile : 4 traits autour
+    elements += `<line x1="${cx - taille}" y1="${cy}" x2="${cx + taille}" y2="${cy}" stroke="black" stroke-width="${stroke}"/>`;
+    elements += `<line x1="${cx}" y1="${cy - taille}" x2="${cx}" y2="${cy + taille}" stroke="black" stroke-width="${stroke}"/>`;
+  }
+
+  // Bordure rectangulaire (= contour de la bande dépliée)
+  const bordure = `<rect x="${stroke / 2}" y="${stroke / 2}" width="${vbW - stroke}" height="${vbH - stroke}" fill="none" stroke="#1d1e1b" stroke-width="${stroke}" stroke-miterlimit="10"/>`;
+
+  // Métadonnées : n° commande + nom client en haut à gauche
+  const meta = `<text x="-5" y="${vbH / 2}" text-anchor="end" dominant-baseline="middle" font-family="Helvetica, Arial, sans-serif" font-size="3" fill="blue" transform="rotate(-90 -5 ${vbH / 2})">${escapeXml(nomClient)} ${escapeXml(numCmd)}</text>`;
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-30 -2 ${vbW + 32} ${vbH + 4}" width="${(vbW + 32) * 4}" height="${(vbH + 4) * 4}">
+  ${meta}
+  ${elements}
+  ${bordure}
+</svg>`;
+}
+
+function placerPaths(cx, cy, scale, rot, srcX, srcY, srcW, srcH) {
+  // Centre l'empreinte source à (cx, cy) avec scale et rotation
+  // Translation pour amener le centre source à l'origine, puis scale, puis rotate, puis translate vers (cx, cy)
+  const transform = `translate(${cx} ${cy}) rotate(${rot}) scale(${scale}) translate(${-srcX - srcW/2} ${-srcY - srcH/2})`;
+  return vectorPaths.map(d => `<path d="${d}" fill="black" transform="${transform}"/>`).join('\n  ');
+}
+
+function escapeXml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+// ============ DOWNLOAD ============
+function telechargerSVG() {
+  if (!svgFinal) return;
+  const numCmd = document.getElementById('num-cmd').value.trim() || 'sans-num';
+  const nomClient = document.getElementById('nom-client').value.trim() || 'sans-nom';
+  const blob = new Blob([svgFinal], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${nomClient.replace(/\s+/g, '_')}_${numCmd}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function telechargerPNG() {
+  if (!svgFinal) return;
+  const numCmd = document.getElementById('num-cmd').value.trim() || 'sans-num';
+  const nomClient = document.getElementById('nom-client').value.trim() || 'sans-nom';
+  // Render SVG to canvas
+  const blob = new Blob([svgFinal], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+    img.src = url;
+  });
+  const canvas = document.createElement('canvas');
+  const scale = 8;  // résolution suffisante pour preview
+  canvas.width = img.naturalWidth * scale;
+  canvas.height = img.naturalHeight * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  URL.revokeObjectURL(url);
+  canvas.toBlob(b => {
+    const u = URL.createObjectURL(b);
+    const a = document.createElement('a');
+    a.href = u;
+    a.download = `${nomClient.replace(/\s+/g, '_')}_${numCmd}.png`;
+    a.click();
+    URL.revokeObjectURL(u);
+  }, 'image/png');
+}
+
+function copierSVG() {
+  if (!svgFinal) return;
+  navigator.clipboard.writeText(svgFinal).then(() => {
+    alert('SVG copié dans le presse-papiers');
+  });
+}
+</script>
+</body>
+</html>
