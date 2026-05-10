@@ -660,15 +660,8 @@ async function genererTextureBague() {
   canvas.width = tw;
   canvas.height = th;
   const ctx = canvas.getContext('2d');
-  // Fond couleur aluminium
+  // Fond couleur aluminium pur (pas d'effet brossé qui assombrit)
   ctx.fillStyle = couleurChoisie.hex;
-  ctx.fillRect(0, 0, tw, th);
-  // Léger bruit pour texture aluminium brossé
-  const grain = ctx.createLinearGradient(0, 0, 0, th);
-  grain.addColorStop(0, 'rgba(255,255,255,0.08)');
-  grain.addColorStop(0.5, 'rgba(0,0,0,0)');
-  grain.addColorStop(1, 'rgba(0,0,0,0.08)');
-  ctx.fillStyle = grain;
   ctx.fillRect(0, 0, tw, th);
 
   // Construire le SVG des éléments en string
@@ -705,10 +698,9 @@ async function majApercu3D() {
   texture.anisotropy = 16;
   texture.needsUpdate = true;
 
-  const material = new THREE.MeshStandardMaterial({
+  // MeshBasicMaterial : ignore les lights, affiche la couleur de la texture exactement comme elle est
+  const material = new THREE.MeshBasicMaterial({
     map: texture,
-    metalness: 0,       // 0 → couleur pure de la texture, pas de reflet métal qui assombrit
-    roughness: 0.85,    // presque 100% mat
     side: THREE.DoubleSide,
   });
 
