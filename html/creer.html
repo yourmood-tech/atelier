@@ -22,13 +22,12 @@
   .symb-btn { font-size: 1.5rem; padding: 0.5rem 0; line-height: 1; }
   @media (max-width: 600px) { .symboles-grid { grid-template-columns: repeat(4, 1fr); } }
   .formats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
-  .format-btn { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 0.6rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
-  .format-btn img { width: 100%; height: 70px; object-fit: contain; filter: var(--tint-filter, none); transition: filter 0.2s; }
-  .format-btn .format-label { font-size: 0.72rem; line-height: 1.2; text-align: center; color: var(--noir); }
-  .format-btn .format-label span { color: var(--gris); font-size: 0.68rem; }
+  .format-btn { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 0.7rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; font-family: inherit; }
+  .format-btn strong { font-size: 0.85rem; color: var(--noir); }
+  .format-btn span { font-size: 0.72rem; color: var(--gris); }
   .format-btn:hover { border-color: var(--gris); }
   .format-btn.active { border-color: var(--or); border-width: 3px; background: #fdf8ee; }
-  @media (max-width: 600px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } .format-btn img { height: 60px; } }
+  @media (max-width: 600px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } }
   .couleurs-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
   @media (max-width: 600px) { .couleurs-grid { grid-template-columns: repeat(4, 1fr); } }
   .couleur-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; overflow: hidden; background: white; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
@@ -101,20 +100,16 @@
     <label>Format de la bague</label>
     <div class="formats-grid">
       <button type="button" class="format-btn" data-format="medium" data-w="2.3" onclick="choisirFormat('medium')">
-        <img src="/aluminium/formats/medium.png" alt="Medium">
-        <div class="format-label"><strong>Medium</strong><br><span>2,3 mm</span></div>
+        <strong>Medium</strong><span>2,3 mm</span>
       </button>
       <button type="button" class="format-btn" data-format="2-3" data-w="4.6" onclick="choisirFormat('2-3')">
-        <img src="/aluminium/formats/deux-tiers.png" alt="Deux tiers">
-        <div class="format-label"><strong>Deux tiers</strong><br><span>4,6 mm</span></div>
+        <strong>Deux tiers</strong><span>4,6 mm</span>
       </button>
       <button type="button" class="format-btn active" data-format="addon" data-w="7" onclick="choisirFormat('addon')">
-        <img src="/aluminium/formats/addon.png" alt="Addon">
-        <div class="format-label"><strong>Addon</strong><br><span>7 mm</span></div>
+        <strong>Addon</strong><span>7 mm</span>
       </button>
       <button type="button" class="format-btn" data-format="open-mood" data-w="10" onclick="choisirFormat('open-mood')">
-        <img src="/aluminium/formats/open-mood.png" alt="Open mood">
-        <div class="format-label"><strong>Open mood</strong><br><span>10 mm</span></div>
+        <strong>Open mood</strong><span>10 mm</span>
       </button>
     </div>
     <!-- Hidden input pour compat code existant qui lit document.getElementById('format').value -->
@@ -520,19 +515,39 @@ const SYMBOLES = {
 
 // ============ COULEURS ALUMINIUM ============
 const COULEURS = [
-  { id: 'noir',           nom: 'Noir',            hex: '#1a1a1a', img: '/aluminium/noir.jpg' },
-  { id: 'rouge',          nom: 'Rouge',           hex: '#b8232a', img: '/aluminium/rouge.jpg' },
-  { id: 'bleu-marine',    nom: 'Bleu marine',     hex: '#1e2c5a', img: '/aluminium/bleu-marine.jpg' },
-  { id: 'lilas-cashmere', nom: 'Lilas cashmere',  hex: '#b9a5c3', img: '/aluminium/lilas-cashmere.png' },
-  { id: 'beige-pastel',   nom: 'Beige pastel',    hex: '#d2cdba', img: '/aluminium/beige-pastel.png' },
-  { id: 'rose-pastel',    nom: 'Rose pastel',     hex: '#ddb0c2', img: '/aluminium/rose-pastel.png' },
-  { id: 'noisette',       nom: 'Noisette',        hex: '#d2a89c', img: '/aluminium/noisette.png' },
-  { id: 'peche',          nom: 'Pêche',           hex: '#e8baa2', img: '/aluminium/peche.png' },
-  { id: 'abricot',        nom: 'Abricot',         hex: '#e8a586', img: '/aluminium/abricot.png' },
-  { id: 'jaune-pastel',   nom: 'Jaune pastel',    hex: '#cdc998', img: '/aluminium/jaune-pastel.png' },
-  { id: 'vert-pastel',    nom: 'Vert pastel',     hex: '#99c5a3', img: '/aluminium/vert-pastel.png' },
-  { id: 'bleu-pastel',    nom: 'Bleu pastel',     hex: '#a9c8c1', img: '/aluminium/bleu-pastel.png' },
+  { id: 'noir',           nom: 'Noir',            hex: '#1a1a1a' },
+  { id: 'rouge',          nom: 'Rouge',           hex: '#b8232a' },
+  { id: 'bleu-marine',    nom: 'Bleu marine',     hex: '#1e2c5a' },
+  { id: 'lilas-cashmere', nom: 'Lilas cashmere',  hex: '#b9a5c3' },
+  { id: 'beige-pastel',   nom: 'Beige pastel',    hex: '#d2cdba' },
+  { id: 'rose-pastel',    nom: 'Rose pastel',     hex: '#ddb0c2' },
+  { id: 'noisette',       nom: 'Noisette',        hex: '#d2a89c' },
+  { id: 'peche',          nom: 'Pêche',           hex: '#e8baa2' },
+  { id: 'abricot',        nom: 'Abricot',         hex: '#e8a586' },
+  { id: 'jaune-pastel',   nom: 'Jaune pastel',    hex: '#cdc998' },
+  { id: 'vert-pastel',    nom: 'Vert pastel',     hex: '#99c5a3' },
+  { id: 'bleu-pastel',    nom: 'Bleu pastel',     hex: '#a9c8c1' },
 ];
+
+// Photos disponibles par format (mapping couleur → extension fichier).
+// Quand Amila ajoute une photo manquante, on l'inscrit ici et le fallback teinté disparaît.
+const PHOTOS_DISPO = {
+  'addon': {
+    'noir': 'jpg', 'rouge': 'jpg', 'bleu-marine': 'jpg', 'lilas-cashmere': 'png',
+    'beige-pastel': 'png', 'rose-pastel': 'png', 'noisette': 'png', 'peche': 'png',
+    'abricot': 'png', 'jaune-pastel': 'png', 'vert-pastel': 'png', 'bleu-pastel': 'png',
+  },
+  'deux-tiers': { 'lilas-cashmere': 'png' },
+  'medium':     { 'lilas-cashmere': 'png' },
+  'open-mood':  { 'lilas-cashmere': 'png' },
+};
+
+// URL d'une vignette : photo native si dispo, sinon photo lilas du format (sera teintée par filter)
+function urlPhotoVignette(couleurId, formatId) {
+  const photos = PHOTOS_DISPO[formatId] || {};
+  if (photos[couleurId]) return { url: `/aluminium/${formatId}/${couleurId}.${photos[couleurId]}`, native: true };
+  return { url: `/aluminium/${formatId}/lilas-cashmere.png`, native: false };
+}
 // (couleurChoisie déjà déclarée plus haut pour éviter la TDZ au démarrage)
 couleurChoisie = COULEURS.find(c => c.id === 'lilas-cashmere') || COULEURS[0];
 
@@ -553,11 +568,15 @@ function genererFiltresCouleurs() {
 function genererSelecteurCouleurs() {
   const grid = document.getElementById('couleurs-grid');
   if (!grid) return;
-  grid.innerHTML = COULEURS.map(c => `
-    <button type="button" class="couleur-btn ${c.id === couleurChoisie.id ? 'active' : ''}" data-couleur="${c.id}" title="${c.nom}" onclick="choisirCouleur('${c.id}')">
-      <img src="${c.img}" alt="${c.nom}" loading="lazy">
-    </button>
-  `).join('');
+  const fmt = document.getElementById('format')?.value || 'addon';
+  grid.innerHTML = COULEURS.map(c => {
+    const { url, native } = urlPhotoVignette(c.id, fmt);
+    // Photo native = pas de filtre. Sinon = photo lilas teintée par filter (sauf si on est déjà sur lilas).
+    const filtre = native || c.id === 'lilas-cashmere' ? '' : `style="filter:url(#tint-${c.id});"`;
+    return `<button type="button" class="couleur-btn ${c.id === couleurChoisie.id ? 'active' : ''}" data-couleur="${c.id}" title="${c.nom}" onclick="choisirCouleur('${c.id}')">
+      <img src="${url}" alt="${c.nom}" loading="lazy" ${filtre}>
+    </button>`;
+  }).join('');
 }
 
 function choisirFormat(fmt) {
@@ -571,6 +590,8 @@ function choisirFormat(fmt) {
   document.querySelectorAll('.format-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.format === fmt);
   });
+  // Régénère les vignettes couleur pour qu'elles correspondent au nouveau format
+  genererSelecteurCouleurs();
   majDimensions();
 }
 
