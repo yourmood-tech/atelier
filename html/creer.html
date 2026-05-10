@@ -23,7 +23,7 @@
   @media (max-width: 600px) { .symboles-grid { grid-template-columns: repeat(4, 1fr); } }
   .formats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
   .format-btn { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 0.6rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
-  .format-btn img { width: 100%; height: 70px; object-fit: contain; }
+  .format-btn img { width: 100%; height: 70px; object-fit: contain; filter: var(--tint-filter, none); transition: filter 0.2s; }
   .format-btn .format-label { font-size: 0.72rem; line-height: 1.2; text-align: center; color: var(--noir); }
   .format-btn .format-label span { color: var(--gris); font-size: 0.68rem; }
   .format-btn:hover { border-color: var(--gris); }
@@ -75,6 +75,11 @@
 </style>
 </head>
 <body>
+
+<!-- Filtres SVG pour teinter les photos format selon la couleur sélectionnée -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
+  <defs id="tint-filters"></defs>
+</svg>
 
 <header>
   <div class="marque">Mood Collection</div>
@@ -295,7 +300,14 @@ window.addEventListener('load', () => {
 });
 // genererIcones() retiré : pas de palette diamants côté client
 // Différé pour que COULEURS soit déclarée (évite TDZ avec const plus bas dans le fichier)
-setTimeout(() => genererSelecteurCouleurs(), 0);
+setTimeout(() => {
+  genererFiltresCouleurs();
+  genererSelecteurCouleurs();
+  // Applique le filtre par défaut (couleur initiale)
+  if (typeof couleurChoisie !== 'undefined' && couleurChoisie?.id) {
+    document.documentElement.style.setProperty('--tint-filter', `url(#tint-${couleurChoisie.id})`);
+  }
+}, 0);
 
 function majDimensions() {
   const fmt = document.getElementById('format');
@@ -527,6 +539,20 @@ const COULEURS = [
 // (couleurChoisie déjà déclarée plus haut pour éviter la TDZ au démarrage)
 couleurChoisie = COULEURS[0]; // noir par défaut
 
+// Génère un filtre SVG par couleur : grayscale + colorize vers la couleur cible.
+// Composé en 1 matrice : on calcule la luminance (Y) puis on la multiplie par RGB cible.
+function genererFiltresCouleurs() {
+  const defs = document.getElementById('tint-filters');
+  if (!defs) return;
+  defs.innerHTML = COULEURS.map(c => {
+    const r = parseInt(c.hex.slice(1, 3), 16) / 255;
+    const g = parseInt(c.hex.slice(3, 5), 16) / 255;
+    const b = parseInt(c.hex.slice(5, 7), 16) / 255;
+    const m = `${r*0.299} ${r*0.587} ${r*0.114} 0 0  ${g*0.299} ${g*0.587} ${g*0.114} 0 0  ${b*0.299} ${b*0.587} ${b*0.114} 0 0  0 0 0 1 0`;
+    return `<filter id="tint-${c.id}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="${m}"/></filter>`;
+  }).join('');
+}
+
 function genererSelecteurCouleurs() {
   const grid = document.getElementById('couleurs-grid');
   if (!grid) return;
@@ -553,6 +579,8 @@ function choisirCouleur(id) {
   document.querySelectorAll('.couleur-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.couleur === id);
   });
+  // Teinte les photos format avec la couleur choisie
+  document.documentElement.style.setProperty('--tint-filter', `url(#tint-${id})`);
   rendreCanvas();
 }
 
