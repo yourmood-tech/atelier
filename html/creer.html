@@ -56,6 +56,12 @@
   .canvas-info { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; text-align: center; }
   .canvas-zone { overflow: hidden; }
   button.outline.mode-actif { background: var(--or); color: white; border-color: var(--or); }
+  .apercu-3d-wrapper { display: flex; justify-content: center; }
+  .apercu-3d { position: relative; width: 100%; max-width: 400px; aspect-ratio: 1; }
+  .apercu-3d img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .apercu-overlay-wrapper { position: absolute; inset: 0; pointer-events: none; }
+  .apercu-overlay { position: absolute; overflow: hidden; }
+  .apercu-overlay svg { display: block; height: 100%; }
   .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; touch-action: manipulation; }
   .editor-svg .element { cursor: move; }
   .editor-svg .element.selected { outline: 2px dashed var(--bleu); outline-offset: 4px; }
@@ -246,6 +252,24 @@
       </optgroup>
     </select>
     <button onclick="ajouterTexte()" style="margin-top:0.6rem;width:100%;">+ Ajouter ce texte sur ma bague</button>
+  </div>
+
+  <!-- APERÇU RÉALISTE 3D -->
+  <div class="card">
+    <h2>🔄 Aperçu réaliste sur ta bague</h2>
+    <p class="info" style="margin-bottom:0.6rem;">Voici comment ta gravure apparaîtra sur la bague. Glisse le curseur ou clique le bouton pour la faire tourner.</p>
+    <div class="apercu-3d-wrapper">
+      <div class="apercu-3d" id="apercu-3d">
+        <img id="apercu-photo" alt="Aperçu bague">
+        <div class="apercu-overlay-wrapper">
+          <div class="apercu-overlay" id="apercu-overlay">
+            <svg id="apercu-svg" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input type="range" id="apercu-rotation" min="0" max="360" value="0" step="1" style="width:100%;margin-top:0.8rem;" oninput="rotateApercu(this.value)">
+    <button class="outline" onclick="animerRotation()" style="width:100%;margin-top:0.4rem;">▶ Faire tourner la bague (360°)</button>
   </div>
 
   <!-- PRIX DYNAMIQUE -->
@@ -561,6 +585,98 @@ const SYMBOLES = {
   note: 'M -1 -7 L 4 -7 L 4 3 C 4 5, 2 6, 0 6 C -2 6, -4 5, -4 3 C -4 1, -2 0, 0 0 C 1 0, 2 0.5, 2 1 L 2 -5 L -1 -5 Z',
 };
 
+// ============ APERÇU 3D RÉALISTE ============
+// Position de la zone gravable visible sur chaque photo (en % de la photo)
+// La face avant de la bague représente ~33% de sa circonférence (360° / ~100° visibles)
+const ZONES_GRAVABLES = {
+  'addon':     { x: 31, y: 32, w: 38, h: 42 }, // bague large 7mm
+  '2-3':       { x: 33, y: 33, w: 35, h: 32 }, // 4.6mm
+  'medium':    { x: 35, y: 36, w: 32, h: 24 }, // 2.3mm fine
+  'open-mood': { x: 28, y: 28, w: 42, h: 50 }, // 10mm très large
+};
+let rotationApercu = 0;
+let animationApercuId = null;
+
+function majApercu3D() {
+  const photoEl = document.getElementById('apercu-photo');
+  const svgEl = document.getElementById('apercu-svg');
+  const overlay = document.getElementById('apercu-overlay');
+  if (!photoEl || !svgEl || !overlay) return;
+
+  const fmt = document.getElementById('format')?.value;
+  if (!fmt) return;
+  const photos = PHOTOS_DISPO[fmt] || {};
+  const ext = photos[couleurChoisie?.id];
+  if (!ext) return;
+  photoEl.src = `/aluminium/${fmt}/${couleurChoisie.id}.${ext}`;
+
+  // Positionner l'overlay sur la zone gravable visible
+  const zone = ZONES_GRAVABLES[fmt];
+  overlay.style.left = zone.x + '%';
+  overlay.style.top = zone.y + '%';
+  overlay.style.width = zone.w + '%';
+  overlay.style.height = zone.h + '%';
+
+  // SVG du design : on étire à 3x la largeur visible (la bague fait ~3x la face visible)
+  // On utilise un viewBox plus large que la circonférence pour permettre la rotation translateX
+  const W = viewLongueur, H = viewLargeur;
+  // viewBox horizontal = 3 × W pour permettre 360° de rotation en translateX
+  // On affiche initialement la zone centrale [W..2W]
+  svgEl.setAttribute('viewBox', `0 0 ${W * 3} ${H}`);
+  svgEl.style.width = '300%';
+
+  // Rendre le design 3 fois (gauche, centre, droite) pour effet enroulé continu
+  let html = '';
+  for (const offsetX of [0, W, W * 2]) {
+    html += `<g transform="translate(${offsetX} 0)">`;
+    html += `<rect x="0" y="0" width="${W}" height="${H}" fill="${couleurChoisie.hex}" />`;
+    for (const el of elements) html += elementSvg(el, false);
+    html += `</g>`;
+  }
+  svgEl.innerHTML = html;
+
+  // Appliquer la rotation
+  appliquerRotationApercu();
+}
+
+function appliquerRotationApercu() {
+  const svgEl = document.getElementById('apercu-svg');
+  if (!svgEl) return;
+  // Rotation 0° → le design centré (translateX = -33.3%, montre la zone [W..2W])
+  // Rotation 360° → un tour complet (translateX = -33.3% - 33.3% = -66.6%)
+  const offset = -33.333 - (rotationApercu / 360) * 33.333;
+  svgEl.style.transform = `translateX(${offset}%)`;
+}
+
+function rotateApercu(value) {
+  rotationApercu = +value;
+  appliquerRotationApercu();
+}
+
+function animerRotation() {
+  if (animationApercuId) {
+    clearInterval(animationApercuId);
+    animationApercuId = null;
+    return;
+  }
+  const slider = document.getElementById('apercu-rotation');
+  let start = +slider.value;
+  let t = 0;
+  const dur = 5000; // 5s pour un tour
+  const startTime = Date.now();
+  animationApercuId = setInterval(() => {
+    t = (Date.now() - startTime) / dur;
+    if (t >= 1) {
+      clearInterval(animationApercuId);
+      animationApercuId = null;
+      slider.value = (start + 360) % 360;
+    } else {
+      slider.value = (start + t * 360) % 360;
+    }
+    rotateApercu(slider.value);
+  }, 30);
+}
+
 // ============ COULEURS ALUMINIUM ============
 const COULEURS = [
   { id: 'noir',           nom: 'Noir',            hex: '#1a1a1a' },
@@ -822,6 +938,7 @@ function elementSvg(el, withSelection = false) {
 // ============ RENDU CANVAS ============
 function rendreCanvas() {
   if (typeof majPrix === 'function') majPrix();
+  if (typeof majApercu3D === 'function') majApercu3D();
   const svg = document.getElementById('editor-svg');
   const W = viewLongueur, H = viewLargeur;
   const margin = 1;
