@@ -598,6 +598,11 @@ let rotationApercu = 0;
 let animationApercuId = null;
 
 function majApercu3D() {
+  // Protection TDZ : PHOTOS_DISPO et COULEURS peuvent être en TDZ au tout premier appel
+  let photosMap;
+  try { photosMap = PHOTOS_DISPO; } catch (e) { return; }
+  if (!photosMap) return;
+
   const photoEl = document.getElementById('apercu-photo');
   const svgEl = document.getElementById('apercu-svg');
   const overlay = document.getElementById('apercu-overlay');
@@ -605,7 +610,7 @@ function majApercu3D() {
 
   const fmt = document.getElementById('format')?.value;
   if (!fmt) return;
-  const photos = PHOTOS_DISPO[fmt] || {};
+  const photos = photosMap[fmt] || {};
   const ext = photos[couleurChoisie?.id];
   if (!ext) return;
   photoEl.src = `/aluminium/${fmt}/${couleurChoisie.id}.${ext}`;
