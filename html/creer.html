@@ -599,6 +599,9 @@ function init3D() {
   renderer3D = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer3D.setSize(w, h);
   renderer3D.setPixelRatio(window.devicePixelRatio);
+  // Préserver les couleurs sans correction tonale (rendu fidèle à la texture)
+  renderer3D.outputColorSpace = THREE.SRGBColorSpace;
+  renderer3D.toneMapping = THREE.NoToneMapping;
   container.innerHTML = '';
   container.appendChild(renderer3D.domElement);
 
@@ -696,6 +699,7 @@ async function majApercu3D() {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.anisotropy = 16;
+  texture.colorSpace = THREE.SRGBColorSpace;
   texture.needsUpdate = true;
 
   // MeshBasicMaterial : ignore les lights, affiche la couleur de la texture exactement comme elle est
@@ -730,7 +734,7 @@ function animerRotation() {
 
 // ============ COULEURS ALUMINIUM ============
 const COULEURS = [
-  { id: 'noir',           nom: 'Noir',            hex: '#1a1a1a' },
+  { id: 'noir',           nom: 'Noir',            hex: '#0a0a0a' },
   { id: 'rouge',          nom: 'Rouge',           hex: '#b8232a' },
   { id: 'bleu-marine',    nom: 'Bleu marine',     hex: '#1e2c5a' },
   { id: 'lilas-cashmere', nom: 'Lilas cashmere',  hex: '#b9a5c3' },
