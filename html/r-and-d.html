@@ -611,18 +611,34 @@ function rendreCalendrier() {
     </div>`;
 
     if (produitsDuMois.length > 0) {
+      // Si on a les ventes Shopify du mois, recalculer les ventes par produit auto
+      const ventesShopify = ventesParMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
+      let totalVentesAuto = 0;
+      let synchroBadge = '';
+      if (ventesShopify && ventesShopify.ventes) {
+        // Pour chaque produit du planning, chercher dans les ventes Shopify par titre similaire
+        const produitsRapprochés = produitsDuMois.map(p => {
+          const match = trouverVentesShopify(p.nom, ventesShopify.ventes);
+          return { ...p, ventesAuto: match.ca, qtyAuto: match.qty };
+        });
+        totalVentesAuto = produitsRapprochés.reduce((s, p) => s + (p.ventesAuto || 0), 0);
+        synchroBadge = `<span style="font-size:0.7rem;color:var(--vert);margin-left:0.5rem;">☁️ Ventes Shopify synchronisées</span>`;
+      }
       const totalObj = produitsDuMois.reduce((s, p) => s + (+p.objectifCA || 0), 0);
-      const totalVentes = produitsDuMois.reduce((s, p) => s + (+p.ventes || 0), 0);
+      const totalVentesManuel = produitsDuMois.reduce((s, p) => s + (+p.ventes || 0), 0);
+      const totalVentes = totalVentesAuto > 0 ? totalVentesAuto : totalVentesManuel;
       const reste = totalObj - totalVentes;
       const pctMois = totalObj > 0 ? Math.round((totalVentes / totalObj) * 100) : 0;
       html += `<div class="recap-mensuel">
-        <div class="recap-mensuel-title">📊 Bilan ${NOMS_MOIS[mois]} ${annee}</div>
+        <div class="recap-mensuel-title">📊 Bilan ${NOMS_MOIS[mois]} ${annee}${synchroBadge}</div>
         <div class="recap-totals">
           <div class="recap-total-item">Objectif total<strong>${totalObj.toLocaleString('fr-CH')}.- CHF</strong></div>
           <div class="recap-total-item">Réalisé<strong>${totalVentes.toLocaleString('fr-CH')}.- CHF (${pctMois}%)</strong></div>
           <div class="recap-total-item">${reste >= 0 ? 'Manque' : 'Dépassement'}<strong style="color:${reste >= 0 ? 'var(--rouge)' : 'var(--vert)'}">${Math.abs(reste).toLocaleString('fr-CH')}.- CHF</strong></div>
           <div class="recap-total-item">Nouveautés<strong>${produitsDuMois.length}</strong></div>
+          ${ventesShopify ? `<div class="recap-total-item">CA total Shopify<strong>${ventesShopify.total_ca.toLocaleString('fr-CH')}.- CHF</strong></div>` : ''}
         </div>
+        ${!ventesShopify ? `<button class="outline" onclick="chargerVentesMois(${annee},${mois + 1})" style="font-size:0.75rem;padding:0.3rem 0.7rem;margin-top:0.5rem;">☁️ Charger ventes Shopify</button>` : ''}
       </div>`;
     }
 
@@ -1147,6 +1163,47 @@ function ajouterIdeeAuPlanning(idee) {
   fermerBrainstorm();
 }
 
+// ============ VENTES SHOPIFY (PLAN DE BATAILLE) ============
+const ventesParMois = {};  // { '2026-05': { ventes: {...}, total_ca, total_commandes } }
+
+function trouverVentesShopify(nomPepite, ventesMap) {
+  if (!nomPepite || !ventesMap) return { ca: 0, qty: 0 };
+  const needle = nomPepite.toLowerCase().trim();
+  let ca = 0, qty = 0;
+  for (const title in ventesMap) {
+    const t = title.toLowerCase();
+    if (t === needle || t.includes(needle) || needle.includes(t)) {
+      ca += ventesMap[title].ca || 0;
+      qty += ventesMap[title].quantity || 0;
+    }
+  }
+  return { ca: Math.round(ca), qty };
+}
+
+async function chargerVentesMois(annee, mois) {
+  const key = `${annee}-${String(mois).padStart(2, '0')}`;
+  if (ventesParMois[key]) return;
+  try {
+    const r = await fetch(`/api/r-and-d/ventes-mois?annee=${annee}&mois=${mois}`);
+    if (!r.ok) {
+      const err = await r.json();
+      alert(`Erreur fetch ventes ${key} : ${err.error || 'inconnu'}`);
+      return;
+    }
+    const data = await r.json();
+    ventesParMois[key] = data;
+    rendreCalendrier();
+  } catch (e) {
+    alert('Erreur réseau : ' + e.message);
+  }
+}
+
+// Charger automatiquement les ventes du mois courant au démarrage
+function chargerVentesMoisCourant() {
+  const today = new Date();
+  chargerVentesMois(today.getFullYear(), today.getMonth() + 1);
+}
+
 // ============ DRAG & DROP ============
 let dragProductId = null;
 
@@ -1271,6 +1328,8 @@ document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
 rendreCalendrier();
 // Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
 chargerDonneesCloud();
+// Charger les ventes Shopify du mois courant
+chargerVentesMoisCourant();
 </script>
 </body>
 </html>
