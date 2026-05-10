@@ -151,16 +151,27 @@
       <input id="texte-nouveau" placeholder="ex : Madame & Monsieur">
       <label style="margin-top:0.4rem;font-size:0.75rem;">Police</label>
       <select id="texte-font" style="font-size:0.78rem;">
-        <option value="opensans" selected>Open Sans (sans serif)</option>
-        <option value="lora">Lora (serif)</option>
-        <option value="courierprime">Courier Prime (mono)</option>
-        <option value="pacifico">Pacifico (manuscrit)</option>
-        <option value="greatvibes">Great Vibes (élégant)</option>
-        <option value="tangerine">Tangerine (calligraphie)</option>
-        <option value="bebasneue">Bebas Neue (gras)</option>
-        <option value="playfair">Playfair Display (élégant)</option>
-        <option value="nunito">Nunito (moderne)</option>
-        <option value="dancingscript">Dancing Script (script)</option>
+        <optgroup label="Trait simple (gravure)">
+          <option value="hershey:futural" selected>Futural (sans, gravure)</option>
+          <option value="hershey:futuram">Futuram (sans gras, gravure)</option>
+          <option value="hershey:timesr">Times (serif, gravure)</option>
+          <option value="hershey:timesrb">Times bold (serif gras, gravure)</option>
+          <option value="hershey:timesi">Times italique (gravure)</option>
+          <option value="hershey:cursive">Cursive (manuscrit, gravure)</option>
+          <option value="hershey:scripts">Scripts (script, gravure)</option>
+        </optgroup>
+        <optgroup label="Aplat (rempli)">
+          <option value="opensans">Open Sans (sans serif)</option>
+          <option value="lora">Lora (serif)</option>
+          <option value="courierprime">Courier Prime (mono)</option>
+          <option value="pacifico">Pacifico (manuscrit)</option>
+          <option value="greatvibes">Great Vibes (élégant)</option>
+          <option value="tangerine">Tangerine (calligraphie)</option>
+          <option value="bebasneue">Bebas Neue (gras)</option>
+          <option value="playfair">Playfair Display (élégant)</option>
+          <option value="nunito">Nunito (moderne)</option>
+          <option value="dancingscript">Dancing Script (script)</option>
+        </optgroup>
       </select>
       <button onclick="ajouterTexte()" style="margin-top:0.4rem;width:100%;">+ Ajouter ce texte</button>
     </div>
@@ -240,6 +251,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('load', () => {
   setTimeout(() => {
     Object.keys(FONT_URLS).forEach(key => chargerFont(key).catch(() => {}));
+    chargerHershey().catch(() => {});
   }, 100);
 });
 genererIcones();
@@ -305,16 +317,74 @@ async function chargerFont(key) {
   });
 }
 
+// Données Hershey (chargées en arrière-plan, format JSON minifié)
+let HERSHEY_DATA = null;
+const HERSHEY_URL = 'https://cdn.jsdelivr.net/npm/hersheytext@2.0.0/hersheytext.min.json';
+async function chargerHershey() {
+  if (HERSHEY_DATA) return HERSHEY_DATA;
+  const r = await fetch(HERSHEY_URL);
+  HERSHEY_DATA = await r.json();
+  return HERSHEY_DATA;
+}
+
+// Transforme un path Hershey ("M4,3 L8,5 10,7") en path SVG translaté + scalé
+function transformHersheyPath(d, dx, dy, scale) {
+  const tokens = d.match(/[ML]|-?\d+,-?\d+/g) || [];
+  const out = [];
+  for (const tok of tokens) {
+    if (tok === 'M' || tok === 'L') {
+      out.push(tok);
+    } else {
+      const [x, y] = tok.split(',').map(Number);
+      out.push(`${((x + dx) * scale).toFixed(3)},${((y + dy) * scale).toFixed(3)}`);
+    }
+  }
+  return out.join(' ');
+}
+
+// Rend un texte en path SVG single-line (Hershey)
+function renderHersheyText(text, fontName, fontSize) {
+  const font = HERSHEY_DATA && HERSHEY_DATA[fontName];
+  if (!font) return null;
+  const HERSHEY_HEIGHT = 32; // hauteur approximative des caractères Hershey
+  const scale = fontSize / HERSHEY_HEIGHT;
+  // Calculer largeur totale pour centrer
+  let totalWidth = 0;
+  for (const ch of text) {
+    const idx = ch.charCodeAt(0) - 32;
+    if (idx >= 0 && idx < font.chars.length) totalWidth += font.chars[idx].o;
+  }
+  // Générer les paths translatés
+  let cursor = -totalWidth / 2;
+  const parts = [];
+  for (const ch of text) {
+    const idx = ch.charCodeAt(0) - 32;
+    if (idx < 0 || idx >= font.chars.length) { cursor += 8; continue; }
+    const c = font.chars[idx];
+    if (c.d) parts.push(transformHersheyPath(c.d, cursor, -11, scale)); // -11 pour centrer verticalement
+    cursor += c.o;
+  }
+  return parts.join(' ');
+}
+
 // Convertir texte → path SVG (centré sur 0,0). Stocke le résultat sur l'élément.
 async function regenererPathTexte(el) {
   if (el.type !== 'texte' || !el.font || !el.text) return;
   try {
+    if (el.font.startsWith('hershey:')) {
+      const fontName = el.font.replace('hershey:', '');
+      await chargerHershey();
+      el.pathData = renderHersheyText(el.text, fontName, el.fontSize);
+      el.isStroke = true;
+      rendreCanvas();
+      return;
+    }
     const font = await chargerFont(el.font);
     const bb = font.getPath(el.text, 0, 0, el.fontSize).getBoundingBox();
     const w = bb.x2 - bb.x1, h = bb.y2 - bb.y1;
-    // Recentrer le path sur 0,0
     const path = font.getPath(el.text, -bb.x1 - w/2, -bb.y1 - h/2, el.fontSize);
     el.pathData = path.toPathData(3);
+    el.isStroke = false;
     el.textBBox = { w, h };
     rendreCanvas();
   } catch (e) { console.error('Erreur chargement font', el.font, e); }
@@ -372,9 +442,11 @@ function elementSvg(el, withSelection = false) {
   }
   if (el.type === 'texte') {
     if (el.pathData) {
-      // Texte en aplat noir (fill) — 1 forme par lettre, pas de double contour
+      const style = el.isStroke
+        ? 'fill="none" stroke="#1d1e1b" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"'
+        : 'fill="#1d1e1b" stroke="none" fill-rule="evenodd"';
       return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
-        <path d="${el.pathData}" fill="#1d1e1b" stroke="none" fill-rule="evenodd"/>
+        <path d="${el.pathData}" ${style}/>
       </g>`;
     }
     // Fallback en attendant le chargement de la font
