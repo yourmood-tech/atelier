@@ -28,6 +28,21 @@ export default function SetupPersoPage() {
       .catch(() => {});
   }, []);
 
+  const reinitialiser = async () => {
+    if (!confirm("Effacer le mapping actuel et permettre de re-créer les produits ? (à faire uniquement après avoir supprimé les anciens produits sur Shopify)")) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/creer-produits-perso", { method: "DELETE" });
+      if (!r.ok) throw new Error(`Erreur ${r.status}`);
+      setResultats(null);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const lancerCreation = async () => {
     if (!confirm("Créer 4 produits Shopify avec 12 variants chacun ? (action irréversible, les produits seront publiés actifs)")) return;
     setLoading(true);
@@ -119,6 +134,17 @@ export default function SetupPersoPage() {
             <p className="text-sm text-zinc-400 mt-6">
               Les variant IDs sont stockés dans Redis. La page <code className="text-amber-400">/creer</code> les utilisera automatiquement pour le bouton "Acheter".
             </p>
+            <div className="mt-6 pt-4 border-t border-zinc-800">
+              <p className="text-xs text-zinc-500 mb-2">⚠️ Si tu as supprimé les produits sur Shopify et veux tout re-créer :</p>
+              <button
+                onClick={reinitialiser}
+                disabled={loading}
+                className="bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm"
+              >
+                {loading ? "..." : "♻️ Réinitialiser le mapping (puis re-cliquer 'Créer')"}
+              </button>
+              {error && <p className="text-red-400 text-sm mt-3">Erreur : {error}</p>}
+            </div>
           </div>
         )}
       </div>

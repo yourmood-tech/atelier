@@ -117,11 +117,25 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
 
-  // Renvoie les variants déjà créés (depuis Redis) pour vérification
   if (!REDIS_URL || !REDIS_TOKEN) return NextResponse.json({ error: "Redis non configuré" }, { status: 503 });
   const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent("perso:shopify:variants")}`, {
     headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
   });
   const data = await r.json();
-  return NextResponse.json({ resultats: data.result ? JSON.parse(data.result) : null });
+  let resultats = null;
+  if (data.result) {
+    try { resultats = JSON.parse(data.result); } catch { resultats = null; }
+  }
+  return NextResponse.json({ resultats });
+}
+
+export async function DELETE() {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
+  if (!REDIS_URL || !REDIS_TOKEN) return NextResponse.json({ error: "Redis non configuré" }, { status: 503 });
+  await fetch(`${REDIS_URL}/del/${encodeURIComponent("perso:shopify:variants")}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  return NextResponse.json({ ok: true });
 }
