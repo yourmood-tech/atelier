@@ -279,7 +279,7 @@ for (const t of Object.keys(LONGUEURS_TAILLES).sort((a,b)=>+a-+b)) {
   taillesSelect.appendChild(opt);
 }
 taillesSelect.value = '54';
-document.getElementById('format').value = '2-3';
+document.getElementById('format').value = 'addon';
 majDimensions();
 let resizeTimer = null;
 window.addEventListener('resize', () => {
@@ -547,7 +547,7 @@ const PHOTOS_DISPO = {
     'noisette': 'png', 'peche': 'png', 'abricot': 'png',
     'jaune-pastel': 'png', 'vert-pastel': 'png', 'bleu-pastel': 'png',
   },
-  'deux-tiers': {
+  '2-3': {
     'noir': 'jpg', 'rouge': 'jpg', 'bleu-marine': 'webp',
     'lilas-cashmere': 'png', 'belipastel': 'png', 'rose-pastel': 'png',
     'noisette': 'png', 'peche': 'png', 'abricot': 'png',
