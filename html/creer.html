@@ -268,7 +268,7 @@ const LONGUEURS_TAILLES = {
 
 // État global
 let elements = [];  // { id, type, x, y, scale, rotation, ...données }
-let couleurChoisie = { id: 'noir', nom: 'Noir', hex: '#1a1a1a', img: '/aluminium/noir.jpg' }; // remplacé au load par COULEURS[0]
+let couleurChoisie = { id: 'lilas-cashmere', nom: 'Lilas cashmere', hex: '#b9a5c3', img: '/aluminium/lilas-cashmere.png' }; // remplacé au load par COULEURS[3]
 const PRIX_BASE = { 'addon': 85, '2-3': 75, 'medium': 65, 'open-mood': 109 };
 let selectedId = null;
 let nextId = 1;
@@ -303,10 +303,7 @@ window.addEventListener('load', () => {
 setTimeout(() => {
   genererFiltresCouleurs();
   genererSelecteurCouleurs();
-  // Applique le filtre par défaut (couleur initiale)
-  if (typeof couleurChoisie !== 'undefined' && couleurChoisie?.id) {
-    document.documentElement.style.setProperty('--tint-filter', `url(#tint-${couleurChoisie.id})`);
-  }
+  // Pas de filtre par défaut : les photos sont déjà en lilas cashmere (couleur par défaut)
 }, 0);
 
 function majDimensions() {
@@ -537,7 +534,7 @@ const COULEURS = [
   { id: 'bleu-pastel',    nom: 'Bleu pastel',     hex: '#a9c8c1', img: '/aluminium/bleu-pastel.png' },
 ];
 // (couleurChoisie déjà déclarée plus haut pour éviter la TDZ au démarrage)
-couleurChoisie = COULEURS[0]; // noir par défaut
+couleurChoisie = COULEURS.find(c => c.id === 'lilas-cashmere') || COULEURS[0];
 
 // Génère un filtre SVG par couleur : grayscale + colorize vers la couleur cible.
 // Composé en 1 matrice : on calcule la luminance (Y) puis on la multiplie par RGB cible.
@@ -564,7 +561,13 @@ function genererSelecteurCouleurs() {
 }
 
 function choisirFormat(fmt) {
-  document.getElementById('format').value = fmt;
+  const btn = document.querySelector(`.format-btn[data-format="${fmt}"]`);
+  if (!btn) return;
+  // Synchronise le select caché : on met selectedIndex explicitement (plus fiable que .value sur un select hidden)
+  const sel = document.getElementById('format');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === fmt) { sel.selectedIndex = i; break; }
+  }
   document.querySelectorAll('.format-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.format === fmt);
   });
@@ -579,8 +582,12 @@ function choisirCouleur(id) {
   document.querySelectorAll('.couleur-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.couleur === id);
   });
-  // Teinte les photos format avec la couleur choisie
-  document.documentElement.style.setProperty('--tint-filter', `url(#tint-${id})`);
+  // Teinte les photos format avec la couleur choisie (sauf lilas qui est la couleur native des photos)
+  if (id === 'lilas-cashmere') {
+    document.documentElement.style.setProperty('--tint-filter', 'none');
+  } else {
+    document.documentElement.style.setProperty('--tint-filter', `url(#tint-${id})`);
+  }
   rendreCanvas();
 }
 
