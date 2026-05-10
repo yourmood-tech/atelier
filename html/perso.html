@@ -504,6 +504,19 @@ document.getElementById('file-input').addEventListener('change', e => {
   if (e.target.files && e.target.files[0]) lireImage(e.target.files[0]);
 });
 
+// Permettre aussi de glisser une image directement sur la bague
+const editorSvg = document.getElementById('editor-svg');
+editorSvg.addEventListener('dragover', e => { e.preventDefault(); editorSvg.style.outline = '2px dashed var(--bleu)'; });
+editorSvg.addEventListener('dragleave', () => { editorSvg.style.outline = ''; });
+editorSvg.addEventListener('drop', e => {
+  e.preventDefault(); editorSvg.style.outline = '';
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) lireImage(e.dataTransfer.files[0]);
+});
+
+// Empêcher le navigateur d'ouvrir une image lâchée hors zone (= "ça zoome la page")
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
 function lireImage(f) {
   if (!f.type.startsWith('image/')) { alert('Image uniquement'); return; }
   const reader = new FileReader();
