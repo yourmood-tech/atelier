@@ -243,6 +243,7 @@ const LONGUEURS_TAILLES = {
 // État global
 let elements = [];  // { id, type, x, y, scale, rotation, ...données }
 let couleurChoisie = { id: 'noir', nom: 'Noir', hex: '#1a1a1a', img: '/aluminium/noir.jpg' }; // remplacé au load par COULEURS[0]
+const PRIX_BASE = { 'addon': 85, '2-3': 75, 'medium': 65, 'open-mood': 109 };
 let selectedId = null;
 let nextId = 1;
 let viewLongueur = 67.19;  // taille 54 par défaut
@@ -272,7 +273,8 @@ window.addEventListener('load', () => {
   }, 100);
 });
 // genererIcones() retiré : pas de palette diamants côté client
-genererSelecteurCouleurs();
+// Différé pour que COULEURS soit déclarée (évite TDZ avec const plus bas dans le fichier)
+setTimeout(() => genererSelecteurCouleurs(), 0);
 
 function majDimensions() {
   const fmt = document.getElementById('format');
@@ -514,12 +516,7 @@ function couleurContrastee(hex) {
 }
 
 // ============ PRIX DYNAMIQUE ============
-const PRIX_BASE = {
-  'addon': 85,        // 7mm
-  '2-3': 75,          // 4.6mm
-  'medium': 65,       // 2.3mm
-  'open-mood': 109,   // 10mm
-};
+// (PRIX_BASE déclaré plus haut pour éviter la TDZ au démarrage)
 
 // Niveaux de complexité (uniquement pour addon pour l'instant — 85/95/105)
 function calculerComplexite() {
