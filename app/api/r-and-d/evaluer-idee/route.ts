@@ -3,6 +3,58 @@ import { NextResponse } from "next/server";
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-2.5-flash";
 
+const SHOPIFY_TOKEN = process.env.MOOD_SHOPIFY_ACCESS_TOKEN;
+const SHOPIFY_DOMAIN = process.env.MOOD_SHOPIFY_DOMAIN;
+
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+const CACHE_KEY = "mood:products:catalogue";
+const CACHE_TTL = 86400; // 24h
+
+interface ProduitMood { title: string; type: string; tags: string }
+
+async function redisGet(key: string): Promise<unknown> {
+  if (!REDIS_URL || !REDIS_TOKEN) return null;
+  try {
+    const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return typeof j?.result === "string" ? JSON.parse(j.result) : j?.result;
+  } catch { return null; }
+}
+
+async function redisSetEx(key: string, value: unknown, ttl: number) {
+  if (!REDIS_URL || !REDIS_TOKEN) return;
+  try {
+    await fetch(`${REDIS_URL}/setex/${encodeURIComponent(key)}/${ttl}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify([JSON.stringify(value)]),
+    });
+  } catch { /* skip */ }
+}
+
+async function fetchCatalogueMood(): Promise<ProduitMood[]> {
+  const cached = await redisGet(CACHE_KEY) as ProduitMood[] | null;
+  if (cached && Array.isArray(cached) && cached.length > 0) return cached;
+  if (!SHOPIFY_TOKEN || !SHOPIFY_DOMAIN) return [];
+
+  // Fetch les 250 produits actifs les plus récents
+  const url = `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/products.json?limit=250&status=active&fields=title,product_type,tags&order=created_at+desc`;
+  const r = await fetch(url, { headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN } });
+  if (!r.ok) return [];
+  const data = await r.json();
+  const list: ProduitMood[] = (data.products || []).map((p: { title: string; product_type: string; tags: string }) => ({
+    title: p.title,
+    type: p.product_type || "",
+    tags: p.tags || "",
+  }));
+  await redisSetEx(CACHE_KEY, list, CACHE_TTL);
+  return list;
+}
+
 const ADN_EVAL = `Tu es l'adjoint stratégique d'Amila Pousaz, designer chez Mood Collection. Ton rôle : ÉVALUER la pertinence d'une idée de pépite créative AVANT lancement, et donner un avis honnête.
 
 CRITÈRES D'ÉVALUATION (basés sur les patterns Mood réels) :
@@ -78,14 +130,23 @@ export async function POST(request: Request) {
     idee.notes && `Notes / description : ${idee.notes}`,
   ].filter(Boolean).join('\n');
 
+  // Récupérer le catalogue Mood actuel pour comparaison réelle (cached 24h)
+  const catalogue = await fetchCatalogueMood();
+  const catalogueSection = catalogue.length > 0
+    ? `\n\n--- CATALOGUE MOOD ACTUEL (${catalogue.length} produits actifs récents — pour vérifier si l'idée existe déjà ou ressemble à un produit en ligne) ---\n` +
+      catalogue.slice(0, 200).map(p => `• ${p.title}${p.type ? ` [${p.type}]` : ''}`).join('\n')
+    : '';
+
   const prompt = `${ADN_EVAL}
 
 --- IDÉE À ÉVALUER ---
 ${ideeContexte}
 
 ${idee.image ? "Une image / croquis / photo proto est jointe ci-dessous — analyse aussi le visuel." : ""}
+${catalogueSection}
 
 --- ÉVALUATION ---
+${catalogue.length > 0 ? "Compare l'idée au CATALOGUE MOOD ACTUEL ci-dessus pour identifier si elle existe déjà ou est trop similaire à un produit en ligne." : ""}
 RÉPONSE OBLIGATOIRE — JSON STRICT, RIEN D'AUTRE.`;
 
   // Construire les parts avec image si dispo
