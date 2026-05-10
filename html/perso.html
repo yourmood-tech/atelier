@@ -281,18 +281,18 @@ function ajouterDiamant(taille, style) {
   rendreCanvas();
 }
 
-// Mapping clé → URL TTF (fonts open source via jsdelivr)
+// Mapping clé → URL TTF (fonts open source via jsdelivr, branche main pour éviter le cache obsolète)
 const FONT_URLS = {
-  opensans: 'https://cdn.jsdelivr.net/gh/google/fonts/apache/opensans/static/OpenSans-Regular.ttf',
-  lora: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/lora/static/Lora-Regular.ttf',
-  courierprime: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/courierprime/CourierPrime-Regular.ttf',
-  pacifico: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/pacifico/Pacifico-Regular.ttf',
-  greatvibes: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/greatvibes/GreatVibes-Regular.ttf',
-  tangerine: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/tangerine/Tangerine-Regular.ttf',
-  bebasneue: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/bebasneue/BebasNeue-Regular.ttf',
-  playfair: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/playfairdisplay/static/PlayfairDisplay-Regular.ttf',
-  nunito: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nunito/static/Nunito-Regular.ttf',
-  dancingscript: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/dancingscript/static/DancingScript-Regular.ttf',
+  opensans: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/opensans/OpenSans%5Bwdth%2Cwght%5D.ttf',
+  lora: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/lora/Lora%5Bwght%5D.ttf',
+  courierprime: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/courierprime/CourierPrime-Regular.ttf',
+  pacifico: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/pacifico/Pacifico-Regular.ttf',
+  greatvibes: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/greatvibes/GreatVibes-Regular.ttf',
+  tangerine: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/tangerine/Tangerine-Regular.ttf',
+  bebasneue: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/bebasneue/BebasNeue-Regular.ttf',
+  playfair: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf',
+  nunito: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nunito/Nunito%5Bwght%5D.ttf',
+  dancingscript: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
 };
 const fontCache = {};
 async function chargerFont(key) {
