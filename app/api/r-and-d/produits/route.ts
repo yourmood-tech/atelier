@@ -14,8 +14,9 @@ import { NextResponse } from "next/server";
  * Si non configuré, l'API renvoie 503 et le frontend reste sur localStorage.
  */
 
-const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+// Upstash Redis (alias Vercel KV) — clés standard Vercel
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 const KEY = "r-and-d:produits:amila";
 
 async function redisFetch(path: string, body?: unknown) {
