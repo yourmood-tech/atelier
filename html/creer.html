@@ -21,6 +21,14 @@
   .symboles-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
   .symb-btn { font-size: 1.5rem; padding: 0.5rem 0; line-height: 1; }
   @media (max-width: 600px) { .symboles-grid { grid-template-columns: repeat(4, 1fr); } }
+  .formats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+  .format-btn { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 0.6rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+  .format-btn img { width: 100%; height: 70px; object-fit: contain; }
+  .format-btn .format-label { font-size: 0.72rem; line-height: 1.2; text-align: center; color: var(--noir); }
+  .format-btn .format-label span { color: var(--gris); font-size: 0.68rem; }
+  .format-btn:hover { border-color: var(--gris); }
+  .format-btn.active { border-color: var(--or); border-width: 3px; background: #fdf8ee; }
+  @media (max-width: 600px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } .format-btn img { height: 60px; } }
   .couleurs-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
   @media (max-width: 600px) { .couleurs-grid { grid-template-columns: repeat(4, 1fr); } }
   .couleur-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; overflow: hidden; background: white; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
@@ -85,22 +93,35 @@
   <!-- ÉTAPE 1 : BAGUE -->
   <div class="card">
     <h2>1. Ta bague</h2>
-    <div class="row">
-      <div>
-        <label>Format de la bague</label>
-        <select id="format" onchange="majDimensions()">
-          <option value="addon" data-w="7">Addon (7 mm)</option>
-          <option value="2-3" data-w="4.6">Deux tiers (4,6 mm)</option>
-          <option value="medium" data-w="2.3">Medium (2,3 mm)</option>
-          <option value="open-mood" data-w="10">Open mood (10 mm)</option>
-        </select>
-      </div>
-      <div>
-        <label>Ta taille</label>
-        <select id="taille" onchange="majDimensions()"></select>
-      </div>
+    <label>Format de la bague</label>
+    <div class="formats-grid">
+      <button type="button" class="format-btn" data-format="medium" data-w="2.3" onclick="choisirFormat('medium')">
+        <img src="/aluminium/formats/medium.png" alt="Medium">
+        <div class="format-label"><strong>Medium</strong><br><span>2,3 mm</span></div>
+      </button>
+      <button type="button" class="format-btn" data-format="2-3" data-w="4.6" onclick="choisirFormat('2-3')">
+        <img src="/aluminium/formats/deux-tiers.png" alt="Deux tiers">
+        <div class="format-label"><strong>Deux tiers</strong><br><span>4,6 mm</span></div>
+      </button>
+      <button type="button" class="format-btn active" data-format="addon" data-w="7" onclick="choisirFormat('addon')">
+        <img src="/aluminium/formats/addon.png" alt="Addon">
+        <div class="format-label"><strong>Addon</strong><br><span>7 mm</span></div>
+      </button>
+      <button type="button" class="format-btn" data-format="open-mood" data-w="10" onclick="choisirFormat('open-mood')">
+        <img src="/aluminium/formats/open-mood.png" alt="Open mood">
+        <div class="format-label"><strong>Open mood</strong><br><span>10 mm</span></div>
+      </button>
     </div>
-    <div class="info" id="dim-info">—</div>
+    <!-- Hidden input pour compat code existant qui lit document.getElementById('format').value -->
+    <select id="format" onchange="majDimensions()" style="display:none;">
+      <option value="addon" data-w="7" selected>Addon</option>
+      <option value="2-3" data-w="4.6">Deux tiers</option>
+      <option value="medium" data-w="2.3">Medium</option>
+      <option value="open-mood" data-w="10">Open mood</option>
+    </select>
+    <label style="margin-top:0.8rem;">Ta taille</label>
+    <select id="taille" onchange="majDimensions()" style="max-width:120px;"></select>
+    <div class="info" id="dim-info" style="margin-top:0.4rem;">—</div>
 
     <label style="margin-top:0.8rem;">Couleur de l'aluminium</label>
     <div class="couleurs-grid" id="couleurs-grid"></div>
@@ -514,6 +535,14 @@ function genererSelecteurCouleurs() {
       <img src="${c.img}" alt="${c.nom}" loading="lazy">
     </button>
   `).join('');
+}
+
+function choisirFormat(fmt) {
+  document.getElementById('format').value = fmt;
+  document.querySelectorAll('.format-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.format === fmt);
+  });
+  majDimensions();
 }
 
 function choisirCouleur(id) {
