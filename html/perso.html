@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Personnalisation Mood — Éditeur visuel</title>
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
 <style>
   :root { --or:#c9a96e; --noir:#1a1a1a; --gris:#6b6b6b; --gris-clair:#f5f5f5; --vert:#2d8a4e; --rouge:#c0392b; --bleu:#2563eb; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -150,16 +151,16 @@
       <input id="texte-nouveau" placeholder="ex : Madame & Monsieur">
       <label style="margin-top:0.4rem;font-size:0.75rem;">Police</label>
       <select id="texte-font" style="font-size:0.78rem;">
-        <option value="Helvetica, Arial, sans-serif" selected>Helvetica (sans serif)</option>
-        <option value="Georgia, 'Times New Roman', serif">Georgia (serif)</option>
-        <option value="'Courier New', monospace">Courier (mono)</option>
-        <option value="'Brush Script MT', cursive" style="font-family:'Brush Script MT', cursive;">Brush Script (manuscrit)</option>
-        <option value="'Snell Roundhand', cursive" style="font-family:'Snell Roundhand', cursive;">Snell Roundhand (élégant)</option>
-        <option value="'Zapfino', cursive" style="font-family:'Zapfino', cursive;">Zapfino (calligraphie)</option>
-        <option value="Impact, sans-serif" style="font-family:Impact, sans-serif;">Impact (gras)</option>
-        <option value="'Arial Black', sans-serif">Arial Black</option>
-        <option value="Optima, sans-serif">Optima (élégant)</option>
-        <option value="'Avenir Next', sans-serif">Avenir Next (moderne)</option>
+        <option value="opensans" selected>Open Sans (sans serif)</option>
+        <option value="lora">Lora (serif)</option>
+        <option value="courierprime">Courier Prime (mono)</option>
+        <option value="pacifico">Pacifico (manuscrit)</option>
+        <option value="greatvibes">Great Vibes (élégant)</option>
+        <option value="tangerine">Tangerine (calligraphie)</option>
+        <option value="bebasneue">Bebas Neue (gras)</option>
+        <option value="playfair">Playfair Display (élégant)</option>
+        <option value="nunito">Nunito (moderne)</option>
+        <option value="dancingscript">Dancing Script (script)</option>
       </select>
       <button onclick="ajouterTexte()" style="margin-top:0.4rem;width:100%;">+ Ajouter ce texte</button>
     </div>
@@ -273,13 +274,55 @@ function ajouterDiamant(taille, style) {
   rendreCanvas();
 }
 
+// Mapping clé → URL TTF (fonts open source via jsdelivr)
+const FONT_URLS = {
+  opensans: 'https://cdn.jsdelivr.net/gh/google/fonts/apache/opensans/static/OpenSans-Regular.ttf',
+  lora: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/lora/static/Lora-Regular.ttf',
+  courierprime: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/courierprime/CourierPrime-Regular.ttf',
+  pacifico: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/pacifico/Pacifico-Regular.ttf',
+  greatvibes: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/greatvibes/GreatVibes-Regular.ttf',
+  tangerine: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/tangerine/Tangerine-Regular.ttf',
+  bebasneue: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/bebasneue/BebasNeue-Regular.ttf',
+  playfair: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/playfairdisplay/static/PlayfairDisplay-Regular.ttf',
+  nunito: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/nunito/static/Nunito-Regular.ttf',
+  dancingscript: 'https://cdn.jsdelivr.net/gh/google/fonts/ofl/dancingscript/static/DancingScript-Regular.ttf',
+};
+const fontCache = {};
+async function chargerFont(key) {
+  if (fontCache[key]) return fontCache[key];
+  return new Promise((resolve, reject) => {
+    opentype.load(FONT_URLS[key], (err, font) => {
+      if (err) reject(err);
+      else { fontCache[key] = font; resolve(font); }
+    });
+  });
+}
+
+// Convertir texte → path SVG (centré sur 0,0). Stocke le résultat sur l'élément.
+async function regenererPathTexte(el) {
+  if (el.type !== 'texte' || !el.font || !el.text) return;
+  try {
+    const font = await chargerFont(el.font);
+    const bb = font.getPath(el.text, 0, 0, el.fontSize).getBoundingBox();
+    const w = bb.x2 - bb.x1, h = bb.y2 - bb.y1;
+    // Recentrer le path sur 0,0
+    const path = font.getPath(el.text, -bb.x1 - w/2, -bb.y1 - h/2, el.fontSize);
+    el.pathData = path.toPathData(3);
+    el.textBBox = { w, h };
+    rendreCanvas();
+  } catch (e) { console.error('Erreur chargement font', el.font, e); }
+}
+
 function ajouterTexte() {
   const text = document.getElementById('texte-nouveau').value.trim();
   if (!text) return;
   const font = document.getElementById('texte-font').value;
-  elements.push({ id: nextId++, type: 'texte', text, font, x: viewLongueur / 2, y: viewLargeur / 2, fontSize: viewLargeur * 0.5, rotation: 0 });
+  const el = { id: nextId++, type: 'texte', text, font, x: viewLongueur / 2, y: viewLargeur / 2, fontSize: viewLargeur * 0.5, rotation: 0, pathData: null };
+  elements.push(el);
   document.getElementById('texte-nouveau').value = '';
+  selectedId = el.id;
   rendreCanvas();
+  regenererPathTexte(el);
 }
 
 function ajouterEmpreinte(paths, srcViewBox, srcImage) {
@@ -321,9 +364,14 @@ function elementSvg(el, withSelection = false) {
     </g>`;
   }
   if (el.type === 'texte') {
-    const fontFamily = el.font || 'Helvetica, Arial, sans-serif';
+    if (el.pathData) {
+      return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+        <path d="${el.pathData}" fill="none" stroke="#1d1e1b" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>`;
+    }
+    // Fallback en attendant le chargement de la font
     return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
-      <text text-anchor="middle" dominant-baseline="middle" font-family="${escapeXml(fontFamily)}" font-size="${el.fontSize}" fill="black">${escapeXml(el.text)}</text>
+      <text text-anchor="middle" dominant-baseline="middle" font-size="${el.fontSize}" fill="#999">${escapeXml(el.text)} (chargement…)</text>
     </g>`;
   }
   if (el.type === 'empreinte') {
