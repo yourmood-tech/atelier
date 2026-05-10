@@ -424,8 +424,11 @@
     <div class="modal-actions">
       <button class="outline" onclick="fermerModal()">Annuler</button>
       <button class="danger" id="btn-supprimer" onclick="supprimerProduit()" style="display:none">Supprimer</button>
+      <button class="outline" id="btn-evaluer" onclick="evaluerIdeeModal()" style="background:#fff8e7;border-color:var(--or);color:var(--or);">🔍 Évaluer</button>
       <button onclick="sauverProduit()">Sauver</button>
     </div>
+
+    <div id="eval-resultat" style="margin-top:1rem;display:none;"></div>
   </div>
 </div>
 
@@ -642,6 +645,8 @@ function ouvrirModalAjout(date) {
   document.getElementById('produit-image').value = '';
   setImagePreview('');
   document.getElementById('btn-supprimer').style.display = 'none';
+  const evalZone = document.getElementById('eval-resultat');
+  if (evalZone) { evalZone.innerHTML = ''; evalZone.style.display = 'none'; }
   document.getElementById('modal').classList.add('show');
 }
 
@@ -934,6 +939,97 @@ async function genererImageIdee(idx) {
 
 function ajouterIdeeAuPlanningParIndex(idx) {
   ajouterIdeeAuPlanning(ideesEnCours[idx]);
+}
+
+// ============ ÉVALUER UNE IDÉE ============
+async function evaluerIdeeModal() {
+  const idee = {
+    nom: document.getElementById('produit-nom').value.trim(),
+    type: document.getElementById('produit-type').value,
+    matiere: '',  // pas de champ matière dédié pour l'instant — info dans notes
+    couleur: '',
+    pierre: '',
+    fournisseur: document.getElementById('produit-fournisseur').value,
+    objectifCA: parseInt(document.getElementById('produit-ca').value, 10) || null,
+    notes: document.getElementById('produit-notes').value,
+    image: document.getElementById('produit-image').value || null,
+  };
+  if (!idee.nom) { alert('Saisis au moins le nom de l\'idée avant de l\'évaluer.'); return; }
+
+  const btn = document.getElementById('btn-evaluer');
+  const zone = document.getElementById('eval-resultat');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyse…';
+  zone.style.display = 'block';
+  zone.innerHTML = '<div style="font-size:0.85rem;color:var(--gris);padding:0.6rem;">Gemini analyse ton idée selon les patterns Mood (5-15 sec)…</div>';
+
+  try {
+    const r = await fetch('/api/r-and-d/evaluer-idee', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idee }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;padding:0.6rem;">Erreur : ${data.error || JSON.stringify(data)}</div>`;
+      return;
+    }
+    afficherEvaluation(data);
+  } catch (e) {
+    zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;padding:0.6rem;">Erreur réseau : ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Évaluer';
+  }
+}
+
+function afficherEvaluation(eval_) {
+  const zone = document.getElementById('eval-resultat');
+  const score = eval_.score_global || 0;
+  const stars = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+  const couleurScore = score >= 4 ? 'var(--vert)' : score >= 3 ? 'var(--orange)' : 'var(--rouge)';
+
+  let html = `<div style="border:2px solid ${couleurScore};border-radius:8px;padding:0.8rem;background:#fafafa;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
+      <strong style="font-size:1rem;">🔍 Évaluation Mood</strong>
+      <span style="font-size:1rem;color:${couleurScore};font-weight:600;">${stars} ${score}/5</span>
+    </div>`;
+
+  // Sous-scores
+  html += `<div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:0.75rem;color:var(--gris);margin-bottom:0.6rem;">`;
+  if (eval_.score_nouveaute !== undefined) html += `<span>Nouveauté : <strong>${eval_.score_nouveaute}/5</strong></span>`;
+  if (eval_.score_declinabilite !== undefined) html += `<span>Déclinabilité : <strong>${eval_.score_declinabilite}/5</strong></span>`;
+  if (eval_.score_alignement_clients !== undefined) html += `<span>Alignement clients : <strong>${eval_.score_alignement_clients}/5</strong></span>`;
+  html += `</div>`;
+
+  if (eval_.verdict) {
+    html += `<div style="font-size:0.85rem;font-style:italic;margin-bottom:0.6rem;padding:0.5rem;background:white;border-left:3px solid ${couleurScore};border-radius:4px;">${escapeHtml(eval_.verdict)}</div>`;
+  }
+
+  if (eval_.atouts && eval_.atouts.length > 0) {
+    html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:var(--vert);">✅ Atouts</strong><ul style="font-size:0.8rem;margin:0.2rem 0 0 1.2rem;">`;
+    for (const a of eval_.atouts) html += `<li>${escapeHtml(a)}</li>`;
+    html += '</ul></div>';
+  }
+
+  if (eval_.risques && eval_.risques.length > 0) {
+    html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:var(--rouge);">⚠️ Risques</strong><ul style="font-size:0.8rem;margin:0.2rem 0 0 1.2rem;">`;
+    for (const r of eval_.risques) html += `<li>${escapeHtml(r)}</li>`;
+    html += '</ul></div>';
+  }
+
+  if (eval_.comparaison_existant) {
+    html += `<div style="margin-bottom:0.5rem;font-size:0.8rem;"><strong>📊 Comparaison :</strong> ${escapeHtml(eval_.comparaison_existant)}</div>`;
+  }
+
+  if (eval_.recommandations && eval_.recommandations.length > 0) {
+    html += `<div><strong style="font-size:0.8rem;color:var(--or);">💡 Recommandations</strong><ul style="font-size:0.8rem;margin:0.2rem 0 0 1.2rem;">`;
+    for (const r of eval_.recommandations) html += `<li>${escapeHtml(r)}</li>`;
+    html += '</ul></div>';
+  }
+
+  html += '</div>';
+  zone.innerHTML = html;
 }
 
 function escapeHtml(s) {
