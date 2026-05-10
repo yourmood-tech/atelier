@@ -185,16 +185,25 @@
 
       <label style="margin-top:0.6rem;">Lissage des traits (smoothing)</label>
       <select id="smoothing" onchange="if(imageDataUrl) vectoriserPreview()">
-        <option value="0">Aucun (traits droits, pixelés)</option>
-        <option value="0.5">Léger (Douglas-Peucker 0.5)</option>
-        <option value="1.5" selected>Moyen — recommandé empreintes</option>
-        <option value="3">Fort (traits très lissés)</option>
+        <option value="0">Aucun (pixelés)</option>
+        <option value="0.5">Léger</option>
+        <option value="1.5">Moyen</option>
+        <option value="3" selected>Fort — recommandé empreintes</option>
+        <option value="5">Très fort (très simplifié)</option>
       </select>
 
       <label style="margin-top:0.6rem;">Type de tracé</label>
       <select id="trace-mode" onchange="if(imageDataUrl) vectoriserPreview()">
-        <option value="line" selected>Lignes droites entre points</option>
-        <option value="bezier">Courbes Bézier (organique, ne tremble pas)</option>
+        <option value="line">Lignes droites</option>
+        <option value="bezier" selected>Courbes lisses (Bézier)</option>
+      </select>
+
+      <label style="margin-top:0.6rem;">Filtrer les traits courts (bruit)</label>
+      <select id="min-length" onchange="if(imageDataUrl) vectoriserPreview()">
+        <option value="0">Garder tout</option>
+        <option value="5">Min 5 px (filtre léger)</option>
+        <option value="10" selected>Min 10 px — recommandé</option>
+        <option value="20">Min 20 px (très simplifié)</option>
       </select>
     </div>
   </div>
@@ -332,12 +341,26 @@ async function vectoriserPreview() {
     }
 
     // 4b. Extraire les paths DIRECTEMENT du squelette (suit la connectivité des pixels)
-    const polylines = extractPathsFromSkeleton(skeleton, w, h);
+    let polylines = extractPathsFromSkeleton(skeleton, w, h);
+
+    // Filtrer les polylines trop courtes (= bruit)
+    const minLen = parseInt(document.getElementById('min-length')?.value || '10', 10);
+    if (minLen > 0) {
+      polylines = polylines.filter(pl => {
+        let len = 0;
+        for (let i = 1; i < pl.length; i++) {
+          len += Math.hypot(pl[i][0] - pl[i-1][0], pl[i][1] - pl[i-1][1]);
+        }
+        return len >= minLen;
+      });
+    }
+
     // Simplifier chaque polyline (Douglas-Peucker) selon réglage smoothing
-    const eps = parseFloat(document.getElementById('smoothing')?.value || '1.5');
+    const eps = parseFloat(document.getElementById('smoothing')?.value || '3');
     const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
-    // Convertir en SVG paths : ligne droite OU courbes Bézier
-    const traceMode = document.getElementById('trace-mode')?.value || 'line';
+
+    // Convertir en SVG paths : ligne droite OU courbes Bézier (par défaut)
+    const traceMode = document.getElementById('trace-mode')?.value || 'bezier';
     vectorPaths = simplified
       .filter(pl => pl.length >= 2)
       .map(pl => traceMode === 'bezier' ? polylineToBezier(pl) : polylineToLine(pl));
