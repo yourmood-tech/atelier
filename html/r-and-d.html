@@ -261,6 +261,12 @@
     border-radius: 6px;
     padding: 0.5rem;
     text-align: center;
+    transition: all 0.2s;
+  }
+  .image-zone.drag-over {
+    border-color: var(--or);
+    background: #fff8e7;
+    transform: scale(1.02);
   }
   .image-preview {
     max-width: 100%;
@@ -403,11 +409,12 @@
     <input id="produit-ventes" type="number" placeholder="ex : 3200">
 
     <label>Image <span style="color:var(--gris);font-weight:400">— dessin, photo proto, référence visuelle</span></label>
-    <div class="image-zone">
+    <div class="image-zone" id="image-drop-zone" ondragover="onImageDragOver(event)" ondragleave="onImageDragLeave(event)" ondrop="onImageDrop(event)">
       <img id="produit-image-preview" class="image-preview" style="display:none">
       <input type="file" id="produit-image-input" accept="image/*" style="display:none" onchange="onImageChosen(event)">
       <button type="button" class="outline" onclick="document.getElementById('produit-image-input').click()" style="font-size:0.8rem;">📷 Choisir une image</button>
       <button type="button" class="outline" id="btn-retirer-image" onclick="retirerImage()" style="font-size:0.8rem;display:none;margin-left:0.4rem;">✕ Retirer</button>
+      <div style="font-size:0.7rem;color:var(--gris);margin-top:0.4rem;">ou glisse-dépose une image ici</div>
       <input type="hidden" id="produit-image">
     </div>
 
@@ -672,8 +679,7 @@ function setImagePreview(dataUrl) {
   }
 }
 
-function onImageChosen(e) {
-  const f = e.target.files[0];
+function traiterFichierImage(f) {
   if (!f) return;
   if (!f.type.startsWith('image/')) { alert('Seules les images sont acceptées.'); return; }
   const reader = new FileReader();
@@ -699,7 +705,32 @@ function onImageChosen(e) {
     img.src = ev.target.result;
   };
   reader.readAsDataURL(f);
+}
+
+function onImageChosen(e) {
+  const f = e.target.files[0];
+  traiterFichierImage(f);
   e.target.value = ''; // reset pour pouvoir re-choisir le même fichier
+}
+
+function onImageDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onImageDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function onImageDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('drag-over');
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0) {
+    traiterFichierImage(files[0]);
+  }
 }
 
 function retirerImage() {
