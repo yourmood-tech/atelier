@@ -1012,11 +1012,49 @@ function onDragLeave(e) {
 function onDrop(e, jourISO) {
   e.preventDefault();
   e.currentTarget.classList.remove('drop-target');
+
+  // Cas 1 : drop d'un FICHIER IMAGE OS → ouvrir modal d'ajout préremplie
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+    const f = files[0];
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 600;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.75);
+        // Ouvrir la modal d'ajout avec image préremplie
+        ouvrirModalAjout(jourISO);
+        document.getElementById('produit-image').value = compressed;
+        setImagePreview(compressed);
+        // Pré-suggérer le nom depuis le nom du fichier (sans extension)
+        const nomSuggere = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        document.getElementById('produit-nom').value = nomSuggere;
+        document.getElementById('produit-nom').focus();
+        document.getElementById('produit-nom').select();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
+    return;
+  }
+
+  // Cas 2 : drag&drop d'un PRODUIT INTERNE (changement de date)
   const id = e.dataTransfer.getData('text/plain') || dragProductId;
   if (!id) return;
   const p = donnees.produits.find(x => x.id === id);
   if (!p) return;
-  if (p.date === jourISO) return;  // pas de changement
+  if (p.date === jourISO) return;
   p.date = jourISO;
   p.majAt = new Date().toISOString();
   sauverDonnees();
