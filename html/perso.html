@@ -183,13 +183,23 @@
         </div>
       </div>
 
-      <label style="margin-top:0.6rem;">Lissage des traits (smoothing)</label>
+      <label style="margin-top:0.6rem;">Lissage par moyenne mobile (suit les courbes)</label>
+      <select id="smooth-window" onchange="if(imageDataUrl) vectoriserPreview()">
+        <option value="1">Aucun</option>
+        <option value="3">Léger (3 px)</option>
+        <option value="5" selected>Moyen (5 px) — recommandé</option>
+        <option value="9">Fort (9 px)</option>
+        <option value="15">Très fort (15 px)</option>
+      </select>
+      <div class="info">Lisse les pixels pixelisés sans perdre la forme. Plus c'est élevé, plus c'est lisse.</div>
+
+      <label style="margin-top:0.6rem;">Simplification des points (Douglas-Peucker)</label>
       <select id="smoothing" onchange="if(imageDataUrl) vectoriserPreview()">
-        <option value="0">Aucun (pixelés)</option>
-        <option value="0.5">Léger</option>
-        <option value="1.5">Moyen</option>
-        <option value="3" selected>Fort — recommandé empreintes</option>
-        <option value="5">Très fort (très simplifié)</option>
+        <option value="0">Aucune (garde tous les points)</option>
+        <option value="0.5">Légère</option>
+        <option value="1" selected>Moyenne — recommandé</option>
+        <option value="2">Forte</option>
+        <option value="4">Très forte (= polygone simple)</option>
       </select>
 
       <label style="margin-top:0.6rem;">Type de tracé</label>
@@ -345,7 +355,7 @@ async function vectoriserPreview() {
     let polylines = extractPathsFromSkeleton(skeleton, w, h);
 
     // Filtrer les polylines trop courtes (= bruit)
-    const minLen = parseInt(document.getElementById('min-length')?.value || '10', 10);
+    const minLen = parseInt(document.getElementById('min-length')?.value || '20', 10);
     if (minLen > 0) {
       polylines = polylines.filter(pl => {
         let len = 0;
@@ -356,8 +366,14 @@ async function vectoriserPreview() {
       });
     }
 
-    // Simplifier chaque polyline (Douglas-Peucker) selon réglage smoothing
-    const eps = parseFloat(document.getElementById('smoothing')?.value || '3');
+    // ÉTAPE CLÉ : moyenne mobile pour lisser les pixels pixelisés sans perdre la courbe
+    const smoothWin = parseInt(document.getElementById('smooth-window')?.value || '5', 10);
+    if (smoothWin > 1) {
+      polylines = polylines.map(pl => smoothPolyline(pl, smoothWin));
+    }
+
+    // Simplifier chaque polyline (Douglas-Peucker) — léger pour pas perdre les courbes
+    const eps = parseFloat(document.getElementById('smoothing')?.value || '1');
     const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
 
     // Convertir en SVG paths : ligne droite OU courbes Bézier (par défaut)
@@ -416,6 +432,27 @@ function thresholdOtsu(imageData, w, h) {
   const binary = new Uint8Array(gray.length);
   for (let i = 0; i < gray.length; i++) binary[i] = gray[i] < threshold ? 1 : 0;
   return binary;
+}
+
+/** Lissage par moyenne mobile : pour chaque point, prend la moyenne avec ses voisins.
+ *  Lisse les pixels pixelisés du squelette tout en gardant la forme exacte de la crête.
+ *  Ne touche pas aux extrémités pour conserver les endpoints.
+ */
+function smoothPolyline(pl, win) {
+  if (pl.length < 3 || win < 2) return pl;
+  const half = Math.floor(win / 2);
+  const smoothed = [pl[0]];
+  for (let i = 1; i < pl.length - 1; i++) {
+    let sx = 0, sy = 0, n = 0;
+    const start = Math.max(0, i - half);
+    const end = Math.min(pl.length - 1, i + half);
+    for (let j = start; j <= end; j++) {
+      sx += pl[j][0]; sy += pl[j][1]; n++;
+    }
+    smoothed.push([sx / n, sy / n]);
+  }
+  smoothed.push(pl[pl.length - 1]);
+  return smoothed;
 }
 
 function afficherDebug() {
