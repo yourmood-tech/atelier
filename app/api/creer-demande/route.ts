@@ -25,6 +25,8 @@ type Demande = {
   email: string;
   tel?: string;
   matiere?: string;
+  couleur?: string;
+  couleurNom?: string;
   message?: string;
   format?: string;
   taille?: string;
@@ -67,6 +69,8 @@ export async function POST(req: Request) {
     email: String(data.email).slice(0, 200),
     tel: data.tel ? String(data.tel).slice(0, 50) : undefined,
     matiere: data.matiere ? String(data.matiere).slice(0, 50) : undefined,
+    couleur: data.couleur ? String(data.couleur).slice(0, 50) : undefined,
+    couleurNom: data.couleurNom ? String(data.couleurNom).slice(0, 50) : undefined,
     message: data.message,
     format: data.format ? String(data.format).slice(0, 50) : undefined,
     taille: data.taille ? String(data.taille).slice(0, 10) : undefined,

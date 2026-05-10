@@ -21,6 +21,12 @@
   .symboles-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
   .symb-btn { font-size: 1.5rem; padding: 0.5rem 0; line-height: 1; }
   @media (max-width: 600px) { .symboles-grid { grid-template-columns: repeat(4, 1fr); } }
+  .couleurs-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+  @media (max-width: 600px) { .couleurs-grid { grid-template-columns: repeat(4, 1fr); } }
+  .couleur-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; overflow: hidden; background: #f0f0f0; transition: all 0.15s; }
+  .couleur-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .couleur-btn:hover { border-color: var(--gris); transform: scale(1.05); }
+  .couleur-btn.active { border-color: var(--or); border-width: 3px; transform: scale(1.05); }
   .prix-zone { background: linear-gradient(135deg, #fdf6e7 0%, #fff 100%); border: 1px solid var(--or); border-radius: 12px; padding: 1rem; margin: 1rem 0; text-align: center; }
   .prix-zone .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gris); }
   .prix-zone .montant { font-size: 2rem; font-weight: 300; color: var(--noir); margin: 0.3rem 0; }
@@ -95,6 +101,10 @@
       </div>
     </div>
     <div class="info" id="dim-info">—</div>
+
+    <label style="margin-top:0.8rem;">Couleur de l'aluminium</label>
+    <div class="couleurs-grid" id="couleurs-grid"></div>
+    <div class="info" id="couleur-info" style="margin-top:0.4rem;text-align:center;">Couleur sélectionnée : <strong id="couleur-nom">Noir</strong></div>
   </div>
 
   <!-- ÉTAPE 2 : CANVAS APERÇU -->
@@ -206,16 +216,8 @@
         <input id="cli-tel" type="tel" placeholder="+41 79 ...">
       </div>
       <div>
-        <label>Matière souhaitée</label>
-        <select id="cli-matiere">
-          <option value="acier">Acier 316L</option>
-          <option value="titane">Titane</option>
-          <option value="argent">Argent 925</option>
-          <option value="or-jaune">Or jaune 18K</option>
-          <option value="or-rose">Or rose 18K</option>
-          <option value="or-blanc">Or blanc 18K</option>
-          <option value="autre">Autre / je ne sais pas</option>
-        </select>
+        <label>Matière</label>
+        <input id="cli-matiere" value="Aluminium" readonly style="background:#f5f5f5;">
       </div>
     </div>
     <label style="margin-top:0.5rem;">Un message pour l'équipe ? (optionnel)</label>
@@ -269,6 +271,7 @@ window.addEventListener('load', () => {
   }, 100);
 });
 // genererIcones() retiré : pas de palette diamants côté client
+genererSelecteurCouleurs();
 
 function majDimensions() {
   const fmt = document.getElementById('format');
@@ -461,6 +464,53 @@ const SYMBOLES = {
   note: 'M -1 -7 L 4 -7 L 4 3 C 4 5, 2 6, 0 6 C -2 6, -4 5, -4 3 C -4 1, -2 0, 0 0 C 1 0, 2 0.5, 2 1 L 2 -5 L -1 -5 Z',
 };
 
+// ============ COULEURS ALUMINIUM ============
+const COULEURS = [
+  { id: 'noir',           nom: 'Noir',            hex: '#1a1a1a', img: '/aluminium/noir.jpg' },
+  { id: 'rouge',          nom: 'Rouge',           hex: '#b8232a', img: '/aluminium/rouge.jpg' },
+  { id: 'bleu-marine',    nom: 'Bleu marine',     hex: '#1e2c5a', img: '/aluminium/bleu-marine.jpg' },
+  { id: 'lilas-cashmere', nom: 'Lilas cashmere',  hex: '#b9a5c3', img: '/aluminium/lilas-cashmere.png' },
+  { id: 'beige-pastel',   nom: 'Beige pastel',    hex: '#d2cdba', img: '/aluminium/beige-pastel.png' },
+  { id: 'rose-pastel',    nom: 'Rose pastel',     hex: '#ddb0c2', img: '/aluminium/rose-pastel.png' },
+  { id: 'noisette',       nom: 'Noisette',        hex: '#d2a89c', img: '/aluminium/noisette.png' },
+  { id: 'peche',          nom: 'Pêche',           hex: '#e8baa2', img: '/aluminium/peche.png' },
+  { id: 'abricot',        nom: 'Abricot',         hex: '#e8a586', img: '/aluminium/abricot.png' },
+  { id: 'jaune-pastel',   nom: 'Jaune pastel',    hex: '#cdc998', img: '/aluminium/jaune-pastel.png' },
+  { id: 'vert-pastel',    nom: 'Vert pastel',     hex: '#99c5a3', img: '/aluminium/vert-pastel.png' },
+  { id: 'bleu-pastel',    nom: 'Bleu pastel',     hex: '#a9c8c1', img: '/aluminium/bleu-pastel.png' },
+];
+let couleurChoisie = COULEURS[0]; // noir par défaut
+
+function genererSelecteurCouleurs() {
+  const grid = document.getElementById('couleurs-grid');
+  if (!grid) return;
+  grid.innerHTML = COULEURS.map(c => `
+    <button type="button" class="couleur-btn ${c.id === couleurChoisie.id ? 'active' : ''}" data-couleur="${c.id}" title="${c.nom}" onclick="choisirCouleur('${c.id}')">
+      <img src="${c.img}" alt="${c.nom}" loading="lazy">
+    </button>
+  `).join('');
+}
+
+function choisirCouleur(id) {
+  const c = COULEURS.find(x => x.id === id);
+  if (!c) return;
+  couleurChoisie = c;
+  document.getElementById('couleur-nom').textContent = c.nom;
+  document.querySelectorAll('.couleur-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.couleur === id);
+  });
+  rendreCanvas();
+}
+
+// Détermine si la couleur est sombre → traits en blanc, sinon en noir
+function couleurContrastee(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance < 0.5 ? '#ffffff' : '#1d1e1b';
+}
+
 // ============ PRIX DYNAMIQUE ============
 const PRIX_BASE = {
   'addon': 85,        // 7mm
@@ -559,7 +609,12 @@ function diamantSvg(taille, style, mode = 'normal') {
     <line x1="0" y1="${-lr}" x2="0" y2="${lr}" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>`;
 }
 
+function couleurTrait() {
+  return couleurContrastee(couleurChoisie?.hex || '#ffffff');
+}
+
 function elementSvg(el, withSelection = false) {
+  const trait = couleurTrait();
   const sel = (withSelection && el.id === selectedId) ? ' element selected' : '';
   if (el.type === 'diamant') {
     return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
@@ -569,8 +624,8 @@ function elementSvg(el, withSelection = false) {
   if (el.type === 'texte') {
     if (el.pathData) {
       const style = el.isStroke
-        ? 'fill="none" stroke="#1d1e1b" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"'
-        : 'fill="#1d1e1b" stroke="none" fill-rule="evenodd"';
+        ? `fill="none" stroke="${trait}" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"`
+        : `fill="${trait}" stroke="none" fill-rule="evenodd"`;
       return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
         <path d="${el.pathData}" ${style}/>
       </g>`;
@@ -586,14 +641,14 @@ function elementSvg(el, withSelection = false) {
     const innerTransform = `scale(${el.scale}) translate(${-vb.x - vb.w/2} ${-vb.y - vb.h/2})`;
     return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
       <g transform="${innerTransform}">
-        ${el.paths.map(d => `<path d="${d}" fill="none" stroke="#1d1e1b" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+        ${el.paths.map(d => `<path d="${d}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
       </g>
     </g>`;
   }
   if (el.type === 'symbole') {
     const stroke = 0.15 / el.scale;
     return `<g class="element${sel}" data-id="${el.id}" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0}) scale(${el.scale})">
-      <path d="${el.pathData}" fill="none" stroke="#1d1e1b" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="${el.pathData}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>
     </g>`;
   }
   return '';
@@ -615,8 +670,10 @@ function rendreCanvas() {
   svg.style.touchAction = 'manipulation';
 
   let html = '';
-  // Bordure (la bande)
-  html += `<rect x="0" y="0" width="${W}" height="${H}" fill="none" stroke="#1d1e1b" stroke-width="0.25" stroke-miterlimit="10"/>`;
+  // Fond aluminium coloré + bordure
+  const bg = couleurChoisie?.hex || '#e8e8e8';
+  const traitBordure = couleurContrastee(bg);
+  html += `<rect x="0" y="0" width="${W}" height="${H}" fill="${bg}" stroke="${traitBordure}" stroke-width="0.15" stroke-miterlimit="10"/>`;
   // Éléments
   for (const el of elements) {
     html += elementSvg(el, true);
@@ -961,7 +1018,7 @@ async function envoyerDemande() {
     const r = await fetch('/api/creer-demande', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prenom, email, tel, matiere, message, format, taille, svg, nbElements: elements.length, prix: prixCalc?.prix, niveau: prixCalc?.label })
+      body: JSON.stringify({ prenom, email, tel, matiere, couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom, message, format, taille, svg, nbElements: elements.length, prix: prixCalc?.prix, niveau: prixCalc?.label })
     });
     if (!r.ok) throw new Error('Réponse ' + r.status);
     okEl.textContent = `✓ Merci ${prenom} ! On a bien reçu ta demande. On te recontacte sous 24h ouvrées à ${email}.`;
