@@ -613,9 +613,12 @@ function rendreCalendrier() {
     if (produitsDuMois.length > 0) {
       // Si on a les ventes Shopify du mois, recalculer les ventes par produit auto
       const ventesShopify = ventesParMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
+      const ventesShopifyOK = ventesShopify
+        && ventesShopify.ventes
+        && typeof ventesShopify.total_ca === 'number';
       let totalVentesAuto = 0;
       let synchroBadge = '';
-      if (ventesShopify && ventesShopify.ventes) {
+      if (ventesShopifyOK) {
         // Pour chaque produit du planning, chercher dans les ventes Shopify par titre similaire
         const produitsRapprochés = produitsDuMois.map(p => {
           const match = trouverVentesShopify(p.nom, ventesShopify.ventes);
@@ -636,9 +639,9 @@ function rendreCalendrier() {
           <div class="recap-total-item">Réalisé<strong>${totalVentes.toLocaleString('fr-CH')}.- CHF (${pctMois}%)</strong></div>
           <div class="recap-total-item">${reste >= 0 ? 'Manque' : 'Dépassement'}<strong style="color:${reste >= 0 ? 'var(--rouge)' : 'var(--vert)'}">${Math.abs(reste).toLocaleString('fr-CH')}.- CHF</strong></div>
           <div class="recap-total-item">Nouveautés<strong>${produitsDuMois.length}</strong></div>
-          ${ventesShopify ? `<div class="recap-total-item">CA total Shopify<strong>${ventesShopify.total_ca.toLocaleString('fr-CH')}.- CHF</strong></div>` : ''}
+          ${ventesShopifyOK ? `<div class="recap-total-item">CA total Shopify<strong>${ventesShopify.total_ca.toLocaleString('fr-CH')}.- CHF</strong></div>` : ''}
         </div>
-        ${!ventesShopify ? `<button class="outline" onclick="chargerVentesMois(${annee},${mois + 1})" style="font-size:0.75rem;padding:0.3rem 0.7rem;margin-top:0.5rem;">☁️ Charger ventes Shopify</button>` : ''}
+        ${!ventesShopifyOK ? `<button class="outline" onclick="chargerVentesMois(${annee},${mois + 1})" style="font-size:0.75rem;padding:0.3rem 0.7rem;margin-top:0.5rem;">☁️ Charger ventes Shopify</button>` : ''}
       </div>`;
     }
 
@@ -1186,15 +1189,22 @@ async function chargerVentesMois(annee, mois) {
   try {
     const r = await fetch(`/api/r-and-d/ventes-mois?annee=${annee}&mois=${mois}`);
     if (!r.ok) {
-      const err = await r.json();
-      alert(`Erreur fetch ventes ${key} : ${err.error || 'inconnu'}`);
+      // 503 = Shopify pas configuré, on ignore silencieusement (pas d'alert intrusif)
+      if (r.status === 503) return;
+      const err = await r.json().catch(() => ({}));
+      console.warn(`Ventes ${key} indispo : ${err.error || r.status}`);
       return;
     }
     const data = await r.json();
+    // Valider la structure : doit contenir ventes + total_ca + total_commandes
+    if (!data || typeof data.total_ca !== 'number' || !data.ventes) {
+      console.warn(`Ventes ${key} : réponse mal formée`, data);
+      return;
+    }
     ventesParMois[key] = data;
     rendreCalendrier();
   } catch (e) {
-    alert('Erreur réseau : ' + e.message);
+    console.warn('Erreur réseau ventes-mois :', e.message);
   }
 }
 
