@@ -722,16 +722,21 @@ function init3D() {
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
   const grad = envCtx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#ffffff');     // ciel
-  grad.addColorStop(0.45, '#dddddd');
-  grad.addColorStop(0.55, '#b8b8b8');  // horizon
-  grad.addColorStop(1, '#5a5a5a');     // sol
+  grad.addColorStop(0, '#ffffff');     // ciel pur
+  grad.addColorStop(0.40, '#e8e8e8');
+  grad.addColorStop(0.55, '#909090');  // horizon contrasté
+  grad.addColorStop(1, '#303030');     // sol sombre
   envCtx.fillStyle = grad;
   envCtx.fillRect(0, 0, 512, 256);
-  // Quelques bandes lumineuses pour des highlights ponctuels
-  envCtx.fillStyle = 'rgba(255,255,255,0.6)';
-  envCtx.fillRect(50, 30, 80, 8);
-  envCtx.fillRect(280, 50, 100, 6);
+  // Bandes lumineuses (highlights ponctuels qui glissent quand on tourne)
+  envCtx.fillStyle = 'rgba(255,255,255,0.95)';
+  envCtx.fillRect(40, 20, 90, 14);
+  envCtx.fillRect(200, 35, 60, 8);
+  envCtx.fillRect(310, 18, 110, 12);
+  envCtx.fillRect(430, 45, 50, 6);
+  // Bande horizon brillante (donne un highlight long sur la bague)
+  envCtx.fillStyle = 'rgba(255,255,255,0.55)';
+  envCtx.fillRect(0, 105, 512, 4);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
@@ -883,7 +888,7 @@ async function majApercu3D() {
 
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
-    map: texture, metalness: 0.55, roughness: 0.32, clearcoat: 0.4, clearcoatRoughness: 0.15, envMapIntensity: 0.8, side: THREE.FrontSide,
+    map: texture, metalness: 0.85, roughness: 0.22, clearcoat: 0.9, clearcoatRoughness: 0.06, envMapIntensity: 1.4, side: THREE.FrontSide,
   }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
