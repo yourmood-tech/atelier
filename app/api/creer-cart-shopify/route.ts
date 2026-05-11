@@ -70,18 +70,18 @@ export async function POST(req: Request) {
   const designUrl = `https://mood-tools.yourmood.net/api/design/${designId}`;
 
   // Construire le permalink Shopify cart avec line item properties
-  // Format : https://{shop}/cart/{variantId}:{quantity}?properties[Key]=Value...
+  // Format : https://{shop}/cart/{variantId}:{quantity}?attributes[Key]=Value...
   // Note : pour line item properties, on utilise les "cart attributes" qui apparaissent sur la commande
   const props = new URLSearchParams();
-  props.set("properties[Format]", format);
-  props.set("properties[Couleur]", couleurNom || couleur);
-  props.set("properties[Taille]", taille || "");
-  props.set("properties[Prenom]", prenom);
-  props.set("properties[Email]", email);
-  if (tel) props.set("properties[Telephone]", tel);
-  if (message) props.set("properties[Message]", message.slice(0, 500));
-  props.set("properties[Design SVG]", designUrl);
-  if (typeof nbElements === "number") props.set("properties[Nb elements]", String(nbElements));
+  props.set("attributes[Format]", format);
+  props.set("attributes[Couleur]", couleurNom || couleur);
+  props.set("attributes[Taille]", taille || "");
+  props.set("attributes[Prenom]", prenom);
+  props.set("attributes[Email]", email);
+  if (tel) props.set("attributes[Telephone]", tel);
+  if (message) props.set("attributes[Message]", message.slice(0, 500));
+  props.set("attributes[Design SVG]", designUrl);
+  if (typeof nbElements === "number") props.set("attributes[Nb elements]", String(nbElements));
 
   const cartUrl = `https://${STORE_DOMAIN}/cart/${variantId}:1?${props.toString()}`;
 
