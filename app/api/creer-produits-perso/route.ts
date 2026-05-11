@@ -237,7 +237,17 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   const raw = await redisGet("perso:shopify:variants");
   let config: FullConfig | null = null;
-  if (raw) { try { config = JSON.parse(raw); } catch { config = null; } }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      // Détecter l'ancien format (productId à la racine = config mono-produit)
+      if (parsed && typeof parsed === "object" && !parsed.addon && !parsed["2-3"] && !parsed.medium && !parsed["open-mood"]) {
+        config = null; // ancien format → on repart de zéro
+      } else {
+        config = parsed as FullConfig;
+      }
+    } catch { config = null; }
+  }
   return NextResponse.json({ config });
 }
 

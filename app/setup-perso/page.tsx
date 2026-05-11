@@ -55,7 +55,7 @@ export default function SetupPersoPage() {
     }
   };
 
-  const totalVariants = config ? Object.values(config).reduce((s, f) => s + Object.keys(f.variants).length, 0) : 0;
+  const totalVariants = config ? Object.values(config).reduce((s, f) => s + (f?.variants ? Object.keys(f.variants).length : 0), 0) : 0;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-12">
