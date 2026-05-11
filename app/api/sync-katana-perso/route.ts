@@ -269,18 +269,23 @@ export async function POST() {
           ])
       );
 
-      // ── 3. Créer les variants manquants (SKU uniquement) ─────────────────
+      // ── 3. Créer les variants manquants en parallèle (lots de 10) ───────
       const missing = allCombos.filter((c) => !fgBySku.has(c.persoSku));
-      for (const m of missing) {
-        try {
-          const v = (await katanaFetch("/v1/variants", {
-            method: "POST",
-            body: JSON.stringify({ product_id: katanaProductId, sku: m.persoSku }),
-          })) as { id?: number };
-          if (v?.id) fgBySku.set(m.persoSku, { id: v.id, hasConfig: false });
-        } catch (e) {
-          errors.push(`Variant ${m.persoSku}: ${(e as Error).message}`);
-        }
+      const VCREATE = 10;
+      for (let i = 0; i < missing.length; i += VCREATE) {
+        await Promise.all(
+          missing.slice(i, i + VCREATE).map(async (m) => {
+            try {
+              const v = (await katanaFetch("/v1/variants", {
+                method: "POST",
+                body: JSON.stringify({ product_id: katanaProductId, sku: m.persoSku }),
+              })) as { id?: number };
+              if (v?.id) fgBySku.set(m.persoSku, { id: v.id, hasConfig: false });
+            } catch (e) {
+              errors.push(`Variant ${m.persoSku}: ${(e as Error).message}`);
+            }
+          })
+        );
       }
 
       // ── 4. Patcher les variants existants sans config_attributes ───────────
