@@ -6,15 +6,133 @@ const TOKEN = process.env.SHOPIFY_API_TOKEN!;
 const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 const WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
 
+const KATANA_BASE = process.env.KATANA_BASE_URL;
+const KATANA_KEY = process.env.KATANA_API_KEY;
+const KATANA_LOCATION_ID = Number(process.env.KATANA_DEFAULT_LOCATION_ID || 0);
+
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
 type NoteAttribute = { name: string; value: string };
+type LineItemProperty = { name: string; value: string };
+type LineItem = {
+  id: number;
+  sku: string | null;
+  title: string;
+  quantity: number;
+  properties?: LineItemProperty[];
+};
 
 type ShopifyOrder = {
   id: number;
   name: string;
+  email?: string;
   note: string | null;
   tags: string;
   note_attributes: NoteAttribute[];
+  line_items?: LineItem[];
 };
+
+// ============ Mapping SKU PERSO → SKU VIERGE Katana ============
+
+type FormatKey = "ADDON" | "23" | "MED" | "OPEN";
+const FORMAT_CONFIG: Record<FormatKey, { katanaPrefix: string; tailleAvantCouleur: boolean }> = {
+  ADDON: { katanaPrefix: "MTRL-ALU",     tailleAvantCouleur: true },
+  "23":  { katanaPrefix: "MTRL-23ALU",   tailleAvantCouleur: true },
+  MED:   { katanaPrefix: "MTRL-MEDALU",  tailleAvantCouleur: true },
+  OPEN:  { katanaPrefix: "MTRL-OPENALU", tailleAvantCouleur: false },
+};
+
+const COULEUR_KATANA: Record<FormatKey, Record<string, string>> = {
+  ADDON: {
+    NOIR: "NOIR", ROUGE: "ROUGE", MARINE: "MARINE",
+    LILAS: "LILAS", BELI: "BELI", ROSEP: "ROSEP",
+    NOISETTE: "NOISETTE", PECHE: "PECHE", ABRICOT: "ABRICOT",
+    JAUNEP: "JAUNEPASTEL", VERTP: "VP", BLEUP: "BLEUPASTEL",
+  },
+  "23": {
+    NOIR: "NOIR", ROUGE: "ROUGE", MARINE: "MARINE",
+    LILAS: "LIL", BELI: "BELIP", ROSEP: "ROSEP",
+    NOISETTE: "NOISETTE", PECHE: "PECHE", ABRICOT: "ABRICOT",
+    JAUNEP: "JAUNEPASTEL", VERTP: "VERTPASTEL", BLEUP: "BP",
+  },
+  MED: {
+    NOIR: "NOIR", ROUGE: "ROUGE", MARINE: "MARINE",
+    LILAS: "LILACASHMERE", BELI: "BELIP", ROSEP: "ROSEP",
+    NOISETTE: "NOISETTE", PECHE: "PECHE", ABRICOT: "ABRICOT",
+    JAUNEP: "JAUNEP", VERTP: "VERTPASTEL", BLEUP: "BLEUPASTEL",
+  },
+  OPEN: {
+    NOIR: "NOIR", ROUGE: "ROUGE", MARINE: "MARINE",
+    LILAS: "LILASCASHMERE", BELI: "BELIPASTEL", ROSEP: "ROSEPASTEL",
+    NOISETTE: "NOISETTE", PECHE: "PECHE", ABRICOT: "ABRICOT",
+    JAUNEP: "JAUNP", VERTP: "VERTP", BLEUP: "BLEUP",
+  },
+};
+
+function persoSkuToKatanaSku(persoSku: string): string | null {
+  const m = persoSku.match(/^(MED|23|ADDON|OPEN)-PERSO-([A-Z]+)-ALU-(\d+)$/);
+  if (!m) return null;
+  const [, formatSku, couleurSku, taille] = m;
+  const config = FORMAT_CONFIG[formatSku as FormatKey];
+  const couleurKatana = COULEUR_KATANA[formatSku as FormatKey]?.[couleurSku];
+  if (!config || !couleurKatana) return null;
+  return config.tailleAvantCouleur
+    ? `${config.katanaPrefix}-${taille}-${couleurKatana}`
+    : `${config.katanaPrefix}-${couleurKatana}-${taille}`;
+}
+
+// ============ Katana API ============
+
+async function katanaFetch(path: string, init?: RequestInit): Promise<unknown> {
+  if (!KATANA_BASE || !KATANA_KEY) throw new Error("Katana env non configuré");
+  const r = await fetch(`${KATANA_BASE}${path}`, {
+    ...init,
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${KATANA_KEY}`,
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+    cache: "no-store",
+  });
+  const text = await r.text();
+  if (!r.ok) throw new Error(`Katana ${r.status} on ${path}: ${text.slice(0, 200)}`);
+  return JSON.parse(text);
+}
+
+async function getKatanaVariantBySku(sku: string): Promise<{ id: number } | null> {
+  const params = new URLSearchParams({ sku, limit: "10" });
+  const data = (await katanaFetch(`/v1/variants?${params}`)) as { data?: Array<{ id: number; sku?: string | null }> };
+  const variants = data.data || [];
+  const exact = variants.find((v) => v.sku === sku);
+  return exact ? { id: exact.id } : null;
+}
+
+async function decrementKatanaStock(variantId: number, quantity: number): Promise<unknown> {
+  const ts = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
+  const num = `PERSO-${ts}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+  const payload = {
+    stock_adjustment_number: num,
+    location_id: KATANA_LOCATION_ID,
+    stock_adjustment_rows: [{ variant_id: variantId, quantity: -quantity }],
+  };
+  return katanaFetch("/v1/stock_adjustments", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// ============ Redis ============
+
+async function redisSet(key: string, value: string) {
+  if (!REDIS_URL || !REDIS_TOKEN) return;
+  await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+    body: value,
+  });
+}
 
 async function verifyHmac(req: NextRequest, rawBody: string): Promise<boolean> {
   if (!WEBHOOK_SECRET) return true; // Skip verification if secret not configured
@@ -90,9 +208,53 @@ export async function POST(req: NextRequest) {
   try {
     await shopifyPatch(order.id, { order: { id: order.id, ...updates } });
     console.log(`orders-webhook: order ${order.name} — tag autoperso + note SVG ajoutés`);
-    return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("orders-webhook patch error:", (e as Error).message);
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    // On continue malgré l'erreur tag/note, pour quand même tenter le stock Katana
   }
+
+  // Décrémentation automatique du stock Katana pour chaque ligne de bague perso
+  const katanaResultats: Array<{ persoSku: string; katanaSku: string | null; ok: boolean; erreur?: string }> = [];
+  if (KATANA_BASE && KATANA_KEY) {
+    for (const item of order.line_items || []) {
+      if (item.sku !== "BAGUE-PERSO") continue;
+      const skuProp = item.properties?.find((p) => p.name === "SKU Katana")?.value;
+      if (!skuProp) {
+        katanaResultats.push({ persoSku: "?", katanaSku: null, ok: false, erreur: "Property SKU Katana manquante" });
+        continue;
+      }
+      const katanaSku = persoSkuToKatanaSku(skuProp);
+      if (!katanaSku) {
+        katanaResultats.push({ persoSku: skuProp, katanaSku: null, ok: false, erreur: "Mapping format/couleur introuvable" });
+        continue;
+      }
+      try {
+        const v = await getKatanaVariantBySku(katanaSku);
+        if (!v) {
+          katanaResultats.push({ persoSku: skuProp, katanaSku, ok: false, erreur: "SKU vierge inexistant dans Katana" });
+          continue;
+        }
+        await decrementKatanaStock(v.id, item.quantity);
+        console.log(`orders-webhook: -${item.quantity} ${katanaSku} (variant ${v.id})`);
+        katanaResultats.push({ persoSku: skuProp, katanaSku, ok: true });
+      } catch (e: unknown) {
+        console.error(`orders-webhook Katana error pour ${katanaSku}:`, (e as Error).message);
+        katanaResultats.push({ persoSku: skuProp, katanaSku, ok: false, erreur: (e as Error).message });
+      }
+    }
+  }
+
+  // Audit en Redis (visible dans /perso-commandes)
+  if (katanaResultats.length > 0) {
+    const auditEntry = {
+      orderId: order.id,
+      orderName: order.name,
+      email: order.email,
+      date: new Date().toISOString(),
+      katanaResultats,
+    };
+    await redisSet(`perso:webhook:${order.id}`, JSON.stringify(auditEntry));
+  }
+
+  return NextResponse.json({ ok: true, katanaResultats });
 }
