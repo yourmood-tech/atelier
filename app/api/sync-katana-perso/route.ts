@@ -112,7 +112,12 @@ async function katanaFetch(path: string, init?: RequestInit, retries = 3): Promi
   }
   const text = await r.text();
   if (!r.ok) throw new Error(`Katana ${r.status} on ${path}: ${text.slice(0, 300)}`);
-  return text ? JSON.parse(text) : null;
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Katana réponse non-JSON on ${path}: ${text.slice(0, 200)}`);
+  }
 }
 
 type KatanaVariantRaw = {
@@ -214,6 +219,8 @@ export async function POST() {
   const katanaResultats: KatanaConfig = {};
   const errors: string[] = [];
 
+  try {
+
   const PRODUCT_CONFIGS = [
     { name: "Taille",  values: TAILLES.map(String)          },
     { name: "Couleur", values: COULEURS.map((c) => c.nom)   },
@@ -252,16 +259,6 @@ export async function POST() {
           }),
         })) as { id: number };
         katanaProductId = created.id;
-      } else {
-        // Produit existant : s'assurer que les configs options sont définies
-        try {
-          await katanaFetch(`/v1/products/${katanaProductId}`, {
-            method: "PATCH",
-            body: JSON.stringify({ configs: PRODUCT_CONFIGS }),
-          });
-        } catch (e) {
-          errors.push(`PATCH configs produit ${fmt.id}: ${(e as Error).message}`);
-        }
       }
 
       // ── 2. Récupérer les variants existants ────────────────────────────────
@@ -398,6 +395,10 @@ export async function POST() {
 
   await redisSet("perso:katana:config", JSON.stringify(katanaResultats));
   return NextResponse.json({ ok: true, katanaResultats, errors });
+
+  } catch (e: unknown) {
+    return NextResponse.json({ error: (e as Error).message, errors }, { status: 500 });
+  }
 }
 
 export async function GET() {
