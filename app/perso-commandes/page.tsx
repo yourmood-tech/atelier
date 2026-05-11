@@ -64,12 +64,16 @@ export default function PersoCommandesPage() {
             <div className="grid gap-4">
               {commandes.map((c) => (
                 <div key={c.designId} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col md:flex-row gap-4">
-                  {/* Aperçu SVG */}
-                  <div className="bg-white rounded-lg p-3 md:w-72 flex items-center justify-center" style={{ aspectRatio: "3/1" }}>
+                  {/* Aperçu SVG — fond gris-beige aluminium pour que les traits blancs ET noirs soient visibles */}
+                  <div
+                    className="rounded-lg p-3 md:w-72 flex items-center justify-center border border-zinc-700"
+                    style={{ aspectRatio: "3/1", background: "linear-gradient(135deg, #d8d8d8, #b8b8b8)" }}
+                  >
                     <img
                       src={`/api/design/${c.designId}`}
                       alt="Design"
                       className="max-w-full max-h-full"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   </div>
 

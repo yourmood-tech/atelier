@@ -151,7 +151,7 @@ async function envoyerEmailEquipe(demande: Record<string, unknown>, svg: string)
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from: "perso@yourmood.net",
-      to: process.env.PERSO_EMAIL_TO || "info@yourmood.net",
+      to: (process.env.PERSO_EMAIL_TO || "amila@yourmood.net,contact@yourmood.net").split(",").map((s) => s.trim()),
       reply_to: demande.email,
       subject: `🛒 Nouvelle commande perso — ${demande.prenom} — ${formatLabel} ${demande.couleurNom || demande.couleur}`,
       html,
