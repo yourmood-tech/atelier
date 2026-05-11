@@ -84,16 +84,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Design SVG trop volumineux" }, { status: 413 });
   }
 
-  // Récupérer la config produit depuis Redis
+  // Récupérer la config produits depuis Redis (4 produits, un par format)
   const configRaw = await redisGet("perso:shopify:variants");
   if (!configRaw) {
-    return NextResponse.json({ error: "Produit Shopify non créé. L'équipe Mood doit aller sur /setup-perso." }, { status: 503 });
+    return NextResponse.json({ error: "Produits Shopify non créés. L'équipe Mood doit aller sur /setup-perso." }, { status: 503 });
   }
-  type Config = { productId: number; handle: string; variants: Record<string, number> };
-  const config: Config = JSON.parse(configRaw);
-  const variantId = taille ? config.variants?.[taille] : undefined;
+  type FormatConfig = { productId: number; handle: string; variants: Record<string, number> };
+  type FullConfig = Record<string, FormatConfig>;
+  const config: FullConfig = JSON.parse(configRaw);
+  const variantId = config[format]?.variants[`${taille}-${couleur}`];
   if (!variantId) {
-    return NextResponse.json({ error: `Variant introuvable pour taille=${taille}. Recréer les produits sur /setup-perso.` }, { status: 400 });
+    return NextResponse.json({ error: `Variant introuvable pour format=${format}, taille=${taille}, couleur=${couleur}. Recréer les produits sur /setup-perso.` }, { status: 400 });
   }
 
   // Stocker le SVG dans Redis avec un ID unique → URL publique

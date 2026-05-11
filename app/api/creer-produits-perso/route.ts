@@ -8,15 +8,38 @@ const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
+// ============ Référentiels ============
+
+const TAILLES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
+
+const COULEURS = [
+  { id: "noir",           nom: "Noir",           sku: "NOIR"     },
+  { id: "rouge",          nom: "Rouge",          sku: "ROUGE"    },
+  { id: "bleu-marine",    nom: "Bleu marine",    sku: "MARINE"   },
+  { id: "lilas-cashmere", nom: "Lilas cashmere", sku: "LILAS"    },
+  { id: "belipastel",     nom: "Belipastel",     sku: "BELI"     },
+  { id: "rose-pastel",    nom: "Rose pastel",    sku: "ROSEP"    },
+  { id: "noisette",       nom: "Noisette",       sku: "NOISETTE" },
+  { id: "peche",          nom: "Pêche",          sku: "PECHE"    },
+  { id: "abricot",        nom: "Abricot",        sku: "ABRICOT"  },
+  { id: "jaune-pastel",   nom: "Jaune pastel",   sku: "JAUNEP"   },
+  { id: "vert-pastel",    nom: "Vert pastel",    sku: "VERTP"    },
+  { id: "bleu-pastel",    nom: "Bleu pastel",    sku: "BLEUP"    },
+];
+
+const FORMATS = [
+  { id: "addon",     nom: "Addon",      sku: "ADDON", prix: 85  },
+  { id: "2-3",       nom: "Deux tiers", sku: "23",    prix: 75  },
+  { id: "medium",    nom: "Medium",     sku: "MED",   prix: 65  },
+  { id: "open-mood", nom: "Open mood",  sku: "OPEN",  prix: 109 },
+];
+
 // ============ Shopify helpers ============
 
 async function shopifyREST(path: string, method: "POST" | "PUT" | "GET" = "GET", body?: unknown) {
   const r = await fetch(`https://${STORE}/admin/api/${API_VERSION}${path}`, {
     method,
-    headers: {
-      "X-Shopify-Access-Token": TOKEN,
-      "Content-Type": "application/json",
-    },
+    headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -28,10 +51,7 @@ async function shopifyREST(path: string, method: "POST" | "PUT" | "GET" = "GET",
 async function shopifyGraphQL(query: string, variables?: Record<string, unknown>) {
   const r = await fetch(`https://${STORE}/admin/api/${API_VERSION}/graphql.json`, {
     method: "POST",
-    headers: {
-      "X-Shopify-Access-Token": TOKEN,
-      "Content-Type": "application/json",
-    },
+    headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),
     cache: "no-store",
   });
@@ -45,8 +65,8 @@ async function getOnlineStorePublicationId() {
   if (onlineStorePublicationId) return onlineStorePublicationId;
   const data = await shopifyGraphQL(`{ publications(first: 20) { edges { node { id name } } } }`);
   type Pub = { node: { id: string; name: string } };
-  const onlineStore = data.publications.edges.find((e: Pub) => e.node.name === "Online Store");
-  onlineStorePublicationId = onlineStore?.node?.id || null;
+  const pub = data.publications.edges.find((e: Pub) => e.node.name === "Online Store");
+  onlineStorePublicationId = pub?.node?.id || null;
   return onlineStorePublicationId;
 }
 
@@ -55,14 +75,9 @@ async function publierSurOnlineStore(productId: number) {
   if (!pubId) throw new Error("Canal Online Store introuvable");
   const data = await shopifyGraphQL(`
     mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
-      publishablePublish(id: $id, input: $input) {
-        userErrors { field message }
-      }
+      publishablePublish(id: $id, input: $input) { userErrors { field message } }
     }
-  `, {
-    id: `gid://shopify/Product/${productId}`,
-    input: [{ publicationId: pubId }],
-  });
+  `, { id: `gid://shopify/Product/${productId}`, input: [{ publicationId: pubId }] });
   const errors = data.publishablePublish?.userErrors || [];
   if (errors.length > 0) throw new Error(`Publish failed: ${JSON.stringify(errors)}`);
 }
@@ -87,146 +102,149 @@ async function redisGet(key: string): Promise<string | null> {
   return d.result || null;
 }
 
+// ============ Types ============
+
+type FormatConfig = { productId: number; handle: string; variants: Record<string, number> };
+type FullConfig = Record<string, FormatConfig>;
+
 // ============ Endpoints ============
 
+// POST — Crée 4 produits Shopify (un par format), chacun avec 144 variants (12 tailles × 12 couleurs)
+// SKU par variant : PERSO-{FORMAT}-{TAILLE}-{COULEUR} — ex: PERSO-ADDON-56-ROUGE
 export async function POST() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   if (!STORE || !TOKEN) return NextResponse.json({ error: "Shopify env non configuré" }, { status: 503 });
 
-  const TAILLES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
+  const resultats: FullConfig = {};
 
   try {
-    const created = await shopifyREST(`/products.json`, "POST", {
-      product: {
-        title: "Bague personnalisée",
-        body_html: `<p>Crée ta bague unique avec ton design personnalisé : empreintes, dessins, symboles, textes gravés au laser sur l'aluminium de ton choix.</p>
-<p><strong>4 formats disponibles</strong> : Medium (2.3 mm) · Deux tiers (4.6 mm) · Addon (7 mm) · Open mood (10 mm)</p>
-<p><strong>12 couleurs d'aluminium</strong> · 12 tailles de bague · gravure à vie</p>
-<p style="margin-top:20px"><a href="https://mood-tools.yourmood.net/creer" style="display:inline-block;background:#c9a96e;color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600">✨ Configurer ma bague →</a></p>`,
-        vendor: "Mood Collection",
-        product_type: "Bague personnalisée",
-        tags: "personnalisation, perso, gravure, configurateur",
-        status: "active",
-        published_scope: "web",
-        options: [{ name: "Taille" }],
-        variants: TAILLES.map((t) => ({
-          option1: String(t),
-          price: "65.00",
-          sku: `BAGUE-PERSO-${t}`,
-          requires_shipping: true,
-          taxable: true,
-        })),
-      },
-    });
-
-    const product = created.product;
-    const variantsByTaille: Record<string, number> = {};
-    for (const v of product.variants as Array<{ id: number; option1: string }>) {
-      variantsByTaille[v.option1] = v.id;
-    }
-
-    await publierSurOnlineStore(product.id);
-
-    const config = {
-      productId: product.id,
-      handle: product.handle,
-      variants: variantsByTaille,
-    };
-
-    await redisSet("perso:shopify:variants", JSON.stringify(config));
-    return NextResponse.json({ ok: true, config });
-  } catch (e: unknown) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
-  }
-}
-
-// Enregistre un produit Shopify existant dans Redis (sans le recréer)
-export async function PUT(req: Request) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
-  const { productId } = await req.json().catch(() => ({}));
-  if (!productId) return NextResponse.json({ error: "productId requis" }, { status: 400 });
-  try {
-    const data = await shopifyREST(`/products/${productId}.json?fields=id,handle`);
-    const product = data.product;
-    if (!product) throw new Error("Produit introuvable dans Shopify");
-    const config = { productId: Number(product.id), handle: product.handle, variants: {} };
-    await redisSet("perso:shopify:variants", JSON.stringify(config));
-    return NextResponse.json({ ok: true, config });
-  } catch (e: unknown) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
-  }
-}
-
-export async function PATCH() {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
-  const raw = await redisGet("perso:shopify:variants");
-  if (!raw) return NextResponse.json({ error: "Aucun produit trouvé — lance POST d'abord" }, { status: 404 });
-  let config: { productId: number; handle: string };
-  try { config = JSON.parse(raw); } catch { return NextResponse.json({ error: "Config corrompue" }, { status: 500 }); }
-
-  const TAILLES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
-  const pid = config.productId;
-
-  try {
-    // 1. Récupérer le produit (option ID + premier variant ID)
-    const product = (await shopifyREST(`/products/${pid}.json?fields=id,options,variants`)).product;
-    const option = product.options?.[0];
-    const firstVariant = product.variants?.[0];
-    if (!option || !firstVariant) throw new Error("Structure produit inattendue");
-
-    // 2. Renommer l'option en "Taille"
-    await shopifyREST(`/products/${pid}.json`, "PUT", {
-      product: { id: pid, options: [{ id: option.id, name: "Taille" }] },
-    });
-
-    // 3. Mettre à jour le premier variant → taille 48, SKU vide pour saisie manuelle
-    await shopifyREST(`/products/${pid}/variants/${firstVariant.id}.json`, "PUT", {
-      variant: { id: firstVariant.id, option1: "50", sku: ""},
-    });
-    const variantsByTaille: Record<string, number> = { "50": firstVariant.id };
-
-    // 4. Créer les 11 variants restants (50→70) — SKU vide, à remplir manuellement dans Shopify
-    for (const t of TAILLES.slice(1)) {
-      const created = await shopifyREST(`/products/${pid}/variants.json`, "POST", {
-        variant: { option1: String(t), price: "65.00", requires_shipping: true, taxable: true },
+    for (const fmt of FORMATS) {
+      // 1. Créer le produit avec 2 options (Taille, Couleur)
+      const createData = await shopifyGraphQL(`
+        mutation productCreate($input: ProductInput!) {
+          productCreate(input: $input) {
+            product {
+              id handle
+              variants(first: 5) { edges { node { id } } }
+            }
+            userErrors { field message }
+          }
+        }
+      `, {
+        input: {
+          title: `Bague personnalisée — ${fmt.nom}`,
+          vendor: "Mood Collection",
+          productType: "Bague personnalisée",
+          tags: ["personnalisation", "perso", "gravure", "configurateur"],
+          status: "ACTIVE",
+          options: ["Taille", "Couleur"],
+        },
       });
-      variantsByTaille[String(t)] = created.variant.id;
+
+      const createErrors = createData.productCreate?.userErrors || [];
+      if (createErrors.length > 0) throw new Error(`productCreate failed: ${JSON.stringify(createErrors)}`);
+
+      const productGid: string = createData.productCreate.product.id;
+      const productHandle: string = createData.productCreate.product.handle;
+      const productId = parseInt(productGid.split("/").pop()!);
+      const defaultVariantGid: string | undefined = createData.productCreate.product.variants.edges[0]?.node.id;
+
+      const variantsByKey: Record<string, number> = {};
+
+      // 2. Toutes les combinaisons (144 = 12 tailles × 12 couleurs)
+      const allCombinations = TAILLES.flatMap((t) =>
+        COULEURS.map((c) => ({
+          taille: String(t),
+          couleurId: c.id,
+          couleurNom: c.nom,
+          sku: `PERSO-${fmt.sku}-${t}-${c.sku}`,
+        }))
+      );
+
+      // 3. Mettre à jour le variant par défaut créé automatiquement par Shopify
+      const [first, ...rest] = allCombinations;
+      if (defaultVariantGid) {
+        await shopifyGraphQL(`
+          mutation productVariantUpdate($input: ProductVariantInput!) {
+            productVariantUpdate(input: $input) {
+              productVariant { id }
+              userErrors { field message }
+            }
+          }
+        `, {
+          input: {
+            id: defaultVariantGid,
+            price: String(fmt.prix),
+            sku: first.sku,
+            options: [first.taille, first.couleurNom],
+          },
+        });
+        variantsByKey[`${first.taille}-${first.couleurId}`] = parseInt(defaultVariantGid.split("/").pop()!);
+      }
+
+      // 4. Bulk-créer les 143 variants restants (2 batchs de ~72)
+      const BATCH_SIZE = 72;
+      for (let i = 0; i < rest.length; i += BATCH_SIZE) {
+        const batch = rest.slice(i, i + BATCH_SIZE);
+        const variantsInput = batch.map((v) => ({
+          price: String(fmt.prix),
+          sku: v.sku,
+          requiresShipping: true,
+          taxable: true,
+          optionValues: [
+            { optionName: "Taille", name: v.taille },
+            { optionName: "Couleur", name: v.couleurNom },
+          ],
+        }));
+
+        const bulkData = await shopifyGraphQL(`
+          mutation productVariantsBulkCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+            productVariantsBulkCreate(productId: $productId, variants: $variants) {
+              productVariants { id sku selectedOptions { name value } }
+              userErrors { field message }
+            }
+          }
+        `, { productId: productGid, variants: variantsInput });
+
+        const bulkErrors = bulkData.productVariantsBulkCreate?.userErrors || [];
+        if (bulkErrors.length > 0) throw new Error(`bulkCreate failed (format ${fmt.id}): ${JSON.stringify(bulkErrors)}`);
+
+        for (const v of bulkData.productVariantsBulkCreate.productVariants as Array<{ id: string; selectedOptions: { name: string; value: string }[] }>) {
+          const taille = v.selectedOptions.find((o) => o.name === "Taille")?.value;
+          const couleurNom = v.selectedOptions.find((o) => o.name === "Couleur")?.value;
+          const couleur = COULEURS.find((c) => c.nom === couleurNom);
+          if (taille && couleur) {
+            variantsByKey[`${taille}-${couleur.id}`] = parseInt(v.id.split("/").pop()!);
+          }
+        }
+      }
+
+      await publierSurOnlineStore(productId);
+      resultats[fmt.id] = { productId, handle: productHandle, variants: variantsByKey };
     }
 
-    // 5. Republier sur Online Store
-    await publierSurOnlineStore(pid);
-
-    // 6. Mettre à jour Redis
-    const newConfig = { productId: pid, handle: config.handle, variants: variantsByTaille };
-    await redisSet("perso:shopify:variants", JSON.stringify(newConfig));
-
-    return NextResponse.json({ ok: true, config: newConfig });
+    await redisSet("perso:shopify:variants", JSON.stringify(resultats));
+    return NextResponse.json({ ok: true, resultats });
   } catch (e: unknown) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
 
+// GET — Retourne la config actuelle depuis Redis
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   const raw = await redisGet("perso:shopify:variants");
-  let config = null;
-  if (raw) {
-    try { config = JSON.parse(raw); } catch { config = null; }
-  }
+  let config: FullConfig | null = null;
+  if (raw) { try { config = JSON.parse(raw); } catch { config = null; } }
   return NextResponse.json({ config });
 }
 
+// DELETE — Efface le mapping Redis
 export async function DELETE() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
-  if (!REDIS_URL || !REDIS_TOKEN) return NextResponse.json({ error: "Redis non configuré" }, { status: 503 });
-  await fetch(`${REDIS_URL}/del/${encodeURIComponent("perso:shopify:variants")}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-  });
+  await redisSet("perso:shopify:variants", "");
   return NextResponse.json({ ok: true });
 }
