@@ -829,18 +829,7 @@ async function genererTextureBague() {
   ctx.fillRect(0, 0, tw, th);
   ctx.restore();
 
-  // 3. Dégradé vertical de courbure (centre clair, haut/bas légèrement plus sombres)
-  ctx.save();
-  ctx.globalCompositeOperation = 'multiply';
-  const curvGrad = ctx.createLinearGradient(0, 0, 0, th);
-  curvGrad.addColorStop(0, 'rgba(220,220,220,1)');
-  curvGrad.addColorStop(0.5, 'rgba(255,255,255,1)');
-  curvGrad.addColorStop(1, 'rgba(220,220,220,1)');
-  ctx.fillStyle = curvGrad;
-  ctx.fillRect(0, 0, tw, th);
-  ctx.restore();
-
-  // 4. Bande lumineuse verticale large et douce (highlight studio packshot)
+  // 3. Bande lumineuse verticale large et douce (highlight studio packshot)
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   const bandCenterX = tw * 0.35;
@@ -853,7 +842,7 @@ async function genererTextureBague() {
   ctx.fillRect(bandCenterX - bandHalfW, 0, bandHalfW * 2, th);
   ctx.restore();
 
-  // 5. Gravure SVG par-dessus
+  // 4. Gravure SVG par-dessus
   let svgInner = '';
   for (const el of elements) svgInner += elementSvg(el, false);
   if (!svgInner) return canvas;
