@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 type FormatConfig = { productId: number; handle: string; variants: Record<string, number> };
 type FullConfig = Record<string, FormatConfig>;
-type KatanaFormatConfig = { katanaProductId: number; variantsTotal: number; recipesCreated: number; recipesSkipped: number };
+type KatanaFormatConfig = { katanaProductId: number; variantsTotal: number; variantsPatched: number; recipesCreated: number; recipesSkipped: number };
 type KatanaConfig = Record<string, KatanaFormatConfig>;
 
 const FORMATS = [
