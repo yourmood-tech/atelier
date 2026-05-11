@@ -8,6 +8,7 @@ export default function SetupPersoPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingId, setExistingId] = useState("");
 
   useEffect(() => {
     fetch("/api/creer-produits-perso")
@@ -22,6 +23,26 @@ export default function SetupPersoPage() {
     setError(null);
     try {
       const r = await fetch("/api/creer-produits-perso", { method: "POST" });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || `Erreur ${r.status}`);
+      setConfig(d.config);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const enregistrerExistant = async () => {
+    if (!existingId.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/creer-produits-perso", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId: existingId.trim() }),
+      });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || `Erreur ${r.status}`);
       setConfig(d.config);
@@ -93,6 +114,27 @@ export default function SetupPersoPage() {
             >
               {loading ? "Création en cours..." : "🚀 Créer le produit Shopify"}
             </button>
+
+            <div className="mt-6 pt-4 border-t border-zinc-800">
+              <p className="text-xs text-zinc-500 mb-2">Le produit existe déjà sur Shopify ? Entre son ID :</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={existingId}
+                  onChange={(e) => setExistingId(e.target.value)}
+                  placeholder="ex: 15499912642937"
+                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-500"
+                />
+                <button
+                  onClick={enregistrerExistant}
+                  disabled={loading || !existingId.trim()}
+                  className="bg-zinc-600 hover:bg-zinc-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm"
+                >
+                  {loading ? "..." : "Enregistrer"}
+                </button>
+              </div>
+            </div>
+
             {error && <p className="text-red-400 text-sm mt-3">Erreur : {error}</p>}
           </div>
         )}

@@ -141,6 +141,24 @@ export async function POST() {
   }
 }
 
+// Enregistre un produit Shopify existant dans Redis (sans le recréer)
+export async function PUT(req: Request) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
+  const { productId } = await req.json().catch(() => ({}));
+  if (!productId) return NextResponse.json({ error: "productId requis" }, { status: 400 });
+  try {
+    const data = await shopifyREST(`/products/${productId}.json?fields=id,handle`);
+    const product = data.product;
+    if (!product) throw new Error("Produit introuvable dans Shopify");
+    const config = { productId: Number(product.id), handle: product.handle, variants: {} };
+    await redisSet("perso:shopify:variants", JSON.stringify(config));
+    return NextResponse.json({ ok: true, config });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+  }
+}
+
 export async function PATCH() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
