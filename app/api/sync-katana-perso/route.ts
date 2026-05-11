@@ -255,15 +255,21 @@ export async function POST(req: Request) {
       let katanaProductId = await findKatanaProductByName(productName);
 
       if (!katanaProductId) {
-        // Création simple : produit seul, sans configs ni variants dans le payload
-        // (certains champs comme configs peuvent provoquer des réponses non-JSON)
+        const first = allCombos[0];
         const created = (await katanaFetch("/v1/products", {
           method: "POST",
           body: JSON.stringify({
             name: productName,
             is_sellable: true,
             is_producible: true,
-            variants: [{ sku: allCombos[0].persoSku }],
+            configs: [
+              { name: "Taille",  values: TAILLES.map(String)        },
+              { name: "Couleur", values: COULEURS.map((c) => c.nom) },
+            ],
+            variants: [{
+              sku: first.persoSku,
+              config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(first.taille, first.couleurNom),
+            }],
           }),
         })) as { id?: number };
         if (!created?.id) throw new Error(`Katana n'a pas retourné d'ID pour le produit "${productName}"`);
@@ -293,9 +299,13 @@ export async function POST(req: Request) {
             try {
               const v = (await katanaFetch("/v1/variants", {
                 method: "POST",
-                body: JSON.stringify({ product_id: katanaProductId, sku: m.persoSku }),
+                body: JSON.stringify({
+                  product_id: katanaProductId,
+                  sku: m.persoSku,
+                  config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(m.taille, m.couleurNom),
+                }),
               })) as { id?: number };
-              if (v?.id) fgBySku.set(m.persoSku, { id: v.id, hasConfig: false });
+              if (v?.id) fgBySku.set(m.persoSku, { id: v.id, hasConfig: true });
             } catch (e) {
               errors.push(`Variant ${m.persoSku}: ${(e as Error).message}`);
             }
