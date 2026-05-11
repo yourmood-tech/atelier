@@ -120,39 +120,7 @@ export async function POST() {
 
   try {
     for (const fmt of FORMATS) {
-      // 1. Créer le produit avec 2 options (Taille, Couleur)
-      const createData = await shopifyGraphQL(`
-        mutation productCreate($input: ProductInput!) {
-          productCreate(input: $input) {
-            product {
-              id handle
-              variants(first: 5) { edges { node { id } } }
-            }
-            userErrors { field message }
-          }
-        }
-      `, {
-        input: {
-          title: `Bague personnalisée — ${fmt.nom}`,
-          vendor: "Mood Collection",
-          productType: "Bague personnalisée",
-          tags: ["personnalisation", "perso", "gravure", "configurateur"],
-          status: "ACTIVE",
-          options: ["Taille", "Couleur"],
-        },
-      });
-
-      const createErrors = createData.productCreate?.userErrors || [];
-      if (createErrors.length > 0) throw new Error(`productCreate failed: ${JSON.stringify(createErrors)}`);
-
-      const productGid: string = createData.productCreate.product.id;
-      const productHandle: string = createData.productCreate.product.handle;
-      const productId = parseInt(productGid.split("/").pop()!);
-      const defaultVariantGid: string | undefined = createData.productCreate.product.variants.edges[0]?.node.id;
-
-      const variantsByKey: Record<string, number> = {};
-
-      // 2. Toutes les combinaisons (144 = 12 tailles × 12 couleurs)
+      // 1. Créer le produit via REST avec 2 options + 1er variant
       const allCombinations = TAILLES.flatMap((t) =>
         COULEURS.map((c) => ({
           taille: String(t),
@@ -161,29 +129,39 @@ export async function POST() {
           sku: `PERSO-${fmt.sku}-${t}-${c.sku}`,
         }))
       );
-
-      // 3. Mettre à jour le variant par défaut créé automatiquement par Shopify
       const [first, ...rest] = allCombinations;
-      if (defaultVariantGid) {
-        await shopifyGraphQL(`
-          mutation productVariantUpdate($input: ProductVariantInput!) {
-            productVariantUpdate(input: $input) {
-              productVariant { id }
-              userErrors { field message }
-            }
-          }
-        `, {
-          input: {
-            id: defaultVariantGid,
+
+      const created = await shopifyREST(`/products.json`, "POST", {
+        product: {
+          title: `Bague personnalisée — ${fmt.nom}`,
+          vendor: "Mood Collection",
+          product_type: "Bague personnalisée",
+          tags: "personnalisation, perso, gravure, configurateur",
+          status: "active",
+          published_scope: "web",
+          options: [{ name: "Taille" }, { name: "Couleur" }],
+          variants: [{
+            option1: first.taille,
+            option2: first.couleurNom,
             price: String(fmt.prix),
             sku: first.sku,
-            options: [first.taille, first.couleurNom],
-          },
-        });
-        variantsByKey[`${first.taille}-${first.couleurId}`] = parseInt(defaultVariantGid.split("/").pop()!);
-      }
+            requires_shipping: true,
+            taxable: true,
+          }],
+        },
+      });
 
-      // 4. Bulk-créer les 143 variants restants (2 batchs de ~72)
+      const product = created.product;
+      const productId: number = product.id;
+      const productHandle: string = product.handle;
+      const productGid = `gid://shopify/Product/${productId}`;
+      const firstVariantId: number = product.variants[0].id;
+
+      const variantsByKey: Record<string, number> = {
+        [`${first.taille}-${first.couleurId}`]: firstVariantId,
+      };
+
+      // 2. Bulk-créer les 143 variants restants via GraphQL (2 batchs de ~72)
       const BATCH_SIZE = 72;
       for (let i = 0; i < rest.length; i += BATCH_SIZE) {
         const batch = rest.slice(i, i + BATCH_SIZE);
@@ -208,7 +186,7 @@ export async function POST() {
         `, { productId: productGid, variants: variantsInput });
 
         const bulkErrors = bulkData.productVariantsBulkCreate?.userErrors || [];
-        if (bulkErrors.length > 0) throw new Error(`bulkCreate failed (format ${fmt.id}): ${JSON.stringify(bulkErrors)}`);
+        if (bulkErrors.length > 0) throw new Error(`bulkCreate failed (format ${fmt.id}, batch ${i}): ${JSON.stringify(bulkErrors)}`);
 
         for (const v of bulkData.productVariantsBulkCreate.productVariants as Array<{ id: string; selectedOptions: { name: string; value: string }[] }>) {
           const taille = v.selectedOptions.find((o) => o.name === "Taille")?.value;
