@@ -133,10 +133,10 @@ async function findKatanaProductByName(name: string): Promise<number | null> {
   return (data.data ?? []).find((p) => p.name === name)?.id ?? null;
 }
 
-async function katanaVariantBySku(sku: string): Promise<{ id: number; product_id: number } | null> {
+async function katanaVariantBySku(sku: string): Promise<{ id: number; product_id: number | null } | null> {
   const data = (await katanaFetch(
     `/v1/variants?sku=${encodeURIComponent(sku)}&limit=1`
-  )) as { data?: { id: number; product_id: number; sku: string }[] };
+  )) as { data?: { id: number; product_id: number | null; sku: string }[] };
   return data.data?.[0] ?? null;
 }
 
@@ -248,6 +248,7 @@ export async function POST() {
             name: productName,
             is_sellable: true,
             is_producible: true,
+            variants: [{ sku: allCombos[0].persoSku }],
           }),
         })) as { id?: number };
         if (!created?.id) throw new Error(`Katana n'a pas retourné d'ID pour le produit "${productName}"`);
@@ -293,11 +294,13 @@ export async function POST() {
       await patchVariantsConfigAttributes(toPatch, errors);
 
       // ── 5. Charger les matières via product_id (2 appels par format) ────────
+      // Si product_id est null côté Katana (variant sans produit attaché),
+      // mtrlBySku reste vide et le fallback par SKU individuel prend le relais.
       const mtrlBySku = new Map<string, number>();
       const firstMtrlSku = toMtrlSku(formatSku, 56, "ROUGE");
       if (firstMtrlSku) {
         const anchor = await katanaVariantBySku(firstMtrlSku);
-        if (anchor) {
+        if (anchor?.product_id) {
           const mtrlVariants = await katanaVariantsByProductId(anchor.product_id);
           for (const v of mtrlVariants) {
             if (v.sku) mtrlBySku.set(v.sku, v.id);
