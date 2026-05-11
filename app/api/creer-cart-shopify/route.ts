@@ -146,11 +146,11 @@ async function envoyerEmailEquipe(demande: Record<string, unknown>, svg: string)
     4. Préparer expédition</p>
   </div>`;
 
-  await fetch("https://api.resend.com/emails", {
+  const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: "perso@yourmood.net",
+      from: "Mood Personnalisation <katana@yourmood.net>",
       to: (process.env.PERSO_EMAIL_TO || "amila@yourmood.net,contact@yourmood.net").split(",").map((s) => s.trim()),
       reply_to: demande.email,
       subject: `🛒 Nouvelle commande perso — ${demande.prenom} — ${formatLabel} ${demande.couleurNom || demande.couleur}`,
@@ -161,4 +161,10 @@ async function envoyerEmailEquipe(demande: Record<string, unknown>, svg: string)
       }],
     }),
   });
+  const respText = await r.text();
+  if (!r.ok) {
+    console.error("Resend email failed:", r.status, respText.slice(0, 500));
+  } else {
+    console.log("Resend email sent:", respText.slice(0, 200));
+  }
 }
