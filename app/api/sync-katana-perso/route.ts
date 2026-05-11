@@ -203,7 +203,7 @@ type KatanaConfig = Record<string, KatanaFormatResult>;
 
 // ============ Endpoint ============
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   if (!KATANA_BASE || !KATANA_KEY) return NextResponse.json({ error: "Katana env non configuré" }, { status: 503 });
@@ -216,12 +216,27 @@ export async function POST() {
     );
   }
 
+  // Paramètre optionnel : si fourni, ne traite que ce format
+  let formatFilter: string | null = null;
+  try {
+    const body = await req.json();
+    formatFilter = body?.format ?? null;
+  } catch { /* body vide ou absent = tous les formats */ }
+
+  const formatsToProcess = formatFilter
+    ? FORMATS.filter((f) => f.id === formatFilter)
+    : FORMATS;
+
+  if (formatsToProcess.length === 0) {
+    return NextResponse.json({ error: `Format inconnu : ${formatFilter}` }, { status: 400 });
+  }
+
   const katanaResultats: KatanaConfig = {};
   const errors: string[] = [];
 
   try {
 
-  for (const fmt of FORMATS) {
+  for (const fmt of formatsToProcess) {
     const formatSku = fmt.sku as FormatSku;
     const productName = `Bague personnalisée — ${fmt.nom}`;
 

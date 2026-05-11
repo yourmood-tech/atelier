@@ -19,6 +19,7 @@ export default function SetupPersoPage() {
   const [katanaConfig, setKatanaConfig] = useState<KatanaConfig | null>(null);
   const [loading, setLoading] = useState(false);
   const [katanaLoading, setKatanaLoading] = useState(false);
+  const [syncingFormat, setSyncingFormat] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [katanaError, setKatanaError] = useState<string | null>(null);
   const [katanaErrors, setKatanaErrors] = useState<string[]>([]);
@@ -66,21 +67,40 @@ export default function SetupPersoPage() {
   };
 
   const syncKatana = async () => {
-    if (!confirm("Créer 4 produits dans Katana + 144 variants chacun + jusqu'à 576 recettes ? Opération longue (~1-2 min).")) return;
+    if (!confirm("Créer 4 produits dans Katana + 144 variants chacun + jusqu'à 576 recettes ? L'opération tourne format par format (~20s chacun).")) return;
     setKatanaLoading(true);
     setKatanaError(null);
     setKatanaErrors([]);
-    try {
-      const r = await fetch("/api/sync-katana-perso", { method: "POST" });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || `Erreur ${r.status}`);
-      setKatanaConfig(d.katanaResultats);
-      if (d.errors?.length) setKatanaErrors(d.errors);
-    } catch (e: unknown) {
-      setKatanaError((e as Error).message);
-    } finally {
-      setKatanaLoading(false);
+
+    const resultats: KatanaConfig = { ...(katanaConfig ?? {}) };
+    const allErrors: string[] = [];
+
+    for (const fmt of FORMATS) {
+      setSyncingFormat(fmt.id);
+      try {
+        const r = await fetch("/api/sync-katana-perso", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ format: fmt.id }),
+        });
+        const d = await r.json();
+        if (!r.ok) {
+          allErrors.push(`${fmt.nom} : ${d.error || `Erreur ${r.status}`}`);
+        } else {
+          if (d.katanaResultats?.[fmt.id]) {
+            resultats[fmt.id] = d.katanaResultats[fmt.id];
+            setKatanaConfig({ ...resultats });
+          }
+          if (d.errors?.length) allErrors.push(...d.errors);
+        }
+      } catch (e: unknown) {
+        allErrors.push(`${fmt.nom} : ${(e as Error).message}`);
+      }
     }
+
+    setSyncingFormat(null);
+    setKatanaErrors(allErrors);
+    setKatanaLoading(false);
   };
 
   const resetKatana = async () => {
@@ -205,7 +225,9 @@ export default function SetupPersoPage() {
                 disabled={katanaLoading}
                 className="bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-semibold"
               >
-                {katanaLoading ? "Synchronisation en cours (~1-2 min)..." : "Synchroniser vers Katana"}
+                {katanaLoading
+                  ? `Sync — ${FORMATS.find(f => f.id === syncingFormat)?.nom ?? "..."}`
+                  : "Synchroniser vers Katana"}
               </button>
               {katanaError && <p className="text-red-400 text-sm mt-3">Erreur : {katanaError}</p>}
             </div>
