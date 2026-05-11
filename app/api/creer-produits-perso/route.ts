@@ -45,6 +45,48 @@ async function shopifyPost(path: string, body: unknown) {
   return JSON.parse(text);
 }
 
+async function shopifyGraphQL(query: string, variables?: Record<string, unknown>) {
+  const r = await fetch(`https://${STORE}/admin/api/${API_VERSION}/graphql.json`, {
+    method: "POST",
+    headers: {
+      "X-Shopify-Access-Token": TOKEN,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query, variables }),
+    cache: "no-store",
+  });
+  const data = await r.json();
+  if (data.errors) throw new Error(`Shopify GraphQL: ${JSON.stringify(data.errors).slice(0, 300)}`);
+  return data.data;
+}
+
+// Cache l'ID du canal Online Store
+let onlineStorePublicationId: string | null = null;
+async function getOnlineStorePublicationId() {
+  if (onlineStorePublicationId) return onlineStorePublicationId;
+  const data = await shopifyGraphQL(`{ publications(first: 20) { edges { node { id name } } } }`);
+  type Pub = { node: { id: string; name: string } };
+  const onlineStore = data.publications.edges.find((e: Pub) => e.node.name === "Online Store");
+  onlineStorePublicationId = onlineStore?.node?.id || null;
+  return onlineStorePublicationId;
+}
+
+async function publierSurOnlineStore(productId: number) {
+  const pubId = await getOnlineStorePublicationId();
+  if (!pubId) throw new Error("Canal Online Store introuvable");
+  const mutation = `mutation publishablePublish($id: ID!, $input: [PublicationInput!]!) {
+    publishablePublish(id: $id, input: $input) {
+      userErrors { field message }
+    }
+  }`;
+  const data = await shopifyGraphQL(mutation, {
+    id: `gid://shopify/Product/${productId}`,
+    input: [{ publicationId: pubId }],
+  });
+  const errors = data.publishablePublish?.userErrors || [];
+  if (errors.length > 0) throw new Error(`Publish failed: ${JSON.stringify(errors)}`);
+}
+
 async function redisSet(key: string, value: string) {
   if (!REDIS_URL || !REDIS_TOKEN) return;
   // Body raw : Upstash stocke la value telle quelle (pas de double-encoding JSON)
@@ -97,6 +139,8 @@ export async function POST() {
         const couleur = COULEURS.find((c) => c.nom === v.option1);
         if (couleur) variantsMap[couleur.id] = v.id;
       });
+      // Publier sur le canal Online Store (sinon les permalinks cart renvoient 404)
+      await publierSurOnlineStore(product.id);
       resultats[fmt.id] = {
         productId: product.id,
         handle: product.handle,
@@ -127,6 +171,33 @@ export async function GET() {
     try { resultats = JSON.parse(data.result); } catch { resultats = null; }
   }
   return NextResponse.json({ resultats });
+}
+
+// Republier les produits déjà créés sur le canal Online Store (fix pour produits créés sans publishablePublish)
+export async function PATCH() {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
+  if (!REDIS_URL || !REDIS_TOKEN) return NextResponse.json({ error: "Redis non configuré" }, { status: 503 });
+
+  const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent("perso:shopify:variants")}`, {
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  const d = await r.json();
+  if (!d.result) return NextResponse.json({ error: "Aucun produit à republier (mapping vide)" }, { status: 404 });
+  type VariantsMap = Record<string, { productId: number; handle: string; variants: Record<string, number> }>;
+  let mapping: VariantsMap;
+  try { mapping = JSON.parse(d.result); } catch { return NextResponse.json({ error: "Mapping corrompu" }, { status: 500 }); }
+
+  const resultats: Record<string, { productId: number; published: boolean; error?: string }> = {};
+  for (const [fmtId, info] of Object.entries(mapping)) {
+    try {
+      await publierSurOnlineStore(info.productId);
+      resultats[fmtId] = { productId: info.productId, published: true };
+    } catch (e: unknown) {
+      resultats[fmtId] = { productId: info.productId, published: false, error: (e as Error).message };
+    }
+  }
+  return NextResponse.json({ ok: true, resultats });
 }
 
 export async function DELETE() {
