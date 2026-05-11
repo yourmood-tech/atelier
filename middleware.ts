@@ -10,6 +10,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     // Protect all routes except auth, login, gorgias webhook, shopify callback, public client perso pages, and Next.js internals
-    "/((?!api/auth|api/gorgias-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/design|creer|aluminium|login|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/design|creer|aluminium|login|_next/static|_next/image|favicon.ico).*)",
   ],
 };
