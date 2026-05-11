@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-type Config = { productId: number; handle: string; variantId: number };
+type Config = { productId: number; handle: string; variants?: Record<string, number>; variantId?: number };
 
 export default function SetupPersoPage() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -32,15 +32,15 @@ export default function SetupPersoPage() {
     }
   };
 
-  const republier = async () => {
-    if (!confirm("Republier le produit sur le canal Online Store ?")) return;
+  const ajouterTailles = async () => {
+    if (!confirm("Ajouter l'option Taille (48→70) au produit existant ? Les SKU seront vides — tu les remplis manuellement dans Shopify Admin.")) return;
     setLoading(true);
     setError(null);
     try {
       const r = await fetch("/api/creer-produits-perso", { method: "PATCH" });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || `Erreur ${r.status}`);
-      alert(d.published ? "✓ Produit publié sur Online Store" : "Erreur de publication : " + d.error);
+      setConfig(d.config);
     } catch (e: unknown) {
       setError((e as Error).message);
     } finally {
@@ -102,8 +102,12 @@ export default function SetupPersoPage() {
             <h2 className="text-lg font-semibold mb-3 text-green-400">✓ Produit créé</h2>
             <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 mb-4">
               <p className="text-sm"><strong>Product ID :</strong> {config.productId}</p>
-              <p className="text-sm"><strong>Variant ID :</strong> {config.variantId}</p>
               <p className="text-sm"><strong>Handle :</strong> {config.handle}</p>
+              {config.variants ? (
+                <p className="text-sm"><strong>Variants taille :</strong> {Object.keys(config.variants).join(", ")}</p>
+              ) : config.variantId ? (
+                <p className="text-sm"><strong>Variant ID :</strong> {config.variantId} <span className="text-amber-400">(sans taille — utilise le bouton ci-dessous)</span></p>
+              ) : null}
               <p className="text-sm mt-2">
                 <a
                   href={`https://www.yourmood.net/products/${config.handle}`}
@@ -118,13 +122,13 @@ export default function SetupPersoPage() {
 
             <div className="mt-6 pt-4 border-t border-zinc-800 space-y-3">
               <div>
-                <p className="text-xs text-zinc-500 mb-2">Si l'URL produit Shopify renvoie 404 :</p>
+                <p className="text-xs text-zinc-500 mb-2">Ajouter l'option Taille (48→70) au produit existant. Les SKU seront vides — à remplir manuellement dans Shopify Admin ensuite.</p>
                 <button
-                  onClick={republier}
+                  onClick={ajouterTailles}
                   disabled={loading}
                   className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm"
                 >
-                  {loading ? "..." : "📢 Republier sur Online Store"}
+                  {loading ? "..." : "📐 Ajouter les tailles au produit"}
                 </button>
               </div>
               <div>

@@ -145,15 +145,49 @@ export async function PATCH() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   const raw = await redisGet("perso:shopify:variants");
-  if (!raw) return NextResponse.json({ error: "Aucun produit à republier" }, { status: 404 });
-  let config: { productId: number };
-  try { config = JSON.parse(raw); } catch { return NextResponse.json({ error: "Mapping corrompu" }, { status: 500 }); }
+  if (!raw) return NextResponse.json({ error: "Aucun produit trouvé — lance POST d'abord" }, { status: 404 });
+  let config: { productId: number; handle: string };
+  try { config = JSON.parse(raw); } catch { return NextResponse.json({ error: "Config corrompue" }, { status: 500 }); }
+
+  const TAILLES = [48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70];
+  const pid = config.productId;
 
   try {
-    await publierSurOnlineStore(config.productId);
-    return NextResponse.json({ ok: true, productId: config.productId, published: true });
+    // 1. Récupérer le produit (option ID + premier variant ID)
+    const product = (await shopifyREST(`/products/${pid}.json?fields=id,options,variants`)).product;
+    const option = product.options?.[0];
+    const firstVariant = product.variants?.[0];
+    if (!option || !firstVariant) throw new Error("Structure produit inattendue");
+
+    // 2. Renommer l'option en "Taille"
+    await shopifyREST(`/products/${pid}.json`, "PUT", {
+      product: { id: pid, options: [{ id: option.id, name: "Taille" }] },
+    });
+
+    // 3. Mettre à jour le premier variant → taille 48, SKU vide pour saisie manuelle
+    await shopifyREST(`/products/${pid}/variants/${firstVariant.id}.json`, "PUT", {
+      variant: { id: firstVariant.id, option1: "48", sku: "" },
+    });
+    const variantsByTaille: Record<string, number> = { "48": firstVariant.id };
+
+    // 4. Créer les 11 variants restants (50→70) — SKU vide, à remplir manuellement dans Shopify
+    for (const t of TAILLES.slice(1)) {
+      const created = await shopifyREST(`/products/${pid}/variants.json`, "POST", {
+        variant: { option1: String(t), price: "65.00", requires_shipping: true, taxable: true },
+      });
+      variantsByTaille[String(t)] = created.variant.id;
+    }
+
+    // 5. Republier sur Online Store
+    await publierSurOnlineStore(pid);
+
+    // 6. Mettre à jour Redis
+    const newConfig = { productId: pid, handle: config.handle, variants: variantsByTaille };
+    await redisSet("perso:shopify:variants", JSON.stringify(newConfig));
+
+    return NextResponse.json({ ok: true, config: newConfig });
   } catch (e: unknown) {
-    return NextResponse.json({ error: (e as Error).message, productId: config.productId, published: false }, { status: 500 });
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
   }
 }
 
