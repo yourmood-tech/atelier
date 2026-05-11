@@ -721,19 +721,13 @@ function init3D() {
   const envCanvas = document.createElement('canvas');
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
-  // Environment style studio packshot avec bande lumineuse pour highlight
+  // Environment dôme studio : très clair en haut, doux en bas (pas de bande lumineuse → pas de highlight)
   const grad = envCtx.createLinearGradient(0, 0, 0, 256);
   grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(0.4, '#e0e0e0');
-  grad.addColorStop(0.7, '#a5a5a5');
-  grad.addColorStop(1, '#707070');
+  grad.addColorStop(0.5, '#f5f5f5');
+  grad.addColorStop(1, '#cccccc');
   envCtx.fillStyle = grad;
   envCtx.fillRect(0, 0, 512, 256);
-  // 1 grande bande lumineuse en haut = reflet caractéristique du packshot studio
-  envCtx.fillStyle = 'rgba(255,255,255,1)';
-  envCtx.fillRect(80, 30, 350, 26);
-  envCtx.fillStyle = 'rgba(255,255,255,0.6)';
-  envCtx.fillRect(60, 60, 390, 10);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
@@ -742,14 +736,13 @@ function init3D() {
   envTexture.dispose();
   pmrem.dispose();
 
-  // Lights style packshot : ambient forte + 1 key light douce + 1 fill
-  scene3D.add(new THREE.AmbientLight(0xffffff, 1.5));
-  const dir1 = new THREE.DirectionalLight(0xffffff, 0.55);
-  dir1.position.set(2, 3, 5);
-  scene3D.add(dir1);
-  const dir2 = new THREE.DirectionalLight(0xffffff, 0.25);
-  dir2.position.set(-3, 1, 2);
-  scene3D.add(dir2);
+  // Éclairage type dôme studio : HemisphereLight crée naturellement le gradient vertical doux
+  // (sommet plus clair, bas plus foncé) comme sur les vraies photos Mood
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xa0a0a0, 1.6);
+  hemi.position.set(0, 1, 0);
+  scene3D.add(hemi);
+  // Petite ambient pour remplir les ombres profondes
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.35));
 
   // Drag to rotate
   let dragStart = null, ringRotStart = 0;
@@ -858,12 +851,13 @@ async function majApercu3D() {
     const b = Math.round(parseInt(c.substr(4, 2), 16) * facteur);
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
-  const couleurInterieur = assombrir(couleurChoisie.hex, 0.45);
+  // Intérieur : même couleur (juste roughness légèrement plus haute pour effet "moins de lumière y entre")
+  const couleurInterieur = assombrir(couleurChoisie.hex, 0.82);
 
   // Caps : couleur normale (vu de face)
   const materialUni = new THREE.MeshPhysicalMaterial({
     color: couleurChoisie.hex,
-    metalness: 0.0, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.3, envMapIntensity: 0.7,
+    metalness: 0.0, roughness: 0.75, clearcoat: 0, envMapIntensity: 0.4,
     side: THREE.DoubleSide,
   });
 
@@ -891,12 +885,12 @@ async function majApercu3D() {
 
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
-    map: texture, metalness: 0.0, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.3, envMapIntensity: 0.7, side: THREE.FrontSide,
+    map: texture, metalness: 0.0, roughness: 0.75, clearcoat: 0, envMapIntensity: 0.4, side: THREE.FrontSide,
   }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
   const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshPhysicalMaterial({
-    color: couleurInterieur, metalness: 0.0, roughness: 0.9, envMapIntensity: 0.2, side: THREE.BackSide,
+    color: couleurInterieur, metalness: 0.0, roughness: 0.85, envMapIntensity: 0.3, side: THREE.BackSide,
   }));
 
   const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
