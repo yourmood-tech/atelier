@@ -721,13 +721,22 @@ function init3D() {
   const envCanvas = document.createElement('canvas');
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
-  // Environment dôme studio : très clair en haut, doux en bas (pas de bande lumineuse → pas de highlight)
+  // Environment dôme studio doux
   const grad = envCtx.createLinearGradient(0, 0, 0, 256);
   grad.addColorStop(0, '#ffffff');
   grad.addColorStop(0.5, '#f5f5f5');
   grad.addColorStop(1, '#cccccc');
   envCtx.fillStyle = grad;
   envCtx.fillRect(0, 0, 512, 256);
+  // Bande lumineuse verticale dégradée, un peu décalée du centre
+  // → crée un highlight vertical doux sur le côté de la bague
+  const bandX = 180, bandW = 50;
+  const bande = envCtx.createLinearGradient(bandX, 0, bandX + bandW, 0);
+  bande.addColorStop(0, 'rgba(255,255,255,0)');
+  bande.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+  bande.addColorStop(1, 'rgba(255,255,255,0)');
+  envCtx.fillStyle = bande;
+  envCtx.fillRect(bandX, 0, bandW, 256);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
