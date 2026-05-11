@@ -97,5 +97,68 @@ export async function POST(req: Request) {
   };
   await redisSet(`perso:cart:${designId}`, JSON.stringify(demande));
 
+  // Email de notification à l'équipe Mood (best-effort, n'empêche pas la commande si échec)
+  envoyerEmailEquipe(demande, svg).catch((e) => console.error("Email notification fail:", e));
+
   return NextResponse.json({ ok: true, cartUrl, designId });
+}
+
+async function envoyerEmailEquipe(demande: Record<string, unknown>, svg: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+  const designUrl = `https://mood-tools.yourmood.net/api/design/${demande.designId}`;
+  const dashboardUrl = `https://mood-tools.yourmood.net/perso-commandes`;
+  const FORMAT_LABEL: Record<string, string> = {
+    "addon": "Addon (7 mm)",
+    "2-3": "Deux tiers (4.6 mm)",
+    "medium": "Medium (2.3 mm)",
+    "open-mood": "Open mood (10 mm)",
+  };
+  const formatLabel = FORMAT_LABEL[String(demande.format)] || demande.format;
+
+  // Convertir le SVG en base64 pour l'attacher en pièce jointe ET l'embedder inline
+  const svgBase64 = Buffer.from(svg).toString("base64");
+  const svgDataUri = `data:image/svg+xml;base64,${svgBase64}`;
+
+  const html = `<div style="font-family:sans-serif;max-width:600px;color:#111">
+    <h2 style="margin-bottom:4px">🛒 Nouvelle commande personnalisée</h2>
+    <p style="color:#666;margin-top:0">Reçue le ${new Date().toLocaleString("fr-CH")}</p>
+    <div style="background:#fff8e7;border:1px solid #c9a96e;border-radius:8px;padding:14px;margin:14px 0">
+      <p style="margin:4px 0"><strong>Client :</strong> ${demande.prenom} — <a href="mailto:${demande.email}" style="color:#c9a96e">${demande.email}</a></p>
+      ${demande.tel ? `<p style="margin:4px 0"><strong>Téléphone :</strong> ${demande.tel}</p>` : ""}
+      <p style="margin:4px 0"><strong>Format :</strong> ${formatLabel}</p>
+      <p style="margin:4px 0"><strong>Couleur :</strong> ${demande.couleurNom || demande.couleur}</p>
+      <p style="margin:4px 0"><strong>Taille :</strong> ${demande.taille}</p>
+      ${demande.message ? `<p style="margin:4px 0"><strong>Message :</strong> ${demande.message}</p>` : ""}
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:14px;margin:14px 0;text-align:center">
+      <p style="margin:0 0 10px;color:#666;font-size:13px">Aperçu du dessin</p>
+      <img src="${svgDataUri}" alt="Design" style="max-width:100%;border:1px solid #eee;background:#fff" />
+    </div>
+    <p>
+      <a href="${designUrl}" style="display:inline-block;background:#c9a96e;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;margin-right:8px">📥 Télécharger SVG</a>
+      <a href="${dashboardUrl}" style="display:inline-block;background:#333;color:white;padding:10px 20px;border-radius:6px;text-decoration:none">📋 Voir toutes les commandes</a>
+    </p>
+    <p style="color:#999;font-size:12px;margin-top:20px">Action requise côté équipe Mood :<br>
+    1. Sortir la bague vierge alu correspondante du stock Katana (format + couleur + taille)<br>
+    2. Décrémenter le stock<br>
+    3. Graver avec Gravograph (SVG en pièce jointe ou via lien)<br>
+    4. Préparer expédition</p>
+  </div>`;
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: "perso@yourmood.net",
+      to: process.env.PERSO_EMAIL_TO || "info@yourmood.net",
+      reply_to: demande.email,
+      subject: `🛒 Nouvelle commande perso — ${demande.prenom} — ${formatLabel} ${demande.couleurNom || demande.couleur}`,
+      html,
+      attachments: [{
+        filename: `${demande.prenom}_${demande.format}_${demande.couleur}.svg`,
+        content: svgBase64,
+      }],
+    }),
+  });
 }
