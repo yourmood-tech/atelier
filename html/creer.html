@@ -710,18 +710,42 @@ function init3D() {
   renderer3D = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer3D.setSize(w, h);
   renderer3D.setPixelRatio(window.devicePixelRatio);
-  // Préserver les couleurs sans correction tonale (rendu fidèle à la texture)
   renderer3D.outputColorSpace = THREE.SRGBColorSpace;
-  renderer3D.toneMapping = THREE.NoToneMapping;
+  // Tone mapping subtil pour rendu métallique réaliste sans dénaturer les couleurs
+  renderer3D.toneMapping = THREE.LinearToneMapping;
+  renderer3D.toneMappingExposure = 1.0;
   container.innerHTML = '';
   container.appendChild(renderer3D.domElement);
 
-  // Lights : ambient très forte → couleurs pétantes proches du réel
-  scene3D.add(new THREE.AmbientLight(0xffffff, 1.8));
-  const dir1 = new THREE.DirectionalLight(0xffffff, 0.4);
+  // Environment map procédural pour reflets métalliques (gradient ciel→sol)
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 512; envCanvas.height = 256;
+  const envCtx = envCanvas.getContext('2d');
+  const grad = envCtx.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, '#ffffff');     // ciel
+  grad.addColorStop(0.45, '#dddddd');
+  grad.addColorStop(0.55, '#b8b8b8');  // horizon
+  grad.addColorStop(1, '#5a5a5a');     // sol
+  envCtx.fillStyle = grad;
+  envCtx.fillRect(0, 0, 512, 256);
+  // Quelques bandes lumineuses pour des highlights ponctuels
+  envCtx.fillStyle = 'rgba(255,255,255,0.6)';
+  envCtx.fillRect(50, 30, 80, 8);
+  envCtx.fillRect(280, 50, 100, 6);
+  const envTexture = new THREE.CanvasTexture(envCanvas);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.SRGBColorSpace;
+  const pmrem = new THREE.PMREMGenerator(renderer3D);
+  scene3D.environment = pmrem.fromEquirectangular(envTexture).texture;
+  envTexture.dispose();
+  pmrem.dispose();
+
+  // Lights complémentaires (env map fait l'essentiel)
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
   dir1.position.set(3, 4, 5);
   scene3D.add(dir1);
-  const dir2 = new THREE.DirectionalLight(0xffffff, 0.3);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.4);
   dir2.position.set(-3, 2, 3);
   scene3D.add(dir2);
 
@@ -813,15 +837,25 @@ async function majApercu3D() {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.needsUpdate = true;
 
-  // MeshBasicMaterial : ignore les lights, affiche la couleur de la texture exactement comme elle est
-  const material = new THREE.MeshBasicMaterial({
+  // MeshPhysicalMaterial : rendu alu anodisé (semi-métallique avec léger clearcoat)
+  const material = new THREE.MeshPhysicalMaterial({
     map: texture,
+    metalness: 0.55,
+    roughness: 0.32,
+    clearcoat: 0.4,
+    clearcoatRoughness: 0.15,
+    envMapIntensity: 0.8,
     side: THREE.DoubleSide,
   });
 
-  // Couleur unie pour l'intérieur de la bague et les caps (pas de gravure dessus)
-  const materialUni = new THREE.MeshBasicMaterial({
+  // Même matériau pour intérieur et caps mais avec couleur unie (pas de gravure)
+  const materialUni = new THREE.MeshPhysicalMaterial({
     color: couleurChoisie.hex,
+    metalness: 0.55,
+    roughness: 0.32,
+    clearcoat: 0.4,
+    clearcoatRoughness: 0.15,
+    envMapIntensity: 0.8,
     side: THREE.DoubleSide,
   });
 
@@ -848,10 +882,14 @@ async function majApercu3D() {
   const rayonInt = Math.max(0.1, rayon - EPAISSEUR);
 
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
-  const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide }));
+  const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
+    map: texture, metalness: 0.55, roughness: 0.32, clearcoat: 0.4, clearcoatRoughness: 0.15, envMapIntensity: 0.8, side: THREE.FrontSide,
+  }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
-  const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshBasicMaterial({ color: couleurChoisie.hex, side: THREE.BackSide }));
+  const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshPhysicalMaterial({
+    color: couleurChoisie.hex, metalness: 0.55, roughness: 0.4, side: THREE.BackSide,
+  }));
 
   const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
   const topCap = new THREE.Mesh(ringCapGeo, materialUni);
