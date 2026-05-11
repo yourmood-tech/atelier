@@ -94,9 +94,9 @@ export async function POST() {
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   if (!STORE || !TOKEN) return NextResponse.json({ error: "Shopify env non configuré" }, { status: 503 });
 
+  const TAILLES = [48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70];
+
   try {
-    // Création d'UN SEUL produit "Bague personnalisée" avec 1 variant générique
-    // Le prix réel sera passé par le configurateur via Draft Order au moment de l'achat
     const created = await shopifyREST(`/products.json`, "POST", {
       product: {
         title: "Bague personnalisée",
@@ -109,25 +109,29 @@ export async function POST() {
         tags: "personnalisation, perso, gravure, configurateur",
         status: "active",
         published_scope: "web",
-        variants: [{
-          price: "65.00", // prix "à partir de" — overridé par le Draft Order
-          sku: "BAGUE-PERSO",
+        options: [{ name: "Taille" }],
+        variants: TAILLES.map((t) => ({
+          option1: String(t),
+          price: "65.00",
+          sku: `BAGUE-PERSO-${t}`,
           requires_shipping: true,
           taxable: true,
-          // Pas d'inventory_management : stock géré côté Katana
-        }],
+        })),
       },
     });
 
     const product = created.product;
-    const variant = product.variants[0];
+    const variantsByTaille: Record<string, number> = {};
+    for (const v of product.variants as Array<{ id: number; option1: string }>) {
+      variantsByTaille[v.option1] = v.id;
+    }
 
     await publierSurOnlineStore(product.id);
 
     const config = {
       productId: product.id,
       handle: product.handle,
-      variantId: variant.id,
+      variants: variantsByTaille,
     };
 
     await redisSet("perso:shopify:variants", JSON.stringify(config));

@@ -84,14 +84,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Design SVG trop volumineux" }, { status: 413 });
   }
 
-  // Récupérer la config produit (1 produit, 1 variant) depuis Redis
+  // Récupérer la config produit depuis Redis
   const configRaw = await redisGet("perso:shopify:variants");
   if (!configRaw) {
     return NextResponse.json({ error: "Produit Shopify non créé. L'équipe Mood doit aller sur /setup-perso." }, { status: 503 });
   }
-  type Config = { productId: number; handle: string; variantId: number };
+  type Config = { productId: number; handle: string; variants: Record<string, number> };
   const config: Config = JSON.parse(configRaw);
-  const variantId = config.variantId;
+  const variantId = taille ? config.variants?.[taille] : undefined;
+  if (!variantId) {
+    return NextResponse.json({ error: `Variant introuvable pour taille=${taille}. Recréer les produits sur /setup-perso.` }, { status: 400 });
+  }
 
   // Stocker le SVG dans Redis avec un ID unique → URL publique
   const designId = `design_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -109,12 +112,9 @@ export async function POST(req: Request) {
     const draftBody = {
       draft_order: {
         line_items: [{
-          title: "Bague personnalisée",
-          sku: `BAGUE-PERSO-${taille || "??"}`,
+          variant_id: variantId,
           quantity: 1,
           price: prixFinal.toFixed(2),
-          requires_shipping: true,
-          taxable: true,
           properties: [
             { name: "Format", value: formatLabel },
             { name: "Couleur", value: couleurNom || couleur },
