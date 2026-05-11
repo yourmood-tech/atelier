@@ -54,7 +54,7 @@ export default function SetupPersoPage() {
   };
 
   const ajouterTailles = async () => {
-    if (!confirm("Ajouter l'option Taille (48→70) au produit existant ? Les SKU seront vides — tu les remplis manuellement dans Shopify Admin.")) return;
+    if (!confirm("Ajouter l'option Taille (50→72) au produit existant ? Les SKU seront vides — tu les remplis manuellement dans Shopify Admin.")) return;
     setLoading(true);
     setError(null);
     try {
@@ -164,7 +164,7 @@ export default function SetupPersoPage() {
 
             <div className="mt-6 pt-4 border-t border-zinc-800 space-y-3">
               <div>
-                <p className="text-xs text-zinc-500 mb-2">Ajouter l'option Taille (48→70) au produit existant. Les SKU seront vides — à remplir manuellement dans Shopify Admin ensuite.</p>
+                <p className="text-xs text-zinc-500 mb-2">Ajouter l'option Taille (50→72) au produit existant. Les SKU seront vides — à remplir manuellement dans Shopify Admin ensuite.</p>
                 <button
                   onClick={ajouterTailles}
                   disabled={loading}
