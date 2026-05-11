@@ -1,9 +1,39 @@
 import { NextResponse } from "next/server";
 
 const STORE = process.env.SHOPIFY_STORE!;
-const STORE_DOMAIN = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN || "yourmood.net";
+const TOKEN = process.env.SHOPIFY_API_TOKEN!;
+const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const FORMAT_LABELS: Record<string, string> = {
+  "addon": "Addon (7 mm)",
+  "2-3": "Deux tiers (4.6 mm)",
+  "medium": "Medium (2.3 mm)",
+  "open-mood": "Open mood (10 mm)",
+};
+
+const FORMAT_SKU: Record<string, string> = {
+  "addon": "ADDON",
+  "2-3": "23",
+  "medium": "MED",
+  "open-mood": "OPEN",
+};
+
+const COULEUR_SKU: Record<string, string> = {
+  "noir": "NOIR",
+  "rouge": "ROUGE",
+  "bleu-marine": "MARINE",
+  "lilas-cashmere": "LILAS",
+  "belipastel": "BELI",
+  "rose-pastel": "ROSEP",
+  "noisette": "NOISETTE",
+  "peche": "PECHE",
+  "abricot": "ABRICOT",
+  "jaune-pastel": "JAUNEP",
+  "vert-pastel": "VERTP",
+  "bleu-pastel": "BLEUP",
+};
 
 async function redisGet(key: string) {
   if (!REDIS_URL || !REDIS_TOKEN) return null;
@@ -34,6 +64,8 @@ type Demande = {
   couleurNom: string;
   svg: string;
   nbElements?: number;
+  prix?: number;     // prix calculé par le configurateur (override Shopify)
+  niveau?: string;   // niveau de complexité (simple/moyen/complexe)
 };
 
 export async function POST(req: Request) {
@@ -44,7 +76,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { prenom, email, format, couleur, couleurNom, taille, svg, tel, message, nbElements } = data;
+  const { prenom, email, format, couleur, couleurNom, taille, svg, tel, message, nbElements, prix, niveau } = data;
   if (!prenom || !email || !format || !couleur || !svg) {
     return NextResponse.json({ error: "Champs requis manquants (prénom, email, format, couleur, design)" }, { status: 400 });
   }
@@ -52,46 +84,84 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Design SVG trop volumineux" }, { status: 413 });
   }
 
-  // Récupérer le mapping format/couleur → variant ID depuis Redis
-  const variantsRaw = await redisGet("perso:shopify:variants");
-  if (!variantsRaw) {
-    return NextResponse.json({ error: "Produits Shopify non créés. L'équipe Mood doit aller sur /setup-perso." }, { status: 503 });
+  // Récupérer la config produit (1 produit, 1 variant) depuis Redis
+  const configRaw = await redisGet("perso:shopify:variants");
+  if (!configRaw) {
+    return NextResponse.json({ error: "Produit Shopify non créé. L'équipe Mood doit aller sur /setup-perso." }, { status: 503 });
   }
-  type VariantsMap = Record<string, { productId: number; handle: string; variants: Record<string, number> }>;
-  const variantsMap: VariantsMap = JSON.parse(variantsRaw);
-  const variantId = variantsMap[format]?.variants[`${couleur}-${taille}`];
-  if (!variantId) {
-    return NextResponse.json({ error: `Variant introuvable pour format=${format}, couleur=${couleur}, taille=${taille}` }, { status: 400 });
-  }
+  type Config = { productId: number; handle: string; variantId: number };
+  const config: Config = JSON.parse(configRaw);
+  const variantId = config.variantId;
 
   // Stocker le SVG dans Redis avec un ID unique → URL publique
   const designId = `design_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   await redisSet(`perso:design:${designId}`, svg);
   const designUrl = `https://mood-tools.yourmood.net/api/design/${designId}`;
 
-  // Construire le permalink Shopify cart avec line item properties
-  // Format : https://{shop}/cart/{variantId}:{quantity}?attributes[Key]=Value...
-  // Note : pour line item properties, on utilise les "cart attributes" qui apparaissent sur la commande
-  const props = new URLSearchParams();
-  props.set("attributes[Format]", format);
-  props.set("attributes[Couleur]", couleurNom || couleur);
-  props.set("attributes[Taille]", taille || "");
-  props.set("attributes[Prenom]", prenom);
-  props.set("attributes[Email]", email);
-  if (tel) props.set("attributes[Telephone]", tel);
-  if (message) props.set("attributes[Message]", message.slice(0, 500));
-  props.set("attributes[Design SVG]", designUrl);
-  if (typeof nbElements === "number") props.set("attributes[Nb elements]", String(nbElements));
+  // SKU complet pour Katana : MED-PERSO-ROUGE-ALU-54
+  const skuComplet = `${FORMAT_SKU[format] || format.toUpperCase()}-PERSO-${COULEUR_SKU[couleur] || couleur.toUpperCase()}-ALU-${taille || "??"}`;
+  const formatLabel = FORMAT_LABELS[format] || format;
+  const prixFinal = typeof prix === "number" ? prix : 85; // fallback 85 si pas calculé
 
-  const cartUrl = `https://${STORE_DOMAIN}/cart/${variantId}:1?${props.toString()}`;
+  // Créer un Draft Order Shopify avec le prix calculé + toutes les infos en line item properties
+  let invoiceUrl = "";
+  try {
+    const draftBody = {
+      draft_order: {
+        line_items: [{
+          variant_id: variantId,
+          quantity: 1,
+          price: prixFinal.toFixed(2),
+          properties: [
+            { name: "Format", value: formatLabel },
+            { name: "Couleur", value: couleurNom || couleur },
+            { name: "Taille", value: taille || "" },
+            { name: "SKU Katana", value: skuComplet },
+            { name: "Design SVG", value: designUrl },
+            ...(niveau ? [{ name: "Complexité", value: niveau }] : []),
+            ...(nbElements != null ? [{ name: "Nb éléments", value: String(nbElements) }] : []),
+            ...(message ? [{ name: "Message client", value: message.slice(0, 500) }] : []),
+            { name: "Prénom", value: prenom },
+            { name: "Téléphone", value: tel || "" },
+          ],
+        }],
+        customer: { email },
+        email,
+        note: `Bague personnalisée — ${formatLabel} ${couleurNom || couleur} taille ${taille}. SKU Katana : ${skuComplet}. Design : ${designUrl}`,
+        use_customer_default_address: false,
+      },
+    };
+    const draftR = await fetch(`https://${STORE}/admin/api/${API_VERSION}/draft_orders.json`, {
+      method: "POST",
+      headers: {
+        "X-Shopify-Access-Token": TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(draftBody),
+    });
+    const draftData = await draftR.json();
+    if (!draftR.ok) {
+      console.error("Draft order failed:", draftR.status, JSON.stringify(draftData).slice(0, 500));
+      return NextResponse.json({ error: `Shopify Draft Order ${draftR.status}: ${JSON.stringify(draftData).slice(0, 200)}` }, { status: 500 });
+    }
+    invoiceUrl = draftData.draft_order?.invoice_url;
+    if (!invoiceUrl) {
+      return NextResponse.json({ error: "Pas d'invoice_url retourné par Shopify Draft Order" }, { status: 500 });
+    }
+  } catch (e: unknown) {
+    return NextResponse.json({ error: "Création Draft Order échouée: " + (e as Error).message }, { status: 500 });
+  }
 
-  // Logger la demande aussi pour suivi (au cas où)
+  const cartUrl = invoiceUrl;
+
+  // Logger la demande pour suivi
   const demande = {
     designId,
     date: new Date().toISOString(),
     prenom, email, tel, message,
     format, couleur, couleurNom, taille,
-    nbElements,
+    nbElements, prix: prixFinal, niveau,
+    skuComplet,
     variantId,
     cartUrl,
   };
