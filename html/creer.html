@@ -1393,6 +1393,8 @@ function genererSvgFinal() {
   let body = '';
   for (const el of elements) body += elementSvg(el, false);
   body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#1d1e1b" stroke-width="0.25" stroke-miterlimit="10"/>`;
+  // Pour le fichier de gravure : trait NOIR sur fond blanc (le blanc d'affichage 3D est invisible sur fond navigateur blanc)
+  body = body.replace(/stroke="#ffffff"/g, 'stroke="#1d1e1b"').replace(/fill="#ffffff"/g, 'fill="#1d1e1b"');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${H + 4}">
 ${body}
