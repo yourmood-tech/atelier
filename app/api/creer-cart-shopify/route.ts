@@ -109,9 +109,12 @@ export async function POST(req: Request) {
     const draftBody = {
       draft_order: {
         line_items: [{
-          variant_id: variantId,
+          title: "Bague personnalisée",
+          sku: `BAGUE-PERSO-${taille || "??"}`,
           quantity: 1,
           price: prixFinal.toFixed(2),
+          requires_shipping: true,
+          taxable: true,
           properties: [
             { name: "Format", value: formatLabel },
             { name: "Couleur", value: couleurNom || couleur },
