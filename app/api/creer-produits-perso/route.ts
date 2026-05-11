@@ -94,7 +94,7 @@ export async function POST() {
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
   if (!STORE || !TOKEN) return NextResponse.json({ error: "Shopify env non configuré" }, { status: 503 });
 
-  const TAILLES = [48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70];
+  const TAILLES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
 
   try {
     const created = await shopifyREST(`/products.json`, "POST", {
@@ -149,7 +149,7 @@ export async function PATCH() {
   let config: { productId: number; handle: string };
   try { config = JSON.parse(raw); } catch { return NextResponse.json({ error: "Config corrompue" }, { status: 500 }); }
 
-  const TAILLES = [48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70];
+  const TAILLES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
   const pid = config.productId;
 
   try {
@@ -166,9 +166,9 @@ export async function PATCH() {
 
     // 3. Mettre à jour le premier variant → taille 48, SKU vide pour saisie manuelle
     await shopifyREST(`/products/${pid}/variants/${firstVariant.id}.json`, "PUT", {
-      variant: { id: firstVariant.id, option1: "48", sku: "" },
+      variant: { id: firstVariant.id, option1: "50", sku: ""},
     });
-    const variantsByTaille: Record<string, number> = { "48": firstVariant.id };
+    const variantsByTaille: Record<string, number> = { "50": firstVariant.id };
 
     // 4. Créer les 11 variants restants (50→70) — SKU vide, à remplir manuellement dans Shopify
     for (const t of TAILLES.slice(1)) {
