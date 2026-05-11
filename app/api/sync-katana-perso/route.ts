@@ -221,11 +221,6 @@ export async function POST() {
 
   try {
 
-  const PRODUCT_CONFIGS = [
-    { name: "Taille",  values: TAILLES.map(String)          },
-    { name: "Couleur", values: COULEURS.map((c) => c.nom)   },
-  ];
-
   for (const fmt of FORMATS) {
     const formatSku = fmt.sku as FormatSku;
     const productName = `Bague personnalisée — ${fmt.nom}`;
@@ -245,19 +240,17 @@ export async function POST() {
       let katanaProductId = await findKatanaProductByName(productName);
 
       if (!katanaProductId) {
+        // Création simple : produit seul, sans configs ni variants dans le payload
+        // (certains champs comme configs peuvent provoquer des réponses non-JSON)
         const created = (await katanaFetch("/v1/products", {
           method: "POST",
           body: JSON.stringify({
             name: productName,
             is_sellable: true,
             is_producible: true,
-            configs: PRODUCT_CONFIGS,
-            variants: allCombos.map((c) => ({
-              sku: c.persoSku,
-              config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(c.taille, c.couleurNom),
-            })),
           }),
-        })) as { id: number };
+        })) as { id?: number };
+        if (!created?.id) throw new Error(`Katana n'a pas retourné d'ID pour le produit "${productName}"`);
         katanaProductId = created.id;
       }
 
@@ -275,19 +268,15 @@ export async function POST() {
           ])
       );
 
-      // ── 3. Créer les variants manquants (avec config_attributes) ───────────
+      // ── 3. Créer les variants manquants (SKU uniquement) ─────────────────
       const missing = allCombos.filter((c) => !fgBySku.has(c.persoSku));
       for (const m of missing) {
         try {
           const v = (await katanaFetch("/v1/variants", {
             method: "POST",
-            body: JSON.stringify({
-              product_id: katanaProductId,
-              sku: m.persoSku,
-              config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(m.taille, m.couleurNom),
-            }),
-          })) as { id: number };
-          fgBySku.set(m.persoSku, { id: v.id, hasConfig: true });
+            body: JSON.stringify({ product_id: katanaProductId, sku: m.persoSku }),
+          })) as { id?: number };
+          if (v?.id) fgBySku.set(m.persoSku, { id: v.id, hasConfig: false });
         } catch (e) {
           errors.push(`Variant ${m.persoSku}: ${(e as Error).message}`);
         }
