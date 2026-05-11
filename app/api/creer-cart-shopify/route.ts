@@ -59,9 +59,9 @@ export async function POST(req: Request) {
   }
   type VariantsMap = Record<string, { productId: number; handle: string; variants: Record<string, number> }>;
   const variantsMap: VariantsMap = JSON.parse(variantsRaw);
-  const variantId = variantsMap[format]?.variants[couleur];
+  const variantId = variantsMap[format]?.variants[`${couleur}-${taille}`];
   if (!variantId) {
-    return NextResponse.json({ error: `Variant introuvable pour format=${format}, couleur=${couleur}` }, { status: 400 });
+    return NextResponse.json({ error: `Variant introuvable pour format=${format}, couleur=${couleur}, taille=${taille}` }, { status: 400 });
   }
 
   // Stocker le SVG dans Redis avec un ID unique → URL publique

@@ -4,11 +4,6 @@ import { useState, useEffect } from "react";
 
 type ResultatVariants = Record<string, { productId: number; handle: string; variants: Record<string, number> }>;
 
-const COULEURS = [
-  "noir", "rouge", "bleu-marine", "lilas-cashmere", "belipastel", "rose-pastel",
-  "noisette", "peche", "abricot", "jaune-pastel", "vert-pastel", "bleu-pastel",
-];
-
 const FORMATS = [
   { id: "medium", nom: "Medium" },
   { id: "2-3", nom: "Deux tiers" },
@@ -65,7 +60,7 @@ export default function SetupPersoPage() {
   };
 
   const lancerCreation = async () => {
-    if (!confirm("Créer 4 produits Shopify avec 12 variants chacun ? (action irréversible, les produits seront publiés actifs)")) return;
+    if (!confirm("Créer 4 produits Shopify avec 144 variants chacun (12 couleurs × 12 tailles) ? (action irréversible, les produits seront publiés actifs)\n\nNote : si tu as déjà des produits perso, supprime-les d'abord sur Shopify ET clique 'Réinitialiser le mapping' avant.")) return;
     setLoading(true);
     setError(null);
     try {
@@ -85,7 +80,7 @@ export default function SetupPersoPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-semibold mb-2">Setup Bagues personnalisées sur Shopify</h1>
         <p className="text-zinc-400 mb-6">
-          Crée les 4 produits Shopify (1 par format) avec 12 variants couleur chacun. Stock géré côté Katana.
+          Crée les 4 produits Shopify (1 par format) avec 144 variants chacun (12 couleurs × 12 tailles). Stock géré côté Katana.
         </p>
 
         {!resultats && (
@@ -101,8 +96,8 @@ export default function SetupPersoPage() {
               <li>Bague personnalisée — Open mood (109 CHF)</li>
             </ul>
             <p className="text-sm text-zinc-400 mb-4">
-              Chaque produit a 12 variants couleur (noir, rouge, bleu marine, lilas, etc.). Total : <strong>48 variants</strong>.
-              SKU : <code className="text-amber-400">perso-{"{format}"}-{"{couleur}"}</code>.
+              Chaque produit a 144 variants (12 couleurs × 12 tailles). Total : <strong>576 variants</strong>.
+              SKU : <code className="text-amber-400">{"{FORMAT}"}-PERSO-{"{COULEUR}"}-ALU-{"{TAILLE}"}</code> (ex: <code className="text-amber-400">MED-PERSO-ROUGE-ALU-54</code>).
             </p>
             <button
               onClick={lancerCreation}
@@ -138,16 +133,7 @@ export default function SetupPersoPage() {
                         Voir sur Shopify →
                       </a>
                     </div>
-                    <details className="text-xs">
-                      <summary className="cursor-pointer text-zinc-400 hover:text-zinc-300">Voir les 12 variant IDs</summary>
-                      <div className="mt-2 grid grid-cols-2 gap-1 font-mono">
-                        {COULEURS.map((c) => (
-                          <div key={c} className="text-zinc-300">
-                            <span className="text-zinc-500">{c}</span> : {r.variants[c]}
-                          </div>
-                        ))}
-                      </div>
-                    </details>
+                    <p className="text-xs text-zinc-500 mt-1">{Object.keys(r.variants).length} variants créés (12 couleurs × 12 tailles)</p>
                   </div>
                 );
               })}
