@@ -721,13 +721,19 @@ function init3D() {
   const envCanvas = document.createElement('canvas');
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
-  // Environment doux uniforme (style studio packshot)
+  // Environment style studio packshot avec bande lumineuse pour highlight
   const grad = envCtx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#f5f5f5');
-  grad.addColorStop(0.5, '#e8e8e8');
-  grad.addColorStop(1, '#cccccc');
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.4, '#e0e0e0');
+  grad.addColorStop(0.7, '#a5a5a5');
+  grad.addColorStop(1, '#707070');
   envCtx.fillStyle = grad;
   envCtx.fillRect(0, 0, 512, 256);
+  // 1 grande bande lumineuse en haut = reflet caractéristique du packshot studio
+  envCtx.fillStyle = 'rgba(255,255,255,1)';
+  envCtx.fillRect(80, 30, 350, 26);
+  envCtx.fillStyle = 'rgba(255,255,255,0.6)';
+  envCtx.fillRect(60, 60, 390, 10);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
@@ -844,14 +850,20 @@ async function majApercu3D() {
     side: THREE.DoubleSide,
   });
 
-  // Même matériau pour intérieur et caps mais avec couleur unie (pas de gravure)
+  // Helper : assombrit une couleur hex (× facteur 0..1)
+  function assombrir(hex, facteur) {
+    const c = hex.replace('#', '');
+    const r = Math.round(parseInt(c.substr(0, 2), 16) * facteur);
+    const g = Math.round(parseInt(c.substr(2, 2), 16) * facteur);
+    const b = Math.round(parseInt(c.substr(4, 2), 16) * facteur);
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+  const couleurInterieur = assombrir(couleurChoisie.hex, 0.45);
+
+  // Caps : couleur normale (vu de face)
   const materialUni = new THREE.MeshPhysicalMaterial({
     color: couleurChoisie.hex,
-    metalness: 0.55,
-    roughness: 0.32,
-    clearcoat: 0.4,
-    clearcoatRoughness: 0.15,
-    envMapIntensity: 0.8,
+    metalness: 0.0, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.3, envMapIntensity: 0.7,
     side: THREE.DoubleSide,
   });
 
@@ -879,12 +891,12 @@ async function majApercu3D() {
 
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
-    map: texture, metalness: 0.0, roughness: 0.85, clearcoat: 0.1, clearcoatRoughness: 0.7, envMapIntensity: 0.35, side: THREE.FrontSide,
+    map: texture, metalness: 0.0, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.3, envMapIntensity: 0.7, side: THREE.FrontSide,
   }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
   const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshPhysicalMaterial({
-    color: couleurChoisie.hex, metalness: 0.55, roughness: 0.4, side: THREE.BackSide,
+    color: couleurInterieur, metalness: 0.0, roughness: 0.9, envMapIntensity: 0.2, side: THREE.BackSide,
   }));
 
   const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
