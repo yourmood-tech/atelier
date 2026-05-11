@@ -284,19 +284,32 @@ export async function POST() {
       }
 
       // ── 4. Patcher les variants existants sans config_attributes ───────────
-      const toPatch: { id: number; taille: string; couleurNom: string }[] = [];
-      for (const [sku, { id, hasConfig }] of fgBySku) {
-        if (!hasConfig) {
-          const parsed = parsePersoSku(sku);
-          if (parsed) toPatch.push({ id, ...parsed });
+      // Seulement si le produit Katana a des options (configs) définies —
+      // si aucune option n'existe encore, les PATCH échouent de toute façon.
+      let variantsPatched = 0;
+      try {
+        const productData = (await katanaFetch(`/v1/products/${katanaProductId}`)) as {
+          configs?: { id: number; name: string }[];
+        };
+        if ((productData?.configs?.length ?? 0) > 0) {
+          const toPatch: { id: number; taille: string; couleurNom: string }[] = [];
+          for (const [sku, { id, hasConfig }] of fgBySku) {
+            if (!hasConfig) {
+              const parsed = parsePersoSku(sku);
+              if (parsed) toPatch.push({ id, ...parsed });
+            }
+          }
+          await patchVariantsConfigAttributes(toPatch, errors);
+          variantsPatched = toPatch.length;
         }
+      } catch (e) {
+        errors.push(`GET product configs ${fmt.id}: ${(e as Error).message}`);
       }
-      await patchVariantsConfigAttributes(toPatch, errors);
 
-      // ── 5. Charger les matières via product_id (2 appels par format) ────────
-      // Si product_id est null côté Katana (variant sans produit attaché),
-      // mtrlBySku reste vide et le fallback par SKU individuel prend le relais.
+      // ── 5. Charger les matières ───────────────────────────────────────────
       const mtrlBySku = new Map<string, number>();
+
+      // Tentative bulk via product_id (2 appels)
       const firstMtrlSku = toMtrlSku(formatSku, 56, "ROUGE");
       if (firstMtrlSku) {
         const anchor = await katanaVariantBySku(firstMtrlSku);
@@ -305,6 +318,28 @@ export async function POST() {
           for (const v of mtrlVariants) {
             if (v.sku) mtrlBySku.set(v.sku, v.id);
           }
+        }
+      }
+
+      // Fallback parallèle si le bulk n'a rien ramené
+      if (mtrlBySku.size === 0) {
+        const uniqueMtrlSkus = [
+          ...new Set(
+            allCombos
+              .map((c) => toMtrlSku(formatSku, c.taille, c.couleurSku))
+              .filter((s): s is string => s !== null)
+          ),
+        ];
+        const MLOOKUP = 15;
+        for (let i = 0; i < uniqueMtrlSkus.length; i += MLOOKUP) {
+          await Promise.all(
+            uniqueMtrlSkus.slice(i, i + MLOOKUP).map(async (sku) => {
+              try {
+                const v = await katanaVariantBySku(sku);
+                if (v?.id) mtrlBySku.set(sku, v.id);
+              } catch { /* signalé en step 6 */ }
+            })
+          );
         }
       }
 
@@ -320,21 +355,10 @@ export async function POST() {
           continue;
         }
 
-        let mtrlId = mtrlBySku.get(mtrlSku);
+        const mtrlId = mtrlBySku.get(mtrlSku);
         if (!mtrlId) {
-          try {
-            const v = await katanaVariantBySku(mtrlSku);
-            if (v) {
-              mtrlBySku.set(mtrlSku, v.id);
-              mtrlId = v.id;
-            } else {
-              errors.push(`Matière introuvable dans Katana: ${mtrlSku}`);
-              continue;
-            }
-          } catch (e) {
-            errors.push(`Lookup ${mtrlSku}: ${(e as Error).message}`);
-            continue;
-          }
+          errors.push(`Matière introuvable dans Katana: ${mtrlSku}`);
+          continue;
         }
         recipeRows.push({ productVariantId: fg.id, ingredientVariantId: mtrlId });
       }
@@ -376,7 +400,7 @@ export async function POST() {
       katanaResultats[fmt.id] = {
         katanaProductId,
         variantsTotal: fgBySku.size,
-        variantsPatched: toPatch.length,
+        variantsPatched,
         recipesCreated,
         recipesSkipped: skipped,
       };
