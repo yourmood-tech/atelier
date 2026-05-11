@@ -11,18 +11,18 @@ const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_R
 const TAILLES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
 
 const COULEURS = [
-  { id: "noir",           sku: "NOIR"     },
-  { id: "rouge",          sku: "ROUGE"    },
-  { id: "bleu-marine",    sku: "MARINE"   },
-  { id: "lilas-cashmere", sku: "LILAS"    },
-  { id: "belipastel",     sku: "BELI"     },
-  { id: "rose-pastel",    sku: "ROSEP"    },
-  { id: "noisette",       sku: "NOISETTE" },
-  { id: "peche",          sku: "PECHE"    },
-  { id: "abricot",        sku: "ABRICOT"  },
-  { id: "jaune-pastel",   sku: "JAUNEP"   },
-  { id: "vert-pastel",    sku: "VERTP"    },
-  { id: "bleu-pastel",    sku: "BLEUP"    },
+  { id: "noir",           nom: "Noir",           sku: "NOIR"     },
+  { id: "rouge",          nom: "Rouge",          sku: "ROUGE"    },
+  { id: "bleu-marine",    nom: "Bleu marine",    sku: "MARINE"   },
+  { id: "lilas-cashmere", nom: "Lilas cashmere", sku: "LILAS"    },
+  { id: "belipastel",     nom: "Belipastel",     sku: "BELI"     },
+  { id: "rose-pastel",    nom: "Rose pastel",    sku: "ROSEP"    },
+  { id: "noisette",       nom: "Noisette",       sku: "NOISETTE" },
+  { id: "peche",          nom: "Pêche",          sku: "PECHE"    },
+  { id: "abricot",        nom: "Abricot",        sku: "ABRICOT"  },
+  { id: "jaune-pastel",   nom: "Jaune pastel",   sku: "JAUNEP"   },
+  { id: "vert-pastel",    nom: "Vert pastel",    sku: "VERTP"    },
+  { id: "bleu-pastel",    nom: "Bleu pastel",    sku: "BLEUP"    },
 ];
 
 const FORMATS = [
@@ -77,6 +77,20 @@ function toMtrlSku(formatSku: FormatSku, taille: number, couleurSku: string): st
     : `${cfg.prefix}-${couleurKatana}-${taille}`;
 }
 
+// Parse taille + couleurNom depuis SKU = PERSO-{fmt}-{taille}-{couleurSku}
+function parsePersoSku(sku: string): { taille: string; couleurNom: string } | null {
+  const m = sku.match(/^PERSO-[A-Z0-9]+-(\d+)-([A-Z]+)$/);
+  if (!m) return null;
+  const couleur = COULEURS.find((c) => c.sku === m[2]);
+  if (!couleur) return null;
+  return { taille: m[1], couleurNom: couleur.nom };
+}
+
+const CONFIG_ATTRS_TAILLE_COULEUR = (taille: number | string, couleurNom: string) => [
+  { config_name: "Taille", config_value: String(taille) },
+  { config_name: "Couleur", config_value: couleurNom },
+];
+
 // ============ Katana helpers ============
 
 async function katanaFetch(path: string, init?: RequestInit, retries = 3): Promise<unknown> {
@@ -101,6 +115,12 @@ async function katanaFetch(path: string, init?: RequestInit, retries = 3): Promi
   return text ? JSON.parse(text) : null;
 }
 
+type KatanaVariantRaw = {
+  id: number;
+  sku: string | null;
+  config_attributes?: { config_name: string; config_value: string }[];
+};
+
 async function findKatanaProductByName(name: string): Promise<number | null> {
   const data = (await katanaFetch(
     `/v1/products?search=${encodeURIComponent(name)}&limit=20`
@@ -108,18 +128,42 @@ async function findKatanaProductByName(name: string): Promise<number | null> {
   return (data.data ?? []).find((p) => p.name === name)?.id ?? null;
 }
 
-async function katanaVariantsBySku(sku: string): Promise<{ id: number; product_id: number } | null> {
+async function katanaVariantBySku(sku: string): Promise<{ id: number; product_id: number } | null> {
   const data = (await katanaFetch(
     `/v1/variants?sku=${encodeURIComponent(sku)}&limit=1`
   )) as { data?: { id: number; product_id: number; sku: string }[] };
   return data.data?.[0] ?? null;
 }
 
-async function katanaVariantsByProductId(productId: number): Promise<{ id: number; sku: string | null }[]> {
+async function katanaVariantsByProductId(productId: number): Promise<KatanaVariantRaw[]> {
   const data = (await katanaFetch(
     `/v1/variants?product_id=${productId}&limit=500`
-  )) as { data?: { id: number; sku: string | null }[] };
+  )) as { data?: KatanaVariantRaw[] };
   return data.data ?? [];
+}
+
+// Patch en parallèle par lots de N
+async function patchVariantsConfigAttributes(
+  variants: { id: number; taille: string; couleurNom: string }[],
+  errors: string[]
+) {
+  const CONCURRENCY = 8;
+  for (let i = 0; i < variants.length; i += CONCURRENCY) {
+    await Promise.all(
+      variants.slice(i, i + CONCURRENCY).map(async (v) => {
+        try {
+          await katanaFetch(`/v1/variants/${v.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(v.taille, v.couleurNom),
+            }),
+          });
+        } catch (e) {
+          errors.push(`PATCH config variant ${v.id}: ${(e as Error).message}`);
+        }
+      })
+    );
+  }
 }
 
 // ============ Redis ============
@@ -143,11 +187,17 @@ async function redisSet(key: string, value: string) {
 
 // ============ Types ============
 
-type KatanaConfig = Record<string, { katanaProductId: number; variantsTotal: number; recipesCreated: number; recipesSkipped: number }>;
+type KatanaFormatResult = {
+  katanaProductId: number;
+  variantsTotal: number;
+  variantsPatched: number;
+  recipesCreated: number;
+  recipesSkipped: number;
+};
+type KatanaConfig = Record<string, KatanaFormatResult>;
 
 // ============ Endpoint ============
 
-// POST — Crée 4 produits Katana + 144 variants chacun + 576 recettes (idempotent)
 export async function POST() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
@@ -164,56 +214,103 @@ export async function POST() {
   const katanaResultats: KatanaConfig = {};
   const errors: string[] = [];
 
+  const PRODUCT_CONFIGS = [
+    { name: "Taille",  values: TAILLES.map(String)          },
+    { name: "Couleur", values: COULEURS.map((c) => c.nom)   },
+  ];
+
   for (const fmt of FORMATS) {
     const formatSku = fmt.sku as FormatSku;
     const productName = `Bague personnalisée — ${fmt.nom}`;
 
+    // Toutes les combinaisons pour ce format
+    const allCombos = TAILLES.flatMap((t) =>
+      COULEURS.map((c) => ({
+        persoSku: `PERSO-${fmt.sku}-${t}-${c.sku}`,
+        taille: t,
+        couleurSku: c.sku,
+        couleurNom: c.nom,
+      }))
+    );
+
     try {
-      // 1. Find or create Katana product
+      // ── 1. Trouver ou créer le produit Katana ──────────────────────────────
       let katanaProductId = await findKatanaProductByName(productName);
 
       if (!katanaProductId) {
-        const allSkus = TAILLES.flatMap((t) => COULEURS.map((c) => `PERSO-${fmt.sku}-${t}-${c.sku}`));
         const created = (await katanaFetch("/v1/products", {
           method: "POST",
           body: JSON.stringify({
             name: productName,
             is_sellable: true,
             is_producible: true,
-            variants: allSkus.map((sku) => ({ sku })),
+            configs: PRODUCT_CONFIGS,
+            variants: allCombos.map((c) => ({
+              sku: c.persoSku,
+              config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(c.taille, c.couleurNom),
+            })),
           }),
         })) as { id: number };
         katanaProductId = created.id;
+      } else {
+        // Produit existant : s'assurer que les configs options sont définies
+        try {
+          await katanaFetch(`/v1/products/${katanaProductId}`, {
+            method: "PATCH",
+            body: JSON.stringify({ configs: PRODUCT_CONFIGS }),
+          });
+        } catch (e) {
+          errors.push(`PATCH configs produit ${fmt.id}: ${(e as Error).message}`);
+        }
       }
 
-      // 2. Get existing finished-good variants
+      // ── 2. Récupérer les variants existants ────────────────────────────────
       const fgVariants = await katanaVariantsByProductId(katanaProductId);
-      const fgBySku = new Map<string, number>(
-        fgVariants.filter((v) => v.sku).map((v) => [v.sku!, v.id])
+      const fgBySku = new Map<string, { id: number; hasConfig: boolean }>(
+        fgVariants
+          .filter((v) => v.sku)
+          .map((v) => [
+            v.sku!,
+            {
+              id: v.id,
+              hasConfig: (v.config_attributes?.length ?? 0) > 0,
+            },
+          ])
       );
 
-      // 3. Ensure all 144 variants exist (create any missing ones)
-      const allCombos = TAILLES.flatMap((t) =>
-        COULEURS.map((c) => ({ persoSku: `PERSO-${fmt.sku}-${t}-${c.sku}`, taille: t, couleurSku: c.sku }))
-      );
+      // ── 3. Créer les variants manquants (avec config_attributes) ───────────
       const missing = allCombos.filter((c) => !fgBySku.has(c.persoSku));
       for (const m of missing) {
         try {
           const v = (await katanaFetch("/v1/variants", {
             method: "POST",
-            body: JSON.stringify({ product_id: katanaProductId, sku: m.persoSku }),
+            body: JSON.stringify({
+              product_id: katanaProductId,
+              sku: m.persoSku,
+              config_attributes: CONFIG_ATTRS_TAILLE_COULEUR(m.taille, m.couleurNom),
+            }),
           })) as { id: number };
-          fgBySku.set(m.persoSku, v.id);
+          fgBySku.set(m.persoSku, { id: v.id, hasConfig: true });
         } catch (e) {
           errors.push(`Variant ${m.persoSku}: ${(e as Error).message}`);
         }
       }
 
-      // 4. Load material variants for this format (2 API calls via product_id lookup)
+      // ── 4. Patcher les variants existants sans config_attributes ───────────
+      const toPatch: { id: number; taille: string; couleurNom: string }[] = [];
+      for (const [sku, { id, hasConfig }] of fgBySku) {
+        if (!hasConfig) {
+          const parsed = parsePersoSku(sku);
+          if (parsed) toPatch.push({ id, ...parsed });
+        }
+      }
+      await patchVariantsConfigAttributes(toPatch, errors);
+
+      // ── 5. Charger les matières via product_id (2 appels par format) ────────
       const mtrlBySku = new Map<string, number>();
       const firstMtrlSku = toMtrlSku(formatSku, 56, "ROUGE");
       if (firstMtrlSku) {
-        const anchor = await katanaVariantsBySku(firstMtrlSku);
+        const anchor = await katanaVariantBySku(firstMtrlSku);
         if (anchor) {
           const mtrlVariants = await katanaVariantsByProductId(anchor.product_id);
           for (const v of mtrlVariants) {
@@ -222,11 +319,11 @@ export async function POST() {
         }
       }
 
-      // 5. Build recipe rows — fallback to individual SKU lookup for unresolved materials
+      // ── 6. Construire les lignes de recettes ───────────────────────────────
       const recipeRows: { productVariantId: number; ingredientVariantId: number }[] = [];
       for (const combo of allCombos) {
-        const fgId = fgBySku.get(combo.persoSku);
-        if (!fgId) continue;
+        const fg = fgBySku.get(combo.persoSku);
+        if (!fg) continue;
 
         const mtrlSku = toMtrlSku(formatSku, combo.taille, combo.couleurSku);
         if (!mtrlSku) {
@@ -237,7 +334,7 @@ export async function POST() {
         let mtrlId = mtrlBySku.get(mtrlSku);
         if (!mtrlId) {
           try {
-            const v = await katanaVariantsBySku(mtrlSku);
+            const v = await katanaVariantBySku(mtrlSku);
             if (v) {
               mtrlBySku.set(mtrlSku, v.id);
               mtrlId = v.id;
@@ -250,19 +347,17 @@ export async function POST() {
             continue;
           }
         }
-
-        recipeRows.push({ productVariantId: fgId, ingredientVariantId: mtrlId });
+        recipeRows.push({ productVariantId: fg.id, ingredientVariantId: mtrlId });
       }
 
-      // 6. Fetch existing recipes and create only new ones
-      const existingRecipesData = (await katanaFetch(
+      // ── 7. Créer uniquement les recettes manquantes ────────────────────────
+      const existingData = (await katanaFetch(
         `/v1/recipes?product_id=${katanaProductId}&limit=500`
       )) as { data?: { product_variant_id: number; ingredient_variant_id: number }[] };
 
       const existingKeys = new Set(
-        (existingRecipesData.data ?? []).map((r) => `${r.product_variant_id}-${r.ingredient_variant_id}`)
+        (existingData.data ?? []).map((r) => `${r.product_variant_id}-${r.ingredient_variant_id}`)
       );
-
       const newRecipes = recipeRows.filter(
         (r) => !existingKeys.has(`${r.productVariantId}-${r.ingredientVariantId}`)
       );
@@ -292,6 +387,7 @@ export async function POST() {
       katanaResultats[fmt.id] = {
         katanaProductId,
         variantsTotal: fgBySku.size,
+        variantsPatched: toPatch.length,
         recipesCreated,
         recipesSkipped: skipped,
       };
@@ -304,7 +400,6 @@ export async function POST() {
   return NextResponse.json({ ok: true, katanaResultats, errors });
 }
 
-// GET — État de la sync Katana depuis Redis
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });
@@ -316,7 +411,6 @@ export async function GET() {
   return NextResponse.json({ config });
 }
 
-// DELETE — Reset la config Katana dans Redis
 export async function DELETE() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Auth required" }, { status: 401 });

@@ -228,8 +228,11 @@ export default function SetupPersoPage() {
                       <p className="text-sm font-semibold">{fmt.nom}</p>
                       <p className="text-xs text-zinc-500">Katana ID : {kc.katanaProductId}</p>
                       <p className="text-xs text-zinc-400">{kc.variantsTotal} variants · {kc.recipesCreated + kc.recipesSkipped} recettes</p>
+                      {kc.variantsPatched > 0 && (
+                        <p className="text-xs text-amber-500">{kc.variantsPatched} options patchées</p>
+                      )}
                       {kc.recipesSkipped > 0 && (
-                        <p className="text-xs text-zinc-500">{kc.recipesSkipped} déjà existantes</p>
+                        <p className="text-xs text-zinc-500">{kc.recipesSkipped} recettes déjà existantes</p>
                       )}
                     </div>
                   );
