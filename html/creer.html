@@ -721,22 +721,13 @@ function init3D() {
   const envCanvas = document.createElement('canvas');
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
+  // Environment doux uniforme (style studio packshot)
   const grad = envCtx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#ffffff');     // ciel pur
-  grad.addColorStop(0.40, '#e8e8e8');
-  grad.addColorStop(0.55, '#909090');  // horizon contrasté
-  grad.addColorStop(1, '#303030');     // sol sombre
+  grad.addColorStop(0, '#f5f5f5');
+  grad.addColorStop(0.5, '#e8e8e8');
+  grad.addColorStop(1, '#cccccc');
   envCtx.fillStyle = grad;
   envCtx.fillRect(0, 0, 512, 256);
-  // Bandes lumineuses (highlights ponctuels qui glissent quand on tourne)
-  envCtx.fillStyle = 'rgba(255,255,255,0.95)';
-  envCtx.fillRect(40, 20, 90, 14);
-  envCtx.fillRect(200, 35, 60, 8);
-  envCtx.fillRect(310, 18, 110, 12);
-  envCtx.fillRect(430, 45, 50, 6);
-  // Bande horizon brillante (donne un highlight long sur la bague)
-  envCtx.fillStyle = 'rgba(255,255,255,0.55)';
-  envCtx.fillRect(0, 105, 512, 4);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
@@ -745,13 +736,13 @@ function init3D() {
   envTexture.dispose();
   pmrem.dispose();
 
-  // Lights complémentaires (env map fait l'essentiel)
-  scene3D.add(new THREE.AmbientLight(0xffffff, 0.6));
-  const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
-  dir1.position.set(3, 4, 5);
+  // Lights style packshot : ambient forte + 1 key light douce + 1 fill
+  scene3D.add(new THREE.AmbientLight(0xffffff, 1.5));
+  const dir1 = new THREE.DirectionalLight(0xffffff, 0.55);
+  dir1.position.set(2, 3, 5);
   scene3D.add(dir1);
-  const dir2 = new THREE.DirectionalLight(0xffffff, 0.4);
-  dir2.position.set(-3, 2, 3);
+  const dir2 = new THREE.DirectionalLight(0xffffff, 0.25);
+  dir2.position.set(-3, 1, 2);
   scene3D.add(dir2);
 
   // Drag to rotate
@@ -888,7 +879,7 @@ async function majApercu3D() {
 
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
-    map: texture, metalness: 0.85, roughness: 0.22, clearcoat: 0.9, clearcoatRoughness: 0.06, envMapIntensity: 1.4, side: THREE.FrontSide,
+    map: texture, metalness: 0.0, roughness: 0.85, clearcoat: 0.1, clearcoatRoughness: 0.7, envMapIntensity: 0.35, side: THREE.FrontSide,
   }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
