@@ -97,8 +97,13 @@ export async function POST(req: Request) {
   };
   await redisSet(`perso:cart:${designId}`, JSON.stringify(demande));
 
-  // Email de notification à l'équipe Mood (best-effort, n'empêche pas la commande si échec)
-  envoyerEmailEquipe(demande, svg).catch((e) => console.error("Email notification fail:", e));
+  // Email de notification à l'équipe Mood (await nécessaire sinon Vercel termine la fonction avant l'envoi)
+  try {
+    await envoyerEmailEquipe(demande, svg);
+  } catch (e) {
+    console.error("Email notification fail:", (e as Error).message);
+    // Continue quand même — la commande reste valide même si l'email rate
+  }
 
   return NextResponse.json({ ok: true, cartUrl, designId });
 }
