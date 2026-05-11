@@ -721,22 +721,13 @@ function init3D() {
   const envCanvas = document.createElement('canvas');
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
-  // Environment dôme studio doux
+  // Environment dôme studio doux uniforme
   const grad = envCtx.createLinearGradient(0, 0, 0, 256);
   grad.addColorStop(0, '#ffffff');
   grad.addColorStop(0.5, '#f5f5f5');
   grad.addColorStop(1, '#cccccc');
   envCtx.fillStyle = grad;
   envCtx.fillRect(0, 0, 512, 256);
-  // Bande lumineuse verticale dégradée, un peu décalée du centre
-  // → crée un highlight vertical doux sur le côté de la bague
-  const bandX = 180, bandW = 50;
-  const bande = envCtx.createLinearGradient(bandX, 0, bandX + bandW, 0);
-  bande.addColorStop(0, 'rgba(255,255,255,0)');
-  bande.addColorStop(0.5, 'rgba(255,255,255,0.9)');
-  bande.addColorStop(1, 'rgba(255,255,255,0)');
-  envCtx.fillStyle = bande;
-  envCtx.fillRect(bandX, 0, bandW, 256);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
@@ -790,11 +781,21 @@ function init3D() {
   loop();
 }
 
-// Construit la texture de la bague (canvas 2D combinant couleur + design SVG)
+// Texture grain alu réelle (extraite des photos packshot Mood, high-pass désaturé)
+const GRAIN_ALU_DATAURI = 'data:image/png;base64,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';
+let _grainImgCache = null;
+async function getGrainImage() {
+  if (_grainImgCache) return _grainImgCache;
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = GRAIN_ALU_DATAURI; });
+  _grainImgCache = img;
+  return img;
+}
+
+// Construit la texture de la bague (canvas 2D combinant couleur + grain alu + bande lumineuse + design SVG)
 async function genererTextureBague() {
   if (!couleurChoisie) return null;
   const W = viewLongueur || 67.19, H = viewLargeur || 4.6;
-  // Texture haute résolution pour qualité de rendu
   const PX_PAR_MM = 30;
   const tw = Math.round(W * PX_PAR_MM);
   const th = Math.round(H * PX_PAR_MM);
@@ -802,11 +803,36 @@ async function genererTextureBague() {
   canvas.width = tw;
   canvas.height = th;
   const ctx = canvas.getContext('2d');
-  // Fond couleur aluminium pur (pas d'effet brossé qui assombrit)
+  // 1. Fond couleur aluminium
   ctx.fillStyle = couleurChoisie.hex;
   ctx.fillRect(0, 0, tw, th);
 
-  // Construire le SVG des éléments en string
+  // 2. Texture grain alu réel (extrait des photos packshot Mood) en overlay
+  try {
+    const grainImg = await getGrainImage();
+    ctx.save();
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.globalAlpha = 0.9;
+    const pattern = ctx.createPattern(grainImg, 'repeat');
+    ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, tw, th);
+    ctx.restore();
+  } catch (e) { /* ignore si grain pas chargé */ }
+
+  // 3. Bande lumineuse verticale dégradée (highlight studio packshot)
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const bandCenterX = tw * 0.38; // décalé à gauche du centre
+  const bandHalfW = tw * 0.09;
+  const bandGrad = ctx.createLinearGradient(bandCenterX - bandHalfW, 0, bandCenterX + bandHalfW, 0);
+  bandGrad.addColorStop(0, 'rgba(255,255,255,0)');
+  bandGrad.addColorStop(0.5, 'rgba(255,255,255,0.32)');
+  bandGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bandGrad;
+  ctx.fillRect(bandCenterX - bandHalfW, 0, bandHalfW * 2, th);
+  ctx.restore();
+
+  // 4. Gravure SVG par-dessus
   let svgInner = '';
   for (const el of elements) svgInner += elementSvg(el, false);
   if (!svgInner) return canvas;
