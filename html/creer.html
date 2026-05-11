@@ -711,9 +711,8 @@ function init3D() {
   renderer3D.setSize(w, h);
   renderer3D.setPixelRatio(window.devicePixelRatio);
   renderer3D.outputColorSpace = THREE.SRGBColorSpace;
-  // Tone mapping subtil pour rendu métallique réaliste sans dénaturer les couleurs
   renderer3D.toneMapping = THREE.LinearToneMapping;
-  renderer3D.toneMappingExposure = 1.0;
+  renderer3D.toneMappingExposure = 1.3;
   container.innerHTML = '';
   container.appendChild(renderer3D.domElement);
 
@@ -736,13 +735,38 @@ function init3D() {
   envTexture.dispose();
   pmrem.dispose();
 
-  // Éclairage type dôme studio : HemisphereLight crée naturellement le gradient vertical doux
-  // (sommet plus clair, bas plus foncé) comme sur les vraies photos Mood
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xa0a0a0, 1.6);
+  // Éclairage studio : dôme HemisphereLight + ambient + 2 dir lights pour le modeling
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb0b0b0, 2.4);
   hemi.position.set(0, 1, 0);
   scene3D.add(hemi);
-  // Petite ambient pour remplir les ombres profondes
-  scene3D.add(new THREE.AmbientLight(0xffffff, 0.35));
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirL = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirL.position.set(-3, 4, 5);
+  scene3D.add(dirL);
+  const dirR = new THREE.DirectionalLight(0xffffff, 0.35);
+  dirR.position.set(4, 2, 4);
+  scene3D.add(dirR);
+
+  // Texture grain alu satiné (bruit fin, utilisé en bumpMap pour micro-relief)
+  const grainCanvas = document.createElement('canvas');
+  grainCanvas.width = 1024; grainCanvas.height = 256;
+  const grainCtx = grainCanvas.getContext('2d');
+  const grainData = grainCtx.createImageData(1024, 256);
+  for (let i = 0; i < grainData.data.length; i += 4) {
+    // Bruit subtil + petites stries verticales (effet brossé alu)
+    const noise = (Math.random() - 0.5) * 28;
+    const stripe = Math.sin((i / 4) % 1024 * 0.3) * 6;
+    const v = 128 + noise + stripe;
+    grainData.data[i] = v;
+    grainData.data[i + 1] = v;
+    grainData.data[i + 2] = v;
+    grainData.data[i + 3] = 255;
+  }
+  grainCtx.putImageData(grainData, 0, 0);
+  window._grainTexture = new THREE.CanvasTexture(grainCanvas);
+  window._grainTexture.wrapS = THREE.RepeatWrapping;
+  window._grainTexture.wrapT = THREE.RepeatWrapping;
+  window._grainTexture.anisotropy = 16;
 
   // Drag to rotate
   let dragStart = null, ringRotStart = 0;
@@ -883,14 +907,24 @@ async function majApercu3D() {
   const rayonExt = rayon;
   const rayonInt = Math.max(0.1, rayon - EPAISSEUR);
 
+  const grain = window._grainTexture;
+
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
-    map: texture, metalness: 0.0, roughness: 0.75, clearcoat: 0, envMapIntensity: 0.4, side: THREE.FrontSide,
+    map: texture,
+    bumpMap: grain, bumpScale: 0.012,
+    metalness: 0.0, roughness: 0.65, clearcoat: 0.15, clearcoatRoughness: 0.4,
+    envMapIntensity: 0.6,
+    side: THREE.FrontSide,
   }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
   const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshPhysicalMaterial({
-    color: couleurInterieur, metalness: 0.0, roughness: 0.85, envMapIntensity: 0.3, side: THREE.BackSide,
+    color: couleurInterieur,
+    bumpMap: grain, bumpScale: 0.008,
+    metalness: 0.0, roughness: 0.8,
+    envMapIntensity: 0.4,
+    side: THREE.BackSide,
   }));
 
   const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
