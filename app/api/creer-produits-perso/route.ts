@@ -167,9 +167,8 @@ export async function POST() {
         const batch = rest.slice(i, i + BATCH_SIZE);
         const variantsInput = batch.map((v) => ({
           price: String(fmt.prix),
-          sku: v.sku,
-          requiresShipping: true,
           taxable: true,
+          inventoryItem: { sku: v.sku, requiresShipping: true },
           optionValues: [
             { optionName: "Taille", name: v.taille },
             { optionName: "Couleur", name: v.couleurNom },
