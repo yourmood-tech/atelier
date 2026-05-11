@@ -219,6 +219,22 @@
       <button class="outline symb-btn" onclick="ajouterSymbole('croix')" title="Croix">✚</button>
       <button class="outline symb-btn" onclick="ajouterSymbole('eclair')" title="Éclair">⚡</button>
       <button class="outline symb-btn" onclick="ajouterSymbole('note')" title="Note de musique">♪</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('coeurOutline')" title="Cœur outline">♡</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('etoile4')" title="Étoile 4 branches">✦</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('etoile6')" title="Étoile 6 branches">✶</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('carre')" title="Carré">□</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('lignes')" title="Lignes">≡</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('ancre')" title="Ancre">⚓</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('trefle')" title="Trèfle">☘</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('plante')" title="Brindille">🌿</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('feuille')" title="Feuille">🍃</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('arbre')" title="Arbre de vie">⛬</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('oiseau')" title="Oiseau">𓅂</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('fleurDeVie')" title="Fleur de vie">✺</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('papillon')" title="Papillon">🦋</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('vague')" title="Vague">∿</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('montagne')" title="Montagne">⛰</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('plume')" title="Plume">⚐</button>
     </div>
   </div>
 
@@ -574,6 +590,24 @@ const SYMBOLES = {
   croix: 'M -1.5 -6 L 1.5 -6 L 1.5 -1.5 L 6 -1.5 L 6 1.5 L 1.5 1.5 L 1.5 6 L -1.5 6 L -1.5 1.5 L -6 1.5 L -6 -1.5 L -1.5 -1.5 Z',
   eclair: 'M 1 -7 L -4 1 L 0 1 L -2 7 L 4 -2 L 0 -2 Z',
   note: 'M -1 -7 L 4 -7 L 4 3 C 4 5, 2 6, 0 6 C -2 6, -4 5, -4 3 C -4 1, -2 0, 0 0 C 1 0, 2 0.5, 2 1 L 2 -5 L -1 -5 Z',
+
+  // === Nouveaux symboles ===
+  coeurOutline: 'M 0 7 C -5 3, -7 0, -7 -2 C -7 -5, -4 -7, -2 -7 C -1 -7, 0 -5.5, 0 -4 C 0 -5.5, 1 -7, 2 -7 C 4 -7, 7 -5, 7 -2 C 7 0, 5 3, 0 7 Z',
+  etoile4: 'M 0 -7 L 1.5 -1.5 L 7 0 L 1.5 1.5 L 0 7 L -1.5 1.5 L -7 0 L -1.5 -1.5 Z',
+  etoile6: 'M 0 -7 L 1.7 -2 L 7 -2 L 2.7 1 L 4.3 7 L 0 3.5 L -4.3 7 L -2.7 1 L -7 -2 L -1.7 -2 Z',
+  carre: 'M -5 -5 L 5 -5 L 5 5 L -5 5 Z',
+  lignes: 'M -6 -3 L 6 -3 M -6 0 L 6 0 M -6 3 L 6 3',
+  ancre: 'M 0 -7 C -1 -7, -1.5 -6.5, -1.5 -5.5 C -1.5 -4.5, -1 -4, 0 -4 C 1 -4, 1.5 -4.5, 1.5 -5.5 C 1.5 -6.5, 1 -7, 0 -7 Z M 0 -4 L 0 6 M -4 -3 L 4 -3 M -6 2 C -5 5, -2 6.5, 0 6.5 C 2 6.5, 5 5, 6 2 M -6 2 L -4.5 1 M 6 2 L 4.5 1',
+  trefle: 'M 0 -2 C -2 -5, -5 -4, -5 -2 C -5 0, -2 0, 0 -2 M 0 -2 C 2 -5, 5 -4, 5 -2 C 5 0, 2 0, 0 -2 M 0 -2 C -3 0, -2 4, 0 4 C 2 4, 3 0, 0 -2 M 0 4 L 0 7',
+  plante: 'M 0 -7 L 0 7 M 0 -4 C 2 -5, 3 -4, 3 -2 C 1 -2, 0 -3, 0 -2 M 0 -1 C -2 -2, -3 -1, -3 1 C -1 1, 0 0, 0 1 M 0 3 C 2 2, 3 3, 3 5 C 1 5, 0 4, 0 5',
+  feuille: 'M 0 -7 C 4 -4, 4 4, 0 7 C -4 4, -4 -4, 0 -7 Z M 0 -7 L 0 7',
+  arbre: 'M 0 -7 L 0 7 M -6 0 A 6 6 0 1 0 6 0 A 6 6 0 1 0 -6 0 M 0 -4 L -3 -5.5 M 0 -4 L 3 -5.5 M 0 -1 L -4.5 -2.5 M 0 -1 L 4.5 -2.5 M 0 2 L -5.5 0 M 0 2 L 5.5 0',
+  oiseau: 'M -7 0 C -5 -3, -3 -2, 0 0 C 3 -2, 5 -3, 7 0 M 0 0 L 0 1',
+  fleurDeVie: 'M -3 0 A 3 3 0 1 0 3 0 A 3 3 0 1 0 -3 0 M -1.5 -2.6 A 3 3 0 1 0 4.5 -2.6 A 3 3 0 1 0 -1.5 -2.6 M -4.5 -2.6 A 3 3 0 1 0 1.5 -2.6 A 3 3 0 1 0 -4.5 -2.6 M -1.5 2.6 A 3 3 0 1 0 4.5 2.6 A 3 3 0 1 0 -1.5 2.6 M -4.5 2.6 A 3 3 0 1 0 1.5 2.6 A 3 3 0 1 0 -4.5 2.6',
+  papillon: 'M 0 -3 L 0 4 M 0 -3 C -3 -7, -7 -5, -7 -2 C -7 1, -4 2, 0 0 M 0 -3 C 3 -7, 7 -5, 7 -2 C 7 1, 4 2, 0 0 M 0 0 C -2 3, -5 4, -6 3 M 0 0 C 2 3, 5 4, 6 3',
+  vague: 'M -7 0 C -5 -3, -3 -3, -1 0 C 1 3, 3 3, 5 0 C 6 -2, 7 -2, 7 -2',
+  montagne: 'M -7 4 L -2 -3 L 0 0 L 3 -5 L 7 4 M -2 -3 L 0 -2 M 3 -5 L 5 -3',
+  plume: 'M 0 -7 C -2 -5, -3 -3, -2 -1 C -3 1, -2 3, 0 4 L 0 7 M 0 -5 L -2 -4 M 0 -3 L -2 -2 M 0 -1 L -2 0 M 0 1 L -2 2 M 0 3 L -2 4',
 };
 
 // ============ APERÇU 3D RÉALISTE (Three.js) ============
@@ -709,15 +743,50 @@ async function majApercu3D() {
     side: THREE.DoubleSide,
   });
 
-  // Recréer le mesh avec les bonnes dimensions
+  // Couleur unie pour l'intérieur de la bague et les caps (pas de gravure dessus)
+  const materialUni = new THREE.MeshBasicMaterial({
+    color: couleurChoisie.hex,
+    side: THREE.DoubleSide,
+  });
+
+  // Disposer l'ancien anneau
   if (ringMesh) {
     scene3D.remove(ringMesh);
-    ringMesh.geometry.dispose();
-    if (ringMesh.material.map) ringMesh.material.map.dispose();
-    ringMesh.material.dispose();
+    if (ringMesh.children) {
+      ringMesh.children.forEach((child) => {
+        child.geometry?.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose());
+          else child.material.dispose();
+        }
+      });
+    }
   }
-  const geometry = new THREE.CylinderGeometry(rayon, rayon, hauteur, 96, 1, true);
-  ringMesh = new THREE.Mesh(geometry, material);
+
+  // Anneau avec épaisseur : 4 meshes assemblés dans un Group
+  // - Cylindre extérieur : texture gravure (face avant uniquement)
+  // - Cylindre intérieur : couleur unie (face arrière uniquement, visible quand on regarde dedans)
+  // - 2 anneaux plats (caps) : tranches haut et bas de la bague
+  const EPAISSEUR = 0.15; // épaisseur radiale de l'anneau (en unités scène)
+  const rayonExt = rayon;
+  const rayonInt = Math.max(0.1, rayon - EPAISSEUR);
+
+  const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
+  const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshBasicMaterial({ map: texture, side: THREE.FrontSide }));
+
+  const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
+  const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshBasicMaterial({ color: couleurChoisie.hex, side: THREE.BackSide }));
+
+  const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
+  const topCap = new THREE.Mesh(ringCapGeo, materialUni);
+  topCap.rotation.x = Math.PI / 2;
+  topCap.position.y = hauteur / 2;
+  const bottomCap = new THREE.Mesh(ringCapGeo.clone(), materialUni);
+  bottomCap.rotation.x = -Math.PI / 2;
+  bottomCap.position.y = -hauteur / 2;
+
+  ringMesh = new THREE.Group();
+  ringMesh.add(outerMesh, innerMesh, topCap, bottomCap);
   // Inclinaison légère pour vue 3/4
   ringMesh.rotation.x = 0.15;
   scene3D.add(ringMesh);
