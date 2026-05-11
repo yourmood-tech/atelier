@@ -820,16 +820,7 @@ async function genererTextureBague() {
   ctx.fillStyle = couleurChoisie.hex;
   ctx.fillRect(0, 0, tw, th);
 
-  // 2. Texture satinée ultra subtile (bruit lissé, sans direction)
-  ctx.save();
-  ctx.globalCompositeOperation = 'overlay';
-  ctx.globalAlpha = 0.35;
-  const satinPat = ctx.createPattern(generateSatinPattern(), 'repeat');
-  ctx.fillStyle = satinPat;
-  ctx.fillRect(0, 0, tw, th);
-  ctx.restore();
-
-  // 3. Bande lumineuse verticale large et douce (highlight studio packshot)
+  // 2. Bande lumineuse verticale large et douce (highlight studio packshot)
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   const bandCenterX = tw * 0.35;
@@ -842,7 +833,7 @@ async function genererTextureBague() {
   ctx.fillRect(bandCenterX - bandHalfW, 0, bandHalfW * 2, th);
   ctx.restore();
 
-  // 4. Gravure SVG par-dessus
+  // 3. Gravure SVG par-dessus
   let svgInner = '';
   for (const el of elements) svgInner += elementSvg(el, false);
   if (!svgInner) return canvas;
