@@ -42,6 +42,12 @@
   .pierre-btn svg { display: block; }
   .pierre-btn .nom { font-size: 0.62rem; color: var(--gris); line-height: 1.1; text-align: center; min-height: 1.2em; }
   .pierre-btn .prix { font-size: 0.72rem; color: var(--or); font-weight: 600; }
+  .sertissage-btn { background: white; border: 2px solid #e5e5e5; border-radius: 8px; padding: 0.5rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 0.1rem; font-family: inherit; align-items: center; }
+  .sertissage-btn:hover { border-color: var(--gris); }
+  .sertissage-btn.active { border-color: var(--or); border-width: 3px; background: white; }
+  .sertissage-btn strong { font-size: 0.8rem; color: var(--noir); }
+  .sertissage-btn span { font-size: 0.68rem; color: var(--gris); }
+  .hidden { display: none !important; }
   .prix-zone { background: linear-gradient(135deg, #fdf6e7 0%, #fff 100%); border: 1px solid var(--or); border-radius: 12px; padding: 1rem; margin: 1rem 0; text-align: center; }
   .prix-zone .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gris); }
   .prix-zone .montant { font-size: 2rem; font-weight: 300; color: var(--noir); margin: 0.3rem 0; }
@@ -158,6 +164,21 @@
       <button class="outline" onclick="centrer()" id="btn-ctr" disabled>⊕ Centrer</button>
       <button class="outline" onclick="dupliquerSelection()" id="btn-dup" disabled>📋 Dupliquer</button>
       <button class="danger" onclick="supprimerSelection()" id="btn-del" disabled>🗑️ Supprimer</button>
+    </div>
+    <!-- Panneau contextuel : sertissage de la pierre sélectionnée -->
+    <div id="pierre-options" class="hidden" style="margin-top:0.7rem;padding:0.7rem 1rem;background:#fdf8ee;border:2px solid var(--or);border-radius:10px;">
+      <strong style="font-size:0.8rem;display:block;margin-bottom:0.4rem;">Sertissage de cette pierre :</strong>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;">
+        <button class="sertissage-btn active" data-sertissage="grain" onclick="changerSertissage('grain')">
+          <strong>Grain</strong><span>classique</span>
+        </button>
+        <button class="sertissage-btn" data-sertissage="etoile" onclick="changerSertissage('etoile')">
+          <strong>Étoile</strong><span>4 griffes</span>
+        </button>
+        <button class="sertissage-btn" data-sertissage="invisible" onclick="changerSertissage('invisible')">
+          <strong>Invisible</strong><span>sans monture</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1045,10 +1066,35 @@ function ajouterPierre(id) {
     id: nextId++, type: 'pierre', pierreId: id,
     x: viewLongueur / 2, y: viewLargeur / 2,
     scale: 1, rotation: 0,
+    sertissage: 'grain', // 'grain' (par défaut) | 'etoile' | 'invisible'
   };
   elements.push(el);
   selectedId = el.id;
   rendreCanvas();
+}
+
+function changerSertissage(type) {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el || el.type !== 'pierre') return;
+  el.sertissage = type;
+  document.querySelectorAll('.sertissage-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.sertissage === type));
+  rendreCanvas();
+}
+
+function majPanneauPierre() {
+  const panel = document.getElementById('pierre-options');
+  if (!panel) return;
+  const el = selectedId ? elements.find(x => x.id === selectedId) : null;
+  if (el && el.type === 'pierre') {
+    panel.classList.remove('hidden');
+    const type = el.sertissage || 'grain';
+    document.querySelectorAll('.sertissage-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.sertissage === type));
+  } else {
+    panel.classList.add('hidden');
+  }
 }
 
 // Photos disponibles par format pour les finitions argent.
@@ -1279,7 +1325,29 @@ function elementSvg(el, withSelection = false) {
     if (!p) return '';
     const r = p.taille / 2;
     const hr = r * 0.28;
+    const sertissage = el.sertissage || 'grain';
+    let monture = '';
+    if (sertissage === 'grain') {
+      // 4 grains aux 4 coins de la pierre
+      const gr = r * 0.18, gd = r * 1.3;
+      monture = `
+        <circle cx="${-gd}" cy="${-gd}" r="${gr}" fill="#888"/>
+        <circle cx="${gd}" cy="${-gd}" r="${gr}" fill="#888"/>
+        <circle cx="${gd}" cy="${gd}" r="${gr}" fill="#888"/>
+        <circle cx="${-gd}" cy="${gd}" r="${gr}" fill="#888"/>`;
+    } else if (sertissage === 'etoile') {
+      // 4 griffes radiales en croix (étoile)
+      const out = r * 1.55;
+      const sw = r * 0.16;
+      monture = `
+        <line x1="${-out}" y1="0" x2="${-r*0.9}" y2="0" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="${r*0.9}" y1="0" x2="${out}" y2="0" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="0" y1="${-out}" x2="0" y2="${-r*0.9}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="0" y1="${r*0.9}" x2="0" y2="${out}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>`;
+    }
+    // 'invisible' = pas de monture, juste la pierre
     return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y})">
+      ${monture}
       <circle cx="0" cy="0" r="${r}" fill="${p.couleur}" stroke="#000000" stroke-width="0.08"/>
       <circle cx="${-r*0.3}" cy="${-r*0.3}" r="${hr}" fill="rgba(255,255,255,0.55)"/>
     </g>`;
@@ -1291,6 +1359,7 @@ function elementSvg(el, withSelection = false) {
 function rendreCanvas() {
   if (typeof majPrix === 'function') majPrix();
   if (typeof majApercu3D === 'function') majApercu3D();
+  if (typeof majPanneauPierre === 'function') majPanneauPierre();
   const svg = document.getElementById('editor-svg');
   const W = viewLongueur, H = viewLargeur;
   const margin = 1;
@@ -1792,7 +1861,7 @@ async function envoyerDemande() {
         pierresCount: prixCalc?.pierresCount, pierresTotal: prixCalc?.pierresTotal,
         pierres: elements.filter(el => el.type === 'pierre').map(el => {
           const p = PIERRES.find(x => x.id === el.pierreId);
-          return p ? { id: p.id, nom: p.nom, taille: p.taille, prix: p.prix, x: el.x, y: el.y } : null;
+          return p ? { id: p.id, nom: p.nom, taille: p.taille, prix: p.prix, x: el.x, y: el.y, sertissage: el.sertissage || 'grain' } : null;
         }).filter(Boolean)
       })
     });
