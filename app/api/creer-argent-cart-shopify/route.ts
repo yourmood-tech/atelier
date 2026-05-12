@@ -58,17 +58,41 @@ type Pierre = {
 };
 
 type Demande = {
-  prenom: string; email: string; tel?: string; message?: string;
+  prenom?: string; email?: string; tel?: string; message?: string;
   format: string; taille?: string;
-  couleur?: string; couleurNom?: string;     // = finition (id + nom)
-  gravure?: string;                          // 'oxydee' | 'neutre'
-  svg?: string;                              // compat ancien champ (= svgComplet)
+  couleur?: string; couleurNom?: string;
+  gravure?: string;
+  svg?: string;
   svgGravure?: string; svgComplet?: string; svgPlan?: string;
   nbElements?: number;
   prix?: number; prixBase?: number;
   pierres?: Pierre[];
   pierresCount?: number; pierresTotal?: number;
+  devis?: boolean;
 };
+
+async function findOrCreateCustomer(email: string, prenom: string): Promise<number | null> {
+  const STORE = process.env.SHOPIFY_STORE!;
+  const TOKEN = process.env.SHOPIFY_API_TOKEN!;
+  const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
+  try {
+    const searchR = await fetch(
+      `https://${STORE}/admin/api/${API_VERSION}/customers/search.json?query=email:${encodeURIComponent(email)}&limit=1`,
+      { headers: { "X-Shopify-Access-Token": TOKEN } }
+    );
+    const searchData = await searchR.json();
+    if (searchData.customers?.length > 0) return searchData.customers[0].id;
+    const createR = await fetch(`https://${STORE}/admin/api/${API_VERSION}/customers.json`, {
+      method: "POST",
+      headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({ customer: { first_name: prenom || "", email, tags: "autoperso" } }),
+    });
+    const createData = await createR.json();
+    return createData.customer?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST(req: Request) {
   let data: Partial<Demande>;
@@ -85,10 +109,14 @@ export async function POST(req: Request) {
     gravure,
     svgGravure, svgComplet, svgPlan, svg,
     nbElements, prix, prixBase, pierres = [], pierresCount, pierresTotal,
+    devis,
   } = data;
 
-  if (!prenom || !email || !format || !finitionId || (!svgComplet && !svg)) {
-    return NextResponse.json({ error: "Champs requis manquants (prénom, email, format, finition, design)" }, { status: 400 });
+  if (!format || !finitionId || (!svgComplet && !svg)) {
+    return NextResponse.json({ error: "Champs requis manquants (format, finition, design)" }, { status: 400 });
+  }
+  if (devis && (!prenom || !email)) {
+    return NextResponse.json({ error: "Prénom et email requis pour une demande de devis" }, { status: 400 });
   }
 
   const fullSvgComplet = svgComplet || svg!;
@@ -140,9 +168,17 @@ export async function POST(req: Request) {
     .map(g => `${g.count}× ${g.nom} ${g.taille}mm (sertissage ${g.sertissage})`)
     .join(" · ") || "—";
 
+  // Trouver ou créer le client Shopify
+  let customerId: number | null = null;
+  if (email) customerId = await findOrCreateCustomer(email, prenom || "");
+
   // Créer le Draft Order Shopify
   let invoiceUrl = "";
   try {
+    const noteDevis = devis
+      ? `⚠️ DEMANDE DE DEVIS — L'équipe Mood doit valider le design et envoyer un devis à ${email} avant finalisation. Bague argent ${formatLabel} ${finitionNom || finitionId} taille ${taille}. SKU Katana : ${skuComplet}. Gravure : ${urlGravure}. Plan : ${urlPlan}.`
+      : `Bague argent ${formatLabel} ${finitionNom || finitionId} taille ${taille}. Gravure ${gravureLabel}. Pierres : ${pierresRecap}. SKU Katana : ${skuComplet}. Gravure : ${urlGravure}. Plan : ${urlPlan}.`;
+
     const draftBody = {
       draft_order: {
         line_items: [{
@@ -163,15 +199,16 @@ export async function POST(req: Request) {
             { name: "SVG Gravure", value: urlGravure },
             { name: "SVG Complet", value: urlComplet },
             { name: "Plan sertissage", value: urlPlan },
+            ...(devis ? [{ name: "Type", value: "Demande de devis sur mesure" }] : []),
             ...(nbElements != null ? [{ name: "Nb éléments dessin", value: String(nbElements) }] : []),
             ...(message ? [{ name: "Message client", value: message.slice(0, 500) }] : []),
-            { name: "Prénom", value: prenom },
-            { name: "Téléphone", value: tel || "" },
+            ...(prenom ? [{ name: "Prénom", value: prenom }] : []),
+            ...(tel ? [{ name: "Téléphone", value: tel }] : []),
           ],
         }],
-        customer: { email },
-        email,
-        note: `Bague argent ${formatLabel} ${finitionNom || finitionId} taille ${taille}. Gravure ${gravureLabel}. Pierres : ${pierresRecap}. SKU Katana : ${skuComplet}. Gravure : ${urlGravure}. Plan : ${urlPlan}.`,
+        ...(customerId ? { customer: { id: customerId } } : email ? { email } : {}),
+        note: noteDevis,
+        tags: devis ? "devis-sur-mesure,autoperso" : "autoperso",
         use_customer_default_address: false,
       },
     };
@@ -186,7 +223,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Shopify Draft Order ${draftR.status}: ${JSON.stringify(draftData).slice(0, 200)}` }, { status: 500 });
     }
     invoiceUrl = draftData.draft_order?.invoice_url;
-    if (!invoiceUrl) {
+    if (!devis && !invoiceUrl) {
       return NextResponse.json({ error: "Pas d'invoice_url retourné par Shopify Draft Order" }, { status: 500 });
     }
   } catch (e: unknown) {
@@ -213,7 +250,7 @@ export async function POST(req: Request) {
     console.error("Email notification fail:", (e as Error).message);
   }
 
-  return NextResponse.json({ ok: true, cartUrl, designId });
+  return NextResponse.json({ ok: true, designId, ...(devis ? {} : { cartUrl }) });
 }
 
 async function envoyerEmailEquipe(
