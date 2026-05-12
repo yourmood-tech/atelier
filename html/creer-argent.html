@@ -425,6 +425,8 @@
     <label style="margin-top:0.5rem;" data-i18n="label-message">Un message pour l'équipe ? (optionnel)</label>
     <textarea id="cli-message" rows="2" placeholder="ex : c'est pour notre anniversaire de mariage…" style="width:100%;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;" data-i18n-placeholder="msg-placeholder"></textarea>
     <button onclick="acheterSurShopify()" id="btn-acheter-shopify" style="margin-top:0.8rem;width:100%;padding:0.9rem;font-size:1rem;background:var(--or);font-weight:600;" data-i18n="btn-acheter">🛒 Acheter sur yourmood.net</button>
+    <p id="warning-iframe" style="display:none;margin-top:0.6rem;font-size:0.78rem;color:#888;line-height:1.5;text-align:center;" data-i18n="warning-iframe"></p>
+    <script>if(window.top!==window.self){var w=document.getElementById('warning-iframe');if(w)w.style.display='block';}</script>
     <button onclick="envoyerDemande()" id="btn-envoyer-demande" class="outline" style="margin-top:0.4rem;width:100%;padding:0.6rem;font-size:0.85rem;" data-i18n="btn-demande">ou envoyer ma demande à l'équipe (devis sur mesure)</button>
     <div class="erreur hidden" id="erreur" style="margin-top:0.5rem;"></div>
     <div class="info hidden" id="confirmation" style="margin-top:0.5rem;color:var(--vert);font-size:0.9rem;font-weight:500;text-align:center;"></div>
@@ -516,6 +518,7 @@ const DICT = {
     'btn-preparation': '⏳ Préparation de ton panier…',
     'err-panier': (msg) => `Erreur lors de la préparation du panier : ${msg}. Tu peux aussi envoyer ta demande à l'équipe ci-dessous.`,
     'btn-acheter-reset': '🛒 Acheter sur yourmood.net',
+    'warning-iframe': 'ℹ️ Ta bague personnalisée est traitée comme une commande à part — elle ne peut pas rejoindre un panier en cours sur yourmood.net.',
     'err-prenom-email': 'Merci de renseigner ton prénom et ton email.',
     'err-elements-envoi': "Ajoute au moins une empreinte ou un texte sur ton addon avant d'envoyer.",
     'btn-envoi': '⏳ Envoi…',
@@ -606,6 +609,7 @@ const DICT = {
     'btn-preparation': '⏳ Warenkorb wird vorbereitet…',
     'err-panier': (msg) => `Fehler beim Vorbereiten des Warenkorbs: ${msg}. Du kannst auch eine Anfrage senden.`,
     'btn-acheter-reset': '🛒 Auf yourmood.net kaufen',
+    'warning-iframe': 'ℹ️ Dein personalisierter Ring wird als separate Bestellung verarbeitet — er kann nicht zu einem laufenden Warenkorb auf yourmood.net hinzugefügt werden.',
     'err-prenom-email': 'Bitte gib deinen Vornamen und deine E-Mail-Adresse ein.',
     'err-elements-envoi': 'Füge mindestens einen Abdruck oder Text hinzu.',
     'btn-envoi': '⏳ Senden…',
@@ -696,6 +700,7 @@ const DICT = {
     'btn-preparation': '⏳ Preparing your cart…',
     'err-panier': (msg) => `Error preparing cart: ${msg}. You can also send a request to the team below.`,
     'btn-acheter-reset': '🛒 Buy on yourmood.net',
+    'warning-iframe': 'ℹ️ Your personalised ring is processed as a separate order — it cannot be added to an existing cart on yourmood.net.',
     'err-prenom-email': 'Please enter your first name and email.',
     'err-elements-envoi': 'Add at least a fingerprint or text before sending.',
     'btn-envoi': '⏳ Sending…',
