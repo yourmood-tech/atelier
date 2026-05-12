@@ -1791,17 +1791,83 @@ function declencherRevectorisation() {
 });
 
 // ============ GÉNÉRATION SVG + ENVOI DEMANDE CLIENT ============
-function genererSvgFinal() {
+// Helper : convertit blanc (gravure neutre) en noir pour fichiers d'usinage
+function _blancEnNoir(body) {
+  return body.replace(/stroke="#ffffff"/g, 'stroke="#000000"').replace(/fill="#ffffff"/g, 'fill="#000000"');
+}
+
+// 1) SVG GRAVURE — trait des dessins uniquement, SANS les pierres (pour Gravograph mécanique)
+function genererSvgGravure() {
   const W = viewLongueur, H = viewLargeur;
   let body = '';
-  for (const el of elements) body += elementSvg(el, false);
+  for (const el of elements) {
+    if (el.type !== 'pierre') body += elementSvg(el, false);
+  }
   body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#000000" stroke-width="0.25" stroke-miterlimit="10"/>`;
-  // Pour le fichier de gravure : trait NOIR sur fond blanc (le blanc d'affichage 3D est invisible sur fond navigateur blanc)
-  body = body.replace(/stroke="#ffffff"/g, 'stroke="#000000"').replace(/fill="#ffffff"/g, 'fill="#000000"');
+  body = _blancEnNoir(body);
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${H + 4}">
 ${body}
 </svg>`;
+}
+
+// 2) SVG COMPLET — rectangle + dessin + pierres (visuel total = aperçu équipe)
+function genererSvgComplet() {
+  const W = viewLongueur, H = viewLargeur;
+  let body = '';
+  for (const el of elements) body += elementSvg(el, false);
+  body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#000000" stroke-width="0.25" stroke-miterlimit="10"/>`;
+  body = _blancEnNoir(body);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${H + 4}">
+${body}
+</svg>`;
+}
+
+// 3) PLAN DE SERTISSAGE — dessin + pierres positionnées + liste textuelle des pierres groupées
+function genererPlanSertissage() {
+  const W = viewLongueur, H = viewLargeur;
+  // Grouper les pierres par (pierreId, sertissage)
+  const groupes = {};
+  const sertLabels = { grain: 'Grain', etoile: 'Étoile', invisible: 'Invisible' };
+  for (const el of elements) {
+    if (el.type !== 'pierre') continue;
+    const p = PIERRES.find(x => x.id === el.pierreId);
+    if (!p) continue;
+    const sertissage = el.sertissage || 'grain';
+    const key = `${p.id}|${sertissage}`;
+    if (!groupes[key]) groupes[key] = { nom: p.nom, taille: p.taille, sertissage: sertLabels[sertissage] || sertissage, count: 0 };
+    groupes[key].count++;
+  }
+  const lignes = Object.values(groupes).map(g => `${g.count}× ${g.nom} ${g.taille}mm — sertissage ${g.sertissage}`);
+
+  let body = '';
+  for (const el of elements) body += elementSvg(el, false);
+  body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#000000" stroke-width="0.25" stroke-miterlimit="10"/>`;
+  body = _blancEnNoir(body);
+
+  // Texte de la liste (en mm dans le SVG)
+  const yStart = H + 3;
+  const lineH = 1.6;
+  let texte = `<text x="0" y="${yStart}" font-size="1.4" font-family="sans-serif" font-weight="bold" fill="#000">PLAN DE SERTISSAGE</text>`;
+  if (lignes.length === 0) {
+    texte += `<text x="0" y="${yStart + 2}" font-size="1.1" font-family="sans-serif" fill="#888">Aucune pierre</text>`;
+  } else {
+    lignes.forEach((l, i) => {
+      texte += `<text x="0" y="${yStart + 2 + i * lineH}" font-size="1.1" font-family="sans-serif" fill="#000">${escapeXml(l)}</text>`;
+    });
+  }
+  const totalH = H + 5 + Math.max(1, lignes.length) * lineH + 2;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${totalH + 4}">
+${body}
+${texte}
+</svg>`;
+}
+
+// Compat : ancien nom utilisé ailleurs dans le fichier
+function genererSvgFinal() {
+  return genererSvgComplet();
 }
 
 async function acheterSurShopify() {
@@ -1832,7 +1898,9 @@ async function acheterSurShopify() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Préparation de ton panier…'; }
 
   try {
-    const svg = genererSvgFinal();
+    const svgGravure = genererSvgGravure();   // 1) trait dessins uniquement (Gravograph)
+    const svgComplet = genererSvgComplet();   // 2) visuel total (dessin + pierres)
+    const svgPlan    = genererPlanSertissage(); // 3) plan de sertissage avec liste pierres
     const r = await fetch('/api/creer-cart-shopify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1840,7 +1908,9 @@ async function acheterSurShopify() {
         prenom, email, tel, message,
         format, taille,
         couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom,
-        svg, nbElements: elements.length,
+        svg: svgComplet,        // compat ancien champ
+        svgGravure, svgComplet, svgPlan,
+        nbElements: elements.length,
       }),
     });
     const data = await r.json();
@@ -1883,7 +1953,9 @@ async function envoyerDemande() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi…'; }
 
   try {
-    const svg = genererSvgFinal();
+    const svgGravure = genererSvgGravure();
+    const svgComplet = genererSvgComplet();
+    const svgPlan = genererPlanSertissage();
     const prixCalc = calculerPrix();
     const r = await fetch('/api/creer-demande', {
       method: 'POST',
@@ -1893,7 +1965,9 @@ async function envoyerDemande() {
         matiere: 'Argent 925',
         finition: couleurChoisie?.id, finitionNom: couleurChoisie?.nom,
         gravure: gravureType,
-        message, format, taille, svg,
+        message, format, taille,
+        svg: svgComplet,
+        svgGravure, svgComplet, svgPlan,
         nbElements: elements.length,
         prix: prixCalc?.prix, prixBase: prixCalc?.base,
         pierresCount: prixCalc?.pierresCount, pierresTotal: prixCalc?.pierresTotal,
