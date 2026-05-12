@@ -10,7 +10,7 @@ async function fetchDraftOrders(status: "open" | "completed"): Promise<unknown[]
     `https://${STORE}/admin/api/${API_VERSION}/draft_orders.json?status=${status}&limit=250`;
 
   while (url) {
-    const r = await fetch(url, {
+    const r: Response = await fetch(url, {
       headers: { "X-Shopify-Access-Token": TOKEN },
       cache: "no-store",
     });
