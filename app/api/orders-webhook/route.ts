@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createHmac } from "crypto";
+import { sendDevisPayeKlaviyo } from "@/lib/email";
 
 const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -27,10 +28,12 @@ type ShopifyOrder = {
   id: number;
   name: string;
   email?: string;
+  total_price?: string;
   note: string | null;
   tags: string;
   note_attributes: NoteAttribute[];
   line_items?: LineItem[];
+  customer?: { first_name?: string; last_name?: string };
 };
 
 // ============ Mapping SKU PERSO → SKU VIERGE Katana ============
@@ -198,6 +201,22 @@ export async function POST(req: NextRequest) {
     order = JSON.parse(rawBody) as ShopifyOrder;
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
+  }
+
+  // Commande issue d'un devis payé → event Klaviyo DevisPaye (flow dédié)
+  if (order.tags?.includes("devis-sur-mesure") && order.email) {
+    try {
+      await sendDevisPayeKlaviyo({
+        email: order.email,
+        firstName: order.customer?.first_name ?? "",
+        orderName: order.name,
+        totalPrice: order.total_price ?? "0.00",
+        itemTitle: order.line_items?.[0]?.title ?? "Bague personnalisée",
+      });
+      console.log(`orders-webhook: DevisPaye Klaviyo envoyé pour ${order.name}`);
+    } catch (e) {
+      console.error("orders-webhook: Klaviyo DevisPaye error:", (e as Error).message);
+    }
   }
 
   const designAttr = order.note_attributes?.find(
