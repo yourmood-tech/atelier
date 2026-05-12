@@ -1146,13 +1146,13 @@ function diamantSvg(taille, style, mode = 'normal') {
   const r = taille / 2;
   const sw = 0.15; // trait uniforme 0.15mm
   if (style === 'rond') {
-    return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#1d1e1b" stroke-width="${sw}"/>`;
+    return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#000000" stroke-width="${sw}"/>`;
   }
   // étoile : cercle outline + 4 lignes en croix
   const lr = taille * 0.85;
-  return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#1d1e1b" stroke-width="${sw}"/>
-    <line x1="${-lr}" y1="0" x2="${lr}" y2="0" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>
-    <line x1="0" y1="${-lr}" x2="0" y2="${lr}" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>`;
+  return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#000000" stroke-width="${sw}"/>
+    <line x1="${-lr}" y1="0" x2="${lr}" y2="0" stroke="#000000" stroke-width="${sw}" stroke-linecap="round"/>
+    <line x1="0" y1="${-lr}" x2="0" y2="${lr}" stroke="#000000" stroke-width="${sw}" stroke-linecap="round"/>`;
 }
 
 function couleurTrait() {
@@ -1601,9 +1601,9 @@ function genererSvgFinal() {
   const W = viewLongueur, H = viewLargeur;
   let body = '';
   for (const el of elements) body += elementSvg(el, false);
-  body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#1d1e1b" stroke-width="0.25" stroke-miterlimit="10"/>`;
+  body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#000000" stroke-width="0.25" stroke-miterlimit="10"/>`;
   // Pour le fichier de gravure : trait NOIR sur fond blanc (le blanc d'affichage 3D est invisible sur fond navigateur blanc)
-  body = body.replace(/stroke="#ffffff"/g, 'stroke="#1d1e1b"').replace(/fill="#ffffff"/g, 'fill="#1d1e1b"');
+  body = body.replace(/stroke="#ffffff"/g, 'stroke="#000000"').replace(/fill="#ffffff"/g, 'fill="#000000"');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${H + 4}">
 ${body}
