@@ -7,8 +7,8 @@ const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
 // Variant ID Shopify du produit générique "Bague personnalisée argent"
-// À configurer dans Vercel ENV : SHOPIFY_ARGENT_VARIANT_ID
-const ARGENT_VARIANT_ID = process.env.SHOPIFY_ARGENT_VARIANT_ID;
+// Priorité : ENV SHOPIFY_ARGENT_VARIANT_ID > fallback Redis (rempli par /setup-perso-argent)
+const ARGENT_VARIANT_ID_ENV = process.env.SHOPIFY_ARGENT_VARIANT_ID;
 
 const FORMAT_LABELS: Record<string, string> = {
   "addon": "Addon (7 mm)",
@@ -41,6 +41,15 @@ async function redisSet(key: string, value: string) {
     headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
     body: value,
   });
+}
+
+async function redisGet(key: string): Promise<string | null> {
+  if (!REDIS_URL || !REDIS_TOKEN) return null;
+  const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
+    headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+  });
+  const d = await r.json();
+  return d.result || null;
 }
 
 type Pierre = {
@@ -92,9 +101,12 @@ export async function POST(req: Request) {
     }
   }
 
+  // Récupérer le variant ID : ENV en priorité, sinon fallback Redis (rempli par /setup-perso-argent)
+  const variantIdFromRedis = ARGENT_VARIANT_ID_ENV ? null : await redisGet("perso:argent:variant_id");
+  const ARGENT_VARIANT_ID = ARGENT_VARIANT_ID_ENV || variantIdFromRedis;
   if (!ARGENT_VARIANT_ID) {
     return NextResponse.json({
-      error: "Produit Shopify argent non configuré. L'équipe Mood doit créer le produit 'Bague personnalisée argent' sur Shopify et définir SHOPIFY_ARGENT_VARIANT_ID dans Vercel.",
+      error: "Produit Shopify argent non configuré. Va sur /setup-perso-argent pour le créer en 1 clic.",
     }, { status: 503 });
   }
 
