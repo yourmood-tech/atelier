@@ -2384,7 +2384,8 @@ async function acheterSurShopify() {
     const data = await r.json();
     if (!r.ok || !data.cartUrl) throw new Error(data.error || `Réponse ${r.status}`);
     // Redirection vers le cart Shopify pré-rempli
-    window.location.href = data.cartUrl;
+    const target = window.top !== window.self ? window.top : window;
+    target.location.href = data.cartUrl;
   } catch (e) {
     erreurEl.textContent = _T['err-panier'](e.message);
     erreurEl.classList.remove('hidden');
