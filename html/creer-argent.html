@@ -1139,10 +1139,20 @@ function pierreSvgFacettes(r, couleur, swMult = 1) {
   `;
 }
 
+// Filtrage pierres selon le format : Medium (2.3mm) trop étroit pour sertir 2.1mm
+function pierresDisponibles(format) {
+  return PIERRES.filter(p => {
+    if (format === 'medium' && p.taille >= 2.1) return false;
+    return true;
+  });
+}
+
 function genererSelecteurPierres() {
   const grid = document.getElementById('pierres-grid');
   if (!grid) return;
-  grid.innerHTML = PIERRES.map(p => {
+  const fmt = document.getElementById('format')?.value || 'addon';
+  const pierresDispo = pierresDisponibles(fmt);
+  grid.innerHTML = pierresDispo.map(p => {
     const r = p.taille / 2;
     return `<button class="pierre-btn" onclick="ajouterPierre('${p.id}')" title="${p.nom} ${p.taille}mm — ${p.prix} CHF">
       <svg viewBox="-1.5 -1.5 3 3" width="24" height="24">
@@ -1152,6 +1162,20 @@ function genererSelecteurPierres() {
       <span class="prix">${p.prix}.-</span>
     </button>`;
   }).join('');
+}
+
+// Retire les pierres incompatibles avec le format actuel (ex: 2.1mm sur Medium)
+function nettoyerPierresInvalides() {
+  const fmt = document.getElementById('format')?.value;
+  if (!fmt) return;
+  const dispoIds = new Set(pierresDisponibles(fmt).map(p => p.id));
+  const avant = elements.length;
+  elements = elements.filter(el => el.type !== 'pierre' || dispoIds.has(el.pierreId));
+  const retirees = avant - elements.length;
+  if (retirees > 0) {
+    if (selectedId && !elements.find(x => x.id === selectedId)) selectedId = null;
+    alert(`${retirees} pierre${retirees > 1 ? 's' : ''} retirée${retirees > 1 ? 's' : ''} : les pierres de 2.1mm ne peuvent pas être serties sur une bague Medium (trop étroite).`);
+  }
 }
 
 function ajouterPierre(id) {
@@ -1254,7 +1278,11 @@ function choisirFormat(fmt) {
   });
   // Régénère les vignettes couleur pour qu'elles correspondent au nouveau format
   genererSelecteurCouleurs();
+  // Filtre les pierres : 2.1mm exclues sur Medium (trop étroit)
+  nettoyerPierresInvalides();
+  genererSelecteurPierres();
   majDimensions();
+  rendreCanvas();
 }
 
 function choisirCouleur(id) {
