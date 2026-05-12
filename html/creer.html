@@ -1022,13 +1022,27 @@ function genererFiltresCouleurs() {
   }).join('');
 }
 
+const COULEURS_EXCLUES = {
+  'open-mood': ['noir', 'rouge', 'bleu-marine'],
+};
+
+function couleursDisponibles(fmt) {
+  const exclues = COULEURS_EXCLUES[fmt] || [];
+  return COULEURS.filter(c => !exclues.includes(c.id));
+}
+
 function genererSelecteurCouleurs() {
   const grid = document.getElementById('couleurs-grid');
   if (!grid) return;
   const fmt = document.getElementById('format')?.value || 'addon';
-  grid.innerHTML = COULEURS.map(c => {
+  const dispo = couleursDisponibles(fmt);
+  // Si la couleur sélectionnée n'est pas disponible pour ce format, basculer sur lilas-cashmere
+  if (!dispo.find(c => c.id === couleurChoisie.id)) {
+    couleurChoisie = dispo.find(c => c.id === 'lilas-cashmere') || dispo[0];
+    document.getElementById('couleur-nom').textContent = couleurChoisie.nom;
+  }
+  grid.innerHTML = dispo.map(c => {
     const { url, native } = urlPhotoVignette(c.id, fmt);
-    // Photo native = pas de filtre. Sinon = photo lilas teintée par filter (sauf si on est déjà sur lilas).
     const filtre = native || c.id === 'lilas-cashmere' ? '' : `style="filter:url(#tint-${c.id});"`;
     return `<button type="button" class="couleur-btn ${c.id === couleurChoisie.id ? 'active' : ''}" data-couleur="${c.id}" title="${c.nom}" onclick="choisirCouleur('${c.id}')">
       <img src="${url}" alt="${c.nom}" ${filtre}>
