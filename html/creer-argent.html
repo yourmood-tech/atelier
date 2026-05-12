@@ -90,6 +90,42 @@
   .element-item { padding: 0.3rem 0.5rem; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
   .element-item:hover { background: var(--gris-clair); }
   .element-item.selected { background: #fff8e7; color: var(--or); font-weight: 600; }
+
+  /* ============ TABLETTE (601-900px) ============ */
+  @media (max-width: 900px) {
+    body { padding: 1rem 0.8rem; }
+    header h1 { font-size: 1.5rem; }
+    .symboles-grid { grid-template-columns: repeat(5, 1fr); }
+    .couleurs-grid { grid-template-columns: repeat(5, 1fr); }
+    .pierres-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+  }
+
+  /* ============ SMARTPHONE (≤ 600px) ============ */
+  @media (max-width: 600px) {
+    body { padding: 0.8rem 0.6rem; }
+    header { margin-bottom: 1rem; }
+    header h1 { font-size: 1.25rem; }
+    header .sous-titre { font-size: 0.8rem; }
+    .etapes { gap: 0.6rem; margin: 0.8rem 0; }
+    .etape { font-size: 0.72rem; }
+    .etape .num { width: 20px; height: 20px; font-size: 0.7rem; }
+    .card { padding: 0.8rem; margin-bottom: 0.6rem; }
+    h2 { font-size: 0.82rem; }
+    .row { grid-template-columns: 1fr; }
+    .toolbar button { font-size: 0.72rem; padding: 0.3rem 0.5rem; }
+    .prix-zone .montant { font-size: 1.6rem; }
+    .pierre-btn .nom { font-size: 0.58rem; }
+    .pierre-btn .prix { font-size: 0.68rem; }
+    .pierres-grid { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 0.3rem; }
+    .sertissage-btn { min-height: 52px; padding: 0.4rem 0.2rem; }
+    .sertissage-btn strong { font-size: 0.7rem; }
+    .sertissage-btn span { font-size: 0.6rem; }
+    .symb-btn { font-size: 1.25rem; padding: 0.4rem 0; }
+    input, select, textarea { font-size: 16px; } /* éviter zoom iOS au focus */
+    #apercu-3d-container { max-width: 100% !important; }
+    .vector-preview { min-height: 160px; }
+    .vector-preview svg { max-height: 200px; }
+  }
 </style>
 </head>
 <body>
@@ -1046,8 +1082,6 @@ const PIERRES = [
   { id: 'emeraude-16',       nom: 'Émeraude',          taille: 1.6,  couleur: '#059669', prix: 115 },
   { id: 'rubis-19',          nom: 'Rubis',             taille: 1.9,  couleur: '#dc2626', prix: 99 },
   { id: 'rubis-16',          nom: 'Rubis',             taille: 1.6,  couleur: '#dc2626', prix: 89 },
-  { id: 'diampr-rose-21',    nom: 'Diamant pur rose',  taille: 2.1,  couleur: '#f9a8d4', prix: 119 },
-  { id: 'diampr-jaune-21',   nom: 'Diamant pur jaune', taille: 2.1,  couleur: '#fde047', prix: 119 },
 ];
 
 // Dessin d'une pierre taille brillant : cercle extérieur + octogone central + 8 facettes radiales
