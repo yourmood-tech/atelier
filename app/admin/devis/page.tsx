@@ -84,10 +84,10 @@ export default function DevisPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback((force = false) => {
     setLoading(true);
     setError(null);
-    fetch("/api/admin/devis")
+    fetch(`/api/admin/devis${force ? "?refresh=1" : ""}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) { setError(d.error); return; }
@@ -108,7 +108,7 @@ export default function DevisPage() {
             <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>Gestion des devis</h1>
             <p style={{ color: "#71717a", fontSize: "0.82rem", marginTop: 4 }}>Demandes de validation design avant achat</p>
           </div>
-          <button onClick={load} style={{ background: "#27272a", color: "#a1a1aa", border: "none", borderRadius: 6, padding: "0.4rem 0.9rem", fontSize: "0.8rem", cursor: "pointer" }}>
+          <button onClick={() => load(true)} style={{ background: "#27272a", color: "#a1a1aa", border: "none", borderRadius: 6, padding: "0.4rem 0.9rem", fontSize: "0.8rem", cursor: "pointer" }}>
             ↻ Actualiser
           </button>
         </div>
