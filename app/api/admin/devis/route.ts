@@ -6,8 +6,10 @@ const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 
 async function fetchDraftOrders(status: "open" | "completed"): Promise<unknown[]> {
   const all: unknown[] = [];
+  // Limiter aux 180 derniers jours pour éviter de paginer l'historique complet
+  const since = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
   let url: string | null =
-    `https://${STORE}/admin/api/${API_VERSION}/draft_orders.json?status=${status}&limit=250`;
+    `https://${STORE}/admin/api/${API_VERSION}/draft_orders.json?status=${status}&limit=250&updated_at_min=${encodeURIComponent(since)}`;
 
   while (url) {
     const r: Response = await fetch(url, {
