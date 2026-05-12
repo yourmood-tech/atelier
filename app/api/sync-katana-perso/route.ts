@@ -439,7 +439,12 @@ export async function POST(req: Request) {
     }
   }
 
-  await redisSet("perso:katana:config", JSON.stringify(katanaResultats));
+  // Merge avec la config Redis existante pour ne pas écraser les autres formats
+  const existingRaw = await redisGet("perso:katana:config");
+  let existingConfig: KatanaConfig = {};
+  if (existingRaw) { try { existingConfig = JSON.parse(existingRaw) as KatanaConfig; } catch { /* */ } }
+  const merged = { ...existingConfig, ...katanaResultats };
+  await redisSet("perso:katana:config", JSON.stringify(merged));
   return NextResponse.json({ ok: true, katanaResultats, errors });
 
   } catch (e: unknown) {
