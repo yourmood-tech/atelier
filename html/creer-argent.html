@@ -1032,7 +1032,7 @@ function genererSelecteurPierres() {
         <circle cx="0" cy="0" r="${r}" fill="${p.couleur}" stroke="#000" stroke-width="0.12"/>
         <circle cx="${-r*0.3}" cy="${-r*0.3}" r="${highlightR}" fill="rgba(255,255,255,0.55)"/>
       </svg>
-      <span class="nom">${p.nom}</span>
+      <span class="nom">${p.nom} ${p.taille}mm</span>
       <span class="prix">${p.prix}.-</span>
     </button>`;
   }).join('');
@@ -1231,7 +1231,9 @@ function diamantSvg(taille, style, mode = 'normal') {
 }
 
 function couleurTrait() {
-  return couleurContrastee(couleurChoisie?.hex || '#ffffff');
+  // Oxydée = noir vrai (#000000), Neutre = gris clair (gravure visible mais douce, sans oxydation)
+  if (gravureType === 'neutre') return '#a8a8a8';
+  return '#000000';
 }
 
 function elementSvg(el, withSelection = false) {
