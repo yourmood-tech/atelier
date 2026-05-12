@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Crée ta bague — Mood Collection</title>
+<title>Crée ton addon — Mood Collection</title>
 <script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -86,22 +86,22 @@
 
 <header>
   <div class="marque">Mood Collection</div>
-  <h1>Crée ta bague unique</h1>
-  <div class="sous-titre">une empreinte, un mot, un souvenir gravé à vie</div>
+  <h1 data-i18n="h1">Crée ton addon unique</h1>
+  <div class="sous-titre" data-i18n="sous-titre">une empreinte, un mot, un souvenir gravé à vie</div>
 </header>
 
 <div class="etapes">
-  <div class="etape"><span class="num">1</span> Choisis ton format</div>
-  <div class="etape"><span class="num">2</span> Personnalise</div>
-  <div class="etape"><span class="num">3</span> Envoie ta demande</div>
+  <div class="etape"><span class="num">1</span> <span data-i18n="etape-1">Choisis ton format</span></div>
+  <div class="etape"><span class="num">2</span> <span data-i18n="etape-2">Personnalise</span></div>
+  <div class="etape"><span class="num">3</span> <span data-i18n="etape-3">Envoie ta demande</span></div>
 </div>
 
 <div class="grid">
 
   <!-- ÉTAPE 1 : BAGUE -->
   <div class="card">
-    <h2>1. Ta bague</h2>
-    <label>Format de la bague</label>
+    <h2 data-i18n="h2-bague">1. Ton addon</h2>
+    <label data-i18n="label-format">Format de la bague</label>
     <div class="formats-grid">
       <button type="button" class="format-btn" data-format="medium" data-w="2.3" onclick="choisirFormat('medium')">
         <strong>Medium</strong><span>2,3 mm</span>
@@ -123,51 +123,51 @@
       <option value="medium" data-w="2.3">Medium</option>
       <option value="open-mood" data-w="10">Open mood</option>
     </select>
-    <label style="margin-top:0.8rem;">Ta taille</label>
+    <label style="margin-top:0.8rem;" data-i18n="label-taille">Ta taille</label>
     <select id="taille" onchange="majDimensions()" style="max-width:120px;"></select>
     <div class="info" id="dim-info" style="margin-top:0.4rem;">—</div>
 
-    <label style="margin-top:0.8rem;">Couleur de l'aluminium</label>
+    <label style="margin-top:0.8rem;" data-i18n="label-couleur">Couleur de l'aluminium</label>
     <div class="couleurs-grid" id="couleurs-grid"></div>
-    <div class="info" id="couleur-info" style="margin-top:0.4rem;text-align:center;">Couleur sélectionnée : <strong id="couleur-nom">Noir</strong></div>
+    <div class="info" id="couleur-info" style="margin-top:0.4rem;text-align:center;"><span data-i18n="couleur-select">Couleur sélectionnée :</span> <strong id="couleur-nom">Noir</strong></div>
   </div>
 
   <!-- ÉTAPE 2 : CANVAS APERÇU -->
   <div class="canvas-zone">
-    <div class="canvas-info" id="canvas-info">2. Aperçu de ta bague — ajoute ton empreinte ou ton texte ci-dessous</div>
+    <div class="canvas-info" id="canvas-info" data-i18n="canvas-info-init">2. Aperçu de ton addon — ajoute ton empreinte ou ton texte ci-dessous</div>
     <svg id="editor-svg" class="editor-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="toolbar">
-      <button class="outline" onclick="basculerMode('crayon')" id="btn-crayon">✏️ Dessiner</button>
-      <button class="outline" onclick="basculerMode('gomme')" id="btn-gomme">🧽 Gommer</button>
-      <button class="outline" onclick="agrandir()" id="btn-grand" disabled>🔍+ Agrandir</button>
-      <button class="outline" onclick="reduire()" id="btn-petit" disabled>🔍− Rétrécir</button>
-      <button class="outline" onclick="rotation90()" id="btn-rot" disabled>↻ Tourner 30°</button>
-      <button class="outline" onclick="centrer()" id="btn-ctr" disabled>⊕ Centrer</button>
-      <button class="outline" onclick="dupliquerSelection()" id="btn-dup" disabled>📋 Dupliquer</button>
-      <button class="danger" onclick="supprimerSelection()" id="btn-del" disabled>🗑️ Supprimer</button>
+      <button class="outline" onclick="basculerMode('crayon')" id="btn-crayon" data-i18n="btn-dessiner">✏️ Dessiner</button>
+      <button class="outline" onclick="basculerMode('gomme')" id="btn-gomme" data-i18n="btn-gommer">🧽 Gommer</button>
+      <button class="outline" onclick="agrandir()" id="btn-grand" disabled data-i18n="btn-agrandir">🔍+ Agrandir</button>
+      <button class="outline" onclick="reduire()" id="btn-petit" disabled data-i18n="btn-retrecir">🔍− Rétrécir</button>
+      <button class="outline" onclick="rotation90()" id="btn-rot" disabled data-i18n="btn-tourner">↻ Tourner 30°</button>
+      <button class="outline" onclick="centrer()" id="btn-ctr" disabled data-i18n="btn-centrer">⊕ Centrer</button>
+      <button class="outline" onclick="dupliquerSelection()" id="btn-dup" disabled data-i18n="btn-dupliquer">📋 Dupliquer</button>
+      <button class="danger" onclick="supprimerSelection()" id="btn-del" disabled data-i18n="btn-supprimer">🗑️ Supprimer</button>
     </div>
   </div>
 
   <!-- ÉTAPE 2 : EMPREINTE -->
   <div class="card">
-    <h2>+ Ajouter une empreinte ou un dessin</h2>
+    <h2 data-i18n="h2-empreinte">+ Ajouter une empreinte ou un dessin</h2>
     <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-input').click()">
-      <strong>Glisse une photo</strong> ou clique pour choisir<br>
-      <span class="info">empreinte digitale, dessin d'enfant, signature, silhouette…</span>
+      <strong data-i18n="upload-titre">Glisse une photo</strong><span data-i18n="upload-ou"> ou clique pour choisir</span><br>
+      <span class="info" data-i18n="upload-types">empreinte digitale, dessin d'enfant, signature, silhouette…</span>
     </div>
     <input type="file" id="file-input" accept="image/*" style="display:none">
     <div class="vector-preview hidden" id="vector-preview" style="margin-top:0.6rem;"></div>
 
     <details style="margin-top:0.6rem;">
-      <summary style="cursor:pointer;font-size:0.85rem;color:var(--gris);">⚙️ Réglages du dessin (avancé)</summary>
+      <summary style="cursor:pointer;font-size:0.85rem;color:var(--gris);" data-i18n="reglages-titre">⚙️ Réglages du dessin (avancé)</summary>
       <div style="margin-top:0.6rem;padding:0.6rem;background:#fafafa;border-radius:8px;">
-        <p class="info" style="margin-bottom:0.6rem;">Si le rendu n'est pas bon, ajuste ces réglages et l'aperçu se met à jour.</p>
+        <p class="info" style="margin-bottom:0.6rem;" data-i18n="reglages-info">Si le rendu n'est pas bon, ajuste ces réglages et l'aperçu se met à jour.</p>
 
         <label style="display:flex;align-items:center;gap:0.4rem;font-weight:400;cursor:pointer;font-size:0.85rem;">
-          <input type="checkbox" id="enhance" checked style="width:auto;margin:0;"> ✨ Améliorer la qualité de l'image
+          <input type="checkbox" id="enhance" checked style="width:auto;margin:0;"> <span data-i18n="enhance-label">✨ Améliorer la qualité de l'image</span>
         </label>
 
-        <label style="margin-top:0.6rem;font-size:0.8rem;">Lissage des courbes</label>
+        <label style="margin-top:0.6rem;font-size:0.8rem;" data-i18n="lissage-label">Lissage des courbes</label>
         <select id="smooth-window">
           <option value="1">Aucun (trait brut)</option>
           <option value="3">Léger</option>
@@ -176,7 +176,7 @@
           <option value="15">Très fort</option>
         </select>
 
-        <label style="margin-top:0.6rem;font-size:0.8rem;">Simplification du tracé</label>
+        <label style="margin-top:0.6rem;font-size:0.8rem;" data-i18n="simplif-label">Simplification du tracé</label>
         <select id="smoothing">
           <option value="0">Aucune (toutes les courbes)</option>
           <option value="0.5">Légère</option>
@@ -185,7 +185,7 @@
           <option value="4">Très forte</option>
         </select>
 
-        <label style="margin-top:0.6rem;font-size:0.8rem;">Filtrer les petits traits parasites</label>
+        <label style="margin-top:0.6rem;font-size:0.8rem;" data-i18n="filtre-label">Filtrer les petits traits parasites</label>
         <select id="min-length">
           <option value="0">Garder tous les traits</option>
           <option value="5">Filtrer très courts</option>
@@ -194,7 +194,7 @@
           <option value="35">Filtrer fort</option>
         </select>
 
-        <label style="margin-top:0.6rem;font-size:0.8rem;">Style du trait</label>
+        <label style="margin-top:0.6rem;font-size:0.8rem;" data-i18n="style-trait-label">Style du trait</label>
         <select id="trace-mode">
           <option value="line">Lignes droites (anguleux)</option>
           <option value="bezier" selected>Courbes lisses (recommandé)</option>
@@ -205,7 +205,7 @@
 
   <!-- ÉTAPE 2 : SYMBOLES PRÉDÉFINIS -->
   <div class="card">
-    <h2>+ Ajouter un symbole</h2>
+    <h2 data-i18n="h2-symbole">+ Ajouter un symbole</h2>
     <div class="symboles-grid">
       <button class="outline symb-btn" onclick="ajouterSymbole('coeur')" title="Cœur">❤</button>
       <button class="outline symb-btn" onclick="ajouterSymbole('etoile')" title="Étoile">★</button>
@@ -265,9 +265,9 @@
 
   <!-- ÉTAPE 2 : TEXTE -->
   <div class="card">
-    <h2>+ Ajouter un texte</h2>
-    <input id="texte-nouveau" placeholder="ex : Marie & Paul, 14.06.2024…">
-    <label style="margin-top:0.5rem;">Style de gravure</label>
+    <h2 data-i18n="h2-texte">+ Ajouter un texte</h2>
+    <input id="texte-nouveau" placeholder="ex : Marie & Paul, 14.06.2024…" data-i18n-placeholder="texte-placeholder">
+    <label style="margin-top:0.5rem;" data-i18n="style-gravure-label">Style de gravure</label>
     <select id="texte-font" style="font-size:0.85rem;">
       <optgroup label="Trait fin (gravure mécanique)">
         <option value="hershey:hershey_sans_1" selected>Sans serif</option>
@@ -289,57 +289,57 @@
         <option value="dancingscript">Dancing Script</option>
       </optgroup>
     </select>
-    <button onclick="ajouterTexte()" style="margin-top:0.6rem;width:100%;">+ Ajouter ce texte sur ma bague</button>
+    <button onclick="ajouterTexte()" style="margin-top:0.6rem;width:100%;" data-i18n="btn-ajouter-texte">+ Ajouter ce texte sur mon addon</button>
   </div>
 
   <!-- APERÇU RÉALISTE 3D -->
   <div class="card">
-    <h2>🔄 Aperçu réaliste sur ta bague</h2>
-    <p class="info" style="margin-bottom:0.6rem;">Voici ta bague gravée en 3D. Glisse le curseur ou clique le bouton pour la faire tourner.</p>
+    <h2 data-i18n="h2-apercu">🔄 Aperçu réaliste sur ton addon</h2>
+    <p class="info" style="margin-bottom:0.6rem;" data-i18n="apercu-info">Voici ton addon gravé en 3D. Glisse le curseur ou clique le bouton pour le faire tourner.</p>
     <div id="apercu-3d-wrapper" style="display:flex;justify-content:center;background:#fafafa;border-radius:12px;padding:1rem;">
       <div id="apercu-3d-container" style="width:100%;max-width:420px;aspect-ratio:1;"></div>
     </div>
     <input type="range" id="apercu-rotation" min="0" max="360" value="0" step="1" style="width:100%;margin-top:0.8rem;" oninput="rotateApercu(this.value)">
-    <button class="outline" onclick="animerRotation()" style="width:100%;margin-top:0.4rem;">▶ Faire tourner la bague (360°)</button>
+    <button class="outline" onclick="animerRotation()" style="width:100%;margin-top:0.4rem;" data-i18n="btn-rotation">▶ Faire tourner (360°)</button>
   </div>
 
   <!-- PRIX DYNAMIQUE -->
   <div class="prix-zone" id="prix-zone">
-    <div class="label">Prix estimé</div>
+    <div class="label" data-i18n="prix-label">Prix estimé</div>
     <div class="montant"><strong id="prix-montant">—</strong> CHF</div>
-    <div class="detail" id="prix-detail">Choisis un format et ajoute des éléments</div>
+    <div class="detail" id="prix-detail" data-i18n="prix-detail-init">Choisis un format et ajoute des éléments</div>
   </div>
 
   <!-- ÉTAPE 3 : COMMANDE -->
   <div class="card" style="border:2px solid var(--or);">
-    <h2>3. Envoie ta demande</h2>
-    <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">
+    <h2 data-i18n="h2-commande">3. Envoie ta demande</h2>
+    <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;" data-i18n="commande-info">
       On reçoit ton design, on t'envoie un devis personnalisé sous 24h ouvrées.
     </p>
     <div class="row">
       <div>
-        <label>Ton prénom *</label>
-        <input id="cli-prenom" placeholder="Marie">
+        <label data-i18n="label-prenom">Ton prénom *</label>
+        <input id="cli-prenom" placeholder="Marie" data-i18n-placeholder="prenom-placeholder">
       </div>
       <div>
-        <label>Ton email *</label>
-        <input id="cli-email" type="email" placeholder="marie@email.com">
+        <label data-i18n="label-email">Ton email *</label>
+        <input id="cli-email" type="email" placeholder="marie@email.com" data-i18n-placeholder="email-placeholder">
       </div>
     </div>
     <div class="row" style="margin-top:0.5rem;">
       <div>
-        <label>Téléphone</label>
-        <input id="cli-tel" type="tel" placeholder="+41 79 ...">
+        <label data-i18n="label-tel">Téléphone</label>
+        <input id="cli-tel" type="tel" placeholder="+41 79 ..." data-i18n-placeholder="tel-placeholder">
       </div>
       <div>
-        <label>Matière</label>
-        <input id="cli-matiere" value="Aluminium" readonly style="background:#f5f5f5;">
+        <label data-i18n="label-matiere">Matière</label>
+        <input id="cli-matiere" value="Aluminium" readonly style="background:#f5f5f5;" data-i18n-value="mat-alu">
       </div>
     </div>
-    <label style="margin-top:0.5rem;">Un message pour l'équipe ? (optionnel)</label>
-    <textarea id="cli-message" rows="2" placeholder="ex : c'est pour notre anniversaire de mariage…" style="width:100%;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;"></textarea>
-    <button onclick="acheterSurShopify()" style="margin-top:0.8rem;width:100%;padding:0.9rem;font-size:1rem;background:var(--or);font-weight:600;">🛒 Acheter sur yourmood.net</button>
-    <button onclick="envoyerDemande()" class="outline" style="margin-top:0.4rem;width:100%;padding:0.6rem;font-size:0.85rem;">ou envoyer ma demande à l'équipe (devis sur mesure)</button>
+    <label style="margin-top:0.5rem;" data-i18n="label-message">Un message pour l'équipe ? (optionnel)</label>
+    <textarea id="cli-message" rows="2" placeholder="ex : c'est pour notre anniversaire de mariage…" style="width:100%;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;" data-i18n-placeholder="msg-placeholder"></textarea>
+    <button onclick="acheterSurShopify()" id="btn-acheter-shopify" style="margin-top:0.8rem;width:100%;padding:0.9rem;font-size:1rem;background:var(--or);font-weight:600;" data-i18n="btn-acheter">🛒 Acheter sur yourmood.net</button>
+    <button onclick="envoyerDemande()" id="btn-envoyer-demande" class="outline" style="margin-top:0.4rem;width:100%;padding:0.6rem;font-size:0.85rem;" data-i18n="btn-demande">ou envoyer ma demande à l'équipe (devis sur mesure)</button>
     <div class="erreur hidden" id="erreur" style="margin-top:0.5rem;"></div>
     <div class="info hidden" id="confirmation" style="margin-top:0.5rem;color:var(--vert);font-size:0.9rem;font-weight:500;text-align:center;"></div>
   </div>
@@ -351,6 +351,272 @@
 </footer>
 
 <script>
+// ============ I18N ============
+const DICT = {
+  fr: {
+    'page-title': 'Crée ton addon — Mood Collection',
+    'h1': 'Crée ton addon unique',
+    'sous-titre': 'une empreinte, un mot, un souvenir gravé à vie',
+    'etape-1': 'Choisis ton format',
+    'etape-2': 'Personnalise',
+    'etape-3': 'Envoie ta demande',
+    'h2-bague': '1. Ton addon',
+    'label-format': 'Format de la bague',
+    'label-taille': 'Ta taille',
+    'label-couleur': "Couleur de l'aluminium",
+    'couleur-select': 'Couleur sélectionnée :',
+    'canvas-info-init': '2. Aperçu de ton addon — ajoute ton empreinte ou ton texte ci-dessous',
+    'btn-dessiner': '✏️ Dessiner',
+    'btn-gommer': '🧽 Gommer',
+    'btn-agrandir': '🔍+ Agrandir',
+    'btn-retrecir': '🔍− Rétrécir',
+    'btn-tourner': '↻ Tourner 30°',
+    'btn-centrer': '⊕ Centrer',
+    'btn-dupliquer': '📋 Dupliquer',
+    'btn-supprimer': '🗑️ Supprimer',
+    'h2-empreinte': '+ Ajouter une empreinte ou un dessin',
+    'upload-titre': 'Glisse une photo',
+    'upload-ou': ' ou clique pour choisir',
+    'upload-types': "empreinte digitale, dessin d'enfant, signature, silhouette…",
+    'reglages-titre': '⚙️ Réglages du dessin (avancé)',
+    'reglages-info': "Si le rendu n'est pas bon, ajuste ces réglages et l'aperçu se met à jour.",
+    'enhance-label': "✨ Améliorer la qualité de l'image",
+    'lissage-label': 'Lissage des courbes',
+    'simplif-label': 'Simplification du tracé',
+    'filtre-label': 'Filtrer les petits traits parasites',
+    'style-trait-label': 'Style du trait',
+    'h2-symbole': '+ Ajouter un symbole',
+    'h2-texte': '+ Ajouter un texte',
+    'texte-placeholder': 'ex : Marie & Paul, 14.06.2024…',
+    'style-gravure-label': 'Style de gravure',
+    'btn-ajouter-texte': '+ Ajouter ce texte sur mon addon',
+    'h2-apercu': '🔄 Aperçu réaliste sur ton addon',
+    'apercu-info': 'Voici ton addon gravé en 3D. Glisse le curseur ou clique le bouton pour le faire tourner.',
+    'btn-rotation': '▶ Faire tourner (360°)',
+    'prix-label': 'Prix estimé',
+    'prix-detail-init': 'Choisis un format et ajoute des éléments',
+    'h2-commande': '3. Envoie ta demande',
+    'commande-info': "On reçoit ton design, on t'envoie un devis personnalisé sous 24h ouvrées.",
+    'label-prenom': 'Ton prénom *',
+    'label-email': 'Ton email *',
+    'label-tel': 'Téléphone',
+    'label-matiere': 'Matière',
+    'label-message': "Un message pour l'équipe ? (optionnel)",
+    'prenom-placeholder': 'Marie',
+    'email-placeholder': 'marie@email.com',
+    'tel-placeholder': '+41 79 ...',
+    'msg-placeholder': "ex : c'est pour notre anniversaire de mariage…",
+    'mat-alu': 'Aluminium',
+    'btn-acheter': '🛒 Acheter sur yourmood.net',
+    'btn-demande': "ou envoyer ma demande à l'équipe (devis sur mesure)",
+    'btn-demande-reset': '✉️ Envoyer ma demande à Mood',
+    'dim-info': (x, y) => `Surface gravable : ${x} × ${y} mm`,
+    'canvas-info': (t, x, y) => `Bande dépliée taille ${t} — ${x} × ${y} mm`,
+    'prix-base-msg': 'Prix de base — ajoute tes éléments pour personnaliser',
+    'prix-elements': (n, label) => `${n} élément${n > 1 ? 's' : ''} · ${label}`,
+    'prix-base': 'prix de base',
+    'design-simple': 'design simple',
+    'design-moyen': 'design moyen',
+    'design-complexe': 'design complexe',
+    'err-prenom-email-achat': "Merci de renseigner ton prénom et ton email avant de passer à l'achat.",
+    'err-elements-achat': "Ajoute au moins un élément (empreinte, texte, dessin ou symbole) sur ton addon avant de passer à l'achat.",
+    'btn-preparation': '⏳ Préparation de ton panier…',
+    'err-panier': (msg) => `Erreur lors de la préparation du panier : ${msg}. Tu peux aussi envoyer ta demande à l'équipe ci-dessous.`,
+    'btn-acheter-reset': '🛒 Acheter sur yourmood.net',
+    'err-prenom-email': 'Merci de renseigner ton prénom et ton email.',
+    'err-elements-envoi': "Ajoute au moins une empreinte ou un texte sur ton addon avant d'envoyer.",
+    'btn-envoi': '⏳ Envoi…',
+    'ok-envoi': (prenom, email) => `✓ Merci ${prenom} ! On a bien reçu ta demande. On te recontacte sous 24h ouvrées à ${email}.`,
+    'err-envoi': "Erreur d'envoi. Réessaye dans un instant ou écris-nous à info@yourmood.net.",
+    'image-only': 'Image uniquement',
+    'vectorisation': '⏳ Vectorisation…',
+    'aucun-trait': 'Aucun trait détecté.',
+    'silhouette-label': '✂️ Silhouette → contour',
+    'empreinte-label': '🖋️ Empreinte → lignes',
+  },
+  de: {
+    'page-title': 'Erstelle deinen Addon — Mood Collection',
+    'h1': 'Erstelle deinen einzigartigen Addon',
+    'sous-titre': 'Ein Abdruck, ein Wort, eine Erinnerung – für immer graviert',
+    'etape-1': 'Format wählen',
+    'etape-2': 'Personalisieren',
+    'etape-3': 'Anfrage senden',
+    'h2-bague': '1. Dein Addon',
+    'label-format': 'Ringformat',
+    'label-taille': 'Deine Grösse',
+    'label-couleur': 'Aluminiumfarbe',
+    'couleur-select': 'Gewählte Farbe:',
+    'canvas-info-init': '2. Vorschau — füge deinen Abdruck oder deinen Text hinzu',
+    'btn-dessiner': '✏️ Zeichnen',
+    'btn-gommer': '🧽 Radiergummi',
+    'btn-agrandir': '🔍+ Vergrössern',
+    'btn-retrecir': '🔍− Verkleinern',
+    'btn-tourner': '↻ Drehen 30°',
+    'btn-centrer': '⊕ Zentrieren',
+    'btn-dupliquer': '📋 Duplizieren',
+    'btn-supprimer': '🗑️ Löschen',
+    'h2-empreinte': '+ Abdruck oder Zeichnung hinzufügen',
+    'upload-titre': 'Foto hierher ziehen',
+    'upload-ou': ' oder klicken zum Auswählen',
+    'upload-types': 'Fingerabdruck, Kinderzeichnung, Unterschrift, Silhouette…',
+    'reglages-titre': '⚙️ Zeichnungseinstellungen (erweitert)',
+    'reglages-info': 'Falls das Ergebnis nicht stimmt, passe diese Einstellungen an.',
+    'enhance-label': '✨ Bildqualität verbessern',
+    'lissage-label': 'Kurvenglättung',
+    'simplif-label': 'Linienvereinfachung',
+    'filtre-label': 'Kleine Störlinien filtern',
+    'style-trait-label': 'Linienstil',
+    'h2-symbole': '+ Symbol hinzufügen',
+    'h2-texte': '+ Text hinzufügen',
+    'texte-placeholder': 'z.B.: Marie & Paul, 14.06.2024…',
+    'style-gravure-label': 'Gravierstil',
+    'btn-ajouter-texte': '+ Diesen Text auf meinen Addon',
+    'h2-apercu': '🔄 Realistische 3D-Vorschau',
+    'apercu-info': 'Dein gravierter Addon in 3D. Schiebe den Regler oder klicke den Button zum Drehen.',
+    'btn-rotation': '▶ Addon drehen (360°)',
+    'prix-label': 'Geschätzter Preis',
+    'prix-detail-init': 'Format wählen und Elemente hinzufügen',
+    'h2-commande': '3. Anfrage senden',
+    'commande-info': 'Wir erhalten dein Design und senden dir innerhalb von 24 Stunden ein persönliches Angebot.',
+    'label-prenom': 'Dein Vorname *',
+    'label-email': 'Deine E-Mail *',
+    'label-tel': 'Telefon',
+    'label-matiere': 'Material',
+    'label-message': 'Nachricht ans Team? (optional)',
+    'prenom-placeholder': 'Marie',
+    'email-placeholder': 'marie@email.com',
+    'tel-placeholder': '+41 79 ...',
+    'msg-placeholder': 'z.B.: Es ist für unseren Hochzeitstag…',
+    'mat-alu': 'Aluminium',
+    'btn-acheter': '🛒 Auf yourmood.net kaufen',
+    'btn-demande': 'oder Anfrage ans Team senden (Massangebot)',
+    'btn-demande-reset': '✉️ Anfrage ans Team senden',
+    'dim-info': (x, y) => `Gravierfläche: ${x} × ${y} mm`,
+    'canvas-info': (t, x, y) => `Abgerolltes Band Grösse ${t} — ${x} × ${y} mm`,
+    'prix-base-msg': 'Grundpreis — füge Elemente zur Personalisierung hinzu',
+    'prix-elements': (n, label) => `${n} Element${n > 1 ? 'e' : ''} · ${label}`,
+    'prix-base': 'Grundpreis',
+    'design-simple': 'einfaches Design',
+    'design-moyen': 'mittleres Design',
+    'design-complexe': 'komplexes Design',
+    'err-prenom-email-achat': 'Bitte gib deinen Vornamen und deine E-Mail-Adresse ein.',
+    'err-elements-achat': 'Füge mindestens ein Element (Abdruck, Text, Zeichnung oder Symbol) hinzu.',
+    'btn-preparation': '⏳ Warenkorb wird vorbereitet…',
+    'err-panier': (msg) => `Fehler beim Vorbereiten des Warenkorbs: ${msg}. Du kannst auch eine Anfrage senden.`,
+    'btn-acheter-reset': '🛒 Auf yourmood.net kaufen',
+    'err-prenom-email': 'Bitte gib deinen Vornamen und deine E-Mail-Adresse ein.',
+    'err-elements-envoi': 'Füge mindestens einen Abdruck oder Text hinzu.',
+    'btn-envoi': '⏳ Senden…',
+    'ok-envoi': (prenom, email) => `✓ Danke ${prenom}! Wir haben deine Anfrage erhalten. Wir melden uns innerhalb von 24 Stunden bei ${email}.`,
+    'err-envoi': 'Sendefehler. Versuche es später oder schreib uns an info@yourmood.net.',
+    'image-only': 'Nur Bilder erlaubt',
+    'vectorisation': '⏳ Vektorisierung…',
+    'aucun-trait': 'Kein Strich erkannt.',
+    'silhouette-label': '✂️ Silhouette → Kontur',
+    'empreinte-label': '🖋️ Abdruck → Linien',
+  },
+  en: {
+    'page-title': 'Create your addon — Mood Collection',
+    'h1': 'Create your unique addon',
+    'sous-titre': 'a fingerprint, a word, a memory engraved for life',
+    'etape-1': 'Choose your format',
+    'etape-2': 'Personalise',
+    'etape-3': 'Send your request',
+    'h2-bague': '1. Your addon',
+    'label-format': 'Ring format',
+    'label-taille': 'Your size',
+    'label-couleur': 'Aluminium colour',
+    'couleur-select': 'Selected colour:',
+    'canvas-info-init': '2. Preview — add your fingerprint or text below',
+    'btn-dessiner': '✏️ Draw',
+    'btn-gommer': '🧽 Erase',
+    'btn-agrandir': '🔍+ Enlarge',
+    'btn-retrecir': '🔍− Shrink',
+    'btn-tourner': '↻ Rotate 30°',
+    'btn-centrer': '⊕ Centre',
+    'btn-dupliquer': '📋 Duplicate',
+    'btn-supprimer': '🗑️ Delete',
+    'h2-empreinte': '+ Add a fingerprint or drawing',
+    'upload-titre': 'Drop a photo',
+    'upload-ou': ' or click to choose',
+    'upload-types': "fingerprint, child's drawing, signature, silhouette…",
+    'reglages-titre': '⚙️ Drawing settings (advanced)',
+    'reglages-info': "If the result isn't right, adjust these settings and the preview updates.",
+    'enhance-label': '✨ Improve image quality',
+    'lissage-label': 'Curve smoothing',
+    'simplif-label': 'Path simplification',
+    'filtre-label': 'Filter small stray lines',
+    'style-trait-label': 'Line style',
+    'h2-symbole': '+ Add a symbol',
+    'h2-texte': '+ Add text',
+    'texte-placeholder': 'e.g.: Marie & Paul, 14.06.2024…',
+    'style-gravure-label': 'Engraving style',
+    'btn-ajouter-texte': '+ Add this text to my addon',
+    'h2-apercu': '🔄 Realistic 3D preview',
+    'apercu-info': 'Your engraved addon in 3D. Drag the slider or click the button to rotate.',
+    'btn-rotation': '▶ Rotate addon (360°)',
+    'prix-label': 'Estimated price',
+    'prix-detail-init': 'Choose a format and add elements',
+    'h2-commande': '3. Send your request',
+    'commande-info': 'We receive your design and send you a personalised quote within 24 business hours.',
+    'label-prenom': 'Your first name *',
+    'label-email': 'Your email *',
+    'label-tel': 'Phone',
+    'label-matiere': 'Material',
+    'label-message': 'A message for the team? (optional)',
+    'prenom-placeholder': 'Marie',
+    'email-placeholder': 'marie@email.com',
+    'tel-placeholder': '+41 79 ...',
+    'msg-placeholder': "e.g.: it's for our wedding anniversary…",
+    'mat-alu': 'Aluminium',
+    'btn-acheter': '🛒 Buy on yourmood.net',
+    'btn-demande': 'or send a request to the team (custom quote)',
+    'btn-demande-reset': '✉️ Send request to team',
+    'dim-info': (x, y) => `Engravable surface: ${x} × ${y} mm`,
+    'canvas-info': (t, x, y) => `Unrolled band size ${t} — ${x} × ${y} mm`,
+    'prix-base-msg': 'Base price — add elements to personalise',
+    'prix-elements': (n, label) => `${n} element${n > 1 ? 's' : ''} · ${label}`,
+    'prix-base': 'base price',
+    'design-simple': 'simple design',
+    'design-moyen': 'medium design',
+    'design-complexe': 'complex design',
+    'err-prenom-email-achat': 'Please enter your first name and email before purchasing.',
+    'err-elements-achat': 'Add at least one element (fingerprint, text, drawing or symbol) before purchasing.',
+    'btn-preparation': '⏳ Preparing your cart…',
+    'err-panier': (msg) => `Error preparing cart: ${msg}. You can also send a request to the team below.`,
+    'btn-acheter-reset': '🛒 Buy on yourmood.net',
+    'err-prenom-email': 'Please enter your first name and email.',
+    'err-elements-envoi': 'Add at least a fingerprint or text before sending.',
+    'btn-envoi': '⏳ Sending…',
+    'ok-envoi': (prenom, email) => `✓ Thank you ${prenom}! We received your request. We'll get back to you within 24 business hours at ${email}.`,
+    'err-envoi': 'Send error. Please try again later or write to us at info@yourmood.net.',
+    'image-only': 'Images only',
+    'vectorisation': '⏳ Vectorising…',
+    'aucun-trait': 'No lines detected.',
+    'silhouette-label': '✂️ Silhouette → outline',
+    'empreinte-label': '🖋️ Fingerprint → lines',
+  },
+};
+const _langParam = new URLSearchParams(window.location.search).get('lang') || 'fr';
+const _lang = ['fr', 'de', 'en'].includes(_langParam) ? _langParam : 'fr';
+window._T = DICT[_lang];
+
+function applyLang() {
+  document.title = _T['page-title'];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    if (_T[k] && typeof _T[k] === 'string') el.textContent = _T[k];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const k = el.dataset.i18nPlaceholder;
+    if (_T[k]) el.placeholder = _T[k];
+  });
+  document.querySelectorAll('[data-i18n-value]').forEach(el => {
+    const k = el.dataset.i18nValue;
+    if (_T[k]) el.value = _T[k];
+  });
+}
+
 // ============ CONFIG ============
 const LONGUEURS_TAILLES = {
   50: 63.10, 52: 64.99, 54: 67.19, 56: 69.08, 58: 70.96,
@@ -410,8 +676,8 @@ function majDimensions() {
   const t = +document.getElementById('taille').value;
   viewLargeur = +fmt.options[fmt.selectedIndex].dataset.w;
   viewLongueur = LONGUEURS_TAILLES[t];
-  document.getElementById('dim-info').textContent = `Surface gravable : ${viewLongueur.toFixed(2)} × ${viewLargeur} mm`;
-  document.getElementById('canvas-info').textContent = `Bande dépliée taille ${t} — ${viewLongueur.toFixed(2)} × ${viewLargeur} mm`;
+  document.getElementById('dim-info').textContent = _T['dim-info'](viewLongueur.toFixed(2), viewLargeur);
+  document.getElementById('canvas-info').textContent = _T['canvas-info'](t, viewLongueur.toFixed(2), viewLargeur);
   rendreCanvas();
 }
 
@@ -1112,12 +1378,12 @@ function calculerPrix() {
   const niveau = calculerComplexite();
   let prix = base, label = '';
   if (fmt === 'addon') {
-    if (niveau === 0 || niveau === 1) { prix = 85; label = 'design simple'; }
-    else if (niveau === 2) { prix = 95; label = 'design moyen'; }
-    else { prix = 105; label = 'design complexe'; }
+    if (niveau === 0 || niveau === 1) { prix = 85; label = _T['design-simple']; }
+    else if (niveau === 2) { prix = 95; label = _T['design-moyen']; }
+    else { prix = 105; label = _T['design-complexe']; }
   } else {
     prix = base;
-    label = niveau === 0 ? 'prix de base' : niveau === 1 ? 'design simple' : niveau === 2 ? 'design moyen' : 'design complexe';
+    label = niveau === 0 ? _T['prix-base'] : niveau === 1 ? _T['design-simple'] : niveau === 2 ? _T['design-moyen'] : _T['design-complexe'];
   }
   return { prix, label, niveau, base, format: fmt };
 }
@@ -1129,9 +1395,9 @@ function majPrix() {
   if (!montant || !detail || !r) return;
   montant.textContent = r.prix;
   if (elements.length === 0) {
-    detail.textContent = 'Prix de base — ajoute tes éléments pour personnaliser';
+    detail.textContent = _T['prix-base-msg'];
   } else {
-    detail.textContent = `${elements.length} élément${elements.length > 1 ? 's' : ''} · ${r.label}`;
+    detail.textContent = _T['prix-elements'](elements.length, r.label);
   }
 }
 
@@ -1541,7 +1807,7 @@ window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { 
 document.addEventListener('dblclick', e => { e.preventDefault(); }, { passive: false });
 
 function lireImage(f) {
-  if (!f.type.startsWith('image/')) { alert('Image uniquement'); return; }
+  if (!f.type.startsWith('image/')) { alert(_T['image-only']); return; }
   const reader = new FileReader();
   reader.onload = ev => { imageDataUrl = ev.target.result; vectoriserEtAjouter(); };
   reader.readAsDataURL(f);
@@ -1608,14 +1874,14 @@ async function vectoriserImage(dataUrl) {
 async function vectoriserEtAjouter() {
   const previewZone = document.getElementById('vector-preview');
   previewZone.classList.remove('hidden');
-  previewZone.innerHTML = '<div class="info" style="padding:0.5rem;">⏳ Vectorisation…</div>';
+  previewZone.innerHTML = `<div class="info" style="padding:0.5rem;">${_T['vectorisation']}</div>`;
   try {
     const { paths, w, h, modeAuto } = await vectoriserImage(imageDataUrl);
     if (paths.length === 0) {
-      previewZone.innerHTML = '<div class="erreur" style="padding:0.5rem;">Aucun trait détecté.</div>';
+      previewZone.innerHTML = `<div class="erreur" style="padding:0.5rem;">${_T['aucun-trait']}</div>`;
       return;
     }
-    const label = modeAuto === 'silhouette' ? '✂️ Silhouette → contour' : '🖋️ Empreinte → lignes';
+    const label = modeAuto === 'silhouette' ? _T['silhouette-label'] : _T['empreinte-label'];
     previewZone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
       <div class="info" style="font-size:0.72rem;">${label}</div>
       <svg viewBox="0 0 ${w} ${h}">
@@ -1643,7 +1909,7 @@ async function revectoriserSelection() {
     rendreCanvas();
     const previewZone = document.getElementById('vector-preview');
     previewZone.classList.remove('hidden');
-    const label = modeAuto === 'silhouette' ? '✂️ Silhouette → contour' : '🖋️ Empreinte → lignes';
+    const label = modeAuto === 'silhouette' ? _T['silhouette-label'] : _T['empreinte-label'];
     previewZone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
       <div class="info" style="font-size:0.72rem;">${label}</div>
       <svg viewBox="0 0 ${w} ${h}">
@@ -1692,18 +1958,18 @@ async function acheterSurShopify() {
   const taille = document.getElementById('taille').value;
 
   if (!prenom || !email) {
-    erreurEl.textContent = 'Merci de renseigner ton prénom et ton email avant de passer à l\'achat.';
+    erreurEl.textContent = _T['err-prenom-email-achat'];
     erreurEl.classList.remove('hidden');
     return;
   }
   if (elements.length === 0) {
-    erreurEl.textContent = 'Ajoute au moins un élément (empreinte, texte, dessin ou symbole) sur ta bague avant de passer à l\'achat.';
+    erreurEl.textContent = _T['err-elements-achat'];
     erreurEl.classList.remove('hidden');
     return;
   }
 
   const btn = event?.target;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Préparation de ton panier…'; }
+  if (btn) { btn.disabled = true; btn.textContent = _T['btn-preparation']; }
 
   try {
     const svg = genererSvgFinal();
@@ -1722,9 +1988,9 @@ async function acheterSurShopify() {
     // Redirection vers le cart Shopify pré-rempli
     window.location.href = data.cartUrl;
   } catch (e) {
-    erreurEl.textContent = 'Erreur lors de la préparation du panier : ' + e.message + '. Tu peux aussi envoyer ta demande à l\'équipe ci-dessous.';
+    erreurEl.textContent = _T['err-panier'](e.message);
     erreurEl.classList.remove('hidden');
-    if (btn) { btn.disabled = false; btn.textContent = '🛒 Acheter sur yourmood.net'; }
+    if (btn) { btn.disabled = false; btn.textContent = _T['btn-acheter-reset']; }
   }
 }
 
@@ -1743,18 +2009,18 @@ async function envoyerDemande() {
   const taille = document.getElementById('taille').value;
 
   if (!prenom || !email) {
-    erreurEl.textContent = 'Merci de renseigner ton prénom et ton email.';
+    erreurEl.textContent = _T['err-prenom-email'];
     erreurEl.classList.remove('hidden');
     return;
   }
   if (elements.length === 0) {
-    erreurEl.textContent = 'Ajoute au moins une empreinte ou un texte sur ta bague avant d\'envoyer.';
+    erreurEl.textContent = _T['err-elements-envoi'];
     erreurEl.classList.remove('hidden');
     return;
   }
 
   const btn = event?.target;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi…'; }
+  if (btn) { btn.disabled = true; btn.textContent = _T['btn-envoi']; }
 
   try {
     const svg = genererSvgFinal();
@@ -1765,13 +2031,13 @@ async function envoyerDemande() {
       body: JSON.stringify({ prenom, email, tel, matiere, couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom, message, format, taille, svg, nbElements: elements.length, prix: prixCalc?.prix, niveau: prixCalc?.label })
     });
     if (!r.ok) throw new Error('Réponse ' + r.status);
-    okEl.textContent = `✓ Merci ${prenom} ! On a bien reçu ta demande. On te recontacte sous 24h ouvrées à ${email}.`;
+    okEl.textContent = _T['ok-envoi'](prenom, email);
     okEl.classList.remove('hidden');
   } catch (e) {
-    erreurEl.textContent = 'Erreur d\'envoi. Réessaye dans un instant ou écris-nous à info@yourmood.net.';
+    erreurEl.textContent = _T['err-envoi'];
     erreurEl.classList.remove('hidden');
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '✉️ Envoyer ma demande à Mood'; }
+    if (btn) { btn.disabled = false; btn.textContent = _T['btn-demande-reset']; }
   }
 }
 
@@ -2000,6 +2266,9 @@ function polylineToBezier(pl) {
   }
   return d;
 }
+
+// Apply translations after DOM is ready
+applyLang();
 </script>
 </body>
 </html>

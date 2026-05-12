@@ -104,11 +104,15 @@
     </button>
   </div>
 
+  {%- assign cfg_lang = request.locale.iso_code | downcase | slice: 0, 2 -%}
+  {%- unless cfg_lang == 'fr' or cfg_lang == 'de' or cfg_lang == 'en' -%}
+    {%- assign cfg_lang = 'fr' -%}
+  {%- endunless -%}
   <div class="cfg-frames">
     <iframe
       id="cfg-iframe-alu"
       class="cfg-iframe active"
-      src="{{ section.settings.url_alu }}"
+      src="{{ section.settings.url_alu }}?lang={{ cfg_lang }}"
       title="{{ section.settings.h1 }} — {{ section.settings.tab_alu }}"
       allow="clipboard-write; camera"
       loading="eager"
@@ -116,7 +120,7 @@
     <iframe
       id="cfg-iframe-argent"
       class="cfg-iframe"
-      src="{{ section.settings.url_argent }}"
+      src="{{ section.settings.url_argent }}?lang={{ cfg_lang }}"
       title="{{ section.settings.h1 }} — {{ section.settings.tab_argent }}"
       allow="clipboard-write; camera"
       loading="lazy"
