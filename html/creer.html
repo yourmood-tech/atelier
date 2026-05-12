@@ -1135,6 +1135,7 @@ async function majApercu3D() {
   if (!canvas) return;
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
+  texture.offset.x = 0.5; // centre du canvas face caméra (éléments visibles sans rotation)
   texture.anisotropy = 16;
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.needsUpdate = true;
