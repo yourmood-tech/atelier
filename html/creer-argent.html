@@ -42,11 +42,13 @@
   .pierre-btn svg { display: block; }
   .pierre-btn .nom { font-size: 0.62rem; color: var(--gris); line-height: 1.1; text-align: center; min-height: 1.2em; }
   .pierre-btn .prix { font-size: 0.72rem; color: var(--or); font-weight: 600; }
-  .sertissage-btn { background: white; border: 2px solid #e5e5e5; border-radius: 8px; padding: 0.5rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 0.1rem; font-family: inherit; align-items: center; }
+  .sertissage-btn { background-color: #36454f; background-size: cover; background-position: center; border: 2px solid #e5e5e5; border-radius: 8px; padding: 0.5rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 0.1rem; font-family: inherit; align-items: center; min-height: 60px; position: relative; overflow: hidden; }
+  .sertissage-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(54,69,79,0.1) 0%, rgba(54,69,79,0.85) 100%); }
+  .sertissage-btn > * { position: relative; z-index: 1; }
   .sertissage-btn:hover { border-color: var(--gris); }
-  .sertissage-btn.active { border-color: var(--or); border-width: 3px; background: white; }
-  .sertissage-btn strong { font-size: 0.8rem; color: var(--noir); }
-  .sertissage-btn span { font-size: 0.68rem; color: var(--gris); }
+  .sertissage-btn.active { border-color: var(--or); border-width: 3px; }
+  .sertissage-btn strong { font-size: 0.8rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+  .sertissage-btn span { font-size: 0.68rem; color: rgba(255,255,255,0.85); text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
   .hidden { display: none !important; }
   .prix-zone { background: linear-gradient(135deg, #fdf6e7 0%, #fff 100%); border: 1px solid var(--or); border-radius: 12px; padding: 1rem; margin: 1rem 0; text-align: center; }
   .prix-zone .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gris); }
@@ -169,13 +171,13 @@
     <div id="pierre-options" class="hidden" style="margin-top:0.7rem;padding:0.7rem 1rem;background:#fdf8ee;border:2px solid var(--or);border-radius:10px;">
       <strong style="font-size:0.8rem;display:block;margin-bottom:0.4rem;">Sertissage de cette pierre :</strong>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;">
-        <button class="sertissage-btn active" data-sertissage="grain" onclick="changerSertissage('grain')">
+        <button class="sertissage-btn active" data-sertissage="grain" onclick="changerSertissage('grain')" style="background-image:url('/sertissages/grain.jpg');">
           <strong>Grain</strong><span>classique</span>
         </button>
-        <button class="sertissage-btn" data-sertissage="etoile" onclick="changerSertissage('etoile')">
+        <button class="sertissage-btn" data-sertissage="etoile" onclick="changerSertissage('etoile')" style="background-image:url('/sertissages/etoile.jpg');">
           <strong>Étoile</strong><span>4 griffes</span>
         </button>
-        <button class="sertissage-btn" data-sertissage="invisible" onclick="changerSertissage('invisible')">
+        <button class="sertissage-btn" data-sertissage="invisible" onclick="changerSertissage('invisible')" style="background-image:url('/sertissages/invisible.jpg');">
           <strong>Invisible</strong><span>sans monture</span>
         </button>
       </div>
