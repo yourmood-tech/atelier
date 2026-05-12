@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { appendTimeline } from "../../_timeline";
 
 const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -75,6 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       ]);
     }
 
+    appendTimeline(id, "Design SVG mis à jour");
     return NextResponse.json({ ok: true, designId: meta.designId, type: meta.type });
   } catch (e: unknown) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

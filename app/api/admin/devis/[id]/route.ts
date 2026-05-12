@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { appendTimeline } from "../_timeline";
 
 const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -99,6 +100,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
     const data = await r.json();
     if (!r.ok) return NextResponse.json({ error: JSON.stringify(data) }, { status: r.status });
+    const oldPrice = Number(draft_order.total_price).toFixed(2);
+    appendTimeline(id, `Prix modifié — CHF ${oldPrice} → CHF ${Number(prix).toFixed(2)}`);
     return NextResponse.json({ ok: true, draft_order: data.draft_order });
   } catch (e: unknown) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

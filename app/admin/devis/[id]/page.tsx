@@ -67,10 +67,15 @@ export default function DevisDetailPage() {
   const [uploadingsvg, setUploadingsvg] = useState(false);
   const [uploadMsg, setUploadMsg] = useState<string | null>(null);
 
+  // Envoi devis (notification design + prix)
+  const [sendingDevis, setSendingDevis] = useState(false);
+  const [devisMsg, setDevisMsg] = useState<string | null>(null);
+  const [devisMessage, setDevisMessage] = useState("Bonjour, voici ton devis personnalisé Mood. Tu trouveras ci-dessous le lien vers ton design ainsi que le prix validé par notre équipe.");
+
   // Envoi facture
   const [sendingFacture, setSendingFacture] = useState(false);
   const [factureMsg, setFactureMsg] = useState<string | null>(null);
-  const [factureMessage, setFactureMessage] = useState("Bonjour, ton devis personnalisé Mood est prêt. Tu peux finaliser ta commande en cliquant sur le lien ci-dessous.");
+  const [factureMessage, setFactureMessage] = useState("Bonjour, ton devis personnalisé Mood est confirmé. Tu peux finaliser ta commande en cliquant sur le lien ci-dessous.");
 
   const load = useCallback(() => {
     setLoading(true);
@@ -121,6 +126,25 @@ export default function DevisDetailPage() {
     setUploadingsvg(false);
     if (d.ok) { setUploadMsg("✓ Design mis à jour"); load(); }
     else setUploadMsg("Erreur : " + (d.error ?? "inconnue"));
+  }
+
+  async function envoyerDevis() {
+    setSendingDevis(true);
+    setDevisMsg(null);
+    try {
+      const r = await fetch(`/api/admin/devis/${id}/notifier`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: devisMessage }),
+      });
+      const d = await r.json();
+      if (d.ok) { setDevisMsg(`✓ Devis envoyé à ${d.email}`); load(); }
+      else setDevisMsg("Erreur : " + (d.error ?? "inconnue"));
+    } catch (e) {
+      setDevisMsg("Erreur réseau : " + String(e));
+    } finally {
+      setSendingDevis(false);
+    }
   }
 
   async function envoyerFacture() {
@@ -218,9 +242,50 @@ export default function DevisDetailPage() {
               </Section>
             )}
 
+            {/* Timeline */}
+            {draft.note && (() => {
+              const lines = draft.note.split("\n").filter((l) => l.startsWith("▸"));
+              if (!lines.length) return null;
+              return (
+                <Section title="Historique">
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                    {lines.map((l, i) => {
+                      const [, ts, ...rest] = l.match(/▸\s+(.+?)\s+—\s+(.+)/) ?? [null, "", l.slice(2)];
+                      return (
+                        <div key={i} style={{ display: "flex", gap: "0.75rem", fontSize: "0.78rem" }}>
+                          <span style={{ color: "#52525b", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{ts}</span>
+                          <span style={{ color: "#a1a1aa" }}>{rest.join(" — ")}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Section>
+              );
+            })()}
+
+            {/* Envoyer le devis (email design + prix) */}
+            {!isValide && (
+              <Section title="Envoyer le devis au client">
+                <textarea
+                  value={devisMessage}
+                  onChange={(e) => setDevisMessage(e.target.value)}
+                  rows={3}
+                  style={{ width: "100%", background: "#09090b", border: "1px solid #27272a", borderRadius: 6, padding: "0.5rem", color: "#f4f4f5", fontSize: "0.82rem", fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
+                />
+                <button
+                  onClick={envoyerDevis}
+                  disabled={sendingDevis}
+                  style={{ marginTop: "0.5rem", background: "#3f3f46", color: "#e4e4e7", border: "none", borderRadius: 6, padding: "0.5rem 1.2rem", cursor: "pointer", fontWeight: 600, fontSize: "0.85rem", width: "100%" }}
+                >
+                  {sendingDevis ? "Envoi…" : "✉️ Envoyer le devis (design + prix)"}
+                </button>
+                {devisMsg && <p style={{ marginTop: "0.4rem", fontSize: "0.78rem", color: devisMsg.startsWith("✓") ? "#22c55e" : "#fca5a5" }}>{devisMsg}</p>}
+              </Section>
+            )}
+
             {/* Envoyer la facture */}
             {!isValide && (
-              <Section title="Envoyer la facture au client">
+              <Section title="Envoyer la facture de paiement">
                 <textarea
                   value={factureMessage}
                   onChange={(e) => setFactureMessage(e.target.value)}
