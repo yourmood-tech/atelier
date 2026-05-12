@@ -79,6 +79,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const patchBody = {
       draft_order: {
         line_items: [{
+          id: lineItem.id,
+          title: lineItem.title,
           variant_id: lineItem.variant_id,
           quantity: lineItem.quantity,
           price: Number(prix).toFixed(2),
