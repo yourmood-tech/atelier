@@ -798,55 +798,6 @@ Instructions:
   return response.content[0].type === "text" ? response.content[0].text.trim() : "";
 }
 
-// ── Klaviyo — DevisPaye event → déclenche flow confirmation devis ─────────────
-
-export async function sendDevisPayeKlaviyo(params: {
-  email: string;
-  firstName: string;
-  orderName: string;
-  totalPrice: string;
-  itemTitle: string;
-}): Promise<void> {
-  const apiKey = process.env.KLAVIYO_API_KEY!;
-  const res = await fetch("https://a.klaviyo.com/api/events/", {
-    method: "POST",
-    headers: {
-      Authorization: `Klaviyo-API-Key ${apiKey}`,
-      "Content-Type": "application/json",
-      revision: "2024-10-15",
-    },
-    body: JSON.stringify({
-      data: {
-        type: "event",
-        attributes: {
-          profile: {
-            data: {
-              type: "profile",
-              attributes: { email: params.email, first_name: params.firstName },
-            },
-          },
-          metric: {
-            data: {
-              type: "metric",
-              attributes: { name: "DevisPaye" },
-            },
-          },
-          properties: {
-            order_name: params.orderName,
-            total_price: params.totalPrice,
-            item_title: params.itemTitle,
-          },
-          time: new Date().toISOString(),
-        },
-      },
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Klaviyo DevisPaye ${res.status}: ${text.slice(0, 200)}`);
-  }
-}
-
 // ── Resend — internal fulfillment notification ────────────────────────────────
 
 export async function sendFulfillmentNotification(params: {
