@@ -444,6 +444,7 @@
     <div class="modal-actions">
       <button class="outline" onclick="fermerModal()">Annuler</button>
       <button class="danger" id="btn-supprimer" onclick="supprimerProduit()" style="display:none">Supprimer</button>
+      <button class="outline" id="btn-dupliquer" onclick="dupliquerProduit()" style="display:none">📋 Dupliquer</button>
       <button class="outline" id="btn-evaluer" onclick="evaluerIdeeModal()" style="background:#fff8e7;border-color:var(--or);color:var(--or);">🔍 Évaluer</button>
       <button onclick="sauverProduit()">Sauver</button>
     </div>
@@ -762,6 +763,7 @@ function ouvrirModalAjout(date) {
   document.getElementById('produit-image').value = '';
   setImagePreview('');
   document.getElementById('btn-supprimer').style.display = 'none';
+  document.getElementById('btn-dupliquer').style.display = 'none';
   const evalZone = document.getElementById('eval-resultat');
   if (evalZone) { evalZone.innerHTML = ''; evalZone.style.display = 'none'; }
   document.getElementById('modal').classList.add('show');
@@ -785,6 +787,7 @@ function ouvrirModalEdit(id) {
   document.getElementById('produit-image').value = p.image || '';
   setImagePreview(p.image || '');
   document.getElementById('btn-supprimer').style.display = 'inline-block';
+  document.getElementById('btn-dupliquer').style.display = 'inline-block';
   document.getElementById('modal').classList.add('show');
 }
 
@@ -900,6 +903,25 @@ function sauverProduit() {
   sauverDonnees();
   fermerModal();
   rendreCalendrier();
+}
+
+function dupliquerProduit() {
+  const id = document.getElementById('produit-id').value;
+  if (!id) return;
+  const src = donnees.produits.find(p => p.id === id);
+  if (!src) return;
+  // Clone profond du produit (image base64 incluse), nouvel ID, nom suffixé "(copie)"
+  const copie = JSON.parse(JSON.stringify(src));
+  copie.id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  copie.nom = (src.nom || '') + ' (copie)';
+  copie.creAt = new Date().toISOString();
+  copie.majAt = copie.creAt;
+  donnees.produits.push(copie);
+  sauverDonnees();
+  fermerModal();
+  rendreCalendrier();
+  // Ouvre directement la modal sur la copie pour ajustements (date, nom, etc.)
+  setTimeout(() => ouvrirModalEdit(copie.id), 50);
 }
 
 function supprimerProduit() {
