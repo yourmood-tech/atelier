@@ -760,9 +760,9 @@ function init3D() {
   renderer3D.setPixelRatio(window.devicePixelRatio);
   renderer3D.outputColorSpace = THREE.SRGBColorSpace;
   // Tone mapping subtil pour rendu métallique réaliste sans dénaturer les couleurs
-  // Linear tone mapping : préserve les couleurs exactes des photos packshot Mood réelles utilisées en texture
-  renderer3D.toneMapping = THREE.LinearToneMapping;
-  renderer3D.toneMappingExposure = 1.0;
+  // ACES tone mapping : meilleur pour le métal (highlights pas cramés)
+  renderer3D.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer3D.toneMappingExposure = 1.1;
   container.innerHTML = '';
   container.appendChild(renderer3D.domElement);
 
@@ -861,35 +861,24 @@ async function genererTextureBague() {
   canvas.width = tw;
   canvas.height = th;
   const ctx = canvas.getContext('2d');
-  // 1. Fond = strip texture argent extrait des photos packshot Mood
-  const fmt = document.getElementById('format')?.value || 'addon';
-  try {
-    const stripImg = await getArgentStrip(fmt, couleurChoisie.id);
-    const stripW = stripImg.naturalWidth || 128;
-    const stripH = stripImg.naturalHeight || 256;
-    // Largeur cible par tile (étiré verticalement à la hauteur du canvas)
-    // Pour un rendu fidèle aux photos, on garde le ratio d'aspect du strip
-    const tileW = Math.round(th * stripW / stripH);
-    const repeats = Math.ceil(tw / tileW);
-    for (let i = 0; i < repeats; i++) {
-      // Alternance mirror pour éviter les coupures visibles aux jonctions
-      if (i % 2 === 0) {
-        ctx.drawImage(stripImg, i * tileW, 0, tileW, th);
-      } else {
-        ctx.save();
-        ctx.translate((i + 1) * tileW, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(stripImg, 0, 0, tileW, th);
-        ctx.restore();
-      }
-    }
-  } catch (e) {
-    // Fallback : couleur unie si strip pas chargé
-    ctx.fillStyle = couleurChoisie.hex;
-    ctx.fillRect(0, 0, tw, th);
-  }
+  // 1. Fond couleur argent (la finition donne le ton de gris)
+  ctx.fillStyle = couleurChoisie.hex;
+  ctx.fillRect(0, 0, tw, th);
 
-  // 2. Gravure SVG par-dessus
+  // 2. Bande lumineuse verticale dégradée (highlight studio)
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const bandCenterX = tw * 0.35;
+  const bandHalfW = tw * 0.15;
+  const bandGrad = ctx.createLinearGradient(bandCenterX - bandHalfW, 0, bandCenterX + bandHalfW, 0);
+  bandGrad.addColorStop(0, 'rgba(255,255,255,0)');
+  bandGrad.addColorStop(0.5, 'rgba(255,255,255,0.22)');
+  bandGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bandGrad;
+  ctx.fillRect(bandCenterX - bandHalfW, 0, bandHalfW * 2, th);
+  ctx.restore();
+
+  // 3. Gravure SVG par-dessus
   let svgInner = '';
   for (const el of elements) svgInner += elementSvg(el, false);
   if (!svgInner) return canvas;
@@ -925,15 +914,14 @@ async function majApercu3D() {
   texture.needsUpdate = true;
 
   // Params PBR argent selon la finition choisie
-  // Params PBR doux : la texture argent réelle porte déjà tout le visuel,
-  // le PBR ajoute juste un léger éclat à la rotation
+  // Params PBR argent métallique selon finition
   function getArgentParams(finitionId) {
     switch(finitionId) {
-      case 'poli':    return { metalness: 0.4, roughness: 0.30, clearcoat: 0.2, clearcoatRoughness: 0.15 };
-      case 'brosse':  return { metalness: 0.3, roughness: 0.55, clearcoat: 0.05, clearcoatRoughness: 0.4 };
-      case 'neutre':  return { metalness: 0.35, roughness: 0.40, clearcoat: 0.1, clearcoatRoughness: 0.25 };
-      case 'piquete': return { metalness: 0.25, roughness: 0.65, clearcoat: 0,   clearcoatRoughness: 0.5 };
-      default:        return { metalness: 0.35, roughness: 0.45, clearcoat: 0.1, clearcoatRoughness: 0.3 };
+      case 'poli':    return { metalness: 0.95, roughness: 0.12, clearcoat: 0.3, clearcoatRoughness: 0.1 };
+      case 'brosse':  return { metalness: 0.88, roughness: 0.48, clearcoat: 0.05, clearcoatRoughness: 0.4 };
+      case 'neutre':  return { metalness: 0.90, roughness: 0.28, clearcoat: 0.15, clearcoatRoughness: 0.2 };
+      case 'piquete': return { metalness: 0.72, roughness: 0.65, clearcoat: 0,    clearcoatRoughness: 0.5 };
+      default:        return { metalness: 0.88, roughness: 0.30, clearcoat: 0.15, clearcoatRoughness: 0.2 };
     }
   }
   const argentParams = getArgentParams(couleurChoisie?.id);
@@ -942,7 +930,7 @@ async function majApercu3D() {
   const material = new THREE.MeshPhysicalMaterial({
     map: texture,
     ...argentParams,
-    envMapIntensity: 0.4,
+    envMapIntensity: 1.3,
     side: THREE.DoubleSide,
   });
 
@@ -978,7 +966,7 @@ async function majApercu3D() {
 
   const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
-    map: texture, ...argentParams, envMapIntensity: 0.4, side: THREE.FrontSide,
+    map: texture, ...argentParams, envMapIntensity: 1.3, side: THREE.FrontSide,
   }));
 
   const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
