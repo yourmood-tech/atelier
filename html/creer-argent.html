@@ -1042,16 +1042,39 @@ const PIERRES = [
   { id: 'diampr-jaune-21',   nom: 'Diamant pur jaune', taille: 2.1,  couleur: '#fde047', prix: 119 },
 ];
 
+// Dessin d'une pierre taille brillant : cercle extérieur + octogone central + 8 facettes radiales
+function pierreSvgFacettes(r, couleur, swMult = 1) {
+  const inR = r * 0.45;
+  // 8 sommets de l'octogone (rotation pour avoir un côté plat en haut)
+  const verts = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (i * 45 - 22.5) * Math.PI / 180;
+    verts.push({
+      x: inR * Math.cos(a), y: inR * Math.sin(a),
+      ox: r * Math.cos(a), oy: r * Math.sin(a),
+    });
+  }
+  const octPath = 'M ' + verts.map(v => `${v.x.toFixed(3)} ${v.y.toFixed(3)}`).join(' L ') + ' Z';
+  const sw = r * 0.06 * swMult;
+  const swInner = sw * 0.7;
+  const lines = verts.map(v =>
+    `<line x1="${v.x.toFixed(3)}" y1="${v.y.toFixed(3)}" x2="${v.ox.toFixed(3)}" y2="${v.oy.toFixed(3)}" stroke="#000" stroke-width="${swInner.toFixed(3)}" stroke-linecap="round"/>`
+  ).join('');
+  return `
+    <circle cx="0" cy="0" r="${r}" fill="${couleur}" stroke="#000" stroke-width="${sw.toFixed(3)}"/>
+    ${lines}
+    <path d="${octPath}" fill="none" stroke="#000" stroke-width="${swInner.toFixed(3)}"/>
+  `;
+}
+
 function genererSelecteurPierres() {
   const grid = document.getElementById('pierres-grid');
   if (!grid) return;
   grid.innerHTML = PIERRES.map(p => {
     const r = p.taille / 2;
-    const highlightR = r * 0.25;
     return `<button class="pierre-btn" onclick="ajouterPierre('${p.id}')" title="${p.nom} ${p.taille}mm — ${p.prix} CHF">
       <svg viewBox="-1.5 -1.5 3 3" width="24" height="24">
-        <circle cx="0" cy="0" r="${r}" fill="${p.couleur}" stroke="#000" stroke-width="0.12"/>
-        <circle cx="${-r*0.3}" cy="${-r*0.3}" r="${highlightR}" fill="rgba(255,255,255,0.55)"/>
+        ${pierreSvgFacettes(r, p.couleur, 1.4)}
       </svg>
       <span class="nom">${p.nom} ${p.taille}mm</span>
       <span class="prix">${p.prix}.-</span>
@@ -1356,8 +1379,7 @@ function elementSvg(el, withSelection = false) {
     // 'invisible' = pas de monture, juste la pierre
     return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y})">
       ${monture}
-      <circle cx="0" cy="0" r="${r}" fill="${p.couleur}" stroke="#000000" stroke-width="0.08"/>
-      <circle cx="${-r*0.3}" cy="${-r*0.3}" r="${hr}" fill="rgba(255,255,255,0.55)"/>
+      ${pierreSvgFacettes(r, p.couleur, 1)}
     </g>`;
   }
   return '';
