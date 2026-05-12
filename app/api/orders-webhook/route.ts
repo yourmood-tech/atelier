@@ -70,16 +70,34 @@ const COULEUR_KATANA: Record<FormatKey, Record<string, string>> = {
   },
 };
 
+// Convention SKU argent Katana (à confirmer avec Amila/Sandrine si différente)
+const ARGENT_PREFIX: Record<string, string> = {
+  ADDON: "MTRL-ADDONARG",
+  "23":  "MTRL-23ARG",
+  MED:   "MTRL-MEDARG",
+};
+
 function persoSkuToKatanaSku(persoSku: string): string | null {
-  const m = persoSku.match(/^(MED|23|ADDON|OPEN)-PERSO-([A-Z]+)-ALU-(\d+)$/);
-  if (!m) return null;
-  const [, formatSku, couleurSku, taille] = m;
-  const config = FORMAT_CONFIG[formatSku as FormatKey];
-  const couleurKatana = COULEUR_KATANA[formatSku as FormatKey]?.[couleurSku];
-  if (!config || !couleurKatana) return null;
-  return config.tailleAvantCouleur
-    ? `${config.katanaPrefix}-${taille}-${couleurKatana}`
-    : `${config.katanaPrefix}-${couleurKatana}-${taille}`;
+  // Cas alu : {FORMAT}-PERSO-{COULEUR}-ALU-{TAILLE}
+  const aluMatch = persoSku.match(/^(MED|23|ADDON|OPEN)-PERSO-([A-Z]+)-ALU-(\d+)$/);
+  if (aluMatch) {
+    const [, formatSku, couleurSku, taille] = aluMatch;
+    const config = FORMAT_CONFIG[formatSku as FormatKey];
+    const couleurKatana = COULEUR_KATANA[formatSku as FormatKey]?.[couleurSku];
+    if (!config || !couleurKatana) return null;
+    return config.tailleAvantCouleur
+      ? `${config.katanaPrefix}-${taille}-${couleurKatana}`
+      : `${config.katanaPrefix}-${couleurKatana}-${taille}`;
+  }
+  // Cas argent : {FORMAT}-PERSO-ARGENT-{FINITION}-{TAILLE} → MTRL-{FORMAT}ARG-{TAILLE}-{FINITION}
+  const argentMatch = persoSku.match(/^(MED|23|ADDON)-PERSO-ARGENT-([A-Z]+)-(\d+)$/);
+  if (argentMatch) {
+    const [, formatSku, finitionSku, taille] = argentMatch;
+    const prefix = ARGENT_PREFIX[formatSku];
+    if (!prefix) return null;
+    return `${prefix}-${taille}-${finitionSku}`;
+  }
+  return null;
 }
 
 // ============ Katana API ============
@@ -217,7 +235,8 @@ export async function POST(req: NextRequest) {
   const katanaResultats: Array<{ persoSku: string; katanaSku: string | null; ok: boolean; erreur?: string }> = [];
   if (KATANA_BASE && KATANA_KEY) {
     for (const item of order.line_items || []) {
-      if (item.sku !== "BAGUE-PERSO") continue;
+      // Accepte les 2 SKU génériques perso : alu (BAGUE-PERSO) et argent (BAGUE-PERSO-ARGENT)
+      if (item.sku !== "BAGUE-PERSO" && item.sku !== "BAGUE-PERSO-ARGENT") continue;
       const skuProp = item.properties?.find((p) => p.name === "SKU Katana")?.value;
       if (!skuProp) {
         katanaResultats.push({ persoSku: "?", katanaSku: null, ok: false, erreur: "Property SKU Katana manquante" });

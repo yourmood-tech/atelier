@@ -2005,16 +2005,24 @@ async function acheterSurShopify() {
     const svgGravure = genererSvgGravure();   // 1) trait dessins uniquement (Gravograph)
     const svgComplet = genererSvgComplet();   // 2) visuel total (dessin + pierres)
     const svgPlan    = genererPlanSertissage(); // 3) plan de sertissage avec liste pierres
-    const r = await fetch('/api/creer-cart-shopify', {
+    const prixCalc = calculerPrix();
+    const r = await fetch('/api/creer-argent-cart-shopify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prenom, email, tel, message,
         format, taille,
         couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom,
-        svg: svgComplet,        // compat ancien champ
+        gravure: gravureType,
+        svg: svgComplet,
         svgGravure, svgComplet, svgPlan,
         nbElements: elements.length,
+        prix: prixCalc?.prix, prixBase: prixCalc?.base,
+        pierresCount: prixCalc?.pierresCount, pierresTotal: prixCalc?.pierresTotal,
+        pierres: elements.filter(el => el.type === 'pierre').map(el => {
+          const p = PIERRES.find(x => x.id === el.pierreId);
+          return p ? { id: p.id, nom: p.nom, taille: p.taille, prix: p.prix, x: el.x, y: el.y, sertissage: el.sertissage || 'grain' } : null;
+        }).filter(Boolean),
       }),
     });
     const data = await r.json();
