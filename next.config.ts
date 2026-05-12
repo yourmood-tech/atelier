@@ -7,8 +7,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Autoriser /creer et /creer-argent à être intégrés en iframe depuis yourmood.net
-        source: "/creer:path*",
+        source: "/(.*)",
         headers: [
           {
             key: "Content-Security-Policy",
