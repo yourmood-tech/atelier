@@ -97,11 +97,10 @@ export default function DevisDetailPage() {
         body: JSON.stringify({ prix: newPrix }),
       });
       const d = await r.json();
-      if (d.ok) {
-        const returned = d.draft_order?.total_price ?? "?";
-        alert(`Shopify a enregistré → total_price: ${returned} | line_item price: ${d.draft_order?.line_items?.[0]?.price ?? "?"}`);
+      if (d.ok && d.draft_order) {
+        setDraft(d.draft_order);
+        setNewPrix(d.draft_order.total_price ?? "");
         setEditingPrix(false);
-        load();
       } else alert("Erreur Shopify : " + (d.error ?? "inconnue"));
     } catch (e) {
       alert("Erreur réseau : " + String(e));
