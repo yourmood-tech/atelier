@@ -95,7 +95,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       body: JSON.stringify(patchBody),
     });
     const data = await r.json();
-    if (!r.ok) return NextResponse.json({ error: JSON.stringify(data).slice(0, 200) }, { status: r.status });
+    if (!r.ok) return NextResponse.json({ error: JSON.stringify(data) }, { status: r.status });
     return NextResponse.json({ ok: true, draft_order: data.draft_order });
   } catch (e: unknown) {
     return NextResponse.json({ error: (e as Error).message }, { status: 500 });

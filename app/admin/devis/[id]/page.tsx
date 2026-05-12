@@ -90,15 +90,20 @@ export default function DevisDetailPage() {
 
   async function savePrix() {
     setSavingPrix(true);
-    const r = await fetch(`/api/admin/devis/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prix: newPrix }),
-    });
-    const d = await r.json();
-    setSavingPrix(false);
-    if (d.ok) { setEditingPrix(false); load(); }
-    else alert("Erreur : " + (d.error ?? "inconnue"));
+    try {
+      const r = await fetch(`/api/admin/devis/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prix: newPrix }),
+      });
+      const d = await r.json();
+      if (d.ok) { setEditingPrix(false); load(); }
+      else alert("Erreur Shopify : " + (d.error ?? "inconnue"));
+    } catch (e) {
+      alert("Erreur réseau : " + String(e));
+    } finally {
+      setSavingPrix(false);
+    }
   }
 
   async function uploadSvg(file: File) {
