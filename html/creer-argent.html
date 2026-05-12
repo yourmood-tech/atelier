@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Crée ta bague argent — Mood Collection</title>
+<script src="https://cdn.jsdelivr.net/npm/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<style>
+  :root { --or:#c9a96e; --noir:#1a1a1a; --gris:#6b6b6b; --gris-clair:#f5f5f5; --vert:#2d8a4e; --rouge:#c0392b; --bleu:#2563eb; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Optima', 'Avenir Next', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--noir); background: #fafafa; line-height: 1.5; padding: 1.5rem 1rem; max-width: 900px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 2rem; }
+  header .marque { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--or); text-transform: uppercase; margin-bottom: 0.4rem; }
+  header h1 { font-size: 1.8rem; font-weight: 300; letter-spacing: 0.02em; }
+  header .sous-titre { font-size: 0.9rem; color: var(--gris); margin-top: 0.4rem; font-style: italic; }
+  .etapes { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+  .etape { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--gris); }
+  .etape .num { width: 24px; height: 24px; border-radius: 50%; background: var(--or); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; }
+  footer { text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #eee; font-size: 0.75rem; color: var(--gris); }
+  .symboles-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
+  .symb-btn { font-size: 1.5rem; padding: 0.5rem 0; line-height: 1; }
+  @media (max-width: 600px) { .symboles-grid { grid-template-columns: repeat(4, 1fr); } }
+  .formats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+  .format-btn { background: white; border: 2px solid #e5e5e5; border-radius: 10px; padding: 0.7rem 0.3rem; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; font-family: inherit; }
+  .format-btn strong { font-size: 0.85rem; color: var(--noir); }
+  .format-btn span { font-size: 0.72rem; color: var(--gris); }
+  .format-btn:hover { border-color: var(--gris); }
+  .format-btn.active { border-color: var(--or); border-width: 3px; background: #fdf8ee; }
+  @media (max-width: 600px) { .formats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .couleurs-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+  @media (max-width: 600px) { .couleurs-grid { grid-template-columns: repeat(4, 1fr); } }
+  .couleur-btn { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; overflow: hidden; background: white; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+  .couleur-btn img { width: 92%; height: 92%; object-fit: contain; display: block; }
+  .couleur-btn:hover { border-color: var(--gris); transform: scale(1.05); }
+  .couleur-btn.active { border-color: var(--or); border-width: 3px; transform: scale(1.05); }
+  .prix-zone { background: linear-gradient(135deg, #fdf6e7 0%, #fff 100%); border: 1px solid var(--or); border-radius: 12px; padding: 1rem; margin: 1rem 0; text-align: center; }
+  .prix-zone .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gris); }
+  .prix-zone .montant { font-size: 2rem; font-weight: 300; color: var(--noir); margin: 0.3rem 0; }
+  .prix-zone .montant strong { font-weight: 600; color: var(--or); }
+  .prix-zone .detail { font-size: 0.78rem; color: var(--gris); }
+  h2 { font-size: 0.9rem; margin: 0.8rem 0 0.4rem 0; color: var(--or); text-transform: uppercase; letter-spacing: 0.05em; }
+  .grid { display: flex; flex-direction: column; gap: 1rem; }
+  .card { background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 0.8rem; }
+  label { display: block; font-size: 0.78rem; font-weight: 500; margin: 0.5rem 0 0.2rem 0; }
+  input, select, textarea { width: 100%; padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; font-family: inherit; }
+  button { background: var(--or); color: white; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
+  button.outline { background: white; color: var(--noir); border: 1px solid #ccc; }
+  button.danger { background: var(--rouge); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.diamant-btn { display: flex; align-items: center; gap: 0.4rem; width: 100%; justify-content: flex-start; margin-bottom: 0.3rem; padding: 0.4rem 0.6rem; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .info { font-size: 0.7rem; color: var(--gris); margin-top: 0.2rem; }
+  .erreur { color: var(--rouge); font-size: 0.8rem; margin-top: 0.4rem; }
+  .canvas-zone { background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .canvas-info { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; text-align: center; }
+  .canvas-zone { overflow: hidden; }
+  button.outline.mode-actif { background: var(--or); color: white; border-color: var(--or); }
+  #apercu-3d-container canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
+  #apercu-3d-container canvas:active { cursor: grabbing; }
+  .editor-svg { display: block; margin: 0 auto; background: white; cursor: default; user-select: none; touch-action: manipulation; }
+  .editor-svg .element { cursor: move; }
+  .editor-svg .element.selected { outline: 2px dashed var(--bleu); outline-offset: 4px; }
+  .toolbar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.5rem; justify-content: center; }
+  .upload-zone { border: 2px dashed #ccc; border-radius: 8px; padding: 0.8rem; text-align: center; cursor: pointer; font-size: 0.8rem; }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--or); background: #fff8e7; }
+  .vector-preview { background: var(--gris-clair); border-radius: 6px; padding: 0.75rem; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+  .vector-preview svg { max-height: 280px; max-width: 100%; }
+  .hidden { display: none !important; }
+  .diamant-icon { display: inline-block; width: 24px; height: 24px; flex-shrink: 0; }
+  details summary { cursor: pointer; font-size: 0.8rem; padding: 0.3rem 0; }
+  details summary:hover { color: var(--or); }
+  .elements-list { font-size: 0.8rem; }
+  .element-item { padding: 0.3rem 0.5rem; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .element-item:hover { background: var(--gris-clair); }
+  .element-item.selected { background: #fff8e7; color: var(--or); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- Filtres SVG pour teinter les photos format selon la couleur sélectionnée -->
+<svg width="0" height="0" style="position:absolute;pointer-events:none;" aria-hidden="true">
+  <defs id="tint-filters"></defs>
+</svg>
+
+<header>
+  <div class="marque">Mood Collection</div>
+  <h1>Crée ta bague argent unique</h1>
+  <div class="sous-titre">une empreinte, un mot, un souvenir gravé à vie</div>
+</header>
+
+<div class="etapes">
+  <div class="etape"><span class="num">1</span> Choisis ton format</div>
+  <div class="etape"><span class="num">2</span> Personnalise</div>
+  <div class="etape"><span class="num">3</span> Envoie ta demande</div>
+</div>
+
+<div class="grid">
+
+  <!-- ÉTAPE 1 : BAGUE -->
+  <div class="card">
+    <h2>1. Ta bague</h2>
+    <label>Format de la bague</label>
+    <div class="formats-grid">
+      <button type="button" class="format-btn" data-format="medium" data-w="2.3" onclick="choisirFormat('medium')">
+        <strong>Medium</strong><span>2,3 mm</span>
+      </button>
+      <button type="button" class="format-btn" data-format="2-3" data-w="4.6" onclick="choisirFormat('2-3')">
+        <strong>Deux tiers</strong><span>4,6 mm</span>
+      </button>
+      <button type="button" class="format-btn active" data-format="addon" data-w="7" onclick="choisirFormat('addon')">
+        <strong>Addon</strong><span>7 mm</span>
+      </button>
+    </div>
+    <!-- Hidden input pour compat code existant qui lit document.getElementById('format').value -->
+    <select id="format" onchange="majDimensions()" style="display:none;">
+      <option value="addon" data-w="7" selected>Addon</option>
+      <option value="2-3" data-w="4.6">Deux tiers</option>
+      <option value="medium" data-w="2.3">Medium</option>
+    </select>
+    <label style="margin-top:0.8rem;">Ta taille</label>
+    <select id="taille" onchange="majDimensions()" style="max-width:120px;"></select>
+    <div class="info" id="dim-info" style="margin-top:0.4rem;">—</div>
+
+    <label style="margin-top:0.8rem;">Finition de l'argent</label>
+    <div class="couleurs-grid" id="couleurs-grid"></div>
+    <div class="info" id="couleur-info" style="margin-top:0.4rem;text-align:center;">Finition sélectionnée : <strong id="couleur-nom">Poli</strong></div>
+
+    <label style="margin-top:0.8rem;">Type de gravure</label>
+    <div class="formats-grid" style="grid-template-columns:1fr 1fr;">
+      <button type="button" class="format-btn active" data-gravure="oxydee" onclick="choisirGravure('oxydee')">
+        <strong>Oxydée</strong><span>tracé sombre</span>
+      </button>
+      <button type="button" class="format-btn" data-gravure="neutre" onclick="choisirGravure('neutre')">
+        <strong>Neutre</strong><span>tracé clair</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : CANVAS APERÇU -->
+  <div class="canvas-zone">
+    <div class="canvas-info" id="canvas-info">2. Aperçu de ta bague — ajoute ton empreinte ou ton texte ci-dessous</div>
+    <svg id="editor-svg" class="editor-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="toolbar">
+      <button class="outline" onclick="basculerMode('crayon')" id="btn-crayon">✏️ Dessiner</button>
+      <button class="outline" onclick="basculerMode('gomme')" id="btn-gomme">🧽 Gommer</button>
+      <button class="outline" onclick="agrandir()" id="btn-grand" disabled>🔍+ Agrandir</button>
+      <button class="outline" onclick="reduire()" id="btn-petit" disabled>🔍− Rétrécir</button>
+      <button class="outline" onclick="rotation90()" id="btn-rot" disabled>↻ Tourner 30°</button>
+      <button class="outline" onclick="centrer()" id="btn-ctr" disabled>⊕ Centrer</button>
+      <button class="outline" onclick="dupliquerSelection()" id="btn-dup" disabled>📋 Dupliquer</button>
+      <button class="danger" onclick="supprimerSelection()" id="btn-del" disabled>🗑️ Supprimer</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : EMPREINTE -->
+  <div class="card">
+    <h2>+ Ajouter une empreinte ou un dessin</h2>
+    <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-input').click()">
+      <strong>Glisse une photo</strong> ou clique pour choisir<br>
+      <span class="info">empreinte digitale, dessin d'enfant, signature, silhouette…</span>
+    </div>
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+    <div class="vector-preview hidden" id="vector-preview" style="margin-top:0.6rem;"></div>
+
+    <details style="margin-top:0.6rem;">
+      <summary style="cursor:pointer;font-size:0.85rem;color:var(--gris);">⚙️ Réglages du dessin (avancé)</summary>
+      <div style="margin-top:0.6rem;padding:0.6rem;background:#fafafa;border-radius:8px;">
+        <p class="info" style="margin-bottom:0.6rem;">Si le rendu n'est pas bon, ajuste ces réglages et l'aperçu se met à jour.</p>
+
+        <label style="display:flex;align-items:center;gap:0.4rem;font-weight:400;cursor:pointer;font-size:0.85rem;">
+          <input type="checkbox" id="enhance" checked style="width:auto;margin:0;"> ✨ Améliorer la qualité de l'image
+        </label>
+
+        <label style="margin-top:0.6rem;font-size:0.8rem;">Lissage des courbes</label>
+        <select id="smooth-window">
+          <option value="1">Aucun (trait brut)</option>
+          <option value="3">Léger</option>
+          <option value="5" selected>Moyen</option>
+          <option value="9">Fort</option>
+          <option value="15">Très fort</option>
+        </select>
+
+        <label style="margin-top:0.6rem;font-size:0.8rem;">Simplification du tracé</label>
+        <select id="smoothing">
+          <option value="0">Aucune (toutes les courbes)</option>
+          <option value="0.5">Légère</option>
+          <option value="1" selected>Moyenne</option>
+          <option value="2">Forte</option>
+          <option value="4">Très forte</option>
+        </select>
+
+        <label style="margin-top:0.6rem;font-size:0.8rem;">Filtrer les petits traits parasites</label>
+        <select id="min-length">
+          <option value="0">Garder tous les traits</option>
+          <option value="5">Filtrer très courts</option>
+          <option value="10">Filtrer courts</option>
+          <option value="20" selected>Standard</option>
+          <option value="35">Filtrer fort</option>
+        </select>
+
+        <label style="margin-top:0.6rem;font-size:0.8rem;">Style du trait</label>
+        <select id="trace-mode">
+          <option value="line">Lignes droites (anguleux)</option>
+          <option value="bezier" selected>Courbes lisses (recommandé)</option>
+        </select>
+      </div>
+    </details>
+  </div>
+
+  <!-- ÉTAPE 2 : SYMBOLES PRÉDÉFINIS -->
+  <div class="card">
+    <h2>+ Ajouter un symbole</h2>
+    <div class="symboles-grid">
+      <button class="outline symb-btn" onclick="ajouterSymbole('coeur')" title="Cœur">❤</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('etoile')" title="Étoile">★</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('infini')" title="Infini">∞</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('lune')" title="Lune">☾</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('soleil')" title="Soleil">☀</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('fleur')" title="Fleur">✿</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('cercle')" title="Cercle">○</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('triangle')" title="Triangle">△</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('losange')" title="Losange">◇</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('croix')" title="Croix">✚</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('eclair')" title="Éclair">⚡</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('note')" title="Note de musique">♪</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('coeurOutline')" title="Cœur outline">♡</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('etoile4')" title="Étoile 4 branches">✦</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('etoile6')" title="Étoile 6 branches">✶</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('carre')" title="Carré">□</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('lignes')" title="Lignes">≡</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('ancre')" title="Ancre">⚓</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('trefle')" title="Trèfle">☘</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('plante')" title="Brindille">🌿</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('feuille')" title="Feuille">🍃</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('arbre')" title="Arbre de vie">🌳</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('oiseau')" title="Oiseau">🐦</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('fleurDeVie')" title="Fleur de vie">✺</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('papillon')" title="Papillon">🦋</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('vague')" title="Vague">∿</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('montagne')" title="Montagne">⛰</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('plume')" title="Plume">🪶</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('ferCheval')" title="Fer à cheval">🧲</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('chat')" title="Chat">🐱</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('chien')" title="Chien">🐶</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('tortue')" title="Tortue">🐢</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('colombe')" title="Colombe">🕊</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('lapin')" title="Lapin">🐰</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('poisson')" title="Poisson">🐟</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('vague2')" title="Vague rouleau">🌊</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('vague3')" title="Vague triple">≋</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('tourbillon')" title="Tourbillon">🌀</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('arabesque')" title="Arabesque">❦</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('rose')" title="Rose">🌹</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('hibiscus')" title="Hibiscus">🌺</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('marguerite')" title="Marguerite">🌼</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('abeille')" title="Abeille">🐝</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('ligne')" title="Ligne droite">━</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('cheval')" title="Tête de cheval">🐴</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('sapin')" title="Sapin">🌲</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('lotus')" title="Lotus">🪷</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('boussole')" title="Boussole">🧭</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('pointVirgule')" title="Point-virgule">;</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('patte')" title="Patte">🐾</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('fleche')" title="Flèche">→</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('etoile8')" title="Étoile 8 branches">✴</button>
+      <button class="outline symb-btn" onclick="ajouterSymbole('cle')" title="Clé">🔑</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : TEXTE -->
+  <div class="card">
+    <h2>+ Ajouter un texte</h2>
+    <input id="texte-nouveau" placeholder="ex : Marie & Paul, 14.06.2024…">
+    <label style="margin-top:0.5rem;">Style de gravure</label>
+    <select id="texte-font" style="font-size:0.85rem;">
+      <optgroup label="Trait fin (gravure mécanique)">
+        <option value="hershey:hershey_sans_1" selected>Sans serif</option>
+        <option value="hershey:hershey_sans_med">Sans serif medium</option>
+        <option value="hershey:hershey_serif_med">Serif classique</option>
+        <option value="hershey:hershey_serif_bold">Serif gras</option>
+        <option value="hershey:hershey_serif_med_italic">Serif italique</option>
+        <option value="hershey:hershey_script_1">Script manuscrit</option>
+        <option value="hershey:ems_allure">Élégant</option>
+      </optgroup>
+      <optgroup label="Plein (gravure profonde)">
+        <option value="opensans">Open Sans</option>
+        <option value="lora">Lora (serif)</option>
+        <option value="pacifico">Pacifico (manuscrit)</option>
+        <option value="greatvibes">Great Vibes (élégant)</option>
+        <option value="tangerine">Tangerine (calligraphie)</option>
+        <option value="bebasneue">Bebas Neue (gras)</option>
+        <option value="playfair">Playfair Display</option>
+        <option value="dancingscript">Dancing Script</option>
+      </optgroup>
+    </select>
+    <button onclick="ajouterTexte()" style="margin-top:0.6rem;width:100%;">+ Ajouter ce texte sur ma bague</button>
+  </div>
+
+  <!-- APERÇU RÉALISTE 3D -->
+  <div class="card">
+    <h2>🔄 Aperçu réaliste sur ta bague</h2>
+    <p class="info" style="margin-bottom:0.6rem;">Voici ta bague gravée en 3D. Glisse le curseur ou clique le bouton pour la faire tourner.</p>
+    <div id="apercu-3d-wrapper" style="display:flex;justify-content:center;background:#fafafa;border-radius:12px;padding:1rem;">
+      <div id="apercu-3d-container" style="width:100%;max-width:420px;aspect-ratio:1;"></div>
+    </div>
+    <input type="range" id="apercu-rotation" min="0" max="360" value="0" step="1" style="width:100%;margin-top:0.8rem;" oninput="rotateApercu(this.value)">
+    <button class="outline" onclick="animerRotation()" style="width:100%;margin-top:0.4rem;">▶ Faire tourner la bague (360°)</button>
+  </div>
+
+  <!-- PRIX DYNAMIQUE -->
+  <div class="prix-zone" id="prix-zone">
+    <div class="label">Prix estimé</div>
+    <div class="montant"><strong id="prix-montant">—</strong> CHF</div>
+    <div class="detail" id="prix-detail">Choisis un format et ajoute des éléments</div>
+  </div>
+
+  <!-- ÉTAPE 3 : COMMANDE -->
+  <div class="card" style="border:2px solid var(--or);">
+    <h2>3. Envoie ta demande</h2>
+    <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">
+      On reçoit ton design, on t'envoie un devis personnalisé sous 24h ouvrées.
+    </p>
+    <div class="row">
+      <div>
+        <label>Ton prénom *</label>
+        <input id="cli-prenom" placeholder="Marie">
+      </div>
+      <div>
+        <label>Ton email *</label>
+        <input id="cli-email" type="email" placeholder="marie@email.com">
+      </div>
+    </div>
+    <div class="row" style="margin-top:0.5rem;">
+      <div>
+        <label>Téléphone</label>
+        <input id="cli-tel" type="tel" placeholder="+41 79 ...">
+      </div>
+      <div>
+        <label>Matière</label>
+        <input id="cli-matiere" value="Argent 925" readonly style="background:#f5f5f5;">
+      </div>
+    </div>
+    <label style="margin-top:0.5rem;">Un message pour l'équipe ? (optionnel)</label>
+    <textarea id="cli-message" rows="2" placeholder="ex : c'est pour notre anniversaire de mariage…" style="width:100%;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;"></textarea>
+    <button onclick="acheterSurShopify()" style="margin-top:0.8rem;width:100%;padding:0.9rem;font-size:1rem;background:var(--or);font-weight:600;">🛒 Acheter sur yourmood.net</button>
+    <button onclick="envoyerDemande()" class="outline" style="margin-top:0.4rem;width:100%;padding:0.6rem;font-size:0.85rem;">ou envoyer ma demande à l'équipe (devis sur mesure)</button>
+    <div class="erreur hidden" id="erreur" style="margin-top:0.5rem;"></div>
+    <div class="info hidden" id="confirmation" style="margin-top:0.5rem;color:var(--vert);font-size:0.9rem;font-weight:500;text-align:center;"></div>
+  </div>
+
+</div>
+
+<footer>
+  Mood Collection · Joaillerie suisse contemporaine · <a href="https://yourmood.net" style="color:var(--or);">yourmood.net</a>
+</footer>
+
+<script>
+// ============ CONFIG ============
+const LONGUEURS_TAILLES = {
+  50: 63.10, 52: 64.99, 54: 67.19, 56: 69.08, 58: 70.96,
+  60: 73.16, 62: 75.046, 64: 76.93, 66: 79.130, 68: 81.012, 70: 82.89, 72: 84.78
+};
+
+// État global
+let elements = [];  // { id, type, x, y, scale, rotation, ...données }
+let couleurChoisie = { id: 'poli', nom: 'Poli', hex: '#e8e8e8', img: '/argent/addon-poli.png' }; // remplacé au load par COULEURS[0]
+const PRIX_BASE = { 'addon': 295, '2-3': 249, 'medium': 179 };
+let gravureType = 'oxydee'; // 'oxydee' ou 'neutre'
+function choisirGravure(t) {
+  gravureType = t;
+  document.querySelectorAll('[data-gravure]').forEach(b => b.classList.toggle('active', b.dataset.gravure === t));
+  if (typeof majApercu3D === 'function') majApercu3D();
+}
+let selectedId = null;
+let nextId = 1;
+let viewLongueur = 67.19;  // taille 54 par défaut
+let viewLargeur = 4.6;     // 2/3 par défaut
+const SCALE_AFFICHAGE = 8; // 1mm = 8px à l'écran
+
+// ============ INIT ============
+const taillesSelect = document.getElementById('taille');
+for (const t of Object.keys(LONGUEURS_TAILLES).sort((a,b)=>+a-+b)) {
+  const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+  taillesSelect.appendChild(opt);
+}
+taillesSelect.value = '54';
+document.getElementById('format').value = 'addon';
+majDimensions();
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(rendreCanvas, 150);
+});
+
+// Précharger toutes les polices en arrière-plan au démarrage (parallèle, non bloquant)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    Object.keys(FONT_URLS).forEach(key => chargerFont(key).catch(() => {}));
+    Object.keys(HERSHEY_SVG_FILES).forEach(key => chargerHershey(key).catch(() => {}));
+  }, 100);
+});
+// genererIcones() retiré : pas de palette diamants côté client
+// Différé pour que COULEURS soit déclarée (évite TDZ avec const plus bas dans le fichier)
+setTimeout(() => {
+  genererFiltresCouleurs();
+  genererSelecteurCouleurs();
+  // Précharger les ~11 photos finitions en cache navigateur
+  Object.keys(PHOTOS_DISPO).forEach(fmt => {
+    const photos = PHOTOS_DISPO[fmt];
+    const filename = FORMAT_FILENAME[fmt] || fmt;
+    Object.keys(photos).forEach(cId => {
+      const img = new Image();
+      img.src = `/argent/${filename}-${cId}.${photos[cId]}`;
+    });
+  });
+}, 0);
+
+function majDimensions() {
+  const fmt = document.getElementById('format');
+  const t = +document.getElementById('taille').value;
+  viewLargeur = +fmt.options[fmt.selectedIndex].dataset.w;
+  viewLongueur = LONGUEURS_TAILLES[t];
+  document.getElementById('dim-info').textContent = `Surface gravable : ${viewLongueur.toFixed(2)} × ${viewLargeur} mm`;
+  document.getElementById('canvas-info').textContent = `Bande dépliée taille ${t} — ${viewLongueur.toFixed(2)} × ${viewLargeur} mm`;
+  rendreCanvas();
+}
+
+// Génère mini-icônes diamants pour les boutons
+function genererIcones() {
+  const tailles = [
+    { suffix: 'r-09', taille: 0.9, style: 'rond' },
+    { suffix: 'r-13', taille: 1.3, style: 'rond' },
+    { suffix: 'r-16', taille: 1.6, style: 'rond' },
+    { suffix: 'r-19', taille: 1.9, style: 'rond' },
+    { suffix: 'r-21', taille: 2.1, style: 'rond' },
+    { suffix: 'e-09', taille: 0.9, style: 'etoile' },
+    { suffix: 'e-13', taille: 1.3, style: 'etoile' },
+    { suffix: 'e-16', taille: 1.6, style: 'etoile' },
+    { suffix: 'e-19', taille: 1.9, style: 'etoile' },
+    { suffix: 'e-21', taille: 2.1, style: 'etoile' },
+  ];
+  for (const t of tailles) {
+    const el = document.getElementById(`ic-${t.suffix}`);
+    if (!el) continue;
+    el.innerHTML = `<svg viewBox="-3 -3 6 6" style="width:24px;height:24px;">${diamantSvg(t.taille, t.style, 'inner')}</svg>`;
+  }
+}
+
+// ============ AJOUT ÉLÉMENTS ============
+function ajouterDiamant(taille, style) {
+  elements.push({ id: nextId++, type: 'diamant', taille, style, x: viewLongueur / 2, y: viewLargeur / 2, rotation: 0 });
+  rendreCanvas();
+}
+
+// Mapping clé → URL TTF (fonts open source via jsdelivr, branche main pour éviter le cache obsolète)
+const FONT_URLS = {
+  opensans: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/opensans/OpenSans%5Bwdth%2Cwght%5D.ttf',
+  lora: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/lora/Lora%5Bwght%5D.ttf',
+  courierprime: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/courierprime/CourierPrime-Regular.ttf',
+  pacifico: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/pacifico/Pacifico-Regular.ttf',
+  greatvibes: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/greatvibes/GreatVibes-Regular.ttf',
+  tangerine: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/tangerine/Tangerine-Regular.ttf',
+  bebasneue: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/bebasneue/BebasNeue-Regular.ttf',
+  playfair: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf',
+  nunito: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nunito/Nunito%5Bwght%5D.ttf',
+  dancingscript: 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
+};
+const fontCache = {};
+async function chargerFont(key) {
+  if (fontCache[key]) return fontCache[key];
+  return new Promise((resolve, reject) => {
+    opentype.load(FONT_URLS[key], (err, font) => {
+      if (err) reject(err);
+      else { fontCache[key] = font; resolve(font); }
+    });
+  });
+}
+
+// Polices Hershey en format SVG fonts (mapping unicode standard)
+const HERSHEY_SVG_FILES = {
+  hershey_sans_1: 'HersheySans1.svg',
+  hershey_sans_med: 'HersheySansMed.svg',
+  hershey_serif_med: 'HersheySerifMed.svg',
+  hershey_serif_bold: 'HersheySerifBold.svg',
+  hershey_serif_med_italic: 'HersheySerifMedItalic.svg',
+  hershey_script_1: 'HersheyScript1.svg',
+  ems_allure: 'EMSAllure.svg',
+  ems_readability: 'EMSReadability.svg',
+};
+const hersheyCache = {};
+async function chargerHershey(key) {
+  if (hersheyCache[key]) return hersheyCache[key];
+  const url = `https://cdn.jsdelivr.net/npm/hersheytext@2.0.0/svg_fonts/${HERSHEY_SVG_FILES[key]}`;
+  const txt = await fetch(url).then(r => r.text());
+  const doc = new DOMParser().parseFromString(txt, 'image/svg+xml');
+  const ff = doc.querySelector('font-face');
+  const unitsPerEm = parseFloat(ff?.getAttribute('units-per-em') || '1000');
+  const ascent = parseFloat(ff?.getAttribute('ascent') || '800');
+  const descent = parseFloat(ff?.getAttribute('descent') || '-200');
+  const glyphs = {};
+  doc.querySelectorAll('glyph').forEach(g => {
+    const u = g.getAttribute('unicode');
+    if (!u) return;
+    glyphs[u] = { d: g.getAttribute('d') || '', adv: parseFloat(g.getAttribute('horiz-adv-x') || '0') };
+  });
+  hersheyCache[key] = { glyphs, unitsPerEm, ascent, descent };
+  return hersheyCache[key];
+}
+
+// Transforme un path SVG en appliquant fn(x,y) à chaque paire de coords
+function transformSvgPath(d, fn) {
+  const tokens = d.match(/[a-zA-Z]|-?\d+(?:\.\d+)?/g) || [];
+  const out = [];
+  let i = 0;
+  while (i < tokens.length) {
+    const tok = tokens[i];
+    if (/[a-zA-Z]/.test(tok)) {
+      out.push(tok);
+      i++;
+    } else {
+      const x = parseFloat(tok);
+      const y = parseFloat(tokens[i + 1] || '0');
+      const [nx, ny] = fn(x, y);
+      out.push(nx.toFixed(2));
+      out.push(ny.toFixed(2));
+      i += 2;
+    }
+  }
+  return out.join(' ');
+}
+
+// Rend un texte en path SVG single-line (Hershey SVG fonts)
+function renderHersheyText(text, font, fontSize) {
+  if (!font) return null;
+  const scale = fontSize / font.unitsPerEm;
+  // Largeur totale en unités font
+  let totalWidth = 0;
+  for (const ch of text) {
+    const g = font.glyphs[ch];
+    if (g) totalWidth += g.adv;
+    else totalWidth += font.unitsPerEm * 0.3;
+  }
+  // Construire le path final, scalé et flippé verticalement (SVG fonts ont y haut=positif)
+  let cursor = -totalWidth / 2;
+  const parts = [];
+  for (const ch of text) {
+    const g = font.glyphs[ch];
+    if (!g) { cursor += font.unitsPerEm * 0.3; continue; }
+    if (g.d) {
+      const cur = cursor;
+      parts.push(transformSvgPath(g.d, (x, y) => [(x + cur) * scale, -y * scale]));
+    }
+    cursor += g.adv;
+  }
+  return parts.join(' ');
+}
+
+// Convertir texte → path SVG (centré sur 0,0). Stocke le résultat sur l'élément.
+async function regenererPathTexte(el) {
+  if (el.type !== 'texte' || !el.font || !el.text) return;
+  try {
+    if (el.font.startsWith('hershey:')) {
+      const fontKey = el.font.replace('hershey:', '');
+      const font = await chargerHershey(fontKey);
+      el.pathData = renderHersheyText(el.text, font, el.fontSize);
+      el.isStroke = true;
+      rendreCanvas();
+      return;
+    }
+    const font = await chargerFont(el.font);
+    const bb = font.getPath(el.text, 0, 0, el.fontSize).getBoundingBox();
+    const w = bb.x2 - bb.x1, h = bb.y2 - bb.y1;
+    const path = font.getPath(el.text, -bb.x1 - w/2, -bb.y1 - h/2, el.fontSize);
+    el.pathData = path.toPathData(3);
+    el.isStroke = false;
+    el.textBBox = { w, h };
+    rendreCanvas();
+  } catch (e) { console.error('Erreur chargement font', el.font, e); }
+}
+
+function ajouterTexte() {
+  const text = document.getElementById('texte-nouveau').value.trim();
+  if (!text) return;
+  const font = document.getElementById('texte-font').value;
+  const el = { id: nextId++, type: 'texte', text, font, x: viewLongueur / 2, y: viewLargeur / 2, fontSize: viewLargeur * 0.5, rotation: 0, pathData: null };
+  elements.push(el);
+  document.getElementById('texte-nouveau').value = '';
+  selectedId = el.id;
+  rendreCanvas();
+  regenererPathTexte(el);
+}
+
+// Génère un sakura (5 pétales avec encoche caractéristique au bout)
+function genererSakuraPath() {
+  const angles = [0, 72, 144, 216, 288];
+  // Pétale en coords originales (pointe vers le haut), avec encoche au sommet
+  const tpl = [
+    { type: 'M', pts: [[0, 0]] },
+    { type: 'C', pts: [[2, -3], [2.8, -6], [0.6, -6.8]] },
+    { type: 'L', pts: [[0, -5.8]] },          // creux de l'encoche
+    { type: 'L', pts: [[-0.6, -6.8]] },
+    { type: 'C', pts: [[-2.8, -6], [-2, -3], [0, 0]] },
+  ];
+  const parts = [];
+  for (const a of angles) {
+    const r = a * Math.PI / 180;
+    const c = Math.cos(r), s = Math.sin(r);
+    const rot = (x, y) => `${(x * c - y * s).toFixed(2)} ${(x * s + y * c).toFixed(2)}`;
+    parts.push(tpl.map(seg => seg.type + ' ' + seg.pts.map(p => rot(p[0], p[1])).join(' ')).join(' '));
+  }
+  return parts.join(' ');
+}
+
+// Symboles prédéfinis : path SVG centré sur (0,0), dans une boîte ~14×14 unités
+const SYMBOLES = {
+  coeur: 'M 0 3 C 0 1, -2 -3, -4 -3 C -6 -3, -7 -1, -7 1 C -7 4, -4 5, 0 9 C 4 5, 7 4, 7 1 C 7 -1, 6 -3, 4 -3 C 2 -3, 0 1, 0 3 Z',
+  etoile: 'M 0 -7 L 1.6 -2.2 L 6.7 -2.2 L 2.6 0.8 L 4.1 5.7 L 0 2.6 L -4.1 5.7 L -2.6 0.8 L -6.7 -2.2 L -1.6 -2.2 Z',
+  infini: 'M 0 0 C -3 -4, -7 -4, -7 0 C -7 4, -3 4, 0 0 C 3 -4, 7 -4, 7 0 C 7 4, 3 4, 0 0 Z',
+  lune: 'M 3 -6 C -2 -6, -5 -3, -5 0 C -5 3, -2 6, 3 6 C 0 6, -2 3, -2 0 C -2 -3, 0 -6, 3 -6 Z',
+  soleil: 'M 0 -3 C 1.7 -3, 3 -1.7, 3 0 C 3 1.7, 1.7 3, 0 3 C -1.7 3, -3 1.7, -3 0 C -3 -1.7, -1.7 -3, 0 -3 Z M 0 -7 L 0 -5 M 0 5 L 0 7 M -7 0 L -5 0 M 5 0 L 7 0 M -5 -5 L -3.5 -3.5 M 3.5 3.5 L 5 5 M -5 5 L -3.5 3.5 M 3.5 -3.5 L 5 -5',
+  fleur: genererSakuraPath(),
+  cercle: 'M 0 -6 C 3.3 -6, 6 -3.3, 6 0 C 6 3.3, 3.3 6, 0 6 C -3.3 6, -6 3.3, -6 0 C -6 -3.3, -3.3 -6, 0 -6 Z',
+  triangle: 'M 0 -6 L 6 5 L -6 5 Z',
+  losange: 'M 0 -6 L 6 0 L 0 6 L -6 0 Z',
+  croix: 'M -1.5 -6 L 1.5 -6 L 1.5 -1.5 L 6 -1.5 L 6 1.5 L 1.5 1.5 L 1.5 6 L -1.5 6 L -1.5 1.5 L -6 1.5 L -6 -1.5 L -1.5 -1.5 Z',
+  eclair: 'M 1 -7 L -4 1 L 0 1 L -2 7 L 4 -2 L 0 -2 Z',
+  note: 'M -1 -7 L 4 -7 L 4 3 C 4 5, 2 6, 0 6 C -2 6, -4 5, -4 3 C -4 1, -2 0, 0 0 C 1 0, 2 0.5, 2 1 L 2 -5 L -1 -5 Z',
+
+  // === Nouveaux symboles ===
+  coeurOutline: 'M 0 7 C -5 3, -7 0, -7 -2 C -7 -5, -4 -7, -2 -7 C -1 -7, 0 -5.5, 0 -4 C 0 -5.5, 1 -7, 2 -7 C 4 -7, 7 -5, 7 -2 C 7 0, 5 3, 0 7 Z',
+  etoile4: 'M 0 -7 L 1.5 -1.5 L 7 0 L 1.5 1.5 L 0 7 L -1.5 1.5 L -7 0 L -1.5 -1.5 Z',
+  etoile6: 'M 0 -7 L 6 3.5 L -6 3.5 Z M 0 7 L 6 -3.5 L -6 -3.5 Z',
+  carre: 'M -5 -5 L 5 -5 L 5 5 L -5 5 Z',
+  lignes: 'M -6 -3 L 6 -3 M -6 0 L 6 0 M -6 3 L 6 3',
+  ancre: 'M 0 -7 m -1.2 0 a 1.2 1.2 0 1 0 2.4 0 a 1.2 1.2 0 1 0 -2.4 0 M 0 -5.8 L 0 5.8 M -3 -3 L 3 -3 M -2.5 -2 L 2.5 -2 M -5.5 2 C -5 5.5, -2 6.8, 0 6.3 M 0 6.3 C 2 6.8, 5 5.5, 5.5 2 M -5.5 2 L -7 1.3 M -5.5 2 L -4.8 0.3 M 5.5 2 L 7 1.3 M 5.5 2 L 4.8 0.3',
+  trefle: 'M 0 0 C -2.5 -1, -2.5 -4, 0 -5 C 2.5 -4, 2.5 -1, 0 0 Z M 0 0 C -1 2, -4 2.5, -5 0.5 C -4.5 -1.5, -2 -2, 0 0 Z M 0 0 C 1 2, 4 2.5, 5 0.5 C 4.5 -1.5, 2 -2, 0 0 Z M 0 0 C 0.5 2, 0.5 5, 1.5 7',
+  plante: 'M 3.26 -5.63 C 2.96 -5.26 2.67 -4.92 2.28 -4.64 C 2.10 -4.53 1.80 -4.55 1.68 -4.37 C 1.59 -4.22 1.59 -4.01 1.52 -3.85 C 1.24 -3.22 0.89 -2.62 0.61 -1.99 C 0.53 -1.82 0.53 -1.61 0.44 -1.44 C 0.37 -1.30 0.19 -1.24 0.08 -1.12 C -0.09 -0.92 -0.18 -0.65 -0.36 -0.47 C -0.46 -0.37 -0.62 -0.35 -0.71 -0.24 C -0.92 0.05 -0.91 0.43 -1.16 0.74 C -1.60 1.27 -2.07 1.80 -2.44 2.38 C -2.53 2.51 -2.71 2.92 -2.60 3.06 C -2.47 3.24 -1.91 3.18 -1.76 3.06 C -0.80 2.32 0.31 1.99 1.51 2.47 C 1.77 2.57 2.35 2.75 2.40 3.08 C 2.47 3.53 1.61 3.78 1.29 3.88 C 0.26 4.20 -1.17 4.11 -1.78 3.12 M 1.58 -5.60 C 1.58 -5.23 1.54 -4.78 1.72 -4.45 M -1.12 -1.12 C -2.23 -1.34 -3.07 -2.55 -3.08 -3.67 C -3.08 -4.04 -3.09 -4.40 -3.03 -4.76 C -3.00 -4.90 -3.02 -5.09 -2.83 -5.10 C -2.43 -5.12 -2.05 -4.69 -1.82 -4.41 C -1.29 -3.77 -0.94 -3.05 -0.91 -2.20 C -0.89 -1.57 -1.33 -0.78 -0.73 -0.28 M 1.40 -1.43 C 2.04 -2.46 3.22 -2.89 4.41 -2.74 C 4.70 -2.70 5.59 -2.63 5.59 -2.24 C 5.58 -1.82 5.01 -1.49 4.69 -1.30 C 4.00 -0.91 3.16 -0.74 2.38 -0.92 C 2.15 -0.98 1.82 -1.07 1.62 -1.19 C 1.53 -1.24 1.49 -1.35 1.39 -1.38 C 1.21 -1.46 0.68 -1.39 0.49 -1.33 M -3.99 2.77 C -5.20 2.67 -5.82 1.22 -5.97 0.18 C -6.02 -0.17 -5.97 -0.54 -5.90 -0.87 C -5.88 -0.99 -5.87 -1.16 -5.74 -1.19 C -5.33 -1.28 -4.87 -0.72 -4.65 -0.45 C -4.06 0.23 -3.69 1.15 -3.79 2.07 C -3.83 2.51 -3.98 2.81 -3.84 3.26 C -3.81 3.38 -3.76 3.58 -3.64 3.64 C -3.40 3.75 -2.85 3.18 -2.66 3.05 M 2.45 3.12 L 2.73 3.12 M -3.60 3.71 C -3.76 4.38 -4.06 5.01 -4.48 5.57',
+  feuille: 'M -0.14 -6.12 L -0.10 -6.12 M 0.74 1.23 C 0.27 1.70 -0.15 2.24 -0.51 2.80 C -0.80 3.24 -1.06 3.70 -1.24 4.20 C -1.29 4.33 -1.33 4.69 -1.48 4.75 C -1.68 4.82 -1.80 4.51 -1.85 4.38 C -2.02 3.92 -2.11 3.39 -2.05 2.91 C -1.89 1.58 -1.02 0.65 0.14 0.06 C 0.56 -0.15 0.99 -0.36 1.44 -0.53 C 1.56 -0.58 1.82 -0.70 1.92 -0.55 C 2.09 -0.31 1.98 0.27 2.00 0.56 C 2.10 1.98 1.84 3.60 0.53 4.42 C 0.14 4.66 -0.32 4.81 -0.77 4.88 C -0.93 4.90 -1.33 4.86 -1.45 4.94 C -1.53 4.99 -1.51 5.14 -1.52 5.22 C -1.57 5.49 -1.61 5.77 -1.64 6.06 M -1.43 4.83 L -1.43 4.87',
+  arbre: 'M 0 0 m 0 -7 a 7 7 0 1 0 0 14 a 7 7 0 1 0 0 -14 M 0 -3.5 L 0 7 M 0 -3.5 L -3 -5.5 M 0 -3.5 L 3 -5.5 M 0 -2.5 L -2 -6 M 0 -2.5 L 2 -6 M 0 -1 L -4.5 -3 M 0 -1 L 4.5 -3 M 0 0.5 L -5 -1 M 0 0.5 L 5 -1 M 0 4.5 L -2.5 6 M 0 4.5 L 2.5 6 M 0 5.5 L -1.5 7 M 0 5.5 L 1.5 7',
+  oiseau: 'M 1.86 -1.50 C 1.75 -1.08 1.73 -0.71 1.51 -0.31 C 0.72 1.09 -0.99 1.69 -2.52 1.55 C -2.98 1.50 -3.84 1.51 -4.14 1.08 C -4.30 0.85 -3.93 0.59 -3.78 0.46 C -3.26 0.01 -2.74 -0.46 -2.20 -0.90 C -1.70 -1.32 -1.19 -1.74 -0.63 -2.09 C -0.34 -2.27 0.09 -2.38 0.33 -2.61 C 0.67 -2.93 0.78 -3.57 1.05 -3.95 C 1.75 -4.96 3.18 -5.48 4.27 -4.74 C 4.50 -4.59 4.71 -4.37 4.85 -4.13 C 4.95 -3.97 4.98 -3.72 5.15 -3.62 C 5.34 -3.50 5.90 -3.43 5.96 -3.18 C 6.00 -3.02 5.78 -2.94 5.67 -2.89 C 5.25 -2.71 5.03 -2.63 4.82 -2.20 C 4.58 -1.72 4.73 -1.12 4.64 -0.59 C 4.51 0.26 4.07 1.13 3.46 1.75 C 3.01 2.22 2.49 2.57 1.89 2.82 C 1.75 2.88 1.26 2.96 1.23 3.12 C 1.19 3.30 1.43 3.57 1.52 3.71 C 1.64 3.91 1.80 4.34 1.98 4.48 C 2.12 4.58 2.39 4.51 2.56 4.54 C 2.73 4.58 2.83 4.71 2.98 4.80 M 3.54 -3.64 L 3.54 -3.60 M -3.64 1.47 C -3.64 1.89 -3.88 2.01 -4.20 2.24 C -4.61 2.55 -5.02 2.84 -5.42 3.16 C -5.60 3.29 -6.12 3.55 -6.05 3.82 C -5.98 4.12 -5.29 4.55 -5.00 4.37 C -4.42 4.00 -3.90 3.41 -3.36 2.97 C -3.18 2.82 -2.87 2.48 -2.62 2.48 C -2.39 2.48 -2.13 2.70 -1.92 2.79 C -1.60 2.93 -1.22 3.03 -0.87 3.09 C -0.71 3.12 -0.39 3.09 -0.27 3.23 C -0.03 3.52 0.15 4.07 0.32 4.41 C 0.38 4.52 0.50 4.70 0.42 4.82 C 0.34 4.95 0.04 4.96 -0.10 4.97 M -0.24 3.19 L 1.19 3.08 M 1.93 4.48 C 1.79 4.56 1.61 4.54 1.48 4.63 C 1.19 4.82 1.34 5.06 1.58 5.18 M 2.77 4.59 L 3.08 4.55 M 0.53 4.87 L 1.26 4.90 M 1.44 4.87 L 1.72 4.90',
+  fleurDeVie: 'M 0 0 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M 0 -2.3 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M 0 2.3 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M -2 -1.15 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M 2 -1.15 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M -2 1.15 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M 2 1.15 m -2 0 a 2 2 0 1 0 4 0 a 2 2 0 1 0 -4 0 M 0 0 m -6 0 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0',
+  papillon: 'M -2.03 0.74 C -2.64 0.74 -3.19 1.05 -3.78 1.08 C -4.29 1.11 -4.91 0.65 -5.16 0.25 C -5.64 -0.52 -5.43 -1.42 -5.64 -2.24 C -5.80 -2.84 -6.24 -3.52 -6.15 -4.16 C -6.08 -4.65 -5.63 -4.84 -5.18 -4.79 C -3.52 -4.61 -2.14 -2.93 -1.28 -1.64 C -1.10 -1.36 -0.96 -1.05 -0.77 -0.77 C -0.67 -0.63 -0.53 -0.56 -0.48 -0.38 C -0.40 -0.08 -0.54 0.28 -0.56 0.60 C -0.58 0.97 -0.64 1.42 -0.60 1.79 C -0.57 2.01 -0.45 2.28 -0.40 2.52 C -0.36 2.67 -0.31 3.17 -0.07 3.12 C 0.16 3.07 0.21 2.53 0.25 2.35 C 0.30 2.15 0.40 1.95 0.42 1.75 C 0.47 1.10 0.28 0.43 0.32 -0.21 C 0.33 -0.44 0.50 -0.50 0.62 -0.67 C 0.80 -0.93 0.93 -1.23 1.10 -1.50 C 1.82 -2.66 2.79 -3.79 4.03 -4.42 C 4.49 -4.66 5.11 -4.92 5.64 -4.72 C 6.01 -4.58 6.13 -4.23 6.08 -3.85 C 5.99 -3.19 5.63 -2.59 5.51 -1.92 C 5.38 -1.19 5.51 -0.42 5.07 0.25 C 4.88 0.53 4.62 0.78 4.31 0.91 C 4.19 0.96 3.87 0.98 3.84 1.13 C 3.79 1.31 4.24 1.61 4.34 1.75 C 4.63 2.15 4.72 2.60 4.64 3.08 C 4.54 3.78 3.94 4.45 3.29 4.71 C 2.00 5.21 1.33 3.80 0.92 2.84 C 0.80 2.55 0.74 2.00 0.42 1.89 M -1.36 -3.53 C -0.81 -3.13 -0.53 -2.54 -0.36 -1.89 C -0.31 -1.74 -0.29 -1.19 -0.13 -1.16 C 0.18 -1.11 0.13 -1.58 0.18 -1.78 C 0.34 -2.47 0.65 -3.11 1.23 -3.53 M -3.95 -2.20 C -3.08 -1.86 -2.37 -1.29 -1.78 -0.56 M 3.78 -2.20 C 2.93 -1.75 2.28 -1.29 1.65 -0.56 M 0.07 -1.15 L 0.39 -0.45 M -0.28 -1.12 L -0.52 -0.59 M -3.39 -0.45 C -2.97 -0.44 -2.51 -0.32 -2.13 -0.10 M 1.96 -0.10 C 2.35 -0.30 2.81 -0.45 3.26 -0.45 M 1.96 0.74 L 3.78 1.12 M -3.88 1.12 C -4.30 1.62 -4.78 1.91 -4.83 2.63 C -4.91 3.78 -3.63 5.22 -2.41 4.72 C -1.71 4.43 -1.32 3.43 -1.06 2.77 C -0.95 2.46 -0.88 2.07 -0.63 1.86 M -2.03 1.68 C -2.56 2.07 -2.96 2.46 -3.32 3.01 M 1.89 1.72 C 2.42 2.01 2.86 2.47 3.15 3.01 M -1.68 2.03 L -2.17 2.98 M 1.54 2.03 L 2.00 2.98',
+  vague: 'M -6.05 2.66 C -5.55 2.36 -5.14 2.04 -4.77 1.58 C -3.29 -0.30 -1.76 -3.28 1.12 -2.74 C 1.52 -2.67 1.95 -2.53 2.28 -2.29 C 2.51 -2.12 2.75 -1.91 2.88 -1.64 C 2.99 -1.43 2.98 -1.22 3.12 -1.01 M 5.88 2.91 C 5.48 2.91 5.07 2.89 4.73 2.65 C 4.53 2.52 4.30 2.10 4.06 2.10 C 3.77 2.09 3.42 2.44 3.15 2.56 C 2.53 2.84 1.72 2.76 1.19 2.33 C 0.14 1.49 0.12 -0.36 1.37 -1.04 C 1.87 -1.32 2.40 -1.20 2.94 -1.15',
+  montagne: 'M 0.56 -3.50 C 0.73 -3.19 1.00 -2.90 1.19 -2.59 C 1.55 -2.01 1.84 -1.41 2.22 -0.84 C 2.51 -0.39 2.96 0.06 3.08 0.60 M -2.62 0.63 C -2.19 1.13 -1.85 0.22 -1.64 -0.10 C -1.13 -0.91 -0.68 -1.73 -0.15 -2.52 C 0.03 -2.80 0.21 -3.25 0.53 -3.39 M 2.84 -0.07 C 2.99 -0.18 3.26 -0.50 3.46 -0.46 C 3.74 -0.39 4.00 0.27 4.14 0.49 C 4.74 1.44 5.47 2.44 5.95 3.47 M -6.09 3.50 C -5.33 2.60 -4.83 1.46 -4.18 0.49 C -4.03 0.27 -3.70 -0.52 -3.36 -0.39 C -3.23 -0.34 -3.16 -0.18 -3.08 -0.07',
+  plume: 'M -2.90 0.07 C -2.92 -0.30 -2.89 -0.89 -2.74 -1.22 C -2.56 -1.62 -2.21 -1.96 -1.96 -2.31 C -1.77 -2.58 -1.55 -3.01 -1.26 -3.18 C -0.99 -3.34 -0.88 -2.90 -0.63 -3.10 C -0.29 -3.38 -0.28 -3.99 -0.01 -4.34 C 0.31 -4.75 1.07 -5.00 1.54 -5.23 C 2.16 -5.53 2.83 -5.75 3.50 -5.90 C 3.65 -5.94 4.05 -6.06 4.18 -5.93 C 4.31 -5.80 4.20 -5.48 4.17 -5.32 C 4.07 -4.70 3.87 -4.12 3.65 -3.53 C 3.47 -3.06 3.28 -2.36 2.96 -1.96 C 2.74 -1.70 2.27 -1.63 2.11 -1.33 C 1.96 -1.02 2.47 -1.07 2.45 -0.80 C 2.43 -0.58 2.27 -0.39 2.16 -0.21 C 1.92 0.16 1.70 0.58 1.39 0.90 C 1.01 1.30 0.30 1.24 -0.03 1.62 C -0.21 1.82 0.12 2.12 0.32 2.14 M 1.82 -3.71 C 1.32 -3.10 0.73 -2.57 0.22 -1.96 C -0.70 -0.85 -1.55 0.36 -2.27 1.61 C -2.53 2.07 -2.81 2.53 -3.03 3.01 C -3.10 3.14 -3.21 3.42 -3.39 3.40 C -3.69 3.35 -3.71 2.61 -3.74 2.38 C -3.81 1.76 -3.81 1.10 -3.66 0.49 C -3.62 0.33 -3.61 0.04 -3.48 -0.08 C -3.36 -0.19 -3.09 -0.14 -2.94 -0.14 M 1.89 -1.19 L 2.03 -1.19 M -0.35 1.72 L -0.14 1.72 M 0.14 2.21 C 0.03 2.49 -0.28 2.62 -0.52 2.77 C -1.12 3.14 -1.70 3.42 -2.38 3.62 C -2.67 3.70 -3.32 3.94 -3.36 3.47 M -3.36 3.68 C -3.88 4.32 -3.93 5.32 -4.38 6.02',
+
+  // === Animaux et symboles porte-bonheur ===
+  ferCheval: 'M -4.45 -4.51 C -4.56 -4.58 -4.69 -4.64 -4.75 -4.76 C -4.89 -5.01 -4.74 -5.91 -4.48 -6.05 C -4.34 -6.13 -4.14 -6.07 -3.99 -6.06 C -3.52 -6.00 -3.05 -5.89 -2.59 -5.78 C -2.41 -5.74 -2.17 -5.72 -2.08 -5.53 C -1.96 -5.29 -2.12 -4.43 -2.32 -4.25 C -2.45 -4.13 -2.69 -4.23 -2.79 -4.11 C -2.89 -3.97 -2.92 -3.64 -2.97 -3.46 C -3.39 -1.90 -3.63 -0.13 -3.10 1.44 C -2.82 2.27 -2.29 3.08 -1.47 3.46 C -1.18 3.60 -0.87 3.70 -0.56 3.76 C -0.14 3.84 0.25 3.80 0.67 3.71 C 0.97 3.64 1.27 3.53 1.54 3.37 C 3.88 2.03 3.41 -1.34 3.00 -3.53 C 2.98 -3.65 2.98 -3.95 2.90 -4.02 C 2.79 -4.13 2.59 -4.06 2.47 -4.21 C 2.29 -4.42 2.25 -4.91 2.24 -5.18 C 2.23 -5.80 3.57 -5.87 4.03 -5.98 C 4.21 -6.03 4.54 -6.13 4.72 -6.02 C 4.94 -5.88 5.05 -4.95 4.95 -4.73 C 4.87 -4.56 4.61 -4.53 4.59 -4.34 C 4.55 -3.99 4.84 -3.45 4.94 -3.11 C 5.49 -1.17 5.68 0.92 4.90 2.84 C 3.76 5.62 0.42 6.83 -2.27 5.64 C -4.84 4.51 -5.77 1.56 -5.45 -1.05 C -5.34 -1.94 -5.07 -2.84 -4.74 -3.67 C -4.67 -3.84 -4.55 -4.39 -4.40 -4.47 C -4.28 -4.54 -4.04 -4.47 -3.92 -4.44 C -3.56 -4.36 -3.19 -4.30 -2.83 -4.20 M 2.94 -4.06 C 3.38 -4.33 4.08 -4.35 4.59 -4.45 M -4.51 -0.88 C -4.25 -0.99 -4.07 -0.58 -4.31 -0.48 C -4.58 -0.36 -4.78 -0.77 -4.51 -0.88 M 4.24 -0.87 C 4.48 -1.01 4.67 -0.62 4.44 -0.49 C 4.18 -0.34 3.98 -0.73 4.24 -0.87 M -4.26 1.51 C -4.01 1.36 -3.79 1.74 -4.03 1.89 C -4.28 2.04 -4.51 1.65 -4.26 1.51 M 3.96 1.51 C 4.21 1.36 4.44 1.75 4.19 1.89 C 3.95 2.03 3.73 1.65 3.96 1.51 M -3.08 3.50 C -2.83 3.37 -2.66 3.75 -2.88 3.89 C -3.12 4.05 -3.33 3.64 -3.08 3.50 M 2.80 3.50 C 3.06 3.36 3.24 3.78 3.00 3.90 C 2.74 4.04 2.56 3.64 2.80 3.50',
+
+  chat: 'M -3 -5 L -2 -7 L -1 -5 M 1 -5 L 2 -7 L 3 -5 M -3 -5 C -4.5 -4, -4.5 -1, -3 0.5 L 3 0.5 C 4.5 -1, 4.5 -4, 3 -5 M -1.5 -2.5 m -0.3 0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 M 1.5 -2.5 m -0.3 0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 M -0.4 -0.8 L 0 -0.4 L 0.4 -0.8 M 0 -0.4 L 0 0.2 M -2 -1.5 L -4 -1.8 M -2 -1 L -4 -0.8 M 2 -1.5 L 4 -1.8 M 2 -1 L 4 -0.8 M -3 0.5 C -4 2.5, -4 5, -2.5 6 L 2.5 6 C 4 5, 4 2.5, 3 0.5 M 3 4 C 5 4, 6 6, 4 6.5 C 3.5 6.5, 3 6, 3 5.5',
+
+  chien: 'M -4 -3 C -5.5 -1.5, -5.5 2, -3.5 3 M 4 -3 C 5.5 -1.5, 5.5 2, 3.5 3 M -3.5 -3.5 C -2 -5, 2 -5, 3.5 -3.5 C 4 -1, 3.5 1.5, 2.5 2.5 L -2.5 2.5 C -3.5 1.5, -4 -1, -3.5 -3.5 M -1.5 -2 m -0.3 0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 M 1.5 -2 m -0.3 0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 M 0 0.5 m -0.5 0 a 0.5 0.35 0 1 0 1 0 a 0.5 0.35 0 1 0 -1 0 M 0 0.85 L 0 1.8 M -0.7 2.3 C -0.3 2, 0.3 2, 0.7 2.3 M -2.5 2.5 C -4 4.5, -3 6, -1 6 L 1 6 C 3 6, 4 4.5, 2.5 2.5',
+
+  tortue: 'M 2.28 -0.35 C 2.28 -0.12 2.43 0.27 2.27 0.47 C 2.14 0.64 1.54 0.71 1.33 0.75 C 0.42 0.94 -0.53 1.08 -1.47 1.09 C -1.87 1.09 -2.26 1.06 -2.66 1.05 C -2.79 1.05 -3.04 1.05 -3.09 0.90 C -3.14 0.78 -3.08 0.59 -3.08 0.46 C -3.08 0.20 -3.13 -0.23 -3.01 -0.45 C -2.82 -0.83 -2.40 -1.10 -2.15 -1.43 C -1.92 -1.74 -2.29 -2.31 -2.40 -2.62 C -2.44 -2.73 -2.54 -2.89 -2.49 -3.00 C -2.33 -3.28 -1.60 -3.25 -1.33 -3.25 C -0.12 -3.25 0.98 -2.80 1.66 -1.75 C 1.85 -1.45 1.97 -1.10 2.11 -0.77 C 2.15 -0.68 2.17 -0.44 2.29 -0.41 C 2.41 -0.38 2.52 -0.55 2.58 -0.63 C 2.79 -0.91 2.91 -1.22 3.03 -1.54 C 3.19 -1.95 3.36 -2.33 3.71 -2.61 C 4.37 -3.14 5.39 -3.09 5.93 -2.41 C 6.41 -1.82 6.14 -0.95 5.46 -0.66 C 5.17 -0.54 4.77 -0.60 4.52 -0.40 C 4.31 -0.24 4.20 0.04 4.05 0.25 C 3.82 0.55 3.54 0.82 3.22 1.03 C 3.02 1.15 2.79 1.26 2.56 1.30 C 2.44 1.32 2.28 1.28 2.21 1.38 C 2.12 1.51 2.19 1.73 2.23 1.86 C 2.31 2.14 2.59 2.77 2.39 3.04 C 2.13 3.39 1.29 3.39 0.95 3.18 C 0.63 2.99 0.62 2.43 0.56 2.10 C 0.55 2.00 0.48 1.80 0.58 1.72 C 0.68 1.64 0.92 1.63 1.05 1.60 C 1.42 1.52 1.79 1.40 2.17 1.37 M 0.07 -3.01 C -0.13 -2.64 -0.13 -1.92 -0.44 -1.63 C -0.54 -1.54 -0.75 -1.57 -0.87 -1.57 L -2.03 -1.57 M -3.11 -0.45 C -3.43 -0.53 -3.74 -0.65 -4.06 -0.73 C -4.16 -0.75 -4.35 -0.75 -4.40 -0.85 C -4.50 -1.06 -4.26 -1.41 -4.16 -1.57 C -3.80 -2.21 -3.28 -2.78 -2.55 -2.97 M -0.38 -1.57 C -0.15 -1.13 0.37 -0.86 0.59 -0.42 C 0.74 -0.12 0.67 0.47 0.67 0.81 M 2.00 -0.94 L 0.63 -0.45 M -4.45 -0.84 C -4.61 -0.59 -4.67 -0.26 -4.72 0.04 C -4.74 0.16 -4.73 0.38 -4.82 0.47 C -4.99 0.64 -5.50 0.71 -5.74 0.74 C -5.84 0.75 -6.06 0.75 -6.07 0.88 C -6.12 1.25 -5.44 1.45 -5.18 1.51 C -5.08 1.53 -4.90 1.58 -4.82 1.50 C -4.72 1.42 -4.83 1.25 -4.84 1.16 C -4.88 0.96 -4.76 0.73 -4.76 0.53 M 2.31 0.53 C 2.48 0.76 2.46 0.97 2.35 1.23 M -4.69 0.77 L -3.15 0.98 M -4.76 1.47 C -4.44 1.66 -3.91 1.70 -3.53 1.75 C -3.40 1.77 -3.10 1.76 -3.01 1.86 C -2.90 1.97 -3.04 2.32 -3.07 2.45 C -3.12 2.70 -3.13 3.04 -3.36 3.18 C -3.72 3.41 -4.83 3.38 -4.89 2.84 C -4.93 2.45 -4.69 1.95 -4.62 1.58 M -2.94 1.86 L -1.33 1.89 L 0.49 1.75',
+
+  colombe: 'M 2.17 -5.29 C 1.71 -4.18 0.70 -3.60 0.04 -2.66 C -0.46 -1.96 -0.60 -1.19 -0.59 -0.35 M 3.08 -5.29 C 3.08 -5.19 3.05 -5.01 3.12 -4.94 C 3.22 -4.83 3.40 -4.92 3.50 -4.76 C 3.77 -4.32 3.45 -3.61 3.19 -3.25 M 3.08 -4.90 L 2.94 -4.58 M 3.43 -3.43 C 3.92 -3.29 3.64 -2.50 3.46 -2.20 C 3.40 -2.11 3.20 -1.89 3.31 -1.77 C 3.44 -1.65 3.86 -1.87 3.99 -1.92 C 4.52 -2.13 5.00 -2.43 5.43 -2.81 C 5.56 -2.93 5.77 -3.25 5.98 -3.21 C 6.14 -3.18 6.15 -2.96 6.14 -2.83 C 6.12 -2.50 5.88 -2.18 5.88 -1.85 C 5.87 -1.56 6.02 -1.39 5.87 -1.08 C 5.76 -0.86 5.49 -0.74 5.41 -0.52 C 5.30 -0.24 5.39 -0.04 5.14 0.21 C 4.94 0.41 4.60 0.45 4.43 0.64 C 4.23 0.85 4.22 1.10 3.96 1.29 C 3.66 1.51 3.33 1.65 2.98 1.74 C 2.88 1.76 2.62 1.76 2.57 1.87 C 2.49 2.09 2.94 2.38 3.08 2.49 C 3.49 2.80 3.94 3.03 4.45 3.17 C 4.68 3.24 5.13 3.23 5.30 3.42 C 5.58 3.73 5.02 3.99 4.96 4.24 C 4.85 4.75 4.63 4.67 4.21 4.81 C 4.10 4.84 4.10 4.99 4.04 5.07 C 3.96 5.18 3.81 5.23 3.68 5.24 C 2.71 5.31 2.23 3.95 1.54 3.52 C 1.26 3.35 0.87 3.45 0.56 3.43 C 0.00 3.39 -0.64 3.24 -1.12 2.96 C -1.79 2.56 -2.31 1.94 -2.54 1.19 C -2.67 0.74 -2.65 0.19 -2.91 -0.21 C -3.03 -0.40 -3.27 -0.59 -3.50 -0.62 C -3.63 -0.64 -3.91 -0.54 -4.00 -0.65 C -4.13 -0.82 -3.77 -1.05 -3.70 -1.16 C -3.36 -1.66 -3.38 -2.19 -2.62 -2.27 C -2.09 -2.33 -1.64 -1.97 -1.37 -1.54 C -1.19 -1.24 -1.02 -0.81 -0.63 -0.77 M -5.39 -1.47 C -5.73 -1.50 -5.92 -1.68 -6.04 -1.99 C -6.07 -2.07 -6.16 -2.34 -6.04 -2.38 C -5.47 -2.56 -5.44 -1.57 -5.27 -1.33 C -5.20 -1.23 -4.87 -1.05 -4.87 -0.94 C -4.87 -0.51 -5.84 -0.86 -5.78 -0.42 C -5.75 -0.19 -5.29 -0.23 -5.14 -0.27 C -4.98 -0.32 -4.87 -0.54 -4.72 -0.57 C -4.45 -0.61 -3.95 0.21 -3.98 0.46 C -4.01 0.74 -4.37 0.88 -4.62 0.86 C -4.73 0.84 -4.95 0.79 -4.91 0.63 C -4.82 0.28 -4.21 0.46 -4.03 0.60 M -4.72 -1.05 C -4.83 -1.24 -4.87 -1.54 -4.81 -1.75 C -4.77 -1.89 -4.64 -2.06 -4.51 -1.91 C -4.19 -1.56 -4.57 -1.26 -4.71 -1.00 C -4.76 -0.90 -4.73 -0.74 -4.72 -0.63 M 5.67 -1.68 L 5.81 -1.75 M 3.36 -1.64 C 3.35 -0.92 2.91 -0.79 2.50 -0.31 C 2.39 -0.17 2.42 0.02 2.33 0.18 C 2.10 0.60 1.65 0.91 1.19 1.02 M -2.76 -1.36 L -2.76 -1.33 M -5.00 -0.63 L -4.83 -0.56 M 5.29 -0.49 L 5.36 -0.49 M -3.95 0.60 C -3.68 0.75 -3.63 1.11 -3.60 1.40 M 4.52 3.99 L 4.97 4.10 M 3.75 4.52 L 4.13 4.80',
+
+  lapin: 'M -2 -6.5 C -2.5 -5, -2.5 -2.5, -1.5 -1.5 C -1 -2.5, -1 -5, -1.5 -6.5 Z M 2 -6.5 C 2.5 -5, 2.5 -2.5, 1.5 -1.5 C 1 -2.5, 1 -5, 1.5 -6.5 Z M -3 -1.5 C -3 -3, -2 -4, 0 -4 C 2 -4, 3 -3, 3 -1.5 C 3 -0.3, 2 0.5, 0 0.5 C -2 0.5, -3 -0.3, -3 -1.5 Z M -1.3 -2.2 m -0.3 0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 M 1.3 -2.2 m -0.3 0 a 0.3 0.3 0 1 0 0.6 0 a 0.3 0.3 0 1 0 -0.6 0 M -0.3 -0.8 L 0 -0.4 L 0.3 -0.8 M 0 -0.4 L 0 0 M -2 -0.5 L -3.5 -0.8 M -2 -0.2 L -3.5 -0.1 M 2 -0.5 L 3.5 -0.8 M 2 -0.2 L 3.5 -0.1 M -3 0.5 C -4 2.5, -4 5, -2 6 L 2 6 C 4 5, 4 2.5, 3 0.5 M -4 4 m -0.7 0 a 0.7 0.7 0 1 0 1.4 0 a 0.7 0.7 0 1 0 -1.4 0',
+
+  poisson: 'M -4 0 C -4 -2.5, 0 -3.5, 2.5 -2.5 C 4.5 -1.5, 4.5 1.5, 2.5 2.5 C 0 3.5, -4 2.5, -4 0 Z M -4 0 L -7 -2.5 L -7 2.5 Z M 1 -1.3 m -0.4 0 a 0.4 0.4 0 1 0 0.8 0 a 0.4 0.4 0 1 0 -0.8 0 M -1.5 -1.5 C -1 -0.5, -1 0.5, -1.5 1.5 M -0.5 -2.5 L 0.5 -4 L 2 -2.5 M -0.5 2.5 L 0.5 4 L 2 2.5 M 3.5 -0.5 L 4.5 0 L 3.5 0.5',
+
+  vague2: 'M -7 3 C -5 0, -3 -2, 0 -3 C 3 -4, 5 -3, 6 -1 C 6.5 1, 5 2, 3 1.5 C 2 1, 2 0, 3 -0.5 C 4 -0.5, 4 0.5, 3.5 1 M -7 5 C -5 4, -3 5, 0 4.5 C 3 4, 5 5, 7 4 M -4 5.5 C -2 6, 0 6, 2 5.5',
+
+  vague3: 'M -7 -3.5 C -4 -5.5, -2 -5.5, 0 -3.5 C 2 -1.5, 4 -1.5, 7 -3.5 M -7 0 C -4 -2, -2 -2, 0 0 C 2 2, 4 2, 7 0 M -7 3.5 C -4 1.5, -2 1.5, 0 3.5 C 2 5.5, 4 5.5, 7 3.5',
+
+  tourbillon: 'M 6.5 0 C 6.5 -4, 2.5 -6.5, -1.5 -6 C -5 -5, -7 -1, -6 3 C -5 6, -1 7, 2.5 5.5 C 5.5 4, 6 0.5, 4 -1.5 C 2 -3.5, -1.5 -3, -2.5 -0.5 C -3.3 1.5, -1.5 3.5, 0.5 3 C 2.3 2.5, 2.5 0.5, 1 -0.3 C 0 -0.5, -0.5 0.3, 0 1',
+
+  arabesque: 'M 0.04 -0.17 C -0.41 -0.70 -0.59 -1.80 -0.39 -2.45 C -0.34 -2.62 -0.19 -3.25 0.07 -3.17 C 0.35 -3.07 0.46 -2.49 0.49 -2.24 C 0.57 -1.67 0.43 -1.16 0.26 -0.63 C 0.18 -0.40 0.05 -0.21 0.03 0.04 C 0.02 0.23 -0.09 0.66 0.04 0.83 C 0.17 1.00 0.32 0.64 0.35 0.56 C 0.56 0.07 1.13 -0.73 1.75 -0.65 C 2.20 -0.60 2.41 0.04 1.86 0.07 M -1.82 0.07 C -2.34 0.06 -2.27 -0.54 -1.82 -0.65 C -1.06 -0.82 -0.55 0.21 -0.28 0.73 C -0.21 0.87 -0.05 0.97 -0.01 1.12 C 0.05 1.36 0.00 1.68 0.00 1.93 M -1.61 2.42 C -2.19 2.03 -2.41 3.02 -1.85 3.26 C -1.15 3.56 -0.53 2.89 -0.60 2.21 C -0.65 1.70 -1.09 1.34 -1.57 1.27 C -3.04 1.06 -3.95 3.40 -5.53 2.49 C -6.63 1.86 -6.20 -0.13 -4.83 0.04 C -4.51 0.08 -4.09 0.32 -4.03 0.67 C -3.96 1.07 -4.28 1.49 -4.69 1.23 M 4.69 1.23 C 4.36 1.44 3.99 1.20 4.00 0.81 C 4.01 0.37 4.43 0.09 4.83 0.04 C 6.24 -0.13 6.58 1.90 5.46 2.51 C 3.90 3.37 2.99 1.03 1.54 1.27 C 1.02 1.36 0.62 1.74 0.57 2.28 C 0.50 2.88 1.04 3.42 1.65 3.31 C 1.86 3.27 2.08 3.13 2.15 2.91 C 2.28 2.50 1.94 2.20 1.58 2.42 M 0.11 0.91 L 0.00 1.02 M -0.03 3.26 L 0.00 3.26',
+
+  rose: 'M 0.74 -2.87 C 0.68 -3.04 0.50 -3.32 0.57 -3.50 C 0.70 -3.83 1.15 -4.05 1.02 -4.48 C 0.96 -4.67 0.81 -4.70 0.67 -4.81 C 0.38 -5.02 0.10 -5.18 -0.13 -5.45 C -0.22 -5.55 -0.51 -5.62 -0.42 -5.81 C -0.25 -6.15 0.68 -6.11 0.98 -6.03 C 1.93 -5.79 2.56 -4.75 2.13 -3.81 C 1.87 -3.23 1.29 -3.06 0.77 -2.80 C 0.39 -2.61 0.01 -2.34 -0.28 -2.03 C -0.54 -1.74 -0.13 -1.28 -0.04 -0.94 C -0.02 -0.85 -0.03 -0.58 0.08 -0.55 C 0.18 -0.53 0.28 -0.64 0.35 -0.70 C 0.54 -0.89 0.73 -1.08 0.98 -1.20 C 1.18 -1.30 1.41 -1.37 1.56 -1.54 C 1.77 -1.78 1.84 -2.09 2.10 -2.29 C 2.52 -2.63 3.09 -2.68 3.39 -3.18 C 3.87 -4.00 3.05 -4.56 2.31 -4.62 M -0.03 -5.25 C -0.39 -5.03 -0.85 -5.09 -1.19 -4.92 C -1.48 -4.77 -1.68 -4.29 -1.77 -3.99 C -1.87 -3.59 -1.40 -3.25 -1.23 -2.94 C -1.19 -2.87 -1.04 -2.60 -1.15 -2.53 C -1.28 -2.44 -1.57 -2.68 -1.68 -2.74 C -2.16 -3.01 -2.72 -3.34 -2.93 -3.88 C -3.00 -4.07 -3.05 -4.31 -3.05 -4.51 C -3.05 -4.68 -3.01 -4.85 -2.96 -5.00 C -2.60 -6.16 -1.36 -5.69 -0.52 -5.74 M -0.84 -4.90 C -0.86 -4.84 -0.88 -4.79 -0.89 -4.72 C -0.94 -4.16 -0.35 -4.67 -0.12 -4.43 C 0.08 -4.24 -0.18 -4.08 -0.17 -3.89 C -0.16 -3.75 0.40 -3.53 0.53 -3.50 M 0.04 -0.52 C 0.02 -0.41 -0.04 -0.05 -0.23 -0.17 C -0.34 -0.23 -0.36 -0.42 -0.41 -0.52 C -0.51 -0.73 -0.65 -0.91 -0.84 -1.03 C -1.19 -1.25 -1.63 -1.24 -1.96 -1.47 C -2.25 -1.67 -2.33 -2.04 -2.66 -2.21 C -3.12 -2.45 -3.62 -2.44 -3.98 -2.87 C -4.56 -3.57 -3.84 -4.45 -3.08 -4.51 M -1.68 -4.09 C -1.16 -3.72 -0.84 -3.79 -0.24 -3.81 M 2.87 -2.59 C 2.87 -1.61 2.60 -0.63 1.79 -0.01 C 1.49 0.21 1.14 0.29 0.84 0.48 C 0.71 0.57 0.70 0.72 0.61 0.84 C 0.45 1.05 0.12 1.17 -0.14 1.19 C -0.41 1.20 -0.76 1.07 -0.93 0.87 C -1.03 0.77 -1.04 0.62 -1.16 0.55 C -1.48 0.36 -1.86 0.30 -2.17 0.09 C -3.02 -0.49 -3.39 -1.41 -3.39 -2.41 M -1.05 -2.45 L -0.49 -1.89 M -0.21 -0.10 C -0.22 0.06 -0.36 0.39 -0.27 0.54 C -0.15 0.73 0.51 0.53 0.70 0.56 M -1.01 0.56 L -0.35 0.60 M 3.85 0.96 C 4.46 0.88 4.10 1.71 3.96 2.03 C 3.66 2.71 3.08 3.30 2.31 3.39 C 1.96 3.43 1.61 3.40 1.26 3.42 C 1.15 3.42 0.92 3.48 0.83 3.39 C 0.72 3.29 0.85 2.98 0.89 2.87 C 1.06 2.38 1.35 1.92 1.75 1.59 C 2.36 1.08 3.10 1.06 3.85 0.96 M -0.14 1.23 C -0.14 1.98 -0.06 2.72 -0.17 3.47 C -0.18 3.58 -0.31 4.09 -0.16 4.13 C 0.06 4.19 0.54 3.59 0.74 3.47 M -4.19 1.37 C -4.02 1.24 -3.65 1.35 -3.46 1.36 C -2.62 1.40 -1.81 1.72 -1.38 2.49 C -1.24 2.73 -1.13 2.99 -1.04 3.26 C -1.01 3.34 -0.95 3.50 -1.04 3.57 C -1.17 3.68 -1.58 3.57 -1.75 3.57 C -2.65 3.57 -3.41 3.35 -3.89 2.52 C -4.05 2.26 -4.15 1.97 -4.21 1.68 C -4.23 1.59 -4.28 1.43 -4.19 1.37 M -0.98 3.61 C -0.73 3.86 -0.55 4.61 -0.17 4.17 M -0.45 4.45 C -0.54 5.08 -0.93 5.62 -1.29 6.13',
+
+  hibiscus: 'M 0 -1 C -3 -2.5, -3.3 -5.3, 0 -6.5 C 3.3 -5.3, 3 -2.5, 0 -1 Z M 0.8 -0.7 C 3 -2.3, 6 -3.3, 6.8 -1 C 7 1, 4.3 1.8, 2 0.7 Z M 1 0.8 C 3 1.8, 5.8 4.3, 4.8 6 C 3.3 7, 1 4.8, 0.3 2.5 Z M -1 0.8 C -3 1.8, -5.8 4.3, -4.8 6 C -3.3 7, -1 4.8, -0.3 2.5 Z M -0.8 -0.7 C -3 -2.3, -6 -3.3, -6.8 -1 C -7 1, -4.3 1.8, -2 0.7 Z M 0 0 L 0 5 M 0 5 m -0.6 0 a 0.6 0.6 0 1 0 1.2 0 a 0.6 0.6 0 1 0 -1.2 0 M -0.7 4.7 m -0.25 0 a 0.25 0.25 0 1 0 0.5 0 a 0.25 0.25 0 1 0 -0.5 0 M 0.7 4.7 m -0.25 0 a 0.25 0.25 0 1 0 0.5 0 a 0.25 0.25 0 1 0 -0.5 0 M -0.6 5.7 m -0.25 0 a 0.25 0.25 0 1 0 0.5 0 a 0.25 0.25 0 1 0 -0.5 0 M 0.6 5.7 m -0.25 0 a 0.25 0.25 0 1 0 0.5 0 a 0.25 0.25 0 1 0 -0.5 0 M -0.5 3 L -1 4 M 0.5 3 L 1 4 M -0.5 1.5 L -1 2.5 M 0.5 1.5 L 1 2.5',
+
+  marguerite: 'M 0 0 m -1.3 0 a 1.3 1.3 0 1 0 2.6 0 a 1.3 1.3 0 1 0 -2.6 0 M 0 -2 C -0.8 -3, -0.8 -5.5, 0 -6.5 C 0.8 -5.5, 0.8 -3, 0 -2 Z M 1.4 -1.4 C 2.4 -1.8, 4.6 -3.2, 5 -4.6 C 4 -5, 1.8 -2.4, 1.4 -1.4 Z M 2 0 C 3 -0.8, 5.5 -0.8, 6.5 0 C 5.5 0.8, 3 0.8, 2 0 Z M 1.4 1.4 C 2.4 1.8, 4.6 3.2, 5 4.6 C 4 5, 1.8 2.4, 1.4 1.4 Z M 0 2 C -0.8 3, -0.8 5.5, 0 6.5 C 0.8 5.5, 0.8 3, 0 2 Z M -1.4 1.4 C -2.4 1.8, -4.6 3.2, -5 4.6 C -4 5, -1.8 2.4, -1.4 1.4 Z M -2 0 C -3 -0.8, -5.5 -0.8, -6.5 0 C -5.5 0.8, -3 0.8, -2 0 Z M -1.4 -1.4 C -2.4 -1.8, -4.6 -3.2, -5 -4.6 C -4 -5, -1.8 -2.4, -1.4 -1.4 Z',
+
+  abeille: 'M -2.24 -5.78 C -1.67 -5.64 -1.25 -5.38 -0.94 -4.87 C -0.84 -4.69 -0.75 -4.24 -0.61 -4.13 C -0.47 -4.02 -0.10 -4.15 0.07 -4.14 C 0.60 -4.12 1.02 -3.93 1.33 -3.46 C 1.50 -3.20 1.57 -2.84 1.53 -2.52 C 1.52 -2.40 1.40 -2.05 1.50 -1.96 C 1.58 -1.88 1.81 -1.93 1.93 -1.92 C 2.38 -1.86 2.84 -1.85 3.29 -1.78 C 4.09 -1.67 4.96 -1.38 5.51 -0.77 C 6.24 0.03 6.35 1.51 5.36 2.15 C 4.54 2.68 3.55 2.37 2.84 1.84 C 2.72 1.75 2.54 1.71 2.44 1.60 C 2.22 1.35 2.09 0.78 1.75 0.66 C 1.52 0.57 1.02 0.77 0.77 0.80 C 0.22 0.86 -0.39 0.82 -0.94 0.77 C -1.15 0.75 -1.49 0.61 -1.68 0.68 C -1.90 0.76 -2.19 1.19 -2.28 1.40 C -2.42 1.69 -2.26 2.17 -2.22 2.49 C -2.10 3.46 -1.60 4.42 -0.91 5.11 C -0.68 5.34 -0.36 5.65 -0.03 5.74 C 0.17 5.80 0.37 5.64 0.53 5.53 C 0.89 5.27 1.69 4.68 1.67 4.17 C 1.67 3.91 1.10 4.09 0.95 4.09 C 0.45 4.12 -0.06 4.16 -0.56 4.13 C -0.88 4.11 -1.27 3.98 -1.57 4.06 M 0.74 -4.13 C 0.81 -4.95 1.47 -5.60 2.24 -5.78 M -0.59 -4.09 C -0.92 -3.77 -1.31 -3.53 -1.42 -3.04 C -1.56 -2.40 -1.31 -1.63 -0.70 -1.31 C -0.27 -1.08 0.30 -1.16 0.73 -1.29 C 1.00 -1.37 1.22 -1.78 1.44 -1.96 M -1.36 -1.96 C -1.72 -1.77 -2.26 -1.86 -2.66 -1.81 C -3.67 -1.66 -4.76 -1.36 -5.49 -0.59 C -6.44 0.40 -6.21 2.25 -4.69 2.47 C -3.76 2.61 -3.19 1.98 -2.41 1.65 M -0.80 -1.26 C -0.84 -0.56 -1.52 -0.05 -1.57 0.63 M 0.88 -1.26 L 1.68 0.60 M 2.38 1.68 C 2.38 2.40 2.31 3.57 1.72 4.06 M -2.20 2.31 L 0.25 2.48 L 2.28 2.31',
+
+  ligne: 'M -7 -0.15 L 7 -0.15 L 7 0.15 L -7 0.15 Z',
+
+  cheval: 'M -1.01 -4.16 C -1.20 -4.11 -1.73 -3.86 -1.91 -3.99 C -2.09 -4.13 -2.09 -4.72 -2.10 -4.93 C -2.10 -5.03 -2.10 -5.19 -1.99 -5.22 C -1.70 -5.31 -1.20 -4.72 -1.07 -4.51 C -0.97 -4.35 -0.90 -4.06 -0.62 -4.22 C -0.49 -4.29 -0.58 -4.58 -0.59 -4.69 C -0.62 -4.98 -0.55 -5.31 -0.51 -5.60 C -0.50 -5.68 -0.50 -5.83 -0.43 -5.89 C -0.25 -6.03 0.03 -5.60 0.11 -5.50 C 0.53 -4.97 0.81 -4.38 0.81 -3.71 M -0.52 -4.16 C -0.50 -3.99 -0.39 -3.77 -0.44 -3.60 C -0.61 -3.06 -1.43 -2.65 -1.92 -2.48 C -2.16 -2.40 -2.57 -2.40 -2.75 -2.22 C -2.87 -2.12 -2.90 -1.92 -2.98 -1.78 C -3.15 -1.48 -3.35 -1.20 -3.55 -0.91 C -3.95 -0.34 -4.38 0.22 -4.81 0.77 C -5.05 1.07 -5.36 1.39 -5.51 1.75 C -5.73 2.32 -5.52 3.46 -4.87 3.69 C -4.43 3.83 -4.03 3.54 -3.74 3.26 M 0.84 -4.13 C 1.41 -4.08 1.97 -3.75 2.45 -3.46 C 4.06 -2.50 5.41 -0.59 5.49 1.33 C 5.53 2.16 5.46 2.99 5.42 3.82 C 5.41 4.15 5.35 4.74 5.50 5.04 M -1.89 -3.92 C -2.25 -3.52 -2.65 -3.25 -2.97 -2.80 C -3.04 -2.69 -3.24 -2.43 -3.15 -2.30 C -3.09 -2.22 -2.92 -2.23 -2.83 -2.20 M 1.37 -3.22 C 1.84 -2.74 2.18 -2.23 2.37 -1.57 C 2.43 -1.35 2.47 -1.11 2.48 -0.87 C 2.49 -0.79 2.46 -0.65 2.52 -0.58 C 2.63 -0.47 2.82 -0.72 2.96 -0.63 C 3.08 -0.55 3.03 -0.33 3.13 -0.22 C 3.36 0.01 3.47 -0.41 3.47 -0.56 M -3.18 -2.27 L -3.25 -2.20 M -1.08 -1.08 C -1.36 -0.82 -1.63 -0.74 -1.99 -0.87 M 2.94 -0.87 L 2.91 -0.73 M 2.52 -0.52 L 2.52 -0.45 M 3.50 -0.28 C 3.95 0.28 3.57 1.43 3.57 2.10 C 3.57 2.40 3.73 2.65 3.71 2.94 M 3.22 -0.10 L 3.22 0.21 M 0.84 0.28 C 0.69 0.64 0.61 0.99 0.34 1.29 C 0.18 1.48 -0.21 1.65 -0.30 1.86 C -0.43 2.16 -0.39 2.64 -0.48 2.98 C -0.74 4.00 -1.07 5.18 -1.54 6.13 M 4.31 1.68 C 4.30 1.93 3.97 2.46 3.78 2.63 M -4.09 3.99 C -3.77 3.91 -3.48 3.87 -3.22 3.63 C -2.98 3.41 -2.85 3.07 -2.59 2.86 C -1.96 2.37 -1.13 2.04 -0.35 1.89 M 4.27 1.96 C 4.42 2.16 4.36 2.39 4.39 2.63 C 4.47 3.24 4.51 3.83 4.84 4.38 C 4.98 4.59 5.10 4.80 5.36 4.87 M -4.55 2.10 C -4.55 2.30 -4.59 2.41 -4.72 2.56',
+
+  sapin: 'M -0.03 -5.70 C 0.26 -5.71 0.44 -5.28 0.59 -5.07 C 1.01 -4.51 1.44 -3.94 1.93 -3.43 C 2.12 -3.23 2.46 -2.98 2.43 -2.66 C 2.38 -2.16 1.34 -2.74 1.49 -2.06 C 1.51 -1.98 1.53 -1.90 1.56 -1.82 C 1.78 -1.30 2.25 -0.79 2.63 -0.38 C 2.81 -0.19 3.14 0.08 3.10 0.38 C 3.04 0.87 2.03 0.35 1.92 0.71 C 1.85 0.93 2.05 1.30 2.17 1.47 C 2.54 1.99 2.94 2.46 3.35 2.94 C 3.49 3.10 3.73 3.58 3.39 3.63 C 2.84 3.72 2.21 3.64 1.65 3.64 L -1.92 3.64 L -3.18 3.64 C -3.31 3.64 -3.53 3.68 -3.59 3.53 C -3.69 3.27 -3.34 2.90 -3.20 2.73 C -2.76 2.22 -2.09 1.56 -1.96 0.88 C -1.84 0.24 -3.07 0.92 -3.13 0.38 C -3.16 0.11 -2.90 -0.13 -2.74 -0.31 C -2.39 -0.72 -2.07 -1.14 -1.76 -1.57 C -1.64 -1.75 -1.45 -2.04 -1.51 -2.27 C -1.58 -2.57 -2.30 -2.30 -2.45 -2.59 C -2.58 -2.87 -2.19 -3.20 -2.03 -3.36 C -1.52 -3.89 -1.09 -4.52 -0.65 -5.11 C -0.51 -5.30 -0.31 -5.70 -0.03 -5.70 M -0.03 3.68 L -0.03 5.85',
+
+  lotus: 'M 0.32 -1.96 C 0.21 -1.80 -0.11 -1.75 -0.26 -1.88 C -0.46 -2.03 -0.63 -2.54 -0.74 -2.76 C -1.13 -3.58 -1.05 -4.44 -0.66 -5.21 C -0.53 -5.47 -0.35 -5.82 -0.10 -5.96 C 0.20 -6.15 0.57 -5.39 0.67 -5.18 C 1.14 -4.25 1.08 -3.26 0.51 -2.38 C 0.44 -2.27 0.27 -1.96 0.53 -1.96 C 1.46 -1.98 2.14 -3.20 2.34 -3.95 C 2.39 -4.13 2.50 -4.88 2.30 -4.98 C 1.94 -5.16 1.30 -4.70 0.98 -4.58 M -0.42 -1.96 C -1.42 -2.09 -2.17 -3.05 -2.33 -3.99 C -2.36 -4.19 -2.50 -4.83 -2.30 -4.97 C -2.19 -5.04 -2.01 -4.98 -1.89 -4.95 C -1.56 -4.85 -1.24 -4.72 -0.94 -4.55 M -0.31 -1.78 C -0.49 -1.47 -0.90 -1.44 -1.22 -1.43 C -1.94 -1.43 -2.51 -1.65 -2.97 -2.20 C -3.13 -2.39 -3.55 -2.98 -3.39 -3.24 C -3.25 -3.47 -2.50 -3.41 -2.27 -3.36 M 2.24 -3.39 C 2.53 -3.38 3.15 -3.49 3.37 -3.26 C 3.59 -3.05 3.16 -2.44 3.03 -2.27 C 2.55 -1.67 1.94 -1.43 1.19 -1.43 C 0.87 -1.44 0.48 -1.48 0.32 -1.78 M 0.00 5.88 L 0.04 5.88',
+
+  boussole: 'M 0 -7 L 1 -1 L 7 0 L 1 1 L 0 7 L -1 1 L -7 0 L -1 -1 Z M 4 -4 L 1.2 -0.7 M -4 -4 L -1.2 -0.7 M 4 4 L 1.2 0.7 M -4 4 L -1.2 0.7 M 0 0 m -1.5 0 a 1.5 1.5 0 1 0 3 0 a 1.5 1.5 0 1 0 -3 0',
+
+  pointVirgule: 'M 0 -3.5 m -0.8 0 a 0.8 0.8 0 1 0 1.6 0 a 0.8 0.8 0 1 0 -1.6 0 M 0 1.2 m -0.9 0 a 0.9 0.9 0 1 0 1.8 0 a 0.9 0.9 0 1 0 -1.8 0 M 0.4 2 C 0.6 3.5, 0 5, -1.5 6.3',
+
+  patte: 'M -2.27 -5.48 C -0.92 -5.73 -0.54 -3.78 -0.73 -2.83 C -0.83 -2.36 -1.14 -1.86 -1.64 -1.77 C -2.13 -1.68 -2.49 -1.98 -2.76 -2.34 C -3.32 -3.10 -3.54 -5.24 -2.27 -5.48 M 1.86 -5.48 C 2.48 -5.61 2.96 -5.13 3.08 -4.55 C 3.25 -3.67 3.09 -2.03 2.00 -1.79 C 1.29 -1.63 0.91 -2.15 0.73 -2.76 C 0.46 -3.65 0.81 -5.26 1.86 -5.48 M -4.93 -2.35 C -3.86 -2.38 -3.34 -1.00 -3.40 -0.10 C -3.43 0.44 -3.76 1.04 -4.38 1.04 C -5.44 1.04 -6.03 -0.31 -5.92 -1.22 C -5.86 -1.81 -5.60 -2.34 -4.93 -2.35 M 4.90 -2.36 C 5.59 -2.42 5.88 -1.80 5.97 -1.22 C 6.11 -0.34 5.43 0.95 4.48 1.01 C 3.72 1.06 3.37 0.43 3.36 -0.24 C 3.34 -1.14 3.92 -2.28 4.90 -2.36 M -0.17 -0.69 C 0.56 -0.79 1.34 -0.34 1.72 0.28 C 1.95 0.66 2.08 1.14 2.38 1.47 C 2.90 2.03 3.64 2.33 3.84 3.15 C 4.07 4.12 3.62 5.40 2.52 5.59 C 1.59 5.76 0.96 5.10 0.07 5.04 C -0.50 5.01 -0.93 5.32 -1.43 5.51 C -2.08 5.76 -2.83 5.64 -3.32 5.14 C -4.04 4.42 -4.09 3.17 -3.45 2.38 C -3.14 2.00 -2.67 1.79 -2.38 1.40 C -2.12 1.06 -2.01 0.64 -1.78 0.28 C -1.41 -0.28 -0.82 -0.60 -0.17 -0.69',
+
+  fleche: 'M -6.05 -1.19 C -5.84 -0.88 -5.48 -0.67 -5.28 -0.35 C -4.89 0.28 -5.74 0.87 -6.12 1.26 M -4.79 -1.19 L -4.03 -0.42 L -3.78 -0.02 L -3.15 0.00 L -1.78 0.00 L 3.05 0.00 L 5.04 0.00 L 5.65 0.01 L 5.54 -0.31 L 4.87 -0.98 M -3.53 -1.19 C -3.25 -0.90 -2.63 -0.44 -2.63 0.00 C -2.63 0.48 -3.26 0.92 -3.57 1.23 M -5.11 0.00 L -3.85 0.00 M -3.88 0.04 C -4.02 0.60 -4.60 0.80 -4.83 1.29 M 5.60 0.14 L 4.87 0.98',
+
+  etoile8: 'M -3.22 -4.72 C -2.58 -3.81 -1.57 -3.11 -0.83 -2.28 C -0.64 -2.06 -0.41 -1.88 -0.21 -1.68 C -0.15 -1.62 -0.06 -1.51 0.04 -1.53 C 0.30 -1.56 0.65 -2.11 0.84 -2.29 C 1.68 -3.06 2.45 -3.92 3.26 -4.72 M 0.00 -4.65 L 0.00 -2.62 C 0.00 -2.26 0.06 -1.96 -0.21 -1.68 M -0.24 -1.71 C -0.64 -1.33 -1.30 -1.47 -1.82 -1.47 C -3.17 -1.47 -4.53 -1.43 -5.88 -1.43 M 0.28 -1.68 C 0.65 -1.32 1.37 -1.47 1.86 -1.47 C 3.20 -1.47 4.54 -1.46 5.88 -1.43 M -3.85 2.42 L -1.03 -0.43 L -0.31 -1.12 L 0.00 -1.36 L 0.32 -1.12 L 1.02 -0.42 L 3.85 2.42 M 0.00 -1.40 L 0.00 2.66 L 0.00 4.55',
+
+  cle: 'M -5 0 L 2 0 M 2.5 0 m -2.5 0 a 2.5 2.5 0 1 0 5 0 a 2.5 2.5 0 1 0 -5 0 M 2.5 0 m -0.9 0 a 0.9 0.9 0 1 0 1.8 0 a 0.9 0.9 0 1 0 -1.8 0 M -5 0 L -5 2 L -4 2 L -4 0 M -3 0 L -3 2.5 L -2 2.5 L -2 0',
+};
+
+// ============ APERÇU 3D RÉALISTE (Three.js) ============
+let scene3D, camera3D, renderer3D, ringMesh, animationLoopId = null;
+let autoRotation = false;
+let rotationApercu = 0;
+let animationApercuId = null;
+
+function init3D() {
+  if (typeof THREE === 'undefined') return;
+  const container = document.getElementById('apercu-3d-container');
+  if (!container || scene3D) return;
+
+  const w = container.clientWidth || 400;
+  const h = container.clientHeight || 400;
+
+  scene3D = new THREE.Scene();
+  scene3D.background = null;
+
+  camera3D = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+  camera3D.position.set(0, 1.5, 7);
+  camera3D.lookAt(0, 0, 0);
+
+  renderer3D = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer3D.setSize(w, h);
+  renderer3D.setPixelRatio(window.devicePixelRatio);
+  renderer3D.outputColorSpace = THREE.SRGBColorSpace;
+  // Tone mapping subtil pour rendu métallique réaliste sans dénaturer les couleurs
+  renderer3D.toneMapping = THREE.LinearToneMapping;
+  renderer3D.toneMappingExposure = 1.0;
+  container.innerHTML = '';
+  container.appendChild(renderer3D.domElement);
+
+  // Environment map procédural pour reflets métalliques (gradient ciel→sol)
+  const envCanvas = document.createElement('canvas');
+  envCanvas.width = 512; envCanvas.height = 256;
+  const envCtx = envCanvas.getContext('2d');
+  // Environment dôme studio doux uniforme
+  const grad = envCtx.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.5, '#f5f5f5');
+  grad.addColorStop(1, '#cccccc');
+  envCtx.fillStyle = grad;
+  envCtx.fillRect(0, 0, 512, 256);
+  const envTexture = new THREE.CanvasTexture(envCanvas);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.SRGBColorSpace;
+  const pmrem = new THREE.PMREMGenerator(renderer3D);
+  scene3D.environment = pmrem.fromEquirectangular(envTexture).texture;
+  envTexture.dispose();
+  pmrem.dispose();
+
+  // Éclairage type dôme studio : HemisphereLight crée naturellement le gradient vertical doux
+  // (sommet plus clair, bas plus foncé) comme sur les vraies photos Mood
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xa0a0a0, 1.6);
+  hemi.position.set(0, 1, 0);
+  scene3D.add(hemi);
+  // Petite ambient pour remplir les ombres profondes
+  scene3D.add(new THREE.AmbientLight(0xffffff, 0.35));
+
+  // Drag to rotate
+  let dragStart = null, ringRotStart = 0;
+  renderer3D.domElement.addEventListener('mousedown', e => {
+    dragStart = e.clientX;
+    ringRotStart = ringMesh ? ringMesh.rotation.y : 0;
+    autoRotation = false;
+  });
+  window.addEventListener('mousemove', e => {
+    if (dragStart === null || !ringMesh) return;
+    ringMesh.rotation.y = ringRotStart + (e.clientX - dragStart) * 0.01;
+  });
+  window.addEventListener('mouseup', () => { dragStart = null; });
+  // Touch support
+  renderer3D.domElement.addEventListener('touchstart', e => {
+    if (e.touches[0]) { dragStart = e.touches[0].clientX; ringRotStart = ringMesh ? ringMesh.rotation.y : 0; autoRotation = false; }
+  });
+  window.addEventListener('touchmove', e => {
+    if (dragStart === null || !ringMesh || !e.touches[0]) return;
+    ringMesh.rotation.y = ringRotStart + (e.touches[0].clientX - dragStart) * 0.01;
+  });
+  window.addEventListener('touchend', () => { dragStart = null; });
+
+  // Resize
+  window.addEventListener('resize', () => {
+    const nw = container.clientWidth, nh = container.clientHeight;
+    if (nw && nh) renderer3D.setSize(nw, nh);
+  });
+
+  // Loop
+  function loop() {
+    animationLoopId = requestAnimationFrame(loop);
+    if (autoRotation && ringMesh) ringMesh.rotation.y += 0.008;
+    renderer3D.render(scene3D, camera3D);
+  }
+  loop();
+}
+
+// Texture satinée procédurale ultra subtile (bruit aléatoire lissé, sans direction)
+let _satinPatternCache = null;
+function generateSatinPattern() {
+  if (_satinPatternCache) return _satinPatternCache;
+  const size = 512;
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const cx = c.getContext('2d');
+  // Étape 1 : bruit aléatoire centré sur 128 avec amplitude faible
+  const img = cx.createImageData(size, size);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = 128 + (Math.random() - 0.5) * 8; // ±4 seulement = ultra subtil
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 255;
+  }
+  cx.putImageData(img, 0, 0);
+  // Étape 2 : flouter pour lisser et casser tout grain visible
+  cx.filter = 'blur(1.5px)';
+  cx.drawImage(c, 0, 0);
+  cx.filter = 'none';
+  _satinPatternCache = c;
+  return c;
+}
+
+// Construit la texture de la bague (canvas 2D combinant couleur + grain alu + bande lumineuse + design SVG)
+async function genererTextureBague() {
+  if (!couleurChoisie) return null;
+  const W = viewLongueur || 67.19, H = viewLargeur || 4.6;
+  const PX_PAR_MM = 30;
+  const tw = Math.round(W * PX_PAR_MM);
+  const th = Math.round(H * PX_PAR_MM);
+  const canvas = document.createElement('canvas');
+  canvas.width = tw;
+  canvas.height = th;
+  const ctx = canvas.getContext('2d');
+  // 1. Fond couleur aluminium
+  ctx.fillStyle = couleurChoisie.hex;
+  ctx.fillRect(0, 0, tw, th);
+
+  // 2. Bande lumineuse verticale large et douce (highlight studio packshot)
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const bandCenterX = tw * 0.35;
+  const bandHalfW = tw * 0.15;  // large pour effet diffus
+  const bandGrad = ctx.createLinearGradient(bandCenterX - bandHalfW, 0, bandCenterX + bandHalfW, 0);
+  bandGrad.addColorStop(0, 'rgba(255,255,255,0)');
+  bandGrad.addColorStop(0.5, 'rgba(255,255,255,0.22)');
+  bandGrad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = bandGrad;
+  ctx.fillRect(bandCenterX - bandHalfW, 0, bandHalfW * 2, th);
+  ctx.restore();
+
+  // 3. Gravure SVG par-dessus
+  let svgInner = '';
+  for (const el of elements) svgInner += elementSvg(el, false);
+  if (!svgInner) return canvas;
+
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${tw}" height="${th}">${svgInner}</svg>`;
+  const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  ctx.drawImage(img, 0, 0, tw, th);
+  URL.revokeObjectURL(url);
+  return canvas;
+}
+
+async function majApercu3D() {
+  let photosMap;
+  try { photosMap = PHOTOS_DISPO; } catch (e) { return; }
+  if (!photosMap || typeof THREE === 'undefined') return;
+  if (!scene3D) init3D();
+  if (!scene3D) return;
+
+  const W = viewLongueur || 67.19, H = viewLargeur || 4.6;
+  // Rayon = circonférence / 2π
+  const rayon = W / (2 * Math.PI) / 8; // div 8 pour adapter à l'échelle de la scène
+  const hauteur = H / 8;
+
+  const canvas = await genererTextureBague();
+  if (!canvas) return;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.anisotropy = 16;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+
+  // MeshPhysicalMaterial : rendu alu anodisé (semi-métallique avec léger clearcoat)
+  const material = new THREE.MeshPhysicalMaterial({
+    map: texture,
+    metalness: 0.55,
+    roughness: 0.32,
+    clearcoat: 0.4,
+    clearcoatRoughness: 0.15,
+    envMapIntensity: 0.8,
+    side: THREE.DoubleSide,
+  });
+
+  // Helper : assombrit une couleur hex (× facteur 0..1)
+  function assombrir(hex, facteur) {
+    const c = hex.replace('#', '');
+    const r = Math.round(parseInt(c.substr(0, 2), 16) * facteur);
+    const g = Math.round(parseInt(c.substr(2, 2), 16) * facteur);
+    const b = Math.round(parseInt(c.substr(4, 2), 16) * facteur);
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  }
+  // Intérieur : même couleur (juste roughness légèrement plus haute pour effet "moins de lumière y entre")
+  const couleurInterieur = assombrir(couleurChoisie.hex, 0.82);
+
+  // Caps : couleur normale (vu de face)
+  const materialUni = new THREE.MeshPhysicalMaterial({
+    color: couleurChoisie.hex,
+    metalness: 0.0, roughness: 0.75, clearcoat: 0, envMapIntensity: 0.4,
+    side: THREE.DoubleSide,
+  });
+
+  // Disposer l'ancien anneau
+  if (ringMesh) {
+    scene3D.remove(ringMesh);
+    if (ringMesh.children) {
+      ringMesh.children.forEach((child) => {
+        child.geometry?.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose());
+          else child.material.dispose();
+        }
+      });
+    }
+  }
+
+  // Anneau avec épaisseur : 4 meshes assemblés dans un Group
+  // - Cylindre extérieur : texture gravure (face avant uniquement)
+  // - Cylindre intérieur : couleur unie (face arrière uniquement, visible quand on regarde dedans)
+  // - 2 anneaux plats (caps) : tranches haut et bas de la bague
+  const EPAISSEUR = 0.15; // épaisseur radiale de l'anneau (en unités scène)
+  const rayonExt = rayon;
+  const rayonInt = Math.max(0.1, rayon - EPAISSEUR);
+
+  const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
+  const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
+    map: texture, metalness: 0.0, roughness: 0.75, clearcoat: 0, envMapIntensity: 0.4, side: THREE.FrontSide,
+  }));
+
+  const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
+  const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshPhysicalMaterial({
+    color: couleurInterieur, metalness: 0.0, roughness: 0.85, envMapIntensity: 0.3, side: THREE.BackSide,
+  }));
+
+  const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
+  const topCap = new THREE.Mesh(ringCapGeo, materialUni);
+  topCap.rotation.x = Math.PI / 2;
+  topCap.position.y = hauteur / 2;
+  const bottomCap = new THREE.Mesh(ringCapGeo.clone(), materialUni);
+  bottomCap.rotation.x = -Math.PI / 2;
+  bottomCap.position.y = -hauteur / 2;
+
+  ringMesh = new THREE.Group();
+  ringMesh.add(outerMesh, innerMesh, topCap, bottomCap);
+  // Inclinaison légère pour vue 3/4
+  ringMesh.rotation.x = 0.15;
+  scene3D.add(ringMesh);
+}
+
+function rotateApercu(value) {
+  rotationApercu = +value;
+  if (ringMesh) ringMesh.rotation.y = (rotationApercu / 180) * Math.PI;
+  autoRotation = false;
+}
+
+function animerRotation() {
+  autoRotation = !autoRotation;
+}
+
+// ============ FINITIONS ARGENT ============
+// Finitions argent (4 options) — gardées dans `COULEURS` pour réutiliser le code existant
+const COULEURS = [
+  { id: 'poli',    nom: 'Poli',    hex: '#e8e8e8' },
+  { id: 'brosse',  nom: 'Brossé',  hex: '#c8c8c8' },
+  { id: 'neutre',  nom: 'Neutre',  hex: '#d5d5d5' },
+  { id: 'piquete', nom: 'Piqueté', hex: '#bcbcbc' },
+];
+
+// Photos disponibles par format pour les finitions argent.
+// Note : medium-brosse manquant (Amila l'envoie séparément).
+const PHOTOS_DISPO = {
+  'addon':  { 'poli': 'png', 'brosse': 'png', 'neutre': 'png', 'piquete': 'png' },
+  '2-3':    { 'poli': 'png', 'brosse': 'png', 'neutre': 'png', 'piquete': 'png' },
+  'medium': { 'poli': 'png',                  'neutre': 'png', 'piquete': 'png' },
+};
+
+// Mapping format → préfixe fichier
+const FORMAT_FILENAME = { 'addon': 'addon', '2-3': 'deux-tiers', 'medium': 'medium' };
+
+function urlPhotoVignette(couleurId, formatId) {
+  const photos = PHOTOS_DISPO[formatId] || {};
+  const filename = FORMAT_FILENAME[formatId] || formatId;
+  if (photos[couleurId]) return { url: `/argent/${filename}-${couleurId}.${photos[couleurId]}`, native: true };
+  // Fallback : photo poli du format
+  return { url: `/argent/${filename}-poli.png`, native: false };
+}
+// (couleurChoisie déjà déclarée plus haut pour éviter la TDZ au démarrage)
+couleurChoisie = COULEURS.find(c => c.id === 'lilas-cashmere') || COULEURS[0];
+
+// Génère un filtre SVG par couleur : grayscale + colorize vers la couleur cible.
+// Composé en 1 matrice : on calcule la luminance (Y) puis on la multiplie par RGB cible.
+function genererFiltresCouleurs() {
+  const defs = document.getElementById('tint-filters');
+  if (!defs) return;
+  defs.innerHTML = COULEURS.map(c => {
+    const r = parseInt(c.hex.slice(1, 3), 16) / 255;
+    const g = parseInt(c.hex.slice(3, 5), 16) / 255;
+    const b = parseInt(c.hex.slice(5, 7), 16) / 255;
+    const m = `${r*0.299} ${r*0.587} ${r*0.114} 0 0  ${g*0.299} ${g*0.587} ${g*0.114} 0 0  ${b*0.299} ${b*0.587} ${b*0.114} 0 0  0 0 0 1 0`;
+    return `<filter id="tint-${c.id}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="${m}"/></filter>`;
+  }).join('');
+}
+
+function genererSelecteurCouleurs() {
+  const grid = document.getElementById('couleurs-grid');
+  if (!grid) return;
+  const fmt = document.getElementById('format')?.value || 'addon';
+  grid.innerHTML = COULEURS.map(c => {
+    const { url, native } = urlPhotoVignette(c.id, fmt);
+    // Photo native = pas de filtre. Sinon = photo lilas teintée par filter (sauf si on est déjà sur lilas).
+    const filtre = native || c.id === 'lilas-cashmere' ? '' : `style="filter:url(#tint-${c.id});"`;
+    return `<button type="button" class="couleur-btn ${c.id === couleurChoisie.id ? 'active' : ''}" data-couleur="${c.id}" title="${c.nom}" onclick="choisirCouleur('${c.id}')">
+      <img src="${url}" alt="${c.nom}" ${filtre}>
+    </button>`;
+  }).join('');
+}
+
+function choisirFormat(fmt) {
+  const btn = document.querySelector(`.format-btn[data-format="${fmt}"]`);
+  if (!btn) return;
+  // Synchronise le select caché : on met selectedIndex explicitement (plus fiable que .value sur un select hidden)
+  const sel = document.getElementById('format');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === fmt) { sel.selectedIndex = i; break; }
+  }
+  document.querySelectorAll('.format-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.format === fmt);
+  });
+  // Régénère les vignettes couleur pour qu'elles correspondent au nouveau format
+  genererSelecteurCouleurs();
+  majDimensions();
+}
+
+function choisirCouleur(id) {
+  const c = COULEURS.find(x => x.id === id);
+  if (!c) return;
+  couleurChoisie = c;
+  document.getElementById('couleur-nom').textContent = c.nom;
+  document.querySelectorAll('.couleur-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.couleur === id);
+  });
+  // Teinte les photos format avec la couleur choisie (sauf lilas qui est la couleur native des photos)
+  if (id === 'lilas-cashmere') {
+    document.documentElement.style.setProperty('--tint-filter', 'none');
+  } else {
+    document.documentElement.style.setProperty('--tint-filter', `url(#tint-${id})`);
+  }
+  rendreCanvas();
+}
+
+// Couleur des traits gravés : blanc pur pour effet gravure laser net
+function couleurContrastee(hex) {
+  return '#ffffff';
+}
+
+// ============ PRIX DYNAMIQUE ============
+// (PRIX_BASE déclaré plus haut pour éviter la TDZ au démarrage)
+
+// Niveaux de complexité (uniquement pour addon pour l'instant — 85/95/105)
+function calculerComplexite() {
+  // Compter les éléments + nb total de paths (empreintes complexes coûtent plus)
+  let pathsTot = 0;
+  for (const el of elements) {
+    if (el.type === 'empreinte') pathsTot += el.paths.length;
+    else pathsTot += 1;
+  }
+  if (elements.length === 0) return 0;
+  if (elements.length <= 2 && pathsTot <= 15) return 1; // simple
+  if (elements.length <= 4 && pathsTot <= 30) return 2; // moyen
+  return 3; // complexe
+}
+
+function calculerPrix() {
+  const fmt = document.getElementById('format')?.value;
+  if (!fmt) return null;
+  const base = PRIX_BASE[fmt];
+  const niveau = calculerComplexite();
+  let prix = base, label = '';
+  if (fmt === 'addon') {
+    if (niveau === 0 || niveau === 1) { prix = 85; label = 'design simple'; }
+    else if (niveau === 2) { prix = 95; label = 'design moyen'; }
+    else { prix = 105; label = 'design complexe'; }
+  } else {
+    prix = base;
+    label = niveau === 0 ? 'prix de base' : niveau === 1 ? 'design simple' : niveau === 2 ? 'design moyen' : 'design complexe';
+  }
+  return { prix, label, niveau, base, format: fmt };
+}
+
+function majPrix() {
+  const r = calculerPrix();
+  const montant = document.getElementById('prix-montant');
+  const detail = document.getElementById('prix-detail');
+  if (!montant || !detail || !r) return;
+  montant.textContent = r.prix;
+  if (elements.length === 0) {
+    detail.textContent = 'Prix de base — ajoute tes éléments pour personnaliser';
+  } else {
+    detail.textContent = `${elements.length} élément${elements.length > 1 ? 's' : ''} · ${r.label}`;
+  }
+}
+
+function ajouterSymbole(nom) {
+  const pathData = SYMBOLES[nom];
+  if (!pathData) return;
+  // Échelle initiale : on veut le symbole à ~70% de la largeur de la bague
+  const scale = (viewLargeur * 0.7) / 14; // les symboles font ~14 unités de hauteur
+  const el = {
+    id: nextId++, type: 'symbole', nom, pathData,
+    x: viewLongueur / 2, y: viewLargeur / 2,
+    scale, rotation: 0,
+  };
+  elements.push(el);
+  selectedId = el.id;
+  rendreCanvas();
+}
+
+function ajouterEmpreinte(paths, srcViewBox, srcImage) {
+  // Calculer scale pour que l'empreinte fasse ~80% de la largeur de la bague
+  const vb = srcViewBox.split(/\s+/).map(Number);
+  const srcW = vb[2], srcH = vb[3];
+  const scale = (viewLargeur * 0.85) / srcH;
+  const id = nextId++;
+  elements.push({
+    id, type: 'empreinte',
+    paths, srcViewBox: { x: vb[0], y: vb[1], w: srcW, h: srcH },
+    srcImage: srcImage || null,
+    x: viewLongueur / 2, y: viewLargeur / 2, scale, rotation: 0,
+  });
+  selectedId = id;
+  rendreCanvas();
+}
+
+// ============ SVG SHAPES ============
+// Tout en trait vectoriel uniforme (pas de remplissage) — pour Gravograph
+function diamantSvg(taille, style, mode = 'normal') {
+  const r = taille / 2;
+  const sw = 0.15; // trait uniforme 0.15mm
+  if (style === 'rond') {
+    return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#1d1e1b" stroke-width="${sw}"/>`;
+  }
+  // étoile : cercle outline + 4 lignes en croix
+  const lr = taille * 0.85;
+  return `<circle cx="0" cy="0" r="${r}" fill="none" stroke="#1d1e1b" stroke-width="${sw}"/>
+    <line x1="${-lr}" y1="0" x2="${lr}" y2="0" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>
+    <line x1="0" y1="${-lr}" x2="0" y2="${lr}" stroke="#1d1e1b" stroke-width="${sw}" stroke-linecap="round"/>`;
+}
+
+function couleurTrait() {
+  return couleurContrastee(couleurChoisie?.hex || '#ffffff');
+}
+
+function elementSvg(el, withSelection = false) {
+  const trait = couleurTrait();
+  const sel = (withSelection && el.id === selectedId) ? ' element selected' : '';
+  if (el.type === 'diamant') {
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+      ${diamantSvg(el.taille, el.style)}
+    </g>`;
+  }
+  if (el.type === 'texte') {
+    if (el.pathData) {
+      const style = el.isStroke
+        ? `fill="none" stroke="${trait}" stroke-width="0.15" stroke-linecap="round" stroke-linejoin="round"`
+        : `fill="${trait}" stroke="none" fill-rule="evenodd"`;
+      return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+        <path d="${el.pathData}" ${style}/>
+      </g>`;
+    }
+    // Fallback en attendant le chargement de la font
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+      <text text-anchor="middle" dominant-baseline="middle" font-size="${el.fontSize}" fill="#999">${escapeXml(el.text)} (chargement…)</text>
+    </g>`;
+  }
+  if (el.type === 'empreinte') {
+    const vb = el.srcViewBox;
+    const stroke = 0.15 / el.scale; // résultat = 0.15mm uniforme après transform
+    const innerTransform = `scale(${el.scale}) translate(${-vb.x - vb.w/2} ${-vb.y - vb.h/2})`;
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0})">
+      <g transform="${innerTransform}">
+        ${el.paths.map(d => `<path d="${d}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+      </g>
+    </g>`;
+  }
+  if (el.type === 'symbole' || el.type === 'dessin') {
+    const stroke = 0.15 / el.scale;
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0}) scale(${el.scale})">
+      <path d="${el.pathData}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>`;
+  }
+  return '';
+}
+
+// ============ RENDU CANVAS ============
+function rendreCanvas() {
+  if (typeof majPrix === 'function') majPrix();
+  if (typeof majApercu3D === 'function') majApercu3D();
+  const svg = document.getElementById('editor-svg');
+  const W = viewLongueur, H = viewLargeur;
+  const margin = 1;
+  svg.setAttribute('viewBox', `${-margin} ${-margin} ${W + 2*margin} ${H + 2*margin}`);
+  // Fit exact à la largeur dispo (jamais de débord, jamais de scroll)
+  const dispo = (svg.parentElement?.clientWidth || window.innerWidth - 600) - 16;
+  const scale = dispo / (W + 2*margin);
+  svg.setAttribute('width', dispo);
+  svg.setAttribute('height', (H + 2*margin) * scale);
+  svg.style.maxWidth = '100%';
+  svg.style.touchAction = 'manipulation';
+
+  let html = '';
+  // Fond aluminium coloré + bordure
+  const bg = couleurChoisie?.hex || '#e8e8e8';
+  const traitBordure = couleurContrastee(bg);
+  html += `<rect x="0" y="0" width="${W}" height="${H}" fill="${bg}" stroke="${traitBordure}" stroke-width="0.15" stroke-miterlimit="10"/>`;
+  // Éléments
+  for (const el of elements) {
+    html += elementSvg(el, true);
+  }
+  svg.innerHTML = html;
+
+  // Liste à droite (uniquement si présent — version interne)
+  const list = document.getElementById('elements-list');
+  if (list) {
+  if (elements.length === 0) {
+    list.innerHTML = '<div class="info">Aucun élément. Ajoute une empreinte, un diamant ou un texte.</div>';
+  } else {
+    list.innerHTML = elements.map(el => {
+      const cls = el.id === selectedId ? ' selected' : '';
+      const label = el.type === 'diamant' ? `💎 Diamant ${el.taille}mm ${el.style === 'etoile' ? '★' : ''}`
+                  : el.type === 'texte' ? `🔤 "${el.text}"`
+                  : `🖋️ Empreinte (${el.paths.length} traits)`;
+      return `<div class="element-item${cls}" onclick="selectionner(${el.id})">
+        <span>${label}</span>
+        <span style="color:var(--gris);font-size:0.7rem;">id ${el.id}</span>
+      </div>`;
+    }).join('');
+  }
+  } // fin if (list)
+
+  // Boutons toolbar (présents dans les 2 versions, mais btn-dup absent en mode client)
+  ['btn-dup','btn-del','btn-rot','btn-ctr','btn-grand','btn-petit'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = !selectedId;
+  });
+  // Pour les éléments non-empreintes, désactiver agrandir/rétrécir aussi (mais utile pour textes/diamants)
+  if (selectedId) {
+    const el = elements.find(x => x.id === selectedId);
+    // On laisse agrandir/rétrécir actifs pour tous types (utile pour textes aussi)
+  }
+}
+
+function agrandir() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el) return;
+  if (el.type === 'empreinte' || el.type === 'symbole' || el.type === 'dessin') el.scale = (el.scale || 1) * 1.15;
+  else if (el.type === 'diamant') el.taille = el.taille * 1.15;
+  else if (el.type === 'texte') { el.fontSize = el.fontSize * 1.15; regenererPathTexte(el); }
+  rendreCanvas();
+}
+
+function reduire() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el) return;
+  if (el.type === 'empreinte' || el.type === 'symbole' || el.type === 'dessin') el.scale = (el.scale || 1) / 1.15;
+  else if (el.type === 'diamant') el.taille = el.taille / 1.15;
+  else if (el.type === 'texte') { el.fontSize = el.fontSize / 1.15; regenererPathTexte(el); }
+  rendreCanvas();
+}
+
+// ============ INTERACTION DRAG & DROP + CRAYON + GOMME ============
+let dragging = null;  // { id, offsetX, offsetY }
+let modeOutil = 'select'; // 'select' | 'crayon' | 'gomme'
+let pathEnCours = null;   // tableau de points en cours de dessin
+let pathPreviewEl = null; // élément SVG path temporaire affiché pendant le dessin
+
+function basculerMode(mode) {
+  modeOutil = (modeOutil === mode) ? 'select' : mode;
+  ['crayon', 'gomme'].forEach(m => {
+    const b = document.getElementById('btn-' + m);
+    if (b) b.classList.toggle('mode-actif', modeOutil === m);
+  });
+  const svg = document.getElementById('editor-svg');
+  svg.style.cursor = modeOutil === 'crayon' ? 'crosshair' : modeOutil === 'gomme' ? 'cell' : 'default';
+  // Désélectionner pendant le dessin/gomme pour éviter le drag
+  if (modeOutil !== 'select') selectionner(null);
+}
+
+function effacerSousCurseur(clientX, clientY) {
+  const t = document.elementFromPoint(clientX, clientY)?.closest('g.element');
+  if (!t) return;
+  const id = +t.dataset.id;
+  const el = elements.find(x => x.id === id);
+  if (el && el.type === 'dessin') {
+    elements = elements.filter(x => x.id !== id);
+    rendreCanvas();
+  }
+}
+
+document.getElementById('editor-svg').addEventListener('mousedown', e => {
+  if (modeOutil === 'crayon') {
+    const pt = svgPoint(e.clientX, e.clientY);
+    pathEnCours = [[pt.x, pt.y]];
+    const svgNS = 'http://www.w3.org/2000/svg';
+    pathPreviewEl = document.createElementNS(svgNS, 'path');
+    pathPreviewEl.setAttribute('fill', 'none');
+    pathPreviewEl.setAttribute('stroke', couleurTrait());
+    pathPreviewEl.setAttribute('stroke-width', '0.15');
+    pathPreviewEl.setAttribute('stroke-linecap', 'round');
+    pathPreviewEl.setAttribute('stroke-linejoin', 'round');
+    pathPreviewEl.setAttribute('d', `M ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`);
+    document.getElementById('editor-svg').appendChild(pathPreviewEl);
+    return;
+  }
+  if (modeOutil === 'gomme') {
+    effacerSousCurseur(e.clientX, e.clientY);
+    return;
+  }
+  const target = e.target.closest('g.element');
+  if (!target) {
+    selectionner(null);
+    return;
+  }
+  const id = +target.dataset.id;
+  selectionner(id);
+  const el = elements.find(x => x.id === id);
+  const pt = svgPoint(e.clientX, e.clientY);
+  dragging = { id, offsetX: pt.x - el.x, offsetY: pt.y - el.y };
+});
+
+document.addEventListener('mousemove', e => {
+  if (modeOutil === 'crayon' && pathEnCours && pathPreviewEl) {
+    const pt = svgPoint(e.clientX, e.clientY);
+    pathEnCours.push([pt.x, pt.y]);
+    const d = 'M ' + pathEnCours.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' L ');
+    pathPreviewEl.setAttribute('d', d);
+    return;
+  }
+  if (modeOutil === 'gomme' && (e.buttons & 1)) {
+    effacerSousCurseur(e.clientX, e.clientY);
+    return;
+  }
+  if (!dragging) return;
+  const el = elements.find(x => x.id === dragging.id);
+  if (!el) return;
+  const pt = svgPoint(e.clientX, e.clientY);
+  el.x = pt.x - dragging.offsetX;
+  el.y = pt.y - dragging.offsetY;
+  rendreCanvas();
+});
+
+document.addEventListener('mouseup', () => {
+  if (modeOutil === 'crayon' && pathEnCours) {
+    if (pathEnCours.length > 2) {
+      // Lisser → simplifier légèrement → courbes Bezier (mêmes étapes que vectorisation empreinte)
+      const smoothed = smoothPolyline(pathEnCours, 3);
+      const simplified = douglasPeucker(smoothed, 0.15);
+      const xs = simplified.map(p => p[0]);
+      const ys = simplified.map(p => p[1]);
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+      const centered = simplified.map(p => [p[0] - cx, p[1] - cy]);
+      const pathData = polylineToBezier(centered);
+      const id = nextId++;
+      elements.push({ id, type: 'dessin', pathData, x: cx, y: cy, scale: 1, rotation: 0 });
+      selectedId = id;
+    }
+    if (pathPreviewEl) { pathPreviewEl.remove(); pathPreviewEl = null; }
+    pathEnCours = null;
+    rendreCanvas();
+    return;
+  }
+  dragging = null;
+});
+
+function svgPoint(clientX, clientY) {
+  const svg = document.getElementById('editor-svg');
+  const rect = svg.getBoundingClientRect();
+  const xRel = (clientX - rect.left) / rect.width;
+  const yRel = (clientY - rect.top) / rect.height;
+  const W = viewLongueur, H = viewLargeur, margin = 1;
+  return { x: xRel * (W + 2*margin) - margin, y: yRel * (H + 2*margin) - margin };
+}
+
+function selectionner(id) {
+  selectedId = id;
+  rendreCanvas();
+}
+
+function dupliquerSelection() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el) return;
+  const copy = JSON.parse(JSON.stringify(el));
+  copy.id = nextId++;
+  copy.x += 2;
+  copy.y += 0.5;
+  elements.push(copy);
+  selectedId = copy.id;
+  rendreCanvas();
+}
+
+function supprimerSelection() {
+  if (!selectedId) return;
+  elements = elements.filter(x => x.id !== selectedId);
+  selectedId = null;
+  rendreCanvas();
+}
+
+function rotation90() {
+  // (nom historique — tourne par pas de 30° côté client)
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (el) { el.rotation = ((el.rotation || 0) + 30) % 360; rendreCanvas(); }
+}
+
+function centrer() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (el) { el.x = viewLongueur / 2; el.y = viewLargeur / 2; rendreCanvas(); }
+}
+
+// Touches : Delete = supprimer, Cmd+D = dupliquer
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); supprimerSelection(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'd') { e.preventDefault(); dupliquerSelection(); }
+});
+
+// ============ UPLOAD IMAGE & VECTORISATION ============
+let imageDataUrl = null;
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) lireImage(e.dataTransfer.files[0]);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files && e.target.files[0]) lireImage(e.target.files[0]);
+});
+
+// Permettre aussi de glisser une image directement sur la bague
+const editorSvg = document.getElementById('editor-svg');
+editorSvg.addEventListener('dragover', e => { e.preventDefault(); editorSvg.style.outline = '2px dashed var(--bleu)'; });
+editorSvg.addEventListener('dragleave', () => { editorSvg.style.outline = ''; });
+editorSvg.addEventListener('drop', e => {
+  e.preventDefault(); editorSvg.style.outline = '';
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) lireImage(e.dataTransfer.files[0]);
+});
+
+// Empêcher le navigateur d'ouvrir une image lâchée hors zone (= "ça zoome la page")
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
+
+// Bloquer le pinch-zoom du trackpad (Cmd+scroll ou pinch = wheel avec ctrlKey)
+window.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+// Bloquer les gestures de zoom Safari Mac
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => {
+  window.addEventListener(ev, e => e.preventDefault());
+});
+// Bloquer le double-clic qui peut déclencher zoom-to-element sur certains navigateurs
+document.addEventListener('dblclick', e => { e.preventDefault(); }, { passive: false });
+
+function lireImage(f) {
+  if (!f.type.startsWith('image/')) { alert('Image uniquement'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => { imageDataUrl = ev.target.result; vectoriserEtAjouter(); };
+  reader.readAsDataURL(f);
+}
+
+// Extraction du contour : garde uniquement les pixels noirs ayant au moins 1 voisin blanc
+function extractContour(binary, w, h) {
+  const contour = new Uint8Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      if (!binary[i]) continue;
+      if (!binary[i - 1] || !binary[i + 1] || !binary[i - w] || !binary[i + w] ||
+          !binary[i - w - 1] || !binary[i - w + 1] || !binary[i + w - 1] || !binary[i + w + 1]) {
+        contour[i] = 1;
+      }
+    }
+  }
+  return contour;
+}
+
+async function vectoriserImage(dataUrl) {
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
+  const maxSize = 600;
+  const scaleDown = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * scaleDown);
+  const h = Math.round(img.naturalHeight * scaleDown);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  let imageData = ctx.getImageData(0, 0, w, h);
+  if (document.getElementById('enhance').checked) imageData = enhanceImage(imageData, w, h);
+  const binary = thresholdOtsu(imageData, w, h);
+
+  // Détection auto silhouette vs empreinte selon le ratio noir/total
+  let nbBlack = 0;
+  for (let i = 0; i < binary.length; i++) if (binary[i]) nbBlack++;
+  const ratio = nbBlack / binary.length;
+  const modeAuto = ratio > 0.15 ? 'silhouette' : 'empreinte';
+
+  // Pipeline adapté
+  const processed = modeAuto === 'silhouette' ? extractContour(binary, w, h) : zhangSuen(binary, w, h);
+  let polylines = extractPathsFromSkeleton(processed, w, h);
+
+  const minLen = parseInt(document.getElementById('min-length').value, 10);
+  if (minLen > 0) {
+    polylines = polylines.filter(pl => {
+      let len = 0;
+      for (let i = 1; i < pl.length; i++) len += Math.hypot(pl[i][0] - pl[i-1][0], pl[i][1] - pl[i-1][1]);
+      return len >= minLen;
+    });
+  }
+  const smoothWin = parseInt(document.getElementById('smooth-window').value, 10);
+  if (smoothWin > 1) polylines = polylines.map(pl => smoothPolyline(pl, smoothWin));
+  const eps = parseFloat(document.getElementById('smoothing').value);
+  const simplified = eps > 0 ? polylines.map(pl => douglasPeucker(pl, eps)) : polylines;
+  const traceMode = document.getElementById('trace-mode').value;
+  const paths = simplified.filter(pl => pl.length >= 2).map(pl => traceMode === 'bezier' ? polylineToBezier(pl) : polylineToLine(pl));
+  return { paths, w, h, modeAuto };
+}
+
+async function vectoriserEtAjouter() {
+  const previewZone = document.getElementById('vector-preview');
+  previewZone.classList.remove('hidden');
+  previewZone.innerHTML = '<div class="info" style="padding:0.5rem;">⏳ Vectorisation…</div>';
+  try {
+    const { paths, w, h, modeAuto } = await vectoriserImage(imageDataUrl);
+    if (paths.length === 0) {
+      previewZone.innerHTML = '<div class="erreur" style="padding:0.5rem;">Aucun trait détecté.</div>';
+      return;
+    }
+    const label = modeAuto === 'silhouette' ? '✂️ Silhouette → contour' : '🖋️ Empreinte → lignes';
+    previewZone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+      <div class="info" style="font-size:0.72rem;">${label}</div>
+      <svg viewBox="0 0 ${w} ${h}">
+        ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+      </svg>
+    </div>`;
+    ajouterEmpreinte(paths, `0 0 ${w} ${h}`, imageDataUrl);
+  } catch (e) {
+    previewZone.innerHTML = `<div class="erreur" style="padding:0.5rem;">Erreur : ${e.message}</div>`;
+    console.error(e);
+  }
+}
+
+// Re-vectorise l'empreinte sélectionnée avec les nouveaux réglages
+let revectoriserDebounce = null;
+async function revectoriserSelection() {
+  if (!selectedId) return;
+  const el = elements.find(x => x.id === selectedId);
+  if (!el || el.type !== 'empreinte' || !el.srcImage) return;
+  try {
+    const { paths, w, h, modeAuto } = await vectoriserImage(el.srcImage);
+    if (paths.length === 0) return;
+    el.paths = paths;
+    el.srcViewBox = { x: 0, y: 0, w, h };
+    rendreCanvas();
+    const previewZone = document.getElementById('vector-preview');
+    previewZone.classList.remove('hidden');
+    const label = modeAuto === 'silhouette' ? '✂️ Silhouette → contour' : '🖋️ Empreinte → lignes';
+    previewZone.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.4rem;">
+      <div class="info" style="font-size:0.72rem;">${label}</div>
+      <svg viewBox="0 0 ${w} ${h}">
+        ${paths.map(d => `<path d="${d}" fill="none" stroke="black" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+      </svg>
+    </div>`;
+  } catch (e) { console.error(e); }
+}
+
+function declencherRevectorisation() {
+  if (revectoriserDebounce) clearTimeout(revectoriserDebounce);
+  revectoriserDebounce = setTimeout(revectoriserSelection, 250);
+}
+
+// Brancher les onchange sur tous les réglages de vectorisation
+['enhance', 'smooth-window', 'smoothing', 'min-length', 'trace-mode'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', declencherRevectorisation);
+});
+
+// ============ GÉNÉRATION SVG + ENVOI DEMANDE CLIENT ============
+function genererSvgFinal() {
+  const W = viewLongueur, H = viewLargeur;
+  let body = '';
+  for (const el of elements) body += elementSvg(el, false);
+  body += `<rect x="0.125" y="0.125" width="${W - 0.25}" height="${H - 0.25}" fill="none" stroke="#1d1e1b" stroke-width="0.25" stroke-miterlimit="10"/>`;
+  // Pour le fichier de gravure : trait NOIR sur fond blanc (le blanc d'affichage 3D est invisible sur fond navigateur blanc)
+  body = body.replace(/stroke="#ffffff"/g, 'stroke="#1d1e1b"').replace(/fill="#ffffff"/g, 'fill="#1d1e1b"');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 ${W + 4} ${H + 4}">
+${body}
+</svg>`;
+}
+
+async function acheterSurShopify() {
+  const erreurEl = document.getElementById('erreur');
+  const okEl = document.getElementById('confirmation');
+  erreurEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  const prenom = document.getElementById('cli-prenom').value.trim();
+  const email = document.getElementById('cli-email').value.trim();
+  const tel = document.getElementById('cli-tel').value.trim();
+  const message = document.getElementById('cli-message').value.trim();
+  const format = document.getElementById('format').value;
+  const taille = document.getElementById('taille').value;
+
+  if (!prenom || !email) {
+    erreurEl.textContent = 'Merci de renseigner ton prénom et ton email avant de passer à l\'achat.';
+    erreurEl.classList.remove('hidden');
+    return;
+  }
+  if (elements.length === 0) {
+    erreurEl.textContent = 'Ajoute au moins un élément (empreinte, texte, dessin ou symbole) sur ta bague avant de passer à l\'achat.';
+    erreurEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Préparation de ton panier…'; }
+
+  try {
+    const svg = genererSvgFinal();
+    const r = await fetch('/api/creer-cart-shopify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prenom, email, tel, message,
+        format, taille,
+        couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom,
+        svg, nbElements: elements.length,
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.cartUrl) throw new Error(data.error || `Réponse ${r.status}`);
+    // Redirection vers le cart Shopify pré-rempli
+    window.location.href = data.cartUrl;
+  } catch (e) {
+    erreurEl.textContent = 'Erreur lors de la préparation du panier : ' + e.message + '. Tu peux aussi envoyer ta demande à l\'équipe ci-dessous.';
+    erreurEl.classList.remove('hidden');
+    if (btn) { btn.disabled = false; btn.textContent = '🛒 Acheter sur yourmood.net'; }
+  }
+}
+
+async function envoyerDemande() {
+  const erreurEl = document.getElementById('erreur');
+  const okEl = document.getElementById('confirmation');
+  erreurEl.classList.add('hidden');
+  okEl.classList.add('hidden');
+
+  const prenom = document.getElementById('cli-prenom').value.trim();
+  const email = document.getElementById('cli-email').value.trim();
+  const tel = document.getElementById('cli-tel').value.trim();
+  const matiere = document.getElementById('cli-matiere').value;
+  const message = document.getElementById('cli-message').value.trim();
+  const format = document.getElementById('format').value;
+  const taille = document.getElementById('taille').value;
+
+  if (!prenom || !email) {
+    erreurEl.textContent = 'Merci de renseigner ton prénom et ton email.';
+    erreurEl.classList.remove('hidden');
+    return;
+  }
+  if (elements.length === 0) {
+    erreurEl.textContent = 'Ajoute au moins une empreinte ou un texte sur ta bague avant d\'envoyer.';
+    erreurEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Envoi…'; }
+
+  try {
+    const svg = genererSvgFinal();
+    const prixCalc = calculerPrix();
+    const r = await fetch('/api/creer-demande', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prenom, email, tel, matiere, couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom, message, format, taille, svg, nbElements: elements.length, prix: prixCalc?.prix, niveau: prixCalc?.label })
+    });
+    if (!r.ok) throw new Error('Réponse ' + r.status);
+    okEl.textContent = `✓ Merci ${prenom} ! On a bien reçu ta demande. On te recontacte sous 24h ouvrées à ${email}.`;
+    okEl.classList.remove('hidden');
+  } catch (e) {
+    erreurEl.textContent = 'Erreur d\'envoi. Réessaye dans un instant ou écris-nous à info@yourmood.net.';
+    erreurEl.classList.remove('hidden');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✉️ Envoyer ma demande à Mood'; }
+  }
+}
+
+// ============ HELPERS ============
+function escapeXml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
+// ============ PIPELINE VECTORISATION (réutilisé V1) ============
+function enhanceImage(imageData, w, h) {
+  const src = imageData.data;
+  const gray = new Uint8Array(w * h);
+  for (let i = 0; i < gray.length; i++) gray[i] = Math.round(0.299 * src[i*4] + 0.587 * src[i*4+1] + 0.114 * src[i*4+2]);
+  let min = 255, max = 0;
+  for (let i = 0; i < gray.length; i++) { if (gray[i] < min) min = gray[i]; if (gray[i] > max) max = gray[i]; }
+  const range = max - min || 1;
+  for (let i = 0; i < gray.length; i++) gray[i] = Math.round(((gray[i] - min) / range) * 255);
+  const med = new Uint8Array(gray.length);
+  const window = new Array(9);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (y === 0 || y === h-1 || x === 0 || x === w-1) { med[y*w + x] = gray[y*w + x]; continue; }
+      let k = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) window[k++] = gray[(y+dy)*w + (x+dx)];
+      window.sort((a, b) => a - b);
+      med[y*w + x] = window[4];
+    }
+  }
+  const sharp = new Uint8Array(med.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (y === 0 || y === h-1 || x === 0 || x === w-1) { sharp[y*w + x] = med[y*w + x]; continue; }
+      let v = 5 * med[y*w + x] - med[(y-1)*w + x] - med[(y+1)*w + x] - med[y*w + x-1] - med[y*w + x+1];
+      if (v < 0) v = 0; if (v > 255) v = 255;
+      sharp[y*w + x] = v;
+    }
+  }
+  const out = new ImageData(w, h);
+  for (let i = 0; i < sharp.length; i++) {
+    out.data[i*4] = sharp[i]; out.data[i*4+1] = sharp[i]; out.data[i*4+2] = sharp[i]; out.data[i*4+3] = 255;
+  }
+  return out;
+}
+
+function thresholdOtsu(imageData, w, h) {
+  const hist = new Array(256).fill(0);
+  const gray = new Uint8Array(w * h);
+  for (let i = 0; i < gray.length; i++) {
+    const v = Math.round(0.299 * imageData.data[i*4] + 0.587 * imageData.data[i*4+1] + 0.114 * imageData.data[i*4+2]);
+    gray[i] = v; hist[v]++;
+  }
+  const total = w * h;
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, max = 0, threshold = 0;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (wB === 0) continue;
+    const wF = total - wB; if (wF === 0) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB, mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > max) { max = between; threshold = t; }
+  }
+  const binary = new Uint8Array(gray.length);
+  for (let i = 0; i < gray.length; i++) binary[i] = gray[i] < threshold ? 1 : 0;
+  return binary;
+}
+
+function zhangSuen(input, w, h) {
+  const data = new Uint8Array(input);
+  let changed = true; let iter = 0;
+  while (changed && iter++ < 50) {
+    changed = false;
+    for (const pass of [1, 2]) {
+      const toRemove = [];
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const idx = y * w + x;
+          if (data[idx] !== 1) continue;
+          const p2 = data[(y-1)*w + x], p3 = data[(y-1)*w + x+1];
+          const p4 = data[y*w + x+1],   p5 = data[(y+1)*w + x+1];
+          const p6 = data[(y+1)*w + x], p7 = data[(y+1)*w + x-1];
+          const p8 = data[y*w + x-1],   p9 = data[(y-1)*w + x-1];
+          const B = p2+p3+p4+p5+p6+p7+p8+p9;
+          if (B < 2 || B > 6) continue;
+          const seq = [p2,p3,p4,p5,p6,p7,p8,p9,p2];
+          let A = 0;
+          for (let k = 0; k < 8; k++) if (seq[k] === 0 && seq[k+1] === 1) A++;
+          if (A !== 1) continue;
+          if (pass === 1) { if (p2*p4*p6 !== 0 || p4*p6*p8 !== 0) continue; }
+          else { if (p2*p4*p8 !== 0 || p2*p6*p8 !== 0) continue; }
+          toRemove.push(idx);
+        }
+      }
+      if (toRemove.length > 0) { for (const i of toRemove) data[i] = 0; changed = true; }
+    }
+  }
+  return data;
+}
+
+function extractPathsFromSkeleton(skeleton, w, h) {
+  const visited = new Uint8Array(skeleton.length);
+  const paths = [];
+  function countN(x, y) {
+    let n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+      if (skeleton[ny * w + nx] === 1) n++;
+    }
+    return n;
+  }
+  function getUnvisitedNeighbors(x, y) {
+    const ns = [];
+    const order = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+    for (const [dx, dy] of order) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+      const ni = ny * w + nx;
+      if (skeleton[ni] === 1 && !visited[ni]) ns.push([nx, ny]);
+    }
+    return ns;
+  }
+  function followFrom(x, y, initDir) {
+    const path = [[x, y]];
+    visited[y * w + x] = 1;
+    let prevDir = initDir || null;
+    while (true) {
+      const ns = getUnvisitedNeighbors(x, y);
+      if (ns.length === 0) break;
+      let next;
+      if (prevDir && ns.length > 1) {
+        let bestScore = -Infinity;
+        for (const c of ns) {
+          const dx = c[0] - x, dy = c[1] - y;
+          const len = Math.hypot(dx, dy);
+          const dot = (dx*prevDir[0] + dy*prevDir[1]) / (len * Math.hypot(prevDir[0], prevDir[1]) + 0.001);
+          if (dot > bestScore) { bestScore = dot; next = c; }
+        }
+      } else next = ns[0];
+      prevDir = [next[0] - x, next[1] - y];
+      [x, y] = next;
+      path.push([x, y]);
+      visited[y * w + x] = 1;
+    }
+    return path;
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const idx = y * w + x;
+    if (skeleton[idx] !== 1 || visited[idx]) continue;
+    if (countN(x, y) === 1) {
+      const path = followFrom(x, y);
+      if (path.length >= 2) paths.push(path);
+    }
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const idx = y * w + x;
+    if (skeleton[idx] !== 1 || visited[idx]) continue;
+    if (countN(x, y) >= 3) {
+      visited[idx] = 1;
+      let ns = getUnvisitedNeighbors(x, y);
+      while (ns.length > 0) {
+        const [nx, ny] = ns[0];
+        const initDir = [nx - x, ny - y];
+        visited[ny * w + nx] = 1;
+        const sub = followFrom(nx, ny, initDir);
+        sub.unshift([x, y]);
+        if (sub.length >= 2) paths.push(sub);
+        ns = getUnvisitedNeighbors(x, y);
+      }
+    }
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const idx = y * w + x;
+    if (skeleton[idx] !== 1 || visited[idx]) continue;
+    const path = followFrom(x, y);
+    if (path.length >= 2) paths.push(path);
+  }
+  return paths;
+}
+
+function smoothPolyline(pl, win) {
+  if (pl.length < 3 || win < 2) return pl;
+  const half = Math.floor(win / 2);
+  const smoothed = [pl[0]];
+  for (let i = 1; i < pl.length - 1; i++) {
+    let sx = 0, sy = 0, n = 0;
+    const start = Math.max(0, i - half), end = Math.min(pl.length - 1, i + half);
+    for (let j = start; j <= end; j++) { sx += pl[j][0]; sy += pl[j][1]; n++; }
+    smoothed.push([sx / n, sy / n]);
+  }
+  smoothed.push(pl[pl.length - 1]);
+  return smoothed;
+}
+
+function douglasPeucker(points, epsilon) {
+  if (points.length < 3) return points;
+  let maxDist = 0, maxIdx = 0;
+  const [x1, y1] = points[0], [xN, yN] = points[points.length - 1];
+  for (let i = 1; i < points.length - 1; i++) {
+    const [x, y] = points[i];
+    const num = Math.abs((yN - y1) * x - (xN - x1) * y + xN * y1 - yN * x1);
+    const den = Math.hypot(yN - y1, xN - x1);
+    const d = den > 0 ? num / den : 0;
+    if (d > maxDist) { maxDist = d; maxIdx = i; }
+  }
+  if (maxDist > epsilon) {
+    const left = douglasPeucker(points.slice(0, maxIdx + 1), epsilon);
+    const right = douglasPeucker(points.slice(maxIdx), epsilon);
+    return left.slice(0, -1).concat(right);
+  }
+  return [points[0], points[points.length - 1]];
+}
+
+function polylineToLine(pl) { return 'M' + pl.map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`).join('L'); }
+
+function polylineToBezier(pl) {
+  if (pl.length < 2) return '';
+  if (pl.length === 2) return `M${pl[0][0].toFixed(2)} ${pl[0][1].toFixed(2)}L${pl[1][0].toFixed(2)} ${pl[1][1].toFixed(2)}`;
+  let d = `M${pl[0][0].toFixed(2)} ${pl[0][1].toFixed(2)}`;
+  for (let i = 0; i < pl.length - 1; i++) {
+    const p0 = pl[Math.max(0, i-1)], p1 = pl[i], p2 = pl[i+1], p3 = pl[Math.min(pl.length-1, i+2)];
+    const cp1x = p1[0] + (p2[0]-p0[0])/6, cp1y = p1[1] + (p2[1]-p0[1])/6;
+    const cp2x = p2[0] - (p3[0]-p1[0])/6, cp2y = p2[1] - (p3[1]-p1[1])/6;
+    d += `C${cp1x.toFixed(2)} ${cp1y.toFixed(2)} ${cp2x.toFixed(2)} ${cp2y.toFixed(2)} ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+  }
+  return d;
+}
+</script>
+</body>
+</html>
