@@ -375,7 +375,7 @@
   <div class="card">
     <h2>🔄 Aperçu réaliste sur ta bague</h2>
     <p class="info" style="margin-bottom:0.6rem;">Voici ta bague gravée en 3D. Glisse le curseur ou clique le bouton pour la faire tourner.</p>
-    <div id="apercu-3d-wrapper" style="display:flex;justify-content:center;background:#fafafa;border-radius:12px;padding:1rem;">
+    <div id="apercu-3d-wrapper" style="display:flex;justify-content:center;background:#292928;border-radius:12px;padding:1rem;">
       <div id="apercu-3d-container" style="width:100%;max-width:420px;aspect-ratio:1;"></div>
     </div>
     <input type="range" id="apercu-rotation" min="0" max="360" value="0" step="1" style="width:100%;margin-top:0.8rem;" oninput="rotateApercu(this.value)">
@@ -795,7 +795,7 @@ function init3D() {
   const h = container.clientHeight || 400;
 
   scene3D = new THREE.Scene();
-  scene3D.background = null;
+  scene3D.background = new THREE.Color(0x292928); // anthracite = couleur fond photo réf
 
   camera3D = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
   camera3D.position.set(0, 1.5, 7);
@@ -816,18 +816,27 @@ function init3D() {
   const envCanvas = document.createElement('canvas');
   envCanvas.width = 512; envCanvas.height = 256;
   const envCtx = envCanvas.getContext('2d');
-  // Environment studio contrasté pour reflets métalliques (argent)
-  const grad = envCtx.createLinearGradient(0, 0, 0, 256);
-  grad.addColorStop(0, '#ffffff');
-  grad.addColorStop(0.35, '#e8e8e8');
-  grad.addColorStop(0.55, '#8a8a8a');
-  grad.addColorStop(1, '#2a2a2a');
+  // Environment studio dôme — calé sur la photo réf : blanc top, anthracite bas
+  envCanvas.width = 1024; envCanvas.height = 512;
+  const grad = envCtx.createLinearGradient(0, 0, 0, 512);
+  grad.addColorStop(0, '#ffffff');     // dôme studio top — blanc pur
+  grad.addColorStop(0.3, '#f5f5f5');
+  grad.addColorStop(0.5, '#b0b0b0');   // horizon
+  grad.addColorStop(0.7, '#5a5a5a');
+  grad.addColorStop(1, '#1f1f1e');     // sol = anthracite photo réf
   envCtx.fillStyle = grad;
-  envCtx.fillRect(0, 0, 512, 256);
-  // 2 bandes lumineuses pour highlights métalliques ponctuels
+  envCtx.fillRect(0, 0, 1024, 512);
+  // Bande lumineuse principale (= source lumière studio principale haut-gauche)
   envCtx.fillStyle = 'rgba(255,255,255,1)';
-  envCtx.fillRect(60, 25, 110, 18);
-  envCtx.fillRect(300, 35, 130, 14);
+  envCtx.fillRect(120, 30, 280, 28);
+  envCtx.fillStyle = 'rgba(255,255,255,0.85)';
+  envCtx.fillRect(80, 65, 360, 12);
+  // Fill light secondaire à droite (plus doux)
+  envCtx.fillStyle = 'rgba(255,255,255,0.7)';
+  envCtx.fillRect(620, 50, 220, 18);
+  // Ligne d'horizon pour highlight glissant
+  envCtx.fillStyle = 'rgba(255,255,255,0.45)';
+  envCtx.fillRect(0, 230, 1024, 6);
   const envTexture = new THREE.CanvasTexture(envCanvas);
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
   envTexture.colorSpace = THREE.SRGBColorSpace;
@@ -960,14 +969,14 @@ async function majApercu3D() {
   texture.needsUpdate = true;
 
   // Params PBR argent selon la finition choisie
-  // Params PBR argent métallique selon finition
+  // Params PBR argent métallique selon finition (calés sur photos packshot Mood)
   function getArgentParams(finitionId) {
     switch(finitionId) {
-      case 'poli':    return { metalness: 0.95, roughness: 0.12, clearcoat: 0.3, clearcoatRoughness: 0.1 };
-      case 'brosse':  return { metalness: 0.88, roughness: 0.48, clearcoat: 0.05, clearcoatRoughness: 0.4 };
-      case 'neutre':  return { metalness: 0.90, roughness: 0.28, clearcoat: 0.15, clearcoatRoughness: 0.2 };
-      case 'piquete': return { metalness: 0.72, roughness: 0.65, clearcoat: 0,    clearcoatRoughness: 0.5 };
-      default:        return { metalness: 0.88, roughness: 0.30, clearcoat: 0.15, clearcoatRoughness: 0.2 };
+      case 'poli':    return { metalness: 0.98, roughness: 0.06, clearcoat: 0.5, clearcoatRoughness: 0.05 };
+      case 'brosse':  return { metalness: 0.92, roughness: 0.45, clearcoat: 0.1, clearcoatRoughness: 0.3 };
+      case 'neutre':  return { metalness: 0.95, roughness: 0.22, clearcoat: 0.2, clearcoatRoughness: 0.15 };
+      case 'piquete': return { metalness: 0.80, roughness: 0.60, clearcoat: 0,   clearcoatRoughness: 0.5 };
+      default:        return { metalness: 0.95, roughness: 0.20, clearcoat: 0.2, clearcoatRoughness: 0.15 };
     }
   }
   const argentParams = getArgentParams(couleurChoisie?.id);
@@ -1002,26 +1011,48 @@ async function majApercu3D() {
     }
   }
 
-  // Anneau avec épaisseur : 4 meshes assemblés dans un Group
-  // - Cylindre extérieur : texture gravure (face avant uniquement)
-  // - Cylindre intérieur : couleur unie (face arrière uniquement, visible quand on regarde dedans)
-  // - 2 anneaux plats (caps) : tranches haut et bas de la bague
-  const EPAISSEUR = 0.15; // épaisseur radiale de l'anneau (en unités scène)
+  // Vraie bague 3D — LatheGeometry avec profil chanfreiné + face externe gravée séparée
+  // Géométrie : 1 cylindre externe (gravure) + 1 cylindre intérieur + 4 chanfreins arrondis (TorusGeometry partielle)
+  const EPAISSEUR = 0.15;          // épaisseur radiale
+  const CHANFREIN = 0.035;         // rayon des arêtes adoucies (4 arêtes : top-ext, top-int, bot-ext, bot-int)
+  const SEGMENTS = 192;            // subdivisions circonférence (silhouette ultra lisse)
   const rayonExt = rayon;
   const rayonInt = Math.max(0.1, rayon - EPAISSEUR);
+  const hauteurUtile = hauteur - 2 * CHANFREIN; // hauteur du cylindre extérieur entre les 2 chanfreins
+  const hauteurInt = hauteur - 2 * CHANFREIN;
 
-  const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteur, 96, 1, true);
+  // 1) CYLINDRE EXTÉRIEUR — face avec la gravure (légèrement réduit pour laisser place aux chanfreins)
+  const outerGeo = new THREE.CylinderGeometry(rayonExt, rayonExt, hauteurUtile, SEGMENTS, 1, true);
   const outerMesh = new THREE.Mesh(outerGeo, new THREE.MeshPhysicalMaterial({
     map: texture, ...argentParams, envMapIntensity: 1.3, side: THREE.FrontSide,
   }));
 
-  const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteur, 96, 1, true);
+  // 2) CYLINDRE INTÉRIEUR (paroi visible à l'intérieur de la bague)
+  const innerGeo = new THREE.CylinderGeometry(rayonInt, rayonInt, hauteurInt, SEGMENTS, 1, true);
   const innerMesh = new THREE.Mesh(innerGeo, new THREE.MeshPhysicalMaterial({
     color: ARGENT_COLOR, metalness: argentParams.metalness, roughness: Math.min(0.9, argentParams.roughness + 0.2),
-    envMapIntensity: 0.3, side: THREE.BackSide,
+    envMapIntensity: 0.4, side: THREE.BackSide,
   }));
 
-  const ringCapGeo = new THREE.RingGeometry(rayonInt, rayonExt, 96);
+  // 3) CHANFREIN ARRONDI sur les 4 arêtes (top-ext, top-int, bot-ext, bot-int)
+  // TorusGeometry : (radius=rayon du centre du tube depuis l'axe, tube=rayon de la section circulaire, radial, tubular)
+  function buildChanfrein(rayonCentre, yPos, mat) {
+    // Quart de torus complet → ring 3D, sera positionné/rotaté pour suivre l'arête
+    const t = new THREE.TorusGeometry(rayonCentre, CHANFREIN, 12, SEGMENTS);
+    const m = new THREE.Mesh(t, mat);
+    m.rotation.x = Math.PI / 2; // axe du tore parallèle à l'axe Y de la scène
+    m.position.y = yPos;
+    return m;
+  }
+  // Top-extérieur : centre du tube à (rayonExt - CHANFREIN, hauteur/2 - CHANFREIN)
+  const chanfTopExt = buildChanfrein(rayonExt - CHANFREIN, hauteur / 2 - CHANFREIN, materialUni);
+  const chanfBotExt = buildChanfrein(rayonExt - CHANFREIN, -(hauteur / 2 - CHANFREIN), materialUni);
+  // Top-intérieur
+  const chanfTopInt = buildChanfrein(rayonInt + CHANFREIN, hauteur / 2 - CHANFREIN, materialUni);
+  const chanfBotInt = buildChanfrein(rayonInt + CHANFREIN, -(hauteur / 2 - CHANFREIN), materialUni);
+
+  // 4) FACE PLATE (tranche haut/bas entre chanfreins externe et interne)
+  const ringCapGeo = new THREE.RingGeometry(rayonInt + CHANFREIN, rayonExt - CHANFREIN, SEGMENTS);
   const topCap = new THREE.Mesh(ringCapGeo, materialUni);
   topCap.rotation.x = Math.PI / 2;
   topCap.position.y = hauteur / 2;
@@ -1030,8 +1061,7 @@ async function majApercu3D() {
   bottomCap.position.y = -hauteur / 2;
 
   ringMesh = new THREE.Group();
-  ringMesh.add(outerMesh, innerMesh, topCap, bottomCap);
-  // Inclinaison légère pour vue 3/4
+  ringMesh.add(outerMesh, innerMesh, chanfTopExt, chanfBotExt, chanfTopInt, chanfBotInt, topCap, bottomCap);
   ringMesh.rotation.x = 0.15;
   scene3D.add(ringMesh);
 }
