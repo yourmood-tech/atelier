@@ -3,8 +3,9 @@
     "configurateur": {
       "type": "configurateur-page",
       "settings": {
-        "h1": "Créez votre bague, comme vous.",
+        "h1": "Ton addon, comme toi.",
         "subtitle": "Aluminium coloré ou argent 925 — gravé, serti, unique. Fabriqué en Suisse, pour toujours.",
+        "seo_text": "Choisis ta matière : aluminium anodisé en 12 couleurs ou argent 925 en finition polie, brossée, neutre ou piquetée. Fais graver un prénom, un symbole ou un dessin — et ajoute des pierres précieuses si l'envie te prend. Disponible en 12 tailles, 4 formats d'anneau, sur une base interchangeable brevetée.",
         "tab_alu": "Bague aluminium",
         "tab_argent": "Bague argent 925",
         "url_alu": "https://creer.yourmood.net/creer",

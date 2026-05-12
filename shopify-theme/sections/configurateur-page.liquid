@@ -73,6 +73,15 @@
   .cfg-iframe.active {
     display: block;
   }
+  .cfg-seo-text {
+    max-width: 680px;
+    margin: 1.5rem auto 2rem;
+    padding: 0 1rem;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #aaa;
+    line-height: 1.6;
+  }
   @media (max-width: 600px) {
     .cfg-intro { padding: 1rem 0.8rem 0.5rem; }
     .cfg-tab-btn { padding: 0.5rem 1.1rem; font-size: 0.76rem; }
@@ -113,6 +122,12 @@
       loading="lazy"
     ></iframe>
   </div>
+
+  {%- if section.settings.seo_text != blank -%}
+  <div class="cfg-seo-text">
+    <p>{{ section.settings.seo_text }}</p>
+  </div>
+  {%- endif -%}
 </div>
 
 <script>
@@ -143,13 +158,19 @@ function cfgSwitch(tab, btn) {
       "type": "text",
       "id": "h1",
       "label": "Titre H1",
-      "default": "Crée ta bague personnalisée"
+      "default": "Ton addon, comme toi."
     },
     {
       "type": "text",
       "id": "subtitle",
       "label": "Sous-titre",
-      "default": "Grave un prénom, un dessin ou un symbole — sur une bague aluminium colorée ou en argent 925"
+      "default": "Aluminium coloré ou argent 925 — gravé, serti, unique. Fabriqué en Suisse, pour toujours."
+    },
+    {
+      "type": "textarea",
+      "id": "seo_text",
+      "label": "Texte SEO (affiché sous le configurateur, indexé par Google)",
+      "default": "Choisis ta matière : aluminium anodisé en 12 couleurs ou argent 925 en finition polie, brossée, neutre ou piquetée. Fais graver un prénom, un symbole ou un dessin — et ajoute des pierres précieuses si l'envie te prend. Disponible en 12 tailles, 4 formats d'anneau, sur une base interchangeable brevetée."
     },
     {
       "type": "header",
