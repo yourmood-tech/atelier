@@ -1,0 +1,195 @@
+{%- comment -%}
+  Section : Configurateur bague personnalisée
+  Page template : page.configurateur
+  Langify : H1, sous-titre et labels onglets sont traduisibles via l'interface Langify
+{%- endcomment -%}
+
+<style>
+  .cfg-section {
+    padding: 0;
+  }
+  .cfg-intro {
+    text-align: center;
+    padding: 1.5rem 1rem 0.8rem;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .cfg-intro h1 {
+    font-size: clamp(1.3rem, 2.8vw, 1.9rem);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    margin: 0 0 0.5rem;
+    color: #1a1a1a;
+  }
+  .cfg-intro p {
+    font-size: 0.9rem;
+    color: #888;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .cfg-tabs {
+    display: flex;
+    justify-content: center;
+    padding: 0.8rem 1rem 0;
+    gap: 0;
+  }
+  .cfg-tab-btn {
+    padding: 0.55rem 1.8rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border: 1px solid #d4af6e;
+    background: white;
+    color: #d4af6e;
+    transition: all 0.15s;
+    font-family: inherit;
+    text-transform: uppercase;
+  }
+  .cfg-tab-btn:first-child {
+    border-radius: 4px 0 0 4px;
+  }
+  .cfg-tab-btn:last-child {
+    border-radius: 0 4px 4px 0;
+  }
+  .cfg-tab-btn.active {
+    background: #d4af6e;
+    color: white;
+  }
+  .cfg-tab-btn:hover:not(.active) {
+    background: #fdf8ee;
+  }
+  .cfg-frames {
+    margin-top: 0.8rem;
+  }
+  .cfg-iframe {
+    display: none;
+    width: 100%;
+    border: none;
+    /* 100svh - header Shopify estimé (~70px) - intro (~90px) - tabs (~55px) */
+    height: calc(100svh - 215px);
+    min-height: 620px;
+  }
+  .cfg-iframe.active {
+    display: block;
+  }
+  @media (max-width: 600px) {
+    .cfg-intro { padding: 1rem 0.8rem 0.5rem; }
+    .cfg-tab-btn { padding: 0.5rem 1.1rem; font-size: 0.76rem; }
+    .cfg-iframe { height: calc(100svh - 195px); min-height: 540px; }
+  }
+</style>
+
+<div class="cfg-section">
+  <div class="cfg-intro">
+    <h1>{{ section.settings.h1 }}</h1>
+    <p>{{ section.settings.subtitle }}</p>
+  </div>
+
+  <div class="cfg-tabs">
+    <button class="cfg-tab-btn active" onclick="cfgSwitch('alu', this)" aria-pressed="true">
+      {{ section.settings.tab_alu }}
+    </button>
+    <button class="cfg-tab-btn" onclick="cfgSwitch('argent', this)" aria-pressed="false">
+      {{ section.settings.tab_argent }}
+    </button>
+  </div>
+
+  <div class="cfg-frames">
+    <iframe
+      id="cfg-iframe-alu"
+      class="cfg-iframe active"
+      src="{{ section.settings.url_alu }}"
+      title="{{ section.settings.h1 }} — {{ section.settings.tab_alu }}"
+      allow="clipboard-write; camera"
+      loading="eager"
+    ></iframe>
+    <iframe
+      id="cfg-iframe-argent"
+      class="cfg-iframe"
+      src="{{ section.settings.url_argent }}"
+      title="{{ section.settings.h1 }} — {{ section.settings.tab_argent }}"
+      allow="clipboard-write; camera"
+      loading="lazy"
+    ></iframe>
+  </div>
+</div>
+
+<script>
+function cfgSwitch(tab, btn) {
+  document.querySelectorAll('.cfg-tab-btn').forEach(function(b) {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
+  document.querySelectorAll('.cfg-iframe').forEach(function(f) {
+    f.classList.remove('active');
+  });
+  btn.classList.add('active');
+  btn.setAttribute('aria-pressed', 'true');
+  document.getElementById('cfg-iframe-' + tab).classList.add('active');
+}
+</script>
+
+{% schema %}
+{
+  "name": "Configurateur Perso",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Texte de la page"
+    },
+    {
+      "type": "text",
+      "id": "h1",
+      "label": "Titre H1",
+      "default": "Crée ta bague personnalisée"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Sous-titre",
+      "default": "Grave un prénom, un dessin ou un symbole — sur une bague aluminium colorée ou en argent 925"
+    },
+    {
+      "type": "header",
+      "content": "Onglets"
+    },
+    {
+      "type": "text",
+      "id": "tab_alu",
+      "label": "Label onglet Aluminium",
+      "default": "Bague aluminium"
+    },
+    {
+      "type": "text",
+      "id": "tab_argent",
+      "label": "Label onglet Argent",
+      "default": "Bague argent 925"
+    },
+    {
+      "type": "header",
+      "content": "URLs configurateurs"
+    },
+    {
+      "type": "text",
+      "id": "url_alu",
+      "label": "URL configurateur aluminium",
+      "info": "Ex: https://creer.yourmood.net/creer",
+      "default": "https://creer.yourmood.net/creer"
+    },
+    {
+      "type": "text",
+      "id": "url_argent",
+      "label": "URL configurateur argent 925",
+      "info": "Ex: https://creer.yourmood.net/creer-argent",
+      "default": "https://creer.yourmood.net/creer-argent"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Configurateur Perso"
+    }
+  ]
+}
+{% endschema %}

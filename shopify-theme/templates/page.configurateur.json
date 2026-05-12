@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "configurateur": {
+      "type": "configurateur-page",
+      "settings": {
+        "h1": "Créez votre bague, comme vous.",
+        "subtitle": "Aluminium coloré ou argent 925 — gravé, serti, unique. Fabriqué en Suisse, pour toujours.",
+        "tab_alu": "Bague aluminium",
+        "tab_argent": "Bague argent 925",
+        "url_alu": "https://creer.yourmood.net/creer",
+        "url_argent": "https://creer.yourmood.net/creer-argent"
+      }
+    }
+  },
+  "order": ["configurateur"]
+}
