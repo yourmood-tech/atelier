@@ -699,12 +699,16 @@ function rendreCalendrier() {
           }
           // Ventes de la semaine commerciale en cours (jeu→mer) depuis Shopify
           let ventesSemaineHtml = '';
-          if (ventesSemaine && ventesSemaine.ventes) {
-            const matchSem = trouverVentesShopify(p.nom, ventesSemaine.ventes);
-            if (matchSem.ca > 0 || matchSem.qty > 0) {
-              ventesSemaineHtml = `<div class="ventes-semaine">📊 ${matchSem.ca.toLocaleString('fr-CH')}.- · ${matchSem.qty} vente${matchSem.qty > 1 ? 's' : ''}</div>`;
+          try {
+            if (ventesSemaine && ventesSemaine.ventes && p.nom) {
+              const matchSem = trouverVentesShopify(p.nom, ventesSemaine.ventes);
+              const ca = Number(matchSem?.ca) || 0;
+              const qty = Number(matchSem?.qty) || 0;
+              if (ca > 0 || qty > 0) {
+                ventesSemaineHtml = `<div class="ventes-semaine">📊 ${ca.toLocaleString('fr-CH')}.- · ${qty} vente${qty > 1 ? 's' : ''}</div>`;
+              }
             }
-          }
+          } catch (e) { /* badge ventes semaine non bloquant */ }
           cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
             <div class="product-name">${p.nom}${etapeJaugeHtml}${ventesJaugeHtml}${ventesSemaineHtml}</div>
