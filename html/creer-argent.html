@@ -35,6 +35,13 @@
   .couleur-btn img { width: 92%; height: 92%; object-fit: contain; display: block; }
   .couleur-btn:hover { border-color: var(--gris); transform: scale(1.05); }
   .couleur-btn.active { border-color: var(--or); border-width: 3px; transform: scale(1.05); }
+  .pierres-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 0.4rem; margin-top: 0.5rem; }
+  @media (max-width: 600px) { .pierres-grid { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); } }
+  .pierre-btn { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.4rem 0.2rem; background: white; border: 2px solid #e5e5e5; border-radius: 10px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .pierre-btn:hover { border-color: var(--or); transform: translateY(-1px); }
+  .pierre-btn svg { display: block; }
+  .pierre-btn .nom { font-size: 0.62rem; color: var(--gris); line-height: 1.1; text-align: center; min-height: 1.2em; }
+  .pierre-btn .prix { font-size: 0.72rem; color: var(--or); font-weight: 600; }
   .prix-zone { background: linear-gradient(135deg, #fdf6e7 0%, #fff 100%); border: 1px solid var(--or); border-radius: 12px; padding: 1rem; margin: 1rem 0; text-align: center; }
   .prix-zone .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gris); }
   .prix-zone .montant { font-size: 2rem; font-weight: 300; color: var(--noir); margin: 0.3rem 0; }
@@ -269,6 +276,13 @@
     </div>
   </div>
 
+  <!-- ÉTAPE 2 : PIERRES À SERTIR -->
+  <div class="card">
+    <h2>+ Ajouter une pierre</h2>
+    <p class="info" style="margin-bottom:0.5rem;">Clique sur une pierre puis fais-la glisser à l'endroit voulu. Le sertissage est inclus dans le prix.</p>
+    <div class="pierres-grid" id="pierres-grid"></div>
+  </div>
+
   <!-- ÉTAPE 2 : TEXTE -->
   <div class="card">
     <h2>+ Ajouter un texte</h2>
@@ -406,6 +420,7 @@ window.addEventListener('load', () => {
 setTimeout(() => {
   genererFiltresCouleurs();
   genererSelecteurCouleurs();
+  genererSelecteurPierres();
   // Précharger les ~11 photos finitions en cache navigateur
   Object.keys(PHOTOS_DISPO).forEach(fmt => {
     const photos = PHOTOS_DISPO[fmt];
@@ -975,6 +990,67 @@ const COULEURS = [
   { id: 'piquete', nom: 'Piqueté', hex: '#bcbcbc' },
 ];
 
+// ============ CATALOGUE PIERRES ============
+// Prix de vente CHF (sertissage inclus). Couleur hex pour affichage écran.
+const PIERRES = [
+  { id: 'diam-21',           nom: 'Diamant',           taille: 2.1,  couleur: '#ffffff', prix: 129 },
+  { id: 'diam-19',           nom: 'Diamant',           taille: 1.9,  couleur: '#ffffff', prix: 99 },
+  { id: 'diam-16',           nom: 'Diamant',           taille: 1.6,  couleur: '#ffffff', prix: 89 },
+  { id: 'diamnoir-19',       nom: 'Diamant noir',      taille: 1.9,  couleur: '#1a1a1a', prix: 99 },
+  { id: 'diamnoir-16',       nom: 'Diamant noir',      taille: 1.6,  couleur: '#1a1a1a', prix: 89 },
+  { id: 'topaze-175',        nom: 'Topaze',            taille: 1.75, couleur: '#a8e0ff', prix: 89 },
+  { id: 'saphir-bleu-19',    nom: 'Saphir bleu',       taille: 1.9,  couleur: '#1e3a8a', prix: 99 },
+  { id: 'saphir-bleu-16',    nom: 'Saphir bleu',       taille: 1.6,  couleur: '#1e3a8a', prix: 89 },
+  { id: 'saphir-rose-19',    nom: 'Saphir rose',       taille: 1.9,  couleur: '#ec4899', prix: 99 },
+  { id: 'saphir-rose-16',    nom: 'Saphir rose',       taille: 1.6,  couleur: '#ec4899', prix: 89 },
+  { id: 'saphir-orange-19',  nom: 'Saphir orange',     taille: 1.9,  couleur: '#f97316', prix: 99 },
+  { id: 'saphir-orange-16',  nom: 'Saphir orange',     taille: 1.6,  couleur: '#f97316', prix: 89 },
+  { id: 'saphir-violet-19',  nom: 'Saphir violet',     taille: 1.9,  couleur: '#7c3aed', prix: 99 },
+  { id: 'saphir-violet-16',  nom: 'Saphir violet',     taille: 1.6,  couleur: '#7c3aed', prix: 89 },
+  { id: 'amethyste-19',      nom: 'Améthyste',         taille: 1.9,  couleur: '#9333ea', prix: 99 },
+  { id: 'amethyste-16',      nom: 'Améthyste',         taille: 1.6,  couleur: '#9333ea', prix: 89 },
+  { id: 'grenat-19',         nom: 'Grenat',            taille: 1.9,  couleur: '#991b1b', prix: 99 },
+  { id: 'grenat-16',         nom: 'Grenat',            taille: 1.6,  couleur: '#991b1b', prix: 89 },
+  { id: 'diambrun-19',       nom: 'Diamant brun',      taille: 1.9,  couleur: '#92400e', prix: 99 },
+  { id: 'diambrun-16',       nom: 'Diamant brun',      taille: 1.6,  couleur: '#92400e', prix: 89 },
+  { id: 'emeraude-19',       nom: 'Émeraude',          taille: 1.9,  couleur: '#059669', prix: 130 },
+  { id: 'emeraude-16',       nom: 'Émeraude',          taille: 1.6,  couleur: '#059669', prix: 115 },
+  { id: 'rubis-19',          nom: 'Rubis',             taille: 1.9,  couleur: '#dc2626', prix: 99 },
+  { id: 'rubis-16',          nom: 'Rubis',             taille: 1.6,  couleur: '#dc2626', prix: 89 },
+  { id: 'diampr-rose-21',    nom: 'Diamant pur rose',  taille: 2.1,  couleur: '#f9a8d4', prix: 119 },
+  { id: 'diampr-jaune-21',   nom: 'Diamant pur jaune', taille: 2.1,  couleur: '#fde047', prix: 119 },
+];
+
+function genererSelecteurPierres() {
+  const grid = document.getElementById('pierres-grid');
+  if (!grid) return;
+  grid.innerHTML = PIERRES.map(p => {
+    const r = p.taille / 2;
+    const highlightR = r * 0.25;
+    return `<button class="pierre-btn" onclick="ajouterPierre('${p.id}')" title="${p.nom} ${p.taille}mm — ${p.prix} CHF">
+      <svg viewBox="-1.5 -1.5 3 3" width="24" height="24">
+        <circle cx="0" cy="0" r="${r}" fill="${p.couleur}" stroke="#000" stroke-width="0.12"/>
+        <circle cx="${-r*0.3}" cy="${-r*0.3}" r="${highlightR}" fill="rgba(255,255,255,0.55)"/>
+      </svg>
+      <span class="nom">${p.nom}</span>
+      <span class="prix">${p.prix}.-</span>
+    </button>`;
+  }).join('');
+}
+
+function ajouterPierre(id) {
+  const p = PIERRES.find(x => x.id === id);
+  if (!p) return;
+  const el = {
+    id: nextId++, type: 'pierre', pierreId: id,
+    x: viewLongueur / 2, y: viewLargeur / 2,
+    scale: 1, rotation: 0,
+  };
+  elements.push(el);
+  selectedId = el.id;
+  rendreCanvas();
+}
+
 // Photos disponibles par format pour les finitions argent.
 // Note : medium-brosse manquant (Amila l'envoie séparément).
 const PHOTOS_DISPO = {
@@ -1083,17 +1159,16 @@ function calculerPrix() {
   const fmt = document.getElementById('format')?.value;
   if (!fmt) return null;
   const base = PRIX_BASE[fmt];
-  const niveau = calculerComplexite();
-  let prix = base, label = '';
-  if (fmt === 'addon') {
-    if (niveau === 0 || niveau === 1) { prix = 85; label = 'design simple'; }
-    else if (niveau === 2) { prix = 95; label = 'design moyen'; }
-    else { prix = 105; label = 'design complexe'; }
-  } else {
-    prix = base;
-    label = niveau === 0 ? 'prix de base' : niveau === 1 ? 'design simple' : niveau === 2 ? 'design moyen' : 'design complexe';
+  // Somme des pierres
+  let pierresTotal = 0;
+  let pierresCount = 0;
+  for (const el of elements) {
+    if (el.type === 'pierre' && el.pierreId) {
+      const p = PIERRES.find(x => x.id === el.pierreId);
+      if (p) { pierresTotal += p.prix; pierresCount++; }
+    }
   }
-  return { prix, label, niveau, base, format: fmt };
+  return { prix: base + pierresTotal, base, pierresTotal, pierresCount, format: fmt };
 }
 
 function majPrix() {
@@ -1102,10 +1177,10 @@ function majPrix() {
   const detail = document.getElementById('prix-detail');
   if (!montant || !detail || !r) return;
   montant.textContent = r.prix;
-  if (elements.length === 0) {
-    detail.textContent = 'Prix de base — ajoute tes éléments pour personnaliser';
+  if (r.pierresCount === 0) {
+    detail.textContent = `Argent ${r.base} CHF — ajoute des pierres pour personnaliser`;
   } else {
-    detail.textContent = `${elements.length} élément${elements.length > 1 ? 's' : ''} · ${r.label}`;
+    detail.textContent = `Argent ${r.base} CHF + ${r.pierresCount} pierre${r.pierresCount > 1 ? 's' : ''} ${r.pierresTotal} CHF`;
   }
 }
 
@@ -1195,6 +1270,16 @@ function elementSvg(el, withSelection = false) {
     const stroke = 0.15 / el.scale;
     return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y}) rotate(${el.rotation || 0}) scale(${el.scale})">
       <path d="${el.pathData}" fill="none" stroke="${trait}" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>`;
+  }
+  if (el.type === 'pierre') {
+    const p = PIERRES.find(x => x.id === el.pierreId);
+    if (!p) return '';
+    const r = p.taille / 2;
+    const hr = r * 0.28;
+    return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y})">
+      <circle cx="0" cy="0" r="${r}" fill="${p.couleur}" stroke="#000000" stroke-width="0.08"/>
+      <circle cx="${-r*0.3}" cy="${-r*0.3}" r="${hr}" fill="rgba(255,255,255,0.55)"/>
     </g>`;
   }
   return '';
@@ -1694,7 +1779,20 @@ async function envoyerDemande() {
     const r = await fetch('/api/creer-demande', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prenom, email, tel, matiere, couleur: couleurChoisie?.id, couleurNom: couleurChoisie?.nom, message, format, taille, svg, nbElements: elements.length, prix: prixCalc?.prix, niveau: prixCalc?.label })
+      body: JSON.stringify({
+        prenom, email, tel,
+        matiere: 'Argent 925',
+        finition: couleurChoisie?.id, finitionNom: couleurChoisie?.nom,
+        gravure: gravureType,
+        message, format, taille, svg,
+        nbElements: elements.length,
+        prix: prixCalc?.prix, prixBase: prixCalc?.base,
+        pierresCount: prixCalc?.pierresCount, pierresTotal: prixCalc?.pierresTotal,
+        pierres: elements.filter(el => el.type === 'pierre').map(el => {
+          const p = PIERRES.find(x => x.id === el.pierreId);
+          return p ? { id: p.id, nom: p.nom, taille: p.taille, prix: p.prix, x: el.x, y: el.y } : null;
+        }).filter(Boolean)
+      })
     });
     if (!r.ok) throw new Error('Réponse ' + r.status);
     okEl.textContent = `✓ Merci ${prenom} ! On a bien reçu ta demande. On te recontacte sous 24h ouvrées à ${email}.`;
