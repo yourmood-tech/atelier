@@ -1486,7 +1486,7 @@ function basculerMode(mode) {
   });
   const svg = document.getElementById('editor-svg');
   svg.style.cursor = modeOutil === 'crayon' ? 'crosshair' : modeOutil === 'gomme' ? 'cell' : 'default';
-  // Désélectionner pendant le dessin/gomme pour éviter le drag
+  svg.style.touchAction = (modeOutil === 'crayon' || modeOutil === 'gomme') ? 'none' : 'manipulation';
   if (modeOutil !== 'select') selectionner(null);
 }
 
@@ -1501,19 +1501,54 @@ function effacerSousCurseur(clientX, clientY) {
   }
 }
 
+function demarrerDessin(clientX, clientY) {
+  const pt = svgPoint(clientX, clientY);
+  pathEnCours = [[pt.x, pt.y]];
+  const svgNS = 'http://www.w3.org/2000/svg';
+  pathPreviewEl = document.createElementNS(svgNS, 'path');
+  pathPreviewEl.setAttribute('fill', 'none');
+  pathPreviewEl.setAttribute('stroke', couleurTrait());
+  pathPreviewEl.setAttribute('stroke-width', '0.15');
+  pathPreviewEl.setAttribute('stroke-linecap', 'round');
+  pathPreviewEl.setAttribute('stroke-linejoin', 'round');
+  pathPreviewEl.setAttribute('d', `M ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`);
+  document.getElementById('editor-svg').appendChild(pathPreviewEl);
+}
+
+function continuerDessin(clientX, clientY) {
+  if (!pathEnCours || !pathPreviewEl) return;
+  const pt = svgPoint(clientX, clientY);
+  pathEnCours.push([pt.x, pt.y]);
+  const d = 'M ' + pathEnCours.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' L ');
+  pathPreviewEl.setAttribute('d', d);
+}
+
+function finaliserDessin() {
+  if (modeOutil === 'crayon' && pathEnCours) {
+    if (pathEnCours.length > 2) {
+      const smoothed = smoothPolyline(pathEnCours, 3);
+      const simplified = douglasPeucker(smoothed, 0.15);
+      const xs = simplified.map(p => p[0]);
+      const ys = simplified.map(p => p[1]);
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+      const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+      const centered = simplified.map(p => [p[0] - cx, p[1] - cy]);
+      const pathData = polylineToBezier(centered);
+      const id = nextId++;
+      elements.push({ id, type: 'dessin', pathData, x: cx, y: cy, scale: 1, rotation: 0 });
+      selectedId = id;
+    }
+    if (pathPreviewEl) { pathPreviewEl.remove(); pathPreviewEl = null; }
+    pathEnCours = null;
+    rendreCanvas();
+    return;
+  }
+  dragging = null;
+}
+
 document.getElementById('editor-svg').addEventListener('mousedown', e => {
   if (modeOutil === 'crayon') {
-    const pt = svgPoint(e.clientX, e.clientY);
-    pathEnCours = [[pt.x, pt.y]];
-    const svgNS = 'http://www.w3.org/2000/svg';
-    pathPreviewEl = document.createElementNS(svgNS, 'path');
-    pathPreviewEl.setAttribute('fill', 'none');
-    pathPreviewEl.setAttribute('stroke', couleurTrait());
-    pathPreviewEl.setAttribute('stroke-width', '0.15');
-    pathPreviewEl.setAttribute('stroke-linecap', 'round');
-    pathPreviewEl.setAttribute('stroke-linejoin', 'round');
-    pathPreviewEl.setAttribute('d', `M ${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`);
-    document.getElementById('editor-svg').appendChild(pathPreviewEl);
+    demarrerDessin(e.clientX, e.clientY);
     return;
   }
   if (modeOutil === 'gomme') {
@@ -1533,11 +1568,8 @@ document.getElementById('editor-svg').addEventListener('mousedown', e => {
 });
 
 document.addEventListener('mousemove', e => {
-  if (modeOutil === 'crayon' && pathEnCours && pathPreviewEl) {
-    const pt = svgPoint(e.clientX, e.clientY);
-    pathEnCours.push([pt.x, pt.y]);
-    const d = 'M ' + pathEnCours.map(p => `${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(' L ');
-    pathPreviewEl.setAttribute('d', d);
+  if (modeOutil === 'crayon' && pathEnCours) {
+    continuerDessin(e.clientX, e.clientY);
     return;
   }
   if (modeOutil === 'gomme' && (e.buttons & 1)) {
@@ -1553,29 +1585,38 @@ document.addEventListener('mousemove', e => {
   rendreCanvas();
 });
 
-document.addEventListener('mouseup', () => {
-  if (modeOutil === 'crayon' && pathEnCours) {
-    if (pathEnCours.length > 2) {
-      // Lisser → simplifier légèrement → courbes Bezier (mêmes étapes que vectorisation empreinte)
-      const smoothed = smoothPolyline(pathEnCours, 3);
-      const simplified = douglasPeucker(smoothed, 0.15);
-      const xs = simplified.map(p => p[0]);
-      const ys = simplified.map(p => p[1]);
-      const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-      const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-      const centered = simplified.map(p => [p[0] - cx, p[1] - cy]);
-      const pathData = polylineToBezier(centered);
-      const id = nextId++;
-      elements.push({ id, type: 'dessin', pathData, x: cx, y: cy, scale: 1, rotation: 0 });
-      selectedId = id;
-    }
-    if (pathPreviewEl) { pathPreviewEl.remove(); pathPreviewEl = null; }
-    pathEnCours = null;
-    rendreCanvas();
+document.addEventListener('mouseup', finaliserDessin);
+
+// ── Événements touch (stylet + doigt tablette) ──────────────────────────────
+document.getElementById('editor-svg').addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  if (!t) return;
+  if (modeOutil === 'crayon') {
+    e.preventDefault();
+    demarrerDessin(t.clientX, t.clientY);
     return;
   }
-  dragging = null;
-});
+  if (modeOutil === 'gomme') {
+    e.preventDefault();
+    effacerSousCurseur(t.clientX, t.clientY);
+  }
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (!t) return;
+  if (modeOutil === 'crayon' && pathEnCours) {
+    e.preventDefault();
+    continuerDessin(t.clientX, t.clientY);
+    return;
+  }
+  if (modeOutil === 'gomme' && e.touches.length > 0) {
+    e.preventDefault();
+    effacerSousCurseur(t.clientX, t.clientY);
+  }
+}, { passive: false });
+
+document.addEventListener('touchend', finaliserDessin);
 
 function svgPoint(clientX, clientY) {
   const svg = document.getElementById('editor-svg');
