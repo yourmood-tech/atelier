@@ -47,7 +47,14 @@ export async function GET() {
     const r = await redisFetch(`/get/${encodeURIComponent(KEY)}`);
     const raw = r?.result;
     if (!raw) return NextResponse.json({ produits: [] });
-    const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+    let data = typeof raw === "string" ? JSON.parse(raw) : raw;
+    // Backward compat : ancien format stocké comme array wrappé ["{json}"]
+    if (Array.isArray(data) && data.length === 1 && typeof data[0] === "string") {
+      data = JSON.parse(data[0]);
+    }
+    if (!data || !Array.isArray(data.produits)) {
+      return NextResponse.json({ produits: [] });
+    }
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json(
@@ -72,9 +79,15 @@ export async function PUT(request: Request) {
     if (!body || !Array.isArray(body.produits)) {
       return NextResponse.json({ error: "body doit contenir { produits: [] }" }, { status: 400 });
     }
-    // Upstash REST : SET key value
+    // Upstash REST SET : body = string brute (pas JSON encoded)
+    // L'ancien format ["{json}"] reste lisible grâce au backward compat dans GET
     const valueStr = JSON.stringify(body);
-    await redisFetch(`/set/${encodeURIComponent(KEY)}`, [valueStr]);
+    const setR = await fetch(`${REDIS_URL}/set/${encodeURIComponent(KEY)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
+      body: valueStr,
+    });
+    if (!setR.ok) throw new Error(`Redis SET → ${setR.status}: ${await setR.text()}`);
     return NextResponse.json({ ok: true, count: body.produits.length });
   } catch (e) {
     return NextResponse.json(
