@@ -415,7 +415,8 @@ let gravureType = 'oxydee'; // 'oxydee' ou 'neutre'
 function choisirGravure(t) {
   gravureType = t;
   document.querySelectorAll('[data-gravure]').forEach(b => b.classList.toggle('active', b.dataset.gravure === t));
-  if (typeof majApercu3D === 'function') majApercu3D();
+  // Re-render le canvas SVG ET l'aperçu 3D pour que les traits adoptent la nouvelle couleur
+  if (typeof rendreCanvas === 'function') rendreCanvas();
 }
 let selectedId = null;
 let nextId = 1;
