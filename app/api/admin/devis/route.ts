@@ -4,7 +4,7 @@ const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
 const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 
-async function fetchDraftOrders(status: "open" | "completed"): Promise<unknown[]> {
+async function fetchDraftOrders(status: "open" | "invoice_sent" | "completed"): Promise<unknown[]> {
   const all: unknown[] = [];
   // Limiter aux 180 derniers jours pour éviter de paginer l'historique complet
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -30,18 +30,18 @@ async function fetchDraftOrders(status: "open" | "completed"): Promise<unknown[]
 
 export async function GET() {
   try {
-    const [open, completed] = await Promise.all([
+    const [open, invoiceSent, completed] = await Promise.all([
       fetchDraftOrders("open"),
+      fetchDraftOrders("invoice_sent"),
       fetchDraftOrders("completed"),
     ]);
 
-    // Filtrer par tag "devis-sur-mesure" côté serveur
     const hasTag = (d: unknown) => {
       const tags: string = (d as Record<string, unknown>).tags as string ?? "";
       return tags.includes("devis-sur-mesure");
     };
 
-    const enCours = open.filter(hasTag);
+    const enCours = [...open, ...invoiceSent].filter(hasTag);
     const valides = completed.filter(hasTag);
 
     return NextResponse.json({ enCours, valides });
