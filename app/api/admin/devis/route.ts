@@ -4,56 +4,43 @@ const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
 const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2025-01";
 
-const GQL_QUERY = `
-query DevisList {
-  draftOrders(first: 100, query: "tag:devis-sur-mesure", sortKey: UPDATED_AT, reverse: true) {
-    nodes {
-      id
-      legacyResourceId
-      name
-      status
-      email
-      totalPriceSet { shopMoney { amount currencyCode } }
-      createdAt
-      updatedAt
-      note
-      tags
-      customer { firstName lastName email }
-      lineItems(first: 3) {
-        nodes {
-          title
-          quantity
-          originalUnitPriceSet { shopMoney { amount } }
-          customAttributes { key value }
-        }
-      }
-    }
+async function fetchDraftOrders(status: "open" | "completed"): Promise<unknown[]> {
+  const all: unknown[] = [];
+  let url: string | null =
+    `https://${STORE}/admin/api/${API_VERSION}/draft_orders.json?status=${status}&limit=250`;
+
+  while (url) {
+    const r = await fetch(url, {
+      headers: { "X-Shopify-Access-Token": TOKEN },
+      cache: "no-store",
+    });
+    if (!r.ok) throw new Error(`Shopify ${r.status}: ${await r.text()}`);
+    const data = await r.json();
+    all.push(...(data.draft_orders ?? []));
+
+    // Pagination via Link header
+    const link = r.headers.get("Link") ?? "";
+    const next = link.match(/<([^>]+)>;\s*rel="next"/)?.[1] ?? null;
+    url = next;
   }
+  return all;
 }
-`;
 
 export async function GET() {
   try {
-    const r = await fetch(`https://${STORE}/admin/api/${API_VERSION}/graphql.json`, {
-      method: "POST",
-      headers: {
-        "X-Shopify-Access-Token": TOKEN,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query: GQL_QUERY }),
-      cache: "no-store",
-    });
-    const json = await r.json();
-    if (json.errors) {
-      console.error("GraphQL errors:", json.errors);
-      return NextResponse.json({ error: "GraphQL error", details: json.errors }, { status: 500 });
-    }
+    const [open, completed] = await Promise.all([
+      fetchDraftOrders("open"),
+      fetchDraftOrders("completed"),
+    ]);
 
-    const nodes = json.data?.draftOrders?.nodes ?? [];
+    // Filtrer par tag "devis-sur-mesure" côté serveur
+    const hasTag = (d: unknown) => {
+      const tags: string = (d as Record<string, unknown>).tags as string ?? "";
+      return tags.includes("devis-sur-mesure");
+    };
 
-    // Séparer en cours (open) et validés (completed = payé)
-    const enCours = nodes.filter((d: { status: string }) => d.status === "OPEN" || d.status === "INVOICE_SENT");
-    const valides = nodes.filter((d: { status: string }) => d.status === "COMPLETED");
+    const enCours = open.filter(hasTag);
+    const valides = completed.filter(hasTag);
 
     return NextResponse.json({ enCours, valides });
   } catch (e: unknown) {

@@ -3,52 +3,49 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
-type Attr = { key: string; value: string };
+type Prop = { name: string; value: string };
 type LineItem = {
   title: string;
   quantity: number;
-  originalUnitPriceSet: { shopMoney: { amount: string } };
-  customAttributes: Attr[];
+  price: string;
+  properties: Prop[];
 };
-type Customer = { firstName?: string; lastName?: string; email?: string };
+type Customer = { first_name?: string; last_name?: string; email?: string };
 type DraftOrder = {
-  id: string;
-  legacyResourceId: string;
+  id: number;
   name: string;
   status: string;
   email: string;
-  totalPriceSet: { shopMoney: { amount: string; currencyCode: string } };
-  createdAt: string;
-  updatedAt: string;
+  total_price: string;
+  currency: string;
+  created_at: string;
+  updated_at: string;
   note: string;
-  tags: string[];
+  tags: string;
   customer?: Customer;
-  lineItems: { nodes: LineItem[] };
+  line_items: LineItem[];
 };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function attr(li: LineItem, key: string) {
-  return li.customAttributes.find((a) => a.key === key)?.value ?? "—";
+function prop(li: LineItem, key: string) {
+  return li.properties?.find((p) => p.name === key)?.value ?? "—";
 }
 
 function DevisCard({ d, valide }: { d: DraftOrder; valide: boolean }) {
-  const li = d.lineItems.nodes[0];
+  const li = d.line_items?.[0];
   const client = d.customer
-    ? `${d.customer.firstName ?? ""} ${d.customer.lastName ?? ""}`.trim() || d.email
-    : d.email;
-  const prix = d.totalPriceSet.shopMoney;
-  const statusColor = valide ? "#22c55e" : d.status === "INVOICE_SENT" ? "#f59e0b" : "#60a5fa";
-  const statusLabel = valide ? "Payé" : d.status === "INVOICE_SENT" ? "Facture envoyée" : "En attente";
+    ? `${d.customer.first_name ?? ""} ${d.customer.last_name ?? ""}`.trim() || d.email
+    : d.email || "—";
+  const statusColor = valide ? "#22c55e" : d.status === "invoice_sent" ? "#f59e0b" : "#60a5fa";
+  const statusLabel = valide ? "Payé" : d.status === "invoice_sent" ? "Facture envoyée" : "En attente";
 
   return (
-    <Link href={`/admin/devis/${d.legacyResourceId}`} style={{ textDecoration: "none" }}>
-      <div style={{
-        background: "#18181b", border: "1px solid #27272a", borderRadius: 10, padding: "1rem",
-        cursor: "pointer", transition: "border-color 0.15s", marginBottom: "0.75rem",
-      }}
+    <Link href={`/admin/devis/${d.id}`} style={{ textDecoration: "none" }}>
+      <div
+        style={{ background: "#18181b", border: "1px solid #27272a", borderRadius: 10, padding: "1rem", cursor: "pointer", transition: "border-color 0.15s", marginBottom: "0.75rem" }}
         onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#c9a96e")}
         onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#27272a")}
       >
@@ -59,7 +56,7 @@ function DevisCard({ d, valide }: { d: DraftOrder; valide: boolean }) {
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
             <div style={{ fontWeight: 700, color: "#c9a96e", fontSize: "1rem" }}>
-              {Number(prix.amount).toFixed(2)} {prix.currencyCode}
+              {Number(d.total_price).toFixed(2)} {d.currency}
             </div>
             <span style={{ fontSize: "0.7rem", color: statusColor, fontWeight: 600 }}>{statusLabel}</span>
           </div>
@@ -67,14 +64,14 @@ function DevisCard({ d, valide }: { d: DraftOrder; valide: boolean }) {
 
         {li && (
           <div style={{ marginTop: "0.6rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            {[attr(li, "Format"), attr(li, "Couleur"), attr(li, "Taille"), attr(li, "Finition")].filter((v) => v !== "—").map((v, i) => (
+            {[prop(li, "Format"), prop(li, "Couleur"), prop(li, "Taille"), prop(li, "Finition")].filter((v) => v !== "—").map((v, i) => (
               <span key={i} style={{ background: "#27272a", borderRadius: 4, padding: "0.15rem 0.5rem", fontSize: "0.72rem", color: "#a1a1aa" }}>{v}</span>
             ))}
           </div>
         )}
 
         <div style={{ marginTop: "0.5rem", color: "#52525b", fontSize: "0.72rem" }}>
-          {d.name} · {formatDate(d.updatedAt)}
+          {d.name} · {formatDate(d.updated_at)}
         </div>
       </div>
     </Link>
@@ -89,6 +86,7 @@ export default function DevisPage() {
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(null);
     fetch("/api/admin/devis")
       .then((r) => r.json())
       .then((d) => {
@@ -125,7 +123,6 @@ export default function DevisPage() {
           <div style={{ color: "#71717a", textAlign: "center", padding: "3rem" }}>Chargement…</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
-            {/* En cours */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#60a5fa", display: "inline-block" }} />
@@ -133,14 +130,11 @@ export default function DevisPage() {
                   En cours <span style={{ color: "#52525b", fontWeight: 400 }}>({enCours.length})</span>
                 </h2>
               </div>
-              {enCours.length === 0 ? (
-                <p style={{ color: "#52525b", fontSize: "0.82rem" }}>Aucun devis en attente</p>
-              ) : (
-                enCours.map((d) => <DevisCard key={d.id} d={d} valide={false} />)
-              )}
+              {enCours.length === 0
+                ? <p style={{ color: "#52525b", fontSize: "0.82rem" }}>Aucun devis en attente</p>
+                : enCours.map((d) => <DevisCard key={d.id} d={d} valide={false} />)}
             </div>
 
-            {/* Validés (payés) */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
@@ -148,11 +142,9 @@ export default function DevisPage() {
                   Validés (payés) <span style={{ color: "#52525b", fontWeight: 400 }}>({valides.length})</span>
                 </h2>
               </div>
-              {valides.length === 0 ? (
-                <p style={{ color: "#52525b", fontSize: "0.82rem" }}>Aucun devis payé</p>
-              ) : (
-                valides.map((d) => <DevisCard key={d.id} d={d} valide={true} />)
-              )}
+              {valides.length === 0
+                ? <p style={{ color: "#52525b", fontSize: "0.82rem" }}>Aucun devis payé</p>
+                : valides.map((d) => <DevisCard key={d.id} d={d} valide={true} />)}
             </div>
           </div>
         )}
