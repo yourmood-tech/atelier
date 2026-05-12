@@ -207,17 +207,15 @@
     display: inline-block;
     margin-top: 4px;
     padding: 2px 6px;
-    background: rgba(45,138,78,0.12);
-    color: var(--vert);
     border-radius: 4px;
     font-size: 0.65rem;
     font-weight: 600;
     line-height: 1.3;
   }
-  .product-card-image .ventes-semaine {
-    background: rgba(255,255,255,0.25);
-    color: white;
-  }
+  .ventes-semaine.actif { background: rgba(45,138,78,0.15); color: var(--vert); }
+  .ventes-semaine.vide  { background: rgba(107,107,107,0.12); color: var(--gris); }
+  .product-card-image .ventes-semaine.actif { background: rgba(34,197,94,0.5); color: white; }
+  .product-card-image .ventes-semaine.vide  { background: rgba(255,255,255,0.2); color: white; }
 
   /* Jauge progression étape (1-9) */
   .etape-jauge {
@@ -380,6 +378,9 @@
 
     <label>Nom du produit *</label>
     <input id="produit-nom" placeholder="ex : Aura Émeraude, Coffret Printemps…">
+
+    <label>Nom Shopify <span style="color:var(--gris);font-weight:400">— optionnel, pour matcher les ventes si le nom diffère sur Shopify</span></label>
+    <input id="produit-shopify-search" placeholder="ex : « Coffret Mood Édition », « starter pack 2026 »…">
 
     <label>Type</label>
     <select id="produit-type">
@@ -697,16 +698,16 @@ function rendreCalendrier() {
             ventesJaugeHtml = `<div class="ventes-jauge"><div class="ventes-jauge-fill ${cls}" style="width:${pct}%;"></div></div>
               <div class="ventes-pct">${ventes.toLocaleString('fr-CH')}.- / ${p.objectifCA.toLocaleString('fr-CH')}.- (${pct}%)</div>`;
           }
-          // Ventes de la semaine commerciale en cours (jeu→mer) depuis Shopify
+          // Badge ventes Shopify de la semaine commerciale (jeu→mer) — TOUJOURS affiché
           let ventesSemaineHtml = '';
           try {
-            if (ventesSemaine && ventesSemaine.ventes && p.nom) {
-              const matchSem = trouverVentesShopify(p.nom, ventesSemaine.ventes);
+            if (ventesSemaine && ventesSemaine.ventes) {
+              const cle = (p.shopifySearch && p.shopifySearch.trim()) || p.nom;
+              const matchSem = trouverVentesShopify(cle, ventesSemaine.ventes);
               const ca = Number(matchSem?.ca) || 0;
               const qty = Number(matchSem?.qty) || 0;
-              if (ca > 0 || qty > 0) {
-                ventesSemaineHtml = `<div class="ventes-semaine">📊 ${ca.toLocaleString('fr-CH')}.- · ${qty} vente${qty > 1 ? 's' : ''}</div>`;
-              }
+              const cls = qty > 0 ? 'ventes-semaine actif' : 'ventes-semaine vide';
+              ventesSemaineHtml = `<div class="${cls}" title="Ventes Shopify cette semaine (jeu→mer)">📊 ${qty} vente${qty > 1 ? 's' : ''}${ca > 0 ? ' · ' + ca.toLocaleString('fr-CH') + '.-' : ''}</div>`;
             }
           } catch (e) { /* badge ventes semaine non bloquant */ }
           cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
@@ -750,6 +751,7 @@ function ouvrirModalAjout(date) {
   document.getElementById('modal-title').textContent = `Nouveau produit — ${formaterDate(date)}`;
   document.getElementById('produit-id').value = '';
   document.getElementById('produit-nom').value = '';
+  document.getElementById('produit-shopify-search').value = '';
   document.getElementById('produit-type').value = 'addon';
   document.getElementById('produit-etape').value = '1';
   document.getElementById('produit-fournisseur').value = '';
@@ -772,6 +774,7 @@ function ouvrirModalEdit(id) {
   document.getElementById('modal-title').textContent = `Éditer — ${formaterDate(p.date)}`;
   document.getElementById('produit-id').value = p.id;
   document.getElementById('produit-nom').value = p.nom || '';
+  document.getElementById('produit-shopify-search').value = p.shopifySearch || '';
   document.getElementById('produit-type').value = p.type || 'addon';
   document.getElementById('produit-etape').value = p.etape || '1';
   document.getElementById('produit-fournisseur').value = p.fournisseur || '';
@@ -875,6 +878,7 @@ function sauverProduit() {
   const id = document.getElementById('produit-id').value;
   const data = {
     nom,
+    shopifySearch: document.getElementById('produit-shopify-search').value.trim() || null,
     type: document.getElementById('produit-type').value,
     etape: parseInt(document.getElementById('produit-etape').value, 10),
     fournisseur: document.getElementById('produit-fournisseur').value,
