@@ -76,12 +76,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const lineItem = draft_order.line_items?.[0];
     if (!lineItem) return NextResponse.json({ error: "Pas de ligne produit" }, { status: 400 });
 
+    // On retire variant_id pour passer en "custom item" : seul moyen de forcer
+    // un prix arbitraire sur un draft order Shopify (variant_id verrouille au prix catalog)
     const patchBody = {
       draft_order: {
         line_items: [{
           id: lineItem.id,
-          title: lineItem.title,
-          variant_id: lineItem.variant_id,
+          title: lineItem.title || "Bague personnalisée",
           quantity: lineItem.quantity,
           price: Number(prix).toFixed(2),
           properties: lineItem.properties,
