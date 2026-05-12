@@ -1328,22 +1328,30 @@ function elementSvg(el, withSelection = false) {
     const sertissage = el.sertissage || 'grain';
     let monture = '';
     if (sertissage === 'grain') {
-      // 4 grains aux 4 coins de la pierre
-      const gr = r * 0.18, gd = r * 1.3;
+      // 4 grains collés à la pierre (touchent presque le bord)
+      const gr = r * 0.22, gd = r * 0.95;
       monture = `
         <circle cx="${-gd}" cy="${-gd}" r="${gr}" fill="#888"/>
         <circle cx="${gd}" cy="${-gd}" r="${gr}" fill="#888"/>
         <circle cx="${gd}" cy="${gd}" r="${gr}" fill="#888"/>
         <circle cx="${-gd}" cy="${gd}" r="${gr}" fill="#888"/>`;
     } else if (sertissage === 'etoile') {
-      // 4 griffes radiales en croix (étoile)
-      const out = r * 1.55;
+      // Étoile : 4 grandes branches (croix) + 4 petites branches (diagonales)
       const sw = r * 0.16;
+      const outLong = r * 1.7;     // grandes branches
+      const outShort = r * 1.25;   // petites branches diagonales
+      const start = r * 0.9;
+      const startDiag = r * 0.85;
+      const diag = Math.SQRT1_2;   // 1/√2 ≈ 0.707
       monture = `
-        <line x1="${-out}" y1="0" x2="${-r*0.9}" y2="0" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
-        <line x1="${r*0.9}" y1="0" x2="${out}" y2="0" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
-        <line x1="0" y1="${-out}" x2="0" y2="${-r*0.9}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
-        <line x1="0" y1="${r*0.9}" x2="0" y2="${out}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>`;
+        <line x1="${-outLong}" y1="0" x2="${-start}" y2="0" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="${outLong}"  y1="0" x2="${start}"  y2="0" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="0" y1="${-outLong}" x2="0" y2="${-start}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="0" y1="${outLong}"  x2="0" y2="${start}"  stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="${-outShort*diag}" y1="${-outShort*diag}" x2="${-startDiag*diag}" y2="${-startDiag*diag}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="${outShort*diag}"  y1="${-outShort*diag}" x2="${startDiag*diag}"  y2="${-startDiag*diag}" stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="${outShort*diag}"  y1="${outShort*diag}"  x2="${startDiag*diag}"  y2="${startDiag*diag}"  stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>
+        <line x1="${-outShort*diag}" y1="${outShort*diag}"  x2="${-startDiag*diag}" y2="${startDiag*diag}"  stroke="#666" stroke-width="${sw}" stroke-linecap="round"/>`;
     }
     // 'invisible' = pas de monture, juste la pierre
     return `<g class="element${sel}" data-id="${el.id}" pointer-events="bounding-box" transform="translate(${el.x} ${el.y})">
