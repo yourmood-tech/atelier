@@ -21,14 +21,14 @@ const T = {
     en: (first: string) => first ? `Dear ${first},` : "Dear customer,",
   },
   intro: {
-    fr: (price: string) => `Ton design personnalisé a été finalisé par notre équipe. Le prix validé pour ta bague est de CHF ${price}.`,
-    de: (price: string) => `Dein personalisiertes Design wurde von unserem Team fertiggestellt. Der bestätigte Preis für deinen Ring beträgt CHF ${price}.`,
-    en: (price: string) => `Your personalized design has been finalized by our team. The confirmed price for your ring is CHF ${price}.`,
+    fr: (price: string) => `Ton design personnalisé a été finalisé par notre équipe. Le prix validé pour ta bague est de CHF ${price}.\n\nTu as la possibilité de demander une modification de ton devis une seule fois. Si tu fais une demande de modification, un nouveau devis te sera envoyé et le prix pourra varier en fonction de tes demandes.\n\nSi le design te convient, tu peux valider ta commande directement en cliquant sur le bouton ci-dessous.`,
+    de: (price: string) => `Dein personalisiertes Design wurde von unserem Team fertiggestellt. Der bestätigte Preis für deinen Ring beträgt CHF ${price}.\n\nDu hast die Möglichkeit, einmalig eine Änderung an deinem Angebot zu beantragen. Bei einer Änderungsanfrage wird dir ein neues Angebot zugeschickt und der Preis kann je nach deinen Wünschen variieren.\n\nWenn du mit dem Design zufrieden bist, kannst du deine Bestellung direkt über den untenstehenden Button abschließen.`,
+    en: (price: string) => `Your personalized design has been finalized by our team. The confirmed price for your ring is CHF ${price}.\n\nYou may request one modification to your quote. If you do, a new quote will be sent to you and the price may vary depending on your requests.\n\nIf you're happy with the design, you can confirm your order by clicking the button below.`,
   },
-  design_label: {
-    fr: "Voir mon design",
-    de: "Mein Design ansehen",
-    en: "View my design",
+  pay_label: {
+    fr: "Valider ma commande",
+    de: "Bestellung abschließen",
+    en: "Confirm my order",
   },
   sign_off: {
     fr: "L'équipe Mood Collection",
@@ -40,12 +40,12 @@ const T = {
 function buildTexts(locale: Locale, firstName: string, orderName: string, totalPrice: string, customMessage: string) {
   const price = Number(totalPrice).toFixed(2);
   return {
-    email_subject:   T.subject[locale](orderName),
-    email_greeting:  T.greeting[locale](firstName),
-    email_intro:     T.intro[locale](price),
-    email_body:      customMessage,
-    design_label:    T.design_label[locale],
-    email_sign_off:  T.sign_off[locale],
+    email_subject:  T.subject[locale](orderName),
+    email_greeting: T.greeting[locale](firstName),
+    email_intro:    T.intro[locale](price),
+    email_body:     customMessage,
+    pay_label:      T.pay_label[locale],
+    email_sign_off: T.sign_off[locale],
   };
 }
 
@@ -68,15 +68,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const firstName: string = draft_order.customer?.first_name ?? "";
     const totalPrice: string = draft_order.total_price ?? "0.00";
     const orderName: string = draft_order.name ?? "";
+    const invoiceUrl: string = draft_order.invoice_url ?? "";
 
-    // Locale : Klaviyo profile (plus fiable que Shopify pour la langue du compte)
-    const rawLocale = await getKlaviyoProfileLocale(email);
-    const locale: Locale = (["fr", "de", "en"].includes(rawLocale ?? "") ? rawLocale : "fr") as Locale;
-
-    // URL du design depuis les propriétés du line item
     const props: Array<{ name: string; value: string }> = draft_order.line_items?.[0]?.properties ?? [];
     const designProp = props.find((p) => ["Design SVG", "SVG Gravure", "SVG Complet"].includes(p.name));
     const designUrl: string = designProp?.value ?? "";
+
+    const rawLocale = await getKlaviyoProfileLocale(email);
+    const locale: Locale = (["fr", "de", "en"].includes(rawLocale ?? "") ? rawLocale : "fr") as Locale;
 
     const texts = buildTexts(locale, firstName, orderName, totalPrice, customMessage);
 
@@ -107,6 +106,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
               order_name: orderName,
               total_price: totalPrice,
               design_url: designUrl,
+              invoice_url: invoiceUrl,
               locale,
               ...texts,
             },
