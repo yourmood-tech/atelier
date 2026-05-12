@@ -1300,8 +1300,8 @@ function diamantSvg(taille, style, mode = 'normal') {
 }
 
 function couleurTrait() {
-  // Oxydée = noir vrai (#000000), Neutre = gris clair (gravure visible mais douce, sans oxydation)
-  if (gravureType === 'neutre') return '#a8a8a8';
+  // Oxydée = noir vrai, Neutre = blanc (gravure creusée reflète la lumière, effet brillant sur l'argent)
+  if (gravureType === 'neutre') return '#ffffff';
   return '#000000';
 }
 
