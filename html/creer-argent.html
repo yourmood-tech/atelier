@@ -1633,7 +1633,22 @@ document.getElementById('editor-svg').addEventListener('touchstart', e => {
   if (modeOutil === 'gomme') {
     e.preventDefault();
     effacerSousCurseur(t.clientX, t.clientY);
+    return;
   }
+  // Drag tactile d'un élément (symbole, pierre, texte, dessin, empreinte)
+  const target = (e.target.closest && e.target.closest('g.element'))
+    || document.elementFromPoint(t.clientX, t.clientY)?.closest?.('g.element');
+  if (!target) {
+    selectionner(null);
+    return;
+  }
+  e.preventDefault();
+  const id = +target.dataset.id;
+  selectionner(id);
+  const el = elements.find(x => x.id === id);
+  if (!el) return;
+  const pt = svgPoint(t.clientX, t.clientY);
+  dragging = { id, offsetX: pt.x - el.x, offsetY: pt.y - el.y };
 }, { passive: false });
 
 document.addEventListener('touchmove', e => {
@@ -1647,10 +1662,24 @@ document.addEventListener('touchmove', e => {
   if (modeOutil === 'gomme' && e.touches.length > 0) {
     e.preventDefault();
     effacerSousCurseur(t.clientX, t.clientY);
+    return;
+  }
+  // Drag tactile en cours
+  if (dragging) {
+    e.preventDefault();
+    const el = elements.find(x => x.id === dragging.id);
+    if (!el) return;
+    const pt = svgPoint(t.clientX, t.clientY);
+    el.x = pt.x - dragging.offsetX;
+    el.y = pt.y - dragging.offsetY;
+    rendreCanvas();
   }
 }, { passive: false });
 
-document.addEventListener('touchend', finaliserDessin);
+document.addEventListener('touchend', e => {
+  finaliserDessin(e);
+  dragging = null;
+});
 
 function svgPoint(clientX, clientY) {
   const svg = document.getElementById('editor-svg');
