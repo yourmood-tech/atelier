@@ -80,6 +80,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // un prix arbitraire sur un draft order Shopify (variant_id verrouille au prix catalog)
     const patchBody = {
       draft_order: {
+        tags: draft_order.tags,  // préserver les tags (sinon Shopify les efface)
+        note: draft_order.note,
         line_items: [{
           id: lineItem.id,
           title: lineItem.title || "Bague personnalisée",
