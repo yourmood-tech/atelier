@@ -24,9 +24,12 @@ const RATIOS: Record<string, string> = {
   "multi-16-9": "16:9",
 };
 
-async function appelGemini(imageDataUrl: string, action: string): Promise<{ image?: string; error?: string }> {
-  const prompt = PROMPTS[action];
-  if (!prompt) return { error: `Action inconnue : ${action}` };
+async function appelGemini(imageDataUrl: string, action: string, note?: string | null): Promise<{ image?: string; error?: string }> {
+  const basePrompt = PROMPTS[action];
+  if (!basePrompt) return { error: `Action inconnue : ${action}` };
+  const prompt = note && note.trim()
+    ? `${basePrompt}\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR (à respecter en priorité) ===\n${note.trim()}`
+    : basePrompt;
 
   // Extraire mimeType et data depuis dataUrl
   const m = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -88,14 +91,14 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; action?: string };
+  let body: { image?: string; action?: string; note?: string | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, action } = body;
+  const { image, action, note } = body;
   if (!image || !action) {
     return NextResponse.json({ error: "Champs requis : image (dataUrl), action" }, { status: 400 });
   }
@@ -109,12 +112,12 @@ export async function POST(req: Request) {
       "multi-9-16": "Vertical 9:16 (Story/Reel)",
       "multi-16-9": "Paysage 16:9 (FB cover)",
     };
-    const results = await Promise.all(ratios.map(r => appelGemini(image, r).then(res => ({ ...res, ratio: r, label: labels[r] }))));
+    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note).then(res => ({ ...res, ratio: r, label: labels[r] }))));
     return NextResponse.json({ resultats: results });
   }
 
   // Cas simple : 1 appel
-  const res = await appelGemini(image, action);
+  const res = await appelGemini(image, action, note);
   if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
   return NextResponse.json({ image: res.image });
 }

@@ -137,6 +137,12 @@
 </div>
 <input type="file" id="file-input" accept="image/*" onchange="handleFileChosen(event)">
 
+<!-- Indications optionnelles pour l'IA -->
+<div id="indications-zone" style="display:none;margin-top:1rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">💬 Indications pour l'IA <span style="color:var(--gris);font-weight:400;">— optionnel, ex: « fond bleu pastel », « garder le diamant rouge », « redresser vers la gauche »</span></label>
+  <textarea id="indications" rows="2" placeholder="Tape ici si tu veux préciser quelque chose pour TOUTES les actions ci-dessous…" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
+</div>
+
 <!-- Actions -->
 <div class="actions-grid actions-disabled" id="actions">
   <div class="action-card" onclick="lancerAction('fond-blanc')" data-action="fond-blanc">
@@ -198,6 +204,7 @@ async function chargerFichier(file) {
     document.getElementById('upload-preview').style.display = 'block';
     dropZone.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
+    document.getElementById('indications-zone').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
   } catch (e) {
     alert('Impossible de charger cette image : ' + (e.message || e) + '. Essaie un JPG ou PNG standard.');
@@ -251,10 +258,11 @@ async function lancerAction(action) {
   let etape = 'init';
   try {
     etape = 'fetch';
+    const note = document.getElementById('indications')?.value?.trim() || null;
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageActuelle, action }),
+      body: JSON.stringify({ image: imageActuelle, action, note }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();
