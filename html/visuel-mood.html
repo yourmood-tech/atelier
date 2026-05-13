@@ -122,6 +122,13 @@
   .logo-color:hover { transform: scale(1.1); }
   .logo-color.active { border-color: var(--noir); }
 
+  .text-row { padding: 0.5rem 0.6rem; border-radius: 8px; cursor: pointer; transition: background 0.1s; margin-left: -0.6rem; margin-right: -0.6rem; }
+  .text-row:hover { background: #fafafa; }
+  .text-row.selected { background: #fffdf6; box-shadow: inset 2px 0 0 var(--or); }
+  .dot-color { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px solid #ddd; vertical-align: middle; margin-left: 0.3rem; }
+  #canvas-preview { cursor: pointer; }
+  #canvas-preview.dragging { cursor: grabbing; }
+
   .erreur { color: var(--rouge); font-size: 0.85rem; padding: 0.7rem; background: #fee; border-radius: 6px; margin-top: 0.5rem; }
   .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--or); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.4rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -243,8 +250,13 @@ let state = {
     size: 0.22,        // largeur en fraction de la largeur du visuel
     color: 'auto',     // 'auto', 'noir', 'blanc', 'or', 'rouge-suisse', 'rose', custom hex
     position: 'top-center', // top-center, top-left, top-right, bottom-center, hidden
-    yOffset: 0.04,     // position verticale en fraction
+    yOffset: 0.04,
   },
+  layout: {},          // overrides position/scale par élément : { key: { dx, dy, scale } } — dx/dy en fraction de la largeur
+  textesCouleurs: {},  // override couleur par texte : { key: '#xxxxxx' }
+  bboxes: {},          // bbox calculée lors du draw, pour hit-test : { key: {x,y,w,h} }
+  selectedKey: null,   // élément actuellement sélectionné (pour drag/resize)
+  drag: null,          // mode drag actif : { type: 'move'|'resize', corner, startCX, startCY, origDx, origDy, origScale }
   langue: 'fr',
 };
 
@@ -307,6 +319,9 @@ function selectTemplate(t) {
   const cfg = TEMPLATES_CONFIG[t];
   document.getElementById('photos-hint').textContent = cfg.maxPhotos === 1 ? '1 photo' : `1 à ${cfg.maxPhotos} photos`;
   state.textes = { ...cfg.defaults };
+  state.layout = {};
+  state.textesCouleurs = {};
+  state.selectedKey = null;
   // Taille logo par défaut spécifique au template
   const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18 };
   state.logo.size = defaultSizes[t] || 0.22;
@@ -483,16 +498,59 @@ function renderPanelTextes() {
   `;
 
   // Section textes
-  html += `<h3>${cfg.label} — textes</h3>`;
+  html += `<h3>${cfg.label} — textes</h3>
+    <div style="font-size:0.75rem;color:var(--gris);margin-bottom:0.6rem;line-height:1.4;">
+      💡 Tu peux <b>cliquer-glisser</b> n'importe quel texte ou logo sur le visuel pour le déplacer, et <b>tirer un coin</b> pour le redimensionner.
+    </div>
+    <button onclick="resetLayout()" style="margin-bottom:0.8rem;font-size:0.75rem;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:0.4rem 0.7rem;cursor:pointer;">↻ Réinitialiser positions & tailles</button>`;
   for (const f of cfg.fields) {
     const val = state.textes[f.key] ?? '';
+    const colorVal = state.textesCouleurs[f.key] || '';
+    const colorInputVal = colorVal && colorVal.startsWith('#') ? colorVal : '#000000';
+    const isSelected = state.selectedKey === f.key;
     if (f.key === 'body') {
-      html += `<div class="form-row"><label>${f.label}</label><textarea rows="2" id="t-${f.key}" oninput="onTexte('${f.key}', this.value)" placeholder="${escapeAttr(f.placeholder)}">${escapeHtml(val)}</textarea></div>`;
+      html += `<div class="form-row text-row${isSelected ? ' selected' : ''}" data-key="${f.key}" onclick="selectFromPanel('${f.key}')">
+        <label>${f.label} ${colorVal ? '<span class="dot-color" style="background:'+escapeAttr(colorVal)+'"></span>' : ''}</label>
+        <div style="display:flex;gap:0.4rem;align-items:flex-start;">
+          <textarea rows="2" id="t-${f.key}" oninput="onTexte('${f.key}', this.value)" placeholder="${escapeAttr(f.placeholder)}" style="flex:1;">${escapeHtml(val)}</textarea>
+          <input type="color" value="${escapeAttr(colorInputVal)}" oninput="onTexteCouleur('${f.key}', this.value)" title="Couleur du texte" style="width:34px;height:34px;padding:2px;cursor:pointer;">
+          ${colorVal ? `<button onclick="onTexteCouleur('${f.key}', null)" title="Couleur auto" style="border:none;background:none;cursor:pointer;font-size:0.85rem;color:var(--gris);">×</button>` : ''}
+        </div>
+      </div>`;
     } else {
-      html += `<div class="form-row"><label>${f.label}</label><input type="text" id="t-${f.key}" value="${escapeAttr(val)}" oninput="onTexte('${f.key}', this.value)" placeholder="${escapeAttr(f.placeholder)}"></div>`;
+      html += `<div class="form-row text-row${isSelected ? ' selected' : ''}" data-key="${f.key}" onclick="selectFromPanel('${f.key}')">
+        <label>${f.label} ${colorVal ? '<span class="dot-color" style="background:'+escapeAttr(colorVal)+'"></span>' : ''}</label>
+        <div style="display:flex;gap:0.4rem;align-items:center;">
+          <input type="text" id="t-${f.key}" value="${escapeAttr(val)}" oninput="onTexte('${f.key}', this.value)" placeholder="${escapeAttr(f.placeholder)}" style="flex:1;">
+          <input type="color" value="${escapeAttr(colorInputVal)}" oninput="onTexteCouleur('${f.key}', this.value)" title="Couleur du texte" style="width:34px;height:34px;padding:2px;cursor:pointer;">
+          ${colorVal ? `<button onclick="onTexteCouleur('${f.key}', null)" title="Couleur auto" style="border:none;background:none;cursor:pointer;font-size:0.85rem;color:var(--gris);">×</button>` : ''}
+        </div>
+      </div>`;
     }
   }
   panel.innerHTML = html;
+}
+
+function onTexteCouleur(key, hex) {
+  if (hex === null || hex === undefined) {
+    delete state.textesCouleurs[key];
+  } else {
+    state.textesCouleurs[key] = hex;
+  }
+  renderPanelTextes();
+  renderCanvas();
+}
+
+function selectFromPanel(key) {
+  state.selectedKey = key;
+  renderCanvas();
+  updatePanelHighlight();
+}
+
+function resetLayout() {
+  state.layout = {};
+  state.selectedKey = null;
+  renderCanvas();
 }
 
 function onTexte(key, value) {
@@ -561,7 +619,7 @@ async function traduireVers(cible) {
 }
 
 // ============ CANVAS RENDER ============
-const LOGO_SRC = '/logo-mood.jpg';
+const LOGO_SRC = '/logo-mood.png';
 let logoImage = null;
 function preloadLogo() {
   return new Promise((resolve) => {
@@ -594,13 +652,205 @@ async function renderCanvas() {
   // Logo
   const logo = await preloadLogo();
 
-  // Dessin selon template
+  // Reset bboxes (chaque drawXxx les remplit)
+  state.bboxes = {};
+
   switch (state.template) {
     case 'promo-flash': drawPromoFlash(ctx, w, h, logo); break;
     case 'collection-lancee': drawCollectionLancee(ctx, w, h, logo); break;
     case 'date-butoir': drawDateButoir(ctx, w, h, logo); break;
     case 'multi-bagues': drawMultiBagues(ctx, w, h, logo); break;
   }
+
+  // Rendu marqueurs de sélection par-dessus tout (juste pour le preview, EFFACÉS avant le download)
+  drawSelectionMarkers(ctx, w);
+
+  // Attache les handlers une seule fois
+  attachCanvasHandlers();
+}
+
+// Cadre + 4 poignées pour l'élément sélectionné
+function drawSelectionMarkers(ctx, cw) {
+  if (!state.selectedKey || !state.bboxes[state.selectedKey]) return;
+  const bb = state.bboxes[state.selectedKey];
+  const pad = cw * 0.012;
+  const x = bb.x - pad, y = bb.y - pad, w = bb.w + pad * 2, h = bb.h + pad * 2;
+
+  ctx.save();
+  // cadre pointillé
+  ctx.strokeStyle = '#c9a96e';
+  ctx.lineWidth = Math.max(2, cw * 0.003);
+  ctx.setLineDash([cw * 0.012, cw * 0.008]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+
+  // 4 poignées aux coins
+  const hr = Math.max(8, cw * 0.012);
+  const corners = [
+    { cx: x, cy: y },         // top-left
+    { cx: x + w, cy: y },     // top-right
+    { cx: x, cy: y + h },     // bottom-left
+    { cx: x + w, cy: y + h }, // bottom-right
+  ];
+  for (const c of corners) {
+    ctx.beginPath();
+    ctx.arc(c.cx, c.cy, hr, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#c9a96e';
+    ctx.lineWidth = Math.max(2, cw * 0.003);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ============ CANVAS DRAG & RESIZE ============
+let canvasHandlersAttached = false;
+function attachCanvasHandlers() {
+  if (canvasHandlersAttached) return;
+  canvasHandlersAttached = true;
+  const cnv = document.getElementById('canvas-preview');
+
+  function getCanvasCoords(e) {
+    const rect = cnv.getBoundingClientRect();
+    const sx = cnv.width / rect.width;
+    const sy = cnv.height / rect.height;
+    const cx = (('touches' in e && e.touches[0]) ? e.touches[0].clientX : e.clientX) - rect.left;
+    const cy = (('touches' in e && e.touches[0]) ? e.touches[0].clientY : e.clientY) - rect.top;
+    return { x: cx * sx, y: cy * sy };
+  }
+
+  function hitHandle(bb, x, y, cw) {
+    if (!bb) return null;
+    const pad = cw * 0.012;
+    const X = bb.x - pad, Y = bb.y - pad, W = bb.w + pad * 2, H = bb.h + pad * 2;
+    const hr = Math.max(14, cw * 0.018); // un peu plus grand pour le hit-test que le rendu
+    const corners = [
+      { name: 'tl', cx: X, cy: Y },
+      { name: 'tr', cx: X + W, cy: Y },
+      { name: 'bl', cx: X, cy: Y + H },
+      { name: 'br', cx: X + W, cy: Y + H },
+    ];
+    for (const c of corners) {
+      if (Math.hypot(x - c.cx, y - c.cy) < hr) return c.name;
+    }
+    return null;
+  }
+
+  function hitElement(x, y) {
+    // Test priorité : élément sélectionné d'abord, puis les autres
+    const keys = Object.keys(state.bboxes);
+    if (state.selectedKey && state.bboxes[state.selectedKey]) {
+      const bb = state.bboxes[state.selectedKey];
+      if (x >= bb.x && x <= bb.x + bb.w && y >= bb.y && y <= bb.y + bb.h) return state.selectedKey;
+    }
+    // Sinon parcourir tous (priorité au dernier dessiné = dernier dans l'objet)
+    for (let i = keys.length - 1; i >= 0; i--) {
+      const k = keys[i];
+      const bb = state.bboxes[k];
+      if (x >= bb.x && x <= bb.x + bb.w && y >= bb.y && y <= bb.y + bb.h) return k;
+    }
+    return null;
+  }
+
+  function onDown(e) {
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e);
+    const cw = cnv.width;
+
+    // 1. Si un élément est sélectionné, check si on clique sur une poignée
+    if (state.selectedKey && state.bboxes[state.selectedKey]) {
+      const corner = hitHandle(state.bboxes[state.selectedKey], x, y, cw);
+      if (corner) {
+        const lay = state.layout[state.selectedKey] || { dx: 0, dy: 0, scale: 1 };
+        state.drag = {
+          type: 'resize', corner,
+          startCX: x, startCY: y,
+          origScale: lay.scale ?? 1,
+          origDx: lay.dx ?? 0,
+          origDy: lay.dy ?? 0,
+          bbox: { ...state.bboxes[state.selectedKey] },
+        };
+        return;
+      }
+    }
+
+    // 2. Sinon, hit test sur les éléments
+    const hit = hitElement(x, y);
+    if (hit) {
+      state.selectedKey = hit;
+      const lay = state.layout[hit] || { dx: 0, dy: 0, scale: 1 };
+      state.drag = {
+        type: 'move',
+        startCX: x, startCY: y,
+        origDx: lay.dx ?? 0,
+        origDy: lay.dy ?? 0,
+      };
+      renderCanvasNow();
+      updatePanelHighlight();
+    } else {
+      // click ailleurs = déselection
+      if (state.selectedKey) {
+        state.selectedKey = null;
+        renderCanvasNow();
+        updatePanelHighlight();
+      }
+    }
+  }
+
+  function onMove(e) {
+    if (!state.drag) return;
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e);
+    const cw = cnv.width;
+    const dx = (x - state.drag.startCX) / cw;
+    const dy = (y - state.drag.startCY) / cw;
+
+    if (!state.layout[state.selectedKey]) state.layout[state.selectedKey] = { dx: 0, dy: 0, scale: 1 };
+    const lay = state.layout[state.selectedKey];
+
+    if (state.drag.type === 'move') {
+      lay.dx = state.drag.origDx + dx;
+      lay.dy = state.drag.origDy + dy;
+    } else if (state.drag.type === 'resize') {
+      // Resize uniforme : facteur basé sur la distance du coin opposé
+      const bb = state.drag.bbox;
+      const center = { x: bb.x + bb.w / 2, y: bb.y + bb.h / 2 };
+      const origDist = Math.hypot(state.drag.startCX - center.x, state.drag.startCY - center.y);
+      const newDist = Math.hypot(x - center.x, y - center.y);
+      if (origDist > 5) {
+        const factor = newDist / origDist;
+        lay.scale = Math.max(0.2, Math.min(5, state.drag.origScale * factor));
+      }
+    }
+    renderCanvasNow();
+  }
+
+  function onUp() {
+    state.drag = null;
+  }
+
+  cnv.addEventListener('mousedown', onDown);
+  cnv.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  cnv.addEventListener('touchstart', onDown, { passive: false });
+  cnv.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+}
+
+// Re-render sans réattacher les handlers (sync)
+let renderTimeout = null;
+function renderCanvasNow() {
+  // Annule un éventuel render en cours et déclenche immédiatement
+  if (renderTimeout) clearTimeout(renderTimeout);
+  renderTimeout = setTimeout(() => { renderCanvas(); renderTimeout = null; }, 0);
+}
+
+function updatePanelHighlight() {
+  // Highlight la ligne du texte sélectionné dans le panel
+  document.querySelectorAll('.form-row[data-key]').forEach(el => {
+    el.classList.toggle('selected', el.dataset.key === state.selectedKey);
+  });
 }
 
 function loadImage(src) {
@@ -655,25 +905,49 @@ function getTintedLogo(logo, color) {
   const octx = off.getContext('2d');
   octx.drawImage(logo, 0, 0);
 
-  // Lire les pixels, transformer le fond blanc en transparent, et recolorer si demandé
   const imgData = octx.getImageData(0, 0, off.width, off.height);
   const d = imgData.data;
-  const tint = color ? hexToRgb(color) : null;
-  for (let i = 0; i < d.length; i += 4) {
-    const r = d[i], g = d[i + 1], b = d[i + 2];
-    // Détection fond blanc (avec tolérance)
-    const lum = (r + g + b) / 3;
-    if (lum > 235) {
-      d[i + 3] = 0; // transparent
-    } else if (tint) {
-      // Garder l'alpha lié à la noirceur (anti-aliasing préservé)
-      const inkAlpha = Math.round((255 - lum) * 1.05);
-      d[i] = tint.r;
-      d[i + 1] = tint.g;
-      d[i + 2] = tint.b;
-      d[i + 3] = Math.min(255, inkAlpha);
+  const W = off.width, H = off.height;
+
+  // Passe 1 : trouver la bbox des pixels rouges (= zone de la croix suisse)
+  let xMin = W, yMin = H, xMax = -1, yMax = -1;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const idx = (y * W + x) * 4;
+      const a = d[idx + 3];
+      if (a < 50) continue;
+      const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+      if (r > 160 && g < 110 && b < 110 && r > g + 60 && r > b + 60) {
+        if (x < xMin) xMin = x;
+        if (y < yMin) yMin = y;
+        if (x > xMax) xMax = x;
+        if (y > yMax) yMax = y;
+      }
     }
-    // Sinon : pixel sombre, garder noir tel quel
+  }
+  const hasCross = xMax >= 0;
+  if (hasCross) {
+    // Marge pour englober proprement le blanc intérieur de la croix
+    const m = Math.max(2, Math.floor(Math.min(W, H) * 0.005));
+    xMin -= m; yMin -= m; xMax += m; yMax += m;
+  }
+
+  // Passe 2 : recolorer tout sauf la zone croix suisse
+  const tint = color ? hexToRgb(color) : null;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const idx = (y * W + x) * 4;
+      const a = d[idx + 3];
+      if (a === 0) continue;
+      const inCross = hasCross && x >= xMin && x <= xMax && y >= yMin && y <= yMax;
+      if (inCross) continue; // garder la croix suisse intacte (rouge + blanc interne)
+      if (tint) {
+        d[idx] = tint.r;
+        d[idx + 1] = tint.g;
+        d[idx + 2] = tint.b;
+        // Alpha préservé pour l'anti-aliasing
+      }
+    }
   }
   octx.putImageData(imgData, 0, 0);
   LOGO_TINT_CACHE.set(key, off);
@@ -685,16 +959,104 @@ function hexToRgb(hex) {
   return { r: parseInt(m.slice(0, 2), 16), g: parseInt(m.slice(2, 4), 16), b: parseInt(m.slice(4, 6), 16) };
 }
 
-// Dessine le logo Mood selon l'état (position, taille, couleur)
-function drawLogoTop(ctx, cw, ch, logo, _opts = {}) {
-  if (!logo || !state.logo || state.logo.position === 'hidden') return;
+// ============ LAYOUT OVERRIDES + BBOX ============
+// state.layout[key] = { dx, dy, scale } — applique offset position + facteur taille
+// state.textesCouleurs[key] = '#xxx' — override couleur par texte
+// state.bboxes[key] = { x, y, w, h } — enregistré lors du draw pour hit-test
+
+function getLayoutOverride(key) {
+  return state.layout[key] || { dx: 0, dy: 0, scale: 1 };
+}
+function getTextColor(key, defaultColor) {
+  return state.textesCouleurs[key] || defaultColor;
+}
+
+// Découpe le texte en lignes selon maxWidth
+function wrapTextLines(ctx, text, maxWidth) {
+  const result = [];
+  const paras = String(text).split('\n');
+  for (const para of paras) {
+    const words = para.split(' ');
+    let cur = '';
+    for (const word of words) {
+      const test = cur ? cur + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && cur) {
+        result.push(cur); cur = word;
+      } else { cur = test; }
+    }
+    if (cur) result.push(cur);
+  }
+  return result;
+}
+
+// Dessine un texte avec gestion d'override de position/scale/couleur + enregistre la bbox
+function drawTextLayer(ctx, key, text, opts) {
+  if (!text) { delete state.bboxes[key]; return 0; }
+  const cw = ctx.canvas.width;
+  const lay = getLayoutOverride(key);
+  const scale = lay.scale ?? 1;
+  const dx = (lay.dx ?? 0) * cw;
+  const dy = (lay.dy ?? 0) * cw;
+
+  const fontSize = opts.fontSize * scale;
+  const fontStyle = opts.fontStyle || '';
+  const fontWeight = opts.fontWeight || '400';
+  const fontFamily = opts.fontFamily || '-apple-system, "Helvetica Neue", Arial, sans-serif';
+  ctx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`.trim();
+  ctx.fillStyle = getTextColor(key, opts.color || textColorForPalette());
+  ctx.textAlign = opts.align || 'left';
+  ctx.textBaseline = opts.baseline || 'top';
+
+  let displayText = text;
+  if (opts.transform === 'upper') displayText = String(text).toUpperCase();
+
+  const finalX = opts.x + dx;
+  const finalY = opts.y + dy;
+
+  if (opts.maxWidth) {
+    const lh = (opts.lineHeight || fontSize * 1.25);
+    const lines = wrapTextLines(ctx, displayText, opts.maxWidth * scale);
+    let curY = finalY;
+    let maxW = 0;
+    for (const line of lines) {
+      ctx.fillText(line, finalX, curY);
+      const lw = ctx.measureText(line).width;
+      if (lw > maxW) maxW = lw;
+      curY += lh;
+    }
+    const totalH = lh * lines.length;
+    let bx = finalX, by = finalY;
+    if (opts.align === 'center') bx = finalX - maxW / 2;
+    else if (opts.align === 'right') bx = finalX - maxW;
+    if (opts.baseline === 'middle') by = finalY - totalH / 2;
+    else if (opts.baseline === 'bottom') by = finalY - totalH;
+    state.bboxes[key] = { x: bx, y: by, w: maxW, h: totalH };
+    return totalH;
+  }
+
+  ctx.fillText(displayText, finalX, finalY);
+  const tw = ctx.measureText(displayText).width;
+  const th = fontSize * 1.05;
+  let bx = finalX, by = finalY;
+  if (opts.align === 'center') bx = finalX - tw / 2;
+  else if (opts.align === 'right') bx = finalX - tw;
+  if (opts.baseline === 'middle') by = finalY - th / 2;
+  else if (opts.baseline === 'bottom') by = finalY - th;
+  state.bboxes[key] = { x: bx, y: by, w: tw, h: th };
+  return th;
+}
+
+// Dessine logo Mood (taille/couleur/position depuis state.logo + offset depuis state.layout.logo)
+function drawLogoTop(ctx, cw, ch, logo) {
+  if (!logo || !state.logo || state.logo.position === 'hidden') { delete state.bboxes['logo']; return; }
   const conf = state.logo;
-  const targetW = cw * conf.size;
+  const lay = getLayoutOverride('logo');
+  const scale = lay.scale ?? 1;
+  const targetW = cw * conf.size * scale;
   const ratio = logo.naturalHeight / logo.naturalWidth;
   const lw = targetW;
   const lh = lw * ratio;
 
-  // Position
   const margin = cw * 0.05;
   const yOffset = (conf.yOffset ?? 0.04) * cw;
   let lx, ly;
@@ -705,8 +1067,9 @@ function drawLogoTop(ctx, cw, ch, logo, _opts = {}) {
     case 'top-center':
     default: lx = (cw - lw) / 2; ly = yOffset; break;
   }
+  lx += (lay.dx ?? 0) * cw;
+  ly += (lay.dy ?? 0) * cw;
 
-  // Détermine la couleur effective
   let effectiveColor;
   if (conf.color === 'auto') {
     effectiveColor = textColorForPalette() === '#ffffff' ? '#ffffff' : '#1a1a1a';
@@ -715,35 +1078,39 @@ function drawLogoTop(ctx, cw, ch, logo, _opts = {}) {
   } else {
     effectiveColor = LOGO_COLORS[conf.color] || '#1a1a1a';
   }
-
   const tinted = getTintedLogo(logo, effectiveColor);
   if (tinted) {
     ctx.drawImage(tinted, lx, ly, lw, lh);
+    state.bboxes['logo'] = { x: lx, y: ly, w: lw, h: lh };
   }
 }
 
-// Pilule CTA
-function drawCtaPill(ctx, cw, ch, text, opts = {}) {
-  if (!text) return;
-  const fontSize = opts.fontSize ?? cw * 0.038;
+// Pilule CTA avec layout override + bbox
+function drawCtaPill(ctx, key, cw, ch, text, opts = {}) {
+  if (!text) { delete state.bboxes[key]; return; }
+  const lay = getLayoutOverride(key);
+  const scale = lay.scale ?? 1;
+  const dx = (lay.dx ?? 0) * cw;
+  const dy = (lay.dy ?? 0) * cw;
+  const fontSize = (opts.fontSize ?? cw * 0.038) * scale;
   ctx.font = `700 ${fontSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-  const padX = cw * 0.06;
+  const padX = cw * 0.06 * scale;
   const padY = fontSize * 0.65;
   const textW = ctx.measureText(text).width;
   const pillW = textW + padX * 2;
   const pillH = fontSize + padY * 2;
-  const cx = opts.cx ?? cw / 2;
-  const cy = opts.cy ?? ch - cw * 0.1;
+  const cx = (opts.cx ?? cw / 2) + dx;
+  const cy = (opts.cy ?? ch - cw * 0.1) + dy;
   const x = cx - pillW / 2;
   const y = cy - pillH / 2;
-  const r = pillH / 2;
 
   ctx.fillStyle = pillFillColor();
-  roundRect(ctx, x, y, pillW, pillH, r);
+  roundRect(ctx, x, y, pillW, pillH, pillH / 2);
   ctx.fill();
-  ctx.fillStyle = pillTextColor();
+  ctx.fillStyle = getTextColor(key, pillTextColor());
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, cx, cy);
+  state.bboxes[key] = { x, y, w: pillW, h: pillH };
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -760,245 +1127,163 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const lines = String(text).split('\n');
-  let curY = y;
-  for (const line of lines) {
-    const words = line.split(' ');
-    let cur = '';
-    for (const word of words) {
-      const test = cur ? cur + ' ' + word : word;
-      if (ctx.measureText(test).width > maxWidth && cur) {
-        ctx.fillText(cur, x, curY);
-        curY += lineHeight;
-        cur = word;
-      } else {
-        cur = test;
-      }
-    }
-    if (cur) { ctx.fillText(cur, x, curY); curY += lineHeight; }
-  }
-  return curY;
-}
-
 // ====== TEMPLATE 1 : PROMO FLASH ======
 function drawPromoFlash(ctx, w, h, logo) {
   drawLogoTop(ctx, w, h, logo);
-
-  const color = textColorForPalette();
   const t = state.textes;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
 
-  // Gros titre
-  const titreY = w * 0.18;
-  const titreSize = w * 0.13;
-  ctx.font = `800 ${titreSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-  ctx.fillStyle = color;
-  if (t.titreA) wrapText(ctx, t.titreA.toUpperCase(), w / 2, titreY, w * 0.9, titreSize * 1.05);
+  drawTextLayer(ctx, 'titreA', t.titreA, {
+    x: w / 2, y: w * 0.18, fontSize: w * 0.13, fontWeight: '800',
+    align: 'center', baseline: 'top', transform: 'upper',
+    maxWidth: w * 0.9, lineHeight: w * 0.13 * 1.05,
+  });
 
-  // Sous-titre
-  if (t.titreB) {
-    const sousY = titreY + titreSize * 1.5;
-    const sousSize = w * 0.04;
-    ctx.font = `500 ${sousSize}px "Snell Roundhand", "Lucida Handwriting", cursive`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.titreB, w / 2, sousY);
-  }
+  drawTextLayer(ctx, 'titreB', t.titreB, {
+    x: w / 2, y: w * 0.42, fontSize: w * 0.04, fontWeight: '500',
+    fontFamily: '"Snell Roundhand", "Lucida Handwriting", cursive',
+    align: 'center', baseline: 'top',
+  });
 
-  // Code promo
-  if (t.codePromo) {
-    const codeY = h * 0.55;
-    const codeSize = w * 0.035;
-    ctx.font = `600 ${codeSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText('Code · ' + t.codePromo, w / 2, codeY);
-  }
+  drawTextLayer(ctx, 'codePromo', t.codePromo ? 'Code · ' + t.codePromo : '', {
+    x: w / 2, y: h * 0.55, fontSize: w * 0.035, fontWeight: '600',
+    align: 'center', baseline: 'top',
+  });
 
-  // CTA
-  drawCtaPill(ctx, w, h, (t.cta || '').toUpperCase(), { cy: h - w * 0.09 });
+  drawCtaPill(ctx, 'cta', w, h, (t.cta || '').toUpperCase(), { cy: h - w * 0.09 });
 }
 
 // ====== TEMPLATE 2 : COLLECTION LANCÉE ======
 function drawCollectionLancee(ctx, w, h, logo) {
   drawLogoTop(ctx, w, h, logo);
-
-  const color = textColorForPalette();
   const t = state.textes;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
 
-  // Petit "Collection"
-  if (t.labelCollection) {
-    const labY = h * 0.21;
-    const labSize = w * 0.034;
-    ctx.font = `400 ${labSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.letterSpacing = '4px';
-    ctx.fillText(t.labelCollection, w / 2, labY);
-  }
+  drawTextLayer(ctx, 'labelCollection', t.labelCollection, {
+    x: w / 2, y: h * 0.21, fontSize: w * 0.034, fontWeight: '400',
+    align: 'center', baseline: 'top',
+  });
 
-  // Nom collection en script
-  if (t.nomCollection) {
-    const nomY = h * 0.26;
-    const nomSize = w * 0.18;
-    ctx.font = `italic 400 ${nomSize}px "Snell Roundhand", "Apple Chancery", "Lucida Handwriting", cursive`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.nomCollection, w / 2, nomY);
+  drawTextLayer(ctx, 'nomCollection', t.nomCollection, {
+    x: w / 2, y: h * 0.26, fontSize: w * 0.18, fontWeight: '400', fontStyle: 'italic',
+    fontFamily: '"Snell Roundhand", "Apple Chancery", "Lucida Handwriting", cursive',
+    align: 'center', baseline: 'top',
+  });
 
-    // ligne fine ornement
-    const lineY = nomY + nomSize * 1.05;
-    ctx.strokeStyle = color;
+  // ornement (ligne fine sous le nom) — non interactif
+  if (t.nomCollection && state.bboxes.nomCollection) {
+    const bb = state.bboxes.nomCollection;
+    const lineY = bb.y + bb.h + w * 0.005;
+    ctx.strokeStyle = getTextColor('nomCollection', textColorForPalette());
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(w * 0.4, lineY); ctx.lineTo(w * 0.6, lineY); ctx.stroke();
   }
 
-  // Sous-titre
-  if (t.sousTitre) {
-    const sousY = h * 0.48;
-    const sousSize = w * 0.028;
-    ctx.font = `300 ${sousSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    wrapText(ctx, t.sousTitre, w / 2, sousY, w * 0.7, sousSize * 1.3);
-  }
+  drawTextLayer(ctx, 'sousTitre', t.sousTitre, {
+    x: w / 2, y: h * 0.48, fontSize: w * 0.028, fontWeight: '300',
+    align: 'center', baseline: 'top',
+    maxWidth: w * 0.7, lineHeight: w * 0.028 * 1.3,
+  });
 
-  // CTA
-  drawCtaPill(ctx, w, h, (t.cta || '').toUpperCase() + (t.cta ? '  →' : ''), { cy: h - w * 0.08 });
+  drawCtaPill(ctx, 'cta', w, h, (t.cta || '').toUpperCase() + (t.cta ? '  →' : ''), { cy: h - w * 0.08 });
 }
 
 // ====== TEMPLATE 3 : ÉDITION LIMITÉE ======
 function drawDateButoir(ctx, w, h, logo) {
   drawLogoTop(ctx, w, h, logo);
-
-  const color = textColorForPalette();
   const t = state.textes;
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-
   const padX = w * 0.07;
-  let curY = h * 0.2;
 
-  // Tag (ÉDITION LIMITÉE)
-  if (t.tag) {
-    const tagSize = w * 0.026;
-    ctx.font = `600 ${tagSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = '#c9a96e';
-    ctx.fillText(t.tag.toUpperCase(), padX, curY);
-    curY += tagSize * 2;
-  }
+  drawTextLayer(ctx, 'tag', t.tag, {
+    x: padX, y: h * 0.2, fontSize: w * 0.026, fontWeight: '600',
+    align: 'left', baseline: 'top', transform: 'upper',
+    color: '#c9a96e',
+  });
 
-  // Gros texte
-  if (t.gros) {
-    const grosSize = w * 0.14;
-    ctx.font = `300 ${grosSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.gros, padX, curY);
-    curY += grosSize * 1.1;
-  }
+  drawTextLayer(ctx, 'gros', t.gros, {
+    x: padX, y: h * 0.25, fontSize: w * 0.14, fontWeight: '300',
+    align: 'left', baseline: 'top',
+  });
 
-  // Sous-titre
-  if (t.sousTitre) {
-    const sousSize = w * 0.028;
-    ctx.font = `400 ${sousSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.sousTitre, padX, curY);
-    curY += sousSize * 2.2;
-  }
+  drawTextLayer(ctx, 'sousTitre', t.sousTitre, {
+    x: padX, y: h * 0.43, fontSize: w * 0.028, fontWeight: '400',
+    align: 'left', baseline: 'top',
+  });
 
-  // Body
-  if (t.body) {
-    const bodySize = w * 0.022;
-    ctx.font = `300 ${bodySize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    curY = wrapText(ctx, t.body, padX, curY, w * 0.45, bodySize * 1.5);
-  }
+  drawTextLayer(ctx, 'body', t.body, {
+    x: padX, y: h * 0.51, fontSize: w * 0.022, fontWeight: '300',
+    align: 'left', baseline: 'top',
+    maxWidth: w * 0.45, lineHeight: w * 0.022 * 1.5,
+  });
 
-  // CTA aligné gauche
+  // CTA souligné aligné à gauche (custom — pas une pilule)
   if (t.cta) {
-    ctx.textAlign = 'left';
-    const ctaY = h - w * 0.12;
-    const ctaSize = w * 0.034;
+    const lay = getLayoutOverride('cta');
+    const scale = lay.scale ?? 1;
+    const dx = (lay.dx ?? 0) * w;
+    const dy = (lay.dy ?? 0) * w;
+    const ctaY = h - w * 0.12 + dy;
+    const ctaX = padX + dx;
+    const ctaSize = w * 0.034 * scale;
     ctx.font = `600 ${ctaSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.cta, padX, ctaY);
-    // soulignement
+    ctx.fillStyle = getTextColor('cta', textColorForPalette());
+    ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(t.cta, ctaX, ctaY);
     const tw = ctx.measureText(t.cta).width;
-    ctx.strokeStyle = color; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(padX, ctaY + ctaSize * 1.1); ctx.lineTo(padX + tw, ctaY + ctaSize * 1.1); ctx.stroke();
-  }
+    ctx.strokeStyle = getTextColor('cta', textColorForPalette()); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(ctaX, ctaY + ctaSize * 1.1); ctx.lineTo(ctaX + tw, ctaY + ctaSize * 1.1); ctx.stroke();
+    state.bboxes['cta'] = { x: ctaX, y: ctaY, w: tw, h: ctaSize * 1.2 };
+  } else { delete state.bboxes['cta']; }
 }
 
 // ====== TEMPLATE 4 : MULTI-BAGUES ======
 function drawMultiBagues(ctx, w, h, logo) {
   drawLogoTop(ctx, w, h, logo);
-
-  const color = textColorForPalette();
   const t = state.textes;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
 
-  // Gros titre
-  if (t.titreA) {
-    const tY = h * 0.13;
-    const tSize = w * 0.11;
-    ctx.font = `800 ${tSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.titreA.toUpperCase(), w / 2, tY);
-  }
+  drawTextLayer(ctx, 'titreA', t.titreA, {
+    x: w / 2, y: h * 0.13, fontSize: w * 0.11, fontWeight: '800',
+    align: 'center', baseline: 'top', transform: 'upper',
+  });
 
-  // %
-  if (t.gros) {
-    const pY = h * 0.34;
-    const pSize = w * 0.16;
-    ctx.font = `800 ${pSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.gros, w / 2, pY);
-  }
+  drawTextLayer(ctx, 'gros', t.gros, {
+    x: w / 2, y: h * 0.28, fontSize: w * 0.16, fontWeight: '800',
+    align: 'center', baseline: 'top',
+  });
 
-  // Sous-titre
-  if (t.sousTitre) {
-    const sY = h * 0.5;
-    const sSize = w * 0.034;
-    ctx.font = `600 ${sSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.sousTitre.toUpperCase(), w / 2, sY);
-  }
+  drawTextLayer(ctx, 'sousTitre', t.sousTitre, {
+    x: w / 2, y: h * 0.5, fontSize: w * 0.034, fontWeight: '600',
+    align: 'center', baseline: 'top', transform: 'upper',
+  });
 
-  // Body
-  if (t.body) {
-    const bY = h * 0.55;
-    const bSize = w * 0.024;
-    ctx.font = `300 italic ${bSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(t.body, w / 2, bY);
-  }
+  drawTextLayer(ctx, 'body', t.body, {
+    x: w / 2, y: h * 0.55, fontSize: w * 0.024, fontWeight: '300', fontStyle: 'italic',
+    align: 'center', baseline: 'top',
+  });
 
-  // Code promo pill
-  if (t.codePromo) {
-    const cY = h - w * 0.18;
-    const cSize = w * 0.03;
-    ctx.font = `700 ${cSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
-    const txt = 'CODE · ' + t.codePromo;
-    const padX = w * 0.05; const padY = cSize * 0.6;
-    const tw = ctx.measureText(txt).width;
-    const pillW = tw + padX * 2; const pillH = cSize + padY * 2;
-    const cx = w / 2; const x = cx - pillW / 2; const y = cY - pillH / 2;
-    ctx.fillStyle = pillFillColor();
-    roundRect(ctx, x, y, pillW, pillH, pillH / 2); ctx.fill();
-    ctx.fillStyle = pillTextColor();
-    ctx.textBaseline = 'middle';
-    ctx.fillText(txt, cx, cY);
-    ctx.textBaseline = 'top';
-  }
+  drawCtaPill(ctx, 'codePromo', w, h, t.codePromo ? 'CODE · ' + t.codePromo : '', {
+    cy: h - w * 0.18, fontSize: w * 0.03,
+  });
 
-  // CTA optionnel
-  if (t.cta) drawCtaPill(ctx, w, h, t.cta.toUpperCase(), { cy: h - w * 0.07 });
+  if (t.cta) drawCtaPill(ctx, 'cta', w, h, t.cta.toUpperCase(), { cy: h - w * 0.07 });
+  else delete state.bboxes['cta'];
 }
 
 // ============ TÉLÉCHARGER ============
-function telecharger() {
+async function telecharger() {
+  // Re-render SANS markers de sélection
+  const savedSelected = state.selectedKey;
+  state.selectedKey = null;
+  await renderCanvas();
+
   const cnv = document.getElementById('canvas-preview');
   const a = document.createElement('a');
   const ts = Date.now();
   a.href = cnv.toDataURL('image/png');
   a.download = `mood-${state.template}-${state.format.replace(':', 'x')}-${ts}.png`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
+
+  // Restore sélection après download
+  state.selectedKey = savedSelected;
+  await renderCanvas();
 }
 
 function resetEditeur() {
