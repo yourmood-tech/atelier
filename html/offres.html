@@ -409,7 +409,7 @@
 <!-- Modal édition produit -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3 id="modal-title">Nouveau produit</h3>
+    <h3 id="modal-title">🎁 Nouvelle offre</h3>
     <input type="hidden" id="produit-id">
 
     <label>Nom du produit *</label>
@@ -714,7 +714,7 @@ function rendreCalendrier() {
         joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}" data-day="${jourISO}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${jourISO}')">
           <div class="day-header"><span class="day-name">${nomJour}</span><span class="day-number">${numJour}</span></div>
           <div class="day-content">${cardsHtml}</div>
-          <!-- Bouton + désactivé sur /offres : Stéphanie n'ajoute pas de produits, Amila les gère dans /r-and-d -->
+          <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')" title="Ajouter une offre pour ce jour">+</button>
         </div>`;
       }
 
@@ -743,7 +743,7 @@ function rendreCalendrier() {
 
 function ouvrirModalAjout(date) {
   modalContexte = { mode: 'ajout', date };
-  document.getElementById('modal-title').textContent = `Nouveau produit — ${formaterDate(date)}`;
+  document.getElementById('modal-title').textContent = `🎁 Nouvelle offre — ${formaterDate(date)}`;
   document.getElementById('produit-id').value = '';
   document.getElementById('produit-nom').value = '';
   document.getElementById('produit-shopify-search').value = '';
@@ -768,7 +768,7 @@ function ouvrirModalEdit(id) {
   const p = donnees.produits.find(x => x.id === id);
   if (!p) return;
   modalContexte = { mode: 'edit', date: p.date };
-  document.getElementById('modal-title').textContent = `Éditer — ${formaterDate(p.date)}`;
+  document.getElementById('modal-title').textContent = `🎁 Éditer l'offre — ${formaterDate(p.date)}`;
   document.getElementById('produit-id').value = p.id;
   document.getElementById('produit-nom').value = p.nom || '';
   document.getElementById('produit-shopify-search').value = p.shopifySearch || '';
