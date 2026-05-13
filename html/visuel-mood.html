@@ -107,6 +107,21 @@
   .panel-textes .form-row label { font-size: 0.78rem; }
   .panel-textes input, .panel-textes textarea { font-size: 0.85rem; }
 
+  .lang-btn {
+    padding: 0.4rem 0.7rem; border-radius: 8px; font-size: 0.8rem;
+    cursor: pointer; border: 2px solid #ddd; background: white;
+    font-family: inherit;
+  }
+  .lang-btn.active { border-color: var(--or); background: #fffdf6; font-weight: 600; }
+  .lang-btn:hover { border-color: var(--or); }
+  .logo-color {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; display: inline-block; box-sizing: border-box;
+    transition: transform 0.1s, border-color 0.1s;
+  }
+  .logo-color:hover { transform: scale(1.1); }
+  .logo-color.active { border-color: var(--noir); }
+
   .erreur { color: var(--rouge); font-size: 0.85rem; padding: 0.7rem; background: #fee; border-radius: 6px; margin-top: 0.5rem; }
   .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--or); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.4rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -224,6 +239,13 @@ let state = {
   photos: [],     // tableau de dataURL
   textes: {},     // valeurs des champs texte (selon template)
   fondImage: null, // dataURL du fond généré
+  logo: {
+    size: 0.22,        // largeur en fraction de la largeur du visuel
+    color: 'auto',     // 'auto', 'noir', 'blanc', 'or', 'rouge-suisse', 'rose', custom hex
+    position: 'top-center', // top-center, top-left, top-right, bottom-center, hidden
+    yOffset: 0.04,     // position verticale en fraction
+  },
+  langue: 'fr',
 };
 
 // ============ CONFIG TEMPLATES ============
@@ -285,6 +307,9 @@ function selectTemplate(t) {
   const cfg = TEMPLATES_CONFIG[t];
   document.getElementById('photos-hint').textContent = cfg.maxPhotos === 1 ? '1 photo' : `1 à ${cfg.maxPhotos} photos`;
   state.textes = { ...cfg.defaults };
+  // Taille logo par défaut spécifique au template
+  const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18 };
+  state.logo.size = defaultSizes[t] || 0.22;
   refreshGenererBtn();
 }
 
@@ -407,7 +432,58 @@ async function genererFond() {
 function renderPanelTextes() {
   const cfg = TEMPLATES_CONFIG[state.template];
   const panel = document.getElementById('panel-textes');
-  let html = `<h3>${cfg.label} — textes</h3>`;
+
+  // Section traduction
+  let html = `
+    <h3>🌐 Traduction auto</h3>
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <button class="lang-btn ${state.langue === 'fr' ? 'active' : ''}" data-l="fr" onclick="traduireVers('fr')">🇫🇷 Français</button>
+      <button class="lang-btn ${state.langue === 'de' ? 'active' : ''}" data-l="de" onclick="traduireVers('de')">🇩🇪 Allemand</button>
+      <button class="lang-btn ${state.langue === 'en' ? 'active' : ''}" data-l="en" onclick="traduireVers('en')">🇬🇧 Anglais</button>
+    </div>
+    <div id="trad-status" style="font-size:0.75rem;color:var(--gris);margin-bottom:0.8rem;"></div>
+  `;
+
+  // Section logo
+  html += `
+    <h3>🏷️ Logo Mood</h3>
+    <div class="form-row">
+      <label>Taille (${Math.round(state.logo.size * 100)}%)</label>
+      <input type="range" min="8" max="40" step="1" value="${Math.round(state.logo.size * 100)}" oninput="onLogoSize(this.value)">
+    </div>
+    <div class="form-row">
+      <label>Position</label>
+      <select onchange="onLogoPos(this.value)">
+        <option value="top-center" ${state.logo.position === 'top-center' ? 'selected' : ''}>Haut centre</option>
+        <option value="top-left" ${state.logo.position === 'top-left' ? 'selected' : ''}>Haut gauche</option>
+        <option value="top-right" ${state.logo.position === 'top-right' ? 'selected' : ''}>Haut droite</option>
+        <option value="bottom-center" ${state.logo.position === 'bottom-center' ? 'selected' : ''}>Bas centre</option>
+        <option value="hidden" ${state.logo.position === 'hidden' ? 'selected' : ''}>Masquer le logo</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Couleur</label>
+      <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+        <span class="logo-color ${state.logo.color === 'auto' ? 'active' : ''}" data-c="auto" onclick="onLogoColor('auto')" title="Auto (noir ou blanc selon palette)" style="background:linear-gradient(135deg,#1a1a1a 50%,#ffffff 50%);"></span>
+        <span class="logo-color ${state.logo.color === 'noir' ? 'active' : ''}" data-c="noir" onclick="onLogoColor('noir')" title="Noir" style="background:#1a1a1a;"></span>
+        <span class="logo-color ${state.logo.color === 'blanc' ? 'active' : ''}" data-c="blanc" onclick="onLogoColor('blanc')" title="Blanc" style="background:#ffffff;border:1px solid #ccc;"></span>
+        <span class="logo-color ${state.logo.color === 'or' ? 'active' : ''}" data-c="or" onclick="onLogoColor('or')" title="Or" style="background:#c9a96e;"></span>
+        <span class="logo-color ${state.logo.color === 'or-clair' ? 'active' : ''}" data-c="or-clair" onclick="onLogoColor('or-clair')" title="Or clair" style="background:#e8d49e;"></span>
+        <span class="logo-color ${state.logo.color === 'rouge-suisse' ? 'active' : ''}" data-c="rouge-suisse" onclick="onLogoColor('rouge-suisse')" title="Rouge croix suisse" style="background:#dc2626;"></span>
+        <span class="logo-color ${state.logo.color === 'rose-pale' ? 'active' : ''}" data-c="rose-pale" onclick="onLogoColor('rose-pale')" title="Rose pâle" style="background:#f8c7c5;"></span>
+        <span class="logo-color ${state.logo.color === 'rose-vif' ? 'active' : ''}" data-c="rose-vif" onclick="onLogoColor('rose-vif')" title="Rose vif" style="background:#ec4899;"></span>
+        <span class="logo-color ${state.logo.color === 'bleu-mood' ? 'active' : ''}" data-c="bleu-mood" onclick="onLogoColor('bleu-mood')" title="Bleu Mood" style="background:#1e3a8a;"></span>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Couleur perso</label>
+      <input type="color" value="${state.logo.color && state.logo.color.startsWith('#') ? state.logo.color : '#000000'}" oninput="onLogoColorCustom(this.value)" style="height:34px;padding:2px;">
+    </div>
+    <hr style="margin:1rem 0;border:none;border-top:1px solid #eee;">
+  `;
+
+  // Section textes
+  html += `<h3>${cfg.label} — textes</h3>`;
   for (const f of cfg.fields) {
     const val = state.textes[f.key] ?? '';
     if (f.key === 'body') {
@@ -422,6 +498,66 @@ function renderPanelTextes() {
 function onTexte(key, value) {
   state.textes[key] = value;
   renderCanvas();
+}
+
+function onLogoSize(v) {
+  state.logo.size = Number(v) / 100;
+  renderPanelTextes();
+  renderCanvas();
+}
+function onLogoPos(p) {
+  state.logo.position = p;
+  renderCanvas();
+}
+function onLogoColor(c) {
+  state.logo.color = c;
+  renderPanelTextes();
+  renderCanvas();
+}
+function onLogoColorCustom(hex) {
+  state.logo.color = hex;
+  renderPanelTextes();
+  renderCanvas();
+}
+
+// ============ TRADUCTION ============
+async function traduireVers(cible) {
+  if (cible === state.langue) return;
+  const statusEl = document.getElementById('trad-status');
+  if (cible === 'fr') {
+    statusEl.textContent = 'Pour revenir au français, ré-utilise les valeurs par défaut du template.';
+    return;
+  }
+  statusEl.innerHTML = `<span class="loader"></span> Traduction Gemini vers ${cible === 'de' ? 'allemand' : 'anglais'}…`;
+  try {
+    // Récupérer les valeurs texte courantes (depuis state.textes)
+    const r = await fetch('/api/visuel-mood-traduire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        textes: state.textes,
+        cible,
+        contexte: state.template,
+      }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON: ${text.slice(0, 150)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.traductions) throw new Error('Pas de traductions reçues');
+
+    // Appliquer les traductions
+    for (const k of Object.keys(state.textes)) {
+      if (data.traductions[k] !== undefined) state.textes[k] = data.traductions[k];
+    }
+    state.langue = cible;
+    statusEl.textContent = `✅ Traduit en ${cible === 'de' ? 'allemand' : 'anglais'}.`;
+    renderPanelTextes();
+    renderCanvas();
+  } catch (e) {
+    statusEl.innerHTML = `<span style="color:var(--rouge);">⚠️ ${escapeHtml(e.message || String(e))}</span>`;
+  }
 }
 
 // ============ CANVAS RENDER ============
@@ -492,38 +628,97 @@ function pillTextColor() {
   return textColorContrast();
 }
 
-// Dessine logo Mood en haut centre (avec fond effacé approximatif via blend)
-function drawLogoTop(ctx, cw, _ch, logo, opts = {}) {
-  if (!logo) return;
-  const targetW = opts.width ?? cw * 0.28;
+// Couleurs prédéfinies pour le logo
+const LOGO_COLORS = {
+  'auto': null,           // auto = noir sur clair, blanc sur sombre
+  'noir': '#1a1a1a',
+  'blanc': '#ffffff',
+  'or': '#c9a96e',
+  'or-clair': '#e8d49e',
+  'rouge-suisse': '#dc2626',
+  'rose-pale': '#f8c7c5',
+  'rose-vif': '#ec4899',
+  'bleu-mood': '#1e3a8a',
+};
+
+// Cache pour le logo colorisé (évite de recalculer à chaque frappe)
+const LOGO_TINT_CACHE = new Map();
+
+function getTintedLogo(logo, color) {
+  if (!logo) return null;
+  const key = color || 'orig';
+  if (LOGO_TINT_CACHE.has(key)) return LOGO_TINT_CACHE.get(key);
+
+  const off = document.createElement('canvas');
+  off.width = logo.naturalWidth;
+  off.height = logo.naturalHeight;
+  const octx = off.getContext('2d');
+  octx.drawImage(logo, 0, 0);
+
+  // Lire les pixels, transformer le fond blanc en transparent, et recolorer si demandé
+  const imgData = octx.getImageData(0, 0, off.width, off.height);
+  const d = imgData.data;
+  const tint = color ? hexToRgb(color) : null;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    // Détection fond blanc (avec tolérance)
+    const lum = (r + g + b) / 3;
+    if (lum > 235) {
+      d[i + 3] = 0; // transparent
+    } else if (tint) {
+      // Garder l'alpha lié à la noirceur (anti-aliasing préservé)
+      const inkAlpha = Math.round((255 - lum) * 1.05);
+      d[i] = tint.r;
+      d[i + 1] = tint.g;
+      d[i + 2] = tint.b;
+      d[i + 3] = Math.min(255, inkAlpha);
+    }
+    // Sinon : pixel sombre, garder noir tel quel
+  }
+  octx.putImageData(imgData, 0, 0);
+  LOGO_TINT_CACHE.set(key, off);
+  return off;
+}
+
+function hexToRgb(hex) {
+  const m = hex.replace('#', '');
+  return { r: parseInt(m.slice(0, 2), 16), g: parseInt(m.slice(2, 4), 16), b: parseInt(m.slice(4, 6), 16) };
+}
+
+// Dessine le logo Mood selon l'état (position, taille, couleur)
+function drawLogoTop(ctx, cw, ch, logo, _opts = {}) {
+  if (!logo || !state.logo || state.logo.position === 'hidden') return;
+  const conf = state.logo;
+  const targetW = cw * conf.size;
   const ratio = logo.naturalHeight / logo.naturalWidth;
   const lw = targetW;
   const lh = lw * ratio;
-  const lx = opts.x ?? (cw - lw) / 2;
-  const ly = opts.y ?? cw * 0.04;
 
-  // Si palette sombre : le logo noir disparaîtrait → inverser via dessin en blanc
-  const isDarkBg = textColorForPalette() === '#ffffff';
-  if (isDarkBg) {
-    // Truc : on dessine un rectangle, puis on applique le logo en source-in puis on remplit en blanc
-    const off = document.createElement('canvas');
-    off.width = logo.naturalWidth; off.height = logo.naturalHeight;
-    const octx = off.getContext('2d');
-    octx.drawImage(logo, 0, 0);
-    octx.globalCompositeOperation = 'source-in';
-    octx.fillStyle = '#ffffff';
-    octx.fillRect(0, 0, off.width, off.height);
-    // Plus simple : inverser les couleurs via filter
-    ctx.save();
-    ctx.filter = 'invert(1)';
-    ctx.drawImage(logo, lx, ly, lw, lh);
-    ctx.restore();
+  // Position
+  const margin = cw * 0.05;
+  const yOffset = (conf.yOffset ?? 0.04) * cw;
+  let lx, ly;
+  switch (conf.position) {
+    case 'top-left': lx = margin; ly = yOffset; break;
+    case 'top-right': lx = cw - lw - margin; ly = yOffset; break;
+    case 'bottom-center': lx = (cw - lw) / 2; ly = ch - lh - yOffset; break;
+    case 'top-center':
+    default: lx = (cw - lw) / 2; ly = yOffset; break;
+  }
+
+  // Détermine la couleur effective
+  let effectiveColor;
+  if (conf.color === 'auto') {
+    effectiveColor = textColorForPalette() === '#ffffff' ? '#ffffff' : '#1a1a1a';
+  } else if (conf.color && conf.color.startsWith('#')) {
+    effectiveColor = conf.color;
   } else {
-    // Logo a un fond blanc — on le dessine via multiply pour masquer le blanc
-    ctx.save();
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.drawImage(logo, lx, ly, lw, lh);
-    ctx.restore();
+    effectiveColor = LOGO_COLORS[conf.color] || '#1a1a1a';
+  }
+
+  const tinted = getTintedLogo(logo, effectiveColor);
+  if (tinted) {
+    ctx.drawImage(tinted, lx, ly, lw, lh);
   }
 }
 
@@ -588,7 +783,7 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
 
 // ====== TEMPLATE 1 : PROMO FLASH ======
 function drawPromoFlash(ctx, w, h, logo) {
-  drawLogoTop(ctx, w, h, logo, { width: w * 0.22, y: w * 0.04 });
+  drawLogoTop(ctx, w, h, logo);
 
   const color = textColorForPalette();
   const t = state.textes;
@@ -625,7 +820,7 @@ function drawPromoFlash(ctx, w, h, logo) {
 
 // ====== TEMPLATE 2 : COLLECTION LANCÉE ======
 function drawCollectionLancee(ctx, w, h, logo) {
-  drawLogoTop(ctx, w, h, logo, { width: w * 0.26, y: w * 0.07 });
+  drawLogoTop(ctx, w, h, logo);
 
   const color = textColorForPalette();
   const t = state.textes;
@@ -671,7 +866,7 @@ function drawCollectionLancee(ctx, w, h, logo) {
 
 // ====== TEMPLATE 3 : ÉDITION LIMITÉE ======
 function drawDateButoir(ctx, w, h, logo) {
-  drawLogoTop(ctx, w, h, logo, { width: w * 0.2, y: w * 0.04 });
+  drawLogoTop(ctx, w, h, logo);
 
   const color = textColorForPalette();
   const t = state.textes;
@@ -732,7 +927,7 @@ function drawDateButoir(ctx, w, h, logo) {
 
 // ====== TEMPLATE 4 : MULTI-BAGUES ======
 function drawMultiBagues(ctx, w, h, logo) {
-  drawLogoTop(ctx, w, h, logo, { width: w * 0.18, y: w * 0.03 });
+  drawLogoTop(ctx, w, h, logo);
 
   const color = textColorForPalette();
   const t = state.textes;
