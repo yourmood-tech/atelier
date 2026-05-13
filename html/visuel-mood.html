@@ -201,7 +201,8 @@
       </div>
     </div>
 
-    <div class="form-row">
+    <!-- Zone photos pour les templates classiques (1 zone, multi-photos) -->
+    <div class="form-row" id="photos-row-normal">
       <label id="photos-label">Photos bagues<span class="hint" id="photos-hint">1 photo</span></label>
       <div>
         <div class="photos-zone" onclick="document.getElementById('photos-input').click()">
@@ -212,14 +213,26 @@
       </div>
     </div>
 
-    <div class="form-row">
-      <label>💍 Bague portée<span class="hint">optionnel</span></label>
-      <div>
-        <label style="display:flex;align-items:flex-start;gap:0.5rem;cursor:pointer;font-size:0.85rem;font-weight:400;">
-          <input type="checkbox" id="bague-portee-check" onchange="onBaguePortee(this.checked)" style="margin-top:0.2rem;">
-          <span>Composer la bague <b>portée sur une main</b> dans le visuel.<br>
-          <span style="color:var(--gris);font-size:0.78rem;">1ʳᵉ photo = la bague · 2ᵉ photo (optionnelle) = main de référence (pose, peau, manucure). Sans 2ᵉ photo, IA invente une main élégante par défaut.</span></span>
-        </label>
+    <!-- Zone photos pour template "Bague portée" (2 zones distinctes : bague + modèle) -->
+    <div class="form-row" id="photos-row-portee" style="display:none;">
+      <label>Photos<span class="hint">bague + modèle</span></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
+        <div>
+          <div class="photos-zone" onclick="document.getElementById('photos-bague-input').click()" style="min-height:120px;">
+            <div style="font-size:0.95rem;font-weight:600;margin-bottom:0.2rem;">💍 Bague</div>
+            <span class="hint">obligatoire · JPG/PNG · 1 photo</span>
+          </div>
+          <input type="file" id="photos-bague-input" accept="image/*" style="display:none;" onchange="setPhotoBague(event)">
+          <div class="photos-grid" id="photos-bague-grid"></div>
+        </div>
+        <div>
+          <div class="photos-zone" onclick="document.getElementById('photos-modele-input').click()" style="min-height:120px;">
+            <div style="font-size:0.95rem;font-weight:600;margin-bottom:0.2rem;">👩 Modèle de référence</div>
+            <span class="hint">optionnel · pose / peau / manucure / outfit</span>
+          </div>
+          <input type="file" id="photos-modele-input" accept="image/*" style="display:none;" onchange="setPhotoModele(event)">
+          <div class="photos-grid" id="photos-modele-grid"></div>
+        </div>
       </div>
     </div>
 
@@ -287,6 +300,8 @@ let state = {
   drag: null,          // mode drag actif : { type: 'move'|'resize', corner, startCX, startCY, origDx, origDy, origScale }
   langue: 'fr',
   baguePortee: false,  // mode bague portée sur main
+  photoBague: null,    // template bague-portee : photo bague (1)
+  photoModele: null,   // template bague-portee : photo modèle ref (1 optionnelle)
   fondCouleurVide: '#1a1a1a', // couleur de remplissage si fond redimensionné < canvas
 };
 
@@ -367,10 +382,13 @@ function selectTemplate(t) {
   // Taille logo par défaut spécifique au template
   const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18, 'bague-portee': 0.20 };
   state.logo.size = defaultSizes[t] || 0.22;
-  // forceBaguePortee : aligner état + case
   state.baguePortee = !!cfg.forceBaguePortee;
-  const cb = document.getElementById('bague-portee-check');
-  if (cb) cb.checked = state.baguePortee;
+
+  // Switch zones photos selon template
+  const isBP = t === 'bague-portee';
+  document.getElementById('photos-row-normal').style.display = isBP ? 'none' : 'grid';
+  document.getElementById('photos-row-portee').style.display = isBP ? 'grid' : 'none';
+
   refreshGenererBtn();
   refreshElementToolbar();
 }
@@ -446,12 +464,53 @@ function compresserImage(file, maxDim, quality) {
 
 function refreshGenererBtn() {
   const btn = document.getElementById('btn-generer');
-  btn.disabled = !state.template || state.photos.length === 0;
+  if (state.template === 'bague-portee') {
+    btn.disabled = !state.photoBague;
+  } else {
+    btn.disabled = !state.template || state.photos.length === 0;
+  }
 }
 
-function onBaguePortee(checked) {
-  state.baguePortee = !!checked;
+// ====== UPLOAD BAGUE PORTÉE (2 zones distinctes) ======
+async function setPhotoBague(e) {
+  const file = (e.target.files || [])[0];
+  e.target.value = '';
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    state.photoBague = await compresserImage(file, 1280, 0.88);
+    renderPhotoBague();
+    refreshGenererBtn();
+  } catch (err) {
+    alert('Image illisible : ' + (err.message || err));
+  }
 }
+
+async function setPhotoModele(e) {
+  const file = (e.target.files || [])[0];
+  e.target.value = '';
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    state.photoModele = await compresserImage(file, 1280, 0.88);
+    renderPhotoModele();
+  } catch (err) {
+    alert('Image illisible : ' + (err.message || err));
+  }
+}
+
+function renderPhotoBague() {
+  const grid = document.getElementById('photos-bague-grid');
+  grid.innerHTML = state.photoBague
+    ? `<div class="photo-thumb"><img src="${state.photoBague}"><button class="remove" onclick="supprPhotoBague()">×</button></div>`
+    : '';
+}
+function renderPhotoModele() {
+  const grid = document.getElementById('photos-modele-grid');
+  grid.innerHTML = state.photoModele
+    ? `<div class="photo-thumb"><img src="${state.photoModele}"><button class="remove" onclick="supprPhotoModele()">×</button></div>`
+    : '';
+}
+function supprPhotoBague() { state.photoBague = null; renderPhotoBague(); refreshGenererBtn(); }
+function supprPhotoModele() { state.photoModele = null; renderPhotoModele(); }
 
 // ============ GÉNÉRATION FOND ============
 async function genererFond() {
@@ -463,6 +522,13 @@ async function genererFond() {
 
   try {
     const note = document.getElementById('note').value.trim() || null;
+    // Construire le payload photos selon le template
+    let photosPayload;
+    if (state.template === 'bague-portee') {
+      photosPayload = [state.photoBague, state.photoModele].filter(Boolean);
+    } else {
+      photosPayload = state.photos;
+    }
     const r = await fetch('/api/visuel-mood-fond', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -470,7 +536,7 @@ async function genererFond() {
         template: state.template,
         palette: state.palette,
         format: state.format,
-        photos: state.photos,
+        photos: photosPayload,
         note,
         baguePortee: state.baguePortee,
       }),
