@@ -218,6 +218,25 @@
       </div>
     </div>
 
+    <!-- Sélecteur de style pour le template Duo -->
+    <div class="form-row" id="duo-style-row" style="display:none;">
+      <label>Style duo<span class="hint">composition</span></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+        <label style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;padding:0.7rem;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:white;" id="duo-split-card">
+          <input type="radio" name="duo-style" value="split" checked onchange="onDuoStyle('split')" style="display:none;">
+          <div style="font-size:1.5rem;">🔲</div>
+          <div style="font-size:0.85rem;font-weight:600;">2 cases séparées</div>
+          <div style="font-size:0.7rem;color:var(--gris);text-align:center;">Modèle dans une zone, packshot dans un cercle distinct</div>
+        </label>
+        <label style="display:flex;flex-direction:column;align-items:center;gap:0.3rem;padding:0.7rem;border:2px solid #ddd;border-radius:10px;cursor:pointer;background:white;" id="duo-fusion-card">
+          <input type="radio" name="duo-style" value="fusion" onchange="onDuoStyle('fusion')" style="display:none;">
+          <div style="font-size:1.5rem;">🌅</div>
+          <div style="font-size:0.85rem;font-weight:600;">Même fond unifié</div>
+          <div style="font-size:0.7rem;color:var(--gris);text-align:center;">Bague portée + bague seule dans un seul décor cohérent</div>
+        </label>
+      </div>
+    </div>
+
     <!-- Zone photos pour template "Bague portée" (2 zones distinctes : bague + modèle) -->
     <div class="form-row" id="photos-row-portee" style="display:none;">
       <label>Photos<span class="hint">bague + modèle</span></label>
@@ -324,6 +343,7 @@ let state = {
   baguePortee: false,  // mode bague portée sur main
   photoBague: null,    // template bague-portee : photo bague (1)
   photoModele: null,   // template bague-portee : photo modèle ref (1 optionnelle)
+  duoStyle: 'split',   // 'split' = 2 cases distinctes · 'fusion' = scène unifiée
   fondCouleurVide: '#1a1a1a', // couleur de remplissage si fond redimensionné < canvas
 };
 
@@ -423,8 +443,23 @@ function selectTemplate(t) {
   document.getElementById('photos-row-normal').style.display = useBaguePortee ? 'none' : 'grid';
   document.getElementById('photos-row-portee').style.display = useBaguePortee ? 'grid' : 'none';
 
+  // Sélecteur duo style uniquement pour duo-portee-packshot
+  document.getElementById('duo-style-row').style.display = (t === 'duo-portee-packshot') ? 'grid' : 'none';
+  if (t === 'duo-portee-packshot') onDuoStyle(state.duoStyle || 'split');
+
   refreshGenererBtn();
   refreshElementToolbar();
+}
+
+function onDuoStyle(style) {
+  state.duoStyle = style;
+  // Visuel actif
+  const splitCard = document.getElementById('duo-split-card');
+  const fusionCard = document.getElementById('duo-fusion-card');
+  if (splitCard) splitCard.style.borderColor = style === 'split' ? 'var(--or)' : '#ddd';
+  if (fusionCard) fusionCard.style.borderColor = style === 'fusion' ? 'var(--or)' : '#ddd';
+  if (splitCard) splitCard.style.background = style === 'split' ? '#fffdf6' : 'white';
+  if (fusionCard) fusionCard.style.background = style === 'fusion' ? '#fffdf6' : 'white';
 }
 
 // ============ PALETTE ============
@@ -573,6 +608,7 @@ async function genererFond() {
         photos: photosPayload,
         note,
         baguePortee: state.baguePortee,
+        duoStyle: state.duoStyle,
       }),
     });
     const text = await r.text();

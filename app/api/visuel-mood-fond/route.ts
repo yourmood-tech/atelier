@@ -29,7 +29,7 @@ function compositionForFormat(format: string): string {
   }
 }
 
-function promptForTemplate(template: string, palette: string, format: string, nbPhotos: number, baguePortee: boolean): string {
+function promptForTemplate(template: string, palette: string, format: string, nbPhotos: number, baguePortee: boolean, duoStyle: string = "split"): string {
   const paletteDesc = PALETTES[palette] || PALETTES["rose"];
   const compo = compositionForFormat(format);
   // Le template "bague-portee" et "duo-portee-packshot" forcent baguePortee = true
@@ -113,6 +113,27 @@ ${STRICT_NO_TEXT}
 Output: a multi-ring composition with empty central zone for text overlay.`;
 
     case "duo-portee-packshot":
+      if (duoStyle === "fusion") {
+        return `Generate a luxury jewelry LIFESTYLE STILL-LIFE visual where BOTH the ring being worn on a model AND the SAME ring shown alone as a packshot COEXIST naturally in the SAME unified scene (a single coherent decor, NOT two separated frames or cases).
+
+${PRESERVE}
+
+PALETTE & ATMOSPHERE: ${paletteDesc}. A single unified decor that integrates both elements naturally.
+
+COMPOSITION — UNIFIED SCENE (CRITICAL) :
+- One single coherent decor (e.g., elegant marble table with petals for rose, dark wet rock with sea spray for ocean, velvet cushion under soft directional light for heritage, sandy surface with seashells for warm cream-gold).
+- ELEMENT 1 : the SAME ring resting alone on the surface as a beautiful packshot still-life detail (could be near the foreground, on a small cushion, on a stone, on petals…).
+- ELEMENT 2 : in the same continuous scene, the elegant feminine model is visible (her hand wearing the same ring extending into the frame — could be her hand reaching toward the packshot, her hand resting near it, or her half-body in the background with the worn ring visible).
+- The two elements share THE SAME lighting, THE SAME palette, THE SAME atmosphere — they are part of ONE scene, not two zones. No visible frames, circles, or dividers between them.
+- Soft natural composition like a high-end editorial still-life with figure.
+- Leave breathing space for text overlay (typically top portion or empty corner).
+
+THE RING IN BOTH PLACES MUST BE IDENTICAL — same shape, color, material, finish, gemstones. Clearly the SAME piece.
+
+${STRICT_NO_TEXT}
+
+Output: a unified lifestyle still-life with the ring shown twice (worn by model + posed alone) in the same coherent decor, ready for text overlay.`;
+      }
       return `Generate a luxury jewelry SPLIT COMPOSITION visual showing the ring in TWO distinct zones — one worn on a model, one as a clean packshot.
 
 ${PRESERVE}
@@ -162,14 +183,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
   }
 
-  let body: { template?: string; palette?: string; format?: string; photos?: string[]; note?: string | null; baguePortee?: boolean };
+  let body: { template?: string; palette?: string; format?: string; photos?: string[]; note?: string | null; baguePortee?: boolean; duoStyle?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
   }
 
-  const { template = "promo-flash", palette = "rose", format = "1:1", photos, note, baguePortee = false } = body;
+  const { template = "promo-flash", palette = "rose", format = "1:1", photos, note, baguePortee = false, duoStyle = "split" } = body;
   if (!photos || !Array.isArray(photos) || photos.length === 0) {
     return NextResponse.json({ error: "Aucune photo de bague fournie" }, { status: 400 });
   }
@@ -179,7 +200,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Photos invalides (attendu : data:image/...;base64,...)" }, { status: 400 });
   }
 
-  const basePrompt = promptForTemplate(template, palette, format, validPhotos.length, baguePortee);
+  const basePrompt = promptForTemplate(template, palette, format, validPhotos.length, baguePortee, duoStyle);
   const prompt = note && note.trim()
     ? `${basePrompt}\n\n=== USER ADDITIONAL INSTRUCTIONS (priority override) ===\n${note.trim()}`
     : basePrompt;
