@@ -372,10 +372,6 @@
       <option value="2026" selected>2026</option>
       <option value="2027">2027</option>
     </select>
-    <button onclick="ouvrirBrainstorm()">✨ Idées Mood (IA)</button>
-    <button class="outline" onclick="exporterJSON()">📥 Export JSON</button>
-    <button class="outline" onclick="importerJSON()">📤 Import JSON</button>
-    <button class="danger outline" onclick="reset()">🗑️ Reset</button>
     <a href="/" style="font-size:0.85rem;color:var(--gris);text-decoration:none;">← Atelier</a>
   </div>
 </header>
@@ -419,76 +415,26 @@
     <label>Nom du produit *</label>
     <input id="produit-nom" placeholder="ex : Aura Émeraude, Coffret Printemps…">
 
-    <label>Nom Shopify <span style="color:var(--gris);font-weight:400">— optionnel, pour matcher les ventes si le nom diffère sur Shopify</span></label>
-    <input id="produit-shopify-search" placeholder="ex : « Coffret Mood Édition », « starter pack 2026 »…">
+    <label style="color:var(--or);font-weight:600;">🎁 Offre commerciale</label>
+    <textarea id="produit-offre" rows="3" placeholder="ex : Pack +1 gratuit, Promo 20%, Bundle avec collier Aura…" style="background:#fff8e7;border-color:var(--or);"></textarea>
 
-    <label style="color:var(--or);font-weight:600;">🎁 Offre commerciale <span style="color:var(--gris);font-weight:400">— le champ que Stéphanie travaille</span></label>
-    <textarea id="produit-offre" rows="2" placeholder="ex : Pack +1 gratuit, Promo 20%, Bundle avec collier Aura…" style="background:#fff8e7;border-color:var(--or);"></textarea>
-
-    <label>Type</label>
-    <select id="produit-type">
-      <option value="addon">Addon</option>
-      <option value="medium">Medium</option>
-      <option value="deux-tiers">Deux tiers</option>
-      <option value="mini">Mini</option>
-      <option value="base">Base</option>
-      <option value="open-mood">Open mood</option>
-      <option value="coffret">Coffret</option>
-      <option value="pack">Pack</option>
-      <option value="starter-pack">Starter pack</option>
-      <option value="boucles">Boucles d'oreilles</option>
-      <option value="boite">Boîte</option>
-      <option value="couleur-alu">Nouvelle couleur alu</option>
-      <option value="autre">Autre</option>
-    </select>
-
-    <label>Étape actuelle</label>
-    <select id="produit-etape">
-      <option value="1">1. Idée</option>
-      <option value="2">2. Dessin</option>
-      <option value="3">3. Commande test</option>
-      <option value="4">4. Réception</option>
-      <option value="5">5. Validation proto</option>
-      <option value="6">6. OK</option>
-      <option value="7">7. Photos</option>
-      <option value="8">8. Sortie</option>
-      <option value="9">9. Visuels</option>
-    </select>
-
-    <label>Fournisseur (si commande test)</label>
-    <select id="produit-fournisseur">
-      <option value="">— aucun —</option>
-      <option value="icelea">Icelea (5 sem)</option>
-      <option value="bijouterie">Bijouterie (1-2 sem)</option>
-      <option value="sertissage">Sertissage (5-6 sem)</option>
-      <option value="gravure">Gravure (1 sem)</option>
-      <option value="autre">Autre</option>
-    </select>
-
-    <label>Objectif CA (CHF) <span style="color:var(--gris);font-weight:400">— optionnel</span></label>
-    <input id="produit-ca" type="number" placeholder="ex : 5000">
-
-    <label>Ventes réalisées (CHF) <span style="color:var(--gris);font-weight:400">— optionnel, mise à jour manuelle pour l'instant</span></label>
-    <input id="produit-ventes" type="number" placeholder="ex : 3200">
-
-    <label>Image <span style="color:var(--gris);font-weight:400">— dessin, photo proto, référence visuelle</span></label>
-    <div class="image-zone" id="image-drop-zone" ondragover="onImageDragOver(event)" ondragleave="onImageDragLeave(event)" ondrop="onImageDrop(event)">
-      <img id="produit-image-preview" class="image-preview" style="display:none">
-      <input type="file" id="produit-image-input" accept="image/*" style="display:none" onchange="onImageChosen(event)">
-      <button type="button" class="outline" onclick="document.getElementById('produit-image-input').click()" style="font-size:0.8rem;">📷 Choisir une image</button>
-      <button type="button" class="outline" id="btn-retirer-image" onclick="retirerImage()" style="font-size:0.8rem;display:none;margin-left:0.4rem;">✕ Retirer</button>
-      <div style="font-size:0.7rem;color:var(--gris);margin-top:0.4rem;">ou glisse-dépose une image ici</div>
-      <input type="hidden" id="produit-image">
+    <!-- Champs gérés par Amila dans /r-and-d — masqués sur /offres pour rester focus sur l'offre -->
+    <div style="display:none;">
+      <input id="produit-shopify-search">
+      <select id="produit-type"><option value="addon">Addon</option></select>
+      <select id="produit-etape"><option value="1">1</option></select>
+      <select id="produit-fournisseur"><option value="">—</option></select>
+      <input id="produit-ca" type="number">
+      <input id="produit-ventes" type="number">
+      <div id="image-drop-zone"><img id="produit-image-preview"><input type="file" id="produit-image-input"><button id="btn-retirer-image"></button><input type="hidden" id="produit-image"></div>
+      <textarea id="produit-notes"></textarea>
     </div>
-
-    <label>Notes <span style="color:var(--gris);font-weight:400">— inspiration, contraintes, idées</span></label>
-    <textarea id="produit-notes" placeholder="ex : test sertissage diamants 0.9mm sur medium argent, voir Aura authentique pour ref…"></textarea>
 
     <div class="modal-actions">
       <button class="outline" onclick="fermerModal()">Annuler</button>
       <button class="danger" id="btn-supprimer" onclick="supprimerProduit()" style="display:none">Supprimer</button>
       <button class="outline" id="btn-dupliquer" onclick="dupliquerProduit()" style="display:none">📋 Dupliquer</button>
-      <button class="outline" id="btn-evaluer" onclick="evaluerIdeeModal()" style="background:#fff8e7;border-color:var(--or);color:var(--or);">🔍 Évaluer</button>
+      <button class="outline" id="btn-evaluer" onclick="evaluerIdeeModal()" style="background:#fff8e7;border-color:var(--or);color:var(--or);display:none;">🔍 Évaluer</button>
       <button onclick="sauverProduit()">Sauver</button>
     </div>
 
@@ -768,7 +714,7 @@ function rendreCalendrier() {
         joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}" data-day="${jourISO}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${jourISO}')">
           <div class="day-header"><span class="day-name">${nomJour}</span><span class="day-number">${numJour}</span></div>
           <div class="day-content">${cardsHtml}</div>
-          <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')">+</button>
+          <!-- Bouton + désactivé sur /offres : Stéphanie n'ajoute pas de produits, Amila les gère dans /r-and-d -->
         </div>`;
       }
 
