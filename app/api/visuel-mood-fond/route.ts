@@ -32,8 +32,8 @@ function compositionForFormat(format: string): string {
 function promptForTemplate(template: string, palette: string, format: string, nbPhotos: number, baguePortee: boolean): string {
   const paletteDesc = PALETTES[palette] || PALETTES["rose"];
   const compo = compositionForFormat(format);
-  // Le template "bague-portee" force baguePortee = true
-  if (template === "bague-portee") baguePortee = true;
+  // Le template "bague-portee" et "duo-portee-packshot" forcent baguePortee = true
+  if (template === "bague-portee" || template === "duo-portee-packshot") baguePortee = true;
   const ringWord = nbPhotos > 1 ? `${nbPhotos} rings` : "ring";
   const sourceWord = nbPhotos > 1 ? "source images" : "source image";
 
@@ -111,6 +111,29 @@ Soft uniform studio lighting. Premium e-commerce vibe.
 ${STRICT_NO_TEXT}
 
 Output: a multi-ring composition with empty central zone for text overlay.`;
+
+    case "duo-portee-packshot":
+      return `Generate a luxury jewelry SPLIT COMPOSITION visual showing the ring in TWO distinct zones — one worn on a model, one as a clean packshot.
+
+${PRESERVE}
+
+PALETTE & ATMOSPHERE: ${paletteDesc}.
+
+COMPOSITION — TWO ZONES (CRITICAL) :
+- LARGER ZONE (~60% area) : the model wearing the ring (half-body portrait of an elegant feminine model, hand visible with ring, face visible, refined outfit). This is the lifestyle / editorial zone.
+- SMALLER ZONE (~30% area) : the SAME ring shown ALONE as a clean packshot, inside a CIRCULAR or rounded-square frame (well-defined visual container — the frame itself can be subtle border, glow, soft shadow, or color gradient — not heavy).
+- The two zones must read as ONE cohesive visual (unified palette, complementary lighting, harmonious composition).
+- Position the two zones based on format:
+  ${format === "1:1" ? "* Square 1:1 : model on the LEFT (larger), packshot circle on the RIGHT (smaller, offset)" : ""}
+  ${format === "4:5" ? "* Portrait 4:5 : model TOP (larger, ~65% height), packshot BOTTOM-CENTER (smaller circle)" : ""}
+  ${format === "9:16" ? "* Story 9:16 : model TOP (larger, ~70% height), packshot BOTTOM (smaller, centered in a circle)" : ""}
+- Leave generous empty space for text overlay (top of composition or between the two zones).
+
+THE RING IN BOTH ZONES MUST BE IDENTICAL — same shape, color, material, finish, gemstones. They are clearly the SAME piece, just shown twice in different contexts.
+
+${STRICT_NO_TEXT}
+
+Output: a split-composition visual with the ring shown twice (worn + packshot), ready for text overlay.`;
 
     case "bague-portee":
       return `Generate a luxury jewelry EDITORIAL PORTRAIT visual. Style: high-end fashion magazine campaign (Cartier / Tiffany / Bvlgari editorial aesthetic).

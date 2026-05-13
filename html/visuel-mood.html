@@ -171,6 +171,11 @@
     <div class="titre">Bague portée</div>
     <div class="desc">Modèle féminin portant la bague · style éditorial luxe magazine</div>
   </div>
+  <div class="template-card" data-template="duo-portee-packshot" onclick="selectTemplate('duo-portee-packshot')">
+    <div class="emoji">🤚💍</div>
+    <div class="titre">Duo : portée + packshot</div>
+    <div class="desc">2 zones distinctes : modèle portant la bague + packshot bague seule (cercle)</div>
+  </div>
 </div>
 
 <!-- ÉTAPE 2 : palette + format + photos + textes -->
@@ -255,6 +260,17 @@
 
     <div class="canvas-wrap">
       <canvas id="canvas-preview"></canvas>
+
+      <!-- Champ correction post-génération (retoucher l'image après qu'elle soit générée) -->
+      <div id="correction-bloc" style="margin-top:0.8rem;padding:0.8rem 1rem;background:white;border:1px solid #e5e5e5;border-radius:10px;width:100%;max-width:600px;">
+        <label style="display:block;font-size:0.82rem;font-weight:600;color:var(--or);margin-bottom:0.35rem;text-transform:uppercase;letter-spacing:0.05em;">✏️ Corrections à effectuer sur l'image</label>
+        <textarea id="correction-note" rows="2" placeholder="Exemples : « déplace la bague vers la gauche », « rends le fond plus sombre », « enlève les pétales en haut », « remplace la main par une plus claire », « zoome sur la bague »" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;">
+          <button id="btn-corriger" onclick="appliquerCorrection()" style="background:var(--noir);color:white;border:none;padding:0.5rem 1rem;border-radius:999px;font-size:0.85rem;font-weight:600;cursor:pointer;">🪄 Appliquer la correction (IA)</button>
+          <span id="correction-status" style="font-size:0.78rem;color:var(--gris);"></span>
+        </div>
+        <div style="font-size:0.72rem;color:var(--gris);margin-top:0.4rem;">Gemini retouche l'image existante en gardant tout ce qui n'est pas mentionné. Les textes et le logo (overlay Canvas) ne sont jamais touchés.</div>
+      </div>
 
       <!-- Barre d'outils élément sélectionné (apparaît au clic) -->
       <div id="element-toolbar" style="display:none;margin-top:0.6rem;padding:0.7rem 0.9rem;background:#fffdf6;border:1px solid var(--or);border-radius:10px;flex-wrap:wrap;align-items:center;gap:0.5rem;width:100%;max-width:600px;">
@@ -372,6 +388,18 @@ const TEMPLATES_CONFIG = {
     ],
     defaults: { titreA: 'Édition Printemps', titreB: 'élégance & lumière', codePromo: '', cta: 'JE DÉCOUVRE' },
   },
+  'duo-portee-packshot': {
+    label: '🤚💍 Duo portée + packshot',
+    maxPhotos: 5,
+    forceBaguePortee: true,
+    fields: [
+      { key: 'titreA', label: 'Titre principal', placeholder: 'Découvre la collection' },
+      { key: 'titreB', label: 'Sous-titre', placeholder: 'portée · packshot' },
+      { key: 'codePromo', label: 'Code promo (optionnel)', placeholder: '' },
+      { key: 'cta', label: 'Bouton CTA', placeholder: 'JE DÉCOUVRE' },
+    ],
+    defaults: { titreA: 'Découvre la collection', titreB: '', codePromo: '', cta: 'JE DÉCOUVRE' },
+  },
 };
 
 // ============ ÉTAPE 1 : SÉLECTION TEMPLATE ============
@@ -386,14 +414,14 @@ function selectTemplate(t) {
   state.textesCouleurs = {};
   state.selectedKey = null;
   // Taille logo par défaut spécifique au template
-  const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18, 'bague-portee': 0.20 };
+  const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18, 'bague-portee': 0.20, 'duo-portee-packshot': 0.20 };
   state.logo.size = defaultSizes[t] || 0.22;
   state.baguePortee = !!cfg.forceBaguePortee;
 
-  // Switch zones photos selon template
-  const isBP = t === 'bague-portee';
-  document.getElementById('photos-row-normal').style.display = isBP ? 'none' : 'grid';
-  document.getElementById('photos-row-portee').style.display = isBP ? 'grid' : 'none';
+  // Switch zones photos selon template (les 2 templates qui utilisent bague + modèle ref)
+  const useBaguePortee = (t === 'bague-portee' || t === 'duo-portee-packshot');
+  document.getElementById('photos-row-normal').style.display = useBaguePortee ? 'none' : 'grid';
+  document.getElementById('photos-row-portee').style.display = useBaguePortee ? 'grid' : 'none';
 
   refreshGenererBtn();
   refreshElementToolbar();
@@ -470,7 +498,7 @@ function compresserImage(file, maxDim, quality) {
 
 function refreshGenererBtn() {
   const btn = document.getElementById('btn-generer');
-  if (state.template === 'bague-portee') {
+  if (state.template === 'bague-portee' || state.template === 'duo-portee-packshot') {
     btn.disabled = !state.photoBague;
   } else {
     btn.disabled = !state.template || state.photos.length === 0;
@@ -530,7 +558,7 @@ async function genererFond() {
     const note = document.getElementById('note').value.trim() || null;
     // Construire le payload photos selon le template
     let photosPayload;
-    if (state.template === 'bague-portee') {
+    if (state.template === 'bague-portee' || state.template === 'duo-portee-packshot') {
       photosPayload = [state.photoBague, state.photoModele].filter(Boolean);
     } else {
       photosPayload = state.photos;
@@ -746,6 +774,51 @@ function elDeselect() {
   updatePanelHighlight();
 }
 
+// ============ CORRECTION IA POST-GÉNÉRATION ============
+async function appliquerCorrection() {
+  const note = document.getElementById('correction-note').value.trim();
+  if (!note) {
+    alert("Tape une correction à effectuer dans le champ avant de cliquer.");
+    return;
+  }
+  if (!state.fondImage) return;
+  const btn = document.getElementById('btn-corriger');
+  const statusEl = document.getElementById('correction-status');
+  btn.disabled = true;
+  const oldBtnTxt = btn.innerHTML;
+  btn.innerHTML = '<span class="loader" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> Retouche en cours…';
+  statusEl.textContent = '';
+
+  try {
+    const r = await fetch('/api/visuel-mood-corriger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: state.fondImage,
+        instruction: note,
+        format: state.format,
+      }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}): ${text.slice(0, 150)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    state.fondImage = data.image;
+    document.getElementById('correction-note').value = '';
+    statusEl.innerHTML = '<span style="color:var(--vert);">✅ Correction appliquée.</span>';
+    setTimeout(() => statusEl.textContent = '', 5000);
+    await renderCanvas();
+  } catch (e) {
+    statusEl.innerHTML = `<span style="color:var(--rouge);">⚠️ ${escapeHtml(e.message || String(e))}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = oldBtnTxt;
+  }
+}
+
 function onTexte(key, value) {
   state.textes[key] = value;
   renderCanvas();
@@ -872,6 +945,7 @@ async function renderCanvas() {
     case 'date-butoir': drawDateButoir(ctx, w, h, logo); break;
     case 'multi-bagues': drawMultiBagues(ctx, w, h, logo); break;
     case 'bague-portee': drawBaguePortee(ctx, w, h, logo); break;
+    case 'duo-portee-packshot': drawDuoPorteePackshot(ctx, w, h, logo); break;
   }
 
   // Rendu marqueurs de sélection (effacés avant le download)
@@ -1506,6 +1580,33 @@ function drawDateButoir(ctx, w, h, logo) {
     ctx.beginPath(); ctx.moveTo(ctaX, ctaY + ctaSize * 1.1); ctx.lineTo(ctaX + tw, ctaY + ctaSize * 1.1); ctx.stroke();
     state.bboxes['cta'] = { x: ctaX, y: ctaY, w: tw, h: ctaSize * 1.2 };
   } else { delete state.bboxes['cta']; }
+}
+
+// ====== TEMPLATE 6 : DUO PORTÉE + PACKSHOT ======
+function drawDuoPorteePackshot(ctx, w, h, logo) {
+  drawLogoTop(ctx, w, h, logo);
+  const t = state.textes;
+
+  // Titre principal (sans-serif élégant)
+  drawTextLayer(ctx, 'titreA', t.titreA, {
+    x: w / 2, y: h * 0.16, fontSize: w * 0.062, fontWeight: '600',
+    align: 'center', baseline: 'top',
+  });
+
+  // Sous-titre
+  drawTextLayer(ctx, 'titreB', t.titreB, {
+    x: w / 2, y: h * 0.22, fontSize: w * 0.03, fontWeight: '400', fontStyle: 'italic',
+    align: 'center', baseline: 'top',
+  });
+
+  // Code promo
+  drawTextLayer(ctx, 'codePromo', t.codePromo ? 'Code · ' + t.codePromo : '', {
+    x: w / 2, y: h - w * 0.18, fontSize: w * 0.028, fontWeight: '500',
+    align: 'center', baseline: 'top', transform: 'upper',
+  });
+
+  // CTA
+  drawCtaPill(ctx, 'cta', w, h, (t.cta || '').toUpperCase(), { cy: h - w * 0.08 });
 }
 
 // ====== TEMPLATE 5 : BAGUE PORTÉE ÉDITORIAL ======
