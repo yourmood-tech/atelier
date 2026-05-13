@@ -29,7 +29,7 @@ function compositionForFormat(format: string): string {
   }
 }
 
-function promptForTemplate(template: string, palette: string, format: string, nbPhotos: number): string {
+function promptForTemplate(template: string, palette: string, format: string, nbPhotos: number, baguePortee: boolean): string {
   const paletteDesc = PALETTES[palette] || PALETTES["rose"];
   const compo = compositionForFormat(format);
   const ringWord = nbPhotos > 1 ? `${nbPhotos} rings` : "ring";
@@ -37,7 +37,9 @@ function promptForTemplate(template: string, palette: string, format: string, nb
 
   const STRICT_NO_TEXT = `ABSOLUTELY NO TEXT in the generated image. NO LOGO. NO WORDS. NO LETTERS. NO NUMBERS. NO LABELS. NO BRAND MARKS. NO WATERMARKS. The image must be 100% visual — purely the ring(s) and the scenic atmosphere. Any text will be added afterwards in overlay by another tool.`;
 
-  const PRESERVE = `Preserve the ${ringWord} from the ${sourceWord} EXACTLY — identical shape, identical colors, identical material, identical finish, identical gemstones, identical engravings. The ring(s) are the absolute hero — pristine, perfectly lit, sharp.`;
+  const PRESERVE = baguePortee
+    ? `THE RING IS WORN ON A HAND. The ring from the 1st source image must be COMPOSED onto an elegant feminine hand, naturally worn on a finger, in a luxury jewelry editorial style (Cartier / Tiffany / Bvlgari aesthetic). ${nbPhotos >= 2 ? "USE THE 2ND SOURCE IMAGE as the hand reference (pose, skin tone, manicure, framing) — preserve the hand from the 2nd image as faithfully as possible." : "Use a default elegant feminine hand (tan/olive skin, subtle french or natural manicure, soft natural pose)."} PRESERVE THE RING IDENTITY ABSOLUTELY — same shape, same colors, same material, same finish, same gemstones, same engravings as the 1st source image. The ring is the absolute hero — pristine, perfectly lit, sharp, in tight close-up framing.`
+    : `Preserve the ${ringWord} from the ${sourceWord} EXACTLY — identical shape, identical colors, identical material, identical finish, identical gemstones, identical engravings. The ring(s) are the absolute hero — pristine, perfectly lit, sharp.`;
 
   switch (template) {
     case "promo-flash":
@@ -114,14 +116,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
   }
 
-  let body: { template?: string; palette?: string; format?: string; photos?: string[]; note?: string | null };
+  let body: { template?: string; palette?: string; format?: string; photos?: string[]; note?: string | null; baguePortee?: boolean };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 });
   }
 
-  const { template = "promo-flash", palette = "rose", format = "1:1", photos, note } = body;
+  const { template = "promo-flash", palette = "rose", format = "1:1", photos, note, baguePortee = false } = body;
   if (!photos || !Array.isArray(photos) || photos.length === 0) {
     return NextResponse.json({ error: "Aucune photo de bague fournie" }, { status: 400 });
   }
@@ -131,7 +133,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Photos invalides (attendu : data:image/...;base64,...)" }, { status: 400 });
   }
 
-  const basePrompt = promptForTemplate(template, palette, format, validPhotos.length);
+  const basePrompt = promptForTemplate(template, palette, format, validPhotos.length, baguePortee);
   const prompt = note && note.trim()
     ? `${basePrompt}\n\n=== USER ADDITIONAL INSTRUCTIONS (priority override) ===\n${note.trim()}`
     : basePrompt;
