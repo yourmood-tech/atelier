@@ -6,7 +6,7 @@ const MODEL = "gemini-3-pro-image-preview";
 const PROMPTS: Record<string, string> = {
   "fond-blanc": "Remove the background completely from this image, keeping only the main subject perfectly intact. Output the subject on a clean pure white background (#ffffff). Preserve all original details, colors, lighting, shadows and texture of the subject. Maintain a clean cut-out edge without halo or fringe. The subject must remain unchanged in shape, color and composition — only the background is replaced.",
   "fond-anthracite": "Place this subject on a clean, uniform anthracite dark gray background (color hex #292928, the same dark studio background used in Mood Collection product photography). Keep the subject exactly as is — same colors, lighting, shadows, position and composition. Only the background is replaced with the uniform anthracite color. Professional packshot style, centered, studio lighting feel.",
-  "amelioration": "Enhance this photo with professional photographic correction: balance colors naturally, fix exposure and lighting, optimize contrast, increase clarity and sharpness — but keep the result faithful to the original. No artistic filters, no stylization, no creative effects. Just a clean professional touch-up as a Lightroom auto-correction would do. The subject, framing, and composition stay exactly the same.",
+  "amelioration": "Generate an enhanced version of this photo with visible professional photographic correction. Apply: improved white balance (slightly cooler if too warm, warmer if too cold), increased dynamic range (recovering shadows, controlling highlights), boosted contrast (clear difference between dark and bright areas), refined color saturation (vibrant but natural, never oversaturated), sharper details, cleaner skin tones, brighter eyes if portrait. The result must be visibly better than the original — a clear 'after retouching' look like a professional Lightroom edit. Keep the same subject, framing, composition and identity. Output the enhanced image, not the original.",
   // Multi-formats : reframe pour un ratio précis
   "multi-1-1": "Recompose this image for a 1:1 square aspect ratio (Instagram post). Keep the main subject perfectly centered and well-framed. Extend the background intelligently (matching its existing style, color, texture and lighting) to fit the new square dimensions. The subject stays exactly the same.",
   "multi-4-5": "Recompose this image for a 4:5 portrait aspect ratio (Instagram feed portrait). Keep the main subject perfectly centered, with comfortable margin top and bottom. Extend the background intelligently (matching its existing style and lighting) to fit the new portrait dimensions. Subject preserved.",
@@ -52,16 +52,31 @@ async function appelGemini(imageDataUrl: string, action: string): Promise<{ imag
         },
       }),
     });
-    const respData = await r.json();
-    if (!r.ok) {
-      return { error: `Gemini ${r.status}: ${JSON.stringify(respData).slice(0, 300)}` };
+    const respText = await r.text();
+    let respData: { candidates?: Array<{ content?: { parts?: unknown[] }; finishReason?: string }>; promptFeedback?: { blockReason?: string }; error?: { message?: string } };
+    try {
+      respData = JSON.parse(respText);
+    } catch {
+      return { error: `Réponse Gemini non-JSON (HTTP ${r.status}): ${respText.slice(0, 200)}` };
     }
-    const partsOut = respData?.candidates?.[0]?.content?.parts || [];
-    const imagePart = partsOut.find((p: { inlineData?: { mimeType?: string; data?: string } }) =>
-      p.inlineData?.mimeType?.startsWith?.("image/")
-    );
+    if (!r.ok) {
+      const msg = respData?.error?.message || JSON.stringify(respData).slice(0, 300);
+      return { error: `Gemini ${r.status}: ${msg}` };
+    }
+    const candidate = respData?.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== "STOP") {
+      return { error: `Gemini a refusé (finishReason: ${candidate.finishReason}). Essaye avec une autre photo ou une action différente.` };
+    }
+    if (respData?.promptFeedback?.blockReason) {
+      return { error: `Image bloquée par les filtres Gemini (${respData.promptFeedback.blockReason}). Essaye avec une autre photo.` };
+    }
+    const partsOut = (candidate?.content?.parts || []) as Array<{ inlineData?: { mimeType?: string; data?: string }; text?: string }>;
+    const imagePart = partsOut.find(p => p.inlineData?.mimeType?.startsWith?.("image/"));
     if (!imagePart?.inlineData?.data) {
-      return { error: "Pas d'image en sortie. La requête a peut-être été bloquée." };
+      // Si Gemini a renvoyé du texte au lieu d'une image
+      const textPart = partsOut.find(p => p.text);
+      const msg = textPart?.text ? `Gemini a répondu par texte au lieu d'image : « ${textPart.text.slice(0, 150)} »` : "Pas d'image en sortie. La requête a peut-être été bloquée ou refusée.";
+      return { error: msg };
     }
     return { image: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` };
   } catch (e) {
