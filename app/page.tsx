@@ -120,6 +120,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Vue orientée offres pour Stéphanie : champ libre par produit R&D, synchro auto avec le pipeline. Ventes Shopify de la semaine pour décider en fonction du succès.",
       },
       {
+        href: "/retouche",
+        emoji: "📷",
+        title: "Retouche photo IA",
+        description: "Upload une photo : fond blanc auto, fond anthracite Mood, amélioration couleurs/lumière, ou multi-formats sociaux (1:1, 4:5, 9:16, 16:9) — généré par Gemini Image.",
+      },
+      {
         href: "/perso",
         emoji: "🖋️",
         title: "Personnalisation",
