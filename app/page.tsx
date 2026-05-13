@@ -114,6 +114,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Calendrier annuel jeudi→mercredi pour planifier les nouveautés. Suivi des 9 étapes (idée → mise en ligne) + objectifs CA mensuels par produit.",
       },
       {
+        href: "/offres",
+        emoji: "🎁",
+        title: "Offres par nouveauté",
+        description: "Vue orientée offres pour Stéphanie : champ libre par produit R&D, synchro auto avec le pipeline. Ventes Shopify de la semaine pour décider en fonction du succès.",
+      },
+      {
         href: "/perso",
         emoji: "🖋️",
         title: "Personnalisation",
