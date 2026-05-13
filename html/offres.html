@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Offres Mood — par produit/nouveauté</title>
+<style>
+  :root {
+    --or: #c9a96e;
+    --noir: #1a1a1a;
+    --gris: #6b6b6b;
+    --gris-clair: #f5f5f5;
+    --vert: #2d8a4e;
+    --orange: #d97706;
+    --rouge: #c0392b;
+    --bleu: #2563eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--noir);
+    background: #fafafa;
+    line-height: 1.5;
+    padding: 1.2rem 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
+  }
+  h1 { font-size: 1.5rem; font-weight: 600; }
+  .sous-titre { font-size: 0.9rem; color: var(--gris); margin-top: 0.2rem; }
+  .controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  select, input, button {
+    padding: 0.4rem 0.7rem; border: 1px solid #ccc; border-radius: 6px;
+    font-size: 0.85rem; font-family: inherit;
+  }
+  button { background: var(--or); color: white; border: none; cursor: pointer; font-weight: 500; }
+  button.outline { background: white; color: var(--noir); border: 1px solid #ccc; }
+  button:hover { opacity: 0.9; }
+  .sync-status { font-size: 0.75rem; color: var(--gris); }
+  .sync-status.ok { color: var(--vert); }
+  .sync-status.ko { color: var(--orange); }
+
+  .filtres {
+    display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+    margin: 1rem 0; padding: 0.7rem 1rem; background: white; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .filtres label { font-size: 0.78rem; color: var(--gris); font-weight: 500; }
+  .filtres input[type="search"] { width: 220px; }
+
+  /* Liste cartes offre */
+  .offres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+  }
+  .offre-card {
+    background: white;
+    border-radius: 14px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    border-left: 4px solid var(--or);
+    display: flex; flex-direction: column; gap: 0.6rem;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .offre-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .offre-card.has-offre { border-left-color: var(--vert); background: linear-gradient(135deg, #f0f9f0 0%, #fff 40%); }
+
+  .offre-zone {
+    background: #fff8e7;
+    border: 2px dashed #c9a96e;
+    border-radius: 10px;
+    padding: 0.8rem;
+    min-height: 90px;
+    cursor: text;
+  }
+  .offre-card.has-offre .offre-zone {
+    background: #f0f9f0;
+    border-style: solid;
+    border-color: var(--vert);
+  }
+  .offre-zone .label-mini {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--or);
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+  }
+  .offre-card.has-offre .offre-zone .label-mini { color: var(--vert); }
+  .offre-zone textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.35;
+    resize: none;
+    font-family: inherit;
+    color: var(--noir);
+    min-height: 50px;
+    outline: none;
+  }
+  .offre-zone textarea::placeholder { color: #bbb; font-style: italic; font-weight: 400; }
+  .save-status {
+    font-size: 0.7rem;
+    color: var(--gris);
+    margin-top: 0.3rem;
+    height: 1em;
+    transition: opacity 0.3s;
+  }
+  .save-status.saving { color: var(--orange); }
+  .save-status.saved  { color: var(--vert); }
+
+  /* Bloc contextuel (le produit) en plus petit sous l'offre */
+  .produit-contexte {
+    display: flex; gap: 0.7rem; align-items: flex-start;
+    padding-top: 0.4rem; border-top: 1px solid #eee;
+  }
+  .produit-image {
+    width: 56px; height: 56px; flex-shrink: 0;
+    border-radius: 8px; background: var(--gris-clair) center/cover no-repeat;
+  }
+  .produit-info { flex: 1; min-width: 0; }
+  .produit-nom { font-size: 0.95rem; font-weight: 600; color: var(--noir); line-height: 1.2; }
+  .produit-meta {
+    font-size: 0.72rem; color: var(--gris);
+    margin-top: 0.2rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+  }
+  .badge-etape {
+    display: inline-block; padding: 1px 6px; border-radius: 4px;
+    background: var(--or); color: white; font-size: 0.65rem; font-weight: 600;
+  }
+  .ventes-semaine {
+    display: inline-block; padding: 2px 7px; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 700; margin-top: 0.3rem;
+  }
+  .ventes-semaine.actif { background: rgba(45,138,78,0.15); color: var(--vert); }
+  .ventes-semaine.vide  { background: rgba(107,107,107,0.12); color: var(--gris); }
+
+  .empty-state {
+    text-align: center; padding: 3rem 1rem; color: var(--gris); font-size: 0.95rem;
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 0.8rem 0.6rem; }
+    .offres-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+    .offre-card { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🎁 Offres Mood</h1>
+    <div class="sous-titre">Par nouveauté/produit · synchronisé avec le planning R&D</div>
+  </div>
+  <div class="controls">
+    <span class="sync-status" id="sync-status">Synchronisation…</span>
+    <button class="outline" onclick="rafraichir()">🔄 Rafraîchir</button>
+  </div>
+</header>
+
+<div class="filtres">
+  <label>Filtrer :</label>
+  <select id="filtre-etape">
+    <option value="">Toutes étapes</option>
+    <option value="1">1. Idée</option>
+    <option value="2">2. Dessin</option>
+    <option value="3">3. Commande test</option>
+    <option value="4">4. Réception</option>
+    <option value="5">5. Validation</option>
+    <option value="6">6. OK</option>
+    <option value="7">7. Photos</option>
+    <option value="8">8. Sortie</option>
+    <option value="9">9. Visuels</option>
+  </select>
+  <select id="filtre-offre">
+    <option value="">Avec / sans offre</option>
+    <option value="avec">✓ Avec offre</option>
+    <option value="sans">À définir</option>
+  </select>
+  <input type="search" id="filtre-recherche" placeholder="Rechercher un produit…">
+  <span style="font-size:0.78rem;color:var(--gris);margin-left:auto;" id="count-badge"></span>
+</div>
+
+<div class="offres-grid" id="offres-grid"></div>
+
+<script>
+const STAGES = ['Idée','Dessin','Commande test','Réception','Validation','OK','Photos','Sortie','Visuels'];
+let donnees = { produits: [] };
+let ventesSemaine = null;
+const saveTimers = {};
+
+async function chargerDonnees() {
+  try {
+    const r = await fetch('/api/r-and-d/produits');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (d && Array.isArray(d.produits)) {
+      donnees = d;
+      majSyncStatus('ok');
+    }
+  } catch (e) {
+    majSyncStatus('ko');
+    console.warn('Sync impossible :', e.message);
+  }
+}
+
+async function chargerVentesSemaine() {
+  try {
+    const r = await fetch('/api/r-and-d/ventes-semaine');
+    if (!r.ok) return;
+    const d = await r.json();
+    if (d && d.ventes && typeof d.total_ca === 'number') ventesSemaine = d;
+  } catch (e) { /* skip */ }
+}
+
+function trouverVentesShopify(nom, ventesMap) {
+  if (!nom || !ventesMap) return { ca: 0, qty: 0 };
+  const needle = nom.toLowerCase().trim();
+  let ca = 0, qty = 0;
+  for (const title in ventesMap) {
+    const t = title.toLowerCase();
+    if (t === needle || t.includes(needle) || needle.includes(t)) {
+      ca += ventesMap[title].ca || 0;
+      qty += ventesMap[title].quantity || 0;
+    }
+  }
+  return { ca: Math.round(ca), qty };
+}
+
+function rendre() {
+  const grid = document.getElementById('offres-grid');
+  const filtreEtape = document.getElementById('filtre-etape').value;
+  const filtreOffre = document.getElementById('filtre-offre').value;
+  const recherche = document.getElementById('filtre-recherche').value.toLowerCase().trim();
+
+  // Tri : produits AVEC offre d'abord (priorité Stéphanie), puis par date desc
+  let produits = [...donnees.produits];
+  produits.sort((a, b) => {
+    const ao = (a.offre || '').trim() ? 1 : 0;
+    const bo = (b.offre || '').trim() ? 1 : 0;
+    if (ao !== bo) return bo - ao;
+    return (b.date || '').localeCompare(a.date || '');
+  });
+
+  // Filtres
+  if (filtreEtape) produits = produits.filter(p => String(p.etape || 1) === filtreEtape);
+  if (filtreOffre === 'avec') produits = produits.filter(p => (p.offre || '').trim());
+  if (filtreOffre === 'sans') produits = produits.filter(p => !(p.offre || '').trim());
+  if (recherche) produits = produits.filter(p =>
+    (p.nom || '').toLowerCase().includes(recherche) ||
+    (p.offre || '').toLowerCase().includes(recherche)
+  );
+
+  document.getElementById('count-badge').textContent = `${produits.length} produit${produits.length > 1 ? 's' : ''}`;
+
+  if (produits.length === 0) {
+    grid.innerHTML = '<div class="empty-state">Aucun produit ne correspond aux filtres.</div>';
+    return;
+  }
+
+  let html = '';
+  for (const p of produits) {
+    const hasOffre = !!(p.offre || '').trim();
+    const etape = p.etape || 1;
+    const etapeLabel = STAGES[etape - 1] || '';
+
+    // Ventes Shopify de la semaine
+    let ventesHtml = '';
+    try {
+      if (ventesSemaine && ventesSemaine.ventes) {
+        const cle = (p.shopifySearch && p.shopifySearch.trim()) || p.nom;
+        const m = trouverVentesShopify(cle, ventesSemaine.ventes);
+        const qty = Number(m?.qty) || 0;
+        const ca = Number(m?.ca) || 0;
+        const cls = qty > 0 ? 'actif' : 'vide';
+        ventesHtml = `<div class="ventes-semaine ${cls}" title="Ventes Shopify cette semaine (jeu→mer)">📊 ${qty} vente${qty > 1 ? 's' : ''}${ca > 0 ? ' · ' + ca.toLocaleString('fr-CH') + '.-' : ''}</div>`;
+      }
+    } catch (e) { /* ignore */ }
+
+    const imgStyle = p.image ? `background-image:url('${p.image}');` : '';
+
+    html += `<div class="offre-card${hasOffre ? ' has-offre' : ''}" data-id="${p.id}">
+      <div class="offre-zone" onclick="document.getElementById('offre-input-${p.id}').focus()">
+        <div class="label-mini">${hasOffre ? '🎁 Offre' : 'Offre à définir'}</div>
+        <textarea
+          id="offre-input-${p.id}"
+          placeholder="Ex: Pack +1 gratuit, Promo 20%, Bundle avec X…"
+          oninput="onOffreInput('${p.id}', this.value)"
+          rows="2">${escapeHtml(p.offre || '')}</textarea>
+        <div class="save-status" id="save-${p.id}"></div>
+      </div>
+      <div class="produit-contexte">
+        <div class="produit-image" style="${imgStyle}"></div>
+        <div class="produit-info">
+          <div class="produit-nom">${escapeHtml(p.nom || 'Sans nom')}</div>
+          <div class="produit-meta">
+            <span class="badge-etape">${etape}. ${etapeLabel}</span>
+            ${p.type ? `<span>· ${escapeHtml(p.type)}</span>` : ''}
+            ${p.date ? `<span>· ${formaterDate(p.date)}</span>` : ''}
+          </div>
+          ${ventesHtml}
+        </div>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function formaterDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Sauvegarde debounced de l'offre (1.5s après dernière frappe)
+function onOffreInput(id, valeur) {
+  const idx = donnees.produits.findIndex(p => p.id === id);
+  if (idx < 0) return;
+  donnees.produits[idx].offre = valeur;
+  // Toggle has-offre class instantanément pour feedback visuel
+  const card = document.querySelector(`.offre-card[data-id="${id}"]`);
+  if (card) {
+    if (valeur.trim()) card.classList.add('has-offre');
+    else card.classList.remove('has-offre');
+    const labelMini = card.querySelector('.label-mini');
+    if (labelMini) labelMini.textContent = valeur.trim() ? '🎁 Offre' : 'Offre à définir';
+  }
+  // Status saving + debounce save
+  const statusEl = document.getElementById(`save-${id}`);
+  if (statusEl) { statusEl.textContent = '⏳ Sauvegarde…'; statusEl.className = 'save-status saving'; }
+  if (saveTimers[id]) clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(() => sauverProduit(id), 1500);
+}
+
+async function sauverProduit(id) {
+  try {
+    const r = await fetch('/api/r-and-d/produits', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ produits: donnees.produits }),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const statusEl = document.getElementById(`save-${id}`);
+    if (statusEl) {
+      statusEl.textContent = '✓ Enregistré';
+      statusEl.className = 'save-status saved';
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+    }
+  } catch (e) {
+    const statusEl = document.getElementById(`save-${id}`);
+    if (statusEl) { statusEl.textContent = '⚠️ Échec — réessaye'; statusEl.className = 'save-status ko'; }
+    console.warn('Save error :', e);
+  }
+}
+
+function majSyncStatus(s) {
+  const el = document.getElementById('sync-status');
+  if (s === 'ok') { el.textContent = '☁️ Synchronisé'; el.className = 'sync-status ok'; }
+  else if (s === 'ko') { el.textContent = '⚠️ Hors-ligne'; el.className = 'sync-status ko'; }
+  else { el.textContent = 'Synchronisation…'; el.className = 'sync-status'; }
+}
+
+async function rafraichir() {
+  majSyncStatus('');
+  await Promise.all([chargerDonnees(), chargerVentesSemaine()]);
+  rendre();
+}
+
+// Filtres
+document.getElementById('filtre-etape').addEventListener('change', rendre);
+document.getElementById('filtre-offre').addEventListener('change', rendre);
+document.getElementById('filtre-recherche').addEventListener('input', rendre);
+
+// Auto-refresh toutes les 60s (pour voir les nouveaux produits ajoutés par Amila)
+setInterval(rafraichir, 60_000);
+
+// Init
+rafraichir();
+</script>
+</body>
+</html>
