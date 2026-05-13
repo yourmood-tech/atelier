@@ -122,8 +122,8 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
       {
         href: "/retouche",
         emoji: "📷",
-        title: "Retouche photo IA",
-        description: "Upload une photo : fond blanc auto, fond anthracite Mood, amélioration couleurs/lumière, ou multi-formats sociaux (1:1, 4:5, 9:16, 16:9) — généré par Gemini Image.",
+        title: "Retouche photo & vidéo IA",
+        description: "Upload une photo : fond blanc/anthracite, nettoyage, multi-formats sociaux, bague portée, thèmes saisonniers — et rotation 360° en vidéo MP4 (IA Kling).",
       },
       {
         href: "/perso",

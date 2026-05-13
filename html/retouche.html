@@ -175,6 +175,11 @@
     <div class="titre">Multi-formats sociaux</div>
     <div class="desc">1 photo → 4 formats (Insta 1:1, 4:5, story 9:16, FB 16:9)</div>
   </div>
+  <div class="action-card" onclick="lancerVideo360()" data-action="video-360">
+    <span class="emoji">🎬</span>
+    <div class="titre">Rotation 360° (vidéo)</div>
+    <div class="desc">Caméra qui tourne autour de la bague · 5 s · MP4 · IA Kling (~1.50 CHF)</div>
+  </div>
 </div>
 
 <!-- Thèmes saisonniers Mood -->
@@ -356,6 +361,89 @@ async function lancerAction(action) {
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// ============ VIDEO 360° (Kling via fal.ai) ============
+async function lancerVideo360() {
+  if (!imageActuelle) return;
+  const card = document.querySelector('.action-card[data-action="video-360"]');
+  if (!card) return;
+  card.classList.add('loading');
+
+  const resultsZone = document.getElementById('resultats');
+  const bloc = document.createElement('div');
+  bloc.className = 'resultat-bloc';
+  const debutTs = Date.now();
+  bloc.innerHTML = `<div class="resultat-titre"><span class="loader"></span>Rotation 360° — envoi à Kling…</div>
+    <div style="font-size:0.8rem;color:var(--gris);margin-top:0.4rem;">⏱️ La génération vidéo prend 2 à 5 minutes — tu peux laisser tourner et faire autre chose, le résultat s'affichera ici.</div>`;
+  resultsZone.insertBefore(bloc, resultsZone.firstChild);
+
+  let etape = 'init';
+  try {
+    etape = 'envoi initial';
+    const note = document.getElementById('indications')?.value?.trim() || null;
+    const r = await fetch('/api/retouche-video-rotation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageActuelle, duration: '5', aspectRatio: '1:1', note }),
+    });
+    etape = `réponse initiale (HTTP ${r.status})`;
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}). Début : « ${text.slice(0, 200)} »`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.requestId) throw new Error('Pas de requestId reçu');
+
+    const requestId = data.requestId;
+    etape = 'polling status';
+
+    // Poll toutes les 5 s pendant max 8 min
+    const maxAttempts = 96; // 96 × 5 s = 8 min
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(res => setTimeout(res, 5000));
+      const elapsed = Math.round((Date.now() - debutTs) / 1000);
+      const sR = await fetch('/api/retouche-video-rotation?id=' + encodeURIComponent(requestId));
+      const sText = await sR.text();
+      let sData;
+      try { sData = JSON.parse(sText); }
+      catch { throw new Error(`Status non-JSON: ${sText.slice(0, 200)}`); }
+
+      if (sData.status === 'COMPLETED' && sData.videoUrl) {
+        const fname = `mood-rotation-360-${Date.now()}.mp4`;
+        bloc.innerHTML = `<div class="resultat-titre">🎬 Rotation 360° (généré en ${elapsed}s)</div>
+          <div class="image-pair">
+            <div class="image-col">
+              <div class="label">Photo source</div>
+              <img src="${imageActuelle}" alt="original">
+            </div>
+            <div class="image-col">
+              <div class="label">Vidéo 360°</div>
+              <video src="${sData.videoUrl}" controls autoplay muted loop playsinline style="max-width:100%;max-height:350px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,0.1);"></video>
+              <a href="${sData.videoUrl}" download="${fname}" target="_blank" class="btn-download">⬇️ Télécharger MP4</a>
+            </div>
+          </div>`;
+        card.classList.remove('loading');
+        return;
+      }
+      if (sData.status === 'FAILED' || sData.status === 'ERROR' || sData.error) {
+        throw new Error(sData.error || `Génération échouée (${sData.status})`);
+      }
+      // En cours : update le message
+      const queueInfo = sData.queuePosition != null && sData.queuePosition > 0
+        ? ` · position file d'attente : ${sData.queuePosition}`
+        : '';
+      bloc.innerHTML = `<div class="resultat-titre"><span class="loader"></span>Rotation 360° — ${sData.status === 'IN_PROGRESS' ? 'génération en cours' : 'dans la file'} (${elapsed}s)${queueInfo}</div>
+        <div style="font-size:0.8rem;color:var(--gris);margin-top:0.4rem;">⏱️ Génération Kling typiquement 2 à 5 min · tu peux laisser tourner.</div>`;
+    }
+    throw new Error('Timeout (8 min) — la génération prend trop de temps, réessaie plus tard.');
+  } catch (e) {
+    bloc.innerHTML = `<div class="resultat-titre" style="color:var(--rouge);">🎬 Rotation 360°</div>
+      <div class="erreur">⚠️ Erreur (étape : ${escapeHtml(etape)}) : ${escapeHtml(e.message || String(e))}</div>`;
+    console.error('Rotation 360 error', { etape, error: e });
+  } finally {
+    card.classList.remove('loading');
+  }
 }
 </script>
 </body>
