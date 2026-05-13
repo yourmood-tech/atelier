@@ -244,23 +244,33 @@
     background: rgba(255,255,255,0.95);
     border-color: white;
   }
-  /* Bandeau événement marketing en haut de chaque case jour */
+  /* Bandeau événement marketing en haut de chaque case jour — plus voyant */
   .event-banner {
-    background: linear-gradient(90deg, #fce7f3 0%, #fef3c7 100%);
-    color: #92400e;
-    font-size: 0.62rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    padding: 3px 6px;
-    border-radius: 4px 4px 0 0;
-    margin: -0.4rem -0.4rem 0.3rem;
+    padding: 5px 7px;
+    margin: -0.4rem -0.4rem 0.35rem;
     text-align: center;
-    line-height: 1.2;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-bottom: 1px solid #fed7aa;
   }
-  .day.has-event { box-shadow: 0 0 0 1px #fed7aa inset; }
+  .event-banner + .event-banner { margin-top: 0; }
+  /* Commercial (suisse + saisons + ventes) — rose/doré bien visible */
+  .event-banner.event-commercial {
+    background: linear-gradient(90deg, #fde047 0%, #fb923c 100%);
+    color: #7c2d12;
+    border-bottom: 2px solid #ea580c;
+  }
+  /* Mondial (journées UN/UNESCO) — bleu vif */
+  .event-banner.event-mondial {
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+    color: white;
+    border-bottom: 2px solid #1d4ed8;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
+  .day.has-event { box-shadow: 0 0 0 1px #93c5fd inset; }
 
   /* Jauge progression étape (1-9) */
   .etape-jauge {
@@ -616,69 +626,98 @@ function calculerSemainesMois(annee, mois) {
 
 const NOMS_JOURS_COURT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
-// ============ CALENDRIER MARKETING MOOD (suisse + journées mondiales) ============
-// Événements à ne pas louper pour planifier les offres. Mis à jour pour 2026 et 2027.
-const EVENEMENTS_MARKETING = {
-  // ===== 2026 =====
-  '2026-01-01': { nom: 'Nouvel An', emoji: '🎉' },
-  '2026-01-06': { nom: 'Épiphanie', emoji: '👑' },
-  '2026-02-02': { nom: 'Chandeleur', emoji: '🥞' },
-  '2026-02-14': { nom: 'Saint-Valentin', emoji: '❤️' },
-  '2026-03-01': { nom: 'Fête des grands-mères', emoji: '👵' },
-  '2026-03-08': { nom: 'Journée des droits des femmes', emoji: '💜' },
-  '2026-03-20': { nom: 'Printemps', emoji: '🌸' },
-  '2026-04-03': { nom: 'Vendredi saint', emoji: '✝️' },
-  '2026-04-05': { nom: 'Pâques', emoji: '🐰' },
-  '2026-04-06': { nom: 'Lundi de Pâques', emoji: '🐣' },
-  '2026-05-01': { nom: 'Fête du travail', emoji: '🛠' },
-  '2026-05-10': { nom: 'Fête des mères 🇨🇭', emoji: '🌷' },
-  '2026-05-14': { nom: 'Ascension', emoji: '☁️' },
-  '2026-05-24': { nom: 'Pentecôte', emoji: '🕊' },
-  '2026-05-25': { nom: 'Lundi de Pentecôte', emoji: '🕊' },
-  '2026-06-07': { nom: 'Fête des pères 🇨🇭', emoji: '👔' },
-  '2026-06-21': { nom: 'Été · Fête de la musique', emoji: '☀️' },
-  '2026-07-06': { nom: 'Journée mondiale du baiser', emoji: '💋' },
-  '2026-07-30': { nom: 'Journée mondiale de l\'amitié', emoji: '🫶' },
-  '2026-08-01': { nom: 'Fête nationale 🇨🇭', emoji: '🇨🇭' },
-  '2026-09-21': { nom: 'Rentrée', emoji: '📚' },
-  '2026-09-22': { nom: 'Automne', emoji: '🍂' },
-  '2026-09-21': { nom: 'Jeûne fédéral (lun)', emoji: '🕊' },
-  '2026-10-01': { nom: 'Octobre rose (cancer du sein)', emoji: '🎗' },
-  '2026-10-11': { nom: 'Journée mondiale de la fille', emoji: '👧' },
-  '2026-10-31': { nom: 'Halloween', emoji: '🎃' },
-  '2026-11-01': { nom: 'Toussaint', emoji: '🕯' },
-  '2026-11-27': { nom: 'Black Friday', emoji: '🛍' },
-  '2026-11-30': { nom: 'Cyber Monday', emoji: '💻' },
-  '2026-12-06': { nom: 'Saint-Nicolas', emoji: '🎅' },
-  '2026-12-21': { nom: 'Hiver', emoji: '❄️' },
-  '2026-12-24': { nom: 'Veille de Noël', emoji: '🎄' },
-  '2026-12-25': { nom: 'Noël', emoji: '🎄' },
-  '2026-12-26': { nom: 'Saint-Étienne', emoji: '⛪' },
-  '2026-12-31': { nom: 'Saint-Sylvestre', emoji: '🥂' },
-  // ===== 2027 =====
-  '2027-01-01': { nom: 'Nouvel An', emoji: '🎉' },
-  '2027-02-14': { nom: 'Saint-Valentin', emoji: '❤️' },
-  '2027-03-07': { nom: 'Fête des grands-mères', emoji: '👵' },
-  '2027-03-08': { nom: 'Journée des droits des femmes', emoji: '💜' },
-  '2027-03-26': { nom: 'Vendredi saint', emoji: '✝️' },
-  '2027-03-28': { nom: 'Pâques', emoji: '🐰' },
-  '2027-03-29': { nom: 'Lundi de Pâques', emoji: '🐣' },
-  '2027-05-01': { nom: 'Fête du travail', emoji: '🛠' },
-  '2027-05-06': { nom: 'Ascension', emoji: '☁️' },
-  '2027-05-09': { nom: 'Fête des mères 🇨🇭', emoji: '🌷' },
-  '2027-05-16': { nom: 'Pentecôte', emoji: '🕊' },
-  '2027-05-17': { nom: 'Lundi de Pentecôte', emoji: '🕊' },
-  '2027-06-06': { nom: 'Fête des pères 🇨🇭', emoji: '👔' },
-  '2027-08-01': { nom: 'Fête nationale 🇨🇭', emoji: '🇨🇭' },
-  '2027-10-01': { nom: 'Octobre rose', emoji: '🎗' },
-  '2027-10-31': { nom: 'Halloween', emoji: '🎃' },
-  '2027-11-26': { nom: 'Black Friday', emoji: '🛍' },
-  '2027-11-29': { nom: 'Cyber Monday', emoji: '💻' },
-  '2027-12-06': { nom: 'Saint-Nicolas', emoji: '🎅' },
-  '2027-12-24': { nom: 'Veille de Noël', emoji: '🎄' },
-  '2027-12-25': { nom: 'Noël', emoji: '🎄' },
-  '2027-12-31': { nom: 'Saint-Sylvestre', emoji: '🥂' },
+// ============ CALENDRIER MARKETING MOOD ============
+// 2 types : 'commercial' (rose/doré, à fort potentiel ventes) et 'mondial' (bleu, journée internationale UN, info contexte)
+// Si plusieurs events sur le même jour, on liste tous les noms.
+
+// Événements COMMERCIAUX suisses (priorité ventes Mood) — 2026 + 2027
+const EV_COMMERCIAL = {
+  '2026-01-01': 'Nouvel An 🎉', '2026-01-06': 'Épiphanie 👑',
+  '2026-02-02': 'Chandeleur 🥞', '2026-02-14': 'Saint-Valentin ❤️',
+  '2026-03-01': 'Fête des grands-mères 👵', '2026-03-20': 'Printemps 🌸',
+  '2026-04-03': 'Vendredi saint ✝️', '2026-04-05': 'Pâques 🐰', '2026-04-06': 'Lundi de Pâques 🐣',
+  '2026-05-01': 'Fête du travail 🛠', '2026-05-10': 'Fête des mères 🇨🇭 🌷',
+  '2026-05-14': 'Ascension ☁️', '2026-05-24': 'Pentecôte 🕊', '2026-05-25': 'Lundi de Pentecôte 🕊',
+  '2026-06-07': 'Fête des pères 🇨🇭 👔', '2026-06-21': 'Été · Fête de la musique ☀️',
+  '2026-08-01': 'Fête nationale 🇨🇭', '2026-09-21': 'Jeûne fédéral 🕊',
+  '2026-09-22': 'Automne 🍂',
+  '2026-10-01': 'Octobre rose (cancer du sein) 🎗',
+  '2026-10-31': 'Halloween 🎃', '2026-11-01': 'Toussaint 🕯',
+  '2026-11-27': 'Black Friday 🛍', '2026-11-30': 'Cyber Monday 💻',
+  '2026-12-06': 'Saint-Nicolas 🎅', '2026-12-21': 'Hiver ❄️',
+  '2026-12-24': 'Veille de Noël 🎄', '2026-12-25': 'Noël 🎄',
+  '2026-12-26': 'Saint-Étienne ⛪', '2026-12-31': 'Saint-Sylvestre 🥂',
+  '2027-01-01': 'Nouvel An 🎉', '2027-02-14': 'Saint-Valentin ❤️',
+  '2027-03-07': 'Fête des grands-mères 👵', '2027-03-26': 'Vendredi saint ✝️',
+  '2027-03-28': 'Pâques 🐰', '2027-03-29': 'Lundi de Pâques 🐣',
+  '2027-05-01': 'Fête du travail 🛠', '2027-05-06': 'Ascension ☁️',
+  '2027-05-09': 'Fête des mères 🇨🇭 🌷', '2027-05-16': 'Pentecôte 🕊',
+  '2027-05-17': 'Lundi de Pentecôte 🕊', '2027-06-06': 'Fête des pères 🇨🇭 👔',
+  '2027-08-01': 'Fête nationale 🇨🇭', '2027-10-01': 'Octobre rose 🎗',
+  '2027-10-31': 'Halloween 🎃', '2027-11-26': 'Black Friday 🛍',
+  '2027-11-29': 'Cyber Monday 💻', '2027-12-06': 'Saint-Nicolas 🎅',
+  '2027-12-24': 'Veille de Noël 🎄', '2027-12-25': 'Noël 🎄',
+  '2027-12-31': 'Saint-Sylvestre 🥂',
 };
+
+// Journées MONDIALES (ONU/UNESCO) — dates fixes, valides chaque année
+// Source : un.org/fr/observances/list-days-weeks
+const EV_MONDIAL_FIXE = {
+  '01-04': 'Journée mondiale du braille', '01-24': 'Journée internationale de l\'éducation',
+  '01-27': 'Mémoire des victimes de l\'Holocauste',
+  '02-04': 'Journée mondiale contre le cancer', '02-06': 'Tolérance zéro mutilations',
+  '02-11': 'Femmes et filles de science', '02-13': 'Journée mondiale de la radio',
+  '02-20': 'Justice sociale', '02-21': 'Langue maternelle',
+  '03-03': 'Vie sauvage 🐯', '03-08': 'Droits des femmes 💜', '03-15': 'Sommeil 😴',
+  '03-20': 'Bonheur 😊', '03-21': 'Élimination discrimination raciale',
+  '03-22': 'Eau 💧', '03-23': 'Météorologie', '03-25': 'Solidarité personnel ONU',
+  '04-02': 'Sensibilisation autisme 💙', '04-04': 'Sensibilisation aux mines',
+  '04-07': 'Santé 🏥', '04-12': 'Aviation civile', '04-15': 'Art 🎨',
+  '04-22': 'Terre nourricière 🌍', '04-23': 'Livre 📚', '04-25': 'Paludisme', '04-28': 'Sécurité au travail',
+  '05-03': 'Liberté de la presse 📰', '05-08': 'Croix-Rouge', '05-15': 'Familles',
+  '05-17': 'Télécommunications', '05-21': 'Diversité culturelle 🌍', '05-22': 'Biodiversité 🦋',
+  '05-29': 'Casques bleus ONU', '05-31': 'Sans tabac 🚭',
+  '06-01': 'Parents', '06-04': 'Innocents victimes d\'agression',
+  '06-05': 'Environnement 🌳', '06-08': 'Océan 🌊',
+  '06-12': 'Contre travail des enfants', '06-14': 'Donneur de sang 🩸',
+  '06-15': 'Maltraitance des aînés', '06-16': 'Envois de fonds des familles',
+  '06-17': 'Désertification', '06-19': 'Drépanocytose', '06-20': 'Réfugiés',
+  '06-21': 'Yoga 🧘', '06-23': 'Veuves', '06-25': 'Marin', '06-26': 'Contre la torture',
+  '07-11': 'Population 👥', '07-15': 'Compétences des jeunes',
+  '07-18': 'Nelson Mandela', '07-28': 'Hépatite', '07-30': 'Amitié 🫶',
+  '08-09': 'Peuples autochtones', '08-12': 'Jeunesse', '08-19': 'Aide humanitaire',
+  '08-23': 'Souvenir traite négrière', '08-29': 'Contre essais nucléaires', '08-30': 'Disparitions forcées',
+  '09-05': 'Charité', '09-08': 'Alphabétisation 📖',
+  '09-10': 'Prévention suicide', '09-15': 'Démocratie 🗳',
+  '09-16': 'Couche d\'ozone', '09-21': 'Paix ✌️',
+  '09-23': 'Langue des signes', '09-26': 'Élimination armes nucléaires',
+  '09-27': 'Tourisme ✈️', '09-28': 'Accès information',
+  '10-01': 'Personnes âgées 👴', '10-02': 'Non-violence ☮️',
+  '10-05': 'Enseignants 🍎', '10-09': 'Poste 📮',
+  '10-10': 'Santé mentale 🧠', '10-11': 'Filles 👧',
+  '10-13': 'Prévention catastrophes', '10-15': 'Femmes rurales',
+  '10-16': 'Alimentation 🍞', '10-17': 'Élimination pauvreté',
+  '10-24': 'Nations Unies', '10-31': 'Villes (Urban day)',
+  '11-06': 'Environnement temps de guerre', '11-10': 'Science 🔬',
+  '11-14': 'Diabète 💉', '11-16': 'Tolérance 🤝',
+  '11-19': 'Toilettes 🚽', '11-20': 'Enfance 🧒',
+  '11-21': 'Télévision 📺', '11-25': 'Violence contre les femmes 💜',
+  '11-29': 'Solidarité peuple palestinien',
+  '12-01': 'SIDA 🎗', '12-02': 'Abolition esclavage',
+  '12-03': 'Personnes handicapées ♿', '12-05': 'Volontaires',
+  '12-09': 'Contre corruption', '12-10': 'Droits de l\'homme',
+  '12-11': 'Montagne 🏔', '12-18': 'Migrants',
+  '12-20': 'Solidarité humaine',
+};
+
+// Lookup combiné : retourne tous les events d'une date (commercial + mondial)
+function getEventsForDate(jourISO) {
+  const events = [];
+  if (EV_COMMERCIAL[jourISO]) events.push({ type: 'commercial', nom: EV_COMMERCIAL[jourISO] });
+  const mmdd = jourISO.slice(5); // 'MM-DD'
+  if (EV_MONDIAL_FIXE[mmdd]) events.push({ type: 'mondial', nom: EV_MONDIAL_FIXE[mmdd] });
+  return events;
+}
 // Ordre semaine Mood : jeudi → mercredi (jours JS : 4,5,6,0,1,2,3)
 const ORDRE_JOURS_SEMAINE = [4, 5, 6, 0, 1, 2, 3];
 
@@ -800,12 +839,14 @@ function rendreCalendrier() {
           </div>`;
         }
 
-        // Bandeau événement marketing (Saint-Valentin, fête des mères, Black Friday, etc.)
-        const ev = EVENEMENTS_MARKETING[jourISO];
-        const evBanner = ev ? `<div class="event-banner" title="${ev.nom}">${ev.emoji} ${ev.nom}</div>` : '';
+        // Bandeaux événements (commerciaux suisses + journées mondiales UN)
+        const events = getEventsForDate(jourISO);
+        const evBanners = events.map(e =>
+          `<div class="event-banner event-${e.type}" title="${e.nom.replace(/"/g, '&quot;')}">${e.nom}</div>`
+        ).join('');
 
-        joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}${ev ? ' has-event' : ''}" data-day="${jourISO}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${jourISO}')">
-          ${evBanner}
+        joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}${events.length ? ' has-event' : ''}" data-day="${jourISO}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${jourISO}')">
+          ${evBanners}
           <div class="day-header"><span class="day-name">${nomJour}</span><span class="day-number">${numJour}</span></div>
           <div class="day-content">${cardsHtml}</div>
           <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')" title="Ajouter une offre pour ce jour">+</button>
