@@ -450,7 +450,9 @@
       <label style="margin-top:0;">💡 Pas d'inspiration ? Demande à l'IA</label>
       <textarea id="offre-contexte" rows="2" placeholder="Optionnel : tes idées de départ, références, contraintes (ex: « offre couple », « lien avec Aura émeraude »…)" style="font-size:0.85rem;"></textarea>
       <button type="button" class="outline" onclick="genererIdeesOffres()" id="btn-idees-offres" style="margin-top:0.5rem;font-size:0.85rem;background:#fff8e7;border-color:var(--or);color:var(--or);">✨ Trouver 5 idées d'offres</button>
+      <button type="button" class="outline" onclick="evaluerOffre()" id="btn-evaluer-offre" style="margin-top:0.5rem;margin-left:0.4rem;font-size:0.85rem;background:#eff6ff;border-color:#3b82f6;color:#1d4ed8;">🔍 Évaluer cette offre</button>
       <div id="idees-offres-resultat" style="margin-top:0.7rem;"></div>
+      <div id="eval-offre-resultat" style="margin-top:0.7rem;"></div>
     </div>
 
     <!-- Champs gérés par Amila dans /r-and-d — masqués sur /offres pour rester focus sur l'offre -->
@@ -881,8 +883,12 @@ function resetIdeesOffres() {
   if (ctx) ctx.value = '';
   const res = document.getElementById('idees-offres-resultat');
   if (res) res.innerHTML = '';
+  const evalRes = document.getElementById('eval-offre-resultat');
+  if (evalRes) evalRes.innerHTML = '';
   const btn = document.getElementById('btn-idees-offres');
   if (btn) { btn.disabled = false; btn.textContent = "✨ Trouver 5 idées d'offres"; }
+  const btnEval = document.getElementById('btn-evaluer-offre');
+  if (btnEval) { btnEval.disabled = false; btnEval.textContent = '🔍 Évaluer cette offre'; }
 }
 
 function ouvrirModalAjout(date) {
@@ -1070,6 +1076,73 @@ async function genererIdeesOffres() {
     res.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur : ${escapeHtml(e.message)}</div>`;
   } finally {
     btn.disabled = false; btn.textContent = "✨ Trouver 5 idées d'offres";
+  }
+}
+
+async function evaluerOffre() {
+  const btn = document.getElementById('btn-evaluer-offre');
+  const res = document.getElementById('eval-offre-resultat');
+  if (!btn || !res) return;
+  const offreTexte = document.getElementById('produit-offre').value.trim();
+  if (!offreTexte) {
+    res.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Saisis d'abord une offre dans le champ ci-dessus.</div>`;
+    return;
+  }
+  btn.disabled = true; btn.textContent = '⏳ Évaluation…';
+  res.innerHTML = '';
+
+  const date = (modalContexte && modalContexte.date) || null;
+  const produitNom = document.getElementById('produit-nom').value.trim() || null;
+  const contexte = document.getElementById('offre-contexte').value.trim() || null;
+
+  try {
+    const r = await fetch('/api/r-and-d/evaluer-offre', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ offre: offreTexte, date, produitNom, contexte }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Réponse invalide');
+
+    const score = Math.max(1, Math.min(5, parseInt(data.score) || 3));
+    const couleurFinal = data.verdict_final === 'GO' ? '#16a34a'
+                       : data.verdict_final === 'NOGO' ? '#dc2626'
+                       : '#d97706';
+    const labelFinal = data.verdict_final === 'GO' ? '✅ GO — lance-la'
+                     : data.verdict_final === 'NOGO' ? '🚫 NOGO — à revoir'
+                     : '🔧 TWEAK — ajustements recommandés';
+
+    let html = `<div style="background:white;border:2px solid ${couleurFinal};border-radius:10px;padding:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+        <strong style="font-size:0.95rem;color:${couleurFinal};">${labelFinal}</strong>
+        <span style="font-size:0.85rem;color:var(--or);font-weight:700;">${'★'.repeat(score)}${'☆'.repeat(5-score)} (${score}/5)</span>
+      </div>
+      <div style="font-size:0.88rem;font-style:italic;margin-bottom:0.7rem;padding:0.5rem;background:#f9fafb;border-radius:6px;">${escapeHtml(data.verdict || '')}</div>`;
+
+    if (Array.isArray(data.atouts) && data.atouts.length > 0) {
+      html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:var(--vert);">✓ Atouts</strong><ul style="font-size:0.82rem;margin:0.2rem 0 0 1.2rem;">`;
+      for (const a of data.atouts) html += `<li>${escapeHtml(a)}</li>`;
+      html += `</ul></div>`;
+    }
+    if (Array.isArray(data.risques) && data.risques.length > 0) {
+      html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:var(--rouge);">⚠️ Risques</strong><ul style="font-size:0.82rem;margin:0.2rem 0 0 1.2rem;">`;
+      for (const r of data.risques) html += `<li>${escapeHtml(r)}</li>`;
+      html += `</ul></div>`;
+    }
+    if (Array.isArray(data.ameliorations) && data.ameliorations.length > 0) {
+      html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:#1d4ed8;">💡 Comment l'améliorer</strong><ul style="font-size:0.82rem;margin:0.2rem 0 0 1.2rem;">`;
+      for (const a of data.ameliorations) html += `<li>${escapeHtml(a)}</li>`;
+      html += `</ul></div>`;
+    }
+    if (typeof data.timing_adapte === 'boolean') {
+      html += `<div style="font-size:0.75rem;color:var(--gris);margin-top:0.5rem;">📅 Timing/date : ${data.timing_adapte ? '✓ adapté' : '⚠️ à reconsidérer'}</div>`;
+    }
+    html += `</div>`;
+    res.innerHTML = html;
+  } catch (e) {
+    res.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur : ${escapeHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Évaluer cette offre';
   }
 }
 
