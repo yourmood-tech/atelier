@@ -72,12 +72,13 @@ export async function GET(request: Request) {
   }
 
   const ventes: Record<string, VenteAgregee> = {};
+  const ventesParJour: Record<string, { ca: number; count: number }> = {};
   let totalCA = 0;
   let totalCommandes = 0;
   let url: string | null =
     `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any&financial_status=paid` +
     `&created_at_min=${encodeURIComponent(debut.toISOString())}&created_at_max=${encodeURIComponent(fin.toISOString())}` +
-    `&fields=id,total_price,line_items,financial_status,cancelled_at`;
+    `&fields=id,total_price,created_at,line_items,financial_status,cancelled_at`;
 
   try {
     while (url) {
@@ -89,6 +90,7 @@ export async function GET(request: Request) {
       const orders: Array<{
         id: number;
         total_price: string;
+        created_at: string;
         cancelled_at: string | null;
         financial_status: string;
         line_items: Array<{ title: string; quantity: number; price: string }>;
@@ -96,7 +98,15 @@ export async function GET(request: Request) {
       for (const o of orders) {
         if (o.cancelled_at) continue;
         totalCommandes++;
-        totalCA += parseFloat(o.total_price || "0");
+        const ca = parseFloat(o.total_price || "0");
+        totalCA += ca;
+        // Breakdown par jour (YYYY-MM-DD)
+        const jour = (o.created_at || "").slice(0, 10);
+        if (jour) {
+          if (!ventesParJour[jour]) ventesParJour[jour] = { ca: 0, count: 0 };
+          ventesParJour[jour].ca += ca;
+          ventesParJour[jour].count++;
+        }
         for (const li of o.line_items || []) {
           const title = li.title || "Sans titre";
           if (!ventes[title]) ventes[title] = { title, quantity: 0, ca: 0 };
@@ -115,8 +125,14 @@ export async function GET(request: Request) {
     );
   }
 
+  // Arrondir les ventes par jour
+  const ventesParJourRond: Record<string, { ca: number; count: number }> = {};
+  for (const [jour, v] of Object.entries(ventesParJour)) {
+    ventesParJourRond[jour] = { ca: Math.round(v.ca), count: v.count };
+  }
   const result = {
     ventes,
+    ventes_par_jour: ventesParJourRond,
     total_ca: Math.round(totalCA),
     total_commandes: totalCommandes,
     debut: debut.toISOString(),
