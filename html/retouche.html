@@ -188,7 +188,11 @@ async function chargerFichier(file) {
   // Convertir + compresser : iPhone HEIC → JPEG, gros fichiers → max 2048px
   // Évite que Gemini refuse l'image (format non supporté, taille excessive)
   try {
-    imageActuelle = await compresserImage(file, 2048, 0.92);
+    imageActuelle = await compresserImage(file, 1280, 0.88);
+    // Si le résultat est encore > 3 Mo, compresser plus agressivement
+    if (imageActuelle.length > 3_000_000) {
+      imageActuelle = await compresserImage(file, 1024, 0.80);
+    }
     document.getElementById('img-original').src = imageActuelle;
     document.getElementById('upload-empty').style.display = 'none';
     document.getElementById('upload-preview').style.display = 'block';
@@ -244,13 +248,20 @@ async function lancerAction(action) {
   bloc.innerHTML = `<div class="resultat-titre"><span class="loader"></span>${escapeHtml(titre)} — traitement IA…</div>`;
   resultsZone.insertBefore(bloc, resultsZone.firstChild);
 
+  let etape = 'init';
   try {
+    etape = 'fetch';
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: imageActuelle, action }),
     });
-    const data = await r.json();
+    etape = `réponse reçue (HTTP ${r.status})`;
+    const text = await r.text();
+    etape = 'parsing JSON';
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON du serveur (HTTP ${r.status}). Début : « ${text.slice(0, 200)} »`); }
     if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
 
     if (action === 'multi-formats') {
@@ -289,7 +300,8 @@ async function lancerAction(action) {
     }
   } catch (e) {
     bloc.innerHTML = `<div class="resultat-titre" style="color:var(--rouge);">${escapeHtml(titre)}</div>
-      <div class="erreur">⚠️ Erreur : ${escapeHtml(e.message)}</div>`;
+      <div class="erreur">⚠️ Erreur (étape : ${escapeHtml(etape)}) : ${escapeHtml(e.message || String(e))}</div>`;
+    console.error('Retouche photo error', { etape, error: e });
   } finally {
     card.classList.remove('loading');
   }
