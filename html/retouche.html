@@ -160,10 +160,43 @@
     <div class="titre">Nettoyer & redresser</div>
     <div class="desc">Supprime poussière, griffures, traces de doigts · redresse et centre la bague</div>
   </div>
+  <div class="action-card" onclick="lancerAction('lumiere-contraste')" data-action="lumiere-contraste">
+    <span class="emoji">🌟</span>
+    <div class="titre">Lumière & contraste</div>
+    <div class="desc">Photo haute qualité magazine · nettoie bague + décor · améliore exposition/contraste</div>
+  </div>
   <div class="action-card" onclick="lancerAction('multi-formats')" data-action="multi-formats">
     <span class="emoji">📐</span>
     <div class="titre">Multi-formats sociaux</div>
     <div class="desc">1 photo → 4 formats (Insta 1:1, 4:5, story 9:16, FB 16:9)</div>
+  </div>
+</div>
+
+<!-- Thèmes saisonniers Mood -->
+<div id="themes-saison" style="display:none;margin-top:1rem;">
+  <h2 style="font-size:0.95rem;color:var(--or);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.6rem;">🌿 Thème Mood saisonnier</h2>
+  <p style="font-size:0.82rem;color:var(--gris);margin-bottom:0.7rem;">Transforme le décor autour de la bague pour une ambiance luxe selon la saison. La bague reste identique.</p>
+  <div class="actions-grid">
+    <div class="action-card" onclick="lancerAction('theme-printemps')" data-action="theme-printemps">
+      <span class="emoji">🌸</span>
+      <div class="titre">Printemps</div>
+      <div class="desc">Ombres de sakura, lumière du matin, pastel</div>
+    </div>
+    <div class="action-card" onclick="lancerAction('theme-ete')" data-action="theme-ete">
+      <span class="emoji">☀️</span>
+      <div class="titre">Été</div>
+      <div class="desc">Golden hour, palmiers, tons chauds vacances</div>
+    </div>
+    <div class="action-card" onclick="lancerAction('theme-automne')" data-action="theme-automne">
+      <span class="emoji">🍂</span>
+      <div class="titre">Automne</div>
+      <div class="desc">Feuilles ocre, lumière douce, cozy</div>
+    </div>
+    <div class="action-card" onclick="lancerAction('theme-hiver')" data-action="theme-hiver">
+      <span class="emoji">❄️</span>
+      <div class="titre">Hiver</div>
+      <div class="desc">Frost, tons frais, ambiance cristalline</div>
+    </div>
   </div>
 </div>
 
@@ -205,6 +238,7 @@ async function chargerFichier(file) {
     dropZone.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('indications-zone').style.display = 'block';
+    document.getElementById('themes-saison').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
   } catch (e) {
     alert('Impossible de charger cette image : ' + (e.message || e) + '. Essaie un JPG ou PNG standard.');
