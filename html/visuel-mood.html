@@ -1572,15 +1572,53 @@ async function telecharger() {
   await renderCanvas();
 
   const cnv = document.getElementById('canvas-preview');
-  const a = document.createElement('a');
   const ts = Date.now();
-  a.href = cnv.toDataURL('image/png');
-  a.download = `mood-${state.template}-${state.format.replace(':', 'x')}-${ts}.png`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  const filename = `mood-${state.template}-${state.format.replace(':', 'x')}-${ts}.png`;
+
+  await new Promise((resolve) => {
+    if (typeof cnv.toBlob === 'function') {
+      cnv.toBlob((blob) => {
+        if (!blob) {
+          // Fallback : data URL (rare, mais ok sur Chrome desktop)
+          try {
+            const dataUrl = cnv.toDataURL('image/png');
+            triggerDownload(dataUrl, filename);
+          } catch (e) {
+            alert("Impossible de générer le PNG : " + (e.message || e));
+          }
+          resolve();
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url, filename);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        resolve();
+      }, 'image/png');
+    } else {
+      // Vieux navigateurs : data URL direct
+      try {
+        const dataUrl = cnv.toDataURL('image/png');
+        triggerDownload(dataUrl, filename);
+      } catch (e) {
+        alert("Impossible de générer le PNG : " + (e.message || e));
+      }
+      resolve();
+    }
+  });
 
   // Restore sélection après download
   state.selectedKey = savedSelected;
   await renderCanvas();
+}
+
+function triggerDownload(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function resetEditeur() {
