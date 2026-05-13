@@ -139,8 +139,8 @@
 
 <!-- Indications optionnelles pour l'IA -->
 <div id="indications-zone" style="display:none;margin-top:1rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">💬 Indications pour l'IA <span style="color:var(--gris);font-weight:400;">— optionnel, ex: « fond bleu pastel », « garder le diamant rouge », « redresser vers la gauche »</span></label>
-  <textarea id="indications" rows="2" placeholder="Tape ici si tu veux préciser quelque chose pour TOUTES les actions ci-dessous…" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">💬 Indications pour l'IA <span style="color:var(--gris);font-weight:400;">— optionnel, override des défauts</span></label>
+  <textarea id="indications" rows="3" placeholder="Exemples :&#10;• « fond bleu pastel » (pour Fond anthracite)&#10;• « garder le diamant rouge », « redresser vers la gauche » (pour Nettoyer)&#10;• « main de femme métisse, ongles french amande, main posée vers la clavicule, t-shirt blanc, zoom focus bague » (pour Bague portée)" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
 </div>
 
 <!-- Actions -->
@@ -164,6 +164,11 @@
     <span class="emoji">🌟</span>
     <div class="titre">Lumière & contraste</div>
     <div class="desc">Photo haute qualité magazine · nettoie bague + décor · améliore exposition/contraste</div>
+  </div>
+  <div class="action-card" onclick="lancerAction('bague-portee')" data-action="bague-portee">
+    <span class="emoji">💍</span>
+    <div class="titre">Bague portée</div>
+    <div class="desc">Close-up éditorial luxe : la bague sur une main · précise main/ongles/pose/tenue dans Indications</div>
   </div>
   <div class="action-card" onclick="lancerAction('multi-formats')" data-action="multi-formats">
     <span class="emoji">📐</span>
