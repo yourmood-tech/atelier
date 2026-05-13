@@ -418,6 +418,14 @@
     <label style="color:var(--or);font-weight:600;">🎁 Offre commerciale</label>
     <textarea id="produit-offre" rows="3" placeholder="ex : Pack +1 gratuit, Promo 20%, Bundle avec collier Aura…" style="background:#fff8e7;border-color:var(--or);"></textarea>
 
+    <!-- Génération IA d'idées d'offres -->
+    <div style="margin-top:0.8rem;padding:0.8rem;background:#f5f5f5;border-radius:8px;">
+      <label style="margin-top:0;">💡 Pas d'inspiration ? Demande à l'IA</label>
+      <textarea id="offre-contexte" rows="2" placeholder="Optionnel : tes idées de départ, références, contraintes (ex: « offre couple », « lien avec Aura émeraude »…)" style="font-size:0.85rem;"></textarea>
+      <button type="button" class="outline" onclick="genererIdeesOffres()" id="btn-idees-offres" style="margin-top:0.5rem;font-size:0.85rem;background:#fff8e7;border-color:var(--or);color:var(--or);">✨ Trouver 5 idées d'offres</button>
+      <div id="idees-offres-resultat" style="margin-top:0.7rem;"></div>
+    </div>
+
     <!-- Champs gérés par Amila dans /r-and-d — masqués sur /offres pour rester focus sur l'offre -->
     <div style="display:none;">
       <input id="produit-shopify-search">
@@ -741,6 +749,15 @@ function rendreCalendrier() {
   }
 }
 
+function resetIdeesOffres() {
+  const ctx = document.getElementById('offre-contexte');
+  if (ctx) ctx.value = '';
+  const res = document.getElementById('idees-offres-resultat');
+  if (res) res.innerHTML = '';
+  const btn = document.getElementById('btn-idees-offres');
+  if (btn) { btn.disabled = false; btn.textContent = "✨ Trouver 5 idées d'offres"; }
+}
+
 function ouvrirModalAjout(date) {
   modalContexte = { mode: 'ajout', date };
   document.getElementById('modal-title').textContent = `🎁 Nouvelle offre — ${formaterDate(date)}`;
@@ -748,6 +765,7 @@ function ouvrirModalAjout(date) {
   document.getElementById('produit-nom').value = '';
   document.getElementById('produit-shopify-search').value = '';
   document.getElementById('produit-offre').value = '';
+  resetIdeesOffres();
   document.getElementById('produit-type').value = 'addon';
   document.getElementById('produit-etape').value = '1';
   document.getElementById('produit-fournisseur').value = '';
@@ -773,6 +791,7 @@ function ouvrirModalEdit(id) {
   document.getElementById('produit-nom').value = p.nom || '';
   document.getElementById('produit-shopify-search').value = p.shopifySearch || '';
   document.getElementById('produit-offre').value = p.offre || '';
+  resetIdeesOffres();
   document.getElementById('produit-type').value = p.type || 'addon';
   document.getElementById('produit-etape').value = p.etape || '1';
   document.getElementById('produit-fournisseur').value = p.fournisseur || '';
@@ -869,6 +888,74 @@ function formaterDate(iso) {
 function fermerModal() {
   document.getElementById('modal').classList.remove('show');
   modalContexte = null;
+}
+
+async function genererIdeesOffres() {
+  const btn = document.getElementById('btn-idees-offres');
+  const res = document.getElementById('idees-offres-resultat');
+  if (!btn || !res) return;
+  btn.disabled = true; btn.textContent = '⏳ Recherche d\'idées…';
+  res.innerHTML = '';
+
+  // Récupère contexte de la modal
+  const date = (modalContexte && modalContexte.date) || null;
+  const produitNom = document.getElementById('produit-nom').value.trim() || null;
+  const contexte = document.getElementById('offre-contexte').value.trim() || null;
+
+  try {
+    const r = await fetch('/api/r-and-d/idees-offres', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, produitNom, contexte }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.idees) throw new Error(data.error || 'Réponse invalide');
+
+    let html = '';
+    for (let i = 0; i < data.idees.length; i++) {
+      const idee = data.idees[i];
+      const titre = escapeHtml(idee.titre || 'Sans titre');
+      const desc = escapeHtml(idee.description || '');
+      const evenement = escapeHtml(idee.saison_ou_evenement || '');
+      const canal = escapeHtml(idee.canal || '');
+      const duree = escapeHtml(idee.duree_suggeree || '');
+      const score = Math.max(1, Math.min(5, parseInt(idee.potentiel) || 3));
+      const raison = escapeHtml(idee.raisonnement || '');
+      const offreText = `${idee.titre} — ${idee.description}${idee.duree_suggeree ? ' Durée: ' + idee.duree_suggeree + '.' : ''}${idee.canal ? ' Canal: ' + idee.canal + '.' : ''}`;
+      html += `<div style="background:white;border:1px solid var(--or);border-radius:8px;padding:0.7rem;margin-bottom:0.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
+          <strong style="font-size:0.95rem;color:var(--noir);">${titre}</strong>
+          <span style="font-size:0.7rem;color:var(--or);font-weight:600;flex-shrink:0;">${'★'.repeat(score)}${'☆'.repeat(5-score)}</span>
+        </div>
+        <div style="font-size:0.82rem;color:var(--noir);margin-top:0.3rem;line-height:1.4;">${desc}</div>
+        <div style="font-size:0.7rem;color:var(--gris);margin-top:0.3rem;">
+          ${evenement ? '📅 ' + evenement : ''}
+          ${duree ? ' · ⏱ ' + duree : ''}
+          ${canal ? ' · 📢 ' + canal : ''}
+        </div>
+        ${raison ? `<div style="font-size:0.7rem;color:var(--gris);margin-top:0.3rem;font-style:italic;">💡 ${raison}</div>` : ''}
+        <button type="button" class="outline" onclick="utiliserIdeeOffre(${i})" data-offre="${offreText.replace(/"/g,'&quot;')}" style="margin-top:0.5rem;font-size:0.75rem;background:#fff8e7;border-color:var(--or);color:var(--or);">↑ Utiliser cette offre</button>
+      </div>`;
+    }
+    res.innerHTML = html;
+    window._ideesOffres = data.idees;
+  } catch (e) {
+    res.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur : ${escapeHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = "✨ Trouver 5 idées d'offres";
+  }
+}
+
+function utiliserIdeeOffre(idx) {
+  const idee = window._ideesOffres?.[idx];
+  if (!idee) return;
+  // Construit un texte d'offre lisible et compact
+  let texte = idee.titre;
+  if (idee.description) texte += '\n' + idee.description;
+  if (idee.duree_suggeree) texte += `\n⏱ ${idee.duree_suggeree}`;
+  if (idee.canal) texte += `  ·  📢 ${idee.canal}`;
+  document.getElementById('produit-offre').value = texte;
+  document.getElementById('produit-offre').focus();
 }
 
 function sauverProduit() {
