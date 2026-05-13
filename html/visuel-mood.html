@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎨 Visuels Mood — Atelier</title>
+<style>
+  :root {
+    --or: #c9a96e; --noir: #1a1a1a; --gris: #6b6b6b; --gris-clair: #f5f5f5;
+    --rose-mood: #e8b5b8; --bleu-mood: #1e3a8a; --rouge: #c0392b; --vert: #2d8a4e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--noir); background: #fafafa; line-height: 1.5; padding: 1.5rem 1rem; max-width: 1400px; margin: 0 auto; }
+  header { margin-bottom: 1.5rem; }
+  h1 { font-size: 1.6rem; font-weight: 600; }
+  .sous-titre { font-size: 0.9rem; color: var(--gris); margin-top: 0.3rem; }
+  .retour { font-size: 0.85rem; color: var(--gris); text-decoration: none; }
+
+  .step-titre { font-size: 0.85rem; font-weight: 700; color: var(--or); text-transform: uppercase; letter-spacing: 0.08em; margin: 1.4rem 0 0.7rem; }
+
+  /* Templates grid */
+  .templates-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.8rem; }
+  .template-card {
+    background: white; border-radius: 12px; padding: 1rem; cursor: pointer;
+    border: 2px solid transparent; transition: all 0.15s; text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .template-card:hover { border-color: #ddd; transform: translateY(-1px); }
+  .template-card.active { border-color: var(--or); background: #fffdf6; }
+  .template-card .emoji { font-size: 2rem; }
+  .template-card .titre { font-size: 0.95rem; font-weight: 600; margin-top: 0.3rem; }
+  .template-card .desc { font-size: 0.75rem; color: var(--gris); margin-top: 0.2rem; line-height: 1.3; }
+
+  /* Form */
+  .form-bloc { background: white; padding: 1.2rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-top: 0.8rem; }
+  .form-row { display: grid; grid-template-columns: 140px 1fr; gap: 0.8rem; align-items: center; margin-bottom: 0.7rem; }
+  .form-row label { font-size: 0.85rem; font-weight: 500; color: var(--noir); }
+  .form-row label .hint { font-size: 0.72rem; color: var(--gris); font-weight: 400; display: block; margin-top: 0.1rem; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%; padding: 0.5rem 0.7rem; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 0.88rem; font-family: inherit;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: 2px solid var(--or); outline-offset: -1px; border-color: var(--or); }
+
+  /* Palette pills */
+  .palette-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .palette-pill {
+    padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.78rem;
+    cursor: pointer; border: 2px solid transparent; background: var(--gris-clair);
+    transition: all 0.15s;
+  }
+  .palette-pill.active { border-color: var(--noir); }
+  .palette-pill[data-c="rose"] { background: #f8c7c5; }
+  .palette-pill[data-c="rose-vif"] { background: #ec4899; color: white; }
+  .palette-pill[data-c="bleu-ocean"] { background: #1e3a8a; color: white; }
+  .palette-pill[data-c="noir-heritage"] { background: #1a1a1a; color: white; }
+  .palette-pill[data-c="anthracite"] { background: #292928; color: white; }
+  .palette-pill[data-c="creme-or"] { background: #f5e8c8; }
+  .palette-pill[data-c="vert"] { background: #c5d9b8; }
+  .palette-pill[data-c="blanc-pur"] { background: #ffffff; border: 1px solid #ddd; }
+
+  /* Format pills */
+  .format-row { display: flex; gap: 0.4rem; }
+  .format-pill {
+    padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.78rem;
+    cursor: pointer; border: 2px solid #ddd; background: white;
+  }
+  .format-pill.active { border-color: var(--or); background: #fffdf6; }
+
+  /* Photos upload */
+  .photos-zone {
+    border: 2px dashed #d4d4d4; border-radius: 12px; padding: 1.3rem;
+    text-align: center; background: white; cursor: pointer;
+  }
+  .photos-zone:hover { border-color: var(--or); background: #fff8e7; }
+  .photos-zone .hint { font-size: 0.85rem; color: var(--gris); }
+  .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.5rem; margin-top: 0.8rem; }
+  .photo-thumb { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 6px; }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .remove { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 0.8rem; line-height: 1; }
+
+  /* Generate button */
+  .btn-primary {
+    background: var(--noir); color: white; padding: 0.8rem 1.6rem;
+    border: none; border-radius: 999px; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; margin-top: 1rem; transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Preview + textes éditables */
+  .editor-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 1.5rem; margin-top: 1.5rem; }
+  @media (max-width: 900px) { .editor-wrap { grid-template-columns: 1fr; } }
+
+  .canvas-wrap {
+    background: white; border-radius: 12px; padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center;
+  }
+  #canvas-preview { max-width: 100%; max-height: 75vh; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+
+  .panel-textes {
+    background: white; border-radius: 12px; padding: 1.2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); max-height: 80vh; overflow-y: auto;
+  }
+  .panel-textes h3 { font-size: 0.85rem; font-weight: 700; color: var(--or); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; }
+  .panel-textes .form-row { grid-template-columns: 1fr; gap: 0.3rem; }
+  .panel-textes .form-row label { font-size: 0.78rem; }
+  .panel-textes input, .panel-textes textarea { font-size: 0.85rem; }
+
+  .erreur { color: var(--rouge); font-size: 0.85rem; padding: 0.7rem; background: #fee; border-radius: 6px; margin-top: 0.5rem; }
+  .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--or); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.4rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hint-block { font-size: 0.78rem; color: var(--gris); margin-top: 0.3rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="retour">← Atelier</a>
+  <h1>🎨 Visuels Mood</h1>
+  <div class="sous-titre">Crée un visuel post / story prêt à publier — fond généré par IA + vrai logo Mood + textes éditables.</div>
+</header>
+
+<!-- ÉTAPE 1 : choisir un template -->
+<div class="step-titre">1 · Choisis un template</div>
+<div class="templates-grid">
+  <div class="template-card" data-template="promo-flash" onclick="selectTemplate('promo-flash')">
+    <div class="emoji">💥</div>
+    <div class="titre">Promo flash</div>
+    <div class="desc">Gros titre + % + CTA · style "50% RABATT" / "Welcome Spring"</div>
+  </div>
+  <div class="template-card" data-template="collection-lancee" onclick="selectTemplate('collection-lancee')">
+    <div class="emoji">🌊</div>
+    <div class="titre">Collection lancée</div>
+    <div class="desc">Logo + nom collection script + bague hero · style "Océan" / "Riviera Rose"</div>
+  </div>
+  <div class="template-card" data-template="date-butoir" onclick="selectTemplate('date-butoir')">
+    <div class="emoji">⏳</div>
+    <div class="titre">Édition limitée</div>
+    <div class="desc">Tag + % + body + CTA · style "Dernière chance" / "Édition limitée"</div>
+  </div>
+  <div class="template-card" data-template="multi-bagues" onclick="selectTemplate('multi-bagues')">
+    <div class="emoji">💍</div>
+    <div class="titre">Multi-bagues</div>
+    <div class="desc">3-5 bagues + offre centrale + code · style "Hump Day"</div>
+  </div>
+</div>
+
+<!-- ÉTAPE 2 : palette + format + photos + textes -->
+<div id="step-2" style="display:none;">
+  <div class="step-titre">2 · Personnalise</div>
+  <div class="form-bloc">
+
+    <div class="form-row">
+      <label>Palette<span class="hint">ambiance de fond</span></label>
+      <div class="palette-row" id="palette-row">
+        <span class="palette-pill" data-c="rose" onclick="selectPalette('rose')">Rose poudré</span>
+        <span class="palette-pill" data-c="rose-vif" onclick="selectPalette('rose-vif')">Rose vif</span>
+        <span class="palette-pill" data-c="bleu-ocean" onclick="selectPalette('bleu-ocean')">Bleu océan</span>
+        <span class="palette-pill" data-c="noir-heritage" onclick="selectPalette('noir-heritage')">Noir Heritage</span>
+        <span class="palette-pill" data-c="anthracite" onclick="selectPalette('anthracite')">Anthracite Mood</span>
+        <span class="palette-pill" data-c="creme-or" onclick="selectPalette('creme-or')">Crème & or</span>
+        <span class="palette-pill" data-c="vert" onclick="selectPalette('vert')">Vert sauge</span>
+        <span class="palette-pill" data-c="blanc-pur" onclick="selectPalette('blanc-pur')">Blanc pur</span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Format<span class="hint">aspect ratio sortie</span></label>
+      <div class="format-row" id="format-row">
+        <span class="format-pill active" data-f="1:1" onclick="selectFormat('1:1')">📱 Post 1:1</span>
+        <span class="format-pill" data-f="4:5" onclick="selectFormat('4:5')">📷 Portrait 4:5</span>
+        <span class="format-pill" data-f="9:16" onclick="selectFormat('9:16')">📲 Story 9:16</span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label id="photos-label">Photos bagues<span class="hint" id="photos-hint">1 photo</span></label>
+      <div>
+        <div class="photos-zone" onclick="document.getElementById('photos-input').click()">
+          📤 <span class="hint">Glisse-dépose ou clique — JPG/PNG, plusieurs possibles</span>
+        </div>
+        <input type="file" id="photos-input" accept="image/*" multiple style="display:none;" onchange="ajouterPhotos(event)">
+        <div class="photos-grid" id="photos-grid"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Indications IA<span class="hint">optionnel</span></label>
+      <textarea id="note" rows="2" placeholder="Ex : « pétales de sakura au sol », « plage tropicale au coucher de soleil », « velours noir et lueur dorée », « ne pas mettre de feuillage »"></textarea>
+    </div>
+
+    <button class="btn-primary" id="btn-generer" onclick="genererFond()" disabled>🎨 Générer le fond IA</button>
+    <div class="hint-block">Gemini Image · 30-60s · zéro texte / zéro logo dans le fond généré (ajoutés ensuite en overlay)</div>
+
+    <div id="gen-erreur"></div>
+  </div>
+</div>
+
+<!-- ÉTAPE 3 : édition textes + canvas live preview -->
+<div id="step-3" style="display:none;">
+  <div class="step-titre">3 · Édite les textes (aperçu en temps réel)</div>
+  <div class="editor-wrap">
+
+    <div class="canvas-wrap">
+      <canvas id="canvas-preview"></canvas>
+      <button class="btn-primary" id="btn-telecharger" onclick="telecharger()" style="margin-top:0.8rem;">⬇️ Télécharger le visuel PNG</button>
+      <button onclick="resetEditeur()" style="margin-top:0.5rem;background:none;border:none;color:var(--gris);text-decoration:underline;font-size:0.8rem;cursor:pointer;">↻ Régénérer un autre fond</button>
+    </div>
+
+    <div class="panel-textes" id="panel-textes">
+      <!-- Champs injectés dynamiquement selon template -->
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============ ÉTAT ============
+let state = {
+  template: null,
+  palette: 'rose',
+  format: '1:1',
+  photos: [],     // tableau de dataURL
+  textes: {},     // valeurs des champs texte (selon template)
+  fondImage: null, // dataURL du fond généré
+};
+
+// ============ CONFIG TEMPLATES ============
+const TEMPLATES_CONFIG = {
+  'promo-flash': {
+    label: '💥 Promo flash',
+    maxPhotos: 1,
+    fields: [
+      { key: 'titreA', label: 'Gros titre', placeholder: '-50% sur tout' },
+      { key: 'titreB', label: 'Sous-titre', placeholder: '24 h Blitz Sale' },
+      { key: 'codePromo', label: 'Code promo (optionnel)', placeholder: 'WELCOMESPRING' },
+      { key: 'cta', label: 'Bouton CTA', placeholder: 'EN PROFITER' },
+    ],
+    defaults: { titreA: '-50%', titreB: 'pendant 24 h', codePromo: '', cta: 'EN PROFITER' },
+  },
+  'collection-lancee': {
+    label: '🌊 Collection lancée',
+    maxPhotos: 3,
+    fields: [
+      { key: 'labelCollection', label: 'Label (au-dessus du nom)', placeholder: 'Collection' },
+      { key: 'nomCollection', label: 'Nom collection (script)', placeholder: 'océan' },
+      { key: 'sousTitre', label: 'Sous-titre', placeholder: 'Créations disponibles uniquement jusqu\'au 11 mai 2026' },
+      { key: 'cta', label: 'Bouton CTA', placeholder: 'JE DÉCOUVRE' },
+    ],
+    defaults: { labelCollection: 'Collection', nomCollection: 'océan', sousTitre: 'Créations disponibles uniquement', cta: 'JE DÉCOUVRE' },
+  },
+  'date-butoir': {
+    label: '⏳ Édition limitée',
+    maxPhotos: 1,
+    fields: [
+      { key: 'tag', label: 'Tag (en haut)', placeholder: 'ÉDITION LIMITÉE' },
+      { key: 'gros', label: 'Texte fort', placeholder: '-50%' },
+      { key: 'sousTitre', label: 'Sous-titre', placeholder: 'pendant 24 heures seulement' },
+      { key: 'body', label: 'Corps texte (2 lignes max)', placeholder: '23 modèles revisités\nFinitions émaillées Signature' },
+      { key: 'cta', label: 'Bouton CTA', placeholder: 'DÉCOUVRIR →' },
+    ],
+    defaults: { tag: 'ÉDITION LIMITÉE', gros: '-50%', sousTitre: 'pendant 24 heures seulement', body: '23 modèles revisités\nFinitions émaillées Signature', cta: 'DÉCOUVRIR →' },
+  },
+  'multi-bagues': {
+    label: '💍 Multi-bagues',
+    maxPhotos: 5,
+    fields: [
+      { key: 'titreA', label: 'Gros titre', placeholder: 'HUMP DAY' },
+      { key: 'gros', label: '%', placeholder: '55%' },
+      { key: 'sousTitre', label: 'Sous-titre', placeholder: 'dès 3 dans ton panier' },
+      { key: 'body', label: 'Body', placeholder: 'parmi cette sélection colorée' },
+      { key: 'codePromo', label: 'Code promo', placeholder: 'COLORSSS' },
+      { key: 'cta', label: 'Bouton CTA (optionnel)', placeholder: 'JE PROFITE' },
+    ],
+    defaults: { titreA: 'HUMP DAY', gros: '55%', sousTitre: 'dès 3 dans ton panier', body: 'parmi cette sélection colorée', codePromo: 'COLORSSS', cta: '' },
+  },
+};
+
+// ============ ÉTAPE 1 : SÉLECTION TEMPLATE ============
+function selectTemplate(t) {
+  state.template = t;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.toggle('active', c.dataset.template === t));
+  document.getElementById('step-2').style.display = 'block';
+  const cfg = TEMPLATES_CONFIG[t];
+  document.getElementById('photos-hint').textContent = cfg.maxPhotos === 1 ? '1 photo' : `1 à ${cfg.maxPhotos} photos`;
+  state.textes = { ...cfg.defaults };
+  refreshGenererBtn();
+}
+
+// ============ PALETTE ============
+function selectPalette(p) {
+  state.palette = p;
+  document.querySelectorAll('.palette-pill').forEach(el => el.classList.toggle('active', el.dataset.c === p));
+}
+selectPalette('rose');
+
+// ============ FORMAT ============
+function selectFormat(f) {
+  state.format = f;
+  document.querySelectorAll('.format-pill').forEach(el => el.classList.toggle('active', el.dataset.f === f));
+}
+
+// ============ PHOTOS ============
+async function ajouterPhotos(e) {
+  const files = Array.from(e.target.files || []);
+  const cfg = state.template ? TEMPLATES_CONFIG[state.template] : { maxPhotos: 1 };
+  for (const file of files) {
+    if (state.photos.length >= cfg.maxPhotos) break;
+    if (!file.type.startsWith('image/')) continue;
+    try {
+      const dataUrl = await compresserImage(file, 1280, 0.88);
+      state.photos.push(dataUrl);
+    } catch (err) {
+      alert('Image illisible : ' + (err.message || err));
+    }
+  }
+  e.target.value = '';
+  renderPhotos();
+  refreshGenererBtn();
+}
+
+function renderPhotos() {
+  const grid = document.getElementById('photos-grid');
+  grid.innerHTML = state.photos.map((p, i) =>
+    `<div class="photo-thumb"><img src="${p}"><button class="remove" onclick="supprPhoto(${i})">×</button></div>`
+  ).join('');
+}
+
+function supprPhoto(i) {
+  state.photos.splice(i, 1);
+  renderPhotos();
+  refreshGenererBtn();
+}
+
+function compresserImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Lecture impossible'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Image illisible'));
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio); h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function refreshGenererBtn() {
+  const btn = document.getElementById('btn-generer');
+  btn.disabled = !state.template || state.photos.length === 0;
+}
+
+// ============ GÉNÉRATION FOND ============
+async function genererFond() {
+  const btn = document.getElementById('btn-generer');
+  const errZone = document.getElementById('gen-erreur');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Génération en cours…';
+  errZone.innerHTML = '';
+
+  try {
+    const note = document.getElementById('note').value.trim() || null;
+    const r = await fetch('/api/visuel-mood-fond', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        template: state.template,
+        palette: state.palette,
+        format: state.format,
+        photos: state.photos,
+        note,
+      }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}). Début : « ${text.slice(0, 200)} »`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image renvoyée');
+
+    state.fondImage = data.image;
+    document.getElementById('step-3').style.display = 'block';
+    renderPanelTextes();
+    await renderCanvas();
+    setTimeout(() => document.getElementById('step-3').scrollIntoView({ behavior: 'smooth' }), 100);
+  } catch (e) {
+    errZone.innerHTML = `<div class="erreur">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🎨 Générer le fond IA';
+  }
+}
+
+// ============ PANEL TEXTES ============
+function renderPanelTextes() {
+  const cfg = TEMPLATES_CONFIG[state.template];
+  const panel = document.getElementById('panel-textes');
+  let html = `<h3>${cfg.label} — textes</h3>`;
+  for (const f of cfg.fields) {
+    const val = state.textes[f.key] ?? '';
+    if (f.key === 'body') {
+      html += `<div class="form-row"><label>${f.label}</label><textarea rows="2" id="t-${f.key}" oninput="onTexte('${f.key}', this.value)" placeholder="${escapeAttr(f.placeholder)}">${escapeHtml(val)}</textarea></div>`;
+    } else {
+      html += `<div class="form-row"><label>${f.label}</label><input type="text" id="t-${f.key}" value="${escapeAttr(val)}" oninput="onTexte('${f.key}', this.value)" placeholder="${escapeAttr(f.placeholder)}"></div>`;
+    }
+  }
+  panel.innerHTML = html;
+}
+
+function onTexte(key, value) {
+  state.textes[key] = value;
+  renderCanvas();
+}
+
+// ============ CANVAS RENDER ============
+const LOGO_SRC = '/logo-mood.jpg';
+let logoImage = null;
+function preloadLogo() {
+  return new Promise((resolve) => {
+    if (logoImage) return resolve(logoImage);
+    const img = new Image();
+    img.onload = () => { logoImage = img; resolve(img); };
+    img.onerror = () => resolve(null);
+    img.src = LOGO_SRC;
+  });
+}
+
+function dimsForFormat(fmt) {
+  if (fmt === '1:1') return { w: 1080, h: 1080 };
+  if (fmt === '4:5') return { w: 1080, h: 1350 };
+  if (fmt === '9:16') return { w: 1080, h: 1920 };
+  return { w: 1080, h: 1080 };
+}
+
+async function renderCanvas() {
+  if (!state.fondImage) return;
+  const cnv = document.getElementById('canvas-preview');
+  const { w, h } = dimsForFormat(state.format);
+  cnv.width = w; cnv.height = h;
+  const ctx = cnv.getContext('2d');
+
+  // Fond
+  const fond = await loadImage(state.fondImage);
+  ctx.drawImage(fond, 0, 0, w, h);
+
+  // Logo
+  const logo = await preloadLogo();
+
+  // Dessin selon template
+  switch (state.template) {
+    case 'promo-flash': drawPromoFlash(ctx, w, h, logo); break;
+    case 'collection-lancee': drawCollectionLancee(ctx, w, h, logo); break;
+    case 'date-butoir': drawDateButoir(ctx, w, h, logo); break;
+    case 'multi-bagues': drawMultiBagues(ctx, w, h, logo); break;
+  }
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Image non chargée'));
+    img.src = src;
+  });
+}
+
+// Détermine couleur texte selon palette (sombre vs clair)
+function textColorForPalette() {
+  const dark = ['rose', 'creme-or', 'vert', 'blanc-pur', 'rose-vif'];
+  return dark.includes(state.palette) ? '#1a1a1a' : '#ffffff';
+}
+function textColorContrast() {
+  return textColorForPalette() === '#ffffff' ? '#1a1a1a' : '#ffffff';
+}
+function pillFillColor() {
+  const c = textColorForPalette();
+  return c === '#ffffff' ? 'rgba(255,255,255,0.9)' : 'rgba(26,26,26,0.9)';
+}
+function pillTextColor() {
+  return textColorContrast();
+}
+
+// Dessine logo Mood en haut centre (avec fond effacé approximatif via blend)
+function drawLogoTop(ctx, cw, _ch, logo, opts = {}) {
+  if (!logo) return;
+  const targetW = opts.width ?? cw * 0.28;
+  const ratio = logo.naturalHeight / logo.naturalWidth;
+  const lw = targetW;
+  const lh = lw * ratio;
+  const lx = opts.x ?? (cw - lw) / 2;
+  const ly = opts.y ?? cw * 0.04;
+
+  // Si palette sombre : le logo noir disparaîtrait → inverser via dessin en blanc
+  const isDarkBg = textColorForPalette() === '#ffffff';
+  if (isDarkBg) {
+    // Truc : on dessine un rectangle, puis on applique le logo en source-in puis on remplit en blanc
+    const off = document.createElement('canvas');
+    off.width = logo.naturalWidth; off.height = logo.naturalHeight;
+    const octx = off.getContext('2d');
+    octx.drawImage(logo, 0, 0);
+    octx.globalCompositeOperation = 'source-in';
+    octx.fillStyle = '#ffffff';
+    octx.fillRect(0, 0, off.width, off.height);
+    // Plus simple : inverser les couleurs via filter
+    ctx.save();
+    ctx.filter = 'invert(1)';
+    ctx.drawImage(logo, lx, ly, lw, lh);
+    ctx.restore();
+  } else {
+    // Logo a un fond blanc — on le dessine via multiply pour masquer le blanc
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.drawImage(logo, lx, ly, lw, lh);
+    ctx.restore();
+  }
+}
+
+// Pilule CTA
+function drawCtaPill(ctx, cw, ch, text, opts = {}) {
+  if (!text) return;
+  const fontSize = opts.fontSize ?? cw * 0.038;
+  ctx.font = `700 ${fontSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+  const padX = cw * 0.06;
+  const padY = fontSize * 0.65;
+  const textW = ctx.measureText(text).width;
+  const pillW = textW + padX * 2;
+  const pillH = fontSize + padY * 2;
+  const cx = opts.cx ?? cw / 2;
+  const cy = opts.cy ?? ch - cw * 0.1;
+  const x = cx - pillW / 2;
+  const y = cy - pillH / 2;
+  const r = pillH / 2;
+
+  ctx.fillStyle = pillFillColor();
+  roundRect(ctx, x, y, pillW, pillH, r);
+  ctx.fill();
+  ctx.fillStyle = pillTextColor();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, cx, cy);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const lines = String(text).split('\n');
+  let curY = y;
+  for (const line of lines) {
+    const words = line.split(' ');
+    let cur = '';
+    for (const word of words) {
+      const test = cur ? cur + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && cur) {
+        ctx.fillText(cur, x, curY);
+        curY += lineHeight;
+        cur = word;
+      } else {
+        cur = test;
+      }
+    }
+    if (cur) { ctx.fillText(cur, x, curY); curY += lineHeight; }
+  }
+  return curY;
+}
+
+// ====== TEMPLATE 1 : PROMO FLASH ======
+function drawPromoFlash(ctx, w, h, logo) {
+  drawLogoTop(ctx, w, h, logo, { width: w * 0.22, y: w * 0.04 });
+
+  const color = textColorForPalette();
+  const t = state.textes;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+  // Gros titre
+  const titreY = w * 0.18;
+  const titreSize = w * 0.13;
+  ctx.font = `800 ${titreSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+  ctx.fillStyle = color;
+  if (t.titreA) wrapText(ctx, t.titreA.toUpperCase(), w / 2, titreY, w * 0.9, titreSize * 1.05);
+
+  // Sous-titre
+  if (t.titreB) {
+    const sousY = titreY + titreSize * 1.5;
+    const sousSize = w * 0.04;
+    ctx.font = `500 ${sousSize}px "Snell Roundhand", "Lucida Handwriting", cursive`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.titreB, w / 2, sousY);
+  }
+
+  // Code promo
+  if (t.codePromo) {
+    const codeY = h * 0.55;
+    const codeSize = w * 0.035;
+    ctx.font = `600 ${codeSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText('Code · ' + t.codePromo, w / 2, codeY);
+  }
+
+  // CTA
+  drawCtaPill(ctx, w, h, (t.cta || '').toUpperCase(), { cy: h - w * 0.09 });
+}
+
+// ====== TEMPLATE 2 : COLLECTION LANCÉE ======
+function drawCollectionLancee(ctx, w, h, logo) {
+  drawLogoTop(ctx, w, h, logo, { width: w * 0.26, y: w * 0.07 });
+
+  const color = textColorForPalette();
+  const t = state.textes;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+  // Petit "Collection"
+  if (t.labelCollection) {
+    const labY = h * 0.21;
+    const labSize = w * 0.034;
+    ctx.font = `400 ${labSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.letterSpacing = '4px';
+    ctx.fillText(t.labelCollection, w / 2, labY);
+  }
+
+  // Nom collection en script
+  if (t.nomCollection) {
+    const nomY = h * 0.26;
+    const nomSize = w * 0.18;
+    ctx.font = `italic 400 ${nomSize}px "Snell Roundhand", "Apple Chancery", "Lucida Handwriting", cursive`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.nomCollection, w / 2, nomY);
+
+    // ligne fine ornement
+    const lineY = nomY + nomSize * 1.05;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(w * 0.4, lineY); ctx.lineTo(w * 0.6, lineY); ctx.stroke();
+  }
+
+  // Sous-titre
+  if (t.sousTitre) {
+    const sousY = h * 0.48;
+    const sousSize = w * 0.028;
+    ctx.font = `300 ${sousSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    wrapText(ctx, t.sousTitre, w / 2, sousY, w * 0.7, sousSize * 1.3);
+  }
+
+  // CTA
+  drawCtaPill(ctx, w, h, (t.cta || '').toUpperCase() + (t.cta ? '  →' : ''), { cy: h - w * 0.08 });
+}
+
+// ====== TEMPLATE 3 : ÉDITION LIMITÉE ======
+function drawDateButoir(ctx, w, h, logo) {
+  drawLogoTop(ctx, w, h, logo, { width: w * 0.2, y: w * 0.04 });
+
+  const color = textColorForPalette();
+  const t = state.textes;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+
+  const padX = w * 0.07;
+  let curY = h * 0.2;
+
+  // Tag (ÉDITION LIMITÉE)
+  if (t.tag) {
+    const tagSize = w * 0.026;
+    ctx.font = `600 ${tagSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = '#c9a96e';
+    ctx.fillText(t.tag.toUpperCase(), padX, curY);
+    curY += tagSize * 2;
+  }
+
+  // Gros texte
+  if (t.gros) {
+    const grosSize = w * 0.14;
+    ctx.font = `300 ${grosSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.gros, padX, curY);
+    curY += grosSize * 1.1;
+  }
+
+  // Sous-titre
+  if (t.sousTitre) {
+    const sousSize = w * 0.028;
+    ctx.font = `400 ${sousSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.sousTitre, padX, curY);
+    curY += sousSize * 2.2;
+  }
+
+  // Body
+  if (t.body) {
+    const bodySize = w * 0.022;
+    ctx.font = `300 ${bodySize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    curY = wrapText(ctx, t.body, padX, curY, w * 0.45, bodySize * 1.5);
+  }
+
+  // CTA aligné gauche
+  if (t.cta) {
+    ctx.textAlign = 'left';
+    const ctaY = h - w * 0.12;
+    const ctaSize = w * 0.034;
+    ctx.font = `600 ${ctaSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.cta, padX, ctaY);
+    // soulignement
+    const tw = ctx.measureText(t.cta).width;
+    ctx.strokeStyle = color; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padX, ctaY + ctaSize * 1.1); ctx.lineTo(padX + tw, ctaY + ctaSize * 1.1); ctx.stroke();
+  }
+}
+
+// ====== TEMPLATE 4 : MULTI-BAGUES ======
+function drawMultiBagues(ctx, w, h, logo) {
+  drawLogoTop(ctx, w, h, logo, { width: w * 0.18, y: w * 0.03 });
+
+  const color = textColorForPalette();
+  const t = state.textes;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+
+  // Gros titre
+  if (t.titreA) {
+    const tY = h * 0.13;
+    const tSize = w * 0.11;
+    ctx.font = `800 ${tSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.titreA.toUpperCase(), w / 2, tY);
+  }
+
+  // %
+  if (t.gros) {
+    const pY = h * 0.34;
+    const pSize = w * 0.16;
+    ctx.font = `800 ${pSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.gros, w / 2, pY);
+  }
+
+  // Sous-titre
+  if (t.sousTitre) {
+    const sY = h * 0.5;
+    const sSize = w * 0.034;
+    ctx.font = `600 ${sSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.sousTitre.toUpperCase(), w / 2, sY);
+  }
+
+  // Body
+  if (t.body) {
+    const bY = h * 0.55;
+    const bSize = w * 0.024;
+    ctx.font = `300 italic ${bSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    ctx.fillStyle = color;
+    ctx.fillText(t.body, w / 2, bY);
+  }
+
+  // Code promo pill
+  if (t.codePromo) {
+    const cY = h - w * 0.18;
+    const cSize = w * 0.03;
+    ctx.font = `700 ${cSize}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+    const txt = 'CODE · ' + t.codePromo;
+    const padX = w * 0.05; const padY = cSize * 0.6;
+    const tw = ctx.measureText(txt).width;
+    const pillW = tw + padX * 2; const pillH = cSize + padY * 2;
+    const cx = w / 2; const x = cx - pillW / 2; const y = cY - pillH / 2;
+    ctx.fillStyle = pillFillColor();
+    roundRect(ctx, x, y, pillW, pillH, pillH / 2); ctx.fill();
+    ctx.fillStyle = pillTextColor();
+    ctx.textBaseline = 'middle';
+    ctx.fillText(txt, cx, cY);
+    ctx.textBaseline = 'top';
+  }
+
+  // CTA optionnel
+  if (t.cta) drawCtaPill(ctx, w, h, t.cta.toUpperCase(), { cy: h - w * 0.07 });
+}
+
+// ============ TÉLÉCHARGER ============
+function telecharger() {
+  const cnv = document.getElementById('canvas-preview');
+  const a = document.createElement('a');
+  const ts = Date.now();
+  a.href = cnv.toDataURL('image/png');
+  a.download = `mood-${state.template}-${state.format.replace(':', 'x')}-${ts}.png`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function resetEditeur() {
+  state.fondImage = null;
+  document.getElementById('step-3').style.display = 'none';
+  document.getElementById('btn-generer').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============ UTILS ============
+function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+
+// Preload logo au boot
+preloadLogo();
+</script>
+</body>
+</html>

@@ -126,6 +126,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Upload une photo : fond blanc/anthracite, nettoyage, multi-formats sociaux, bague portée, thèmes saisonniers — et rotation 360° en vidéo MP4 (IA Kling).",
       },
       {
+        href: "/visuel-mood",
+        emoji: "🎨",
+        title: "Visuels Mood",
+        description: "Crée un visuel post / story prêt à publier : 4 templates (promo flash, collection lancée, édition limitée, multi-bagues) · fond IA + vrai logo Mood + textes éditables.",
+      },
+      {
         href: "/perso",
         emoji: "🖋️",
         title: "Personnalisation",
