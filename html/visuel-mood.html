@@ -364,6 +364,7 @@ let state = {
   fondCouleurVide: '#1a1a1a', // couleur de remplissage si fond redimensionné < canvas
   textesFonts: {},     // override police par texte : { key: 'sans' | 'serif' | 'script' | ... }
   textesCustom: [],    // textes ajoutés librement : [{ id, content }]
+  editingVisuelId: null, // si on édite un visuel enregistré, son id
 };
 
 // Bibliothèque de polices disponibles
@@ -457,6 +458,7 @@ const TEMPLATES_CONFIG = {
 // ============ ÉTAPE 1 : SÉLECTION TEMPLATE ============
 function selectTemplate(t) {
   state.template = t;
+  state.editingVisuelId = null; // changement de template = nouvelle création
   document.querySelectorAll('.template-card').forEach(c => c.classList.toggle('active', c.dataset.template === t));
   document.getElementById('step-2').style.display = 'block';
   const cfg = TEMPLATES_CONFIG[t];
@@ -653,9 +655,11 @@ async function genererFond() {
     if (!data.image) throw new Error('Pas d\'image renvoyée');
 
     state.fondImage = data.image;
+    state.editingVisuelId = null; // nouveau fond = nouvelle création
     document.getElementById('step-3').style.display = 'block';
     renderPanelTextes();
     await renderCanvas();
+    majBoutonEnregistrer();
     setTimeout(() => document.getElementById('step-3').scrollIntoView({ behavior: 'smooth' }), 100);
   } catch (e) {
     errZone.innerHTML = `<div class="erreur">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
@@ -1927,8 +1931,10 @@ async function ouvrirImageNouvelOnglet() {
 function resetEditeur() {
   state.fondImage = null;
   state.selectedKey = null;
+  state.editingVisuelId = null;
   document.getElementById('step-3').style.display = 'none';
   refreshElementToolbar();
+  majBoutonEnregistrer();
   document.getElementById('btn-generer').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -1994,9 +2000,28 @@ async function rafraichirNbVisuels() {
   }
 }
 
+// Snapshot de l'état éditable (pour restaurer un visuel enregistré)
+function snapshotEtat() {
+  return {
+    template: state.template,
+    palette: state.palette,
+    format: state.format,
+    fondImage: state.fondImage,
+    textes: JSON.parse(JSON.stringify(state.textes)),
+    textesCouleurs: JSON.parse(JSON.stringify(state.textesCouleurs)),
+    textesFonts: JSON.parse(JSON.stringify(state.textesFonts)),
+    textesCustom: JSON.parse(JSON.stringify(state.textesCustom)),
+    layout: JSON.parse(JSON.stringify(state.layout)),
+    logo: JSON.parse(JSON.stringify(state.logo)),
+    langue: state.langue,
+    baguePortee: state.baguePortee,
+    duoStyle: state.duoStyle,
+    fondCouleurVide: state.fondCouleurVide,
+  };
+}
+
 async function enregistrerVisuel() {
   if (!state.fondImage) return;
-  // Re-render sans markers
   const savedSelected = state.selectedKey;
   state.selectedKey = null;
   await renderCanvas();
@@ -2009,7 +2034,8 @@ async function enregistrerVisuel() {
       await renderCanvas();
       return;
     }
-    const id = 'v-' + Date.now();
+    // Réutilise l'id si on est en mode édition d'un visuel existant
+    const id = state.editingVisuelId || ('v-' + Date.now());
     const titre = (state.textes.titreA || state.textes.nomCollection || state.textes.gros || 'Visuel') + ' · ' + state.template;
     try {
       await dbSaveVisuel({
@@ -2020,9 +2046,10 @@ async function enregistrerVisuel() {
         format: state.format,
         palette: state.palette,
         titre,
+        etat: snapshotEtat(),
       });
+      state.editingVisuelId = id; // garde l'édition active
       await rafraichirNbVisuels();
-      // Petite confirmation visuelle
       const btnMes = document.getElementById('btn-mes-visuels');
       const oldBg = btnMes.style.background;
       btnMes.style.background = 'var(--vert)';
@@ -2033,12 +2060,73 @@ async function enregistrerVisuel() {
         btnMes.style.color = 'var(--or)';
         btnMes.style.borderColor = 'var(--or)';
       }, 1200);
+      majBoutonEnregistrer();
     } catch (e) {
       alert("Erreur d'enregistrement : " + (e.message || e));
     }
     state.selectedKey = savedSelected;
     await renderCanvas();
   }, 'image/png');
+}
+
+function majBoutonEnregistrer() {
+  // Renomme le bouton si on édite un visuel existant
+  const btns = document.querySelectorAll('button[onclick="enregistrerVisuel()"]');
+  for (const btn of btns) {
+    btn.innerHTML = state.editingVisuelId ? '💾 Mettre à jour le visuel' : '💾 Enregistrer dans mes visuels';
+  }
+}
+
+// Restaure un visuel enregistré dans l'éditeur (re-édition)
+async function chargerVisuel(id) {
+  try {
+    const db = await openVisuelsDB();
+    const visuel = await new Promise((resolve, reject) => {
+      const req = db.transaction(VISUELS_STORE, 'readonly').objectStore(VISUELS_STORE).get(id);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    if (!visuel || !visuel.etat) {
+      alert("Ce visuel ne peut pas être ré-édité (probablement enregistré avant la mise à jour de l'app).");
+      return;
+    }
+    const e = visuel.etat;
+    state.template = e.template;
+    state.palette = e.palette;
+    state.format = e.format;
+    state.fondImage = e.fondImage;
+    state.textes = { ...e.textes };
+    state.textesCouleurs = { ...e.textesCouleurs };
+    state.textesFonts = { ...e.textesFonts };
+    state.textesCustom = JSON.parse(JSON.stringify(e.textesCustom || []));
+    state.layout = { ...e.layout };
+    state.logo = { ...e.logo };
+    state.langue = e.langue || 'fr';
+    state.baguePortee = !!e.baguePortee;
+    state.duoStyle = e.duoStyle || 'split';
+    state.fondCouleurVide = e.fondCouleurVide || '#1a1a1a';
+    state.selectedKey = null;
+    state.editingVisuelId = id;
+
+    fermerMesVisuels();
+
+    // Highlight du bon template
+    document.querySelectorAll('.template-card').forEach(c => c.classList.toggle('active', c.dataset.template === state.template));
+    document.getElementById('step-2').style.display = 'block';
+    document.getElementById('step-3').style.display = 'block';
+
+    // Mise à jour du UI palette/format
+    document.querySelectorAll('.palette-pill').forEach(el => el.classList.toggle('active', el.dataset.c === state.palette));
+    document.querySelectorAll('.format-pill').forEach(el => el.classList.toggle('active', el.dataset.f === state.format));
+
+    renderPanelTextes();
+    await renderCanvas();
+    majBoutonEnregistrer();
+
+    setTimeout(() => document.getElementById('step-3').scrollIntoView({ behavior: 'smooth' }), 100);
+  } catch (err) {
+    alert("Erreur lors du chargement : " + (err.message || err));
+  }
 }
 
 async function ouvrirMesVisuels() {
@@ -2057,12 +2145,14 @@ async function ouvrirMesVisuels() {
       const url = URL.createObjectURL(v.blob);
       const date = new Date(v.dateAjout).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
       const filename = `mood-${v.template}-${v.format.replace(':', 'x')}-${v.id}.png`;
+      const canEdit = !!v.etat;
       html += `<div style="background:#fafafa;border-radius:10px;padding:0.7rem;display:flex;flex-direction:column;gap:0.5rem;">
-        <img src="${url}" alt="${escapeAttr(v.titre)}" style="width:100%;aspect-ratio:1;object-fit:contain;background:white;border-radius:6px;">
+        <img src="${url}" alt="${escapeAttr(v.titre)}" style="width:100%;aspect-ratio:1;object-fit:contain;background:white;border-radius:6px;cursor:${canEdit ? 'pointer' : 'default'};" ${canEdit ? `onclick="chargerVisuel('${v.id}')"` : ''}>
         <div style="font-size:0.85rem;font-weight:600;line-height:1.3;">${escapeHtml(v.titre)}</div>
         <div style="font-size:0.72rem;color:var(--gris);">${date} · ${v.format} · ${v.palette}</div>
-        <div style="display:flex;gap:0.4rem;">
-          <a href="${url}" download="${filename}" style="flex:1;text-align:center;background:var(--noir);color:white;padding:0.45rem;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">⬇️ Télécharger</a>
+        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+          ${canEdit ? `<button onclick="chargerVisuel('${v.id}')" style="flex:1;background:var(--or);color:white;border:none;padding:0.45rem;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;">✏️ Modifier</button>` : ''}
+          <a href="${url}" download="${filename}" style="flex:1;text-align:center;background:var(--noir);color:white;padding:0.45rem;border-radius:6px;font-size:0.78rem;font-weight:600;text-decoration:none;">⬇️</a>
           <button onclick="supprimerVisuel('${v.id}')" style="background:#fee;color:var(--rouge);border:none;padding:0.45rem 0.7rem;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;">🗑️</button>
         </div>
       </div>`;
