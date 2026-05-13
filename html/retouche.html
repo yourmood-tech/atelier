@@ -184,19 +184,48 @@ function handleFileChosen(e) {
   if (file && file.type.startsWith('image/')) chargerFichier(file);
 }
 
-function chargerFichier(file) {
-  // Optionnel : compresser si trop gros (> 4 Mo) pour ne pas exploser la requête
-  const reader = new FileReader();
-  reader.onload = e => {
-    imageActuelle = e.target.result;
+async function chargerFichier(file) {
+  // Convertir + compresser : iPhone HEIC → JPEG, gros fichiers → max 2048px
+  // Évite que Gemini refuse l'image (format non supporté, taille excessive)
+  try {
+    imageActuelle = await compresserImage(file, 2048, 0.92);
     document.getElementById('img-original').src = imageActuelle;
     document.getElementById('upload-empty').style.display = 'none';
     document.getElementById('upload-preview').style.display = 'block';
     dropZone.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('resultats').innerHTML = '';
-  };
-  reader.readAsDataURL(file);
+  } catch (e) {
+    alert('Impossible de charger cette image : ' + (e.message || e) + '. Essaie un JPG ou PNG standard.');
+  }
+}
+
+// Convertit l'image en JPEG, redimensionne si trop grande, retourne dataURL
+function compresserImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Lecture impossible (peut-être un format HEIC non supporté en JS — convertis-la en JPG sur iPhone : Réglages > Caméra > Formats > Le plus compatible)'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Image illisible (format non supporté). Convertis-la en JPG ou PNG.'));
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight;
+        // Redimensionner si trop grand
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 // ============ ACTIONS ============
