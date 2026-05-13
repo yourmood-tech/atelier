@@ -730,10 +730,20 @@ function rendreCalendrier() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  // Détermine quel est le mois courant pour masquer les mois passés par défaut
+  const todayD = new Date();
+  const moisCourant = todayD.getMonth();
+  const anneeCourante = todayD.getFullYear();
+
   for (let mois = 0; mois < 12; mois++) {
     const semaines = calculerSemainesMois(annee, mois);
     const moisDiv = document.createElement('div');
     moisDiv.className = 'month';
+
+    // Mois passé = avant le mois courant de l'année courante OU année précédente
+    const estPasse = (annee < anneeCourante) || (annee === anneeCourante && mois < moisCourant);
+    const moisOuvert = !estPasse; // courant et futurs : ouverts ; passés : masqués
+    moisDiv.dataset.collapsed = estPasse ? 'true' : 'false';
 
     // Récap mensuel : produits dont la date appartient à ce mois
     const produitsDuMois = donnees.produits.filter(p => {
@@ -742,9 +752,13 @@ function rendreCalendrier() {
       return d.getMonth() === mois && d.getFullYear() === annee;
     });
 
-    let html = `<div class="month-header">
-      <div class="month-title">${NOMS_MOIS[mois]} ${annee}</div>
-    </div>`;
+    let html = `<div class="month-header" onclick="toggleMois(this)" style="cursor:pointer;user-select:none;">
+      <div class="month-title">
+        <span class="mois-chevron" style="display:inline-block;margin-right:0.5rem;transition:transform 0.2s;${estPasse ? '' : 'transform:rotate(90deg);'}">▶</span>
+        ${NOMS_MOIS[mois]} ${annee}${estPasse ? ' <span style="font-size:0.7rem;color:var(--gris);font-weight:400;">(passé — clique pour ouvrir)</span>' : ''}
+      </div>
+    </div>
+    <div class="month-content" style="${estPasse ? 'display:none;' : ''}">`;
 
     // Récap mensuel : ventes Shopify Mood GLOBALES du mois (pas par produit)
     const ventesShopify = ventesParMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
@@ -849,9 +863,29 @@ function rendreCalendrier() {
       </div>`;
     }
 
-    html += `</div>`;
+    html += `</div></div>`; // ferme .weeks + .month-content
     moisDiv.innerHTML = html;
     cal.appendChild(moisDiv);
+  }
+}
+
+function toggleMois(headerEl) {
+  const moisDiv = headerEl.parentElement;
+  const content = moisDiv.querySelector('.month-content');
+  const chevron = headerEl.querySelector('.mois-chevron');
+  if (!content) return;
+  const collapsed = moisDiv.dataset.collapsed === 'true';
+  if (collapsed) {
+    content.style.display = '';
+    moisDiv.dataset.collapsed = 'false';
+    if (chevron) chevron.style.transform = 'rotate(90deg)';
+    // Retire la mention "(passé)" quand ouvert
+    const span = headerEl.querySelector('.month-title span:not(.mois-chevron)');
+    if (span) span.remove();
+  } else {
+    content.style.display = 'none';
+    moisDiv.dataset.collapsed = 'true';
+    if (chevron) chevron.style.transform = '';
   }
 }
 
