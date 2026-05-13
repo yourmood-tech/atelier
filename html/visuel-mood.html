@@ -166,6 +166,11 @@
     <div class="titre">Multi-bagues</div>
     <div class="desc">3-5 bagues + offre centrale + code · style "Hump Day"</div>
   </div>
+  <div class="template-card" data-template="bague-portee" onclick="selectTemplate('bague-portee')">
+    <div class="emoji">👩‍🦰</div>
+    <div class="titre">Bague portée</div>
+    <div class="desc">Modèle féminin portant la bague · style éditorial luxe magazine</div>
+  </div>
 </div>
 
 <!-- ÉTAPE 2 : palette + format + photos + textes -->
@@ -237,6 +242,18 @@
 
     <div class="canvas-wrap">
       <canvas id="canvas-preview"></canvas>
+
+      <!-- Barre d'outils élément sélectionné (apparaît au clic) -->
+      <div id="element-toolbar" style="display:none;margin-top:0.6rem;padding:0.7rem 0.9rem;background:#fffdf6;border:1px solid var(--or);border-radius:10px;flex-wrap:wrap;align-items:center;gap:0.5rem;width:100%;max-width:600px;">
+        <span id="el-name" style="font-size:0.78rem;font-weight:700;color:var(--or);text-transform:uppercase;letter-spacing:0.05em;flex:1;min-width:120px;"></span>
+        <button onclick="elZoom(-0.1)" style="width:32px;height:32px;border:1px solid #ddd;border-radius:6px;background:white;font-size:1.1rem;font-weight:700;cursor:pointer;">−</button>
+        <input type="range" id="el-scale" min="20" max="400" step="5" value="100" oninput="elZoomSet(this.value)" style="flex:1;min-width:120px;">
+        <span id="el-scale-label" style="font-size:0.78rem;color:var(--gris);min-width:48px;text-align:right;">100%</span>
+        <button onclick="elZoom(0.1)" style="width:32px;height:32px;border:1px solid #ddd;border-radius:6px;background:white;font-size:1.1rem;font-weight:700;cursor:pointer;">+</button>
+        <button onclick="elReset()" style="padding:0.35rem 0.7rem;border:1px solid #ddd;border-radius:6px;background:white;font-size:0.78rem;cursor:pointer;">↻ Reset</button>
+        <button onclick="elDeselect()" style="padding:0.35rem 0.7rem;border:1px solid #ddd;border-radius:6px;background:white;font-size:0.78rem;cursor:pointer;">× Désélectionner</button>
+      </div>
+
       <button class="btn-primary" id="btn-telecharger" onclick="telecharger()" style="margin-top:0.8rem;">⬇️ Télécharger le visuel PNG</button>
       <button onclick="resetEditeur()" style="margin-top:0.5rem;background:none;border:none;color:var(--gris);text-decoration:underline;font-size:0.8rem;cursor:pointer;">↻ Régénérer un autre fond</button>
     </div>
@@ -322,6 +339,18 @@ const TEMPLATES_CONFIG = {
     ],
     defaults: { titreA: 'HUMP DAY', gros: '55%', sousTitre: 'dès 3 dans ton panier', body: 'parmi cette sélection colorée', codePromo: 'COLORSSS', cta: '' },
   },
+  'bague-portee': {
+    label: '👩‍🦰 Bague portée',
+    maxPhotos: 5,
+    forceBaguePortee: true,
+    fields: [
+      { key: 'titreA', label: 'Titre principal', placeholder: 'Édition Printemps' },
+      { key: 'titreB', label: 'Sous-titre script', placeholder: 'élégance & lumière' },
+      { key: 'codePromo', label: 'Code promo (optionnel)', placeholder: '' },
+      { key: 'cta', label: 'Bouton CTA', placeholder: 'JE DÉCOUVRE' },
+    ],
+    defaults: { titreA: 'Édition Printemps', titreB: 'élégance & lumière', codePromo: '', cta: 'JE DÉCOUVRE' },
+  },
 };
 
 // ============ ÉTAPE 1 : SÉLECTION TEMPLATE ============
@@ -336,9 +365,14 @@ function selectTemplate(t) {
   state.textesCouleurs = {};
   state.selectedKey = null;
   // Taille logo par défaut spécifique au template
-  const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18 };
+  const defaultSizes = { 'promo-flash': 0.22, 'collection-lancee': 0.26, 'date-butoir': 0.20, 'multi-bagues': 0.18, 'bague-portee': 0.20 };
   state.logo.size = defaultSizes[t] || 0.22;
+  // forceBaguePortee : aligner état + case
+  state.baguePortee = !!cfg.forceBaguePortee;
+  const cb = document.getElementById('bague-portee-check');
+  if (cb) cb.checked = state.baguePortee;
   refreshGenererBtn();
+  refreshElementToolbar();
 }
 
 // ============ PALETTE ============
@@ -566,12 +600,78 @@ function selectFromPanel(key) {
   state.selectedKey = key;
   renderCanvas();
   updatePanelHighlight();
+  refreshElementToolbar();
 }
 
 function resetLayout() {
   state.layout = {};
   state.selectedKey = null;
   renderCanvas();
+  refreshElementToolbar();
+}
+
+// ============ BARRE D'OUTILS ÉLÉMENT SÉLECTIONNÉ ============
+const KEY_LABELS = {
+  'logo': '🏷️ Logo Mood',
+  'fond': '🖼️ Arrière-plan',
+  'titreA': 'Titre principal',
+  'titreB': 'Sous-titre',
+  'nomCollection': 'Nom collection',
+  'labelCollection': 'Label Collection',
+  'sousTitre': 'Sous-titre',
+  'tag': 'Tag',
+  'gros': 'Texte fort',
+  'body': 'Corps texte',
+  'codePromo': 'Code promo',
+  'cta': 'Bouton CTA',
+};
+
+function refreshElementToolbar() {
+  const tb = document.getElementById('element-toolbar');
+  if (!tb) return;
+  if (!state.selectedKey) {
+    tb.style.display = 'none';
+    return;
+  }
+  tb.style.display = 'flex';
+  const lbl = KEY_LABELS[state.selectedKey] || state.selectedKey;
+  document.getElementById('el-name').textContent = lbl + ' · sélectionné';
+  const lay = state.layout[state.selectedKey] || { dx: 0, dy: 0, scale: 1 };
+  const scaleVal = Math.round((lay.scale ?? 1) * 100);
+  const slider = document.getElementById('el-scale');
+  if (slider) slider.value = Math.max(20, Math.min(400, scaleVal));
+  document.getElementById('el-scale-label').textContent = scaleVal + '%';
+}
+
+function elZoom(delta) {
+  if (!state.selectedKey) return;
+  if (!state.layout[state.selectedKey]) state.layout[state.selectedKey] = { dx: 0, dy: 0, scale: 1 };
+  const lay = state.layout[state.selectedKey];
+  lay.scale = Math.max(0.2, Math.min(5, (lay.scale ?? 1) + delta));
+  renderCanvas();
+  refreshElementToolbar();
+}
+
+function elZoomSet(percent) {
+  if (!state.selectedKey) return;
+  if (!state.layout[state.selectedKey]) state.layout[state.selectedKey] = { dx: 0, dy: 0, scale: 1 };
+  state.layout[state.selectedKey].scale = Number(percent) / 100;
+  renderCanvas();
+  document.getElementById('el-scale-label').textContent = Math.round(percent) + '%';
+}
+
+function elReset() {
+  if (!state.selectedKey) return;
+  delete state.layout[state.selectedKey];
+  renderCanvas();
+  refreshElementToolbar();
+}
+
+function elDeselect() {
+  state.selectedKey = null;
+  renderCanvas();
+  refreshElementToolbar();
+  updatePanelHighlight();
 }
 
 function onTexte(key, value) {
@@ -699,6 +799,7 @@ async function renderCanvas() {
     case 'collection-lancee': drawCollectionLancee(ctx, w, h, logo); break;
     case 'date-butoir': drawDateButoir(ctx, w, h, logo); break;
     case 'multi-bagues': drawMultiBagues(ctx, w, h, logo); break;
+    case 'bague-portee': drawBaguePortee(ctx, w, h, logo); break;
   }
 
   // Rendu marqueurs de sélection (effacés avant le download)
@@ -855,12 +956,14 @@ function attachCanvasHandlers() {
       };
       renderCanvasNow();
       updatePanelHighlight();
+      refreshElementToolbar();
     } else {
       // click ailleurs = déselection
       if (state.selectedKey) {
         state.selectedKey = null;
         renderCanvasNow();
         updatePanelHighlight();
+        refreshElementToolbar();
       }
     }
   }
@@ -898,6 +1001,7 @@ function attachCanvasHandlers() {
       }
     }
     renderCanvasNow();
+    refreshElementToolbar();
   }
 
   function onUp() {
@@ -1332,6 +1436,35 @@ function drawDateButoir(ctx, w, h, logo) {
   } else { delete state.bboxes['cta']; }
 }
 
+// ====== TEMPLATE 5 : BAGUE PORTÉE ÉDITORIAL ======
+function drawBaguePortee(ctx, w, h, logo) {
+  drawLogoTop(ctx, w, h, logo);
+  const t = state.textes;
+
+  // Titre principal (script ou sans-serif selon goût) — haut milieu
+  drawTextLayer(ctx, 'titreA', t.titreA, {
+    x: w / 2, y: h * 0.18, fontSize: w * 0.075, fontWeight: '400', fontStyle: 'italic',
+    fontFamily: '"Snell Roundhand", "Apple Chancery", "Lucida Handwriting", cursive',
+    align: 'center', baseline: 'top',
+  });
+
+  // Sous-titre script plus petit
+  drawTextLayer(ctx, 'titreB', t.titreB, {
+    x: w / 2, y: h * 0.27, fontSize: w * 0.04, fontWeight: '300',
+    fontFamily: '"Snell Roundhand", "Lucida Handwriting", cursive', fontStyle: 'italic',
+    align: 'center', baseline: 'top',
+  });
+
+  // Code promo si présent
+  drawTextLayer(ctx, 'codePromo', t.codePromo ? 'Code · ' + t.codePromo : '', {
+    x: w / 2, y: h - w * 0.18, fontSize: w * 0.028, fontWeight: '500',
+    align: 'center', baseline: 'top', transform: 'upper',
+  });
+
+  // CTA
+  drawCtaPill(ctx, 'cta', w, h, (t.cta || '').toUpperCase(), { cy: h - w * 0.08 });
+}
+
 // ====== TEMPLATE 4 : MULTI-BAGUES ======
 function drawMultiBagues(ctx, w, h, logo) {
   drawLogoTop(ctx, w, h, logo);
@@ -1386,7 +1519,9 @@ async function telecharger() {
 
 function resetEditeur() {
   state.fondImage = null;
+  state.selectedKey = null;
   document.getElementById('step-3').style.display = 'none';
+  refreshElementToolbar();
   document.getElementById('btn-generer').scrollIntoView({ behavior: 'smooth' });
 }
 

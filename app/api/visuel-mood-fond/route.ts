@@ -32,6 +32,8 @@ function compositionForFormat(format: string): string {
 function promptForTemplate(template: string, palette: string, format: string, nbPhotos: number, baguePortee: boolean): string {
   const paletteDesc = PALETTES[palette] || PALETTES["rose"];
   const compo = compositionForFormat(format);
+  // Le template "bague-portee" force baguePortee = true
+  if (template === "bague-portee") baguePortee = true;
   const ringWord = nbPhotos > 1 ? `${nbPhotos} rings` : "ring";
   const sourceWord = nbPhotos > 1 ? "source images" : "source image";
 
@@ -109,6 +111,23 @@ Soft uniform studio lighting. Premium e-commerce vibe.
 ${STRICT_NO_TEXT}
 
 Output: a multi-ring composition with empty central zone for text overlay.`;
+
+    case "bague-portee":
+      return `Generate a luxury jewelry EDITORIAL PORTRAIT visual. Style: high-end fashion magazine campaign (Cartier / Tiffany / Bvlgari editorial aesthetic).
+
+${PRESERVE}
+
+PALETTE & ATMOSPHERE: ${paletteDesc}. The atmosphere should ENVELOP the model (e.g., soft sakura petals around her for spring/pink, ocean breeze and blue ambient for ocean, golden hour warmth for cream/gold, dramatic dark velvet for heritage). Not just background — atmospheric immersion.
+
+${compo}
+
+The model is the central focal point. Empty zone (top/side per format) for the title overlay — give generous breathing space in the upper third for the title and at the bottom for the CTA pill.
+
+Mood: refined, intimate, sophisticated, contemporary. Think modern luxury woman, confident yet natural.
+
+${STRICT_NO_TEXT}
+
+Output: an editorial portrait visual with the model wearing the ring(s), ready for text overlay.`;
 
     default:
       return `Generate a clean luxury jewelry background with the ring from the source image preserved exactly. Empty space for text overlay. ${STRICT_NO_TEXT}`;
