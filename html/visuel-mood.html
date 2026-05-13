@@ -983,44 +983,68 @@ function getTintedLogo(logo, color) {
   const d = imgData.data;
   const W = off.width, H = off.height;
 
-  // Passe 1 : trouver la bbox des pixels rouges (= zone de la croix suisse)
-  let xMin = W, yMin = H, xMax = -1, yMax = -1;
+  const isRedPixel = (idx) => {
+    const r = d[idx], g = d[idx + 1], b = d[idx + 2], a = d[idx + 3];
+    return a > 50 && r > 160 && g < 120 && b < 120 && r > g + 60 && r > b + 60;
+  };
+
+  // Flood-fill : trouver le plus gros cluster de pixels rouges (la croix suisse)
+  const visited = new Uint8Array(W * H);
+  let bestCluster = null;
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const idx = (y * W + x) * 4;
-      const a = d[idx + 3];
-      if (a < 50) continue;
-      const r = d[idx], g = d[idx + 1], b = d[idx + 2];
-      if (r > 160 && g < 110 && b < 110 && r > g + 60 && r > b + 60) {
-        if (x < xMin) xMin = x;
-        if (y < yMin) yMin = y;
-        if (x > xMax) xMax = x;
-        if (y > yMax) yMax = y;
+      const i = y * W + x;
+      if (visited[i]) continue;
+      const idx = i * 4;
+      if (!isRedPixel(idx)) { visited[i] = 1; continue; }
+
+      // BFS itératif
+      const stack = [x, y];
+      let count = 0, xMin = W, yMin = H, xMax = -1, yMax = -1;
+      while (stack.length) {
+        const cy = stack.pop(), cx = stack.pop();
+        if (cx < 0 || cx >= W || cy < 0 || cy >= H) continue;
+        const ci = cy * W + cx;
+        if (visited[ci]) continue;
+        const cidx = ci * 4;
+        if (!isRedPixel(cidx)) { visited[ci] = 1; continue; }
+        visited[ci] = 1; count++;
+        if (cx < xMin) xMin = cx;
+        if (cx > xMax) xMax = cx;
+        if (cy < yMin) yMin = cy;
+        if (cy > yMax) yMax = cy;
+        stack.push(cx + 1, cy); stack.push(cx - 1, cy);
+        stack.push(cx, cy + 1); stack.push(cx, cy - 1);
+      }
+      if (!bestCluster || count > bestCluster.count) {
+        bestCluster = { count, xMin, yMin, xMax, yMax };
       }
     }
   }
-  const hasCross = xMax >= 0;
+
+  const hasCross = bestCluster && bestCluster.count > 20;
+  let xMin, yMin, xMax, yMax;
   if (hasCross) {
-    // Marge pour englober proprement le blanc intérieur de la croix
+    xMin = bestCluster.xMin; yMin = bestCluster.yMin;
+    xMax = bestCluster.xMax; yMax = bestCluster.yMax;
     const m = Math.max(2, Math.floor(Math.min(W, H) * 0.005));
     xMin -= m; yMin -= m; xMax += m; yMax += m;
   }
 
-  // Passe 2 : recolorer tout sauf la zone croix suisse
+  // Recolorer tout sauf : zone croix suisse + autres pixels rouges (point .net préservé en rouge)
   const tint = color ? hexToRgb(color) : null;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const idx = (y * W + x) * 4;
-      const a = d[idx + 3];
-      if (a === 0) continue;
-      const inCross = hasCross && x >= xMin && x <= xMax && y >= yMin && y <= yMax;
-      if (inCross) continue; // garder la croix suisse intacte (rouge + blanc interne)
-      if (tint) {
-        d[idx] = tint.r;
-        d[idx + 1] = tint.g;
-        d[idx + 2] = tint.b;
-        // Alpha préservé pour l'anti-aliasing
-      }
+  for (let i = 0; i < W * H; i++) {
+    const idx = i * 4;
+    const a = d[idx + 3];
+    if (a === 0) continue;
+    const x = i % W, y = Math.floor(i / W);
+    const inCross = hasCross && x >= xMin && x <= xMax && y >= yMin && y <= yMax;
+    if (inCross) continue; // garder rouge + blanc interne croix
+    if (isRedPixel(idx)) continue; // garder les autres pixels rouges aussi
+    if (tint) {
+      d[idx] = tint.r;
+      d[idx + 1] = tint.g;
+      d[idx + 2] = tint.b;
     }
   }
   octx.putImageData(imgData, 0, 0);
