@@ -267,7 +267,13 @@
         <button onclick="elDeselect()" style="padding:0.35rem 0.7rem;border:1px solid #ddd;border-radius:6px;background:white;font-size:0.78rem;cursor:pointer;">× Désélectionner</button>
       </div>
 
-      <button class="btn-primary" id="btn-telecharger" onclick="telecharger()" style="margin-top:0.8rem;">⬇️ Télécharger le visuel PNG</button>
+      <div style="margin-top:0.8rem;display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;">
+        <button class="btn-primary" id="btn-telecharger" onclick="telecharger()">⬇️ Télécharger PNG</button>
+        <button onclick="ouvrirImageNouvelOnglet()" style="background:white;color:var(--noir);border:2px solid var(--noir);padding:0.7rem 1.4rem;border-radius:999px;font-size:0.95rem;font-weight:600;cursor:pointer;">👁 Ouvrir dans un nouvel onglet</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--gris);margin-top:0.4rem;text-align:center;max-width:600px;">
+        💡 Si le téléchargement ne fonctionne pas (Safari, certains navigateurs), utilise "Ouvrir dans un nouvel onglet" → clic droit sur l'image → "Enregistrer sous".
+      </div>
       <button onclick="resetEditeur()" style="margin-top:0.5rem;background:none;border:none;color:var(--gris);text-decoration:underline;font-size:0.8rem;cursor:pointer;">↻ Régénérer un autre fond</button>
     </div>
 
@@ -1619,6 +1625,54 @@ function triggerDownload(url, filename) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+// Plan B : ouvre l'image dans un nouvel onglet (fallback universel)
+async function ouvrirImageNouvelOnglet() {
+  const savedSelected = state.selectedKey;
+  state.selectedKey = null;
+  await renderCanvas();
+
+  const cnv = document.getElementById('canvas-preview');
+  const filename = `mood-${state.template}-${state.format.replace(':', 'x')}-${Date.now()}.png`;
+
+  // Méthode toBlob d'abord (URL plus courte)
+  const win = window.open('', '_blank');
+  if (!win) {
+    alert("Le navigateur a bloqué la nouvelle fenêtre. Autorise les pop-ups pour ce site puis réessaye.");
+    state.selectedKey = savedSelected;
+    await renderCanvas();
+    return;
+  }
+
+  if (typeof cnv.toBlob === 'function') {
+    cnv.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        win.document.title = filename;
+        win.location.href = url;
+        // Nettoyage du URL après chargement
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      } else {
+        try {
+          const dataUrl = cnv.toDataURL('image/png');
+          win.document.write(`<title>${filename}</title><body style="margin:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${dataUrl}" alt="${filename}" style="max-width:100%;max-height:100vh;"></body>`);
+        } catch (e) {
+          win.document.write(`<p>Erreur : ${e.message}</p>`);
+        }
+      }
+    }, 'image/png');
+  } else {
+    try {
+      const dataUrl = cnv.toDataURL('image/png');
+      win.document.write(`<title>${filename}</title><body style="margin:0;background:#1a1a1a;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${dataUrl}" alt="${filename}" style="max-width:100%;max-height:100vh;"></body>`);
+    } catch (e) {
+      win.document.write(`<p>Erreur : ${e.message}</p>`);
+    }
+  }
+
+  state.selectedKey = savedSelected;
+  await renderCanvas();
 }
 
 function resetEditeur() {
