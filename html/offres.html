@@ -773,9 +773,13 @@ function rendreCalendrier() {
         </div>
       </div>`;
     } else {
+      // Si chargement en cours (auto déclenché au load) → afficher état "chargement"
+      const enCours = !!_chargementVentesMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
       html += `<div class="recap-mensuel" style="background:#f9fafb;">
         <div class="recap-mensuel-title">📊 Ventes Shopify Mood — ${NOMS_MOIS[mois]} ${annee}</div>
-        <button class="outline" onclick="chargerVentesMois(${annee},${mois + 1})" style="font-size:0.8rem;padding:0.4rem 0.8rem;">☁️ Charger ventes Shopify</button>
+        ${enCours
+          ? `<div style="font-size:0.85rem;color:var(--gris);padding:0.4rem 0;">⏳ Chargement depuis Shopify… (jusqu'à 30s)</div>`
+          : `<button class="outline" onclick="chargerVentesMois(${annee},${mois + 1})" style="font-size:0.8rem;padding:0.4rem 0.8rem;">☁️ Charger ventes Shopify</button>`}
       </div>`;
     }
 
@@ -1516,6 +1520,7 @@ function ajouterIdeeAuPlanning(idee) {
 
 // ============ VENTES SHOPIFY (PLAN DE BATAILLE) ============
 const ventesParMois = {};  // { '2026-05': { ventes: {...}, total_ca, total_commandes } }
+const _chargementVentesMois = {};  // { '2026-05': true } pendant fetch en cours
 let ventesSemaine = null;  // { ventes: {...}, total_ca, total_commandes, debut, fin } — semaine commerciale en cours (jeu→mer)
 
 function trouverVentesShopify(nomPepite, ventesMap) {
@@ -1534,7 +1539,9 @@ function trouverVentesShopify(nomPepite, ventesMap) {
 
 async function chargerVentesMois(annee, mois) {
   const key = `${annee}-${String(mois).padStart(2, '0')}`;
-  if (ventesParMois[key]) return;
+  if (ventesParMois[key] || _chargementVentesMois[key]) return;
+  _chargementVentesMois[key] = true;
+  rendreCalendrier(); // affiche immédiatement "Chargement…"
   try {
     const r = await fetch(`/api/r-and-d/ventes-mois?annee=${annee}&mois=${mois}`);
     if (!r.ok) {
@@ -1551,9 +1558,12 @@ async function chargerVentesMois(annee, mois) {
       return;
     }
     ventesParMois[key] = data;
+    delete _chargementVentesMois[key];
     rendreCalendrier();
   } catch (e) {
     console.warn('Erreur réseau ventes-mois :', e.message);
+    delete _chargementVentesMois[key];
+    rendreCalendrier();
   }
 }
 
