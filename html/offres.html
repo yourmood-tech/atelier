@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Offres Mood — par produit/nouveauté</title>
+<title>🎁 Offres Mood — par nouveauté/produit</title>
 <style>
   :root {
     --or: #c9a96e;
@@ -21,209 +21,1262 @@
     color: var(--noir);
     background: #fafafa;
     line-height: 1.5;
-    padding: 1.2rem 1rem;
-    max-width: 1100px;
-    margin: 0 auto;
+    padding: 1rem;
   }
   header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   h1 { font-size: 1.5rem; font-weight: 600; }
-  .sous-titre { font-size: 0.9rem; color: var(--gris); margin-top: 0.2rem; }
+  h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem 0; color: var(--or); }
   .controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-  select, input, button {
-    padding: 0.4rem 0.7rem; border: 1px solid #ccc; border-radius: 6px;
-    font-size: 0.85rem; font-family: inherit;
-  }
-  button { background: var(--or); color: white; border: none; cursor: pointer; font-weight: 500; }
-  button.outline { background: white; color: var(--noir); border: 1px solid #ccc; }
-  button:hover { opacity: 0.9; }
-  .sync-status { font-size: 0.75rem; color: var(--gris); }
-  .sync-status.ok { color: var(--vert); }
-  .sync-status.ko { color: var(--orange); }
-
-  .filtres {
-    display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
-    margin: 1rem 0; padding: 0.7rem 1rem; background: white; border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .filtres label { font-size: 0.78rem; color: var(--gris); font-weight: 500; }
-  .filtres input[type="search"] { width: 220px; }
-
-  /* Liste cartes offre */
-  .offres-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1rem;
-  }
-  .offre-card {
-    background: white;
-    border-radius: 14px;
-    padding: 1.2rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    border-left: 4px solid var(--or);
-    display: flex; flex-direction: column; gap: 0.6rem;
-    transition: transform 0.12s, box-shadow 0.12s;
-  }
-  .offre-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .offre-card.has-offre { border-left-color: var(--vert); background: linear-gradient(135deg, #f0f9f0 0%, #fff 40%); }
-
-  .offre-zone {
-    background: #fff8e7;
-    border: 2px dashed #c9a96e;
-    border-radius: 10px;
-    padding: 0.8rem;
-    min-height: 90px;
-    cursor: text;
-  }
-  .offre-card.has-offre .offre-zone {
-    background: #f0f9f0;
-    border-style: solid;
-    border-color: var(--vert);
-  }
-  .offre-zone .label-mini {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--or);
-    font-weight: 700;
-    margin-bottom: 0.3rem;
-  }
-  .offre-card.has-offre .offre-zone .label-mini { color: var(--vert); }
-  .offre-zone textarea {
-    width: 100%;
+  button {
+    background: var(--or);
+    color: white;
     border: none;
-    background: transparent;
-    font-size: 1.05rem;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    cursor: pointer;
     font-weight: 500;
-    line-height: 1.35;
-    resize: none;
-    font-family: inherit;
-    color: var(--noir);
-    min-height: 50px;
-    outline: none;
   }
-  .offre-zone textarea::placeholder { color: #bbb; font-style: italic; font-weight: 400; }
-  .save-status {
+  button.outline { background: white; color: var(--noir); border: 1px solid #ccc; }
+  button.danger { background: var(--rouge); }
+  button:hover { opacity: 0.9; }
+  select, input { padding: 0.4rem 0.7rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.85rem; }
+
+  /* Calendrier */
+  .month {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--or);
+  }
+  .month-title { font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .month-objective { font-size: 0.85rem; color: var(--gris); }
+  .weeks { display: flex; flex-direction: column; gap: 0.8rem; }
+  .week {
+    background: var(--gris-clair);
+    border-radius: 8px;
+    padding: 0.6rem;
+    border-left: 3px solid var(--or);
+  }
+  .week-header { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; font-weight: 600; }
+  .week-objective { font-size: 0.7rem; color: var(--gris); margin-top: 0.3rem; }
+  .week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; }
+  .day {
+    background: white;
+    border-radius: 6px;
+    padding: 0.4rem;
+    min-height: 80px;
+    border: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+  }
+  .day-header {
     font-size: 0.7rem;
     color: var(--gris);
-    margin-top: 0.3rem;
-    height: 1em;
-    transition: opacity 0.3s;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
   }
-  .save-status.saving { color: var(--orange); }
-  .save-status.saved  { color: var(--vert); }
+  .day-name { text-transform: uppercase; letter-spacing: 0.05em; }
+  .day-number { font-size: 0.85rem; color: var(--noir); font-weight: 700; }
+  .day.today { background: #fff8e7; border-color: var(--or); }
+  .day-content { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
+  @media (max-width: 900px) {
+    .week-days { grid-template-columns: repeat(2, 1fr); }
+  }
 
-  /* Bloc contextuel (le produit) en plus petit sous l'offre */
-  .produit-contexte {
-    display: flex; gap: 0.7rem; align-items: flex-start;
-    padding-top: 0.4rem; border-top: 1px solid #eee;
+  /* Produits */
+  .product-card {
+    background: white;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    border: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: border-color 0.2s;
   }
-  .produit-image {
-    width: 56px; height: 56px; flex-shrink: 0;
-    border-radius: 8px; background: var(--gris-clair) center/cover no-repeat;
+  .product-card:hover { border-color: var(--or); }
+  .product-stage {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
   }
-  .produit-info { flex: 1; min-width: 0; }
-  .produit-nom { font-size: 0.95rem; font-weight: 600; color: var(--noir); line-height: 1.2; }
-  .produit-meta {
-    font-size: 0.72rem; color: var(--gris);
-    margin-top: 0.2rem;
-    display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;
+  .product-name { flex: 1; font-weight: 500; }
+  .product-ca { font-size: 0.7rem; color: var(--gris); }
+
+  /* Couleurs par étape */
+  .stage-1 { background: #94a3b8; } /* idée */
+  .stage-2 { background: #60a5fa; } /* dessin */
+  .stage-3 { background: #f59e0b; } /* commande test */
+  .stage-4 { background: #fbbf24; } /* réception */
+  .stage-5 { background: #f97316; } /* validation */
+  .stage-6 { background: #84cc16; } /* OK */
+  .stage-7 { background: #22c55e; } /* photos */
+  .stage-8 { background: #16a34a; } /* mise en ligne */
+  .stage-9 { background: #15803d; } /* visuels */
+
+  .add-product-btn {
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    border: 1px dashed #aaa;
+    color: var(--gris);
+    padding: 0.25rem 0.3rem;
+    font-size: 0.7rem;
+    margin-top: auto;
   }
-  .badge-etape {
-    display: inline-block; padding: 1px 6px; border-radius: 4px;
-    background: var(--or); color: white; font-size: 0.65rem; font-weight: 600;
+  .add-product-btn:hover { border-color: var(--or); color: var(--or); }
+  .product-card {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.72rem;
   }
+  .product-stage { width: 14px; height: 14px; font-size: 9px; }
+  /* Quand la card a une image en background : layout overlay */
+  .product-card-image {
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    padding: 0.3rem;
+    border: none;
+    position: relative;
+  }
+  .product-card-image .product-stage {
+    align-self: flex-start;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .product-card-image .product-name {
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    padding: 0.4rem 0.3rem 0.2rem 0.3rem;
+    margin: 0 -0.3rem -0.3rem -0.3rem;
+    border-radius: 0 0 6px 6px;
+    font-weight: 600;
+  }
+  /* Jauge ventes */
+  .ventes-jauge {
+    width: 100%;
+    height: 5px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 3px;
+  }
+  .ventes-jauge-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .jauge-rouge { background: var(--rouge); }
+  .jauge-orange { background: var(--orange); }
+  .jauge-vert { background: var(--vert); }
+  .ventes-pct {
+    font-size: 0.65rem;
+    color: var(--gris);
+    margin-top: 2px;
+    font-weight: 600;
+  }
+  .product-card-image .ventes-pct { color: white; }
   .ventes-semaine {
-    display: inline-block; padding: 2px 7px; border-radius: 4px;
-    font-size: 0.7rem; font-weight: 700; margin-top: 0.3rem;
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1.3;
   }
   .ventes-semaine.actif { background: rgba(45,138,78,0.15); color: var(--vert); }
   .ventes-semaine.vide  { background: rgba(107,107,107,0.12); color: var(--gris); }
-
-  .empty-state {
-    text-align: center; padding: 3rem 1rem; color: var(--gris); font-size: 0.95rem;
+  .product-card-image .ventes-semaine.actif { background: rgba(34,197,94,0.5); color: white; }
+  .product-card-image .ventes-semaine.vide  { background: rgba(255,255,255,0.2); color: white; }
+  /* Badge OFFRE — mis en avant sur chaque carte */
+  .offre-badge {
+    display: block;
+    margin-top: 4px;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.3;
+    word-wrap: break-word;
+  }
+  .offre-badge.has-offre {
+    background: linear-gradient(135deg, #fff8e7 0%, #fef3c7 100%);
+    color: #92400e;
+    border: 1px solid var(--or);
+    font-weight: 700;
+  }
+  .offre-badge.no-offre {
+    background: rgba(201,169,110,0.08);
+    color: #c9a96e;
+    border: 1px dashed #c9a96e;
+    font-style: italic;
+  }
+  .product-card-has-offre { box-shadow: 0 0 0 2px var(--or), 0 1px 4px rgba(201,169,110,0.3); }
+  .product-card-image.product-card-has-offre .offre-badge.has-offre {
+    background: rgba(255,255,255,0.95);
+    border-color: white;
   }
 
-  @media (max-width: 600px) {
-    body { padding: 0.8rem 0.6rem; }
-    .offres-grid { grid-template-columns: 1fr; gap: 0.8rem; }
-    .offre-card { padding: 1rem; }
+  /* Jauge progression étape (1-9) */
+  .etape-jauge {
+    width: 100%;
+    height: 4px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 3px;
   }
+  .etape-jauge-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s, background-color 0.3s;
+  }
+  .product-card-image .etape-jauge { background: rgba(255,255,255,0.4); }
+
+  /* Drag & drop */
+  .product-card { cursor: move; user-select: none; }
+  .product-card.dragging { opacity: 0.4; }
+  .day.drop-target { background: #fff8e7; border-color: var(--or); border-style: dashed; }
+
+  /* Récap hebdomadaire */
+  .recap-hebdo {
+    background: white;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 0.6rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+  }
+  .recap-hebdo-title { font-weight: 600; color: var(--or); margin-bottom: 0.4rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .recap-table { width: 100%; border-collapse: collapse; }
+  .recap-table th, .recap-table td { padding: 0.2rem 0.4rem; text-align: right; font-size: 0.75rem; }
+  .recap-table th:first-child, .recap-table td:first-child { text-align: left; }
+  .recap-table thead th { border-bottom: 1px solid #e5e5e5; color: var(--gris); font-weight: 500; }
+  .recap-table .reste-vert { color: var(--vert); font-weight: 600; }
+  .recap-table .reste-rouge { color: var(--rouge); font-weight: 600; }
+  .recap-table .total-row { border-top: 1px solid var(--or); font-weight: 600; }
+
+  /* Récap mensuel */
+  .recap-mensuel {
+    background: linear-gradient(135deg, #fff8e7 0%, #fafafa 100%);
+    border: 1px solid var(--or);
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  .recap-mensuel-title { font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+  .recap-totals { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+  .recap-total-item { font-size: 0.75rem; color: var(--gris); }
+  .recap-total-item strong { display: block; font-size: 1.1rem; color: var(--noir); }
+  .image-zone {
+    margin-top: 0.4rem;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+    padding: 0.5rem;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .image-zone.drag-over {
+    border-color: var(--or);
+    background: #fff8e7;
+    transform: scale(1.02);
+  }
+  .image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 4px;
+    margin-bottom: 0.4rem;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+  .modal label { display: block; font-size: 0.8rem; font-weight: 500; margin: 0.8rem 0 0.3rem 0; }
+  .modal input, .modal select, .modal textarea {
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .modal textarea { min-height: 80px; resize: vertical; }
+  .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
+
+  .stage-legend {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--gris);
+    margin-bottom: 1rem;
+    padding: 0.6rem;
+    background: white;
+    border-radius: 8px;
+  }
+  .stage-legend-item { display: flex; align-items: center; gap: 0.3rem; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <h1>🎁 Offres Mood</h1>
-    <div class="sous-titre">Par nouveauté/produit · synchronisé avec le planning R&D</div>
-  </div>
+  <h1>🎁 Offres Mood — par nouveauté</h1>
   <div class="controls">
-    <span class="sync-status" id="sync-status">Synchronisation…</span>
-    <button class="outline" onclick="rafraichir()">🔄 Rafraîchir</button>
+    <select id="annee">
+      <option value="2026" selected>2026</option>
+      <option value="2027">2027</option>
+    </select>
+    <button onclick="ouvrirBrainstorm()">✨ Idées Mood (IA)</button>
+    <button class="outline" onclick="exporterJSON()">📥 Export JSON</button>
+    <button class="outline" onclick="importerJSON()">📤 Import JSON</button>
+    <button class="danger outline" onclick="reset()">🗑️ Reset</button>
+    <a href="/" style="font-size:0.85rem;color:var(--gris);text-decoration:none;">← Atelier</a>
   </div>
 </header>
 
-<div class="filtres">
-  <label>Filtrer :</label>
-  <select id="filtre-etape">
-    <option value="">Toutes étapes</option>
-    <option value="1">1. Idée</option>
-    <option value="2">2. Dessin</option>
-    <option value="3">3. Commande test</option>
-    <option value="4">4. Réception</option>
-    <option value="5">5. Validation</option>
-    <option value="6">6. OK</option>
-    <option value="7">7. Photos</option>
-    <option value="8">8. Sortie</option>
-    <option value="9">9. Visuels</option>
-  </select>
-  <select id="filtre-offre">
-    <option value="">Avec / sans offre</option>
-    <option value="avec">✓ Avec offre</option>
-    <option value="sans">À définir</option>
-  </select>
-  <input type="search" id="filtre-recherche" placeholder="Rechercher un produit…">
-  <span style="font-size:0.78rem;color:var(--gris);margin-left:auto;" id="count-badge"></span>
+<div style="text-align:right;margin:-0.8rem 0 0.8rem 0;">
+  <span id="sync-indicator" style="font-size:0.75rem;color:var(--gris);" title="Statut synchro cloud">⏳ Vérification…</span>
 </div>
 
-<div class="offres-grid" id="offres-grid"></div>
+<div class="stage-legend">
+  <div class="stage-legend-item"><div class="product-stage stage-1">1</div> Idée</div>
+  <div class="stage-legend-item"><div class="product-stage stage-2">2</div> Dessin</div>
+  <div class="stage-legend-item"><div class="product-stage stage-3">3</div> Commande test</div>
+  <div class="stage-legend-item"><div class="product-stage stage-4">4</div> Réception</div>
+  <div class="stage-legend-item"><div class="product-stage stage-5">5</div> Validation proto</div>
+  <div class="stage-legend-item"><div class="product-stage stage-6">6</div> OK</div>
+  <div class="stage-legend-item"><div class="product-stage stage-7">7</div> Photos</div>
+  <div class="stage-legend-item"><div class="product-stage stage-8">8</div> Sortie</div>
+  <div class="stage-legend-item"><div class="product-stage stage-9">9</div> Visuels</div>
+</div>
+
+<!-- Bannière ventes Shopify de la semaine commerciale en cours -->
+<div id="banniere-semaine" style="display:none;margin-bottom:1rem;padding:0.9rem 1.2rem;background:linear-gradient(135deg,#fdf6e7 0%,#fff 100%);border:1px solid var(--or);border-radius:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem;">
+  <div>
+    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--gris);font-weight:600;">📊 Cette semaine commerciale (jeu → mer)</div>
+    <div id="banniere-dates" style="font-size:0.8rem;color:var(--gris);"></div>
+  </div>
+  <div style="text-align:right;">
+    <div id="banniere-ca" style="font-size:1.4rem;font-weight:700;color:var(--or);">—</div>
+    <div id="banniere-cmd" style="font-size:0.75rem;color:var(--gris);">—</div>
+  </div>
+</div>
+
+<div id="calendrier"></div>
+
+<!-- Modal édition produit -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Nouveau produit</h3>
+    <input type="hidden" id="produit-id">
+
+    <label>Nom du produit *</label>
+    <input id="produit-nom" placeholder="ex : Aura Émeraude, Coffret Printemps…">
+
+    <label>Nom Shopify <span style="color:var(--gris);font-weight:400">— optionnel, pour matcher les ventes si le nom diffère sur Shopify</span></label>
+    <input id="produit-shopify-search" placeholder="ex : « Coffret Mood Édition », « starter pack 2026 »…">
+
+    <label style="color:var(--or);font-weight:600;">🎁 Offre commerciale <span style="color:var(--gris);font-weight:400">— le champ que Stéphanie travaille</span></label>
+    <textarea id="produit-offre" rows="2" placeholder="ex : Pack +1 gratuit, Promo 20%, Bundle avec collier Aura…" style="background:#fff8e7;border-color:var(--or);"></textarea>
+
+    <label>Type</label>
+    <select id="produit-type">
+      <option value="addon">Addon</option>
+      <option value="medium">Medium</option>
+      <option value="deux-tiers">Deux tiers</option>
+      <option value="mini">Mini</option>
+      <option value="base">Base</option>
+      <option value="open-mood">Open mood</option>
+      <option value="coffret">Coffret</option>
+      <option value="pack">Pack</option>
+      <option value="starter-pack">Starter pack</option>
+      <option value="boucles">Boucles d'oreilles</option>
+      <option value="boite">Boîte</option>
+      <option value="couleur-alu">Nouvelle couleur alu</option>
+      <option value="autre">Autre</option>
+    </select>
+
+    <label>Étape actuelle</label>
+    <select id="produit-etape">
+      <option value="1">1. Idée</option>
+      <option value="2">2. Dessin</option>
+      <option value="3">3. Commande test</option>
+      <option value="4">4. Réception</option>
+      <option value="5">5. Validation proto</option>
+      <option value="6">6. OK</option>
+      <option value="7">7. Photos</option>
+      <option value="8">8. Sortie</option>
+      <option value="9">9. Visuels</option>
+    </select>
+
+    <label>Fournisseur (si commande test)</label>
+    <select id="produit-fournisseur">
+      <option value="">— aucun —</option>
+      <option value="icelea">Icelea (5 sem)</option>
+      <option value="bijouterie">Bijouterie (1-2 sem)</option>
+      <option value="sertissage">Sertissage (5-6 sem)</option>
+      <option value="gravure">Gravure (1 sem)</option>
+      <option value="autre">Autre</option>
+    </select>
+
+    <label>Objectif CA (CHF) <span style="color:var(--gris);font-weight:400">— optionnel</span></label>
+    <input id="produit-ca" type="number" placeholder="ex : 5000">
+
+    <label>Ventes réalisées (CHF) <span style="color:var(--gris);font-weight:400">— optionnel, mise à jour manuelle pour l'instant</span></label>
+    <input id="produit-ventes" type="number" placeholder="ex : 3200">
+
+    <label>Image <span style="color:var(--gris);font-weight:400">— dessin, photo proto, référence visuelle</span></label>
+    <div class="image-zone" id="image-drop-zone" ondragover="onImageDragOver(event)" ondragleave="onImageDragLeave(event)" ondrop="onImageDrop(event)">
+      <img id="produit-image-preview" class="image-preview" style="display:none">
+      <input type="file" id="produit-image-input" accept="image/*" style="display:none" onchange="onImageChosen(event)">
+      <button type="button" class="outline" onclick="document.getElementById('produit-image-input').click()" style="font-size:0.8rem;">📷 Choisir une image</button>
+      <button type="button" class="outline" id="btn-retirer-image" onclick="retirerImage()" style="font-size:0.8rem;display:none;margin-left:0.4rem;">✕ Retirer</button>
+      <div style="font-size:0.7rem;color:var(--gris);margin-top:0.4rem;">ou glisse-dépose une image ici</div>
+      <input type="hidden" id="produit-image">
+    </div>
+
+    <label>Notes <span style="color:var(--gris);font-weight:400">— inspiration, contraintes, idées</span></label>
+    <textarea id="produit-notes" placeholder="ex : test sertissage diamants 0.9mm sur medium argent, voir Aura authentique pour ref…"></textarea>
+
+    <div class="modal-actions">
+      <button class="outline" onclick="fermerModal()">Annuler</button>
+      <button class="danger" id="btn-supprimer" onclick="supprimerProduit()" style="display:none">Supprimer</button>
+      <button class="outline" id="btn-dupliquer" onclick="dupliquerProduit()" style="display:none">📋 Dupliquer</button>
+      <button class="outline" id="btn-evaluer" onclick="evaluerIdeeModal()" style="background:#fff8e7;border-color:var(--or);color:var(--or);">🔍 Évaluer</button>
+      <button onclick="sauverProduit()">Sauver</button>
+    </div>
+
+    <div id="eval-resultat" style="margin-top:1rem;display:none;"></div>
+  </div>
+</div>
+
+<input type="file" id="file-import" accept="application/json" style="display:none" onchange="lireFichierImport(event)">
+
+<!-- Modal brainstorm IA -->
+<div class="modal-overlay" id="modal-brainstorm">
+  <div class="modal" style="max-width:680px;">
+    <h3>✨ Brainstorm Idées Mood</h3>
+    <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">Donne-moi un thème ou une inspiration, et je te propose 5 pépites créatives calibrées sur l'ADN Mood.</p>
+
+    <label>Thème ou inspiration *</label>
+    <input id="bs-theme" placeholder="ex : printemps doré · forêt nordique · empreintes lumineuses · St-Valentin minimaliste">
+
+    <label>Saison / période <span style="color:var(--gris);font-weight:400">(optionnel)</span></label>
+    <input id="bs-saison" placeholder="ex : été 2026 · St-Valentin · fête des mères">
+
+    <label>Contraintes ou préférences <span style="color:var(--gris);font-weight:400">(optionnel)</span></label>
+    <input id="bs-contraintes" placeholder="ex : pas d'or, format mini uniquement, prix < 100 CHF">
+
+    <div class="modal-actions">
+      <button class="outline" onclick="fermerBrainstorm()">Fermer</button>
+      <button onclick="lancerBrainstorm()" id="btn-brainstorm">✨ Générer 5 idées</button>
+    </div>
+
+    <div id="bs-resultats" style="margin-top:1rem;"></div>
+  </div>
+</div>
 
 <script>
-const STAGES = ['Idée','Dessin','Commande test','Réception','Validation','OK','Photos','Sortie','Visuels'];
-let donnees = { produits: [] };
-let ventesSemaine = null;
-const saveTimers = {};
+const STORAGE_KEY = 'mood-rd-pipeline';
+const NOMS_MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
-async function chargerDonnees() {
+let donnees = chargerDonneesLocal();
+let modalContexte = null;
+let cloudOK = null;  // null = inconnu, true = synchro OK, false = pas dispo
+let saveTimer = null;
+
+function chargerDonneesLocal() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { produits: [] };
+  } catch { return { produits: [] }; }
+}
+
+function sauverDonneesLocal() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
+}
+
+/** Synchro cloud : tente GET au démarrage, PUT à chaque modif (debounced 1s) */
+async function chargerDonneesCloud() {
   try {
     const r = await fetch('/api/r-and-d/produits');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (r.status === 503) { cloudOK = false; majIndicateurSync(); return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const d = await r.json();
     if (d && Array.isArray(d.produits)) {
       donnees = d;
-      majSyncStatus('ok');
+      sauverDonneesLocal();
+      cloudOK = true;
+      majIndicateurSync();
+      rendreCalendrier();
     }
   } catch (e) {
-    majSyncStatus('ko');
-    console.warn('Sync impossible :', e.message);
+    cloudOK = false;
+    majIndicateurSync();
+    console.warn('Cloud sync indispo, fallback localStorage', e);
   }
 }
 
-async function chargerVentesSemaine() {
-  try {
-    const r = await fetch('/api/r-and-d/ventes-semaine');
-    if (!r.ok) return;
-    const d = await r.json();
-    if (d && d.ventes && typeof d.total_ca === 'number') ventesSemaine = d;
-  } catch (e) { /* skip */ }
+function sauverDonnees() {
+  sauverDonneesLocal();
+  // Debounce 1s avant push cloud
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(pousserDonneesCloud, 1000);
 }
 
-function trouverVentesShopify(nom, ventesMap) {
-  if (!nom || !ventesMap) return { ca: 0, qty: 0 };
-  const needle = nom.toLowerCase().trim();
+async function pousserDonneesCloud() {
+  if (cloudOK === false) return;  // pas la peine de retenter à chaque save
+  try {
+    const r = await fetch('/api/r-and-d/produits', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(donnees),
+    });
+    if (r.status === 503) { cloudOK = false; majIndicateurSync(); return; }
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    cloudOK = true;
+    majIndicateurSync();
+  } catch (e) {
+    cloudOK = false;
+    majIndicateurSync();
+    console.warn('Push cloud échoué', e);
+  }
+}
+
+function majIndicateurSync() {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (cloudOK === true) {
+    el.textContent = '☁️ Synchro cloud active';
+    el.style.color = 'var(--vert)';
+  } else if (cloudOK === false) {
+    el.textContent = '⚠️ Local seulement (Upstash Redis pas activé)';
+    el.style.color = 'var(--orange)';
+    el.title = 'Active Upstash Redis dans Vercel Storage pour synchroniser entre devices';
+  } else {
+    el.textContent = '⏳ Vérification…';
+    el.style.color = 'var(--gris)';
+  }
+}
+
+/** Date locale en string YYYY-MM-DD (pas d'UTC, pour éviter les décalages de timezone). */
+function dateISOLocal(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/** Renvoie les semaines J-M d'un mois. Une semaine = jeudi → mercredi. */
+function calculerSemainesMois(annee, mois) {
+  const semaines = [];
+  const fin = new Date(annee, mois + 1, 0);
+
+  let cursor = new Date(annee, mois, 1);
+  while (cursor.getDay() !== 4) cursor.setDate(cursor.getDate() - 1);
+
+  while (cursor <= fin) {
+    const jeudi = new Date(cursor);
+    const mercredi = new Date(cursor);
+    mercredi.setDate(mercredi.getDate() + 6);
+    let joursDansMois = 0;
+    for (let i = 0; i < 7; i++) {
+      const j = new Date(jeudi);
+      j.setDate(j.getDate() + i);
+      if (j.getMonth() === mois && j.getFullYear() === annee) joursDansMois++;
+    }
+    if (joursDansMois >= 4) {
+      semaines.push({
+        debut: dateISOLocal(jeudi),
+        fin: dateISOLocal(mercredi),
+        label: `${jeudi.getDate()} ${NOMS_MOIS[jeudi.getMonth()].slice(0, 3).toLowerCase()}. → ${mercredi.getDate()} ${NOMS_MOIS[mercredi.getMonth()].slice(0, 3).toLowerCase()}.`
+      });
+    }
+    cursor.setDate(cursor.getDate() + 7);
+  }
+  return semaines;
+}
+
+const NOMS_JOURS_COURT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+// Ordre semaine Mood : jeudi → mercredi (jours JS : 4,5,6,0,1,2,3)
+const ORDRE_JOURS_SEMAINE = [4, 5, 6, 0, 1, 2, 3];
+
+function rendreCalendrier() {
+  const annee = parseInt(document.getElementById('annee').value, 10);
+  const cal = document.getElementById('calendrier');
+  cal.innerHTML = '';
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (let mois = 0; mois < 12; mois++) {
+    const semaines = calculerSemainesMois(annee, mois);
+    const moisDiv = document.createElement('div');
+    moisDiv.className = 'month';
+
+    // Récap mensuel : produits dont la date appartient à ce mois
+    const produitsDuMois = donnees.produits.filter(p => {
+      if (!p.date) return false;
+      const d = new Date(p.date + 'T00:00:00');
+      return d.getMonth() === mois && d.getFullYear() === annee;
+    });
+
+    let html = `<div class="month-header">
+      <div class="month-title">${NOMS_MOIS[mois]} ${annee}</div>
+    </div>`;
+
+    if (produitsDuMois.length > 0) {
+      // Si on a les ventes Shopify du mois, recalculer les ventes par produit auto
+      const ventesShopify = ventesParMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
+      const ventesShopifyOK = ventesShopify
+        && ventesShopify.ventes
+        && typeof ventesShopify.total_ca === 'number';
+      let totalVentesAuto = 0;
+      let synchroBadge = '';
+      if (ventesShopifyOK) {
+        // Pour chaque produit du planning, chercher dans les ventes Shopify par titre similaire
+        const produitsRapprochés = produitsDuMois.map(p => {
+          const match = trouverVentesShopify(p.nom, ventesShopify.ventes);
+          return { ...p, ventesAuto: match.ca, qtyAuto: match.qty };
+        });
+        totalVentesAuto = produitsRapprochés.reduce((s, p) => s + (p.ventesAuto || 0), 0);
+        synchroBadge = `<span style="font-size:0.7rem;color:var(--vert);margin-left:0.5rem;">☁️ Ventes Shopify synchronisées</span>`;
+      }
+      const totalObj = produitsDuMois.reduce((s, p) => s + (+p.objectifCA || 0), 0);
+      const totalVentesManuel = produitsDuMois.reduce((s, p) => s + (+p.ventes || 0), 0);
+      const totalVentes = totalVentesAuto > 0 ? totalVentesAuto : totalVentesManuel;
+      const reste = totalObj - totalVentes;
+      const pctMois = totalObj > 0 ? Math.round((totalVentes / totalObj) * 100) : 0;
+      html += `<div class="recap-mensuel">
+        <div class="recap-mensuel-title">📊 Bilan ${NOMS_MOIS[mois]} ${annee}${synchroBadge}</div>
+        <div class="recap-totals">
+          <div class="recap-total-item">Objectif total<strong>${totalObj.toLocaleString('fr-CH')}.- CHF</strong></div>
+          <div class="recap-total-item">Réalisé<strong>${totalVentes.toLocaleString('fr-CH')}.- CHF (${pctMois}%)</strong></div>
+          <div class="recap-total-item">${reste >= 0 ? 'Manque' : 'Dépassement'}<strong style="color:${reste >= 0 ? 'var(--rouge)' : 'var(--vert)'}">${Math.abs(reste).toLocaleString('fr-CH')}.- CHF</strong></div>
+          <div class="recap-total-item">Nouveautés<strong>${produitsDuMois.length}</strong></div>
+          ${ventesShopifyOK ? `<div class="recap-total-item">CA total Shopify<strong>${ventesShopify.total_ca.toLocaleString('fr-CH')}.- CHF</strong></div>` : ''}
+        </div>
+        ${!ventesShopifyOK ? `<button class="outline" onclick="chargerVentesMois(${annee},${mois + 1})" style="font-size:0.75rem;padding:0.3rem 0.7rem;margin-top:0.5rem;">☁️ Charger ventes Shopify</button>` : ''}
+      </div>`;
+    }
+
+    html += `<div class="weeks">`;
+
+    for (const sem of semaines) {
+      const debutDate = new Date(sem.debut + 'T00:00:00');
+      let joursHtml = '';
+      for (let i = 0; i < 7; i++) {
+        const jour = new Date(debutDate);
+        jour.setDate(jour.getDate() + i);
+        const jourISO = dateISOLocal(jour);
+        const nomJour = NOMS_JOURS_COURT[jour.getDay()];
+        const numJour = jour.getDate();
+        const estAujourdhui = jourISO === today;
+
+        const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
+
+        let cardsHtml = '';
+        for (const p of produitsDuJour) {
+          const hasImage = !!p.image;
+          const cardStyle = hasImage
+            ? `style="background-image:url('${p.image}');background-size:cover;background-position:center;min-height:100px;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.7);"`
+            : '';
+          // Jauge étape (progression 1-9)
+          const etape = p.etape || 1;
+          const etapePct = Math.round((etape / 9) * 100);
+          // Couleur jauge étape : du gris (1) au vert (9)
+          const palette = ['#94a3b8','#60a5fa','#f59e0b','#fbbf24','#f97316','#84cc16','#22c55e','#16a34a','#15803d'];
+          const etapeColor = palette[etape - 1] || palette[0];
+          const etapeJaugeHtml = `<div class="etape-jauge"><div class="etape-jauge-fill" style="width:${etapePct}%;background:${etapeColor};"></div></div>`;
+          // Jauge ventes
+          let ventesJaugeHtml = '';
+          if (p.objectifCA && p.objectifCA > 0) {
+            const ventes = +p.ventes || 0;
+            const pct = Math.min(100, Math.round((ventes / p.objectifCA) * 100));
+            const cls = pct >= 90 ? 'jauge-vert' : pct >= 50 ? 'jauge-orange' : 'jauge-rouge';
+            ventesJaugeHtml = `<div class="ventes-jauge"><div class="ventes-jauge-fill ${cls}" style="width:${pct}%;"></div></div>
+              <div class="ventes-pct">${ventes.toLocaleString('fr-CH')}.- / ${p.objectifCA.toLocaleString('fr-CH')}.- (${pct}%)</div>`;
+          }
+          // Badge ventes Shopify de la semaine commerciale (jeu→mer) — TOUJOURS affiché
+          let ventesSemaineHtml = '';
+          try {
+            if (ventesSemaine && ventesSemaine.ventes) {
+              const cle = (p.shopifySearch && p.shopifySearch.trim()) || p.nom;
+              const matchSem = trouverVentesShopify(cle, ventesSemaine.ventes);
+              const ca = Number(matchSem?.ca) || 0;
+              const qty = Number(matchSem?.qty) || 0;
+              const cls = qty > 0 ? 'ventes-semaine actif' : 'ventes-semaine vide';
+              ventesSemaineHtml = `<div class="${cls}" title="Ventes Shopify cette semaine (jeu→mer)">📊 ${qty} vente${qty > 1 ? 's' : ''}${ca > 0 ? ' · ' + ca.toLocaleString('fr-CH') + '.-' : ''}</div>`;
+            }
+          } catch (e) { /* badge ventes semaine non bloquant */ }
+          // Badge OFFRE en avant (Stéphanie) — placeholder doré si vide, vert si renseigné
+          const offreTexte = (p.offre || '').trim();
+          const offreHtml = offreTexte
+            ? `<div class="offre-badge has-offre" title="Offre : ${offreTexte.replace(/"/g, '&quot;')}">🎁 ${escapeHtml ? escapeHtml(offreTexte) : offreTexte.replace(/[<>&]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;' }[c]))}</div>`
+            : `<div class="offre-badge no-offre">🎁 Offre à définir</div>`;
+          cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}${offreTexte ? ' product-card-has-offre' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
+            <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
+            <div class="product-name">${p.nom}${offreHtml}${etapeJaugeHtml}${ventesJaugeHtml}${ventesSemaineHtml}</div>
+          </div>`;
+        }
+
+        joursHtml += `<div class="day${estAujourdhui ? ' today' : ''}" data-day="${jourISO}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${jourISO}')">
+          <div class="day-header"><span class="day-name">${nomJour}</span><span class="day-number">${numJour}</span></div>
+          <div class="day-content">${cardsHtml}</div>
+          <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')">+</button>
+        </div>`;
+      }
+
+      // Récap hebdomadaire (objectifs + ventes des produits de la semaine)
+      const debutSem = new Date(sem.debut + 'T00:00:00');
+      const finSem = new Date(debutSem); finSem.setDate(finSem.getDate() + 7);
+      const produitsDeSemaine = donnees.produits.filter(p => {
+        if (!p.date) return false;
+        const d = new Date(p.date + 'T00:00:00');
+        return d >= debutSem && d < finSem;
+      });
+      const recapHebdoHtml = construireRecap(produitsDeSemaine, `Semaine ${sem.label}`);
+
+      html += `<div class="week">
+        <div class="week-header">${sem.label}</div>
+        <div class="week-days">${joursHtml}</div>
+        ${recapHebdoHtml}
+      </div>`;
+    }
+
+    html += `</div>`;
+    moisDiv.innerHTML = html;
+    cal.appendChild(moisDiv);
+  }
+}
+
+function ouvrirModalAjout(date) {
+  modalContexte = { mode: 'ajout', date };
+  document.getElementById('modal-title').textContent = `Nouveau produit — ${formaterDate(date)}`;
+  document.getElementById('produit-id').value = '';
+  document.getElementById('produit-nom').value = '';
+  document.getElementById('produit-shopify-search').value = '';
+  document.getElementById('produit-offre').value = '';
+  document.getElementById('produit-type').value = 'addon';
+  document.getElementById('produit-etape').value = '1';
+  document.getElementById('produit-fournisseur').value = '';
+  document.getElementById('produit-ca').value = '';
+  const ventesField = document.getElementById('produit-ventes');
+  if (ventesField) ventesField.value = '';
+  document.getElementById('produit-notes').value = '';
+  document.getElementById('produit-image').value = '';
+  setImagePreview('');
+  document.getElementById('btn-supprimer').style.display = 'none';
+  document.getElementById('btn-dupliquer').style.display = 'none';
+  const evalZone = document.getElementById('eval-resultat');
+  if (evalZone) { evalZone.innerHTML = ''; evalZone.style.display = 'none'; }
+  document.getElementById('modal').classList.add('show');
+}
+
+function ouvrirModalEdit(id) {
+  const p = donnees.produits.find(x => x.id === id);
+  if (!p) return;
+  modalContexte = { mode: 'edit', date: p.date };
+  document.getElementById('modal-title').textContent = `Éditer — ${formaterDate(p.date)}`;
+  document.getElementById('produit-id').value = p.id;
+  document.getElementById('produit-nom').value = p.nom || '';
+  document.getElementById('produit-shopify-search').value = p.shopifySearch || '';
+  document.getElementById('produit-offre').value = p.offre || '';
+  document.getElementById('produit-type').value = p.type || 'addon';
+  document.getElementById('produit-etape').value = p.etape || '1';
+  document.getElementById('produit-fournisseur').value = p.fournisseur || '';
+  document.getElementById('produit-ca').value = p.objectifCA || '';
+  const ventesFieldEdit = document.getElementById('produit-ventes');
+  if (ventesFieldEdit) ventesFieldEdit.value = p.ventes || '';
+  document.getElementById('produit-notes').value = p.notes || '';
+  document.getElementById('produit-image').value = p.image || '';
+  setImagePreview(p.image || '');
+  document.getElementById('btn-supprimer').style.display = 'inline-block';
+  document.getElementById('btn-dupliquer').style.display = 'inline-block';
+  document.getElementById('modal').classList.add('show');
+}
+
+function setImagePreview(dataUrl) {
+  const img = document.getElementById('produit-image-preview');
+  const btn = document.getElementById('btn-retirer-image');
+  if (dataUrl) {
+    img.src = dataUrl;
+    img.style.display = 'block';
+    btn.style.display = 'inline-block';
+  } else {
+    img.src = '';
+    img.style.display = 'none';
+    btn.style.display = 'none';
+  }
+}
+
+function traiterFichierImage(f) {
+  if (!f) return;
+  if (!f.type.startsWith('image/')) { alert('Seules les images sont acceptées.'); return; }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    // Compression : redimensionner à max 600px de côté
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 600;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('produit-image').value = compressed;
+      setImagePreview(compressed);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+
+function onImageChosen(e) {
+  const f = e.target.files[0];
+  traiterFichierImage(f);
+  e.target.value = ''; // reset pour pouvoir re-choisir le même fichier
+}
+
+function onImageDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onImageDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function onImageDrop(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.currentTarget.classList.remove('drag-over');
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0) {
+    traiterFichierImage(files[0]);
+  }
+}
+
+function retirerImage() {
+  document.getElementById('produit-image').value = '';
+  setImagePreview('');
+}
+
+function formaterDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  const noms = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  return `${noms[d.getDay()]} ${d.getDate()} ${NOMS_MOIS[d.getMonth()].toLowerCase()} ${d.getFullYear()}`;
+}
+
+function fermerModal() {
+  document.getElementById('modal').classList.remove('show');
+  modalContexte = null;
+}
+
+function sauverProduit() {
+  const nom = document.getElementById('produit-nom').value.trim();
+  if (!nom) { alert('Le nom est obligatoire'); return; }
+  const id = document.getElementById('produit-id').value;
+  const data = {
+    nom,
+    shopifySearch: document.getElementById('produit-shopify-search').value.trim() || null,
+    offre: document.getElementById('produit-offre').value.trim() || null,
+    type: document.getElementById('produit-type').value,
+    etape: parseInt(document.getElementById('produit-etape').value, 10),
+    fournisseur: document.getElementById('produit-fournisseur').value,
+    objectifCA: parseInt(document.getElementById('produit-ca').value, 10) || null,
+    ventes: parseInt(document.getElementById('produit-ventes')?.value || '0', 10) || 0,
+    notes: document.getElementById('produit-notes').value,
+    image: document.getElementById('produit-image').value || null,
+    date: modalContexte.date,
+    majAt: new Date().toISOString(),
+  };
+  if (id) {
+    const idx = donnees.produits.findIndex(p => p.id === id);
+    if (idx >= 0) donnees.produits[idx] = { ...donnees.produits[idx], ...data };
+  } else {
+    data.id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    data.creAt = data.majAt;
+    donnees.produits.push(data);
+  }
+  sauverDonnees();
+  fermerModal();
+  rendreCalendrier();
+}
+
+function dupliquerProduit() {
+  const id = document.getElementById('produit-id').value;
+  if (!id) return;
+  const src = donnees.produits.find(p => p.id === id);
+  if (!src) return;
+  // Clone profond du produit (image base64 incluse), nouvel ID, nom suffixé "(copie)"
+  const copie = JSON.parse(JSON.stringify(src));
+  copie.id = 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+  copie.nom = (src.nom || '') + ' (copie)';
+  copie.creAt = new Date().toISOString();
+  copie.majAt = copie.creAt;
+  donnees.produits.push(copie);
+  sauverDonnees();
+  fermerModal();
+  rendreCalendrier();
+  // Ouvre directement la modal sur la copie pour ajustements (date, nom, etc.)
+  setTimeout(() => ouvrirModalEdit(copie.id), 50);
+}
+
+function supprimerProduit() {
+  const id = document.getElementById('produit-id').value;
+  if (!confirm('Supprimer ce produit du planning ?')) return;
+  donnees.produits = donnees.produits.filter(p => p.id !== id);
+  sauverDonnees();
+  fermerModal();
+  rendreCalendrier();
+}
+
+function exporterJSON() {
+  const blob = new Blob([JSON.stringify(donnees, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `mood-rd-pipeline-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importerJSON() {
+  document.getElementById('file-import').click();
+}
+
+function lireFichierImport(e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.produits && Array.isArray(data.produits)) {
+        if (confirm(`Importer ${data.produits.length} produits ? Cela remplacera le contenu actuel.`)) {
+          donnees = data;
+          sauverDonnees();
+          rendreCalendrier();
+        }
+      } else {
+        alert('Format invalide — manque la clé "produits".');
+      }
+    } catch (err) {
+      alert('Erreur parsing JSON : ' + err.message);
+    }
+  };
+  reader.readAsText(f);
+}
+
+function reset() {
+  if (!confirm('Effacer tous les produits du planning ? Cette action est irréversible (sauf si tu as fait un export avant).')) return;
+  donnees = { produits: [] };
+  sauverDonnees();
+  rendreCalendrier();
+}
+
+// ============ BRAINSTORM IA ============
+function ouvrirBrainstorm() {
+  document.getElementById('bs-resultats').innerHTML = '';
+  document.getElementById('modal-brainstorm').classList.add('show');
+}
+function fermerBrainstorm() {
+  document.getElementById('modal-brainstorm').classList.remove('show');
+}
+
+async function lancerBrainstorm() {
+  const theme = document.getElementById('bs-theme').value.trim();
+  if (!theme) { alert('Donne-moi au moins un thème ou une inspiration.'); return; }
+  const saison = document.getElementById('bs-saison').value.trim();
+  const contraintes = document.getElementById('bs-contraintes').value.trim();
+  const btn = document.getElementById('btn-brainstorm');
+  const zone = document.getElementById('bs-resultats');
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération…';
+  zone.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;">Gemini réfléchit… (5-15 sec)</div>';
+  try {
+    const r = await fetch('/api/r-and-d/brainstorm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme, saison, contraintes }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.idees) {
+      zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur : ${data.error || JSON.stringify(data)}</div>`;
+      return;
+    }
+    afficherIdees(data.idees);
+  } catch (e) {
+    zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">Erreur réseau : ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Générer 5 idées';
+  }
+}
+
+let ideesEnCours = [];
+
+function afficherIdees(idees) {
+  ideesEnCours = idees;
+  const zone = document.getElementById('bs-resultats');
+  let html = `<div style="font-size:0.85rem;color:var(--gris);margin-bottom:0.5rem;">${idees.length} pépites proposées :</div>`;
+  for (let i = 0; i < idees.length; i++) {
+    const idee = idees[i];
+    const stars = '⭐'.repeat(idee.potentiel || 3);
+    const tags = [idee.type, idee.matiere, idee.couleur, idee.pvd ? `PVD ${idee.pvd}` : null, idee.pierre]
+      .filter(Boolean).map(escapeHtml).join(' · ');
+    html += `<div id="idee-${i}" style="border:1px solid #e5e5e5;border-radius:8px;padding:0.7rem;margin-bottom:0.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:0.5rem;flex-wrap:wrap;">
+        <strong style="font-size:1rem;">${escapeHtml(idee.nom || 'Sans nom')}</strong>
+        <span style="font-size:0.85rem;">${stars}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--gris);margin:0.3rem 0;">${tags}</div>
+      <div style="font-size:0.85rem;margin-bottom:0.4rem;">${escapeHtml(idee.description || '')}</div>
+      <div style="font-size:0.75rem;color:var(--gris);font-style:italic;margin-bottom:0.4rem;">💡 ${escapeHtml(idee.raisonnement || '')}</div>
+      ${idee.fournisseur ? `<div style="font-size:0.75rem;margin-bottom:0.5rem;"><strong>🏭 Fournisseur :</strong> ${escapeHtml(idee.fournisseur)}</div>` : ''}
+      <div id="idee-image-${i}"></div>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+        <button onclick="genererImageIdee(${i})" id="btn-img-${i}" class="outline" style="font-size:0.8rem;padding:0.3rem 0.7rem;">🎨 Générer image</button>
+        <button onclick="ajouterIdeeAuPlanningParIndex(${i})" style="font-size:0.8rem;padding:0.3rem 0.7rem;">+ Ajouter au planning</button>
+      </div>
+    </div>`;
+  }
+  zone.innerHTML = html;
+}
+
+async function genererImageIdee(idx) {
+  const idee = ideesEnCours[idx];
+  if (!idee) return;
+  const btn = document.getElementById(`btn-img-${idx}`);
+  const zone = document.getElementById(`idee-image-${idx}`);
+  btn.disabled = true;
+  btn.textContent = '⏳ Création image…';
+  zone.innerHTML = '<div style="font-size:0.75rem;color:var(--gris);margin:0.4rem 0;">Génération en cours (15-30 sec)…</div>';
+  try {
+    const r = await fetch('/api/r-and-d/generate-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idee }),
+    });
+    const data = await r.json();
+    if (!r.ok || !data.image) {
+      zone.innerHTML = `<div style="font-size:0.75rem;color:var(--rouge);">Erreur : ${data.error || JSON.stringify(data)}</div>`;
+      btn.disabled = false;
+      btn.textContent = '🎨 Réessayer';
+      return;
+    }
+    ideesEnCours[idx].image = data.image;
+    zone.innerHTML = `<img src="${data.image}" style="width:100%;max-width:300px;border-radius:8px;margin:0.4rem 0;">`;
+    btn.textContent = '🔄 Régénérer image';
+    btn.disabled = false;
+  } catch (e) {
+    zone.innerHTML = `<div style="font-size:0.75rem;color:var(--rouge);">Erreur réseau : ${e.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = '🎨 Réessayer';
+  }
+}
+
+function ajouterIdeeAuPlanningParIndex(idx) {
+  ajouterIdeeAuPlanning(ideesEnCours[idx]);
+}
+
+// ============ ÉVALUER UNE IDÉE ============
+async function evaluerIdeeModal() {
+  const idee = {
+    nom: document.getElementById('produit-nom').value.trim(),
+    type: document.getElementById('produit-type').value,
+    matiere: '',  // pas de champ matière dédié pour l'instant — info dans notes
+    couleur: '',
+    pierre: '',
+    fournisseur: document.getElementById('produit-fournisseur').value,
+    objectifCA: parseInt(document.getElementById('produit-ca').value, 10) || null,
+    notes: document.getElementById('produit-notes').value,
+    image: document.getElementById('produit-image').value || null,
+  };
+  if (!idee.nom) { alert('Saisis au moins le nom de l\'idée avant de l\'évaluer.'); return; }
+
+  const btn = document.getElementById('btn-evaluer');
+  const zone = document.getElementById('eval-resultat');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyse…';
+  zone.style.display = 'block';
+  zone.innerHTML = '<div style="font-size:0.85rem;color:var(--gris);padding:0.6rem;">Gemini analyse ton idée selon les patterns Mood (5-15 sec)…</div>';
+
+  try {
+    const r = await fetch('/api/r-and-d/evaluer-idee', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idee }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;padding:0.6rem;">Erreur : ${data.error || JSON.stringify(data)}</div>`;
+      return;
+    }
+    afficherEvaluation(data);
+  } catch (e) {
+    zone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;padding:0.6rem;">Erreur réseau : ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Évaluer';
+  }
+}
+
+function afficherEvaluation(eval_) {
+  const zone = document.getElementById('eval-resultat');
+  const score = eval_.score_global || 0;
+  const stars = '⭐'.repeat(score) + '☆'.repeat(5 - score);
+  const couleurScore = score >= 4 ? 'var(--vert)' : score >= 3 ? 'var(--orange)' : 'var(--rouge)';
+
+  let html = `<div style="border:2px solid ${couleurScore};border-radius:8px;padding:0.8rem;background:#fafafa;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
+      <strong style="font-size:1rem;">🔍 Évaluation Mood</strong>
+      <span style="font-size:1rem;color:${couleurScore};font-weight:600;">${stars} ${score}/5</span>
+    </div>`;
+
+  // Sous-scores
+  html += `<div style="display:flex;gap:1rem;flex-wrap:wrap;font-size:0.75rem;color:var(--gris);margin-bottom:0.6rem;">`;
+  if (eval_.score_nouveaute !== undefined) html += `<span>Nouveauté : <strong>${eval_.score_nouveaute}/5</strong></span>`;
+  if (eval_.score_declinabilite !== undefined) html += `<span>Déclinabilité : <strong>${eval_.score_declinabilite}/5</strong></span>`;
+  if (eval_.score_alignement_clients !== undefined) html += `<span>Alignement clients : <strong>${eval_.score_alignement_clients}/5</strong></span>`;
+  html += `</div>`;
+
+  if (eval_.verdict) {
+    html += `<div style="font-size:0.85rem;font-style:italic;margin-bottom:0.6rem;padding:0.5rem;background:white;border-left:3px solid ${couleurScore};border-radius:4px;">${escapeHtml(eval_.verdict)}</div>`;
+  }
+
+  if (eval_.atouts && eval_.atouts.length > 0) {
+    html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:var(--vert);">✅ Atouts</strong><ul style="font-size:0.8rem;margin:0.2rem 0 0 1.2rem;">`;
+    for (const a of eval_.atouts) html += `<li>${escapeHtml(a)}</li>`;
+    html += '</ul></div>';
+  }
+
+  if (eval_.risques && eval_.risques.length > 0) {
+    html += `<div style="margin-bottom:0.5rem;"><strong style="font-size:0.8rem;color:var(--rouge);">⚠️ Risques</strong><ul style="font-size:0.8rem;margin:0.2rem 0 0 1.2rem;">`;
+    for (const r of eval_.risques) html += `<li>${escapeHtml(r)}</li>`;
+    html += '</ul></div>';
+  }
+
+  if (eval_.comparaison_existant) {
+    html += `<div style="margin-bottom:0.5rem;font-size:0.8rem;"><strong>📊 Comparaison :</strong> ${escapeHtml(eval_.comparaison_existant)}</div>`;
+  }
+
+  if (eval_.recommandations && eval_.recommandations.length > 0) {
+    html += `<div><strong style="font-size:0.8rem;color:var(--or);">💡 Recommandations</strong><ul style="font-size:0.8rem;margin:0.2rem 0 0 1.2rem;">`;
+    for (const r of eval_.recommandations) html += `<li>${escapeHtml(r)}</li>`;
+    html += '</ul></div>';
+  }
+
+  html += '</div>';
+  zone.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function ajouterIdeeAuPlanning(idee) {
+  // Demander à quelle date la mettre (par défaut = jeudi prochain)
+  const today = new Date();
+  while (today.getDay() !== 4) today.setDate(today.getDate() + 1);  // prochain jeudi
+  const defaut = dateISOLocal(today);
+  const dateChoisie = prompt(`Date de planification (YYYY-MM-DD) ?\n\nProposition : ${defaut} (prochain jeudi)`, defaut);
+  if (!dateChoisie) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateChoisie)) { alert('Format invalide. Utilise YYYY-MM-DD.'); return; }
+
+  const noteParts = [
+    `[Idée IA] ${idee.description || ''}`,
+    idee.pvd && `PVD : ${idee.pvd}`,
+    idee.couleur && `Couleur : ${idee.couleur}`,
+    idee.pierre && `Pierre : ${idee.pierre}`,
+    idee.fournisseur && `Fournisseur conseillé : ${idee.fournisseur}`,
+    `💡 ${idee.raisonnement || ''}`,
+    `Potentiel : ${idee.potentiel || '?'}/5`,
+  ].filter(Boolean);
+  const noteIA = noteParts.join('\n');
+
+  // Mapper le fournisseur IA vers le sélecteur HTML
+  const fournMap = { 'icelea': 'icelea', 'bijouterie': 'bijouterie', 'sertissage': 'sertissage', 'gravure': 'gravure' };
+  const fournisseurChoisi = fournMap[String(idee.fournisseur || '').toLowerCase()] || '';
+
+  donnees.produits.push({
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    nom: idee.nom,
+    type: idee.type || 'addon',
+    etape: 1,
+    fournisseur: fournisseurChoisi,
+    objectifCA: null,
+    notes: noteIA,
+    image: idee.image || null,
+    date: dateChoisie,
+    creAt: new Date().toISOString(),
+    majAt: new Date().toISOString(),
+  });
+  sauverDonnees();
+  rendreCalendrier();
+  fermerBrainstorm();
+}
+
+// ============ VENTES SHOPIFY (PLAN DE BATAILLE) ============
+const ventesParMois = {};  // { '2026-05': { ventes: {...}, total_ca, total_commandes } }
+let ventesSemaine = null;  // { ventes: {...}, total_ca, total_commandes, debut, fin } — semaine commerciale en cours (jeu→mer)
+
+function trouverVentesShopify(nomPepite, ventesMap) {
+  if (!nomPepite || !ventesMap) return { ca: 0, qty: 0 };
+  const needle = nomPepite.toLowerCase().trim();
   let ca = 0, qty = 0;
   for (const title in ventesMap) {
     const t = title.toLowerCase();
@@ -235,159 +1288,197 @@ function trouverVentesShopify(nom, ventesMap) {
   return { ca: Math.round(ca), qty };
 }
 
-function rendre() {
-  const grid = document.getElementById('offres-grid');
-  const filtreEtape = document.getElementById('filtre-etape').value;
-  const filtreOffre = document.getElementById('filtre-offre').value;
-  const recherche = document.getElementById('filtre-recherche').value.toLowerCase().trim();
+async function chargerVentesMois(annee, mois) {
+  const key = `${annee}-${String(mois).padStart(2, '0')}`;
+  if (ventesParMois[key]) return;
+  try {
+    const r = await fetch(`/api/r-and-d/ventes-mois?annee=${annee}&mois=${mois}`);
+    if (!r.ok) {
+      // 503 = Shopify pas configuré, on ignore silencieusement (pas d'alert intrusif)
+      if (r.status === 503) return;
+      const err = await r.json().catch(() => ({}));
+      console.warn(`Ventes ${key} indispo : ${err.error || r.status}`);
+      return;
+    }
+    const data = await r.json();
+    // Valider la structure : doit contenir ventes + total_ca + total_commandes
+    if (!data || typeof data.total_ca !== 'number' || !data.ventes) {
+      console.warn(`Ventes ${key} : réponse mal formée`, data);
+      return;
+    }
+    ventesParMois[key] = data;
+    rendreCalendrier();
+  } catch (e) {
+    console.warn('Erreur réseau ventes-mois :', e.message);
+  }
+}
 
-  // Tri : produits AVEC offre d'abord (priorité Stéphanie), puis par date desc
-  let produits = [...donnees.produits];
-  produits.sort((a, b) => {
-    const ao = (a.offre || '').trim() ? 1 : 0;
-    const bo = (b.offre || '').trim() ? 1 : 0;
-    if (ao !== bo) return bo - ao;
-    return (b.date || '').localeCompare(a.date || '');
-  });
+// Charger automatiquement les ventes du mois courant au démarrage
+function chargerVentesMoisCourant() {
+  const today = new Date();
+  chargerVentesMois(today.getFullYear(), today.getMonth() + 1);
+}
 
-  // Filtres
-  if (filtreEtape) produits = produits.filter(p => String(p.etape || 1) === filtreEtape);
-  if (filtreOffre === 'avec') produits = produits.filter(p => (p.offre || '').trim());
-  if (filtreOffre === 'sans') produits = produits.filter(p => !(p.offre || '').trim());
-  if (recherche) produits = produits.filter(p =>
-    (p.nom || '').toLowerCase().includes(recherche) ||
-    (p.offre || '').toLowerCase().includes(recherche)
-  );
+// Charger les ventes Shopify de la semaine commerciale Mood (jeudi 00:00 → mercredi 23:59)
+async function chargerVentesSemaine() {
+  try {
+    const r = await fetch('/api/r-and-d/ventes-semaine');
+    if (!r.ok) {
+      if (r.status === 503) return;
+      console.warn(`Ventes semaine indispo : ${r.status}`);
+      return;
+    }
+    const data = await r.json();
+    if (!data || typeof data.total_ca !== 'number' || !data.ventes) {
+      console.warn('Ventes semaine : réponse mal formée', data);
+      return;
+    }
+    ventesSemaine = data;
+    // Met à jour la bannière en haut
+    const bann = document.getElementById('banniere-semaine');
+    if (bann) {
+      bann.style.display = 'flex';
+      const fmtDate = iso => new Date(iso).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' });
+      document.getElementById('banniere-dates').textContent =
+        `${fmtDate(data.debut)} → ${fmtDate(data.fin)} (Mood Collection global)`;
+      document.getElementById('banniere-ca').textContent =
+        `${data.total_ca.toLocaleString('fr-CH')}.- CHF`;
+      document.getElementById('banniere-cmd').textContent =
+        `${data.total_commandes} commande${data.total_commandes > 1 ? 's' : ''}`;
+    }
+    rendreCalendrier();
+  } catch (e) {
+    console.warn('Erreur réseau ventes-semaine :', e.message);
+  }
+}
 
-  document.getElementById('count-badge').textContent = `${produits.length} produit${produits.length > 1 ? 's' : ''}`;
+// ============ DRAG & DROP ============
+let dragProductId = null;
 
-  if (produits.length === 0) {
-    grid.innerHTML = '<div class="empty-state">Aucun produit ne correspond aux filtres.</div>';
+function onDragStart(e, productId) {
+  dragProductId = productId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', productId);
+  e.target.classList.add('dragging');
+  e.stopPropagation();
+}
+
+function onDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.day.drop-target').forEach(d => d.classList.remove('drop-target'));
+  dragProductId = null;
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drop-target');
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drop-target');
+}
+
+function onDrop(e, jourISO) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+
+  // Cas 1 : drop d'un FICHIER IMAGE OS → ouvrir modal d'ajout préremplie
+  const files = e.dataTransfer?.files;
+  if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+    const f = files[0];
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 600;
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.75);
+        // Ouvrir la modal d'ajout avec image préremplie
+        ouvrirModalAjout(jourISO);
+        document.getElementById('produit-image').value = compressed;
+        setImagePreview(compressed);
+        // Pré-suggérer le nom depuis le nom du fichier (sans extension)
+        const nomSuggere = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        document.getElementById('produit-nom').value = nomSuggere;
+        document.getElementById('produit-nom').focus();
+        document.getElementById('produit-nom').select();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(f);
     return;
   }
 
-  let html = '';
+  // Cas 2 : drag&drop d'un PRODUIT INTERNE (changement de date)
+  const id = e.dataTransfer.getData('text/plain') || dragProductId;
+  if (!id) return;
+  const p = donnees.produits.find(x => x.id === id);
+  if (!p) return;
+  if (p.date === jourISO) return;
+  p.date = jourISO;
+  p.majAt = new Date().toISOString();
+  sauverDonnees();
+  rendreCalendrier();
+}
+
+// ============ RÉCAP HEBDOMADAIRE ============
+function construireRecap(produits, label) {
+  if (!produits || produits.length === 0) return '';
+  const totalObj = produits.reduce((s, p) => s + (+p.objectifCA || 0), 0);
+  const totalVentes = produits.reduce((s, p) => s + (+p.ventes || 0), 0);
+  if (totalObj === 0 && totalVentes === 0) return '';
+  const reste = totalObj - totalVentes;
+  let html = `<div class="recap-hebdo"><div class="recap-hebdo-title">📋 Récap ${escapeHtml(label)}</div>
+    <table class="recap-table">
+      <thead><tr><th>Produit</th><th>Objectif</th><th>Fait</th><th>Reste</th></tr></thead>
+      <tbody>`;
   for (const p of produits) {
-    const hasOffre = !!(p.offre || '').trim();
-    const etape = p.etape || 1;
-    const etapeLabel = STAGES[etape - 1] || '';
-
-    // Ventes Shopify de la semaine
-    let ventesHtml = '';
-    try {
-      if (ventesSemaine && ventesSemaine.ventes) {
-        const cle = (p.shopifySearch && p.shopifySearch.trim()) || p.nom;
-        const m = trouverVentesShopify(cle, ventesSemaine.ventes);
-        const qty = Number(m?.qty) || 0;
-        const ca = Number(m?.ca) || 0;
-        const cls = qty > 0 ? 'actif' : 'vide';
-        ventesHtml = `<div class="ventes-semaine ${cls}" title="Ventes Shopify cette semaine (jeu→mer)">📊 ${qty} vente${qty > 1 ? 's' : ''}${ca > 0 ? ' · ' + ca.toLocaleString('fr-CH') + '.-' : ''}</div>`;
-      }
-    } catch (e) { /* ignore */ }
-
-    const imgStyle = p.image ? `background-image:url('${p.image}');` : '';
-
-    html += `<div class="offre-card${hasOffre ? ' has-offre' : ''}" data-id="${p.id}">
-      <div class="offre-zone" onclick="document.getElementById('offre-input-${p.id}').focus()">
-        <div class="label-mini">${hasOffre ? '🎁 Offre' : 'Offre à définir'}</div>
-        <textarea
-          id="offre-input-${p.id}"
-          placeholder="Ex: Pack +1 gratuit, Promo 20%, Bundle avec X…"
-          oninput="onOffreInput('${p.id}', this.value)"
-          rows="2">${escapeHtml(p.offre || '')}</textarea>
-        <div class="save-status" id="save-${p.id}"></div>
-      </div>
-      <div class="produit-contexte">
-        <div class="produit-image" style="${imgStyle}"></div>
-        <div class="produit-info">
-          <div class="produit-nom">${escapeHtml(p.nom || 'Sans nom')}</div>
-          <div class="produit-meta">
-            <span class="badge-etape">${etape}. ${etapeLabel}</span>
-            ${p.type ? `<span>· ${escapeHtml(p.type)}</span>` : ''}
-            ${p.date ? `<span>· ${formaterDate(p.date)}</span>` : ''}
-          </div>
-          ${ventesHtml}
-        </div>
-      </div>
-    </div>`;
+    const obj = +p.objectifCA || 0;
+    const fait = +p.ventes || 0;
+    const r = obj - fait;
+    if (obj === 0 && fait === 0) continue;
+    const cls = r > 0 ? 'reste-rouge' : r < 0 ? 'reste-vert' : '';
+    html += `<tr>
+      <td>${escapeHtml(p.nom)}</td>
+      <td>${obj > 0 ? obj.toLocaleString('fr-CH') + '.-' : '—'}</td>
+      <td>${fait > 0 ? fait.toLocaleString('fr-CH') + '.-' : '—'}</td>
+      <td class="${cls}">${r !== 0 ? (r > 0 ? r : -r).toLocaleString('fr-CH') + '.-' : '0'}</td>
+    </tr>`;
   }
-  grid.innerHTML = html;
+  html += `<tr class="total-row">
+    <td>TOTAL</td>
+    <td>${totalObj.toLocaleString('fr-CH')}.-</td>
+    <td>${totalVentes.toLocaleString('fr-CH')}.-</td>
+    <td class="${reste > 0 ? 'reste-rouge' : 'reste-vert'}">${(reste >= 0 ? reste : -reste).toLocaleString('fr-CH')}.-</td>
+  </tr>`;
+  html += '</tbody></table></div>';
+  return html;
 }
 
-function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
+document.getElementById('annee').addEventListener('change', rendreCalendrier);
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') fermerModal();
+});
+document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-brainstorm') fermerBrainstorm();
+});
 
-function formaterDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-// Sauvegarde debounced de l'offre (1.5s après dernière frappe)
-function onOffreInput(id, valeur) {
-  const idx = donnees.produits.findIndex(p => p.id === id);
-  if (idx < 0) return;
-  donnees.produits[idx].offre = valeur;
-  // Toggle has-offre class instantanément pour feedback visuel
-  const card = document.querySelector(`.offre-card[data-id="${id}"]`);
-  if (card) {
-    if (valeur.trim()) card.classList.add('has-offre');
-    else card.classList.remove('has-offre');
-    const labelMini = card.querySelector('.label-mini');
-    if (labelMini) labelMini.textContent = valeur.trim() ? '🎁 Offre' : 'Offre à définir';
-  }
-  // Status saving + debounce save
-  const statusEl = document.getElementById(`save-${id}`);
-  if (statusEl) { statusEl.textContent = '⏳ Sauvegarde…'; statusEl.className = 'save-status saving'; }
-  if (saveTimers[id]) clearTimeout(saveTimers[id]);
-  saveTimers[id] = setTimeout(() => sauverProduit(id), 1500);
-}
-
-async function sauverProduit(id) {
-  try {
-    const r = await fetch('/api/r-and-d/produits', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ produits: donnees.produits }),
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const statusEl = document.getElementById(`save-${id}`);
-    if (statusEl) {
-      statusEl.textContent = '✓ Enregistré';
-      statusEl.className = 'save-status saved';
-      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
-    }
-  } catch (e) {
-    const statusEl = document.getElementById(`save-${id}`);
-    if (statusEl) { statusEl.textContent = '⚠️ Échec — réessaye'; statusEl.className = 'save-status ko'; }
-    console.warn('Save error :', e);
-  }
-}
-
-function majSyncStatus(s) {
-  const el = document.getElementById('sync-status');
-  if (s === 'ok') { el.textContent = '☁️ Synchronisé'; el.className = 'sync-status ok'; }
-  else if (s === 'ko') { el.textContent = '⚠️ Hors-ligne'; el.className = 'sync-status ko'; }
-  else { el.textContent = 'Synchronisation…'; el.className = 'sync-status'; }
-}
-
-async function rafraichir() {
-  majSyncStatus('');
-  await Promise.all([chargerDonnees(), chargerVentesSemaine()]);
-  rendre();
-}
-
-// Filtres
-document.getElementById('filtre-etape').addEventListener('change', rendre);
-document.getElementById('filtre-offre').addEventListener('change', rendre);
-document.getElementById('filtre-recherche').addEventListener('input', rendre);
-
-// Auto-refresh toutes les 60s (pour voir les nouveaux produits ajoutés par Amila)
-setInterval(rafraichir, 60_000);
-
-// Init
-rafraichir();
+rendreCalendrier();
+// Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
+chargerDonneesCloud();
+// Charger les ventes Shopify du mois courant
+chargerVentesMoisCourant();
+chargerVentesSemaine();
 </script>
 </body>
 </html>
