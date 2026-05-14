@@ -143,6 +143,18 @@
   <textarea id="indications" rows="3" placeholder="Exemples :&#10;• « fond bleu pastel » (pour Fond anthracite)&#10;• « garder le diamant rouge », « redresser vers la gauche » (pour Nettoyer)&#10;• « main de femme métisse, ongles french amande, main posée vers la clavicule, t-shirt blanc, zoom focus bague » (pour Bague portée)" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
 </div>
 
+<!-- Nommage des photos téléchargées -->
+<div id="naming-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.4rem;">📛 Nommage des photos téléchargées <span style="color:var(--gris);font-weight:400;">— optionnel</span></label>
+  <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;font-size:0.85rem;">
+    <input id="nom-bague" type="text" placeholder="aura, océan, riviera rose..." style="flex:1;min-width:140px;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-family:inherit;">
+    <span style="color:var(--gris);font-size:0.78rem;">_bague_mood_interchangeable_</span>
+    <input id="numero-photo" type="number" min="1" value="1" style="width:70px;padding:0.4rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-family:inherit;">
+    <span style="color:var(--gris);font-size:0.78rem;">_ring.png</span>
+  </div>
+  <div style="font-size:0.72rem;color:var(--gris);margin-top:0.4rem;">Le numéro s'incrémente automatiquement à chaque téléchargement. Si "Nom de la bague" est vide, le nommage par défaut est utilisé.</div>
+</div>
+
 <!-- Actions -->
 <div class="actions-grid actions-disabled" id="actions">
   <div class="action-card" onclick="lancerAction('fond-blanc')" data-action="fond-blanc">
@@ -246,7 +258,34 @@ function telechargerDataUrl(dataUrl, filename) {
 function telechargerCache(id, filename) {
   const dataUrl = imagesCache[id];
   if (!dataUrl) { alert('Image non trouvée'); return; }
-  telechargerDataUrl(dataUrl, filename);
+  // Si "Nom de la bague" est rempli, override le nom selon le format Mood
+  const nomFinal = construireNomFichier(filename);
+  telechargerDataUrl(dataUrl, nomFinal);
+  incrementerNumero();
+}
+
+function construireNomFichier(filenameDefaut) {
+  const nomEl = document.getElementById('nom-bague');
+  const numEl = document.getElementById('numero-photo');
+  const nom = nomEl?.value?.trim();
+  if (!nom) return filenameDefaut;
+  const sanitized = nom.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // supprime accents
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const numero = parseInt(numEl?.value || '1', 10);
+  // Extrait le ratio si présent dans le nom par défaut (mood-1x1-... ou mood-9x16-...)
+  const ratioMatch = filenameDefaut.match(/mood-(\d+x\d+)-/);
+  const ratio = ratioMatch ? ratioMatch[1] : '';
+  const suffix = ratio && ratio !== '1x1' ? `_${ratio}` : '';
+  return `${sanitized}_bague_mood_interchangeable_${numero}_ring${suffix}.png`;
+}
+
+function incrementerNumero() {
+  const numEl = document.getElementById('numero-photo');
+  if (!numEl) return;
+  const nomEl = document.getElementById('nom-bague');
+  if (!nomEl?.value?.trim()) return; // pas d'incrémentation si pas de nom custom
+  numEl.value = (parseInt(numEl.value || '1', 10) || 1) + 1;
 }
 
 // ============ CORRECTION IA (par image) ============
@@ -329,6 +368,7 @@ async function chargerFichier(file) {
     dropZoneEl.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('indications-zone').style.display = 'block';
+    document.getElementById('naming-zone').style.display = 'block';
     document.getElementById('themes-saison').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
   } catch (e) {
