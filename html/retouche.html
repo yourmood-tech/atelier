@@ -216,6 +216,39 @@
 <script>
 let imageActuelle = null;  // dataUrl base64
 
+// ============ TÉLÉCHARGEMENT 1-CLIC (Blob URL, marche sur Safari) ============
+const imagesCache = {};
+function cacheImage(dataUrl) {
+  const id = 'img-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+  imagesCache[id] = dataUrl;
+  return id;
+}
+function telechargerDataUrl(dataUrl, filename) {
+  try {
+    const arr = dataUrl.split(',');
+    const mime = (arr[0].match(/:(.*?);/) || [, 'image/png'])[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    const blob = new Blob([u8arr], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) {
+    const a = document.createElement('a');
+    a.href = dataUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+function telechargerCache(id, filename) {
+  const dataUrl = imagesCache[id];
+  if (!dataUrl) { alert('Image non trouvée'); return; }
+  telechargerDataUrl(dataUrl, filename);
+}
+
 // ============ UPLOAD ============
 const dropZone = document.getElementById('upload-zone');
 
@@ -325,10 +358,11 @@ async function lancerAction(action) {
           html += `<div class="multi-item"><div class="multi-label">${escapeHtml(res.label)}</div><div class="erreur" style="font-size:0.7rem;">${escapeHtml(res.error.slice(0, 100))}</div></div>`;
         } else {
           const fname = `mood-${res.ratio}-${Date.now()}.png`;
+          const id = cacheImage(res.image);
           html += `<div class="multi-item">
             <div class="multi-label">${escapeHtml(res.label)}</div>
             <img src="${res.image}" alt="${escapeHtml(res.label)}">
-            <a href="${res.image}" download="${fname}" class="btn-download" style="margin-top:0.4rem;font-size:0.75rem;padding:0.3rem 0.6rem;">⬇️ Télécharger</a>
+            <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="margin-top:0.4rem;font-size:0.75rem;padding:0.3rem 0.6rem;border:none;cursor:pointer;">⬇️ Télécharger</button>
           </div>`;
         }
       }
@@ -337,6 +371,7 @@ async function lancerAction(action) {
     } else {
       if (!data.image) throw new Error('Pas d\'image retournée');
       const fname = `mood-${action}-${Date.now()}.png`;
+      const id = cacheImage(data.image);
       bloc.innerHTML = `<div class="resultat-titre">${escapeHtml(titre)}</div>
         <div class="image-pair">
           <div class="image-col">
@@ -346,7 +381,7 @@ async function lancerAction(action) {
           <div class="image-col">
             <div class="label">Après</div>
             <img src="${data.image}" alt="résultat">
-            <a href="${data.image}" download="${fname}" class="btn-download">⬇️ Télécharger</a>
+            <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="border:none;cursor:pointer;">⬇️ Télécharger</button>
           </div>
         </div>`;
     }
