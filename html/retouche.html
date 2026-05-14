@@ -309,47 +309,78 @@ function handleFileChosen(e) {
 }
 
 async function chargerFichier(file) {
-  // Convertir + compresser : iPhone HEIC → JPEG, gros fichiers → max 2048px
-  // Évite que Gemini refuse l'image (format non supporté, taille excessive)
+  // Affiche loader pendant chargement (gros fichiers = plusieurs secondes)
+  const dropZoneEl = document.getElementById('upload-zone');
+  const emptyEl = document.getElementById('upload-empty');
+  const previewEl = document.getElementById('upload-preview');
+  const sizeMB = (file.size / 1_000_000).toFixed(1);
+  emptyEl.innerHTML = `<div class="emoji-up">⏳</div>
+    <div class="titre-up">Chargement de l'image…</div>
+    <div class="hint">${sizeMB} Mo · compression en cours</div>`;
+
   try {
     imageActuelle = await compresserImage(file, 1280, 0.88);
-    // Si le résultat est encore > 3 Mo, compresser plus agressivement
     if (imageActuelle.length > 3_000_000) {
       imageActuelle = await compresserImage(file, 1024, 0.80);
     }
     document.getElementById('img-original').src = imageActuelle;
-    document.getElementById('upload-empty').style.display = 'none';
-    document.getElementById('upload-preview').style.display = 'block';
-    dropZone.classList.add('has-image');
+    emptyEl.style.display = 'none';
+    previewEl.style.display = 'block';
+    dropZoneEl.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('indications-zone').style.display = 'block';
     document.getElementById('themes-saison').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
   } catch (e) {
-    alert('Impossible de charger cette image : ' + (e.message || e) + '. Essaie un JPG ou PNG standard.');
+    emptyEl.innerHTML = `<div class="emoji-up">⚠️</div>
+      <div class="titre-up">Impossible de charger</div>
+      <div class="hint">${escapeHtml(e.message || String(e))}</div>
+      <div class="hint" style="margin-top:0.6rem;">Re-clique ou glisse une autre photo</div>`;
   }
 }
 
 // Convertit l'image en JPEG, redimensionne si trop grande, retourne dataURL
-function compresserImage(file, maxDim, quality) {
+// Utilise createImageBitmap (rapide, moins de mémoire) avec fallback FileReader
+async function compresserImage(file, maxDim, quality) {
+  let bitmap = null;
+  try {
+    // createImageBitmap est 10-30× plus rapide que FileReader + new Image() pour les gros fichiers
+    bitmap = await createImageBitmap(file);
+  } catch {
+    // Fallback FileReader pour les vieux navigateurs ou HEIC
+    return compresserImageLegacy(file, maxDim, quality);
+  }
+  try {
+    let w = bitmap.width, h = bitmap.height;
+    if (w > maxDim || h > maxDim) {
+      const ratio = Math.min(maxDim / w, maxDim / h);
+      w = Math.round(w * ratio); h = Math.round(h * ratio);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    return canvas.toDataURL('image/jpeg', quality);
+  } finally {
+    if (bitmap.close) bitmap.close();
+  }
+}
+
+function compresserImageLegacy(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Lecture impossible (peut-être un format HEIC non supporté en JS — convertis-la en JPG sur iPhone : Réglages > Caméra > Formats > Le plus compatible)'));
+    reader.onerror = () => reject(new Error('Lecture impossible (peut-être HEIC non supporté — convertis en JPG : Réglages iPhone > Caméra > Formats > Le plus compatible)'));
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error('Image illisible (format non supporté). Convertis-la en JPG ou PNG.'));
+      img.onerror = () => reject(new Error('Image illisible (format non supporté). Convertis en JPG ou PNG.'));
       img.onload = () => {
         let w = img.naturalWidth, h = img.naturalHeight;
-        // Redimensionner si trop grand
         if (w > maxDim || h > maxDim) {
           const ratio = Math.min(maxDim / w, maxDim / h);
-          w = Math.round(w * ratio);
-          h = Math.round(h * ratio);
+          w = Math.round(w * ratio); h = Math.round(h * ratio);
         }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.src = reader.result;
