@@ -249,6 +249,48 @@ function telechargerCache(id, filename) {
   telechargerDataUrl(dataUrl, filename);
 }
 
+// ============ CORRECTION IA (par image) ============
+async function corrigerImage(id, ratio) {
+  const noteEl = document.getElementById('corr-note-' + id);
+  const note = noteEl?.value?.trim();
+  if (!note) { alert("Tape ce que tu veux corriger dans le champ avant de cliquer."); return; }
+  const imgUrl = imagesCache[id];
+  if (!imgUrl) { alert('Image non trouvée'); return; }
+  const btn = document.getElementById('corr-btn-' + id);
+  const oldText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Correction…';
+  try {
+    const r = await fetch('/api/visuel-mood-corriger', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imgUrl, instruction: note, format: ratio || '1:1' }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error('Réponse non-JSON : ' + text.slice(0, 150)); }
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    if (!data.image) throw new Error("Pas d'image renvoyée");
+    imagesCache[id] = data.image;
+    const imgEl = document.getElementById('img-' + id);
+    if (imgEl) imgEl.src = data.image;
+    noteEl.value = '';
+    btn.innerHTML = '✅ Corrigé';
+    setTimeout(() => { btn.innerHTML = oldText; btn.disabled = false; }, 1800);
+  } catch (e) {
+    btn.innerHTML = '⚠️ ' + String(e.message || e).slice(0, 50);
+    setTimeout(() => { btn.innerHTML = oldText; btn.disabled = false; }, 3500);
+  }
+}
+
+// Génère le HTML du bloc "Correction" sous une image
+function htmlCorrection(id, ratio) {
+  return `<div style="margin-top:0.6rem;display:flex;gap:0.4rem;align-items:center;background:#fafafa;padding:0.5rem;border-radius:8px;">
+    <textarea id="corr-note-${id}" rows="1" placeholder="✏️ Correction à effectuer (ex : 'enlève la poussière sur la bague')" style="flex:1;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:5px;font-size:0.78rem;font-family:inherit;resize:none;min-height:32px;"></textarea>
+    <button id="corr-btn-${id}" onclick="corrigerImage('${id}','${ratio || '1:1'}')" style="background:var(--or);color:white;border:none;padding:0.4rem 0.7rem;border-radius:5px;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;">🪄 Appliquer</button>
+  </div>`;
+}
+
 // ============ UPLOAD ============
 const dropZone = document.getElementById('upload-zone');
 
@@ -361,8 +403,9 @@ async function lancerAction(action) {
           const id = cacheImage(res.image);
           html += `<div class="multi-item">
             <div class="multi-label">${escapeHtml(res.label)}</div>
-            <img src="${res.image}" alt="${escapeHtml(res.label)}">
+            <img id="img-${id}" src="${res.image}" alt="${escapeHtml(res.label)}">
             <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="margin-top:0.4rem;font-size:0.75rem;padding:0.3rem 0.6rem;border:none;cursor:pointer;">⬇️ Télécharger</button>
+            ${htmlCorrection(id, res.ratio)}
           </div>`;
         }
       }
@@ -380,8 +423,9 @@ async function lancerAction(action) {
           </div>
           <div class="image-col">
             <div class="label">Après</div>
-            <img src="${data.image}" alt="résultat">
+            <img id="img-${id}" src="${data.image}" alt="résultat">
             <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="border:none;cursor:pointer;">⬇️ Télécharger</button>
+            ${htmlCorrection(id, '1:1')}
           </div>
         </div>`;
     }
