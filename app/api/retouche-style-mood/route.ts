@@ -8,6 +8,7 @@ const MODEL = "gemini-3-pro-image-preview";
 // Référence d'angle hardcodée par preset (nombre de variantes disponibles)
 const ANGLE_REFS_COUNT: Record<string, number> = {
   "lea": 4,
+  "face": 9,
   // Autres presets à compléter quand Stéphanie fournira les photos
 };
 
