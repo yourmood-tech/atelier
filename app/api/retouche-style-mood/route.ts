@@ -34,9 +34,9 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - The ring is a SINGLE band with decoration only on the OUTER top surface — the inner surface (the hole side) is uniformly polished metal, period.
 
 3️⃣ COMPOSITION — RING IN A SCENE, NOT A PACKSHOT
-   - The ring fills **45-65% of the frame width** (NOT more — leave generous bokeh / decor space around it).
+   - The ring fills **55-75% of the frame width** (prominent and bold but with room for decor bokeh around).
    - The ring is INTEGRATED in a scene, not isolated like a product catalog shot. The viewer sees the ring AND the soft blurred decor around it (paracord, draped fabric, surface, sand, petals, etc.).
-   - Around the ring: at least 35-55% of the frame area is filled with soft-focus DECOR — visible but heavily blurred. NEVER a clean isolated background.
+   - Around the ring: 25-45% of the frame area is filled with soft-focus DECOR — visible but heavily blurred. NEVER a clean isolated background.
    - The ring is RESTING ON or LEANING AGAINST something in the scene: a fold of fabric, a coil of paracord, a soft cushion, a textured surface — never floating on a clean studio backdrop.
    - Varied placement of the ring in the frame:
      • Off-center right with the scene's decor flowing on the LEFT
@@ -83,7 +83,8 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 - NO hard ring-light or strobe specular hotspots.
 - NO everything-in-focus 3D-render look.
 - NO altering the ring's geometry, colors, gemstones, engravings.
-- NO ring filling more than 65% of the frame — leave generous bokeh/decor space around.
+- NO ring filling more than 75% of the frame — leave bokeh/decor space around.
+- NO ring filling less than 55% of the frame — the ring is the hero and dominates.
 - NO isolated ring on a clean studio background — the ring is integrated in a scene with visible blurred decor materials around it.
 - NO multi-layered / segmented / stacked interior. The inside of the ring is ONE smooth continuous polished metal surface (mirror-polished, no decoration, no division).
 - NO camera angle that deviates from the USER-SELECTED angle directive (see rule 1️⃣).
@@ -153,11 +154,12 @@ PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring rests 
    - The ring appears as a flattened oval — most of the upper band is visible plus a tiny hint of side profile.
    - The inner hole shows as a clear oval.
    - Reference: a top-down look with just enough tilt to show depth.`,
-    "lea": `STYLE LÉA — strong plunge from above (50-65° downward).
-   - The camera is well above the ring, plunging at 50-65°.
-   - The ring appears clearly oval-shaped (the inner hole visible as a wide oval).
-   - The upper band-surface decoration is mostly visible, with a touch of side profile.
-   - Reference: Léa's classic editorial macro angle — looking down onto a low table from a standing position.`,
+    "lea": `STYLE LÉA — strong plunge from above (60-75° downward).
+   - The camera is well above the ring, plunging at 60-75°.
+   - The ring appears as a clearly OVAL shape (inner hole visible as a wide oval — almost circular).
+   - The upper band-surface decoration is fully visible across the entire ring top.
+   - Only a very small hint of side profile shows.
+   - Reference: Léa's signature editorial macro angle — looking down onto a low table from standing height, almost top-down but with enough tilt to give depth.`,
     "legere": `LIGHT PLUNGE (15-25° downward).
    - The camera is just slightly above the ring, looking gently down.
    - Most of the side profile of the ring is visible, with a small hint of the upper band decoration on top.
