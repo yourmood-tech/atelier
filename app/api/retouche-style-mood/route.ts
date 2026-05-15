@@ -194,11 +194,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
   }
 
-  let body: { image?: string; theme?: string; note?: string | null; format?: string; cameraAngle?: string; referenceDecor?: string | null };
+  let body: { image?: string; theme?: string; note?: string | null; format?: string; cameraAngle?: string; referenceDecor?: string | null; referenceAngle?: string | null };
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 }); }
 
-  const { image, theme, note, format = "3:2", cameraAngle = "lea", referenceDecor = null } = body;
+  const { image, theme, note, format = "3:2", cameraAngle = "lea", referenceDecor = null, referenceAngle = null } = body;
   if (!image || typeof image !== "string" || !image.startsWith("data:image/")) {
     return NextResponse.json({ error: "Image manquante ou invalide" }, { status: 400 });
   }
@@ -216,6 +216,12 @@ export async function POST(req: NextRequest) {
   if (referenceDecor && referenceDecor.startsWith("data:image/")) {
     const refM = referenceDecor.match(/^data:([^;]+);base64,(.+)$/);
     if (refM) refDecorPart = { inlineData: { mimeType: refM[1], data: refM[2] } };
+  }
+  // Optionnel : image de référence d'angle (pose de la bague)
+  let refAnglePart: { inlineData: { mimeType: string; data: string } } | null = null;
+  if (referenceAngle && referenceAngle.startsWith("data:image/")) {
+    const refM = referenceAngle.match(/^data:([^;]+);base64,(.+)$/);
+    if (refM) refAnglePart = { inlineData: { mimeType: refM[1], data: refM[2] } };
   }
 
   const themeText = `THEME: "${theme.trim()}"
@@ -309,6 +315,29 @@ PRODUCE THE IMAGE NOW with all 6 checklist items satisfied.`;
   const cameraDirective = CAMERA_DIRECTIVES[cameraAngle] || CAMERA_DIRECTIVES["lea"];
   let prompt = (PROMPT_BASE + themeText).replace("{{CAMERA_ANGLE_DIRECTIVE}}", cameraDirective);
 
+  // Si référence d'angle fournie, instruction PRIORITAIRE
+  if (refAnglePart) {
+    prompt = `🚨🚨🚨 ANGLE REFERENCE IMAGE PROVIDED — SUPER PRIORITY 🚨🚨🚨
+The 2nd image attached is a REFERENCE FOR THE CAMERA ANGLE / RING POSE ONLY. You MUST reproduce the EXACT SAME camera angle / ring orientation / pose / geometry as shown in this 2nd image.
+
+✅ FROM THE 2nd IMAGE (angle reference) — COPY :
+- The exact camera angle on the ring (top-down / 3/4 / side / etc.)
+- The exact orientation of the ring in 3D space (lying flat / tilted / standing / etc.)
+- The exact way the ring presents itself to the camera (visible parts, perspective foreshortening)
+- The exact pose/composition geometry
+
+⛔ FROM THE 2nd IMAGE — DO NOT COPY :
+- The ring itself (use the 1st image's ring identity — same colors, same materials, same decoration)
+- The decor/background (use either the theme below, or the 3rd image if a decor reference is also provided)
+- The lighting style (use Léa's signature soft window light)
+
+Ignore any text-based "cameraAngle" directive that may contradict the 2nd image — the IMAGE reference is the source of truth for angle.
+
+═══════════════════════════════════════════════════════════════════
+
+` + prompt;
+  }
+
   // Si référence décor fournie, ajouter une instruction explicite
   if (refDecorPart) {
     prompt += `\n\n═══════════════════════════════════════════════════════════════════
@@ -347,6 +376,7 @@ Think of it as : "Léa took multiple shots of different rings on the same setup,
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType, data } },
+          ...(refAnglePart ? [refAnglePart] : []),
           ...(refDecorPart ? [refDecorPart] : []),
           { text: prompt },
         ] }],

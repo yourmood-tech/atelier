@@ -215,6 +215,22 @@
     🎯 <b>Décor suggéré par couleur + texture + matière</b> — jamais d'objets littéraux (balles pour "militaire", coquillages pour "marine", animaux pour "safari", dragons pour "chine", etc.).
   </div>
 
+  <!-- Référence d'angle (photo qui montre l'angle voulu) -->
+  <div style="margin-top:0.7rem;padding:0.6rem 0.8rem;background:#fffdf6;border:1px solid var(--or);border-radius:8px;">
+    <label style="display:block;font-size:0.82rem;font-weight:600;margin-bottom:0.3rem;">📷 Référence d'angle <span style="color:var(--gris);font-weight:400;">— optionnel, plus efficace que le sélecteur</span></label>
+    <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+      <button onclick="document.getElementById('angle-ref-input').click()" style="padding:0.4rem 0.8rem;border:1px solid #ddd;border-radius:6px;background:white;font-size:0.78rem;cursor:pointer;">📤 Charger une photo d'angle</button>
+      <input type="file" id="angle-ref-input" accept="image/*" style="display:none;" onchange="onAngleRefUpload(event)">
+      <div id="angle-ref-preview" style="display:none;align-items:center;gap:0.4rem;">
+        <img id="angle-ref-img" src="" style="width:50px;height:40px;object-fit:cover;border-radius:4px;border:1px solid #ddd;">
+        <button onclick="resetAngleRef()" style="padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:5px;background:white;font-size:0.72rem;cursor:pointer;">× Retirer</button>
+      </div>
+    </div>
+    <div style="font-size:0.7rem;color:var(--gris);margin-top:0.3rem;line-height:1.4;">
+      💡 Upload une photo (par ex. une photo de Léa avec l'angle voulu, ou n'importe quelle photo de bague avec la pose souhaitée). L'IA reproduira EXACTEMENT cet angle. Bien plus fiable que le sélecteur texte ci-dessus.
+    </div>
+  </div>
+
   <!-- Verrouillage décor pour shoot série -->
   <div style="margin-top:0.7rem;padding:0.6rem 0.8rem;background:#fffdf6;border:1px solid var(--or);border-radius:8px;display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
     <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.82rem;font-weight:600;flex:1;min-width:200px;">
@@ -614,6 +630,28 @@ document.addEventListener('change', (e) => {
   }
 });
 
+// ============ RÉFÉRENCE D'ANGLE (image montrant l'angle voulu) ============
+let angleReferenceImage = null;
+
+async function onAngleRefUpload(e) {
+  const file = (e.target.files || [])[0];
+  e.target.value = '';
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    angleReferenceImage = await compresserImage(file, 1024, 0.85);
+    const imgEl = document.getElementById('angle-ref-img');
+    imgEl.src = angleReferenceImage;
+    document.getElementById('angle-ref-preview').style.display = 'flex';
+  } catch (err) {
+    alert('Image illisible : ' + (err.message || err));
+  }
+}
+
+function resetAngleRef() {
+  angleReferenceImage = null;
+  document.getElementById('angle-ref-preview').style.display = 'none';
+}
+
 // ============ VERROUILLAGE DÉCOR (shoot série cohérent) ============
 let decorLockEnabled = false;        // toggle utilisateur
 let decorReferenceImage = null;      // dataURL de la 1ère photo Style Mood = référence
@@ -675,10 +713,11 @@ async function lancerStyleMood() {
     const camAngleRadio = document.querySelector('input[name="cam-angle"]:checked');
     const cameraAngle = camAngleRadio?.value || 'lea';
     const referenceDecor = (decorLockEnabled && decorReferenceImage) ? decorReferenceImage : null;
+    const referenceAngle = angleReferenceImage || null;
     const r = await fetch('/api/retouche-style-mood', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageActuelle, theme, note, format, cameraAngle, referenceDecor }),
+      body: JSON.stringify({ image: imageActuelle, theme, note, format, cameraAngle, referenceDecor, referenceAngle }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();
