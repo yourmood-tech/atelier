@@ -146,8 +146,18 @@
 <!-- Thème photographe Mood (utilisé par l'action 🎨 Style photographe Mood) -->
 <div id="theme-mood-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
   <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">🎨 Thème pour le style photographe Mood <span style="color:var(--gris);font-weight:400;">— obligatoire pour l'action "Style photographe Mood"</span></label>
-  <input id="theme-mood" type="text" placeholder="Exemples : neige, papillon, sombre, chine, sparkling doré, paon, dragon rouge, automne, hiver poudreux, plage dorée, peau de léopard, glace fondue, velours noir reflet..." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;">
-  <div style="font-size:0.72rem;color:var(--gris);margin-top:0.3rem;">L'IA interprète le thème comme la photographe Mood le ferait — fond évocateur, palette en harmonie avec la bague, bokeh prononcé. Le thème est "suggéré" dans le fond, jamais affiché littéralement.</div>
+  <input id="theme-mood" type="text" placeholder="Exemples : militaire (kaki canvas), marine (bleu royal sable), sombre (velours noir), neige (poudre bleue), chine (soie rouge), sparkling doré..." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;">
+  <div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.6rem;flex-wrap:wrap;">
+    <span style="font-size:0.78rem;color:var(--gris);">Format :</span>
+    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="3:2" checked> 🖼️ 3:2 paysage (style Léa)</label>
+    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="1:1"> ⬜ 1:1 carré (Insta post)</label>
+    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="4:5"> 📱 4:5 portrait</label>
+    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="9:16"> 📲 9:16 story</label>
+  </div>
+  <div style="font-size:0.72rem;color:var(--gris);margin-top:0.5rem;line-height:1.4;">
+    🔒 <b>Position et orientation de la bague préservées</b> depuis la photo source (jamais repositionnée debout).<br>
+    🎯 Le décor est <b>suggéré uniquement par la couleur + texture + lumière</b> — jamais d'objets littéraux (pas de balles pour "militaire", pas de coquillages pour "marine", pas de neige tombée pour "neige", etc.).
+  </div>
 </div>
 
 <!-- Nommage des photos téléchargées -->
@@ -550,10 +560,12 @@ async function lancerStyleMood() {
   try {
     etape = 'fetch';
     const note = document.getElementById('indications')?.value?.trim() || null;
+    const formatRadio = document.querySelector('input[name="theme-format"]:checked');
+    const format = formatRadio?.value || '3:2';
     const r = await fetch('/api/retouche-style-mood', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageActuelle, theme, note }),
+      body: JSON.stringify({ image: imageActuelle, theme, note, format }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();
@@ -573,10 +585,10 @@ async function lancerStyleMood() {
           <img src="${imageActuelle}" alt="original">
         </div>
         <div class="image-col">
-          <div class="label">Après · style Mood</div>
+          <div class="label">Après · style Mood (${format})</div>
           <img id="img-${id}" src="${data.image}" alt="résultat">
           <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="border:none;cursor:pointer;">⬇️ Télécharger</button>
-          ${htmlCorrection(id, '1:1')}
+          ${htmlCorrection(id, format)}
         </div>
       </div>`;
   } catch (e) {

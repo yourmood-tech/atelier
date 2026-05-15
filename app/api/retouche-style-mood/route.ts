@@ -5,52 +5,61 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
-const PROMPT_BASE = `Transform this Mood Collection ring photo into a HIGH-END EDITORIAL MACRO STILL-LIFE in the signature style of Mood Collection's in-house photographer (Léa).
+const PROMPT_BASE = `Apply a thematic atmosphere to this Mood Collection ring photo, in the SIGNATURE STYLE of Mood Collection's in-house photographer (Léa).
 
-═══════════════════════════════════════════════════
-SIGNATURE STYLE — ABSOLUTE REQUIREMENTS
-═══════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════════
+⛔ ABSOLUTE RULE — RING POSITION IS PRESERVED
+═══════════════════════════════════════════════════════════════════
+- The ring's POSITION, ORIENTATION, ANGLE, FRAMING from the source image MUST BE PRESERVED EXACTLY.
+- If the ring lies FLAT on a surface in the source → it stays FLAT in the output. Do NOT stand it up.
+- If the ring is TILTED at an angle in the source → it stays at the SAME tilt in the output.
+- If the ring is shown SIDE-VIEW / SLIGHTLY FROM ABOVE → it stays in that view in the output.
+- DO NOT REPOSITION, DO NOT REORIENT, DO NOT MAKE IT "STAND UP", DO NOT ROTATE.
+- The ring's exact placement in the frame (off-center left, off-center right, etc.) is also preserved.
 
-1. THE RING IS PRESERVED IDENTICALLY
-   - Same shape, same color, same material, same finish, same gemstones, same engravings as the source image. Pixel-precise preservation.
-   - The ring is the HERO of the shot — perfectly sharp, exquisitely lit.
+⛔ ABSOLUTE RULE — RING IDENTITY IS PRESERVED
+- Same shape, same colors, same material, same finish, same gemstones, same engravings as the source. Pixel-precise preservation.
 
-2. MACRO COMPOSITION
-   - Tight close-up of the ring filling 50-70% of the frame.
-   - Ring positioned OFF-CENTER (typically left third or center-left), with generous breathing space on one side (top-right or right) for the camera to "see" depth.
-   - Shallow depth of field (very narrow DOF, like macro lens at f/2.8) — only a thin slice of the ring is in perfect focus, with creamy bokeh in front and behind.
-   - Subtle reflection or surface beneath the ring if the surface allows.
+═══════════════════════════════════════════════════════════════════
+SIGNATURE STYLE — WHAT TO PRODUCE
+═══════════════════════════════════════════════════════════════════
 
-3. LIGHTING
-   - Strong DIRECTIONAL light (key light from one side, typically upper-left or upper-right) creating dramatic highlights on the metal edges.
-   - Soft fill on the opposite side keeping the ring readable.
-   - The light SCULPTS the 3D form of the ring — reflections on polished metal, soft glow on satin finishes.
-   - Mood is warm and intimate, never harsh studio.
+1. MACRO COMPOSITION (preserved from source if already macro)
+   - Very tight close-up — the ring fills 50-70% of the frame.
+   - Off-center placement (left or right side), generous breathing space on the opposite side.
+   - VERY shallow depth of field: only a thin slice of the ring is in perfect focus. The rest of the ring and the entire background is in heavy, creamy bokeh.
 
-4. THEMATIC BACKGROUND (CRITICAL)
-   - The background is NEVER neutral or empty — it is a NARRATIVE SCENE that echoes the personality of the ring.
-   - The background is highly out-of-focus (heavy bokeh), so it reads as ATMOSPHERE rather than a defined object. The ring stays sharp; the background is a painterly blur of color, texture and suggestion.
-   - The atmosphere supports the ring's mood: a winter ring sits on a dreamy field of soft blue snowflakes; a butterfly ring on a bed of golden sparkling sand; a Chinese-themed ring on draped red silk; a dark elegant ring on a black matte surface with mirror reflection.
+2. LIGHTING — soft natural directional
+   - Strong directional light from one side (typically upper-left or upper-right).
+   - Soft fill on the opposite side.
+   - Warm intimate mood, never harsh studio. No clinical e-commerce flat light.
 
-5. COLOR HARMONY
-   - The background palette is in CONVERSATION with the ring colors — either echoing them (a pink ring on a softly pink-glittered surface) or contrasting elegantly (a vivid red ring against a deep matte black to make it pop).
-   - No clashing colors. Always cohesive, always intentional.
+3. BACKGROUND — SUBTLE & SUGGESTIVE (CRITICAL)
+   - The atmosphere is evoked through 3 ELEMENTS ONLY:
+     • COLOR PALETTE (warm khaki for army, royal blue for marine, soft cream for desert, etc.)
+     • TEXTURE / MATERIAL (woven canvas, raw linen, soft sand, draped silk, paracord blurred, leather grain, wool knit, rough stone, fresh snow)
+     • LIGHT QUALITY (warm/cool, soft/dramatic)
+   - The background is HEAVILY out of focus (creamy bokeh) — it reads as ATMOSPHERE, never as a defined scene.
+   - Optionally: ONE single out-of-focus complementary material (a fold of fabric, a corner of canvas, a blurred paracord, scattered sand) — but NEVER a literal themed object.
 
-6. SUBTLE ENVIRONMENTAL DETAILS
-   - Optionally, the background can hint at the theme with one out-of-focus element (a real feather, a petal, a snowflake icon, draped fabric, scattered glitter, etc.) — but NEVER busy or competing with the ring.
-
-═══════════════════════════════════════════════════
-WHAT TO AVOID — ABSOLUTE BANS
-═══════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════════
+⛔ BANNED — DO NOT INCLUDE ANY OF THESE
+═══════════════════════════════════════════════════════════════════
+- NO literal themed objects. NEVER. For example:
+  • "military" theme → NO bullets, NO ammunition, NO knives, NO firearms, NO dog tags, NO helmets, NO uniforms. ONLY khaki canvas texture + paracord blurred + earthy palette.
+  • "marine / ocean" theme → NO seashells in focus, NO anchor, NO fishnet, NO boat, NO fish. ONLY blue/teal palette + soft wet stone texture + cool light.
+  • "safari / lion" theme → NO live animals, NO actual fur of an animal in focus, NO leopard print fabric. ONLY warm earth palette + raw linen texture + golden light.
+  • "winter / snow" theme → NO snowflake stickers, NO snowman, NO Christmas tree, NO pine cones in focus. ONLY soft white-blue palette + sparkling powder texture blurred.
+  • "Chinese / dragon" theme → NO actual dragon, NO Chinese characters, NO lantern. ONLY draped red silk texture + warm light.
 - NO text, NO logo, NO watermark, NO letters, NO numbers, NO branding.
-- NO flat / clinical / e-commerce neutral white background (this is editorial, not catalog).
-- NO sharp background — the ring is ALWAYS the only sharp element.
-- NO altered ring identity — never invent details, never change the geometry, never add or remove gemstones.
-- NO faces, NO hands, NO body parts — pure still-life only.
+- NO faces, NO hands, NO body parts, NO people. Pure still-life only.
+- NO white catalog background. NO flat studio light. NO clinical packshot.
+- NO repositioning the ring. NO making it stand on edge.
+- NO inventing details on the ring. NO adding gemstones. NO changing colors.
 
-═══════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════════
 USER-PROVIDED THEME
-═══════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════════
 `;
 
 export async function POST(req: NextRequest) {
@@ -58,11 +67,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
   }
 
-  let body: { image?: string; theme?: string; note?: string | null };
+  let body: { image?: string; theme?: string; note?: string | null; format?: string };
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 }); }
 
-  const { image, theme, note } = body;
+  const { image, theme, note, format = "3:2" } = body;
   if (!image || typeof image !== "string" || !image.startsWith("data:image/")) {
     return NextResponse.json({ error: "Image manquante ou invalide" }, { status: 400 });
   }
@@ -75,18 +84,31 @@ export async function POST(req: NextRequest) {
   const mimeType = m[1];
   const data = m[2];
 
-  const themeText = `THEME (the user wants the background and atmosphere to evoke this theme — interpret it as the in-house Mood photographer would, with subtlety and elegance, not literally):
+  const themeText = `THEME (interpret as Mood's photographer would — through COLOR + TEXTURE + MATERIAL + LIGHT QUALITY only, NEVER through literal themed objects):
 "${theme.trim()}"
 
-The background should evoke this theme through:
-- Color palette
-- Optional out-of-focus suggestive object (real, not graphic) that hints at the theme
-- Surface texture (smooth, glittery, fabric, water, sand, etc.)
-- Light quality (warm, cool, soft, dramatic)
+Translate this theme into:
+- 1 COLOR PALETTE (in harmony or in elegant contrast with the ring colors)
+- 1 BACKGROUND TEXTURE/MATERIAL (woven, draped, scattered, blurred — choose ONE, keep it soft and out of focus)
+- 1 LIGHT QUALITY (warm/cool, direction, intensity)
+- Optionally 1 single out-of-focus material accent (a fold of fabric, a paracord, scattered powder, water droplets) — never a literal themed object.
 
-But the background remains HEAVILY out of focus — the theme is felt, not displayed literally.${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority): ${note.trim()}` : ""}
+Examples of correct interpretation (NEVER deviate from this minimalism):
+- "militaire" → khaki canvas texture + olive paracord blurred in background + warm soft directional light
+- "marine" / "marco" → royal blue palette + soft sand or stone texture + cool diffused light  OR  pale sand + soft white light + blue accent
+- "désert" / "sahara" → warm cream/beige sand texture + golden warm directional light
+- "neige" → soft white-blue palette + dusting of out-of-focus sparkling powder + cool clean light
+- "papillon" → warm golden glitter texture blurred + soft directional light + neutral palette
+- "chine" → draped deep red silk blurred + warm light + cinnamon/black palette
+- "automne" → warm rust/ochre palette + raw linen texture + soft directional warm light
+- "velours noir" → deep black matte fabric + dramatic single side light + subtle mirror reflection
+- "sparkling doré" → bokeh of golden sparkling lights blurred + warm light + black or cream foreground
 
-Output: the transformed editorial macro still-life photograph, ready for catalog/social use.`;
+${note && note.trim() ? `ADDITIONAL USER NOTE (priority — respect strictly): ${note.trim()}\n\n` : ""}
+
+Output format: ${format} aspect ratio (landscape if 3:2 or 16:9, portrait if 2:3 or 4:5, square if 1:1).
+
+PRODUCE THE TRANSFORMED IMAGE NOW. Ring identity + position preserved exactly. Background reimagined per theme with COLOR + TEXTURE + LIGHT ONLY.`;
 
   const prompt = PROMPT_BASE + themeText;
 
@@ -102,7 +124,7 @@ Output: the transformed editorial macro still-life photograph, ready for catalog
         ] }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: "1:1" },
+          imageConfig: { aspectRatio: format },
         },
       }),
     });
