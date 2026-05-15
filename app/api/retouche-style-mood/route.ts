@@ -51,6 +51,14 @@ CRITICAL GEOMETRY RULES (the most common AI mistake — pay extreme attention) :
 - ✅ THE ADDON FILLS THE ENTIRE GROOVE between the two rails. Top edge touches upper rail, bottom edge touches lower rail. NO empty band of base metal visible between addon and rails.
 - ✅ ALL THREE ELEMENTS (upper rail / addon / lower rail) appear as THREE PARALLEL HORIZONTAL BANDS of CONSTANT WIDTH wrapping around the ring's circumference.
 
+🔘 ADDON AND RAILS ARE AT THE SAME SURFACE HEIGHT — NO STEP, NO RELIEF :
+- ✅ The OUTER SURFACE of the addon and the OUTER SURFACE of the rails are at the SAME LEVEL — flush, continuous, smooth.
+- ✅ There is NO step / NO ledge / NO bump / NO relief between the addon and the rails. The transition is seamless along the ring's diameter.
+- ✅ The dividing line between the addon and each rail is a CRISP CLEAN LINE — visible only as a thin demarcation line (where two materials meet), NOT as a gap, NOT as a shadow ditch, NOT as a dark groove.
+- ⛔ Do NOT show the addon raised above the rails (it should not look like a separate band sitting on top).
+- ⛔ Do NOT show a dark gap line, a shadow groove, or a recessed channel between the addon and the rails.
+- ⛔ The rails and the addon are coplanar — one continuous curved surface, just with different finishes (polished rails, decorated addon).
+
 ⛔ COMMON AI MISTAKES TO AVOID :
 - ❌ Making the ring thinner overall (reducing its total band thickness) — the ring must keep its source proportions.
 - ❌ Addon positioned at the TOP (upper rail very thin, lower rail very wide) or BOTTOM (the opposite).
@@ -60,6 +68,8 @@ CRITICAL GEOMETRY RULES (the most common AI mistake — pay extreme attention) :
 - ❌ Addon that has a "double layer" or appears split into two stacked thinner bands.
 - ❌ Rails that vary in width along the ring's curvature.
 - ❌ Geometry where the addon and rails do not form 3 clean parallel bands of constant width centered symmetrically.
+- ❌ Addon SITTING ABOVE the rails (raised, in relief, like a separate band stuck on top) — addon and rails MUST be flush/coplanar at the same surface height.
+- ❌ Dark gap line / shadow groove / recessed channel visible between the addon and the rails — only a crisp clean material-transition line is allowed.
 
 If the source shows imperfect geometry (variation, gaps, lifting, double layers, misaligned), the output shows PERFECT factory-fresh constant-width parallel bands — addon centered, rails symmetric, total proportions preserved.
 
@@ -218,7 +228,7 @@ Output: ${format} aspect ratio.
 
 ⚠️ FINAL CHECKLIST — VERIFY BEFORE PRODUCING :
 1. RING IS PRISTINE : zero dust, zero fingerprints, zero scratches, mirror-clean polished metal, sparkling gemstones, crisp engravings.
-2. ADDON-BASE GEOMETRY : (a) source proportions preserved (ring NOT thinner than source), (b) addon CENTERED vertically with upper rail = lower rail width, (c) addon constant width fills the entire groove, (d) all 3 elements = 3 parallel bands of constant width.
+2. ADDON-BASE GEOMETRY : (a) source proportions preserved (ring NOT thinner), (b) addon CENTERED vertically with upper rail = lower rail width, (c) addon constant width fills the entire groove, (d) addon and rails are FLUSH/COPLANAR at the same surface height (NO step, NO relief, NO dark gap line — only a crisp material-transition line), (e) all 3 elements = 3 parallel bands of constant width.
 3. CAMERA ANGLE matches the user-selected directive (geometry of the ring matches : circle/oval/rectangle as specified).
 4. RING fills 55-75% of frame, NOT a packshot, integrated in soft minimal decor.
 5. LIGHTING is soft single window light, NOT studio strobe.
