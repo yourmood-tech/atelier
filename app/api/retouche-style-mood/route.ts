@@ -5,68 +5,70 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
-const PROMPT_BASE = `RE-PHOTOGRAPH this Mood Collection ring in the SIGNATURE STYLE of Mood Collection's in-house editorial photographer (Léa) — soft window-light macro still-life.
+const PROMPT_BASE = `RE-PHOTOGRAPH the Mood Collection ring from the source image, as if it were freshly shot by Mood Collection's signature in-house photographer (Léa) on her macro setup.
 
-⛔ ABSOLUTE RULE — RING IDENTITY PRESERVED (PIXEL-PRECISE)
-- Same shape, same colors, same material, same finish, same gemstones, same engravings, same pattern as the source image. Do NOT invent details, do NOT change colors, do NOT add or remove gemstones.
+THE SOURCE IMAGE MAY BE AN E-COMMERCE PACKSHOT (ring standing upright in profile). IGNORE THAT POSE COMPLETELY. Re-stage the ring exactly as described below — Léa would never shoot it like a Shopify packshot.
 
-═══════════════════════════════════════════════════════════════════
-RING ANGLE & POSITION — CRITICAL, DIFFERENT FROM E-COMMERCE PACKSHOT
-═══════════════════════════════════════════════════════════════════
-The source image may show the ring as a vertical e-commerce packshot (standing upright, perfect profile view). DO NOT keep that pose.
-
-INSTEAD, RE-POSITION the ring as Léa would shoot it:
-- Lay the ring DOWN or TILT it dynamically — 3/4 view from above AND slightly from the side.
-- We must see BOTH the OUTER decorated band (engravings, gemstones, color) AND a hint of the INNER metal interior of the ring (the polished hole through the ring should be visible at an angle).
-- The ring rests on the surface or is balanced on its side at an angle, NEVER standing perfectly vertical like a catalog product.
-- The ring fills 55-75% of the frame — bold and bigger than a packshot.
-- Off-center placement (typically slightly right or slightly left of center), generous breathing space on the opposite side for bokeh atmosphere.
+⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION
+- Same shape, exact same colors, exact same materials, exact same finish, exact same gemstones, exact same engravings/patterns as the source. DO NOT invent. DO NOT change colors. DO NOT add or remove anything.
 
 ═══════════════════════════════════════════════════════════════════
-LIGHTING — SOFT WINDOW LIGHT, NEVER STUDIO STROBE
+LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 ═══════════════════════════════════════════════════════════════════
-- Source: SOFT DIFFUSED NATURAL DAYLIGHT, like a north-facing window at 45° from one side (typically upper-left).
-- Light is gentle and wraps around the ring smoothly. Soft shadow gradient on the opposite side.
-- NO ring light. NO hard studio strobe. NO clinical flat overhead light. NO hot specular hotspots.
-- The reflections on polished metal are SOFT and SUBTLE — not bright burning highlights.
-- Mood: intimate, calm, editorial. Like a luxury magazine still-life shot in available light.
+
+1️⃣ CAMERA ANGLE — slightly elevated 3/4 view from above
+   - The camera is positioned ABOVE the table at roughly a 30-45° downward angle (NOT top-down, NOT horizontal/eye-level).
+   - The lens looks slightly DOWN onto the ring.
+   - This reveals: the curved upper band-surface (decoration / engravings / gemstones), the polished inner hole of the ring at one end, AND the side profile of the band.
+
+2️⃣ RING POSITION — laid FLAT and HORIZONTAL on its side
+   - The ring lies on the surface with the BAND-CIRCLE LAYING HORIZONTALLY (like a small donut on a table viewed slightly from above).
+   - The inner polished hole of the ring is visible at one end (left or right end of the ring).
+   - The band's decorated outer surface curves up and over toward the camera.
+   - NEVER standing vertical/upright like a Shopify packshot. NEVER perfectly profile-only.
+
+3️⃣ COMPOSITION — VARIED placement, never rigid center
+   - Choose ONE natural composition for this ring (pick one of these placements based on the ring's silhouette and theme):
+     • Off-center right with negative space on the LEFT
+     • Off-center left with negative space on the RIGHT
+     • Almost centered with subtle asymmetry
+   - The ring is the absolute focal point but its position in the frame should feel intentional and unforced — NEVER perfectly centered in a rigid catalog way.
+   - The ring fills 60-75% of the frame horizontally.
+
+4️⃣ DEPTH OF FIELD — classic macro shallow but NOT extreme
+   - Imagine a 100mm macro lens at f/3.5–f/5.6 (NOT f/2.8, NOT f/1.4).
+   - The front-facing portion of the ring (where the camera looks most directly) is in PERFECT sharp focus.
+   - The far side of the ring gently falls off into soft creamy bokeh.
+   - The background is in heavy soft bokeh.
+   - This is REAL macro photography — not the "everything-magically-blurred-except-one-pixel" look of cheap AI generators.
+
+5️⃣ LIGHTING — single soft window from one side, north-facing morning light
+   - ONE soft directional source from upper-left OR upper-right (choose one based on the theme).
+   - Creates a gentle highlight on the upper edge of the ring and a soft delicate shadow on the lower edge.
+   - The polished metal interior catches a subtle reflection of the light source.
+   - NEVER hard studio strobe. NEVER ring-light. NEVER overhead flat. NEVER hot specular hotspots.
+   - Mood: 9am morning light through a north-facing window. Soft, calm, intimate, editorial.
+   - The shadow side of the ring is gently illuminated, not pitch black.
+
+6️⃣ BACKGROUND — minimalist, often a single deep matte color
+   - Léa often shoots on a single deep-color seamless paper or matte textured surface (cuir noir mat, gris dégradé, pastel pink, etc.).
+   - The atmosphere of the theme is evoked through COLOR + TEXTURE + LIGHT QUALITY only — never through literal themed objects.
+   - The background is in heavy bokeh and reads as ambiance, not as a defined scene.
+   - Optionally: ONE single out-of-focus complementary material element (a fold of dark fabric, a corner of paracord blurred, a hint of feathers) — but always blurred and never the focal point.
 
 ═══════════════════════════════════════════════════════════════════
-DEPTH OF FIELD — VERY SHALLOW MACRO
+⛔ ABSOLUTE BANS — DO NOT INCLUDE
 ═══════════════════════════════════════════════════════════════════
-- Imagine 100mm macro lens at f/2.8 or wider.
-- ONLY a thin slice of the ring (front edge, key gemstone, or decorated band) is in PERFECT FOCUS.
-- The far side of the ring, the inner interior, and the ENTIRE BACKGROUND are in CREAMY HEAVY BOKEH.
-- The bokeh is dreamy and painterly — never sharp, never readable as a clear scene.
-- No "everything in focus" 3D-render look.
-
-═══════════════════════════════════════════════════════════════════
-BACKGROUND — MINIMAL, SUGGESTIVE, NEVER LITERAL
-═══════════════════════════════════════════════════════════════════
-- The atmosphere is evoked through 3 ELEMENTS ONLY:
-  • COLOR PALETTE (in harmony or elegant contrast with the ring)
-  • TEXTURE / MATERIAL (one only — woven canvas, raw linen, soft sand, draped silk, paracord blurred, leather grain, wool knit, fur, etc.)
-  • LIGHT QUALITY (warm/cool)
-- Background is HEAVILY out of focus — reads as atmosphere, never as readable scene.
-- Optionally: ONE single out-of-focus complementary material (a fold of fabric, paracord blurred, a feather, draped silk). NEVER a themed object.
-- Often: a simple flat colored surface is enough (pink for romantic, black matte for elegant, gray gradient for editorial). No need for fancy decor — Léa often shoots on a single colored seamless paper.
-
-═══════════════════════════════════════════════════════════════════
-⛔ BANNED — DO NOT INCLUDE ANY OF THESE
-═══════════════════════════════════════════════════════════════════
-- NO literal themed objects. NEVER. For example:
-  • "military" theme → NO bullets, NO ammunition, NO knives, NO firearms, NO dog tags, NO helmets, NO uniforms. ONLY khaki canvas texture + paracord blurred + earthy palette.
-  • "marine / ocean" theme → NO seashells in focus, NO anchor, NO fishnet, NO boat, NO fish. ONLY blue/teal palette + soft wet stone texture + cool light.
-  • "safari / lion" theme → NO live animals, NO actual fur of an animal in focus, NO leopard print fabric. ONLY warm earth palette + raw linen texture + golden light.
-  • "winter / snow" theme → NO snowflake stickers, NO snowman, NO Christmas tree, NO pine cones in focus. ONLY soft white-blue palette + sparkling powder texture blurred.
-  • "Chinese / dragon" theme → NO actual dragon, NO Chinese characters, NO lantern. ONLY draped red silk texture + warm light.
+- NO ring standing upright vertical like a Shopify catalog packshot.
+- NO horizontal eye-level view (no looking AT the ring from the side at zero angle).
+- NO top-down 90° overhead view.
+- NO literal themed objects: militaire = NO bullets/guns/helmets; marine = NO seashells/anchors/fish; safari = NO live animals; chine = NO dragons/lanterns; neige = NO snowmen/Christmas trees. ONLY color + texture + light.
 - NO text, NO logo, NO watermark, NO letters, NO numbers, NO branding.
-- NO faces, NO hands, NO body parts, NO people. Pure still-life only.
-- NO white catalog background. NO flat studio light. NO clinical packshot.
-- NO ring standing perfectly vertical like a catalog packshot (Shopify-style profile view).
-- NO sharp focus everywhere (3D-render look) — heavy bokeh on background is mandatory.
-- NO hard ring-light or studio strobe with hot specular hotspots.
-- NO inventing details on the ring. NO adding gemstones. NO changing colors.
+- NO faces, NO hands, NO body parts, NO people.
+- NO white catalog seamless background, NO flat clinical studio light.
+- NO hard ring-light or strobe specular hotspots.
+- NO everything-in-focus 3D-render look.
+- NO altering the ring's geometry, colors, gemstones, engravings.
 
 ═══════════════════════════════════════════════════════════════════
 USER-PROVIDED THEME
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Image manquante ou invalide" }, { status: 400 });
   }
   if (!theme || !theme.trim()) {
-    return NextResponse.json({ error: "Le champ Thème est obligatoire (ex : 'neige', 'sombre', 'papillon', 'chine')" }, { status: 400 });
+    return NextResponse.json({ error: "Le champ Thème est obligatoire" }, { status: 400 });
   }
 
   const m = image.match(/^data:([^;]+);base64,(.+)$/);
@@ -95,31 +97,31 @@ export async function POST(req: NextRequest) {
   const mimeType = m[1];
   const data = m[2];
 
-  const themeText = `THEME (interpret as Mood's photographer would — through COLOR + TEXTURE + MATERIAL + LIGHT QUALITY only, NEVER through literal themed objects):
-"${theme.trim()}"
+  const themeText = `THEME: "${theme.trim()}"
 
-Translate this theme into:
-- 1 COLOR PALETTE (in harmony or in elegant contrast with the ring colors)
-- 1 BACKGROUND TEXTURE/MATERIAL (woven, draped, scattered, blurred — choose ONE, keep it soft and out of focus)
-- 1 LIGHT QUALITY (warm/cool, direction, intensity)
-- Optionally 1 single out-of-focus material accent (a fold of fabric, a paracord, scattered powder, water droplets) — never a literal themed object.
+Translate the theme into Léa's signature aesthetic — interpret through:
+- 1 dominant background color (deep matte color, often dark or pastel — see examples below)
+- 1 background texture/material (smooth, fabric, grainy, sparkly — choose ONE)
+- 1 optional out-of-focus accent (a fold of fabric, a paracord, feathers) — heavily blurred, never literal
+- Light quality (warm/cool, direction)
 
-Examples of correct interpretation (NEVER deviate from this minimalism):
-- "militaire" → khaki canvas texture + olive paracord blurred in background + warm soft directional light
-- "marine" / "marco" → royal blue palette + soft sand or stone texture + cool diffused light  OR  pale sand + soft white light + blue accent
-- "désert" / "sahara" → warm cream/beige sand texture + golden warm directional light
-- "neige" → soft white-blue palette + dusting of out-of-focus sparkling powder + cool clean light
-- "papillon" → warm golden glitter texture blurred + soft directional light + neutral palette
-- "chine" → draped deep red silk blurred + warm light + cinnamon/black palette
-- "automne" → warm rust/ochre palette + raw linen texture + soft directional warm light
-- "velours noir" → deep black matte fabric + dramatic single side light + subtle mirror reflection
-- "sparkling doré" → bokeh of golden sparkling lights blurred + warm light + black or cream foreground
+Examples of correct Léa-style interpretation:
+- "militaire" → deep matte black or olive khaki seamless + heavy blurred paracord at edge + warm soft directional light from upper-left
+- "marine" → deep royal blue or pale sand seamless + soft draped texture + cool diffused morning light
+- "désert / sahara" → warm cream/beige seamless + soft sand grain texture + warm golden directional light
+- "neige / hiver" → soft pale blue or white seamless + dust of sparkling powder heavily blurred + cool clean morning light
+- "papillon" → black matte seamless + warm golden glitter bokeh in background + soft directional light
+- "chine / dragon" → deep red matte seamless + heavily blurred draped silk at edge + warm light
+- "automne" → warm rust/ochre seamless + raw linen texture + soft directional warm light
+- "velours noir / sombre" → deep matte black textured leather + dramatic single side window light + subtle reflection on surface
+- "sparkling doré" → black matte foreground + warm golden bokeh of out-of-focus sparkles in background + warm light
+- "romantique / saint-valentin" → soft pink pastel seamless + blurred pink feathers + warm soft window light
 
-${note && note.trim() ? `ADDITIONAL USER NOTE (priority — respect strictly): ${note.trim()}\n\n` : ""}
+${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority — respect strictly): ${note.trim()}` : ""}
 
-Output format: ${format} aspect ratio (landscape if 3:2 or 16:9, portrait if 2:3 or 4:5, square if 1:1).
+Output: ${format} aspect ratio.
 
-PRODUCE THE TRANSFORMED IMAGE NOW. Ring identity + position preserved exactly. Background reimagined per theme with COLOR + TEXTURE + LIGHT ONLY.`;
+PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring is laid flat horizontally, slight elevated 3/4 camera angle, soft single window light, classic macro DOF, minimalist colored seamless background interpreting the theme through color+texture+light only.`;
 
   const prompt = PROMPT_BASE + themeText;
 
