@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFileSync, existsSync } from "fs";
+import path from "path";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
+
+// Référence d'angle hardcodée par preset (nombre de variantes disponibles)
+const ANGLE_REFS_COUNT: Record<string, number> = {
+  "lea": 4,
+  // Autres presets à compléter quand Stéphanie fournira les photos
+};
+
+function loadAngleReference(cameraAngle: string): { inlineData: { mimeType: string; data: string } } | null {
+  const count = ANGLE_REFS_COUNT[cameraAngle];
+  if (!count || count < 1) return null;
+  // Sélection aléatoire entre les variantes disponibles
+  const idx = Math.floor(Math.random() * count) + 1;
+  const refPath = path.join(process.cwd(), "public", "refs", "angles", `${cameraAngle}-${idx}.jpg`);
+  if (!existsSync(refPath)) return null;
+  try {
+    const buffer = readFileSync(refPath);
+    return { inlineData: { mimeType: "image/jpeg", data: buffer.toString("base64") } };
+  } catch {
+    return null;
+  }
+}
 
 export const maxDuration = 60;
 
@@ -274,6 +297,10 @@ export async function POST(req: NextRequest) {
   if (referenceAngle && referenceAngle.startsWith("data:image/")) {
     const refM = referenceAngle.match(/^data:([^;]+);base64,(.+)$/);
     if (refM) refAnglePart = { inlineData: { mimeType: refM[1], data: refM[2] } };
+  }
+  // Si aucun upload utilisateur, charge la référence hardcodée du preset (si elle existe)
+  if (!refAnglePart) {
+    refAnglePart = loadAngleReference(cameraAngle);
   }
 
   const themeText = `THEME: "${theme.trim()}"
