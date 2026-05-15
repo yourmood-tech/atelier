@@ -16,32 +16,36 @@ THE SOURCE IMAGE MAY BE AN E-COMMERCE PACKSHOT (ring standing upright in profile
 LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 ═══════════════════════════════════════════════════════════════════
 
-1️⃣ CAMERA ANGLE — strongly elevated, almost top-down 3/4
-   - The camera is positioned ABOVE the table at roughly a **50-65° downward angle** (closer to top-down than horizontal).
-   - The lens looks DOWN onto the ring, almost overhead but slightly tilted.
-   - This reveals: the **ENTIRE upper band-surface** (full decoration / engravings / gemstones visible from end to end, no perspective foreshortening that hides half the pattern), the polished inner hole of the ring at one end, AND a hint of the side profile.
-   - You should see the FULL DECORATIVE PATTERN clearly readable on the top surface — not just a sliver in perspective.
+1️⃣ CAMERA ANGLE — moderate plunge from above
+   - The camera is positioned ABOVE and SLIGHTLY in front of the ring, at roughly a **30-45° downward angle** (more plunged than horizontal eye-level, but NOT pure top-down).
+   - The lens looks DOWN-AND-FORWARD onto the ring.
+   - This reveals: the upper band-surface decoration, the polished inner hole of the ring visible at one end (oval-shaped due to the angle), AND a hint of the side profile.
+   - Reference: classic editorial jewelry macro angle, like a magazine still-life shot from a chest-high position looking down onto a low table.
 
-2️⃣ RING POSITION — laid FLAT and HORIZONTAL on its side
-   - The ring lies on the surface with the BAND-CIRCLE LAYING HORIZONTALLY (like a small donut on a table viewed from above with slight tilt).
-   - The inner polished hole of the ring is visible at one end (left or right end of the ring).
-   - The decorative outer surface of the band faces the camera, fully visible.
-   - NEVER standing vertical/upright like a Shopify packshot. NEVER perfectly profile-only.
+2️⃣ RING POSITION — rested naturally in the scene, slightly tilted
+   - The ring is NATURALLY POSED in the scene — either:
+     • Lying on its side on a soft surface with the open hole visible at one end (most common Léa pose)
+     • Leaning against a fold of fabric, a coil of paracord, or a soft cushion at a slight angle
+     • Half-buried / half-hidden in soft material (sand, fabric folds)
+   - The ring is NOT floating in space. NOT a packshot on a clean white seamless. NOT perfectly vertical like a Shopify catalog product.
+   - The inner polished hole is visible at one end (left or right) as an oval shape.
+   - The decorated outer band-surface is visible on top, even if partly in perspective.
 
 ⚠️ CRITICAL — RING INTERIOR IS ONE SMOOTH POLISHED METAL SURFACE
    - The inside of a Mood Collection ring (visible through the ring's hole, on the inner edge of the band) is **ONE SINGLE CONTINUOUS SMOOTH POLISHED METAL SURFACE** — like the inside of a wedding band: uniform, mirror-polished, no decoration, no division, no pattern.
    - DO NOT render the interior as multiple stacked rings, multiple layered bands, segmented sections, or split parts. The interior is **MONOLITHIC and SMOOTH**.
    - The ring is a SINGLE band with decoration only on the OUTER top surface — the inner surface (the hole side) is uniformly polished metal, period.
 
-3️⃣ COMPOSITION — TIGHT CROP, VARIED placement
-   - EXTREME MACRO CLOSE-UP. The ring must be BIG in the frame.
-   - The ring fills **75-90% of the frame width** (and a comparable share of the height). The ring is huge — like a magazine editorial macro shot, not a small object in a wide scene.
-   - Tight crop: the ring may slightly touch or be very close to the frame edges on the side it leans towards. There is NO wide negative space all around — only a single area of soft bokeh on ONE side.
-   - Varied placement (avoid rigid centering):
-     • Off-center right with breathing space on the LEFT
-     • Off-center left with breathing space on the RIGHT
-     • Almost centered with subtle asymmetry
-   - Think: "the ring fills my viewfinder". Like a macro Canon 5D + 100mm lens at minimum focusing distance. Not a wide product shot.
+3️⃣ COMPOSITION — RING IN A SCENE, NOT A PACKSHOT
+   - The ring fills **45-65% of the frame width** (NOT more — leave generous bokeh / decor space around it).
+   - The ring is INTEGRATED in a scene, not isolated like a product catalog shot. The viewer sees the ring AND the soft blurred decor around it (paracord, draped fabric, surface, sand, petals, etc.).
+   - Around the ring: at least 35-55% of the frame area is filled with soft-focus DECOR — visible but heavily blurred. NEVER a clean isolated background.
+   - The ring is RESTING ON or LEANING AGAINST something in the scene: a fold of fabric, a coil of paracord, a soft cushion, a textured surface — never floating on a clean studio backdrop.
+   - Varied placement of the ring in the frame:
+     • Off-center right with the scene's decor flowing on the LEFT
+     • Off-center left with decor on the RIGHT
+     • Center with decor around (top and/or sides)
+   - Think editorial still-life: "the ring lives in this little world". Not a product packshot.
 
 4️⃣ DEPTH OF FIELD — classic macro shallow but NOT extreme
    - Imagine a 100mm macro lens at f/3.5–f/5.6 (NOT f/2.8, NOT f/1.4).
@@ -58,11 +62,16 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - Mood: 9am morning light through a north-facing window. Soft, calm, intimate, editorial.
    - The shadow side of the ring is gently illuminated, not pitch black.
 
-6️⃣ BACKGROUND — minimalist, often a single deep matte color
-   - Léa often shoots on a single deep-color seamless paper or matte textured surface (cuir noir mat, gris dégradé, pastel pink, etc.).
-   - The atmosphere of the theme is evoked through COLOR + TEXTURE + LIGHT QUALITY only — never through literal themed objects.
-   - The background is in heavy bokeh and reads as ambiance, not as a defined scene.
-   - Optionally: ONE single out-of-focus complementary material element (a fold of dark fabric, a corner of paracord blurred, a hint of feathers) — but always blurred and never the focal point.
+6️⃣ DECOR / BACKGROUND — SCENE WITH MATERIAL, NOT JUST FLAT BACKDROP
+   - The scene includes 1-2 thematic MATERIALS visible in heavy bokeh AROUND the ring (not just a flat colored backdrop). Examples:
+     • army theme → ring rests on canvas khaki fabric + blurred paracord coil in background
+     • marine theme → ring on wet pebbles + blurred draped blue cloth in background
+     • neige theme → ring on soft white fabric + blurred sparkling dust in background
+     • chine theme → ring on draped red silk + blurred silk folds in background
+   - The decor fills 35-55% of the frame area (in soft bokeh, never sharp).
+   - The decor uses ONLY: textiles (canvas, silk, linen, fur, knit), cords (paracord, rope), natural materials (sand, pebbles, petals, feathers, dust), surfaces (leather, stone, wood, paper).
+   - NEVER includes literal themed objects: NO bullets/guns for military, NO shells/anchors for marine, NO animals for safari, NO snowflakes for winter, NO dragons for chinese.
+   - The decor is a "still-life nest" for the ring — it cradles or surrounds the ring naturally.
 
 ═══════════════════════════════════════════════════════════════════
 ⛔ ABSOLUTE BANS — DO NOT INCLUDE
@@ -77,10 +86,11 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 - NO hard ring-light or strobe specular hotspots.
 - NO everything-in-focus 3D-render look.
 - NO altering the ring's geometry, colors, gemstones, engravings.
-- NO small ring in wide scene — the ring MUST be huge, filling 75-90% of the frame.
-- NO excessive negative space around the ring — only ONE direction has breathing space (left OR right OR top), the other sides crop tight.
+- NO ring filling more than 65% of the frame — leave generous bokeh/decor space around.
+- NO isolated ring on a clean studio background — the ring is integrated in a scene with visible blurred decor materials around it.
 - NO multi-layered / segmented / stacked interior. The inside of the ring is ONE smooth continuous polished metal surface (mirror-polished, no decoration, no division).
-- NO low/horizontal eye-level camera angle. The camera is 50-65° from above (almost top-down with slight tilt).
+- NO low/horizontal eye-level camera angle. The camera plunges from above at 30-45°.
+- NO vertical-packshot pose. The ring rests naturally in the scene (laid on its side, leaning against decor, half-cradled).
 
 ═══════════════════════════════════════════════════════════════════
 USER-PROVIDED THEME
@@ -133,7 +143,7 @@ ${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority — respect strictly
 
 Output: ${format} aspect ratio.
 
-PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring is laid flat horizontally, slight elevated 3/4 camera angle, **TIGHT CROP filling 75-90% of the frame**, soft single window light, classic macro DOF, minimalist colored seamless background interpreting the theme through color+texture+light only.`;
+PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring rests naturally in a still-life scene (NOT a packshot), camera plunges 30-45° from above, ring fills 45-65% of the frame, decor materials (textiles, cords, natural materials) cradle and surround the ring in heavy bokeh, soft single window light, classic macro DOF, ring interior is one smooth polished metal surface.`;
 
   const prompt = PROMPT_BASE + themeText;
 
