@@ -155,17 +155,22 @@
   <textarea id="indications" rows="3" placeholder="Exemples :&#10;• « fond bleu pastel » (pour Fond anthracite)&#10;• « garder le diamant rouge », « redresser vers la gauche » (pour Nettoyer)&#10;• « main de femme métisse, ongles french amande, main posée vers la clavicule, t-shirt blanc, zoom focus bague » (pour Bague portée)" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
 </div>
 
+<!-- Sélecteur de format global (appliqué à toutes les actions) -->
+<div id="format-global-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.5rem;">📐 Format de sortie <span style="color:var(--gris);font-weight:400;">— s'applique à toutes les actions (sauf Multi-formats qui génère les 4)</span></label>
+  <div style="display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap;">
+    <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="theme-format" value="1:1" checked> ⬜ 1:1 carré (Insta post)</label>
+    <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="theme-format" value="3:2"> 🖼️ 3:2 paysage (style Léa)</label>
+    <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="theme-format" value="4:5"> 📱 4:5 portrait</label>
+    <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="theme-format" value="9:16"> 📲 9:16 story</label>
+    <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="theme-format" value="16:9"> 📺 16:9 paysage large</label>
+  </div>
+</div>
+
 <!-- Thème photographe Mood (utilisé par l'action 🎨 Style photographe Mood) -->
 <div id="theme-mood-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
   <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">🎨 Thème pour le style photographe Mood <span style="color:var(--gris);font-weight:400;">— obligatoire pour l'action "Style photographe Mood"</span></label>
   <input id="theme-mood" type="text" placeholder="Exemples : militaire (kaki canvas), marine (bleu royal sable), sombre (velours noir), neige (poudre bleue), chine (soie rouge), sparkling doré..." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;">
-  <div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.6rem;flex-wrap:wrap;">
-    <span style="font-size:0.78rem;color:var(--gris);">Format :</span>
-    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="3:2" checked> 🖼️ 3:2 paysage (style Léa)</label>
-    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="1:1"> ⬜ 1:1 carré (Insta post)</label>
-    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="4:5"> 📱 4:5 portrait</label>
-    <label style="font-size:0.8rem;cursor:pointer;"><input type="radio" name="theme-format" value="9:16"> 📲 9:16 story</label>
-  </div>
 
   <!-- Sélecteur d'angle de caméra (style Léa) — 2 presets actifs, autres à venir -->
   <div style="margin-top:0.8rem;">
@@ -442,6 +447,7 @@ async function chargerFichier(file) {
     dropZoneEl.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('indications-zone').style.display = 'block';
+    document.getElementById('format-global-zone').style.display = 'block';
     document.getElementById('theme-mood-zone').style.display = 'block';
     document.getElementById('naming-zone').style.display = 'block';
     document.getElementById('themes-saison').style.display = 'block';
@@ -524,10 +530,12 @@ async function lancerAction(action) {
   try {
     etape = 'fetch';
     const note = document.getElementById('indications')?.value?.trim() || null;
+    const formatRadio = document.querySelector('input[name="theme-format"]:checked');
+    const format = formatRadio?.value || '1:1';
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageActuelle, action, note }),
+      body: JSON.stringify({ image: imageActuelle, action, note, format }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();
@@ -571,7 +579,7 @@ async function lancerAction(action) {
             <div class="label">Après</div>
             <img id="img-${id}" src="${data.image}" alt="résultat">
             <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="border:none;cursor:pointer;">⬇️ Télécharger</button>
-            ${htmlCorrection(id, '1:1')}
+            ${htmlCorrection(id, format)}
           </div>
         </div>`;
     }

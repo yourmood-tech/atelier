@@ -63,12 +63,13 @@ const RATIOS: Record<string, string> = {
   "multi-16-9": "16:9",
 };
 
-async function appelGemini(imageDataUrl: string, action: string, note?: string | null): Promise<{ image?: string; error?: string }> {
+async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null): Promise<{ image?: string; error?: string }> {
   const basePrompt = PROMPTS[action];
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
   const prompt = note && note.trim()
     ? `${basePrompt}\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR (à respecter en priorité) ===\n${note.trim()}`
     : basePrompt;
+  const aspectRatio = (formatOverride && /^\d+:\d+$/.test(formatOverride)) ? formatOverride : (RATIOS[action] || "1:1");
 
   // Extraire mimeType et data depuis dataUrl
   const m = imageDataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -92,7 +93,7 @@ async function appelGemini(imageDataUrl: string, action: string, note?: string |
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: RATIOS[action] || "1:1", imageSize: "2K" },
+          imageConfig: { aspectRatio, imageSize: "2K" },
         },
       }),
     });
@@ -132,19 +133,19 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; action?: string; note?: string | null };
+  let body: { image?: string; action?: string; note?: string | null; format?: string | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, action, note } = body;
+  const { image, action, note, format } = body;
   if (!image || !action) {
     return NextResponse.json({ error: "Champs requis : image (dataUrl), action" }, { status: 400 });
   }
 
-  // Cas spécial : multi-formats = 4 appels parallèles
+  // Cas spécial : multi-formats = 4 appels parallèles (le format global est ignoré, on génère les 4)
   if (action === "multi-formats") {
     const ratios = ["multi-1-1", "multi-4-5", "multi-9-16", "multi-16-9"];
     const labels: Record<string, string> = {
@@ -157,8 +158,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ resultats: results });
   }
 
-  // Cas simple : 1 appel
-  const res = await appelGemini(image, action, note);
+  // Cas simple : 1 appel — le format choisi par l'utilisateur override le ratio par défaut de l'action
+  const res = await appelGemini(image, action, note, format);
   if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
   return NextResponse.json({ image: res.image });
 }
