@@ -30,16 +30,25 @@ The ring in the output looks like it just came out of the workshop, fresh from t
 - 💎 GEMSTONES sparkle clean and brilliant — no dust trapped under prongs, no fingerprint film.
 - 🎯 ADDON (the decorated central band) is impeccable — every engraving line crisp, every gemstone setting clean, every color zone uniform.
 
-🔧 MOOD RING STRUCTURE — FIX ADDON-BASE ALIGNMENT IF NEEDED :
+🔧 MOOD RING STRUCTURE — STRICT ADDON-BASE GEOMETRY :
 Mood Collection rings have TWO PARTS visible from outside :
-- THE BASE (steel 316L or titanium) — structural ring with TWO POLISHED METAL RAILS framing a central groove.
-- THE ADDON (decorated interchangeable band) — colored/patterned/gemstone band that CLIPS INTO the central groove.
+- THE BASE (steel 316L or titanium) — structural ring with TWO POLISHED METAL RAILS framing a central groove of CONSTANT WIDTH.
+- THE ADDON (decorated interchangeable band) — colored/patterned/gemstone band that CLIPS INTO the central groove and FILLS IT COMPLETELY.
 
-In the output, the addon MUST sit PERFECTLY FLUSH inside the base :
-- NO part of the addon overflows or extends beyond the two rails of the base.
-- NO gaps or spaces visible between the addon and the rails. They touch tightly.
-- The addon's outer surface curves smoothly continuous with the rails (no step / no discontinuity).
-- If the source shows imperfect alignment (overflow, gaps, lifting), the output shows PERFECT factory-fresh alignment.
+CRITICAL GEOMETRY RULES (the most common AI mistake — pay extreme attention) :
+- ✅ THE ADDON HAS A UNIFORM, CONSTANT WIDTH along its ENTIRE visible length. From one end of the visible ring to the other, the addon's height (thickness top-to-bottom along the band) is IDENTICAL. It does NOT shrink, NOT taper, NOT vary in width anywhere.
+- ✅ THE ADDON FILLS THE ENTIRE GROOVE between the two rails. Its top edge touches the upper rail. Its bottom edge touches the lower rail. NO empty band of base metal visible between addon and rails ANYWHERE.
+- ✅ THE TWO RAILS of the base also have UNIFORM, CONSTANT widths along the entire visible length. The upper rail = uniform thickness everywhere. The lower rail = uniform thickness everywhere. They are PARALLEL and EQUIDISTANT.
+- ✅ ALL THREE ELEMENTS (upper rail / addon / lower rail) appear as THREE PARALLEL HORIZONTAL BANDS of CONSTANT WIDTH wrapping around the ring's circumference.
+
+⛔ COMMON AI MISTAKES TO AVOID :
+- ❌ Addon that gets THINNER (or thicker) towards the ends of the ring's visible curvature.
+- ❌ Addon that does NOT touch the rails (leaving a strip of base metal visible between).
+- ❌ Addon that has a "double layer" or appears split into two stacked thinner bands.
+- ❌ Rails that vary in width along the ring's curvature.
+- ❌ Geometry where the addon and rails do not form 3 clean parallel bands of constant width.
+
+If the source shows imperfect geometry (variation, gaps, lifting, double layers), the output shows PERFECT factory-fresh constant-width parallel bands.
 
 ⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION (everything except cleaning/alignment) :
 - Same shape, same colors, same materials, same finish, same gemstones, same engravings/patterns as the source.
@@ -196,7 +205,7 @@ Output: ${format} aspect ratio.
 
 ⚠️ FINAL CHECKLIST — VERIFY BEFORE PRODUCING :
 1. RING IS PRISTINE : zero dust, zero fingerprints, zero scratches, mirror-clean polished metal, sparkling gemstones, crisp engravings.
-2. ADDON ALIGNMENT PERFECT : no overflow beyond rails, no gaps between addon and rails, smooth continuous surface.
+2. ADDON-BASE GEOMETRY : addon has UNIFORM constant width along the entire ring, fills the groove COMPLETELY (no gap with rails), rails are also constant width, all 3 elements form 3 parallel bands.
 3. CAMERA ANGLE matches the user-selected directive (geometry of the ring matches : circle/oval/rectangle as specified).
 4. RING fills 55-75% of frame, NOT a packshot, integrated in soft minimal decor.
 5. LIGHTING is soft single window light, NOT studio strobe.
