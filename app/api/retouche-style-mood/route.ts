@@ -153,11 +153,12 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - DO NOT render the interior as multiple stacked rings, multiple layered bands, segmented sections, or split parts. The interior is **MONOLITHIC and SMOOTH**.
    - The ring is a SINGLE band with decoration only on the OUTER top surface — the inner surface (the hole side) is uniformly polished metal, period.
 
-3️⃣ COMPOSITION — RING IS HERO, DECOR IS MINIMAL HINT
-   - The ring fills **55-75% of the frame width** (prominent and bold).
+3️⃣ COMPOSITION — RING IS HERO, EXTREME MACRO CLOSE-UP
+   - The ring fills **65-85% of the frame width** (very prominent, fills most of the image).
    - The ring is INTEGRATED in a scene, but the decor is MINIMAL and SUGGESTIVE — a single surface texture, one corner of fabric, or just an out-of-focus color gradient.
-   - Around the ring: 15-25% of the frame area is filled with soft-focus DECOR — a tiny hint, not a full scene. Prefer ONE single surface/texture, not multiple materials.
+   - Around the ring: only 10-20% of the frame area is filled with soft-focus DECOR — a tiny hint, not a full scene. Prefer ONE single surface/texture, not multiple materials.
    - Often: just a colored seamless surface beneath the ring + soft bokeh of one material in the corner is enough.
+   - Reference: think Léa magazine macro shots where the ring fills most of the image with just enough decor around to give context.
    - The ring is RESTING ON or LEANING AGAINST something in the scene: a fold of fabric, a coil of paracord, a soft cushion, a textured surface — never floating on a clean studio backdrop.
    - Varied placement of the ring in the frame:
      • Off-center right with the scene's decor flowing on the LEFT
@@ -205,8 +206,8 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 - NO hard ring-light or strobe specular hotspots.
 - NO everything-in-focus 3D-render look.
 - NO altering the ring's geometry, colors, gemstones, engravings.
-- NO ring filling more than 75% of the frame — leave bokeh/decor space around.
-- NO ring filling less than 55% of the frame — the ring is the hero and dominates.
+- NO ring filling more than 85% of the frame — keep a little bokeh space around.
+- NO ring filling less than 65% of the frame — the ring is the hero and dominates the image.
 - NO isolated ring on a clean studio background — the ring is integrated in a scene with visible blurred decor materials around it.
 - NO multi-layered / segmented / stacked interior. The inside of the ring is ONE smooth continuous polished metal surface (mirror-polished, no decoration, no division).
 - NO camera angle that deviates from the USER-SELECTED angle directive (see rule 1️⃣).
@@ -280,7 +281,7 @@ Output: ${format} aspect ratio.
 1. RING IS PRISTINE : zero dust, zero fingerprints, zero scratches, mirror-clean polished metal, sparkling gemstones, crisp engravings.
 2. ADDON-BASE GEOMETRY : (a) source proportions preserved (ring NOT thinner), (b) addon CENTERED vertically with upper rail = lower rail width, (c) addon constant width fills the entire groove, (d) addon and rails are FLUSH/COPLANAR at the same surface height (NO step, NO relief, NO dark gap line — only a crisp material-transition line), (e) all 3 elements = 3 parallel bands of constant width.
 3. CAMERA ANGLE matches the user-selected directive (geometry of the ring matches : circle/oval/rectangle as specified).
-4. RING fills 55-75% of frame, NOT a packshot, integrated in soft minimal decor.
+4. RING fills 65-85% of frame, NOT a packshot, integrated in soft minimal decor.
 5. LIGHTING is soft single window light, NOT studio strobe.
 6. MAGAZINE PRINT QUALITY : ultra-sharp, high-res, professional retouching pass applied.
 
