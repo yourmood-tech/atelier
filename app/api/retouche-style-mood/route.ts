@@ -6,10 +6,11 @@ const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
 
 // Référence d'angle hardcodée par preset (nombre de variantes disponibles)
+// NOTE : désactivé pour lea/face car Gemini fusionnait les designs des 2 bagues.
+// L'angle est forcé via le prompt texte uniquement (descriptions géométriques précises).
 const ANGLE_REFS_COUNT: Record<string, number> = {
-  "lea": 4,
-  "face": 9,
-  // Autres presets à compléter quand Stéphanie fournira les photos
+  // "lea": 4,
+  // "face": 9,
 };
 
 function loadAngleReference(cameraAngle: string): { inlineData: { mimeType: string; data: string } } | null {
@@ -141,23 +142,30 @@ CRITICAL GEOMETRY RULES (the most common AI mistake — pay extreme attention) :
 
 If the source shows imperfect geometry (variation, gaps, lifting, double layers, misaligned), the output shows PERFECT factory-fresh constant-width parallel bands — addon centered, rails symmetric, total proportions preserved.
 
-⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION (everything except cleaning/alignment) :
-- Same shape, same colors, same materials, same finish, same gemstones, same engravings/patterns as the source.
-- Cleaning and alignment are the ONLY corrections. DO NOT change design, colors, gemstones, or pattern.
+⛔⛔⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION — ABSOLUTE TOP PRIORITY ⛔⛔⛔
 
-🎨 PRESERVE THE ADDON DECORATION EXACTLY — DO NOT REINTERPRET, DO NOT SIMPLIFY
-The decoration on the central addon is the ring's IDENTITY. You MUST preserve it pixel-precise :
-- If you see PAVÉ-SET DIAMONDS (3D-mounted gemstones in relief, claw/grain settings) → output PAVÉ-SET DIAMONDS in relief. NEVER flatten them to engraved/printed dots.
-- If you see 3D RELIEF DECORATION (sculpted, raised, with depth) → output 3D RELIEF DECORATION. NEVER flatten to 2D engraving.
-- If you see ENGRAVED LINES (incised pattern flat into metal) → output engraved lines, never raised.
-- If you see SPECIFIC SHAPES (mountains, hearts, leaves, animals, abstract motifs) → output the EXACT SAME SHAPES with the same proportions and arrangement.
-- If you see SETTING TYPES (pavé, channel, bezel, prong) → output the EXACT SAME setting type.
-- The number of gemstones, their positions, their sizes, their colors → IDENTICAL to the source.
+You MUST output THE EXACT RING from the attached source image. Not a similar ring, not a simplified version, not an "improved" version — THE EXACT SAME RING.
 
-⛔ DO NOT redesign. DO NOT reinterpret. DO NOT simplify. DO NOT "improve" the design.
-⛔ DO NOT change pavé to engraving. DO NOT change 3D relief to flat printing.
-⛔ DO NOT change the number of gemstones or their arrangement.
-⛔ DO NOT swap one type of decoration for another (e.g., don't replace mountain peaks with triangles).
+📋 BEFORE GENERATING, LOOK CAREFULLY AT THE SOURCE IMAGE AND IDENTIFY :
+- How many addon bands are visible? (1, 2, 3...) → output the EXACT same number.
+- How many rows of pavé diamonds? (1 row, 2 rows, 4 rows...) → output the EXACT same count.
+- How many gemstones in total? → output the EXACT same count.
+- What is the exact pattern? (mountain peaks, hearts, geometric, abstract, etc.) → output the EXACT same pattern.
+- What is the exact metal color? (silver, rose gold, yellow gold, titanium blue, anthracite...) → output the EXACT same color.
+- What is the exact finish? (polished, brushed, satin, hammered, matte...) → output the EXACT same finish.
+- What setting type? (pavé, channel, bezel, prong, flush-set...) → output the EXACT same setting.
+
+⛔ ABSOLUTE BANS :
+- DO NOT simplify the decoration. If source has 4 rows → output 4 rows. If source has 2 addon bands → output 2 addon bands. NEVER merge/combine bands.
+- DO NOT reduce complexity. NEVER remove decoration elements.
+- DO NOT reinterpret the design. NEVER replace one motif with another.
+- DO NOT change colors, materials, or finishes.
+- DO NOT change the number/arrangement/size of gemstones.
+- DO NOT change pavé to engraving, or 3D relief to flat, or vice versa.
+
+If the source ring has 2 different addon bands (e.g., one white textured + one gold pavé), you MUST output 2 different addon bands. If the source has multiple rows of small diamonds, you MUST output multiple rows of small diamonds. COUNT and PRESERVE every element.
+
+Cleaning and alignment are the ONLY allowed corrections. Everything else = IDENTICAL.
 
 ═══════════════════════════════════════════════════════════════════
 NOW THE STYLE PHOTOGRAPHE LÉA SETUP — SEE BELOW
