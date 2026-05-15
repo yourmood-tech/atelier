@@ -27,13 +27,15 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - The band's decorated outer surface curves up and over toward the camera.
    - NEVER standing vertical/upright like a Shopify packshot. NEVER perfectly profile-only.
 
-3️⃣ COMPOSITION — VARIED placement, never rigid center
-   - Choose ONE natural composition for this ring (pick one of these placements based on the ring's silhouette and theme):
-     • Off-center right with negative space on the LEFT
-     • Off-center left with negative space on the RIGHT
+3️⃣ COMPOSITION — TIGHT CROP, VARIED placement
+   - EXTREME MACRO CLOSE-UP. The ring must be BIG in the frame.
+   - The ring fills **75-90% of the frame width** (and a comparable share of the height). The ring is huge — like a magazine editorial macro shot, not a small object in a wide scene.
+   - Tight crop: the ring may slightly touch or be very close to the frame edges on the side it leans towards. There is NO wide negative space all around — only a single area of soft bokeh on ONE side.
+   - Varied placement (avoid rigid centering):
+     • Off-center right with breathing space on the LEFT
+     • Off-center left with breathing space on the RIGHT
      • Almost centered with subtle asymmetry
-   - The ring is the absolute focal point but its position in the frame should feel intentional and unforced — NEVER perfectly centered in a rigid catalog way.
-   - The ring fills 60-75% of the frame horizontally.
+   - Think: "the ring fills my viewfinder". Like a macro Canon 5D + 100mm lens at minimum focusing distance. Not a wide product shot.
 
 4️⃣ DEPTH OF FIELD — classic macro shallow but NOT extreme
    - Imagine a 100mm macro lens at f/3.5–f/5.6 (NOT f/2.8, NOT f/1.4).
@@ -69,6 +71,8 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 - NO hard ring-light or strobe specular hotspots.
 - NO everything-in-focus 3D-render look.
 - NO altering the ring's geometry, colors, gemstones, engravings.
+- NO small ring in wide scene — the ring MUST be huge, filling 75-90% of the frame.
+- NO excessive negative space around the ring — only ONE direction has breathing space (left OR right OR top), the other sides crop tight.
 
 ═══════════════════════════════════════════════════════════════════
 USER-PROVIDED THEME
@@ -121,7 +125,7 @@ ${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority — respect strictly
 
 Output: ${format} aspect ratio.
 
-PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring is laid flat horizontally, slight elevated 3/4 camera angle, soft single window light, classic macro DOF, minimalist colored seamless background interpreting the theme through color+texture+light only.`;
+PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring is laid flat horizontally, slight elevated 3/4 camera angle, **TIGHT CROP filling 75-90% of the frame**, soft single window light, classic macro DOF, minimalist colored seamless background interpreting the theme through color+texture+light only.`;
 
   const prompt = PROMPT_BASE + themeText;
 
