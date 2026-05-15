@@ -312,21 +312,31 @@ PRODUCE THE IMAGE NOW with all 6 checklist items satisfied.`;
   // Si référence décor fournie, ajouter une instruction explicite
   if (refDecorPart) {
     prompt += `\n\n═══════════════════════════════════════════════════════════════════
-🔒 DECOR REFERENCE IMAGE PROVIDED (2nd input image)
+🔒 DECOR REFERENCE IMAGE PROVIDED (2nd input image) — "SAME PHOTO SESSION" CONSISTENCY
 ═══════════════════════════════════════════════════════════════════
-A SECOND IMAGE is provided alongside the ring's source image. This 2nd image is a REFERENCE for the DECOR ONLY (background, surface, lighting, color palette, materials, mood).
+A SECOND IMAGE is provided alongside the ring's source image. This 2nd image is a REFERENCE for the DECOR setup (materials, palette, lighting, mood).
 
-YOU MUST MATCH the 2nd image's décor EXACTLY:
-- Same background color and texture
-- Same surface the ring rests on
-- Same surrounding materials (fabric folds, paracord, sand, etc.)
-- Same lighting direction, color temperature, and softness
-- Same overall mood and color palette
+The output must look like ANOTHER SHOT FROM THE SAME PHOTO SESSION as the reference image — not a pixel-perfect copy.
 
-This is part of a SERIES — multiple ring photos must share the IDENTICAL décor for visual consistency across the collection.
+✅ MATCH FROM THE REFERENCE (mandatory consistency) :
+- The SAME MATERIALS used in the decor (e.g., same khaki canvas fabric, same olive paracord, same red silk, same sand texture, same pebble surface — whatever the reference uses).
+- The SAME COLOR PALETTE (background tones, accent colors, overall warmth/coolness).
+- The SAME LIGHTING (same window-light direction, same softness, same color temperature, same shadow quality).
+- The SAME OVERALL MOOD AND ATMOSPHERE (editorial, intimate, soft, dramatic — match the reference's feel).
+- The SAME TYPES of decorative elements (if the reference has paracord in the background, the output also has paracord — same material, but the arrangement can vary).
 
-⛔ DO NOT use the 2nd image's RING — only its DÉCOR. The ring in the output is the one from the FIRST image (source).
-⛔ DO NOT change the décor compared to the 2nd image. The décor of the 2nd image is locked.`;
+🔄 ALLOWED TO VARY (natural shot-to-shot differences) :
+- The exact ARRANGEMENT / FOLDS / FLOW of the decor materials (e.g., different drape, different paracord coil position).
+- The exact POSITION of the ring within the scene (can be in a different spot of the setup).
+- The CAMERA ANGLE on the ring (respect the user-selected camera angle directive — don't copy the reference's angle).
+- Subtle variations in lighting intensity (same source/direction, but slight natural fluctuation OK).
+- Subtle variations in the bokeh and depth of field.
+
+Think of it as : "Léa took multiple shots of different rings on the same setup, moving the ring, changing the angle slightly between shots. Each shot has the same materials, palette, lighting, but a different composition."
+
+⛔ DO NOT use the 2nd image's RING — only its DECOR materials/palette/lighting/mood. The ring in the output is the one from the 1st image (source).
+⛔ DO NOT introduce NEW materials, colors, or lighting types that weren't in the reference. Stay within the reference's "session".
+⛔ DO NOT make a pixel-perfect duplicate — natural shot variation is expected.`;
   }
 
   try {
