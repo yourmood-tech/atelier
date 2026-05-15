@@ -5,7 +5,23 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
-const PROMPT_BASE = `You are a professional luxury jewelry post-production retoucher creating a high-end editorial photograph for Mood Collection — to magazine print quality standards (Vogue / Harper's Bazaar level).
+const PROMPT_BASE = `🚨🚨🚨 ABSOLUTE TOP PRIORITY — READ FIRST 🚨🚨🚨
+
+THE CAMERA ANGLE FOR THIS SHOT IS USER-SELECTED. You MUST output an image where the ring's geometry matches the user's selected camera angle (see directive at the bottom of this prompt).
+
+⚠️ THE SOURCE IMAGE SHOWS THE RING IN AN ARBITRARY POSE. You MUST DISREGARD that pose. Re-stage the ring from scratch at the camera angle specified. Specifically :
+- If user selected TOP-DOWN → the ring MUST appear in the output as a FLAT CIRCLE/RING shape (a donut viewed from directly above). The ring's axis (the line through the center of the hole) is VERTICAL and points UP to the camera. You see ONLY the top face of the band, no side profile.
+- If user selected HIGH PLUNGE → the ring is a slightly squashed circle (oval ~1.5:1).
+- If user selected STYLE LÉA → the ring is a clear oval (2:1).
+- If user selected LIGHT PLUNGE → the ring is a narrow oval (4:1), mostly side band visible.
+- If user selected FRONT VIEW → the ring is a rectangle (pure side band, no top visible).
+- If user selected LOW-ANGLE → the ring is a curved rectangle viewed from below.
+
+If your output does NOT match the geometry above for the selected angle, YOU HAVE FAILED. Check before producing.
+
+═══════════════════════════════════════════════════════════════════
+
+You are a professional luxury jewelry post-production retoucher creating a high-end editorial photograph for Mood Collection — to magazine print quality standards (Vogue / Harper's Bazaar level).
 
 ═══════════════════════════════════════════════════════════════════
 🏆 OUTPUT QUALITY MANDATE — TOP PRIORITY, NON-NEGOTIABLE
@@ -237,13 +253,22 @@ Output: ${format} aspect ratio.
 PRODUCE THE IMAGE NOW with all 6 checklist items satisfied.`;
 
   const CAMERA_DIRECTIVES: Record<string, string> = {
-    "top-down": `🔝 TOP-DOWN VIEW (90° pure overhead — looking straight DOWN onto the ring).
-   GEOMETRY THE RING MUST SHOW :
-   - The ring is a PERFECT CIRCLE shape (a donut viewed from directly above).
-   - The inner hole is a SMALLER CIRCLE inside the circle.
-   - The ENTIRE upper band-surface decoration is fully visible and undistorted across the full circle.
-   - ZERO side profile visible (no thickness of the band edge visible at all).
-   - If you can see the band's side profile, you are NOT shooting top-down. The ring must look like a flat ring shape, not a tilted one.`,
+    "top-down": `🔝 TOP-DOWN VIEW — 90° PURE OVERHEAD (the most extreme angle).
+
+   🎯 PHYSICAL SETUP :
+   - The ring is LYING FLAT on the surface like a coin or a donut resting on a table.
+   - The ring's central axis (the imaginary line passing through the center of the hole) is VERTICAL — pointing straight UP toward the ceiling/sky.
+   - The camera is positioned DIRECTLY ABOVE the ring, looking STRAIGHT DOWN at it (lens axis perfectly vertical pointing downward).
+   - You are looking THROUGH or ALONG the ring's hole axis from above.
+
+   🎯 RESULTING GEOMETRY IN THE OUTPUT :
+   - The ring appears as a PERFECT CIRCLE (a flat ring shape / donut shape).
+   - The inner hole appears as a smaller perfect CIRCLE inside.
+   - The decoration on the band's outer top surface is FULLY VISIBLE all around the circle, like a wrap visible from above.
+   - The polished metal of the inner band (around the hole) is fully visible as a flat circular surface.
+   - ZERO side-profile of the band is visible — you cannot see the band's thickness from the side, only from the top.
+
+   ⛔ VERIFICATION : if your output shows the ring as an oval or as a side band rectangle, the angle is WRONG. If you see the band's edge thickness from the side, it's WRONG. ONLY a perfect ring/donut shape from above is correct for top-down.`,
     "haute": `🔭 HIGH PLUNGE (60-70° from above — almost overhead).
    GEOMETRY THE RING MUST SHOW :
    - The ring is a FLATTENED CIRCLE / wide oval (slightly squished circle).
