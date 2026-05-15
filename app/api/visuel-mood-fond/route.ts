@@ -221,7 +221,7 @@ export async function POST(req: NextRequest) {
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: format },
+          imageConfig: { aspectRatio: format, imageSize: "2K" },
         },
       }),
     });

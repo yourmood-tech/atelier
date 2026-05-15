@@ -53,7 +53,7 @@ Output: the corrected image as a new ${format} aspect ratio image, ready for tex
         ] }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: format },
+          imageConfig: { aspectRatio: format, imageSize: "2K" },
         },
       }),
     });

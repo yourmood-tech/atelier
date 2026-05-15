@@ -89,7 +89,7 @@ async function appelGemini(imageDataUrl: string, action: string, note?: string |
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: RATIOS[action] || "1:1" },
+          imageConfig: { aspectRatio: RATIOS[action] || "1:1", imageSize: "2K" },
         },
       }),
     });

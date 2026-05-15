@@ -492,7 +492,7 @@ Think of it as : "Léa took multiple shots of different rings on the same setup,
         ] }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: format },
+          imageConfig: { aspectRatio: format, imageSize: "2K" },
         },
       }),
     });
