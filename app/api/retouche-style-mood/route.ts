@@ -13,6 +13,29 @@ The source is just to identify the ring (shape, color, materials, gemstones, eng
 ⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION
 - Same shape, exact same colors, exact same materials, exact same finish, exact same gemstones, exact same engravings/patterns as the source. DO NOT invent. DO NOT change colors. DO NOT add or remove anything.
 
+🧹 RING CLEANING — REMOVE ALL IMPERFECTIONS BEFORE THE PHOTO
+- The ring in the output must look PRISTINE — like it just came out of the factory polishing stage.
+- REMOVE all surface imperfections from the ring:
+  • Dust particles, lint fibers, microscopic hairs
+  • Fingerprints, smudges, oily traces
+  • Fine scratches, micro-scratches, surface marks
+  • Discolorations, water spots, residue
+- Pay special attention to the CENTRAL ADDON (the decorated central band of the ring, between the two polished metal rails) — this is where dust and scratches accumulate most. Clean it thoroughly.
+- The polished metal surfaces (inner band and outer rails) must be MIRROR-CLEAN with perfect reflections — no fingerprints, no smudges.
+- BUT preserve all DESIGN ELEMENTS exactly: engravings, gemstones, color pattern, texture (brushed, satin, hammered, etc.) — these are the ring's design, not imperfections.
+- The cleaning is invisible — the ring just looks freshly made, never altered.
+
+🎯 MOOD RING STRUCTURE — FIX ADDON-BASE ALIGNMENT
+- Every Mood Collection ring has TWO PARTS visible from the outside:
+  • THE BASE (steel 316L or titanium) — the structural ring with TWO POLISHED METAL RAILS (one above, one below the central groove).
+  • THE ADDON (the decorated interchangeable band) — the colored/patterned/gemstone band that CLIPS INTO the central groove between the two rails.
+- The addon MUST sit PERFECTLY FLUSH inside the base's central groove. Specifically:
+  • NO PART OF THE ADDON OVERFLOWS / EXTENDS BEYOND the two metal rails of the base. If the source shows the addon slightly larger than the rails, RE-ALIGN it so its edges sit exactly inside the rails.
+  • NO GAPS / SPACES visible between the addon and the metal rails. The addon's edges must touch the rails tightly with zero visible gap.
+  • The addon's outer surface should curve smoothly continuous with the rails (no step / discontinuity), as if it were clipped in by hand to perfection.
+- The rails (top + bottom) of the base must appear as TWO PARALLEL POLISHED METAL LINES bordering the addon. Crisp, mirror-finished, no irregularities.
+- If the source shows imperfect alignment (addon overflow, gaps, lifting), the output must show PERFECT factory-fresh alignment. This is a quality-control / catalog-shot correction.
+
 ═══════════════════════════════════════════════════════════════════
 LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 ═══════════════════════════════════════════════════════════════════
