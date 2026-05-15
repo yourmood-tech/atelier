@@ -5,36 +5,56 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
-const PROMPT_BASE = `RE-PHOTOGRAPH the Mood Collection ring from the source image, AT A USER-SELECTED CAMERA ANGLE (see directive below — this is the #1 priority of this prompt).
+const PROMPT_BASE = `You are a professional luxury jewelry post-production retoucher creating a high-end editorial photograph for Mood Collection — to magazine print quality standards (Vogue / Harper's Bazaar level).
+
+═══════════════════════════════════════════════════════════════════
+🏆 OUTPUT QUALITY MANDATE — TOP PRIORITY, NON-NEGOTIABLE
+═══════════════════════════════════════════════════════════════════
+
+The final image MUST look like a high-end retouched jewelry photograph at magazine print quality. This means:
+
+📷 IMAGE QUALITY :
+- ULTRA-SHARP focus on the ring (every micro-detail of metal/gemstones/engravings crisp and crystal clear).
+- HIGH-RESOLUTION feel — like a Hasselblad H6D 100MP medium-format capture.
+- Perfect exposure: highlights controlled, shadows rich with detail, no banding, no noise.
+- Color accuracy: precise rendering of metal tones (silver, rose gold, titanium blue, etc.), gemstones (CZ sparkle, diamond fire), and surface finishes (brushed/satin/polished).
+- Professional retouching pass — every imperfection removed, every reflection clean.
+
+💎 THE RING MUST BE FLAWLESS — FACTORY-FRESH PRISTINE :
+The ring in the output looks like it just came out of the workshop, fresh from the final polish, photographed for a luxury catalog. SPECIFICALLY :
+- ✂️ REMOVE ALL DUST, lint fibers, microscopic hairs, fluff particles. NONE remain anywhere on the ring.
+- ✂️ REMOVE ALL FINGERPRINTS, smudges, oily traces, breath marks. The metal looks mirror-clean.
+- ✂️ REMOVE ALL FINE SCRATCHES, micro-rayures, surface marks, brush marks (unless brushed/satin finish is the intentional design — in which case keep the brush pattern intentional and clean).
+- ✂️ REMOVE all water spots, residue, discoloration, oxidation.
+- ✨ POLISHED METAL SURFACES (the base's two rails and the inner band of the ring) must be MIRROR-PERFECT with crisp clean reflections — no dust dots, no fingerprint smears.
+- 💎 GEMSTONES sparkle clean and brilliant — no dust trapped under prongs, no fingerprint film.
+- 🎯 ADDON (the decorated central band) is impeccable — every engraving line crisp, every gemstone setting clean, every color zone uniform.
+
+🔧 MOOD RING STRUCTURE — FIX ADDON-BASE ALIGNMENT IF NEEDED :
+Mood Collection rings have TWO PARTS visible from outside :
+- THE BASE (steel 316L or titanium) — structural ring with TWO POLISHED METAL RAILS framing a central groove.
+- THE ADDON (decorated interchangeable band) — colored/patterned/gemstone band that CLIPS INTO the central groove.
+
+In the output, the addon MUST sit PERFECTLY FLUSH inside the base :
+- NO part of the addon overflows or extends beyond the two rails of the base.
+- NO gaps or spaces visible between the addon and the rails. They touch tightly.
+- The addon's outer surface curves smoothly continuous with the rails (no step / no discontinuity).
+- If the source shows imperfect alignment (overflow, gaps, lifting), the output shows PERFECT factory-fresh alignment.
+
+⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION (everything except cleaning/alignment) :
+- Same shape, same colors, same materials, same finish, same gemstones, same engravings/patterns as the source.
+- Cleaning and alignment are the ONLY corrections. DO NOT change design, colors, gemstones, or pattern.
+
+═══════════════════════════════════════════════════════════════════
+NOW THE STYLE PHOTOGRAPHE LÉA SETUP — SEE BELOW
+═══════════════════════════════════════════════════════════════════
+
+RE-PHOTOGRAPH the ring above (cleaned and corrected) in the SIGNATURE STYLE of Mood Collection's in-house photographer (Léa), AT A USER-SELECTED CAMERA ANGLE.
 
 ⚠️⚠️⚠️ IGNORE THE POSE / ANGLE / ORIENTATION OF THE RING IN THE SOURCE IMAGE.
 The source is just to identify the ring (shape, color, materials, gemstones, engravings, pattern). You must RE-SHOOT the ring from a new camera angle as specified in the USER-SELECTED ANGLE DIRECTIVE below. The geometry the ring shows in the output MUST match the directive — if the source shows the ring in side profile but the directive says "top-down", you MUST output a top-down view (ring as a circle).
 
-⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION
-- Same shape, exact same colors, exact same materials, exact same finish, exact same gemstones, exact same engravings/patterns as the source. DO NOT invent. DO NOT change colors. DO NOT add or remove anything.
-
-🧹 RING CLEANING — REMOVE ALL IMPERFECTIONS BEFORE THE PHOTO
-- The ring in the output must look PRISTINE — like it just came out of the factory polishing stage.
-- REMOVE all surface imperfections from the ring:
-  • Dust particles, lint fibers, microscopic hairs
-  • Fingerprints, smudges, oily traces
-  • Fine scratches, micro-scratches, surface marks
-  • Discolorations, water spots, residue
-- Pay special attention to the CENTRAL ADDON (the decorated central band of the ring, between the two polished metal rails) — this is where dust and scratches accumulate most. Clean it thoroughly.
-- The polished metal surfaces (inner band and outer rails) must be MIRROR-CLEAN with perfect reflections — no fingerprints, no smudges.
-- BUT preserve all DESIGN ELEMENTS exactly: engravings, gemstones, color pattern, texture (brushed, satin, hammered, etc.) — these are the ring's design, not imperfections.
-- The cleaning is invisible — the ring just looks freshly made, never altered.
-
-🎯 MOOD RING STRUCTURE — FIX ADDON-BASE ALIGNMENT
-- Every Mood Collection ring has TWO PARTS visible from the outside:
-  • THE BASE (steel 316L or titanium) — the structural ring with TWO POLISHED METAL RAILS (one above, one below the central groove).
-  • THE ADDON (the decorated interchangeable band) — the colored/patterned/gemstone band that CLIPS INTO the central groove between the two rails.
-- The addon MUST sit PERFECTLY FLUSH inside the base's central groove. Specifically:
-  • NO PART OF THE ADDON OVERFLOWS / EXTENDS BEYOND the two metal rails of the base. If the source shows the addon slightly larger than the rails, RE-ALIGN it so its edges sit exactly inside the rails.
-  • NO GAPS / SPACES visible between the addon and the metal rails. The addon's edges must touch the rails tightly with zero visible gap.
-  • The addon's outer surface should curve smoothly continuous with the rails (no step / discontinuity), as if it were clipped in by hand to perfection.
-- The rails (top + bottom) of the base must appear as TWO PARALLEL POLISHED METAL LINES bordering the addon. Crisp, mirror-finished, no irregularities.
-- If the source shows imperfect alignment (addon overflow, gaps, lifting), the output must show PERFECT factory-fresh alignment. This is a quality-control / catalog-shot correction.
+(Quality mandate, cleaning, and addon-base alignment are specified at the TOP of this prompt — they are mandatory and non-negotiable.)
 
 ═══════════════════════════════════════════════════════════════════
 LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
@@ -174,12 +194,15 @@ ${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority — respect strictly
 
 Output: ${format} aspect ratio.
 
-⚠️ FINAL REMINDER : THE CAMERA ANGLE FROM RULE 1️⃣ IS THE #1 PRIORITY.
-   - If you keep the source pose instead of applying the user-selected angle, the output is WRONG.
-   - Look at the geometry directive : does the ring appear as a circle (top-down), oval (Léa), or rectangle (front)? Match it strictly.
-   - Re-imagine the ring from scratch at the specified angle — don't preserve the source's angle.
+⚠️ FINAL CHECKLIST — VERIFY BEFORE PRODUCING :
+1. RING IS PRISTINE : zero dust, zero fingerprints, zero scratches, mirror-clean polished metal, sparkling gemstones, crisp engravings.
+2. ADDON ALIGNMENT PERFECT : no overflow beyond rails, no gaps between addon and rails, smooth continuous surface.
+3. CAMERA ANGLE matches the user-selected directive (geometry of the ring matches : circle/oval/rectangle as specified).
+4. RING fills 55-75% of frame, NOT a packshot, integrated in soft minimal decor.
+5. LIGHTING is soft single window light, NOT studio strobe.
+6. MAGAZINE PRINT QUALITY : ultra-sharp, high-res, professional retouching pass applied.
 
-PRODUCE THE IMAGE NOW. The ring is re-shot at the user-selected camera angle (rule 1️⃣), ring fills 55-75% of the frame, decor is a minimal thematic surface hint (15-25% of frame in soft bokeh), soft single window light, classic macro DOF, ring interior is one smooth polished metal surface.`;
+PRODUCE THE IMAGE NOW with all 6 checklist items satisfied.`;
 
   const CAMERA_DIRECTIVES: Record<string, string> = {
     "top-down": `🔝 TOP-DOWN VIEW (90° pure overhead — looking straight DOWN onto the ring).
