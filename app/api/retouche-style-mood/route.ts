@@ -16,16 +16,22 @@ THE SOURCE IMAGE MAY BE AN E-COMMERCE PACKSHOT (ring standing upright in profile
 LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 ═══════════════════════════════════════════════════════════════════
 
-1️⃣ CAMERA ANGLE — slightly elevated 3/4 view from above
-   - The camera is positioned ABOVE the table at roughly a 30-45° downward angle (NOT top-down, NOT horizontal/eye-level).
-   - The lens looks slightly DOWN onto the ring.
-   - This reveals: the curved upper band-surface (decoration / engravings / gemstones), the polished inner hole of the ring at one end, AND the side profile of the band.
+1️⃣ CAMERA ANGLE — strongly elevated, almost top-down 3/4
+   - The camera is positioned ABOVE the table at roughly a **50-65° downward angle** (closer to top-down than horizontal).
+   - The lens looks DOWN onto the ring, almost overhead but slightly tilted.
+   - This reveals: the **ENTIRE upper band-surface** (full decoration / engravings / gemstones visible from end to end, no perspective foreshortening that hides half the pattern), the polished inner hole of the ring at one end, AND a hint of the side profile.
+   - You should see the FULL DECORATIVE PATTERN clearly readable on the top surface — not just a sliver in perspective.
 
 2️⃣ RING POSITION — laid FLAT and HORIZONTAL on its side
-   - The ring lies on the surface with the BAND-CIRCLE LAYING HORIZONTALLY (like a small donut on a table viewed slightly from above).
+   - The ring lies on the surface with the BAND-CIRCLE LAYING HORIZONTALLY (like a small donut on a table viewed from above with slight tilt).
    - The inner polished hole of the ring is visible at one end (left or right end of the ring).
-   - The band's decorated outer surface curves up and over toward the camera.
+   - The decorative outer surface of the band faces the camera, fully visible.
    - NEVER standing vertical/upright like a Shopify packshot. NEVER perfectly profile-only.
+
+⚠️ CRITICAL — RING INTERIOR IS ONE SMOOTH POLISHED METAL SURFACE
+   - The inside of a Mood Collection ring (visible through the ring's hole, on the inner edge of the band) is **ONE SINGLE CONTINUOUS SMOOTH POLISHED METAL SURFACE** — like the inside of a wedding band: uniform, mirror-polished, no decoration, no division, no pattern.
+   - DO NOT render the interior as multiple stacked rings, multiple layered bands, segmented sections, or split parts. The interior is **MONOLITHIC and SMOOTH**.
+   - The ring is a SINGLE band with decoration only on the OUTER top surface — the inner surface (the hole side) is uniformly polished metal, period.
 
 3️⃣ COMPOSITION — TIGHT CROP, VARIED placement
    - EXTREME MACRO CLOSE-UP. The ring must be BIG in the frame.
@@ -73,6 +79,8 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 - NO altering the ring's geometry, colors, gemstones, engravings.
 - NO small ring in wide scene — the ring MUST be huge, filling 75-90% of the frame.
 - NO excessive negative space around the ring — only ONE direction has breathing space (left OR right OR top), the other sides crop tight.
+- NO multi-layered / segmented / stacked interior. The inside of the ring is ONE smooth continuous polished metal surface (mirror-polished, no decoration, no division).
+- NO low/horizontal eye-level camera angle. The camera is 50-65° from above (almost top-down with slight tilt).
 
 ═══════════════════════════════════════════════════════════════════
 USER-PROVIDED THEME
