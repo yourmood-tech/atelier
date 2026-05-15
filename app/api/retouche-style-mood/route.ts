@@ -401,23 +401,34 @@ PRODUCE THE IMAGE NOW with all 6 checklist items satisfied.`;
 
 You are receiving multiple images. Each has a SPECIFIC ROLE — do not confuse them.
 
-📷 IMAGE 1 (FIRST attached) = ANGLE REFERENCE
-   → Look at this image to understand the EXACT CAMERA ANGLE / RING POSE you must reproduce.
-   → Note how the ring is positioned in 3D space, what parts are visible, the perspective foreshortening.
-   → COPY this angle/pose/perspective exactly in your output.
-   → IGNORE this ring's design, color, materials, decoration, lighting — those are NOT for you to copy.
+⚠️ THE MOST COMMON FAILURE : using the wrong ring from the wrong image. DO NOT confuse the images. The ring you must photograph is IMAGE 1 (first attached). The other images are ONLY references for angle/decor.
 
-💎 IMAGE 2 (SECOND attached) = RING IDENTITY (the one to photograph)
-   → This is the ring whose IDENTITY you must preserve : exact shape, exact colors, exact materials, exact gemstones, exact engravings, exact pattern.
-   → Pretend this ring was placed in front of the camera at IMAGE 1's exact angle, then photographed.
-   → IGNORE this ring's current pose/angle/orientation — you will re-photograph it at IMAGE 1's angle.
+💎 IMAGE 1 (FIRST attached) = THE RING TO PHOTOGRAPH ⭐ THIS IS THE RING
+   → This is THE RING whose IDENTITY you must preserve EXACTLY : exact shape, exact colors, exact materials, exact gemstones, exact engravings, exact pattern.
+   → THE OUTPUT MUST SHOW THIS EXACT RING. Not a similar ring, not the angle reference's ring, not the decor reference's ring — THIS RING.
+   → IGNORE this ring's current pose/angle/orientation in the source — you will re-photograph it at IMAGE 2's angle.
 
-${refDecorPart ? `🖼️ IMAGE 3 (THIRD attached) = DECOR REFERENCE
-   → Use the materials, palette, lighting, and mood from this image for the background/scene.
-   → IGNORE this image's ring — you only borrow its setting.
+📷 IMAGE 2 (SECOND attached) = ANGLE REFERENCE ONLY (do NOT use this ring)
+   → Look at IMAGE 2 ONLY to understand the EXACT CAMERA ANGLE / RING POSE / framing / perspective.
+   → COPY ONLY the angle/pose/perspective from IMAGE 2 in your output.
+   → ⛔ DO NOT use IMAGE 2's ring design — that ring is NOT in the output.
+   → ⛔ DO NOT use IMAGE 2's colors, materials, engravings, decoration — those are NOT in the output.
+   → ⛔ DO NOT use IMAGE 2's lighting style — apply Léa's signature lighting instead.
+   → ⛔ DO NOT use IMAGE 2's decor/background — use the theme or IMAGE 3 instead.
+
+${refDecorPart ? `🖼️ IMAGE 3 (THIRD attached) = DECOR REFERENCE ONLY (do NOT use this ring)
+   → Use ONLY the materials, palette, lighting mood, and background style from IMAGE 3 for your output's scene.
+   → The actual arrangement can vary slightly (different fold, different angle of decor) — this is a "same photo session" consistency, not pixel-perfect copy.
+   → ⛔ DO NOT use IMAGE 3's ring — that ring is NOT in the output.
+   → ⛔ DO NOT change to NEW materials/colors that weren't in IMAGE 3 — stay within its visual world.
 ` : ""}
 
-YOUR TASK : Output a single new image showing IMAGE 2's RING (preserved identity) photographed at IMAGE 1's exact CAMERA ANGLE${refDecorPart ? " in a scene matching IMAGE 3's decor mood" : ""}, with the theme atmosphere described below.
+YOUR TASK :
+- The RING IN THE OUTPUT = the ring from IMAGE 1 (preserved identity, pixel-precise).
+- The CAMERA ANGLE in the output = the angle from IMAGE 2 (reproduced exactly).${refDecorPart ? `
+- The DECOR / BACKGROUND in the output = same materials/palette/lighting as IMAGE 3.` : ""}
+
+⛔ ABSOLUTE BAN : DO NOT swap rings. The output ring identity comes ONLY from IMAGE 1.${refDecorPart ? " The decor consistency comes ONLY from IMAGE 3." : ""} If you produce a ring that looks like IMAGE 2's ring (e.g., zebra-pattern rose gold when IMAGE 1 is a diamond mountain band, or vice versa), YOU HAVE FAILED.
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -461,9 +472,10 @@ Think of it as : "Léa took multiple shots of different rings on the same setup,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [
-          // Ordre : angle ref EN PREMIER (le plus déterminant pour Gemini), puis bague source, puis décor
-          ...(refAnglePart ? [refAnglePart] : []),
+          // Ordre : bague source EN PREMIER (la plus prioritaire — son identité doit être préservée)
+          // Puis angle ref, puis décor ref
           { inlineData: { mimeType, data } },
+          ...(refAnglePart ? [refAnglePart] : []),
           ...(refDecorPart ? [refDecorPart] : []),
           { text: prompt },
         ] }],
