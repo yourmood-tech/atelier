@@ -16,11 +16,8 @@ THE SOURCE IMAGE MAY BE AN E-COMMERCE PACKSHOT (ring standing upright in profile
 LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 ═══════════════════════════════════════════════════════════════════
 
-1️⃣ CAMERA ANGLE — moderate plunge from above
-   - The camera is positioned ABOVE and SLIGHTLY in front of the ring, at roughly a **30-45° downward angle** (more plunged than horizontal eye-level, but NOT pure top-down).
-   - The lens looks DOWN-AND-FORWARD onto the ring.
-   - This reveals: the upper band-surface decoration, the polished inner hole of the ring visible at one end (oval-shaped due to the angle), AND a hint of the side profile.
-   - Reference: classic editorial jewelry macro angle, like a magazine still-life shot from a chest-high position looking down onto a low table.
+1️⃣ CAMERA ANGLE — USER-SELECTED (see angle directive below)
+   - {{CAMERA_ANGLE_DIRECTIVE}}
 
 2️⃣ RING POSITION — rested naturally in the scene, slightly tilted
    - The ring is NATURALLY POSED in the scene — either:
@@ -89,7 +86,7 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
 - NO ring filling more than 65% of the frame — leave generous bokeh/decor space around.
 - NO isolated ring on a clean studio background — the ring is integrated in a scene with visible blurred decor materials around it.
 - NO multi-layered / segmented / stacked interior. The inside of the ring is ONE smooth continuous polished metal surface (mirror-polished, no decoration, no division).
-- NO low/horizontal eye-level camera angle. The camera plunges from above at 30-45°.
+- NO camera angle that deviates from the USER-SELECTED angle directive (see rule 1️⃣).
 - NO vertical-packshot pose. The ring rests naturally in the scene (laid on its side, leaning against decor, half-cradled).
 
 ═══════════════════════════════════════════════════════════════════
@@ -102,11 +99,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
   }
 
-  let body: { image?: string; theme?: string; note?: string | null; format?: string };
+  let body: { image?: string; theme?: string; note?: string | null; format?: string; cameraAngle?: string };
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 }); }
 
-  const { image, theme, note, format = "3:2" } = body;
+  const { image, theme, note, format = "3:2", cameraAngle = "lea" } = body;
   if (!image || typeof image !== "string" || !image.startsWith("data:image/")) {
     return NextResponse.json({ error: "Image manquante ou invalide" }, { status: 400 });
   }
@@ -143,9 +140,42 @@ ${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority — respect strictly
 
 Output: ${format} aspect ratio.
 
-PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring rests naturally in a still-life scene (NOT a packshot), camera plunges 30-45° from above, ring fills 45-65% of the frame, decor materials (textiles, cords, natural materials) cradle and surround the ring in heavy bokeh, soft single window light, classic macro DOF, ring interior is one smooth polished metal surface.`;
+PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring rests naturally in a still-life scene (NOT a packshot), ring fills 45-65% of the frame, decor materials (textiles, cords, natural materials) cradle and surround the ring in heavy bokeh, soft single window light, classic macro DOF, ring interior is one smooth polished metal surface. Camera angle: as specified in rule 1️⃣.`;
 
-  const prompt = PROMPT_BASE + themeText;
+  const CAMERA_DIRECTIVES: Record<string, string> = {
+    "top-down": `TOP-DOWN VIEW (pure overhead, 90° from above).
+   - The camera is DIRECTLY ABOVE the ring, looking straight DOWN.
+   - The ring appears as a perfect circle (or near-circle) with the inner hole as a smaller circle inside.
+   - The full decoration on the upper band-surface is fully visible and undistorted.
+   - You see ONLY the top of the ring — no side profile at all.`,
+    "haute": `HIGH PLUNGE (60-70° from above).
+   - The camera is well above the ring, plunging downward at 60-70°.
+   - The ring appears as a flattened oval — most of the upper band is visible plus a tiny hint of side profile.
+   - The inner hole shows as a clear oval.
+   - Reference: a top-down look with just enough tilt to show depth.`,
+    "lea": `STYLE LÉA — strong plunge from above (50-65° downward).
+   - The camera is well above the ring, plunging at 50-65°.
+   - The ring appears clearly oval-shaped (the inner hole visible as a wide oval).
+   - The upper band-surface decoration is mostly visible, with a touch of side profile.
+   - Reference: Léa's classic editorial macro angle — looking down onto a low table from a standing position.`,
+    "legere": `LIGHT PLUNGE (15-25° downward).
+   - The camera is just slightly above the ring, looking gently down.
+   - Most of the side profile of the ring is visible, with a small hint of the upper band decoration on top.
+   - The inner hole appears as a narrow oval (mostly side-view).
+   - More side-profile-heavy than top-down.`,
+    "face": `EYE-LEVEL FRONT VIEW (0° — horizontal).
+   - The camera is at the same height as the ring, looking straight at it.
+   - The ring appears in PURE SIDE PROFILE (band visible from the side, inner hole as a thin vertical slot at most).
+   - No upper band decoration visible from above — only the side profile of the band.
+   - Reference: a classic horizontal jewelry side-shot.`,
+    "contre-plongee": `LOW-ANGLE / UNDER-VIEW (-15° to -25° looking up).
+   - The camera is slightly BELOW the ring, looking UP at it.
+   - The bottom edge of the ring is closer to the camera, the top edge falls away.
+   - Dramatic and unusual perspective — gives the ring a monumental feel.
+   - The inner polished hole may be visible at the upper edge as a faint oval.`,
+  };
+  const cameraDirective = CAMERA_DIRECTIVES[cameraAngle] || CAMERA_DIRECTIVES["lea"];
+  const prompt = (PROMPT_BASE + themeText).replace("{{CAMERA_ANGLE_DIRECTIVE}}", cameraDirective);
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
