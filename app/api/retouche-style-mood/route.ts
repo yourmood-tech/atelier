@@ -121,6 +121,20 @@ If the source shows imperfect geometry (variation, gaps, lifting, double layers,
 - Same shape, same colors, same materials, same finish, same gemstones, same engravings/patterns as the source.
 - Cleaning and alignment are the ONLY corrections. DO NOT change design, colors, gemstones, or pattern.
 
+🎨 PRESERVE THE ADDON DECORATION EXACTLY — DO NOT REINTERPRET, DO NOT SIMPLIFY
+The decoration on the central addon is the ring's IDENTITY. You MUST preserve it pixel-precise :
+- If you see PAVÉ-SET DIAMONDS (3D-mounted gemstones in relief, claw/grain settings) → output PAVÉ-SET DIAMONDS in relief. NEVER flatten them to engraved/printed dots.
+- If you see 3D RELIEF DECORATION (sculpted, raised, with depth) → output 3D RELIEF DECORATION. NEVER flatten to 2D engraving.
+- If you see ENGRAVED LINES (incised pattern flat into metal) → output engraved lines, never raised.
+- If you see SPECIFIC SHAPES (mountains, hearts, leaves, animals, abstract motifs) → output the EXACT SAME SHAPES with the same proportions and arrangement.
+- If you see SETTING TYPES (pavé, channel, bezel, prong) → output the EXACT SAME setting type.
+- The number of gemstones, their positions, their sizes, their colors → IDENTICAL to the source.
+
+⛔ DO NOT redesign. DO NOT reinterpret. DO NOT simplify. DO NOT "improve" the design.
+⛔ DO NOT change pavé to engraving. DO NOT change 3D relief to flat printing.
+⛔ DO NOT change the number of gemstones or their arrangement.
+⛔ DO NOT swap one type of decoration for another (e.g., don't replace mountain peaks with triangles).
+
 ═══════════════════════════════════════════════════════════════════
 NOW THE STYLE PHOTOGRAPHE LÉA SETUP — SEE BELOW
 ═══════════════════════════════════════════════════════════════════
@@ -173,13 +187,22 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - The background is in heavy soft bokeh.
    - This is REAL macro photography — not the "everything-magically-blurred-except-one-pixel" look of cheap AI generators.
 
-5️⃣ LIGHTING — single soft window from one side, north-facing morning light
-   - ONE soft directional source from upper-left OR upper-right (choose one based on the theme).
-   - Creates a gentle highlight on the upper edge of the ring and a soft delicate shadow on the lower edge.
-   - The polished metal interior catches a subtle reflection of the light source.
-   - NEVER hard studio strobe. NEVER ring-light. NEVER overhead flat. NEVER hot specular hotspots.
-   - Mood: 9am morning light through a north-facing window. Soft, calm, intimate, editorial.
-   - The shadow side of the ring is gently illuminated, not pitch black.
+5️⃣ LIGHTING — LÉA SIGNATURE : warm window light + dramatic chiaroscuro
+   - ONE soft DIFFUSED directional source from upper-left (or upper-right) at ~45° elevation.
+   - The light is WARM (slight golden/tungsten warmth, like late morning sun through window glass) — not cold studio white.
+   - Creates SOFT GRADIENT shadows : highlights wrap around the ring smoothly, shadows fall gradually into deep but readable darkness.
+   - CHIAROSCURO MOOD : the lit side is luminous and bright, the shadow side is rich and deep but still has texture/detail visible. NOT flat lit, NOT pitch black.
+   - The polished metal interior catches a SUBTLE soft reflection — a gentle gradient, NOT a hard mirror highlight.
+   - Specular reflections on polished metal are SOFT and ROLLING (not sharp white hotspots, not blown-out).
+   - Mood reference : think Léa's army3 / heart8 / large.paillettes2 shots — luxe magazine still-life, warm intimate, dramatic but gentle.
+
+   ⛔ ABSOLUTE BANS ON LIGHTING :
+   - NO hard studio strobe (sharp shadows with crisp edges).
+   - NO ring-light (uniform front-lit, no shadows).
+   - NO overhead clinical flat light (uniform from above, no drama).
+   - NO hot blown-out specular hotspots on polished metal.
+   - NO completely dark unlit shadows (always some detail visible in shadows).
+   - NO cold blue-white sterile light (always warm or neutral).
 
 6️⃣ DECOR — MINIMAL HINT, NOT FULL SCENE
    - The decor is a single THEMATIC SURFACE TEXTURE the ring rests on, with optional ONE small corner of complementary material in soft bokeh.
