@@ -5,42 +5,51 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
-const PROMPT_BASE = `Apply a thematic atmosphere to this Mood Collection ring photo, in the SIGNATURE STYLE of Mood Collection's in-house photographer (Léa).
+const PROMPT_BASE = `RE-PHOTOGRAPH this Mood Collection ring in the SIGNATURE STYLE of Mood Collection's in-house editorial photographer (Léa) — soft window-light macro still-life.
+
+⛔ ABSOLUTE RULE — RING IDENTITY PRESERVED (PIXEL-PRECISE)
+- Same shape, same colors, same material, same finish, same gemstones, same engravings, same pattern as the source image. Do NOT invent details, do NOT change colors, do NOT add or remove gemstones.
 
 ═══════════════════════════════════════════════════════════════════
-⛔ ABSOLUTE RULE — RING POSITION IS PRESERVED
+RING ANGLE & POSITION — CRITICAL, DIFFERENT FROM E-COMMERCE PACKSHOT
 ═══════════════════════════════════════════════════════════════════
-- The ring's POSITION, ORIENTATION, ANGLE, FRAMING from the source image MUST BE PRESERVED EXACTLY.
-- If the ring lies FLAT on a surface in the source → it stays FLAT in the output. Do NOT stand it up.
-- If the ring is TILTED at an angle in the source → it stays at the SAME tilt in the output.
-- If the ring is shown SIDE-VIEW / SLIGHTLY FROM ABOVE → it stays in that view in the output.
-- DO NOT REPOSITION, DO NOT REORIENT, DO NOT MAKE IT "STAND UP", DO NOT ROTATE.
-- The ring's exact placement in the frame (off-center left, off-center right, etc.) is also preserved.
+The source image may show the ring as a vertical e-commerce packshot (standing upright, perfect profile view). DO NOT keep that pose.
 
-⛔ ABSOLUTE RULE — RING IDENTITY IS PRESERVED
-- Same shape, same colors, same material, same finish, same gemstones, same engravings as the source. Pixel-precise preservation.
+INSTEAD, RE-POSITION the ring as Léa would shoot it:
+- Lay the ring DOWN or TILT it dynamically — 3/4 view from above AND slightly from the side.
+- We must see BOTH the OUTER decorated band (engravings, gemstones, color) AND a hint of the INNER metal interior of the ring (the polished hole through the ring should be visible at an angle).
+- The ring rests on the surface or is balanced on its side at an angle, NEVER standing perfectly vertical like a catalog product.
+- The ring fills 55-75% of the frame — bold and bigger than a packshot.
+- Off-center placement (typically slightly right or slightly left of center), generous breathing space on the opposite side for bokeh atmosphere.
 
 ═══════════════════════════════════════════════════════════════════
-SIGNATURE STYLE — WHAT TO PRODUCE
+LIGHTING — SOFT WINDOW LIGHT, NEVER STUDIO STROBE
 ═══════════════════════════════════════════════════════════════════
+- Source: SOFT DIFFUSED NATURAL DAYLIGHT, like a north-facing window at 45° from one side (typically upper-left).
+- Light is gentle and wraps around the ring smoothly. Soft shadow gradient on the opposite side.
+- NO ring light. NO hard studio strobe. NO clinical flat overhead light. NO hot specular hotspots.
+- The reflections on polished metal are SOFT and SUBTLE — not bright burning highlights.
+- Mood: intimate, calm, editorial. Like a luxury magazine still-life shot in available light.
 
-1. MACRO COMPOSITION (preserved from source if already macro)
-   - Very tight close-up — the ring fills 50-70% of the frame.
-   - Off-center placement (left or right side), generous breathing space on the opposite side.
-   - VERY shallow depth of field: only a thin slice of the ring is in perfect focus. The rest of the ring and the entire background is in heavy, creamy bokeh.
+═══════════════════════════════════════════════════════════════════
+DEPTH OF FIELD — VERY SHALLOW MACRO
+═══════════════════════════════════════════════════════════════════
+- Imagine 100mm macro lens at f/2.8 or wider.
+- ONLY a thin slice of the ring (front edge, key gemstone, or decorated band) is in PERFECT FOCUS.
+- The far side of the ring, the inner interior, and the ENTIRE BACKGROUND are in CREAMY HEAVY BOKEH.
+- The bokeh is dreamy and painterly — never sharp, never readable as a clear scene.
+- No "everything in focus" 3D-render look.
 
-2. LIGHTING — soft natural directional
-   - Strong directional light from one side (typically upper-left or upper-right).
-   - Soft fill on the opposite side.
-   - Warm intimate mood, never harsh studio. No clinical e-commerce flat light.
-
-3. BACKGROUND — SUBTLE & SUGGESTIVE (CRITICAL)
-   - The atmosphere is evoked through 3 ELEMENTS ONLY:
-     • COLOR PALETTE (warm khaki for army, royal blue for marine, soft cream for desert, etc.)
-     • TEXTURE / MATERIAL (woven canvas, raw linen, soft sand, draped silk, paracord blurred, leather grain, wool knit, rough stone, fresh snow)
-     • LIGHT QUALITY (warm/cool, soft/dramatic)
-   - The background is HEAVILY out of focus (creamy bokeh) — it reads as ATMOSPHERE, never as a defined scene.
-   - Optionally: ONE single out-of-focus complementary material (a fold of fabric, a corner of canvas, a blurred paracord, scattered sand) — but NEVER a literal themed object.
+═══════════════════════════════════════════════════════════════════
+BACKGROUND — MINIMAL, SUGGESTIVE, NEVER LITERAL
+═══════════════════════════════════════════════════════════════════
+- The atmosphere is evoked through 3 ELEMENTS ONLY:
+  • COLOR PALETTE (in harmony or elegant contrast with the ring)
+  • TEXTURE / MATERIAL (one only — woven canvas, raw linen, soft sand, draped silk, paracord blurred, leather grain, wool knit, fur, etc.)
+  • LIGHT QUALITY (warm/cool)
+- Background is HEAVILY out of focus — reads as atmosphere, never as readable scene.
+- Optionally: ONE single out-of-focus complementary material (a fold of fabric, paracord blurred, a feather, draped silk). NEVER a themed object.
+- Often: a simple flat colored surface is enough (pink for romantic, black matte for elegant, gray gradient for editorial). No need for fancy decor — Léa often shoots on a single colored seamless paper.
 
 ═══════════════════════════════════════════════════════════════════
 ⛔ BANNED — DO NOT INCLUDE ANY OF THESE
@@ -54,7 +63,9 @@ SIGNATURE STYLE — WHAT TO PRODUCE
 - NO text, NO logo, NO watermark, NO letters, NO numbers, NO branding.
 - NO faces, NO hands, NO body parts, NO people. Pure still-life only.
 - NO white catalog background. NO flat studio light. NO clinical packshot.
-- NO repositioning the ring. NO making it stand on edge.
+- NO ring standing perfectly vertical like a catalog packshot (Shopify-style profile view).
+- NO sharp focus everywhere (3D-render look) — heavy bokeh on background is mandatory.
+- NO hard ring-light or studio strobe with hot specular hotspots.
 - NO inventing details on the ring. NO adding gemstones. NO changing colors.
 
 ═══════════════════════════════════════════════════════════════════
