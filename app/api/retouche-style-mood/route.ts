@@ -5,9 +5,10 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
-const PROMPT_BASE = `RE-PHOTOGRAPH the Mood Collection ring from the source image, as if it were freshly shot by Mood Collection's signature in-house photographer (Léa) on her macro setup.
+const PROMPT_BASE = `RE-PHOTOGRAPH the Mood Collection ring from the source image, AT A USER-SELECTED CAMERA ANGLE (see directive below — this is the #1 priority of this prompt).
 
-THE SOURCE IMAGE MAY BE AN E-COMMERCE PACKSHOT (ring standing upright in profile). IGNORE THAT POSE COMPLETELY. Re-stage the ring exactly as described below — Léa would never shoot it like a Shopify packshot.
+⚠️⚠️⚠️ IGNORE THE POSE / ANGLE / ORIENTATION OF THE RING IN THE SOURCE IMAGE.
+The source is just to identify the ring (shape, color, materials, gemstones, engravings, pattern). You must RE-SHOOT the ring from a new camera angle as specified in the USER-SELECTED ANGLE DIRECTIVE below. The geometry the ring shows in the output MUST match the directive — if the source shows the ring in side profile but the directive says "top-down", you MUST output a top-down view (ring as a circle).
 
 ⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION
 - Same shape, exact same colors, exact same materials, exact same finish, exact same gemstones, exact same engravings/patterns as the source. DO NOT invent. DO NOT change colors. DO NOT add or remove anything.
@@ -33,10 +34,11 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - DO NOT render the interior as multiple stacked rings, multiple layered bands, segmented sections, or split parts. The interior is **MONOLITHIC and SMOOTH**.
    - The ring is a SINGLE band with decoration only on the OUTER top surface — the inner surface (the hole side) is uniformly polished metal, period.
 
-3️⃣ COMPOSITION — RING IN A SCENE, NOT A PACKSHOT
-   - The ring fills **55-75% of the frame width** (prominent and bold but with room for decor bokeh around).
-   - The ring is INTEGRATED in a scene, not isolated like a product catalog shot. The viewer sees the ring AND the soft blurred decor around it (paracord, draped fabric, surface, sand, petals, etc.).
-   - Around the ring: 25-45% of the frame area is filled with soft-focus DECOR — visible but heavily blurred. NEVER a clean isolated background.
+3️⃣ COMPOSITION — RING IS HERO, DECOR IS MINIMAL HINT
+   - The ring fills **55-75% of the frame width** (prominent and bold).
+   - The ring is INTEGRATED in a scene, but the decor is MINIMAL and SUGGESTIVE — a single surface texture, one corner of fabric, or just an out-of-focus color gradient.
+   - Around the ring: 15-25% of the frame area is filled with soft-focus DECOR — a tiny hint, not a full scene. Prefer ONE single surface/texture, not multiple materials.
+   - Often: just a colored seamless surface beneath the ring + soft bokeh of one material in the corner is enough.
    - The ring is RESTING ON or LEANING AGAINST something in the scene: a fold of fabric, a coil of paracord, a soft cushion, a textured surface — never floating on a clean studio backdrop.
    - Varied placement of the ring in the frame:
      • Off-center right with the scene's decor flowing on the LEFT
@@ -59,16 +61,17 @@ LÉA'S SIGNATURE — 6 NON-NEGOTIABLE RULES
    - Mood: 9am morning light through a north-facing window. Soft, calm, intimate, editorial.
    - The shadow side of the ring is gently illuminated, not pitch black.
 
-6️⃣ DECOR / BACKGROUND — SCENE WITH MATERIAL, NOT JUST FLAT BACKDROP
-   - The scene includes 1-2 thematic MATERIALS visible in heavy bokeh AROUND the ring (not just a flat colored backdrop). Examples:
-     • army theme → ring rests on canvas khaki fabric + blurred paracord coil in background
-     • marine theme → ring on wet pebbles + blurred draped blue cloth in background
-     • neige theme → ring on soft white fabric + blurred sparkling dust in background
-     • chine theme → ring on draped red silk + blurred silk folds in background
-   - The decor fills 35-55% of the frame area (in soft bokeh, never sharp).
+6️⃣ DECOR — MINIMAL HINT, NOT FULL SCENE
+   - The decor is a single THEMATIC SURFACE TEXTURE the ring rests on, with optional ONE small corner of complementary material in soft bokeh.
+   - Examples (kept minimal, never multi-element scenes):
+     • army theme → ring on khaki canvas surface; optional tiny corner of olive paracord blurred in one corner
+     • marine theme → ring on smooth wet pebble or soft sand; optional hint of blue cloth in corner
+     • neige theme → ring on soft white fabric; optional sparkling dust blurred in corner
+     • chine theme → ring on deep red silk surface; optional silk fold in corner
+   - Decor fills 15-25% of the frame area (in heavy bokeh, never sharp).
    - The decor uses ONLY: textiles (canvas, silk, linen, fur, knit), cords (paracord, rope), natural materials (sand, pebbles, petals, feathers, dust), surfaces (leather, stone, wood, paper).
-   - NEVER includes literal themed objects: NO bullets/guns for military, NO shells/anchors for marine, NO animals for safari, NO snowflakes for winter, NO dragons for chinese.
-   - The decor is a "still-life nest" for the ring — it cradles or surrounds the ring naturally.
+   - NEVER literal themed objects: NO bullets/guns for military, NO shells/anchors for marine, NO animals for safari, NO snowflakes for winter, NO dragons for chinese.
+   - Often: just a single colored surface beneath + soft color gradient bokeh = enough.
 
 ═══════════════════════════════════════════════════════════════════
 ⛔ ABSOLUTE BANS — DO NOT INCLUDE
@@ -141,40 +144,57 @@ ${note && note.trim() ? `\n\nADDITIONAL USER NOTE (priority — respect strictly
 
 Output: ${format} aspect ratio.
 
-PRODUCE THE IMAGE NOW following ALL 6 Léa rules above strictly. The ring rests naturally in a still-life scene (NOT a packshot), ring fills 45-65% of the frame, decor materials (textiles, cords, natural materials) cradle and surround the ring in heavy bokeh, soft single window light, classic macro DOF, ring interior is one smooth polished metal surface. Camera angle: as specified in rule 1️⃣.`;
+⚠️ FINAL REMINDER : THE CAMERA ANGLE FROM RULE 1️⃣ IS THE #1 PRIORITY.
+   - If you keep the source pose instead of applying the user-selected angle, the output is WRONG.
+   - Look at the geometry directive : does the ring appear as a circle (top-down), oval (Léa), or rectangle (front)? Match it strictly.
+   - Re-imagine the ring from scratch at the specified angle — don't preserve the source's angle.
+
+PRODUCE THE IMAGE NOW. The ring is re-shot at the user-selected camera angle (rule 1️⃣), ring fills 55-75% of the frame, decor is a minimal thematic surface hint (15-25% of frame in soft bokeh), soft single window light, classic macro DOF, ring interior is one smooth polished metal surface.`;
 
   const CAMERA_DIRECTIVES: Record<string, string> = {
-    "top-down": `TOP-DOWN VIEW (pure overhead, 90° from above).
-   - The camera is DIRECTLY ABOVE the ring, looking straight DOWN.
-   - The ring appears as a perfect circle (or near-circle) with the inner hole as a smaller circle inside.
-   - The full decoration on the upper band-surface is fully visible and undistorted.
-   - You see ONLY the top of the ring — no side profile at all.`,
-    "haute": `HIGH PLUNGE (60-70° from above).
-   - The camera is well above the ring, plunging downward at 60-70°.
-   - The ring appears as a flattened oval — most of the upper band is visible plus a tiny hint of side profile.
-   - The inner hole shows as a clear oval.
-   - Reference: a top-down look with just enough tilt to show depth.`,
-    "lea": `STYLE LÉA — strong plunge from above (60-75° downward).
-   - The camera is well above the ring, plunging at 60-75°.
-   - The ring appears as a clearly OVAL shape (inner hole visible as a wide oval — almost circular).
-   - The upper band-surface decoration is fully visible across the entire ring top.
-   - Only a very small hint of side profile shows.
-   - Reference: Léa's signature editorial macro angle — looking down onto a low table from standing height, almost top-down but with enough tilt to give depth.`,
-    "legere": `LIGHT PLUNGE (15-25° downward).
-   - The camera is just slightly above the ring, looking gently down.
-   - Most of the side profile of the ring is visible, with a small hint of the upper band decoration on top.
-   - The inner hole appears as a narrow oval (mostly side-view).
-   - More side-profile-heavy than top-down.`,
-    "face": `EYE-LEVEL FRONT VIEW (0° — horizontal).
-   - The camera is at the same height as the ring, looking straight at it.
-   - The ring appears in PURE SIDE PROFILE (band visible from the side, inner hole as a thin vertical slot at most).
-   - No upper band decoration visible from above — only the side profile of the band.
-   - Reference: a classic horizontal jewelry side-shot.`,
-    "contre-plongee": `LOW-ANGLE / UNDER-VIEW (-15° to -25° looking up).
-   - The camera is slightly BELOW the ring, looking UP at it.
-   - The bottom edge of the ring is closer to the camera, the top edge falls away.
-   - Dramatic and unusual perspective — gives the ring a monumental feel.
-   - The inner polished hole may be visible at the upper edge as a faint oval.`,
+    "top-down": `🔝 TOP-DOWN VIEW (90° pure overhead — looking straight DOWN onto the ring).
+   GEOMETRY THE RING MUST SHOW :
+   - The ring is a PERFECT CIRCLE shape (a donut viewed from directly above).
+   - The inner hole is a SMALLER CIRCLE inside the circle.
+   - The ENTIRE upper band-surface decoration is fully visible and undistorted across the full circle.
+   - ZERO side profile visible (no thickness of the band edge visible at all).
+   - If you can see the band's side profile, you are NOT shooting top-down. The ring must look like a flat ring shape, not a tilted one.`,
+    "haute": `🔭 HIGH PLUNGE (60-70° from above — almost overhead).
+   GEOMETRY THE RING MUST SHOW :
+   - The ring is a FLATTENED CIRCLE / wide oval (slightly squished circle).
+   - The inner hole is a wide oval (almost a circle).
+   - ~90% of the upper band-surface decoration is visible across the ring.
+   - Only a tiny strip of side profile visible at the far edge.
+   - If the ring looks like a side profile rectangle, the angle is WRONG.`,
+    "lea": `📐 STYLE LÉA — STRONG PLUNGE (60-75° from above — almost top-down but tilted).
+   GEOMETRY THE RING MUST SHOW :
+   - The ring is a clear OVAL SHAPE (elongated horizontally, ~2:1 ratio width:height).
+   - The inner hole is a wide OVAL.
+   - ~80% of the upper band-surface decoration is visible across the ring top.
+   - Only a small sliver of side profile visible at the bottom edge.
+   - Reference: Léa's signature angle — looking down at the ring from standing height.
+   - If you produce a ring shown in side profile (band rectangle visible), you got the angle WRONG.`,
+    "legere": `📷 LIGHT PLUNGE (15-25° from above — gentle downward tilt).
+   GEOMETRY THE RING MUST SHOW :
+   - The ring is a NARROW OVAL / horizontal capsule shape (much wider than tall, ~4:1 ratio).
+   - Most of what you see is the SIDE band profile (the thick side of the ring).
+   - The upper band decoration appears as a thin strip along the top edge of the ring.
+   - The inner hole appears as a narrow horizontal slit.
+   - More side-view than top-view.`,
+    "face": `👁 EYE-LEVEL FRONT VIEW (0° — pure horizontal side shot).
+   GEOMETRY THE RING MUST SHOW :
+   - The ring is a RECTANGLE shape (the side profile of the band — purely flat horizontal).
+   - The inner hole is a very thin vertical slot at the center (or invisible behind the band).
+   - NO upper band-surface decoration visible (looking from the side, you see only the side profile of the band).
+   - Reference: a classic horizontal jewelry side-shot like a wedding-band catalog side view.
+   - If you see the top of the ring or the inner hole as an oval, you are WRONG — only side band rectangle visible.`,
+    "contre-plongee": `⬆️ LOW-ANGLE / UNDER-VIEW (-15° to -25° looking UP at the ring).
+   GEOMETRY THE RING MUST SHOW :
+   - The ring band appears as a CURVED RECTANGLE (band visible from below, curving slightly).
+   - The bottom edge of the ring is closer/larger; the top edge falls away/smaller.
+   - The inner hole may show as a faint oval at the TOP of the ring (not bottom).
+   - The ring feels monumental, shot from a low angle looking up.
+   - Dramatic, slightly unusual perspective.`,
   };
   const cameraDirective = CAMERA_DIRECTIVES[cameraAngle] || CAMERA_DIRECTIVES["lea"];
   const prompt = (PROMPT_BASE + themeText).replace("{{CAMERA_ANGLE_DIRECTIVE}}", cameraDirective);
