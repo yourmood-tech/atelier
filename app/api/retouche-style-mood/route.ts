@@ -36,19 +36,32 @@ Mood Collection rings have TWO PARTS visible from outside :
 - THE ADDON (decorated interchangeable band) — colored/patterned/gemstone band that CLIPS INTO the central groove and FILLS IT COMPLETELY.
 
 CRITICAL GEOMETRY RULES (the most common AI mistake — pay extreme attention) :
-- ✅ THE ADDON HAS A UNIFORM, CONSTANT WIDTH along its ENTIRE visible length. From one end of the visible ring to the other, the addon's height (thickness top-to-bottom along the band) is IDENTICAL. It does NOT shrink, NOT taper, NOT vary in width anywhere.
-- ✅ THE ADDON FILLS THE ENTIRE GROOVE between the two rails. Its top edge touches the upper rail. Its bottom edge touches the lower rail. NO empty band of base metal visible between addon and rails ANYWHERE.
-- ✅ THE TWO RAILS of the base also have UNIFORM, CONSTANT widths along the entire visible length. The upper rail = uniform thickness everywhere. The lower rail = uniform thickness everywhere. They are PARALLEL and EQUIDISTANT.
+
+📏 PRESERVE THE RING'S OVERALL PROPORTIONS FROM THE SOURCE :
+- ✅ THE TOTAL VISIBLE BAND THICKNESS (top-to-bottom height of the entire ring profile) is IDENTICAL to the source. DO NOT make the ring thinner. DO NOT make it slimmer. The ring's overall thickness (épaisseur) must match the source exactly.
+- ✅ THE WIDTH PROPORTIONS between rails and addon are IDENTICAL to the source. If the source shows a wide addon and thin rails, the output shows the same ratio. If the source shows balanced rails and addon, the output respects that balance.
+
+📐 ADDON IS CENTERED BETWEEN THE TWO RAILS :
+- ✅ The addon (decorated central band) is positioned EXACTLY IN THE MIDDLE of the ring's height — equidistant from the top edge of the band and the bottom edge.
+- ✅ The UPPER RAIL (between addon and top edge of the ring) and the LOWER RAIL (between addon and bottom edge of the ring) have EXACTLY THE SAME WIDTH/THICKNESS. They are MIRROR-symmetric across the addon's center.
+- ⛔ The addon must NOT be positioned higher (closer to the top edge) or lower (closer to the bottom edge). It is centered vertically on the band.
+
+📏 ADDON GEOMETRY :
+- ✅ THE ADDON HAS A UNIFORM, CONSTANT WIDTH along its ENTIRE visible length. It does NOT shrink, NOT taper, NOT vary anywhere.
+- ✅ THE ADDON FILLS THE ENTIRE GROOVE between the two rails. Top edge touches upper rail, bottom edge touches lower rail. NO empty band of base metal visible between addon and rails.
 - ✅ ALL THREE ELEMENTS (upper rail / addon / lower rail) appear as THREE PARALLEL HORIZONTAL BANDS of CONSTANT WIDTH wrapping around the ring's circumference.
 
 ⛔ COMMON AI MISTAKES TO AVOID :
-- ❌ Addon that gets THINNER (or thicker) towards the ends of the ring's visible curvature.
-- ❌ Addon that does NOT touch the rails (leaving a strip of base metal visible between).
+- ❌ Making the ring thinner overall (reducing its total band thickness) — the ring must keep its source proportions.
+- ❌ Addon positioned at the TOP (upper rail very thin, lower rail very wide) or BOTTOM (the opposite).
+- ❌ Upper rail and lower rail having DIFFERENT widths — they must be identical mirror-symmetric.
+- ❌ Addon that gets thinner or thicker towards the ends of the curvature.
+- ❌ Addon that does not touch the rails (strip of base metal visible).
 - ❌ Addon that has a "double layer" or appears split into two stacked thinner bands.
 - ❌ Rails that vary in width along the ring's curvature.
-- ❌ Geometry where the addon and rails do not form 3 clean parallel bands of constant width.
+- ❌ Geometry where the addon and rails do not form 3 clean parallel bands of constant width centered symmetrically.
 
-If the source shows imperfect geometry (variation, gaps, lifting, double layers), the output shows PERFECT factory-fresh constant-width parallel bands.
+If the source shows imperfect geometry (variation, gaps, lifting, double layers, misaligned), the output shows PERFECT factory-fresh constant-width parallel bands — addon centered, rails symmetric, total proportions preserved.
 
 ⛔ RING IDENTITY — PIXEL-PRECISE PRESERVATION (everything except cleaning/alignment) :
 - Same shape, same colors, same materials, same finish, same gemstones, same engravings/patterns as the source.
@@ -205,7 +218,7 @@ Output: ${format} aspect ratio.
 
 ⚠️ FINAL CHECKLIST — VERIFY BEFORE PRODUCING :
 1. RING IS PRISTINE : zero dust, zero fingerprints, zero scratches, mirror-clean polished metal, sparkling gemstones, crisp engravings.
-2. ADDON-BASE GEOMETRY : addon has UNIFORM constant width along the entire ring, fills the groove COMPLETELY (no gap with rails), rails are also constant width, all 3 elements form 3 parallel bands.
+2. ADDON-BASE GEOMETRY : (a) source proportions preserved (ring NOT thinner than source), (b) addon CENTERED vertically with upper rail = lower rail width, (c) addon constant width fills the entire groove, (d) all 3 elements = 3 parallel bands of constant width.
 3. CAMERA ANGLE matches the user-selected directive (geometry of the ring matches : circle/oval/rectangle as specified).
 4. RING fills 55-75% of frame, NOT a packshot, integrated in soft minimal decor.
 5. LIGHTING is soft single window light, NOT studio strobe.
