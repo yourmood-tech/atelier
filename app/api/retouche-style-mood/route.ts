@@ -95,9 +95,21 @@ The ring in the output looks like it just came out of the workshop, fresh from t
 - ✂️ REMOVE ALL FINGERPRINTS, smudges, oily traces, breath marks. The metal looks mirror-clean.
 - ✂️ REMOVE ALL FINE SCRATCHES, micro-rayures, surface marks, brush marks (unless brushed/satin finish is the intentional design — in which case keep the brush pattern intentional and clean).
 - ✂️ REMOVE all water spots, residue, discoloration, oxidation.
-- ✨ POLISHED METAL SURFACES (the base's two rails and the inner band of the ring) must be MIRROR-PERFECT with crisp clean reflections — no dust dots, no fingerprint smears.
-- 💎 GEMSTONES sparkle clean and brilliant — no dust trapped under prongs, no fingerprint film.
-- 🎯 ADDON (the decorated central band) is impeccable — every engraving line crisp, every gemstone setting clean, every color zone uniform.
+
+🔧 THE BASE RAILS — MUST BE NICKEL-MIRROR-POLISHED CLEAN (CRITICAL) :
+- The two metal rails of the base (steel 316L or titanium) are POLISHED MIRROR FINISH — completely clean, completely flawless, completely free of any trace.
+- ⛔ NO scratches, NO marks, NO traces, NO dust, NO smudges visible on the rails. They are PERFECT mirror surfaces.
+- The rails reflect light cleanly with sharp specular highlights and smooth gradients — like a wedding band fresh from the polish.
+- If the source shows scratched/marked/traced rails → output PRISTINE polished rails.
+
+🎨 RING INTERIOR COLOR — MATCH THE BASE COLOR (Mood specificity) :
+Mood Collection rings have specific anatomy for the inner band color :
+- ✅ IF the base is COLORED (titanium anodized blue, pink, violet, gold, black, etc.) → the inner band of the ring (the polished interior visible through the hole) is the SAME COLOR as the outside of the base. Anodized titanium is colored all around — not just outside.
+- ✅ IF the base is NEUTRAL STEEL 316L (silver-grey polished) → the inner band is silver polished steel.
+- ⛔ DO NOT make the interior steel/silver when the base exterior is colored titanium. They MUST match.
+
+💎 GEMSTONES sparkle clean and brilliant — no dust trapped under prongs, no fingerprint film.
+🎯 ADDON (the decorated central band) is impeccable — every engraving line crisp, every gemstone setting clean, every color zone uniform.
 
 🔧 MOOD RING STRUCTURE — STRICT ADDON-BASE GEOMETRY :
 Mood Collection rings have TWO PARTS visible from outside :
