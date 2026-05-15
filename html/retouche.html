@@ -143,6 +143,13 @@
   <textarea id="indications" rows="3" placeholder="Exemples :&#10;• « fond bleu pastel » (pour Fond anthracite)&#10;• « garder le diamant rouge », « redresser vers la gauche » (pour Nettoyer)&#10;• « main de femme métisse, ongles french amande, main posée vers la clavicule, t-shirt blanc, zoom focus bague » (pour Bague portée)" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
 </div>
 
+<!-- Thème photographe Mood (utilisé par l'action 🎨 Style photographe Mood) -->
+<div id="theme-mood-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">🎨 Thème pour le style photographe Mood <span style="color:var(--gris);font-weight:400;">— obligatoire pour l'action "Style photographe Mood"</span></label>
+  <input id="theme-mood" type="text" placeholder="Exemples : neige, papillon, sombre, chine, sparkling doré, paon, dragon rouge, automne, hiver poudreux, plage dorée, peau de léopard, glace fondue, velours noir reflet..." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;">
+  <div style="font-size:0.72rem;color:var(--gris);margin-top:0.3rem;">L'IA interprète le thème comme la photographe Mood le ferait — fond évocateur, palette en harmonie avec la bague, bokeh prononcé. Le thème est "suggéré" dans le fond, jamais affiché littéralement.</div>
+</div>
+
 <!-- Nommage des photos téléchargées -->
 <div id="naming-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
   <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.4rem;">📛 Nommage des photos téléchargées <span style="color:var(--gris);font-weight:400;">— optionnel</span></label>
@@ -181,6 +188,11 @@
     <span class="emoji">💍</span>
     <div class="titre">Bague portée</div>
     <div class="desc">Close-up éditorial luxe : la bague sur une main · précise main/ongles/pose/tenue dans Indications</div>
+  </div>
+  <div class="action-card" onclick="lancerStyleMood()" data-action="style-mood">
+    <span class="emoji">🎨</span>
+    <div class="titre">Style photographe Mood</div>
+    <div class="desc">Macro éditorial signature Léa · fond thématique narratif · saisis un thème avant (ex : "neige", "papillon", "sombre", "chine", "sparkling doré")</div>
   </div>
   <div class="action-card" onclick="lancerAction('multi-formats')" data-action="multi-formats">
     <span class="emoji">📐</span>
@@ -368,6 +380,7 @@ async function chargerFichier(file) {
     dropZoneEl.classList.add('has-image');
     document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('indications-zone').style.display = 'block';
+    document.getElementById('theme-mood-zone').style.display = 'block';
     document.getElementById('naming-zone').style.display = 'block';
     document.getElementById('themes-saison').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
@@ -511,6 +524,68 @@ async function lancerAction(action) {
 
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// ============ 🎨 STYLE PHOTOGRAPHE MOOD ============
+async function lancerStyleMood() {
+  if (!imageActuelle) return;
+  const theme = document.getElementById('theme-mood')?.value?.trim();
+  if (!theme) {
+    alert("Tape un thème dans le champ 🎨 « Thème pour le style photographe Mood » avant de lancer cette action.\n\nExemples : neige, papillon, sombre, chine, sparkling doré, plage dorée, peau de léopard…");
+    document.getElementById('theme-mood')?.focus();
+    return;
+  }
+  const card = document.querySelector('.action-card[data-action="style-mood"]');
+  if (!card) return;
+  card.classList.add('loading');
+  const titre = '🎨 Style Mood · ' + theme;
+
+  const resultsZone = document.getElementById('resultats');
+  const bloc = document.createElement('div');
+  bloc.className = 'resultat-bloc';
+  bloc.innerHTML = `<div class="resultat-titre"><span class="loader"></span>${escapeHtml(titre)} — l'IA recompose le décor…</div>`;
+  resultsZone.insertBefore(bloc, resultsZone.firstChild);
+
+  let etape = 'init';
+  try {
+    etape = 'fetch';
+    const note = document.getElementById('indications')?.value?.trim() || null;
+    const r = await fetch('/api/retouche-style-mood', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageActuelle, theme, note }),
+    });
+    etape = `réponse reçue (HTTP ${r.status})`;
+    const text = await r.text();
+    etape = 'parsing JSON';
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON du serveur (HTTP ${r.status}). Début : « ${text.slice(0, 200)} »`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error("Pas d'image retournée");
+
+    const fname = `mood-style-${Date.now()}.png`;
+    const id = cacheImage(data.image);
+    bloc.innerHTML = `<div class="resultat-titre">${escapeHtml(titre)}</div>
+      <div class="image-pair">
+        <div class="image-col">
+          <div class="label">Avant</div>
+          <img src="${imageActuelle}" alt="original">
+        </div>
+        <div class="image-col">
+          <div class="label">Après · style Mood</div>
+          <img id="img-${id}" src="${data.image}" alt="résultat">
+          <button onclick="telechargerCache('${id}','${fname}')" class="btn-download" style="border:none;cursor:pointer;">⬇️ Télécharger</button>
+          ${htmlCorrection(id, '1:1')}
+        </div>
+      </div>`;
+  } catch (e) {
+    bloc.innerHTML = `<div class="resultat-titre" style="color:var(--rouge);">${escapeHtml(titre)}</div>
+      <div class="erreur">⚠️ Erreur (étape : ${escapeHtml(etape)}) : ${escapeHtml(e.message || String(e))}</div>`;
+    console.error('Style Mood error', { etape, error: e });
+  } finally {
+    card.classList.remove('loading');
+  }
 }
 
 // ============ VIDEO 360° (Kling via fal.ai) ============
