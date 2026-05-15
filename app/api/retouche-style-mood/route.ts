@@ -126,11 +126,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
   }
 
-  let body: { image?: string; theme?: string; note?: string | null; format?: string; cameraAngle?: string };
+  let body: { image?: string; theme?: string; note?: string | null; format?: string; cameraAngle?: string; referenceDecor?: string | null };
   try { body = await req.json(); }
   catch { return NextResponse.json({ error: "Body JSON invalide" }, { status: 400 }); }
 
-  const { image, theme, note, format = "3:2", cameraAngle = "lea" } = body;
+  const { image, theme, note, format = "3:2", cameraAngle = "lea", referenceDecor = null } = body;
   if (!image || typeof image !== "string" || !image.startsWith("data:image/")) {
     return NextResponse.json({ error: "Image manquante ou invalide" }, { status: 400 });
   }
@@ -142,6 +142,13 @@ export async function POST(req: NextRequest) {
   if (!m) return NextResponse.json({ error: "Format image invalide" }, { status: 400 });
   const mimeType = m[1];
   const data = m[2];
+
+  // Optionnel : image de référence décor (verrouillage série)
+  let refDecorPart: { inlineData: { mimeType: string; data: string } } | null = null;
+  if (referenceDecor && referenceDecor.startsWith("data:image/")) {
+    const refM = referenceDecor.match(/^data:([^;]+);base64,(.+)$/);
+    if (refM) refDecorPart = { inlineData: { mimeType: refM[1], data: refM[2] } };
+  }
 
   const themeText = `THEME: "${theme.trim()}"
 
@@ -220,7 +227,27 @@ PRODUCE THE IMAGE NOW. The ring is re-shot at the user-selected camera angle (ru
    - Dramatic, slightly unusual perspective.`,
   };
   const cameraDirective = CAMERA_DIRECTIVES[cameraAngle] || CAMERA_DIRECTIVES["lea"];
-  const prompt = (PROMPT_BASE + themeText).replace("{{CAMERA_ANGLE_DIRECTIVE}}", cameraDirective);
+  let prompt = (PROMPT_BASE + themeText).replace("{{CAMERA_ANGLE_DIRECTIVE}}", cameraDirective);
+
+  // Si référence décor fournie, ajouter une instruction explicite
+  if (refDecorPart) {
+    prompt += `\n\n═══════════════════════════════════════════════════════════════════
+🔒 DECOR REFERENCE IMAGE PROVIDED (2nd input image)
+═══════════════════════════════════════════════════════════════════
+A SECOND IMAGE is provided alongside the ring's source image. This 2nd image is a REFERENCE for the DECOR ONLY (background, surface, lighting, color palette, materials, mood).
+
+YOU MUST MATCH the 2nd image's décor EXACTLY:
+- Same background color and texture
+- Same surface the ring rests on
+- Same surrounding materials (fabric folds, paracord, sand, etc.)
+- Same lighting direction, color temperature, and softness
+- Same overall mood and color palette
+
+This is part of a SERIES — multiple ring photos must share the IDENTICAL décor for visual consistency across the collection.
+
+⛔ DO NOT use the 2nd image's RING — only its DÉCOR. The ring in the output is the one from the FIRST image (source).
+⛔ DO NOT change the décor compared to the 2nd image. The décor of the 2nd image is locked.`;
+  }
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
@@ -230,6 +257,7 @@ PRODUCE THE IMAGE NOW. The ring is re-shot at the user-selected camera angle (ru
       body: JSON.stringify({
         contents: [{ parts: [
           { inlineData: { mimeType, data } },
+          ...(refDecorPart ? [refDecorPart] : []),
           { text: prompt },
         ] }],
         generationConfig: {

@@ -214,6 +214,19 @@
     🔒 <b>Identité de la bague préservée</b> (forme, couleur, matière, pierres).<br>
     🎯 <b>Décor suggéré par couleur + texture + matière</b> — jamais d'objets littéraux (balles pour "militaire", coquillages pour "marine", animaux pour "safari", dragons pour "chine", etc.).
   </div>
+
+  <!-- Verrouillage décor pour shoot série -->
+  <div style="margin-top:0.7rem;padding:0.6rem 0.8rem;background:#fffdf6;border:1px solid var(--or);border-radius:8px;display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
+    <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.82rem;font-weight:600;flex:1;min-width:200px;">
+      <input type="checkbox" id="decor-lock-toggle" onchange="onToggleDecorLock(this.checked)">
+      🔒 Garder le même décor pour les prochaines bagues
+    </label>
+    <span id="decor-lock-status" style="font-size:0.72rem;color:var(--gris);">aucun décor verrouillé</span>
+    <button id="decor-lock-reset" onclick="resetDecorLock()" style="display:none;padding:0.3rem 0.6rem;border:1px solid #ddd;border-radius:5px;background:white;font-size:0.72rem;cursor:pointer;">🔄 Nouveau décor</button>
+  </div>
+  <div style="font-size:0.7rem;color:var(--gris);margin-top:0.3rem;line-height:1.4;">
+    💡 Coche pour figer le décor de la <b>prochaine photo générée</b>. Toutes les bagues suivantes utiliseront le même fond/lumière/matières → idéal pour un shoot de collection cohérent.
+  </div>
 </div>
 
 <!-- Nommage des photos téléchargées -->
@@ -600,6 +613,38 @@ document.addEventListener('change', (e) => {
   }
 });
 
+// ============ VERROUILLAGE DÉCOR (shoot série cohérent) ============
+let decorLockEnabled = false;        // toggle utilisateur
+let decorReferenceImage = null;      // dataURL de la 1ère photo Style Mood = référence
+
+function onToggleDecorLock(checked) {
+  decorLockEnabled = !!checked;
+  majDecorLockStatus();
+}
+
+function resetDecorLock() {
+  decorReferenceImage = null;
+  majDecorLockStatus();
+}
+
+function majDecorLockStatus() {
+  const statusEl = document.getElementById('decor-lock-status');
+  const resetBtn = document.getElementById('decor-lock-reset');
+  if (!statusEl) return;
+  if (decorLockEnabled) {
+    if (decorReferenceImage) {
+      statusEl.innerHTML = '<span style="color:var(--vert);">✅ décor verrouillé · les prochaines générations utiliseront le même fond</span>';
+      if (resetBtn) resetBtn.style.display = '';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--or);">⏳ la prochaine génération deviendra la référence</span>';
+      if (resetBtn) resetBtn.style.display = 'none';
+    }
+  } else {
+    statusEl.textContent = 'aucun décor verrouillé';
+    if (resetBtn) resetBtn.style.display = decorReferenceImage ? '' : 'none';
+  }
+}
+
 // ============ 🎨 STYLE PHOTOGRAPHE MOOD ============
 async function lancerStyleMood() {
   if (!imageActuelle) return;
@@ -628,10 +673,11 @@ async function lancerStyleMood() {
     const format = formatRadio?.value || '3:2';
     const camAngleRadio = document.querySelector('input[name="cam-angle"]:checked');
     const cameraAngle = camAngleRadio?.value || 'lea';
+    const referenceDecor = (decorLockEnabled && decorReferenceImage) ? decorReferenceImage : null;
     const r = await fetch('/api/retouche-style-mood', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageActuelle, theme, note, format, cameraAngle }),
+      body: JSON.stringify({ image: imageActuelle, theme, note, format, cameraAngle, referenceDecor }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();
@@ -644,6 +690,11 @@ async function lancerStyleMood() {
 
     const fname = `mood-style-${Date.now()}.png`;
     const id = cacheImage(data.image);
+    // Si toggle verrouillage actif et qu'il n'y a pas encore de référence, stocke celle-ci
+    if (decorLockEnabled && !decorReferenceImage) {
+      decorReferenceImage = data.image;
+      majDecorLockStatus();
+    }
     bloc.innerHTML = `<div class="resultat-titre">${escapeHtml(titre)}</div>
       <div class="image-pair">
         <div class="image-col">
