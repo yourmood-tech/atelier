@@ -109,14 +109,14 @@ const ICELEA_MATERIAU_LABELS: Record<string, string> = {
 };
 
 const ICELEA_FORMAT_LABELS: Record<string, string> = {
-  "base-large": "BASE LARGE (13mm wide) — a thick structural ring with TWO POLISHED METAL RAILS on top and bottom edges and a central groove between them where an addon clips. Always show base + flanking rails + addon-receiving groove. Visual signature : THICK band, ~13mm wide.",
-  "base-small": "BASE SMALL (11mm wide) — a MEDIUM-thick structural ring with two rails and central groove for addon. Visual signature : narrower than base large but still substantial.",
-  "base-xs": "BASE EXTRA-SMALL (9mm wide) — a NARROW structural ring with two thin rails and slim central groove. Visual signature : thin elegant band, ~9mm.",
-  "addon": "🚨 ADDON STANDALONE — Render the ADDON ALONE. NO BASE, NO RAILS, NO FLANKING METAL STRIPS. The addon is a SINGLE DECORATED BAND on its own, like a regular ring band. ⛔ DO NOT add polished rails. ⛔ DO NOT add a base structure. ⛔ DO NOT render as 'medium' or any other format. The output is JUST the standalone decorated addon band — exactly as the artist requested. Visual signature : single decorated band, no metal frame around it.",
-  "open-mood": "OPEN MOOD — an OPEN ring with a visible GAP / SPLIT in the band (not a closed circle). The band stops before completing the full circle, leaving a small opening (asymmetric adjustable design). Visual signature : C-shape or split-band silhouette.",
-  "deux-tiers": "TWO-THIRDS (deux tiers) — a PARTIAL ring covering only the front ~two thirds of the finger circumference. The BACK of the ring (below the finger) is OPEN/MISSING. Visual signature : open-back band, like a horseshoe shape when viewed from above.",
-  "medium": "MEDIUM addon — a STANDARD-WIDTH decorated band (medium thickness). Visual signature : balanced proportions, neither narrow nor wide. NOT to be confused with addon-standalone : medium is a complete ring band with consistent medium width.",
-  "mini": "MINI — VERY FINE NARROW band, the thinnest delicate ring profile. Visual signature : ultra-thin elegant ring band, like a stacking ring. The band is significantly thinner than a regular band.",
+  "base-large": "BASE LARGE (13mm wide) — a THICK structural ring with TWO POLISHED METAL RAILS on top and bottom edges and a central groove between them where an addon clips. Width signature : 13mm — substantial, bold band.",
+  "base-small": "BASE SMALL (11mm wide) — a MEDIUM-thick structural ring with two rails and central groove for addon. Width signature : 11mm — balanced.",
+  "base-xs": "BASE EXTRA-SMALL (9mm wide) — a NARROWER structural ring with two thin rails and slim central groove. Width signature : 9mm — slim elegant.",
+  "addon": "🚨 ADDON STANDALONE (7mm wide) — Render the ADDON ALONE on its own. NO BASE, NO RAILS, NO FLANKING METAL STRIPS. The addon is a SINGLE DECORATED BAND of ~7mm width. ⛔ DO NOT add polished rails. ⛔ DO NOT add a base structure. ⛔ DO NOT make it look like medium (2.3mm) or open mood (10mm). The addon visual signature is a MEDIUM-WIDE band (~7mm) shown as a standalone ring with the decoration as its primary surface.",
+  "open-mood": "OPEN MOOD (10mm wide) — the WIDEST band (~10mm). The ring is OPEN with a visible GAP / SPLIT — the band does NOT close into a full circle. C-shape or split silhouette. Width signature : 10mm — bold, the widest format.",
+  "deux-tiers": "DEUX TIERS / TWO-THIRDS (4.6mm wide) — a slim partial ring (~4.6mm width) covering only ~2/3 of the finger circumference. The BACK of the ring (below the finger) is OPEN. Width signature : 4.6mm — slim. Visual : open-back band, horseshoe shape from above.",
+  "medium": "MEDIUM (2.3mm wide) — a VERY THIN delicate band (~2.3mm). NOT a standard-width band — this is a fine narrow ring profile. Width signature : 2.3mm — very thin. ⛔ DO NOT confuse with addon (7mm) — medium is MUCH thinner.",
+  "mini": "MINI (~1.5mm wide) — the THINNEST band, ultra-fine. Even thinner than medium. Like a delicate stacking ring or a fine wire band. Width signature : the thinnest profile of all Mood formats.",
 };
 
 const ICELEA_DECO_LABELS: Record<string, string> = {
@@ -559,11 +559,12 @@ export async function POST(req: Request) {
       const fmt = body.icelea?.format;
       refPreamble += `- One of the attached reference images shows a REAL MOOD RING in the '${fmt}' FORMAT the user wants. Match the proportions, structure, and silhouette of this format reference EXACTLY. Do not output a different format — if user asked '${fmt}' do not deliver 'medium' or any other format.\n`;
       if (fmt === "addon") {
-        refPreamble += `🚨 FORMAT ADDON STANDALONE : the reference shows an addon ALONE (no base, no rails). Reproduce exactly this : a single decorated band with NO flanking polished rails, NO outer base structure. DO NOT add rails. DO NOT add a base.\n`;
+        refPreamble += `🚨 FORMAT ADDON STANDALONE (7mm width) : the reference shows an addon ALONE (no base, no rails). Reproduce exactly this : a single decorated band ~7mm wide, NO flanking polished rails, NO outer base structure.\n`;
       }
-      if (fmt === "open-mood") refPreamble += `🚨 OPEN MOOD : the ring has a VISIBLE GAP / SPLIT. Show the opening explicitly.\n`;
-      if (fmt === "deux-tiers") refPreamble += `🚨 DEUX TIERS : the ring is OPEN AT THE BACK (partial ring, only covers ~2/3 of the finger).\n`;
-      if (fmt === "mini") refPreamble += `🚨 MINI : ULTRA-THIN delicate band. Significantly thinner than a normal band.\n`;
+      if (fmt === "open-mood") refPreamble += `🚨 OPEN MOOD (10mm width — the WIDEST format) : the ring has a VISIBLE GAP / SPLIT. The band is BOLD and WIDE (10mm). Show the opening explicitly.\n`;
+      if (fmt === "deux-tiers") refPreamble += `🚨 DEUX TIERS (4.6mm width — slim) : the ring is OPEN AT THE BACK (partial ring, only covers ~2/3 of the finger). Band is slim (~4.6mm).\n`;
+      if (fmt === "medium") refPreamble += `🚨 MEDIUM (2.3mm width — VERY THIN) : a delicate fine band, NOT a standard width. Width is only 2.3mm — narrow elegant profile.\n`;
+      if (fmt === "mini") refPreamble += `🚨 MINI (the thinnest, ~1.5mm) : ULTRA-FINE delicate band, even thinner than medium.\n`;
     }
     if (emailBordRefAdded === "avec") refPreamble += `- One of the attached reference images shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
     if (emailBordRefAdded === "sans") refPreamble += `- One of the attached reference images shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;

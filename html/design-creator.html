@@ -100,21 +100,21 @@
   .email-nuancier-details summary { padding: 0.5rem 0.8rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; background: #faf6ec; user-select: none; }
   .email-nuancier-details summary:hover { background: #f5efd9; }
   .email-pastilles-grid {
-    display: grid; gap: 0.4rem; padding: 0.8rem;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    display: grid; gap: 0.5rem; padding: 0.8rem;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
   }
   .email-pastille {
-    text-align: center; cursor: pointer; padding: 0.25rem; border-radius: 8px;
+    text-align: center; cursor: pointer; padding: 0.3rem; border-radius: 8px;
     border: 2px solid transparent; transition: all 0.12s; background: white;
   }
   .email-pastille:hover { background: #fffdf6; border-color: rgba(201, 169, 110, 0.4); }
   .email-pastille.active { border-color: var(--or); background: #fff8e7; box-shadow: 0 2px 8px rgba(201, 169, 110, 0.3); }
   .email-pastille .pastille-rond {
-    width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 0.2rem;
+    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 0.25rem;
     background-repeat: no-repeat; border: 1px solid rgba(0,0,0,0.08);
-    box-shadow: inset -4px -4px 8px rgba(0,0,0,0.1);
+    box-shadow: inset -5px -5px 10px rgba(0,0,0,0.12);
   }
-  .email-pastille .pastille-code { font-size: 0.62rem; font-weight: 600; color: var(--noir); line-height: 1.1; }
+  .email-pastille .pastille-code { font-size: 0.68rem; font-weight: 600; color: var(--noir); line-height: 1.1; }
 
   /* Grille pastilles PVD */
   .pvd-grid {
@@ -583,13 +583,12 @@ function buildPvdGrid() {
   });
 }
 
-// === Émail : pastilles individuelles avec image extraite via CSS background-position ===
+// === Émail : pastilles individuelles via fichiers PNG découpés côté serveur ===
 const emailSelected = new Set();
 
 function buildEmailHotspots() {
   document.querySelectorAll('.email-pastilles-grid').forEach(grid => {
     if (grid.children.length > 0) return; // déjà construit
-    const img = grid.dataset.img;
     const prefix = grid.dataset.prefix;
     const cols = parseInt(grid.dataset.cols, 10);
     const rows = parseInt(grid.dataset.rows, 10);
@@ -597,19 +596,12 @@ function buildEmailHotspots() {
     const pad = parseInt(grid.dataset.pad, 10);
     const total = cols * rows;
     for (let i = 0; i < total; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
       const code = `${prefix}-${String(start + i).padStart(pad, '0')}`;
-      // background-position en % : col / (cols-1) * 100, row / (rows-1) * 100
-      const posX = cols > 1 ? (col / (cols - 1)) * 100 : 50;
-      const posY = rows > 1 ? (row / (rows - 1)) * 100 : 50;
-      const sizeX = cols * 100;
-      const sizeY = rows * 100;
       const pastille = document.createElement('div');
       pastille.className = 'email-pastille';
       pastille.dataset.code = code;
       pastille.title = code;
-      pastille.innerHTML = `<div class="pastille-rond" style="background-image:url('${img}');background-size:${sizeX}% ${sizeY}%;background-position:${posX}% ${posY}%;"></div><div class="pastille-code">${code}</div>`;
+      pastille.innerHTML = `<div class="pastille-rond" style="background-image:url('/refs/email/pastilles/${code}.png');background-size:cover;background-position:center;"></div><div class="pastille-code">${code}</div>`;
       pastille.addEventListener('click', () => toggleEmailCode(code, pastille));
       grid.appendChild(pastille);
     }
