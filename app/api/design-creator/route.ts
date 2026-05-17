@@ -109,9 +109,9 @@ const ICELEA_MATERIAU_LABELS: Record<string, string> = {
 };
 
 const ICELEA_FORMAT_LABELS: Record<string, string> = {
-  "base-large": "BASE LARGE (13mm wide) — a THICK structural ring with TWO POLISHED METAL RAILS on top and bottom edges and a central groove between them where an addon clips. Width signature : 13mm — substantial, bold band.",
-  "base-small": "BASE SMALL (11mm wide) — a MEDIUM-thick structural ring with two rails and central groove for addon. Width signature : 11mm — balanced.",
-  "base-xs": "BASE EXTRA-SMALL (9mm wide) — a NARROWER structural ring with two thin rails and slim central groove. Width signature : 9mm — slim elegant.",
+  "base-large": "🚨 BASE LARGE — THE WIDEST BASE format (13mm wide). Render a SUBSTANTIAL THICK STRUCTURAL RING with two prominent polished metal rails (top and bottom edges of the band) and a central groove between them where an addon clips. Visual signature : VERY WIDE band, ~13mm — bold and substantial. ⛔ DO NOT render thinner. The base must look notably thicker than 'base-small' or 'base-xs'. The rails should occupy ~25% each of the band width, with ~50% for the central groove.",
+  "base-small": "🚨 BASE SMALL — MEDIUM base format (11mm wide). Render a MEDIUM-THICKNESS structural ring with two rails and central groove for addon. Visual signature : 11mm — balanced, neither thick nor thin. ⛔ DO NOT render as wide as base-large (13mm) nor as narrow as base-xs (9mm). Width is in between.",
+  "base-xs": "🚨 BASE EXTRA-SMALL — THE NARROWEST BASE format (9mm wide). Render a SLIM ELEGANT structural ring with two THIN rails and a slim central groove for addon. Visual signature : ~9mm — visibly slimmer than base-small (11mm) and much slimmer than base-large (13mm). ⛔ DO NOT render thick. The band is delicate, refined, fine.",
   "addon": "🚨 ADDON STANDALONE (7mm wide) — Render the ADDON ALONE on its own. NO BASE, NO RAILS, NO FLANKING METAL STRIPS. The addon is a SINGLE DECORATED BAND of ~7mm width. ⛔ DO NOT add polished rails. ⛔ DO NOT add a base structure. ⛔ DO NOT make it look like medium (2.3mm) or open mood (10mm). The addon visual signature is a MEDIUM-WIDE band (~7mm) shown as a standalone ring with the decoration as its primary surface.",
   "open-mood": "OPEN MOOD (10mm wide) — the WIDEST band (~10mm). The ring is OPEN with a visible GAP / SPLIT — the band does NOT close into a full circle. C-shape or split silhouette. Width signature : 10mm — bold, the widest format.",
   "deux-tiers": "DEUX TIERS / TWO-THIRDS (4.6mm wide) — a slim partial ring (~4.6mm width) covering only ~2/3 of the finger circumference. The BACK of the ring (below the finger) is OPEN. Width signature : 4.6mm — slim. Visual : open-back band, horseshoe shape from above.",
@@ -565,6 +565,9 @@ export async function POST(req: Request) {
       if (fmt === "deux-tiers") refPreamble += `🚨 DEUX TIERS (4.6mm width — slim) : the ring is OPEN AT THE BACK (partial ring, only covers ~2/3 of the finger). Band is slim (~4.6mm).\n`;
       if (fmt === "medium") refPreamble += `🚨 MEDIUM (2.3mm width — VERY THIN) : a delicate fine band, NOT a standard width. Width is only 2.3mm — narrow elegant profile.\n`;
       if (fmt === "mini") refPreamble += `🚨 MINI (the thinnest, ~1.5mm) : ULTRA-FINE delicate band, even thinner than medium.\n`;
+      if (fmt === "base-large") refPreamble += `🚨 BASE LARGE (13mm — THE WIDEST base) : show a VISIBLY thick base with prominent rails. Notably wider than base-small and base-xs.\n`;
+      if (fmt === "base-small") refPreamble += `🚨 BASE SMALL (11mm — MEDIUM base) : intermediate thickness, NOT as wide as base-large NOR as slim as base-xs.\n`;
+      if (fmt === "base-xs") refPreamble += `🚨 BASE EXTRA-SMALL (9mm — THE NARROWEST base) : show a SLIM elegant base with thin delicate rails. Notably slimmer than base-small and base-large.\n`;
     }
     if (emailBordRefAdded === "avec") refPreamble += `- One of the attached reference images shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
     if (emailBordRefAdded === "sans") refPreamble += `- One of the attached reference images shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;
