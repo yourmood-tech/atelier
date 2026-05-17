@@ -356,11 +356,12 @@ CRITICAL geometry rules :
 PHOTOGRAPHY STYLE — CAD RENDER PREVIEW
 ═══════════════════════════════════════════════
 
-📐 ANGLE & FRAMING :
-- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
-- Ring laid flat horizontally.
-- Slight 3/4 perspective : decorated outer band visible on TOP, polished inner hole as horizontal OVAL on the right side.
+📐 ANGLE & FRAMING — 🚨 RING STANDING UPRIGHT (NOT laying flat) :
+- The ring is STANDING UPRIGHT ON ITS EDGE on the (invisible) surface — like a wedding band on a jewelry display, vertical orientation. The ring's circular axis is HORIZONTAL : opening faces toward the right side of the frame.
+- Camera at near eye-level with a slight downward tilt (~5-15° plunge).
+- Slight 3/4 perspective : the decorated outer surface of the band is visible on the LEFT-FRONT (facing the camera), the polished inner hole visible on the RIGHT as a soft oval opening.
 - The ring fills 80-95% of the frame width, well-centered.
+- ⛔ DO NOT lay the ring flat horizontally. The ring MUST be standing upright on its bottom edge.
 
 🎯 BACKGROUND : Pure WHITE seamless studio background (#FFFFFF), no texture, no gradient.
 
@@ -462,46 +463,35 @@ This is the ADDON ONLY — a single decorated ring band, no base, no flanking ra
 - Show the decoration in PRIORITY — gemstones, engraving, texture, pattern must dominate the visual.`;
 
   // === Section photo style (selon catégorie) ===
-  const photoStyle = categorie === "icelea-3d"
-    ? `📐 ANGLE & FRAMING — Clean 3D CAD render preview :
-- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
-- Ring laid flat horizontally.
-- Slight 3/4 perspective showing the top decoration + inner oval on the right.
+  const standUprightInstr = `📐 ANGLE & FRAMING — 🚨 RING STANDING UPRIGHT ON ITS EDGE (NOT lying flat) :
+- The ring is STANDING UPRIGHT vertically on its bottom edge, like a wedding band on a jewelry display.
+- Camera at near eye-level with a slight downward tilt (~5-15° plunge).
+- 3/4 perspective : decorated outer surface visible on the LEFT-FRONT (facing camera), polished inner hole visible on the RIGHT as a soft oval opening.
 - The ring fills 80-95% of the frame width, well-centered.
+- ⛔ DO NOT lay the ring flat horizontally. ⛔ DO NOT show only the top of the ring.\n`;
 
+  const photoStyle = categorie === "icelea-3d"
+    ? `${standUprightInstr}
 🎯 BACKGROUND : Pure WHITE seamless studio background (#FFFFFF), no texture.
 
 💡 LIGHTING : CAD-render studio lighting — soft HDRI environment with subtle multi-direction reflections to showcase facets and geometry.
 
 ✨ STYLE : Photorealistic CAD render, slightly idealized perfect geometry (like Rhino + KeyShot output), precise edges, no surface imperfections. Premium prototype look.`
     : categorie === "mood-joaillerie"
-    ? `📐 ANGLE & FRAMING — Luxury jewelry editorial :
-- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
-- Slight 3/4 perspective revealing the top decoration + inner oval.
-- The ring fills 80-95% of the frame width.
-
+    ? `${standUprightInstr}
 🎯 BACKGROUND : Pure WHITE seamless (#FFFFFF), like Cartier / Van Cleef catalog.
 
 💡 LIGHTING : Premium jewelry lighting — multi-direction soft fills to maximize gemstone fire and brilliance. Stones should sparkle with rainbow refractions.
 
 ✨ STYLE : Haute joaillerie photography, magazine cover quality, gemstone brilliance is the hero.`
     : categorie === "technocut"
-    ? `📐 ANGLE & FRAMING — Architectural product shot :
-- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
-- Slight 3/4 perspective revealing the cut-out geometry and openwork.
-- The ring fills 80-95% of the frame width.
-
+    ? `${standUprightInstr}
 🎯 BACKGROUND : Pure WHITE seamless (#FFFFFF), no texture.
 
 💡 LIGHTING : Clean directional studio light revealing the sharp geometric edges and cut-out shadows. Shadows inside the openwork should be visible to highlight the laser-cut precision.
 
 ✨ STYLE : Architectural / industrial design photography — emphasize the precision of cuts, openings, and geometric patterns.`
-    : `📐 ANGLE & FRAMING — Mood signature catalog shot :
-- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
-- Ring laid flat horizontally.
-- Slight 3/4 perspective : decorated outer band visible on TOP, polished inner hole as horizontal OVAL on the right side.
-- The ring fills 80-95% of the frame width, well-centered.
-
+    : `${standUprightInstr}
 🎯 BACKGROUND : Pure WHITE seamless catalog background (#FFFFFF), no texture.
 
 💡 LIGHTING : Soft diffused studio illumination from upper-left at ~45°. Gentle highlights, soft gradients.
