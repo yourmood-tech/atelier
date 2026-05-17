@@ -6,6 +6,8 @@ const MODEL = "gemini-3-pro-image-preview";
 export const maxDuration = 60;
 
 type DesignInput = {
+  categorie?: string | null;     // icelea-3d | bijouterie-mood | mood-joaillerie | technocut
+  withBase?: string | null;      // "avec" | "sans"
   sketch?: string | null;        // data URL image (optional)
   idea?: string | null;          // texte description libre
   largeur?: string | null;       // XS | S | L
@@ -14,6 +16,13 @@ type DesignInput = {
   matiereAddon?: string | null;  // acier | argent-925 | or-jaune-18k | or-rose-18k | or-blanc-18k | ceramique-noire | tantale | alu-couleur
   finitionAddon?: string | null; // poli-miroir | brosse | satine | martele
   format?: string | null;        // 1:1 | 3:2 | 4:5 | 9:16
+};
+
+const CATEGORIE_INTROS: Record<string, string> = {
+  "icelea-3d": "🖥️ CATEGORY : ICELEA 3D DEVELOPMENT RENDER — This is a CAD-style 3D rendered prototype visualization, the kind a jewelry developer would produce before manufacturing. Clean, technical, photorealistic CAD rendering style with very precise edges, perfect geometry, slightly idealized surfaces. Like a Rhino + KeyShot render or Matrix CAD jewelry preview. The lighting should be studio-clean to showcase every facet and geometric detail. The aesthetic is precision + premium prototype, NOT a worn-in artisan piece.",
+  "bijouterie-mood": "🔨 CATEGORY : MOOD INTERNAL JEWELRY WORKSHOP — This is a piece handcrafted in the Mood internal workshop. Real-feel artisan jewelry photograph with a sense of handmade quality, slight organic warmth, visible fine craftsmanship. The metalwork has the precision of skilled goldsmith work but retains a human touch (not the perfect machined look of CAD). Studio jewelry photography style, the kind a small high-end atelier would produce.",
+  "mood-joaillerie": "💍 CATEGORY : MOOD JOAILLERIE HIGH-END — This is fine high-jewelry, the prestige line. Premium stones (diamonds, sapphires, emeralds, rubies, fine colored gems) with master-quality prong setting, exquisite craftsmanship, like Cartier / Van Cleef / Bulgari level. The photograph should feel like a luxury campaign — flawless brilliance, gemstone fire and clarity, sublime light play. This is the high-jewelry tier of Mood Collection.",
+  "technocut": "⚙️ CATEGORY : TECHNOCUT — Stainless steel laser-cut design. Sharp geometric lines, precise CNC / laser cut openings, mechanical-industrial-precision aesthetic. The decoration is born from technical cutting work (perforations, geometric shapes, openwork lattice, etched lines) rather than gem-setting or hand-engraving. Cool, modern, architectural feel. Polished steel surface with crisp edges from the cutting process.",
 };
 
 const LARGEUR_LABELS: Record<string, string> = {
@@ -58,6 +67,9 @@ const FINITION_LABELS: Record<string, string> = {
 };
 
 function buildPrompt(input: DesignInput): string {
+  const categorie = input.categorie || "bijouterie-mood";
+  const catIntro = CATEGORIE_INTROS[categorie] || CATEGORIE_INTROS["bijouterie-mood"];
+  const withBase = input.withBase !== "sans"; // default = avec base
   const largeur = input.largeur ? LARGEUR_LABELS[input.largeur] || input.largeur : "S medium (11mm width)";
   const base = input.matiereBase ? MATIERE_BASE_LABELS[input.matiereBase] || input.matiereBase : "polished 316L surgical steel";
   const addonType = input.typeAddon ? TYPE_ADDON_LABELS[input.typeAddon] || input.typeAddon : "smooth flat band addon";
@@ -66,18 +78,25 @@ function buildPrompt(input: DesignInput): string {
   const idea = (input.idea && input.idea.trim()) || "(no extra description — follow the sketch + selectors strictly)";
   const sketchPresent = !!(input.sketch && input.sketch.trim());
 
-  return `MOOD COLLECTION RING DESIGN VISUALIZATION — Generate a PHOTOREALISTIC catalog photo of a NEW Mood Collection ring design based on the sketch${sketchPresent ? " image provided" : ""} + the design specifications below. The output must look like a real professional jewelry photograph, indistinguishable from a studio shot of a finished ring.
-
+  // === Section catégorie ===
+  const sectionCategorie = `═══════════════════════════════════════════════
+DESIGN CATEGORY
 ═══════════════════════════════════════════════
-DESIGN SPECIFICATIONS (must be respected exactly)
-═══════════════════════════════════════════════
 
-📐 RING WIDTH : ${largeur}.
+${catIntro}`;
+
+  // === Section spécifications (varie selon avec/sans base) ===
+  const sectionBase = withBase
+    ? `📐 RING WIDTH : ${largeur}.
 
 🔩 BASE MATERIAL (the outer rails + interior of the ring) : ${base}.
-The Mood base is the structural part of the ring. It has TWO polished metal rails (top and bottom edges of the band), and a central groove between them where the addon clips in.
+The Mood base is the structural part of the ring. It has TWO polished metal rails (top and bottom edges of the band), and a central groove between them where the addon clips in.`
+    : `🚨 NO BASE MODE — Render the ADDON ALONE as a standalone decorated band/ring. There are NO rails, NO outer base structure flanking the addon. The addon stands on its own as a complete decorated ring.
 
-💎 ADDON (the decorated central band that clips between the two rails) :
+📏 The addon's width is the full ring width (no flanking rails).
+🎯 Focus 100% of the visual attention on the addon's decoration, surface, gemstones, and craftsmanship.`;
+
+  const sectionAddon = `💎 ${withBase ? "ADDON (the decorated central band that clips between the two rails)" : "ADDON (standalone — no base, no rails)"} :
 - Type: ${addonType}
 - Material: ${addonMat}
 - Finish: ${finition}
@@ -85,13 +104,15 @@ The Mood base is the structural part of the ring. It has TWO polished metal rail
 🎨 DESIGN IDEA (artist's intent — interpret faithfully) :
 ${idea}
 
-${sketchPresent ? "🖼️ SKETCH REFERENCE (IMAGE 1) : The user provided a sketch / drawing of the intended design. Interpret it FAITHFULLY — respect the proportions, motifs, decorations, gemstone positions, and overall style of the sketch. The sketch is the PRIMARY visual reference for the addon decoration." : ""}
+${sketchPresent ? "🖼️ SKETCH REFERENCE (IMAGE 1) : The user provided a sketch / drawing of the intended design. Interpret it FAITHFULLY — respect the proportions, motifs, decorations, gemstone positions, and overall style of the sketch. The sketch is the PRIMARY visual reference for the decoration." : ""}`;
 
-═══════════════════════════════════════════════
+  // === Section anatomie (varie) ===
+  const sectionAnatomie = withBase
+    ? `═══════════════════════════════════════════════
 MOOD COLLECTION RING ANATOMY (NON-NEGOTIABLE)
 ═══════════════════════════════════════════════
 
-The Mood ring is a patented INTERCHANGEABLE clip-on system. Every Mood ring has 3 components visible :
+The Mood ring is a patented INTERCHANGEABLE clip-on system. Every complete Mood ring has 3 components visible :
 
 1. 🔩 BASE (steel 316L or titanium) — a structural ring with TWO polished metal rails on top and bottom edges of the band.
 2. 🎯 ADDON — a separate decorated band that CLIPS into the central groove between the two rails of the base.
@@ -102,45 +123,107 @@ CRITICAL geometry rules :
 - Addon and rails are FLUSH at the same surface height (no relief / no step / no shadow groove between addon and rail).
 - Addon has UNIFORM width along the entire visible length.
 - Upper rail width = lower rail width (mirror-symmetric, addon centered vertically on the band).
-- Rails are ALWAYS nickel-mirror-polished (clean, flawless, specular highlights) regardless of base material.
-
+- Rails are ALWAYS nickel-mirror-polished (clean, flawless, specular highlights) regardless of base material.`
+    : `═══════════════════════════════════════════════
+STANDALONE ADDON ANATOMY (NO BASE)
 ═══════════════════════════════════════════════
-PHOTOGRAPHY STYLE (Mood signature catalog shot)
-═══════════════════════════════════════════════
 
-📐 ANGLE & FRAMING :
+This is the ADDON ONLY — a single decorated ring band, no base, no flanking rails.
+
+- The band is a clean continuous ring with the decoration as its primary surface.
+- No rails on top or bottom — just the decorated band itself, from one outer edge to the other.
+- Interior of the ring : polished smooth (silver or material-matching).
+- Show the decoration in PRIORITY — gemstones, engraving, texture, pattern must dominate the visual.`;
+
+  // === Section photo style (selon catégorie) ===
+  const photoStyle = categorie === "icelea-3d"
+    ? `📐 ANGLE & FRAMING — Clean 3D CAD render preview :
 - Camera at near eye-level with a slight downward tilt (~10-15° plunge).
-- Ring laid flat horizontally on the (invisible) surface.
-- Slight 3/4 perspective : the decorated outer band-surface visible on TOP (with slight foreshortening), the polished inner hole visible as a horizontal OVAL on the right side, a hint of the side profile visible at the front.
+- Ring laid flat horizontally.
+- Slight 3/4 perspective showing the top decoration + inner oval on the right.
 - The ring fills 80-95% of the frame width, well-centered.
 
-🎯 BACKGROUND :
-- Pure WHITE seamless catalog background (#FFFFFF), no texture, no gradient, no shadow on the surface.
-- The ring's own 3D self-shadow (modeling the band's volume) is allowed and adds realism.
+🎯 BACKGROUND : Pure WHITE seamless studio background (#FFFFFF), no texture.
 
-💡 LIGHTING :
-- Soft diffused studio illumination from upper-left at ~45°.
-- Gentle highlights on polished surfaces, soft gradient on curves.
-- NO harsh hotspots, NO ringlight flat lighting, NO color casts. Clean even product light revealing every design detail.
+💡 LIGHTING : CAD-render studio lighting — soft HDRI environment with subtle multi-direction reflections to showcase facets and geometry.
+
+✨ STYLE : Photorealistic CAD render, slightly idealized perfect geometry (like Rhino + KeyShot output), precise edges, no surface imperfections. Premium prototype look.`
+    : categorie === "mood-joaillerie"
+    ? `📐 ANGLE & FRAMING — Luxury jewelry editorial :
+- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
+- Slight 3/4 perspective revealing the top decoration + inner oval.
+- The ring fills 80-95% of the frame width.
+
+🎯 BACKGROUND : Pure WHITE seamless (#FFFFFF), like Cartier / Van Cleef catalog.
+
+💡 LIGHTING : Premium jewelry lighting — multi-direction soft fills to maximize gemstone fire and brilliance. Stones should sparkle with rainbow refractions.
+
+✨ STYLE : Haute joaillerie photography, magazine cover quality, gemstone brilliance is the hero.`
+    : categorie === "technocut"
+    ? `📐 ANGLE & FRAMING — Architectural product shot :
+- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
+- Slight 3/4 perspective revealing the cut-out geometry and openwork.
+- The ring fills 80-95% of the frame width.
+
+🎯 BACKGROUND : Pure WHITE seamless (#FFFFFF), no texture.
+
+💡 LIGHTING : Clean directional studio light revealing the sharp geometric edges and cut-out shadows. Shadows inside the openwork should be visible to highlight the laser-cut precision.
+
+✨ STYLE : Architectural / industrial design photography — emphasize the precision of cuts, openings, and geometric patterns.`
+    : `📐 ANGLE & FRAMING — Mood signature catalog shot :
+- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
+- Ring laid flat horizontally.
+- Slight 3/4 perspective : decorated outer band visible on TOP, polished inner hole as horizontal OVAL on the right side.
+- The ring fills 80-95% of the frame width, well-centered.
+
+🎯 BACKGROUND : Pure WHITE seamless catalog background (#FFFFFF), no texture.
+
+💡 LIGHTING : Soft diffused studio illumination from upper-left at ~45°. Gentle highlights, soft gradients.
+
+✨ STYLE : Real-feel artisan jewelry photography with handmade warmth, fine craftsmanship visible.`;
+
+  const sectionPhoto = `═══════════════════════════════════════════════
+PHOTOGRAPHY STYLE
+═══════════════════════════════════════════════
+
+${photoStyle}
 
 ✨ QUALITY :
 - ULTRA HIGH RESOLUTION photoreal output.
 - Gemstones (if any) : crystal-clear, brilliant sparkle, prong-setting visible, count exactly per spec or sketch.
-- Polished metal : crisp specular reflections, smooth gradients, MIRROR-CLEAN nickel finish on rails.
-- ZERO dust, ZERO fingerprints, ZERO scratches, ZERO trace marks.
+- Polished metal : crisp specular reflections, smooth gradients.
+- ZERO dust, ZERO fingerprints, ZERO scratches, ZERO trace marks.`;
 
-═══════════════════════════════════════════════
+  // === Section bans ===
+  const sectionBans = `═══════════════════════════════════════════════
 ABSOLUTE BANS
 ═══════════════════════════════════════════════
 
 - NO text, NO logo, NO watermark in the image.
 - NO hands, NO human, NO mannequin holding the ring.
 - NO scene props, NO leaves, NO water, NO fabric — just the ring on pure white.
-- NO ring without addon (always show the COMPLETE Mood ring : base + addon clicked in).
-- NO interior color that doesn't match the base material (anodized base = same color all around).
+${withBase ? "- NO ring without addon (always show the COMPLETE Mood ring : base + addon clicked in).\n- NO interior color that doesn't match the base material (anodized base = same color all around)." : "- NO base, NO rails — the addon is standalone, render it as a single decorated band."}
 - NO simplification or generic ring design — the output must reflect the sketch + specifications precisely.
 
-Output : ONE photoreal jewelry catalog image of the Mood ring design described above.`;
+Output : ONE photoreal image of the design described above.`;
+
+  return `MOOD COLLECTION RING DESIGN VISUALIZATION — Generate a PHOTOREALISTIC catalog photo of a NEW Mood Collection ring design based on the sketch${sketchPresent ? " image provided" : ""} + the design specifications below. The output must look like a real professional jewelry photograph, indistinguishable from a studio shot of a finished ring.
+
+${sectionCategorie}
+
+═══════════════════════════════════════════════
+DESIGN SPECIFICATIONS (must be respected exactly)
+═══════════════════════════════════════════════
+
+${sectionBase}
+
+${sectionAddon}
+
+${sectionAnatomie}
+
+${sectionPhoto}
+
+${sectionBans}`;
 }
 
 export async function POST(req: Request) {

@@ -81,6 +81,32 @@
   /* Hint inline */
   .hint-inline { font-size: 0.72rem; color: var(--gris); font-style: italic; margin-top: 0.2rem; }
 
+  /* Choix de catégorie */
+  .cat-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;
+  }
+  .cat-card {
+    background: white; border: 2px solid #e5e5e5; border-radius: 14px; padding: 1.5rem 1.2rem;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .cat-card:hover { border-color: var(--or); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+  .cat-card.active { border-color: var(--or); background: #fffdf6; box-shadow: 0 4px 14px rgba(201, 169, 110, 0.2); }
+  .cat-card .cat-emoji { font-size: 2.4rem; margin-bottom: 0.5rem; display: block; }
+  .cat-card .cat-titre { font-size: 0.95rem; font-weight: 700; color: var(--noir); margin-bottom: 0.3rem; }
+  .cat-card .cat-desc { font-size: 0.78rem; color: var(--gris); line-height: 1.4; }
+
+  /* Toggle base */
+  .toggle-base {
+    display: inline-flex; gap: 0; border: 1px solid #ccc; border-radius: 10px;
+    overflow: hidden; background: white;
+  }
+  .toggle-base label {
+    padding: 0.55rem 1rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+    background: white; color: var(--gris); transition: all 0.15s;
+  }
+  .toggle-base label.active { background: var(--or); color: white; }
+  .toggle-base input[type="radio"] { display: none; }
+
   @media (max-width: 600px) { body { padding: 1rem 0.6rem; } .form-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -91,6 +117,46 @@
   <h1>💡 Création design Mood</h1>
   <div class="sous-titre">Donne ton croquis ou ton idée — l'IA te fait une visualisation photo-réaliste de ta bague mood</div>
 </header>
+
+<!-- Étape 0 : choix de la catégorie -->
+<div class="panel" id="cat-panel">
+  <div class="panel-titre">0 · Catégorie de bague</div>
+  <div class="cat-grid">
+    <div class="cat-card" data-cat="icelea-3d" onclick="choisirCategorie('icelea-3d')">
+      <span class="cat-emoji">🖥️</span>
+      <div class="cat-titre">Bague développement 3D</div>
+      <div class="cat-desc">Icelea — rendu CAD propre, prototype avant fabrication</div>
+    </div>
+    <div class="cat-card" data-cat="bijouterie-mood" onclick="choisirCategorie('bijouterie-mood')">
+      <span class="cat-emoji">🔨</span>
+      <div class="cat-titre">Bague bijouterie</div>
+      <div class="cat-desc">Faite en interne chez Mood — artisanat, savoir-faire</div>
+    </div>
+    <div class="cat-card" data-cat="mood-joaillerie" onclick="choisirCategorie('mood-joaillerie')">
+      <span class="cat-emoji">💍</span>
+      <div class="cat-titre">Bague Mood Joaillerie</div>
+      <div class="cat-desc">Haut de gamme, pierres précieuses, sertissage soigné</div>
+    </div>
+    <div class="cat-card" data-cat="technocut" onclick="choisirCategorie('technocut')">
+      <span class="cat-emoji">⚙️</span>
+      <div class="cat-titre">Bague Technocut</div>
+      <div class="cat-desc">Acier découpé — lignes géométriques nettes, technique</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tout ce qui suit est masqué tant qu'une catégorie n'est pas choisie -->
+<div id="form-zone" style="display:none;">
+
+<!-- Toggle avec/sans base -->
+<div class="panel">
+  <div class="panel-titre">Avec ou sans base ?</div>
+  <div class="toggle-base" id="toggle-base">
+    <label class="active" data-val="avec"><input type="radio" name="with-base" value="avec" checked> 🔩 Avec base (bague complète : base + addon)</label>
+    <label data-val="sans"><input type="radio" name="with-base" value="sans"> 💎 Sans base (addon seul, pas de rails)</label>
+  </div>
+  <div class="hint-inline" style="margin-top:0.5rem;">Choisis selon ce que tu veux visualiser — la bague mood complète, ou juste le décor central</div>
+</div>
 
 <!-- Panel 1 : croquis (optionnel) -->
 <div class="panel">
@@ -194,11 +260,43 @@
   <div class="hint-inline" style="margin-top:0.4rem;">⏱️ La génération prend ~20-30 secondes</div>
 </div>
 
+</div><!-- /form-zone -->
+
 <!-- Résultats -->
 <div class="resultats-zone" id="resultats"></div>
 
 <script>
 let sketchData = null;
+let categorie = null;
+let withBase = "avec";
+
+function choisirCategorie(cat) {
+  categorie = cat;
+  document.querySelectorAll('.cat-card').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+  document.getElementById('form-zone').style.display = 'block';
+  // Si "sans base" → masquer les selecteurs base
+  toggleBaseFields();
+  // Scroll doux vers la zone formulaire
+  setTimeout(() => document.getElementById('form-zone').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function toggleBaseFields() {
+  const sans = withBase === 'sans';
+  const largeurRow = document.getElementById('largeur')?.closest('.form-row');
+  const matiereBaseRow = document.getElementById('matiere-base')?.closest('.form-row');
+  if (largeurRow) largeurRow.style.display = sans ? 'none' : 'flex';
+  if (matiereBaseRow) matiereBaseRow.style.display = sans ? 'none' : 'flex';
+}
+
+// Toggle base listener
+document.querySelectorAll('#toggle-base label').forEach(lbl => {
+  lbl.addEventListener('click', () => {
+    document.querySelectorAll('#toggle-base label').forEach(l => l.classList.remove('active'));
+    lbl.classList.add('active');
+    withBase = lbl.dataset.val;
+    toggleBaseFields();
+  });
+});
 
 function handleSketch(event) {
   const file = event.target.files[0];
@@ -243,6 +341,10 @@ async function compresserImage(file, maxDim = 1600) {
 }
 
 async function genererDesign() {
+  if (!categorie) {
+    alert('Choisis d\'abord une catégorie de bague (étape 0)');
+    return;
+  }
   const idea = document.getElementById('idea').value.trim();
   if (!idea && !sketchData) {
     alert('Donne au moins une idée écrite OU un croquis');
@@ -250,10 +352,12 @@ async function genererDesign() {
   }
 
   const payload = {
+    categorie,
+    withBase,
     sketch: sketchData,
     idea,
-    largeur: document.getElementById('largeur').value,
-    matiereBase: document.getElementById('matiere-base').value,
+    largeur: withBase === 'avec' ? document.getElementById('largeur').value : null,
+    matiereBase: withBase === 'avec' ? document.getElementById('matiere-base').value : null,
     typeAddon: document.getElementById('type-addon').value,
     matiereAddon: document.getElementById('matiere-addon').value,
     finitionAddon: document.getElementById('finition-addon').value,
