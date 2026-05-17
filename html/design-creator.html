@@ -169,10 +169,13 @@
 </head>
 <body>
 
-<header>
-  <a href="/" class="retour">← Atelier</a>
-  <h1>💡 Création design Mood</h1>
-  <div class="sous-titre">Donne ton croquis ou ton idée — l'IA te fait une visualisation photo-réaliste de ta bague mood</div>
+<header style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+  <div>
+    <a href="/" class="retour">← Atelier</a>
+    <h1>💡 Création design Mood</h1>
+    <div class="sous-titre">Donne ton croquis ou ton idée — l'IA te fait une visualisation photo-réaliste de ta bague mood</div>
+  </div>
+  <button onclick="ouvrirProjets()" style="padding:0.5rem 1rem;background:white;color:var(--or);border:2px solid var(--or);border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;align-self:flex-start;">📂 Mes projets <span id="projets-count" style="background:var(--or);color:white;padding:0.1rem 0.5rem;border-radius:10px;margin-left:0.3rem;font-size:0.75rem;">0</span></button>
 </header>
 
 <!-- Étape 0 : choix de la catégorie -->
@@ -472,13 +475,14 @@
   </div>
 </div>
 
-<!-- Bouton générer -->
-<div style="text-align:center;margin: 1.4rem 0;">
+<!-- Bouton générer + sauvegarder -->
+<div style="text-align:center;margin: 1.4rem 0;display:flex;justify-content:center;gap:0.7rem;flex-wrap:wrap;">
   <button class="btn-generer" id="btn-generer" onclick="genererDesign()">
     🎨 Générer la visualisation
   </button>
-  <div class="hint-inline" style="margin-top:0.4rem;">⏱️ La génération prend ~20-30 secondes</div>
+  <button onclick="sauverProjet()" style="padding:0.9rem 1.4rem;background:white;color:var(--or);border:2px solid var(--or);border-radius:10px;font-size:0.95rem;font-weight:700;cursor:pointer;">💾 Sauvegarder le projet</button>
 </div>
+<div class="hint-inline" style="margin-top:-0.5rem;margin-bottom:1rem;text-align:center;">⏱️ La génération prend ~20-30s — la sauvegarde garde tes paramètres + dernière image</div>
 
 </div><!-- /form-zone -->
 
@@ -490,6 +494,22 @@
   <div class="modal-titre" id="modal-titre"></div>
   <div class="modal-close" onclick="event.stopPropagation();fermerNuancier()">✕</div>
   <img id="modal-img" src="" alt="">
+</div>
+
+<!-- Modale "Mes projets" -->
+<div id="projets-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;">
+  <div style="background:white;max-width:900px;width:100%;border-radius:14px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.3);max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h2 style="font-size:1.3rem;font-weight:600;color:var(--noir);">📂 Mes projets enregistrés</h2>
+      <button onclick="fermerProjets()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--gris);">✕</button>
+    </div>
+    <div id="projets-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.9rem;">
+      <!-- Cards générées dynamiquement -->
+    </div>
+    <div id="projets-vide" style="text-align:center;padding:2rem;color:var(--gris);display:none;">
+      Aucun projet enregistré pour le moment.<br><span style="font-size:0.85rem;">Renseigne un nom + clique "💾 Sauvegarder le projet" après une génération.</span>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -981,6 +1001,253 @@ async function genererDesign() {
     btn.innerHTML = '🎨 Générer la visualisation';
   }
 }
+
+// === Stockage local des projets (localStorage) ===
+const STORAGE_KEY = 'mood-design-projects';
+
+function listeProjets() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function ecrireProjets(projets) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(projets)); }
+  catch (e) { alert('Stockage plein. Supprime quelques projets pour libérer de la place.\n\n' + e.message); throw e; }
+}
+
+function majBadgeProjets() {
+  const count = listeProjets().length;
+  const badge = document.getElementById('projets-count');
+  if (badge) badge.textContent = count;
+}
+
+async function compresserDataUrl(dataUrl, maxDim = 800, quality = 0.82) {
+  const blob = await (await fetch(dataUrl)).blob();
+  const bitmap = await createImageBitmap(blob);
+  let w = bitmap.width, h = bitmap.height;
+  if (w > maxDim || h > maxDim) {
+    const r = Math.min(maxDim / w, maxDim / h);
+    w = Math.round(w * r); h = Math.round(h * r);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+function recupererEtatProjet() {
+  const nom = document.getElementById('projet-nom')?.value?.trim();
+  if (!nom) { alert('Donne d\'abord un nom au projet (champ 📋 en haut)'); return null; }
+  if (!categorie) { alert('Choisis une catégorie de bague avant de sauvegarder'); return null; }
+
+  const idee = document.getElementById('idea')?.value?.trim() || '';
+  const taille = document.getElementById('projet-taille')?.value || '';
+  const fmtImg = document.getElementById('format')?.value || document.getElementById('icelea-img-format')?.value || '1:1';
+
+  const etat = {
+    nom, taille, idee, categorie, withBase, fmtImg,
+    standard: categorie !== 'icelea-3d' ? {
+      largeur: document.getElementById('largeur')?.value,
+      matiereBase: document.getElementById('matiere-base')?.value,
+      typeAddon: document.getElementById('type-addon')?.value,
+      matiereAddon: document.getElementById('matiere-addon')?.value,
+      finitionAddon: document.getElementById('finition-addon')?.value,
+    } : null,
+    icelea: categorie === 'icelea-3d' ? {
+      materiau: document.querySelector('input[name="icelea-mat"]:checked')?.value,
+      materiauAutre: document.getElementById('icelea-mat-autre')?.value?.trim(),
+      format: document.querySelector('input[name="icelea-format"]:checked')?.value,
+      decorations: Array.from(document.querySelectorAll('input[name="icelea-deco"]:checked')).map(c => c.value),
+      decorationAutre: document.getElementById('icelea-deco-autre')?.value?.trim(),
+      finitionArgent: document.querySelector('input[name="icelea-fin-argent"]:checked')?.value,
+      finitionArgentAutre: document.getElementById('icelea-fin-argent-autre')?.value?.trim(),
+      emailCodes: document.getElementById('icelea-email-codes')?.value?.trim(),
+      emailSelected: Array.from(emailSelected),
+      emailBord: document.querySelector('input[name="icelea-email-bord-val"]:checked')?.value,
+      pvdColors: Array.from(pvdSelected),
+      zircons: recupererZircons(),
+    } : null,
+  };
+  return etat;
+}
+
+async function sauverProjet() {
+  const etat = recupererEtatProjet();
+  if (!etat) return;
+
+  // Récupérer la dernière image affichée (premier resultat-bloc)
+  const dernierImg = document.querySelector('.resultat-bloc img.resultat-img');
+  let imageThumb = null;
+  if (dernierImg && dernierImg.src && dernierImg.src.startsWith('data:image/')) {
+    try { imageThumb = await compresserDataUrl(dernierImg.src, 600, 0.78); }
+    catch { /* skip */ }
+  }
+
+  const projets = listeProjets();
+  // Si projet avec même nom existe → update (sinon création)
+  const idx = projets.findIndex(p => p.nom === etat.nom);
+  const projet = {
+    ...etat,
+    id: idx >= 0 ? projets[idx].id : `p-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    image: imageThumb,
+    cree: idx >= 0 ? projets[idx].cree : new Date().toISOString(),
+    maj: new Date().toISOString(),
+  };
+  if (idx >= 0) projets[idx] = projet; else projets.unshift(projet);
+
+  try { ecrireProjets(projets); }
+  catch { return; }
+
+  majBadgeProjets();
+  alert(`✅ Projet "${etat.nom}" ${idx >= 0 ? 'mis à jour' : 'sauvegardé'}.`);
+}
+
+function ouvrirProjets() {
+  const projets = listeProjets();
+  const liste = document.getElementById('projets-list');
+  const vide = document.getElementById('projets-vide');
+  liste.innerHTML = '';
+  if (projets.length === 0) {
+    vide.style.display = 'block';
+  } else {
+    vide.style.display = 'none';
+    projets.forEach(p => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:white;border:1px solid #e5e5e5;border-radius:10px;padding:0.7rem;cursor:pointer;transition:all 0.15s;';
+      card.onmouseenter = () => { card.style.borderColor = 'var(--or)'; card.style.boxShadow = '0 4px 12px rgba(201,169,110,0.2)'; };
+      card.onmouseleave = () => { card.style.borderColor = '#e5e5e5'; card.style.boxShadow = 'none'; };
+      const date = new Date(p.maj || p.cree).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      card.innerHTML = `
+        ${p.image ? `<img src="${p.image}" alt="${escapeHtml(p.nom)}" style="width:100%;height:160px;object-fit:cover;border-radius:8px;background:#f5f5f5;">` : `<div style="width:100%;height:160px;background:#f5f5f5;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gris);font-size:0.85rem;">— pas d'image —</div>`}
+        <div style="margin-top:0.5rem;">
+          <div style="font-weight:600;font-size:0.95rem;color:var(--noir);">${escapeHtml(p.nom)}</div>
+          <div style="font-size:0.72rem;color:var(--gris);">${p.categorie} · taille ${p.taille || '?'} · ${date}</div>
+        </div>
+        <div style="display:flex;gap:0.4rem;margin-top:0.6rem;">
+          <button onclick="event.stopPropagation();chargerProjet('${p.id}')" style="flex:1;padding:0.4rem;background:var(--or);color:white;border:none;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;">📥 Charger</button>
+          <button onclick="event.stopPropagation();supprimerProjet('${p.id}')" style="padding:0.4rem 0.6rem;background:#fee;color:var(--rouge);border:1px solid #fcc;border-radius:6px;font-size:0.78rem;cursor:pointer;">🗑️</button>
+        </div>
+      `;
+      liste.appendChild(card);
+    });
+  }
+  document.getElementById('projets-modal').style.display = 'flex';
+}
+
+function fermerProjets() {
+  document.getElementById('projets-modal').style.display = 'none';
+}
+
+function chargerProjet(id) {
+  const p = listeProjets().find(x => x.id === id);
+  if (!p) { alert('Projet introuvable'); return; }
+
+  // Reset puis remplit
+  document.getElementById('projet-nom').value = p.nom || '';
+  document.getElementById('projet-taille').value = p.taille || '56';
+  document.getElementById('idea').value = p.idee || '';
+
+  // Choisir la catégorie
+  if (p.categorie) {
+    choisirCategorie(p.categorie);
+  }
+
+  // Champs standard
+  if (p.standard && p.categorie !== 'icelea-3d') {
+    if (document.getElementById('largeur') && p.standard.largeur) document.getElementById('largeur').value = p.standard.largeur;
+    if (document.getElementById('matiere-base') && p.standard.matiereBase) document.getElementById('matiere-base').value = p.standard.matiereBase;
+    if (document.getElementById('type-addon') && p.standard.typeAddon) document.getElementById('type-addon').value = p.standard.typeAddon;
+    if (document.getElementById('matiere-addon') && p.standard.matiereAddon) document.getElementById('matiere-addon').value = p.standard.matiereAddon;
+    if (document.getElementById('finition-addon') && p.standard.finitionAddon) document.getElementById('finition-addon').value = p.standard.finitionAddon;
+  }
+
+  // Champs Icelea
+  if (p.icelea && p.categorie === 'icelea-3d') {
+    if (p.icelea.materiau) { const r = document.querySelector(`input[name="icelea-mat"][value="${p.icelea.materiau}"]`); if (r) r.checked = true; }
+    if (p.icelea.materiauAutre !== undefined) document.getElementById('icelea-mat-autre').value = p.icelea.materiauAutre;
+    if (p.icelea.format) { const r = document.querySelector(`input[name="icelea-format"][value="${p.icelea.format}"]`); if (r) r.checked = true; }
+    // Decorations (checkboxes)
+    document.querySelectorAll('input[name="icelea-deco"]').forEach(c => { c.checked = (p.icelea.decorations || []).includes(c.value); });
+    if (p.icelea.decorationAutre !== undefined) document.getElementById('icelea-deco-autre').value = p.icelea.decorationAutre;
+    if (p.icelea.finitionArgent) { const r = document.querySelector(`input[name="icelea-fin-argent"][value="${p.icelea.finitionArgent}"]`); if (r) r.checked = true; }
+    if (p.icelea.finitionArgentAutre !== undefined) document.getElementById('icelea-fin-argent-autre').value = p.icelea.finitionArgentAutre;
+    if (p.icelea.emailCodes !== undefined) document.getElementById('icelea-email-codes').value = p.icelea.emailCodes;
+    if (p.icelea.emailBord) { const r = document.querySelector(`input[name="icelea-email-bord-val"][value="${p.icelea.emailBord}"]`); if (r) r.checked = true; }
+
+    // Pastilles email sélectionnées
+    emailSelected.clear();
+    (p.icelea.emailSelected || []).forEach(c => emailSelected.add(c));
+    // PVD sélectionnés
+    pvdSelected.clear();
+    (p.icelea.pvdColors || []).forEach(c => pvdSelected.add(c));
+
+    // Update visuel des conditionals
+    updateIceleaConditional();
+
+    // Re-construire grille email + PVD + marquer pastilles sélectionnées
+    setTimeout(() => {
+      document.querySelectorAll('.email-pastille').forEach(el => {
+        if (emailSelected.has(el.dataset.code)) el.classList.add('active');
+      });
+      document.querySelectorAll('.pvd-pastille').forEach(el => {
+        if (pvdSelected.has(el.dataset.code)) el.classList.add('active');
+      });
+      const selE = Array.from(emailSelected);
+      if (selE.length) document.getElementById('email-selection').textContent = `${selE.length} pastille${selE.length>1?'s':''} sélectionnée${selE.length>1?'s':''} : ${selE.join(' · ')}`;
+      const selP = Array.from(pvdSelected);
+      if (selP.length) document.getElementById('pvd-selection').textContent = `${selP.length} couleur${selP.length>1?'s':''} sélectionnée${selP.length>1?'s':''} : ${selP.join(' · ')}`;
+    }, 150);
+
+    // Zircons
+    document.getElementById('zircons-list').innerHTML = '';
+    (p.icelea.zircons || []).forEach(z => {
+      ajouterZircon();
+      const ligne = document.querySelector('.zircon-ligne:last-child');
+      if (z.forme) ligne.querySelector(`[data-forme="${z.forme}"]`)?.click();
+      setTimeout(() => {
+        if (z.taille) {
+          const tSelect = ligne.querySelector('.z-taille');
+          if (!Array.from(tSelect.options).some(o => o.value === z.taille)) {
+            const opt = document.createElement('option'); opt.value = z.taille; opt.text = z.taille; tSelect.appendChild(opt);
+          }
+          tSelect.value = z.taille;
+        }
+        if (z.couleur) ligne.querySelector('.z-couleur').value = z.couleur;
+        if (z.saturation) ligne.querySelector('.z-saturation').value = z.saturation;
+        if (z.quantite) ligne.querySelector('.z-quantite').value = z.quantite;
+        majCodeZircon(ligne);
+      }, 100);
+    });
+  }
+
+  // Affiche l'image sauvée si dispo
+  if (p.image) {
+    const resultsZone = document.getElementById('resultats');
+    const imgId = 'img-' + Date.now();
+    cacheImagePut(imgId, p.image);
+    const bloc = document.createElement('div');
+    bloc.className = 'resultat-bloc';
+    bloc.innerHTML = `
+      <div class="resultat-titre">📥 Projet chargé — ${escapeHtml(p.nom)}</div>
+      <img id="${imgId}-display" src="${p.image}" alt="design Mood" class="resultat-img">
+      <div class="hint-inline" style="text-align:center;">Image basse résolution sauvegardée — relance "Générer" pour une nouvelle image 2K à partir des paramètres restaurés</div>
+    `;
+    resultsZone.insertBefore(bloc, resultsZone.firstChild);
+  }
+
+  fermerProjets();
+}
+
+function supprimerProjet(id) {
+  if (!confirm('Supprimer ce projet ? Action irréversible.')) return;
+  const projets = listeProjets().filter(p => p.id !== id);
+  ecrireProjets(projets);
+  majBadgeProjets();
+  ouvrirProjets(); // refresh la liste
+}
+
+// Init badge au chargement
+window.addEventListener('DOMContentLoaded', majBadgeProjets);
 
 // === Cache d'images pour téléchargement + modification ===
 const imageCache = {};
