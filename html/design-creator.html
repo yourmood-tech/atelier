@@ -662,10 +662,11 @@ const ZIRCON_TAILLES = {
   'marquise':         ['1.5x3','2x4','2.5x5','3x6','4x8','5x10','6x12','8x16','10x20'],
 };
 const ZIRCON_COULEURS = [
-  ['blanc', 'Blanc / transparent (diamant)'], ['jaune', 'Jaune'], ['jaune-orange', 'Jaune orange'],
+  ['blanc', 'Blanc / transparent (diamant)'], ['rose', 'Rose'], ['jaune', 'Jaune'], ['jaune-orange', 'Jaune orange'],
   ['orange', 'Orange'], ['orange-rouge', 'Orange rouge'], ['rouge', 'Rouge'],
   ['rouge-violet', 'Rouge violet'], ['violet', 'Violet'], ['violet-bleu', 'Violet bleu'],
-  ['bleu', 'Bleu'], ['bleu-vert', 'Bleu vert'], ['vert', 'Vert'], ['noir', 'Noir'],
+  ['bleu', 'Bleu'], ['turquoise', 'Turquoise'], ['bleu-vert', 'Bleu vert'], ['vert', 'Vert'],
+  ['gris', 'Gris (smoky)'], ['noir', 'Noir'],
 ];
 const ZIRCON_SATURATIONS = [
   ['tres-clair', 'Très clair'], ['clair', 'Clair'], ['medium', 'Medium'], ['fonce', 'Foncé'], ['tres-fonce', 'Très foncé'],
@@ -673,7 +674,7 @@ const ZIRCON_SATURATIONS = [
 
 // Map abréviations pour le code de référence
 const FORME_ABBR = { 'rond':'RND', 'ovale':'OVL', 'poire':'PRE', 'marquise':'MRQ', 'coeur':'HRT', 'princess':'PRN', 'baguette':'BGT', 'trillion':'TRI', 'coussin':'CSH', 'octogonal':'OCT', 'rose-cut':'RSE', 'tapered-baguette':'TPB' };
-const COULEUR_ABBR = { 'blanc':'WH', 'jaune':'YL', 'jaune-orange':'YO', 'orange':'OR', 'orange-rouge':'ORD', 'rouge':'RD', 'rouge-violet':'RV', 'violet':'VL', 'violet-bleu':'VB', 'bleu':'BL', 'bleu-vert':'BV', 'vert':'GR', 'noir':'BK' };
+const COULEUR_ABBR = { 'blanc':'WH', 'rose':'PK', 'jaune':'YL', 'jaune-orange':'YO', 'orange':'OR', 'orange-rouge':'ORD', 'rouge':'RD', 'rouge-violet':'RV', 'violet':'VL', 'violet-bleu':'VB', 'bleu':'BL', 'turquoise':'TQ', 'bleu-vert':'BV', 'vert':'GR', 'gris':'GY', 'noir':'BK' };
 const SATURATION_ABBR = { 'tres-clair':'VL', 'clair':'L', 'medium':'M', 'fonce':'D', 'tres-fonce':'VD' };
 
 function genererCodeZircon(forme, taille, couleur, saturation) {

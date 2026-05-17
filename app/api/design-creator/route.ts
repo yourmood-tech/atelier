@@ -230,17 +230,20 @@ const ZIRCON_FORME_LABELS: Record<string, string> = {
 
 const ZIRCON_COULEUR_LABELS: Record<string, string> = {
   "blanc": "WHITE / colorless (like diamond)",
-  "jaune": "yellow",
+  "rose": "soft pink (rose quartz / kunzite / morganite tone)",
+  "jaune": "yellow (citrine tone)",
   "jaune-orange": "yellow-orange (amber-toned)",
-  "orange": "orange",
-  "orange-rouge": "orange-red (coral-toned)",
+  "orange": "orange (mandarin garnet tone)",
+  "orange-rouge": "orange-red (coral / hessonite-toned)",
   "rouge": "red (ruby tone)",
   "rouge-violet": "red-violet (rubellite tone)",
   "violet": "violet (amethyst tone)",
   "violet-bleu": "violet-blue (tanzanite tone)",
   "bleu": "blue (sapphire tone)",
-  "bleu-vert": "blue-green (paraiba tone)",
+  "turquoise": "turquoise (cyan-teal, distinctive turquoise stone tone)",
+  "bleu-vert": "blue-green (paraiba tourmaline tone)",
   "vert": "green (emerald tone)",
+  "gris": "gray (smoky quartz / hematite tone)",
   "noir": "black (onyx tone)",
 };
 
