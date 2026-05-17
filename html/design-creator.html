@@ -982,6 +982,7 @@ async function genererDesign() {
         <button class="btn-action" onclick="telechargerCache('${imgId}','${fname}')">⬇️ Télécharger</button>
         <button class="btn-action secondary" onclick="genererDesign()">🔄 Regénérer (variation)</button>
         <button class="btn-action" style="background:#6366f1;" onclick="toggleModification('${imgId}')">✏️ Modification</button>
+        <button class="btn-action" style="background:#0a6b3f;" onclick="telechargerFiche('${imgId}')">📄 Fiche fournisseur</button>
       </div>
       <div id="${imgId}-modif-zone" style="display:none;margin-top:0.7rem;padding:0.8rem;background:#f4f4f7;border-radius:8px;">
         <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
@@ -1248,6 +1249,162 @@ function supprimerProjet(id) {
 
 // Init badge au chargement
 window.addEventListener('DOMContentLoaded', majBadgeProjets);
+
+// === Génération de la fiche fournisseur (style Icelea : titre + description + image) ===
+
+// Compose la description automatique à partir de l'état actuel du formulaire
+function composerDescriptionFiche(etat) {
+  const lignes = [];
+  const e = etat;
+
+  if (e.categorie === 'icelea-3d' && e.icelea) {
+    const i = e.icelea;
+    // Format + matériau
+    const FORMAT_LABELS_FR = {
+      'base-large':'Base large (13mm)', 'base-small':'Base small (11mm)', 'base-xs':'Base extra small (9mm)',
+      'addon':'Addon (7mm)', 'open-mood':'Open mood (10mm)', 'deux-tiers':'Deux tiers (4,6mm)',
+      'medium':'Medium (2,3mm)', 'mini':'Mini',
+    };
+    const MAT_LABELS_FR = { 'argent':'argent 925', 'acier':'acier 316L', 'ceramique':'céramique' };
+    const FIN_LABELS_FR = { 'poli':'poli', 'matt':'matt', 'glitter':'glitter (neige éternelle)', 'froisse':'froissé', 'brosse':'brossé', 'satine':'satiné', 'martele':'martelé' };
+
+    const fmt = FORMAT_LABELS_FR[i.format] || i.format || '';
+    const mat = i.materiau === 'autre' ? (i.materiauAutre || 'matière custom') : (MAT_LABELS_FR[i.materiau] || i.materiau || '');
+    const fin = i.finitionArgent === 'autre-fin' ? (i.finitionArgentAutre || 'finition custom') : (FIN_LABELS_FR[i.finitionArgent] || '');
+
+    let l1 = fmt.toUpperCase() + (mat ? ' EN ' + mat.toUpperCase() : '');
+    if (fin && !(i.decorations || []).some(d => d === 'email' || d === 'pvd')) l1 += ' ' + fin.toUpperCase();
+    if (l1) lignes.push(l1 + '.');
+
+    // Décorations
+    const decos = i.decorations || [];
+    if (decos.includes('3d')) lignes.push('FORME 3D SCULPTÉE.');
+    if (decos.includes('email')) {
+      const codes = i.emailCodes || (i.emailSelected || []).join(', ') || '';
+      const bord = i.emailBord === 'avec' ? ' (avec bord argent)' : i.emailBord === 'sans' ? ' (sans bord — full coverage)' : '';
+      lignes.push(`ÉMAIL${bord} : ${codes || '— couleurs à préciser —'}.`);
+    }
+    if (decos.includes('pvd') && (i.pvdColors || []).length > 0) {
+      lignes.push(`REVÊTEMENT PVD : ${i.pvdColors.join(' · ')}.`);
+    }
+    if (decos.includes('zircons') && (i.zircons || []).length > 0) {
+      const zLines = i.zircons.map(z => {
+        const FORME_LABELS_FR = { 'rond':'rond brillant','ovale':'ovale','poire':'poire','marquise':'marquise','coeur':'cœur','princess':'princess','baguette':'baguette','trillion':'trillion','coussin':'coussin','octogonal':'octogonal','rose-cut':'rose cut','tapered-baguette':'tapered baguette' };
+        const COULEUR_FR = { 'blanc':'blanc','rose':'rose','jaune':'jaune','jaune-orange':'jaune orange','orange':'orange','orange-rouge':'orange rouge','rouge':'rouge','rouge-violet':'rouge violet','violet':'violet','violet-bleu':'violet bleu','bleu':'bleu','turquoise':'turquoise','bleu-vert':'bleu vert','vert':'vert','gris':'gris','noir':'noir' };
+        const SAT_FR = { 'tres-clair':'très clair','clair':'clair','medium':'medium','fonce':'foncé','tres-fonce':'très foncé' };
+        const code = z.code || '';
+        return `${z.quantite} ${FORME_LABELS_FR[z.forme]||z.forme} ${z.taille}mm ${COULEUR_FR[z.couleur]||z.couleur} ${SAT_FR[z.saturation]||''}${code ? ' ['+code+']' : ''}`;
+      });
+      lignes.push('SERTI DE : ' + zLines.join(' + ') + '.');
+    }
+    if (decos.includes('autre') && i.decorationAutre) lignes.push('AUTRE : ' + i.decorationAutre + '.');
+  } else if (e.standard) {
+    const s = e.standard;
+    const FORMAT_LABELS_FR_STD = { 'XS':'extra-fine (9mm)', 'S':'medium (11mm)', 'L':'large (13mm)' };
+    const lab = (FORMAT_LABELS_FR_STD[s.largeur] || s.largeur || '') + ' en ' + (s.matiereBase || '') + ', addon ' + (s.matiereAddon || '') + ' ' + (s.finitionAddon || '');
+    lignes.push(lab.trim().toUpperCase() + '.');
+    if (s.typeAddon && s.typeAddon !== 'lisse') lignes.push('DÉCOR : ' + s.typeAddon + '.');
+  }
+
+  if (e.taille) lignes.push('TAILLE ' + e.taille + '.');
+  if (e.idee && e.idee.trim()) lignes.push('NOTE : ' + e.idee.trim());
+
+  return lignes.join(' ');
+}
+
+async function telechargerFiche(imgId) {
+  const etat = recupererEtatProjet();
+  if (!etat) return;
+  const dataUrl = cacheImageGet(imgId);
+  if (!dataUrl) { alert('Image introuvable'); return; }
+
+  const description = composerDescriptionFiche(etat);
+  const titre = (etat.nom || 'Mood Design').toUpperCase();
+
+  // Compose la fiche en Canvas (paysage 1920x1280 = ratio 3:2)
+  const W = 1920, H = 1280;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Fond blanc
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  // Titre (haut-gauche)
+  ctx.fillStyle = '#000000';
+  ctx.textBaseline = 'top';
+  ctx.font = '700 92px "Helvetica Neue", Helvetica, "Futura", sans-serif';
+  const titreXY = { x: 80, y: 80 };
+  // Si titre trop long, réduire la taille
+  let titreSize = 92;
+  while (ctx.measureText(titre).width > W * 0.5 && titreSize > 40) {
+    titreSize -= 4;
+    ctx.font = `700 ${titreSize}px "Helvetica Neue", Helvetica, "Futura", sans-serif`;
+  }
+  ctx.fillText(titre, titreXY.x, titreXY.y);
+
+  // Description (sous le titre, max ~50% width, wrap automatique)
+  ctx.fillStyle = '#333333';
+  ctx.font = '22px "Helvetica Neue", Helvetica, sans-serif';
+  const descStartY = titreXY.y + titreSize + 30;
+  const descMaxW = W * 0.5 - 80;
+  const lineHeight = 32;
+  const mots = description.split(/\s+/);
+  let ligne = '';
+  let yDesc = descStartY;
+  for (const mot of mots) {
+    const test = ligne + mot + ' ';
+    if (ctx.measureText(test).width > descMaxW && ligne) {
+      ctx.fillText(ligne.trim(), titreXY.x, yDesc);
+      ligne = mot + ' ';
+      yDesc += lineHeight;
+    } else {
+      ligne = test;
+    }
+    if (yDesc > H - 100) break;
+  }
+  if (ligne) ctx.fillText(ligne.trim(), titreXY.x, yDesc);
+
+  // Image à droite (centrée verticalement)
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+  // Taille cible : ~45% width, hauteur proportionnelle
+  const imgMaxW = W * 0.45;
+  const imgMaxH = H * 0.75;
+  let imgW = img.width, imgH = img.height;
+  const ratioW = imgMaxW / imgW;
+  const ratioH = imgMaxH / imgH;
+  const ratio = Math.min(ratioW, ratioH);
+  imgW = imgW * ratio;
+  imgH = imgH * ratio;
+  const imgX = W - imgW - 80;
+  const imgY = (H - imgH) / 2;
+  ctx.drawImage(img, imgX, imgY, imgW, imgH);
+
+  // Petit pied : taille bague + date
+  ctx.fillStyle = '#999999';
+  ctx.font = '18px "Helvetica Neue", Helvetica, sans-serif';
+  const dateStr = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+  ctx.fillText(`MOOD COLLECTION · ${dateStr}`, 80, H - 60);
+
+  // Télécharger en PNG
+  const slug = (etat.nom || 'mood-design').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+  const fname = `fiche-${slug}-${Date.now()}.png`;
+  canvas.toBlob(blob => {
+    if (!blob) { alert('Erreur génération fiche'); return; }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, 'image/png');
+}
 
 // === Cache d'images pour téléchargement + modification ===
 const imageCache = {};
