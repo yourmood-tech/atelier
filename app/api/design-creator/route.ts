@@ -1,9 +1,33 @@
 import { NextResponse } from "next/server";
+import { readFileSync, existsSync } from "fs";
+import path from "path";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
+
+// Nuanciers émail Icelea — fichiers dans public/refs/email/
+const EMAIL_NUANCIERS: { file: string; label: string }[] = [
+  { file: "rb-01-80.jpg", label: "RB-01 to RB-80 : solid enamel colors (first batch)" },
+  { file: "rb-81-160.jpg", label: "RB-81 to RB-160 : solid enamel colors (second batch)" },
+  { file: "rb-161-240.jpg", label: "RB-161 to RB-240 : solid enamel colors (third batch)" },
+  { file: "rp-pearl-glitter.jpg", label: "RP-01 to RP-40 : pearlescent/glitter enamel finishes" },
+  { file: "rbf-motifs.jpg", label: "RBF-001 to RBF-072 : printed enamel motifs (animal prints, plaids, geometric)" },
+];
+
+function loadEmailNuanciers(): Array<{ inlineData: { mimeType: string; data: string } }> {
+  const refs: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+  for (const n of EMAIL_NUANCIERS) {
+    const p = path.join(process.cwd(), "public", "refs", "email", n.file);
+    if (!existsSync(p)) continue;
+    try {
+      const buf = readFileSync(p);
+      refs.push({ inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } });
+    } catch { /* skip */ }
+  }
+  return refs;
+}
 
 type IceleaData = {
   materiau?: string | null;        // argent | acier | ceramique | autre
@@ -13,6 +37,7 @@ type IceleaData = {
   decorationAutre?: string | null;
   finitionArgent?: string | null;  // poli | matt | glitter | froisse | autre-fin
   finitionArgentAutre?: string | null;
+  emailCodes?: string | null;      // ex: "RB-013, RB-067, RP-22, RBF-008"
 };
 
 type DesignInput = {
@@ -126,6 +151,24 @@ function buildIceleaPrompt(input: DesignInput): string {
     .map(d => d === "autre" && icelea.decorationAutre ? `- OTHER : ${icelea.decorationAutre}` : `- ${ICELEA_DECO_LABELS[d] || d}`)
     .join("\n");
 
+  // Section émail : si "email" coché et codes fournis, instructions Gemini pour lire le nuancier
+  let emailSection = "";
+  if (decos.includes("email") && icelea.emailCodes) {
+    emailSection = `\n\n🎨 ENAMEL COLOR REFERENCE (CRITICAL — match the user's exact selection) :
+The user selected the following enamel codes from the Icelea Mood reference charts (provided as IMAGE references in this request) :
+${icelea.emailCodes}
+
+INSTRUCTIONS :
+- The reference images attached to this request are the OFFICIAL Icelea enamel color charts used by Mood Collection.
+- Identify each code listed above on the appropriate chart (RB-* = solid colors charts, RP-* = pearlescent/glitter chart, RBF-* = printed motif chart).
+- Reproduce those EXACT colors and motifs on the ring's enamel surface.
+- If multiple codes are listed → combine them on the band (e.g. zones of different colors, alternating segments, or a multi-color composition as per the artist's idea).
+- The enamel finish should be glossy and smooth, jewelry-grade, like the references show.
+- DO NOT invent enamel colors. STRICTLY use what's visible on the charts for the listed codes.`;
+  } else if (decos.includes("email") && !icelea.emailCodes) {
+    emailSection = "\n\n🎨 ENAMEL : applied to the band but no specific codes provided — choose a tasteful color that fits the artist's idea.";
+  }
+
   // Matériau neutre sans revêtement (tout matériau) → finition appliquée
   const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
   const finitionDispo = !!matKey && !aRevetement;
@@ -153,7 +196,7 @@ ICELEA SPECIFICATIONS
 📏 FORMAT : ${fmtLabel}.
 
 ✨ DECORATIONS / SURFACE TREATMENT (combine all of the following) :
-${decoLabels || "- (none specified — clean plain band)"}${finitionSection}
+${decoLabels || "- (none specified — clean plain band)"}${finitionSection}${emailSection}
 
 🎨 DESIGN IDEA (artist's intent — interpret faithfully) :
 ${idea}
@@ -396,13 +439,18 @@ export async function POST(req: Request) {
   const format = (body.format && /^\d+:\d+$/.test(body.format)) ? body.format : "1:1";
   const prompt = buildPrompt(body);
 
-  // Construire les parts pour Gemini : croquis (si fourni) en premier, puis prompt
+  // Construire les parts pour Gemini : croquis (si fourni) en premier, puis nuanciers émail (si Icelea + email coché), puis prompt
   const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
   if (sketch) {
     const m = sketch.match(/^data:([^;]+);base64,(.+)$/);
     if (m) {
       parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
     }
+  }
+  // Icelea + email coché → joindre les nuanciers comme refs visuelles
+  if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
+    const nuanciers = loadEmailNuanciers();
+    for (const n of nuanciers) parts.push(n);
   }
   parts.push({ text: prompt });
 

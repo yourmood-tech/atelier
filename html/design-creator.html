@@ -95,6 +95,26 @@
   .cat-card .cat-titre { font-size: 0.95rem; font-weight: 700; color: var(--noir); margin-bottom: 0.3rem; }
   .cat-card .cat-desc { font-size: 0.78rem; color: var(--gris); line-height: 1.4; }
 
+  /* Nuancier émail */
+  .nuancier-card {
+    background: white; border: 2px solid #e5e5e5; border-radius: 8px; padding: 0.4rem;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .nuancier-card:hover { border-color: var(--or); transform: translateY(-1px); }
+  .nuancier-card img { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; display: block; }
+  .nuancier-label { font-size: 0.7rem; font-weight: 600; color: var(--noir); margin-top: 0.3rem; line-height: 1.2; }
+  .nuancier-label small { font-size: 0.62rem; color: var(--gris); font-weight: 400; }
+
+  /* Modale zoom nuancier */
+  .nuancier-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000;
+    display: none; align-items: center; justify-content: center; padding: 2rem; cursor: zoom-out;
+  }
+  .nuancier-modal.active { display: flex; }
+  .nuancier-modal img { max-width: 95vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+  .nuancier-modal .modal-titre { position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); color: white; font-size: 0.95rem; font-weight: 600; background: rgba(0,0,0,0.6); padding: 0.4rem 1rem; border-radius: 20px; }
+  .nuancier-modal .modal-close { position: absolute; top: 1rem; right: 1rem; color: white; font-size: 1.6rem; cursor: pointer; background: rgba(0,0,0,0.6); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+
   /* Toggle base */
   .toggle-base {
     display: inline-flex; gap: 0; border: 1px solid #ccc; border-radius: 10px;
@@ -245,8 +265,36 @@
     </div>
   </div>
 
-  <!-- Placeholders pour paliers 2/3/4 -->
-  <div id="icelea-email-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">🎨 Sélecteur couleurs émail — palier 2 (à venir)</div>
+  <!-- Émail : nuancier + sélection (palier 2) -->
+  <div id="icelea-email-zone" style="display:none;margin-bottom:1.2rem;padding:0.9rem;background:#fffdf6;border-left:3px solid var(--or);border-radius:6px;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">🎨 Couleurs / motifs émail <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— clique sur un nuancier pour zoomer, puis recopie les codes choisis</span></label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.5rem;margin-bottom:0.7rem;">
+      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-01-80.jpg', 'Couleurs unies RB-01 → RB-80')">
+        <img src="/refs/email/rb-01-80.jpg" alt="RB-01 à RB-80">
+        <div class="nuancier-label">RB-01 → RB-80<br><small>Couleurs unies</small></div>
+      </div>
+      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-81-160.jpg', 'Couleurs unies RB-81 → RB-160')">
+        <img src="/refs/email/rb-81-160.jpg" alt="RB-81 à RB-160">
+        <div class="nuancier-label">RB-81 → RB-160<br><small>Couleurs unies (suite)</small></div>
+      </div>
+      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-161-240.jpg', 'Couleurs unies RB-161 → RB-240')">
+        <img src="/refs/email/rb-161-240.jpg" alt="RB-161 à RB-240">
+        <div class="nuancier-label">RB-161 → RB-240<br><small>Couleurs unies (fin)</small></div>
+      </div>
+      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rp-pearl-glitter.jpg', 'Perlés / glitter RP-01 → RP-40')">
+        <img src="/refs/email/rp-pearl-glitter.jpg" alt="RP-01 à RP-40">
+        <div class="nuancier-label">RP-01 → RP-40<br><small>Perlés / glitter</small></div>
+      </div>
+      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rbf-motifs.jpg', 'Motifs RBF-001 → RBF-072')">
+        <img src="/refs/email/rbf-motifs.jpg" alt="RBF-001 à RBF-072">
+        <div class="nuancier-label">RBF-001 → RBF-072<br><small>Motifs (animaliers, plaids…)</small></div>
+      </div>
+    </div>
+    <textarea id="icelea-email-codes" rows="2" placeholder="Exemples : RB-013, RB-067 + RP-22 (perlé vert) + RBF-008 (léopard rose)" style="width:100%;padding:0.55rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+    <div class="hint-inline">Tape les codes séparés par virgules. Tu peux mixer plusieurs couleurs et motifs sur la même bague.</div>
+  </div>
+
+  <!-- Placeholders pour paliers 3/4 -->
   <div id="icelea-pvd-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">🌈 Sélecteur couleurs PVD — palier 3 (à venir)</div>
   <div id="icelea-zircons-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">💎 Sélecteur zircons (taille, forme, couleur) — palier 4 (à venir)</div>
 
@@ -342,6 +390,13 @@
 <!-- Résultats -->
 <div class="resultats-zone" id="resultats"></div>
 
+<!-- Modale zoom nuancier -->
+<div class="nuancier-modal" id="nuancier-modal" onclick="fermerNuancier()">
+  <div class="modal-titre" id="modal-titre"></div>
+  <div class="modal-close" onclick="event.stopPropagation();fermerNuancier()">✕</div>
+  <img id="modal-img" src="" alt="">
+</div>
+
 <script>
 let sketchData = null;
 let categorie = null;
@@ -371,8 +426,8 @@ function updateIceleaConditional() {
   const mat = document.querySelector('input[name="icelea-mat"]:checked')?.value;
   const decos = Array.from(document.querySelectorAll('input[name="icelea-deco"]:checked')).map(c => c.value);
 
-  // Émail coché → afficher placeholder émail (palier 2)
-  document.getElementById('icelea-email-placeholder').style.display = decos.includes('email') ? 'block' : 'none';
+  // Émail coché → afficher zone nuancier émail (palier 2)
+  document.getElementById('icelea-email-zone').style.display = decos.includes('email') ? 'block' : 'none';
   // PVD coché → afficher placeholder PVD (palier 3)
   document.getElementById('icelea-pvd-placeholder').style.display = decos.includes('pvd') ? 'block' : 'none';
   // Zircons coché → afficher placeholder zircons (palier 4)
@@ -403,6 +458,16 @@ function toggleBaseFields() {
   const matiereBaseRow = document.getElementById('matiere-base')?.closest('.form-row');
   if (largeurRow) largeurRow.style.display = sans ? 'none' : 'flex';
   if (matiereBaseRow) matiereBaseRow.style.display = sans ? 'none' : 'flex';
+}
+
+function zoomNuancier(src, titre) {
+  document.getElementById('modal-img').src = src;
+  document.getElementById('modal-titre').textContent = titre;
+  document.getElementById('nuancier-modal').classList.add('active');
+}
+
+function fermerNuancier() {
+  document.getElementById('nuancier-modal').classList.remove('active');
 }
 
 // Toggle base listener
@@ -479,6 +544,7 @@ async function genererDesign() {
     const finArgent = document.querySelector('input[name="icelea-fin-argent"]:checked')?.value || null;
     const finArgentAutre = document.getElementById('icelea-fin-argent-autre')?.value?.trim() || null;
 
+    const emailCodes = document.getElementById('icelea-email-codes')?.value?.trim() || null;
     payload = {
       categorie,
       sketch: sketchData,
@@ -491,6 +557,7 @@ async function genererDesign() {
         decorationAutre: decoAutre,
         finitionArgent: finArgent,
         finitionArgentAutre: finArgentAutre,
+        emailCodes,
       },
       format: document.getElementById('icelea-img-format').value,
     };
