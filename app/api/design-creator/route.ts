@@ -34,7 +34,7 @@ const FINITION_REFS_COUNT: Record<string, number> = {
   "poli": 11, "mat": 6, "froisse": 11, "glitter": 3,
 };
 const FORMAT_REFS_COUNT: Record<string, number> = {
-  "addon": 6, "deux-tiers": 4, "medium": 3, "mini": 11, "base-large": 11, "base-small": 8, "base-xs": 0,
+  "addon": 6, "deux-tiers": 4, "medium": 3, "mini": 11, "base-large": 11, "base-small": 8, "base-xs": 10,
 };
 
 function loadFinitionRef(finition: string): { inlineData: { mimeType: string; data: string } } | null {
