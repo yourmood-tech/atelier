@@ -407,10 +407,26 @@ INSTRUCTIONS :
       const s = ZIRCON_SATURATION_LABELS[z.saturation || "medium"] || z.saturation;
       const q = z.quantite || 1;
       const t = z.taille || "1.5";
-      return `  • ${q} × ${f}, size ${t}mm, color ${c} (${s})`;
+      const qSpelled = q === 1 ? "ONE (1)" : q === 2 ? "TWO (2)" : q === 3 ? "THREE (3)" : q === 4 ? "FOUR (4)" : q === 5 ? "FIVE (5)" : q === 6 ? "SIX (6)" : q === 7 ? "SEVEN (7)" : q === 8 ? "EIGHT (8)" : q === 9 ? "NINE (9)" : q === 10 ? "TEN (10)" : `${q} (number ${q})`;
+      return `  • ${qSpelled} × ${f}, exact size ${t}mm, color ${c}, saturation ${s}`;
     }).join("\n");
     const total = zircons.reduce((sum, z) => sum + (z.quantite || 1), 0);
-    zirconsSection = `\n\n💎 ZIRCON GEMSTONE SETTING — Siamite glass-ceramic gemstones with the EXACT specifications below. Total : ${total} stones.\n${lines}\n\n🚨 ZIRCON RULES :\n- Count and set EXACTLY the requested quantity of each type.\n- Match each shape, size and color faithfully (brilliant sparkle, faceted cuts visible).\n- For mixed types, arrange them harmoniously on the band (e.g. centered cluster, evenly spaced, or per the artist's idea).\n- Prong-setting or bezel-setting visible per professional jewelry standards.\n- All stones must be CRYSTAL-CLEAR with brilliant sparkle and visible facets.`;
+    const detail = zircons.map(z => `${z.quantite || 1} ${z.forme || 'rond'} ${z.couleur || 'blanc'} ${z.taille}mm`).join(" + ");
+    zirconsSection = `\n\n💎 ZIRCON GEMSTONE SETTING — Siamite glass-ceramic gemstones, EXACT specifications below.
+
+🔢 EXACT TOTAL : ${total} stones on the ring (NOT more, NOT less).
+🔢 EXACT BREAKDOWN : ${detail}
+🔢 DETAILED LIST (count carefully, one bullet per type) :
+${lines}
+
+🚨 NON-NEGOTIABLE RULES :
+- 🔢 COUNT : Render EXACTLY the listed quantities. If "5 round" is asked, show EXACTLY 5 round stones — not 4, not 6, not 7. Count them visually before drawing.
+- 📏 SIZE : Render each stone at the EXACT size relative to the band : a 1.5mm stone is small, a 5mm stone is big. The size proportion to the band width matters.
+- 🎨 COLOR : Each stone must show its EXACT specified color and saturation. Don't drift to default white/clear if a color is specified.
+- 💎 SHAPE : Each stone must show its specified facet cut (round brilliant, oval, marquise, etc.) — clearly identifiable shape.
+- ✂️ SETTING : Prong-setting or bezel-setting visible, jewelry-grade professional setting.
+- 🌟 SPARKLE : All stones crystal-clear, brilliant facets visible, light refractions.
+- 📐 ARRANGEMENT : Distribute the stones harmoniously along the band visible front (e.g. evenly spaced row, centered cluster, asymmetric per artist's idea).`;
   }
 
   // Section PVD : couleurs sélectionnées dans la palette PVD Icelea
@@ -427,8 +443,9 @@ The user wants several PVD colors on the same ring. Combine them in a creative t
     }
   }
 
-  // Matériau neutre sans revêtement (tout matériau) → finition appliquée
-  const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
+  // Matériau neutre sans revêtement → finition appliquée
+  // Zircons retiré : pierres serties au-dessus n'empêchent pas la texture du métal d'être visible
+  const aRevetement = decos.includes("email") || decos.includes("pvd");
   const finitionDispo = !!matKey && !aRevetement;
   let finitionSection = "";
   if (finitionDispo) {
@@ -730,7 +747,7 @@ export async function POST(req: Request) {
   let formatRefAdded = false;
   if (!useEmailTransform && body.categorie === "icelea-3d" && body.icelea) {
     const decos = body.icelea.decorations || [];
-    const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
+    const aRevetement = decos.includes("email") || decos.includes("pvd");
     if (!aRevetement && body.icelea.finitionArgent && body.icelea.finitionArgent !== "autre-fin") {
       const refF = loadFinitionRef(body.icelea.finitionArgent);
       if (refF) { parts.push(refF); finitionRefAdded = true; }
@@ -772,7 +789,7 @@ export async function POST(req: Request) {
   if (finitionRefAdded || formatRefAdded) {
     refPreamble = "\n\n🖼️ VISUAL REFERENCES PROVIDED IN THIS REQUEST (CRITICAL — match the look) :\n";
     if (sketch) refPreamble += "- The FIRST attached image is the USER'S SKETCH/DRAWING of the design intent.\n";
-    if (finitionRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING with the EXACT '${body.icelea?.finitionArgent}' FINISH the user wants. Replicate this texture/surface treatment faithfully (look at how light interacts with the material, the micro-texture, the reflections).\n`;
+    if (finitionRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING with the EXACT '${body.icelea?.finitionArgent}' FINISH the user wants. Replicate this texture/surface treatment faithfully on the metal band (look at how light interacts with the material, the micro-texture, the reflections). 🚨 The metal texture is VISIBLE on the band even if there are gemstones set on top — the texture stays present between/around the stones.\n`;
     if (formatRefAdded) {
       const fmt = body.icelea?.format;
       refPreamble += `- One of the attached reference images shows a REAL MOOD RING in the '${fmt}' FORMAT the user wants. Match the proportions, structure, and silhouette of this format reference EXACTLY. Do not output a different format — if user asked '${fmt}' do not deliver 'medium' or any other format.\n`;

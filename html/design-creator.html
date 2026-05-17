@@ -511,8 +511,9 @@ function updateIceleaConditional() {
   document.getElementById('icelea-zircons-zone').style.display = zirconsOn ? 'block' : 'none';
   if (zirconsOn && document.getElementById('zircons-list').children.length === 0) ajouterZircon();
 
-  // Matériau neutre (sans revêtement émail/PVD/zircons) → afficher finition matériau (pour tous les matériaux)
-  const aRevetement = decos.includes('email') || decos.includes('pvd') || decos.includes('zircons');
+  // Matériau neutre (sans revêtement de surface) → afficher finition matériau
+  // Les zircons sont SERTIS dessus mais ne couvrent pas la surface → la finition reste pertinente
+  const aRevetement = decos.includes('email') || decos.includes('pvd');
   const materiauChoisi = !!mat;
   const finitionDispo = materiauChoisi && !aRevetement;
   document.getElementById('icelea-finition-argent').style.display = finitionDispo ? 'block' : 'none';
