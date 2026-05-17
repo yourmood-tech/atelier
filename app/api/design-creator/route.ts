@@ -95,43 +95,57 @@ function loadEmailCanvas(structure: string): { inlineData: { mimeType: string; d
 
 function buildEmailTransformPrompt(structure: string, emailCodes: string, idea: string): string {
   const structureDesc = structure === "avec"
-    ? "an addon ring with TWO thin polished silver rails on top and bottom edges framing a central enamel channel"
+    ? "an addon ring with TWO thin polished silver rails on top and bottom edges framing a central enamel channel (Mood signature addon)"
     : structure === "sans"
     ? "an addon ring with full enamel coverage edge-to-edge (no visible polished rails on the exterior)"
     : "a Mood BASE with two colored enamel stripes on its two rails";
 
-  return `MOOD COLLECTION ENAMEL COLOR TRANSFORM — Take THIS EXACT RING from the attached image (IMAGE 1) and CHANGE ONLY THE ENAMEL COLOR.
+  return `MOOD COLLECTION ENAMEL COLOR TRANSFORM — Take THIS EXACT RING from the attached image (IMAGE 1) and CHANGE ONLY THE ENAMEL COLOR. Nothing else.
 
-The ring in the attached image is ${structureDesc}. The original enamel color must be REPLACED with the new color(s) specified below.
+🚨🚨🚨 CRITICAL INSTRUCTION 🚨🚨🚨
+NE CHANGE RIEN AU FORMAT DE LA BAGUE.
+DO NOT change the ring's format, shape, structure, proportions, rails, silhouette, angle, or any other visual element.
+The ONLY change allowed is the COLOR of the enamel.
+Treat this as a pixel-precise color-replacement task : isolate the enamel zone and recolor it. Keep every other pixel identical to the source image.
+
+The ring in the attached image is ${structureDesc}.
 
 🎨 NEW ENAMEL COLOR(S) : ${emailCodes}
 
 The reference enamel charts (RB-* solid colors, RP-* pearlescent, RBF-* patterns) are attached as additional images. Identify the listed code(s) on the appropriate chart and apply the EXACT corresponding color(s) to the enamel zone of the ring.
 
 ═══════════════════════════════════════════════
-ABSOLUTE PRESERVATION RULES (everything else stays IDENTICAL)
+ABSOLUTE PRESERVATION RULES (NE CHANGE RIEN, EVERYTHING STAYS IDENTICAL)
 ═══════════════════════════════════════════════
 
-- 🚨 The METAL RAILS (polished silver borders) must remain EXACTLY as shown : same width, same shine, same placement.
-- 🚨 The RING SHAPE, SILHOUETTE, AND PROPORTIONS must remain IDENTICAL.
-- 🚨 The PHOTOGRAPHIC STYLE (lighting, background, angle, framing) must remain IDENTICAL.
-- 🚨 The INTERIOR of the ring stays polished silver as shown.
-- 🚨 The ENAMEL TEXTURE (matte/glossy/sparkle) should match the new code : RB-* = glossy smooth solid color, RP-* = pearlescent/glitter texture, RBF-* = printed motif pattern.
+- 🚨 METAL RAILS (polished silver borders) : EXACTLY as shown — same width, same shine, same placement, same thickness, same edges.
+- 🚨 RING SHAPE / SILHOUETTE / PROPORTIONS : IDENTICAL pixel-by-pixel to the source.
+- 🚨 RING FORMAT : IDENTICAL. NE CHANGE RIEN AU FORMAT DE LA BAGUE.
+- 🚨 PHOTOGRAPHIC STYLE : same lighting, same background, same angle, same framing, same depth of field, same shadows.
+- 🚨 INTERIOR of the ring : stays polished silver as shown.
+- 🚨 RING ORIENTATION : keep the exact same orientation as the source image (standing upright, opening to the right, etc.).
+- 🚨 ENAMEL TEXTURE : adapt to match the new code's type :
+  • RB-* (solid colors) → glossy smooth solid enamel
+  • RP-* (pearlescent) → pearlescent / glitter sparkle texture
+  • RBF-* (patterns) → printed motif pattern (animal print, plaid, geometric)
 
 ═══════════════════════════════════════════════
-ARTIST'S DESIGN IDEA (additional context, secondary to the color change)
+ARTIST'S DESIGN IDEA (secondary context — DOES NOT override format preservation)
 ═══════════════════════════════════════════════
-${idea || "(no additional idea — just change the enamel color)"}
+${idea || "(no additional idea — just change the enamel color, nothing else)"}
+
+⚠️ Even if the idea mentions other elements, IGNORE THEM. The ONLY allowed change is the enamel color. Format, shape, rails, structure — all stay identical.
 
 ═══════════════════════════════════════════════
 ABSOLUTE BANS
 ═══════════════════════════════════════════════
-- NO text, NO logo, NO watermark.
+- NO text, NO logo, NO watermark in the output.
 - NO hands, NO human.
-- NO changes to the ring's shape, structure, or rails.
-- NO changes to the photographic style.
+- ⛔ NO changes to the ring's format, shape, structure, rails, or proportions.
+- ⛔ NO changes to the photographic style, angle, lighting, or background.
+- ⛔ NO reinterpretation — strictly a color swap.
 
-Output : the SAME ring with the new enamel color applied.`;
+Output : the SAME ring with the new enamel color applied. Pixel-identical to source EXCEPT for the enamel color.`;
 }
 
 type IceleaData = {
