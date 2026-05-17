@@ -204,6 +204,52 @@ type IceleaData = {
   emailCodes?: string | null;      // ex: "RB-013, RB-067, RP-22, RBF-008"
   emailBord?: string | null;       // "avec" | "sans" — uniquement si email FULL revêtement (sans zircons/PVD)
   pvdColors?: string[] | null;     // ex: ["18K Rose Gold", "Royal Blue", "Rainbow"]
+  zircons?: Array<{
+    forme?: string;        // rond | ovale | poire | marquise | coeur | princess | baguette | trillion | coussin | octogonal | rose-cut | tapered-baguette
+    taille?: string;       // texte libre, ex "1.5" ou "2x3"
+    couleur?: string;      // blanc | jaune | bleu | etc.
+    saturation?: string;   // tres-clair | clair | medium | fonce | tres-fonce
+    quantite?: number;
+  }> | null;
+};
+
+const ZIRCON_FORME_LABELS: Record<string, string> = {
+  "rond": "round brilliant cut",
+  "ovale": "oval cut",
+  "poire": "pear cut",
+  "marquise": "marquise cut",
+  "coeur": "heart cut",
+  "princess": "square princess cut",
+  "baguette": "baguette cut (rectangular step-cut)",
+  "trillion": "trillion cut (triangular)",
+  "coussin": "cushion cut (square with rounded corners)",
+  "octogonal": "octagonal step-cut",
+  "rose-cut": "rose cut (dome-shaped, faceted top, flat bottom)",
+  "tapered-baguette": "tapered baguette cut",
+};
+
+const ZIRCON_COULEUR_LABELS: Record<string, string> = {
+  "blanc": "WHITE / colorless (like diamond)",
+  "jaune": "yellow",
+  "jaune-orange": "yellow-orange (amber-toned)",
+  "orange": "orange",
+  "orange-rouge": "orange-red (coral-toned)",
+  "rouge": "red (ruby tone)",
+  "rouge-violet": "red-violet (rubellite tone)",
+  "violet": "violet (amethyst tone)",
+  "violet-bleu": "violet-blue (tanzanite tone)",
+  "bleu": "blue (sapphire tone)",
+  "bleu-vert": "blue-green (paraiba tone)",
+  "vert": "green (emerald tone)",
+  "noir": "black (onyx tone)",
+};
+
+const ZIRCON_SATURATION_LABELS: Record<string, string> = {
+  "tres-clair": "very light pastel saturation",
+  "clair": "light saturation",
+  "medium": "medium saturation",
+  "fonce": "deep dark saturation",
+  "tres-fonce": "very deep intense saturation",
 };
 
 type DesignInput = {
@@ -346,6 +392,24 @@ INSTRUCTIONS :
     emailSection += "\n\n🌊 STRUCTURE — ADDON WITHOUT SILVER BORDER (full enamel coverage) : the enamel covers the ENTIRE outer surface of the addon from edge to edge. NO polished rails visible on the outside. The interior of the ring (inside the hole) remains polished silver. An attached reference image shows this exact full-coverage structure.";
   }
 
+  // Section zircons : pierres Siamite avec forme + taille + couleur + saturation + quantité
+  let zirconsSection = "";
+  const zircons = (icelea.zircons || []) as Array<{
+    forme?: string; taille?: string; couleur?: string; saturation?: string; quantite?: number;
+  }>;
+  if (decos.includes("zircons") && zircons.length > 0) {
+    const lines = zircons.map(z => {
+      const f = ZIRCON_FORME_LABELS[z.forme || "rond"] || z.forme;
+      const c = ZIRCON_COULEUR_LABELS[z.couleur || "blanc"] || z.couleur;
+      const s = ZIRCON_SATURATION_LABELS[z.saturation || "medium"] || z.saturation;
+      const q = z.quantite || 1;
+      const t = z.taille || "1.5";
+      return `  • ${q} × ${f}, size ${t}mm, color ${c} (${s})`;
+    }).join("\n");
+    const total = zircons.reduce((sum, z) => sum + (z.quantite || 1), 0);
+    zirconsSection = `\n\n💎 ZIRCON GEMSTONE SETTING — Siamite glass-ceramic gemstones with the EXACT specifications below. Total : ${total} stones.\n${lines}\n\n🚨 ZIRCON RULES :\n- Count and set EXACTLY the requested quantity of each type.\n- Match each shape, size and color faithfully (brilliant sparkle, faceted cuts visible).\n- For mixed types, arrange them harmoniously on the band (e.g. centered cluster, evenly spaced, or per the artist's idea).\n- Prong-setting or bezel-setting visible per professional jewelry standards.\n- All stones must be CRYSTAL-CLEAR with brilliant sparkle and visible facets.`;
+  }
+
   // Section PVD : couleurs sélectionnées dans la palette PVD Icelea
   let pvdSection = "";
   if (decos.includes("pvd")) {
@@ -387,7 +451,7 @@ ICELEA SPECIFICATIONS
 📏 FORMAT : ${fmtLabel}.
 
 ✨ DECORATIONS / SURFACE TREATMENT (combine all of the following) :
-${decoLabels || "- (none specified — clean plain band)"}${finitionSection}${emailSection}${pvdSection}
+${decoLabels || "- (none specified — clean plain band)"}${finitionSection}${emailSection}${pvdSection}${zirconsSection}
 
 🎨 DESIGN IDEA (artist's intent — interpret faithfully, RESPECT EVERY DETAIL) :
 ${idea}

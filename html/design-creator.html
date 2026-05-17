@@ -358,8 +358,12 @@
     <div class="hint-inline" id="pvd-selection" style="margin-top:0.5rem;font-weight:600;">Aucune couleur sélectionnée</div>
   </div>
 
-  <!-- Placeholder palier 4 zircons -->
-  <div id="icelea-zircons-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">💎 Sélecteur zircons (taille, forme, couleur) — palier 4 (à venir)</div>
+  <!-- Zircons : sélecteur cumulatif (palier 4) -->
+  <div id="icelea-zircons-zone" style="display:none;margin-bottom:1.2rem;padding:0.9rem;background:#fffdf6;border-left:3px solid var(--or);border-radius:6px;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">💎 Zircons Siamite <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— ajoute autant de types que tu veux (ex: 6 ronds blancs 1.5mm + 2 ovales bleus 2mm)</span></label>
+    <div id="zircons-list"></div>
+    <button type="button" onclick="ajouterZircon()" style="margin-top:0.5rem;padding:0.4rem 0.9rem;background:white;color:var(--or);border:2px dashed var(--or);border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">+ ajouter un type de zircon</button>
+  </div>
 
   <!-- Format image -->
   <div style="margin-top:1rem;">
@@ -502,8 +506,10 @@ function updateIceleaConditional() {
   const pvdShow = decos.includes('pvd');
   document.getElementById('icelea-pvd-zone').style.display = pvdShow ? 'block' : 'none';
   if (pvdShow) buildPvdGrid();
-  // Zircons coché → afficher placeholder zircons (palier 4)
-  document.getElementById('icelea-zircons-placeholder').style.display = decos.includes('zircons') ? 'block' : 'none';
+  // Zircons coché → afficher zone zircons (palier 4)
+  const zirconsOn = decos.includes('zircons');
+  document.getElementById('icelea-zircons-zone').style.display = zirconsOn ? 'block' : 'none';
+  if (zirconsOn && document.getElementById('zircons-list').children.length === 0) ajouterZircon();
 
   // Matériau neutre (sans revêtement émail/PVD/zircons) → afficher finition matériau (pour tous les matériaux)
   const aRevetement = decos.includes('email') || decos.includes('pvd') || decos.includes('zircons');
@@ -618,6 +624,54 @@ function toggleEmailCode(code, cell) {
     sel.length ? `${sel.length} pastille${sel.length > 1 ? 's' : ''} sélectionnée${sel.length > 1 ? 's' : ''} : ${sel.join(' · ')}` : 'Aucune pastille sélectionnée';
 }
 
+// === Zircons : sélecteur cumulatif ===
+const ZIRCON_FORMES = [
+  ['rond', 'Rond (brillant)'], ['ovale', 'Ovale'], ['poire', 'Poire'], ['marquise', 'Marquise'],
+  ['coeur', 'Cœur'], ['princess', 'Princess (carré)'], ['baguette', 'Baguette'], ['trillion', 'Trillion'],
+  ['coussin', 'Coussin'], ['octogonal', 'Octogonal'], ['rose-cut', 'Rose cut (dôme)'], ['tapered-baguette', 'Tapered baguette'],
+];
+const ZIRCON_COULEURS = [
+  ['blanc', 'Blanc / transparent (diamant)'], ['jaune', 'Jaune'], ['jaune-orange', 'Jaune orange'],
+  ['orange', 'Orange'], ['orange-rouge', 'Orange rouge'], ['rouge', 'Rouge'],
+  ['rouge-violet', 'Rouge violet'], ['violet', 'Violet'], ['violet-bleu', 'Violet bleu'],
+  ['bleu', 'Bleu'], ['bleu-vert', 'Bleu vert'], ['vert', 'Vert'], ['noir', 'Noir'],
+];
+const ZIRCON_SATURATIONS = [
+  ['tres-clair', 'Très clair'], ['clair', 'Clair'], ['medium', 'Medium'], ['fonce', 'Foncé'], ['tres-fonce', 'Très foncé'],
+];
+
+let zirconCounter = 0;
+function ajouterZircon() {
+  zirconCounter++;
+  const id = `zircon-${zirconCounter}`;
+  const ligne = document.createElement('div');
+  ligne.className = 'zircon-ligne';
+  ligne.id = id;
+  ligne.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.5rem;align-items:end;padding:0.6rem;background:white;border-radius:8px;margin-bottom:0.5rem;border:1px solid #eee;';
+  const optFormes = ZIRCON_FORMES.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+  const optCouleurs = ZIRCON_COULEURS.map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+  const optSaturations = ZIRCON_SATURATIONS.map(([v,l]) => `<option value="${v}"${v==='medium'?' selected':''}>${l}</option>`).join('');
+  ligne.innerHTML = `
+    <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Forme</label><select class="z-forme" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;">${optFormes}</select></div>
+    <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Taille (mm)</label><input type="text" class="z-taille" value="1.5" placeholder="ex: 1.5 ou 2x3" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;"></div>
+    <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Couleur</label><select class="z-couleur" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;">${optCouleurs}</select></div>
+    <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Saturation</label><select class="z-saturation" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;">${optSaturations}</select></div>
+    <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Quantité</label><input type="number" class="z-quantite" value="1" min="1" max="100" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;"></div>
+    <button type="button" onclick="document.getElementById('${id}').remove()" style="padding:0.4rem;background:#fee;color:var(--rouge);border:1px solid #fcc;border-radius:6px;font-size:0.78rem;cursor:pointer;">🗑️ retirer</button>
+  `;
+  document.getElementById('zircons-list').appendChild(ligne);
+}
+
+function recupererZircons() {
+  return Array.from(document.querySelectorAll('.zircon-ligne')).map(l => ({
+    forme: l.querySelector('.z-forme').value,
+    taille: l.querySelector('.z-taille').value.trim(),
+    couleur: l.querySelector('.z-couleur').value,
+    saturation: l.querySelector('.z-saturation').value,
+    quantite: parseInt(l.querySelector('.z-quantite').value, 10) || 1,
+  }));
+}
+
 function togglePvd(code, card) {
   if (pvdSelected.has(code)) { pvdSelected.delete(code); card.classList.remove('active'); }
   else { pvdSelected.add(code); card.classList.add('active'); }
@@ -705,6 +759,7 @@ async function genererDesign() {
     const emailCodes = [emailCodesPastilles, emailCodesTexte].filter(s => s).join(', ') || null;
     const emailBord = document.querySelector('input[name="icelea-email-bord-val"]:checked')?.value || null;
     const pvdColors = Array.from(pvdSelected);
+    const zircons = decos.includes('zircons') ? recupererZircons() : [];
     payload = {
       categorie,
       sketch: sketchData,
@@ -720,6 +775,7 @@ async function genererDesign() {
         emailCodes,
         emailBord,
         pvdColors,
+        zircons,
       },
       format: document.getElementById('icelea-img-format').value,
     };
