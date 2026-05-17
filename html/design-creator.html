@@ -100,21 +100,21 @@
   .email-nuancier-details summary { padding: 0.5rem 0.8rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; background: #faf6ec; user-select: none; }
   .email-nuancier-details summary:hover { background: #f5efd9; }
   .email-pastilles-grid {
-    display: grid; gap: 0.5rem; padding: 0.8rem;
-    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    display: grid; gap: 0.55rem; padding: 0.8rem;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   }
   .email-pastille {
-    text-align: center; cursor: pointer; padding: 0.3rem; border-radius: 8px;
+    text-align: center; cursor: pointer; padding: 0.35rem; border-radius: 10px;
     border: 2px solid transparent; transition: all 0.12s; background: white;
   }
   .email-pastille:hover { background: #fffdf6; border-color: rgba(201, 169, 110, 0.4); }
-  .email-pastille.active { border-color: var(--or); background: #fff8e7; box-shadow: 0 2px 8px rgba(201, 169, 110, 0.3); }
+  .email-pastille.active { border-color: var(--or); background: #fff8e7; box-shadow: 0 2px 10px rgba(201, 169, 110, 0.3); }
   .email-pastille .pastille-rond {
-    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 0.25rem;
+    width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 0.3rem;
     background-repeat: no-repeat; border: 1px solid rgba(0,0,0,0.08);
-    box-shadow: inset -5px -5px 10px rgba(0,0,0,0.12);
+    box-shadow: inset -6px -6px 12px rgba(0,0,0,0.13);
   }
-  .email-pastille .pastille-code { font-size: 0.68rem; font-weight: 600; color: var(--noir); line-height: 1.1; }
+  .email-pastille .pastille-code { font-size: 0.78rem; font-weight: 600; color: var(--noir); line-height: 1.1; }
 
   /* Grille pastilles PVD */
   .pvd-grid {
@@ -262,14 +262,14 @@
   <div style="margin-bottom:1.2rem;">
     <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">📏 Format de la bague</label>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.4rem;">
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-large" checked> Base large</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-small"> Base small</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-xs"> Base extra small</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="addon"> Addon (seul)</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="open-mood"> Open mood</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="deux-tiers"> Deux tiers</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="medium"> Medium</label>
-      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="mini"> Mini</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-large" checked onchange="updateIceleaConditional()"> Base large</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-small" onchange="updateIceleaConditional()"> Base small</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-xs" onchange="updateIceleaConditional()"> Base extra small</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="addon" onchange="updateIceleaConditional()"> Addon (seul)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="open-mood" onchange="updateIceleaConditional()"> Open mood</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="deux-tiers" onchange="updateIceleaConditional()"> Deux tiers</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="medium" onchange="updateIceleaConditional()"> Medium</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="mini" onchange="updateIceleaConditional()"> Mini</label>
     </div>
   </div>
 
@@ -493,9 +493,11 @@ function updateIceleaConditional() {
   const emailOn = decos.includes('email');
   document.getElementById('icelea-email-zone').style.display = emailOn ? 'block' : 'none';
   if (emailOn) buildEmailHotspots();
-  // Toggle "avec bord / sans bord" : visible seulement si email SEUL (pas de zircons ni PVD)
+  // Toggle "avec bord / sans bord" : visible seulement si email SEUL (pas de zircons ni PVD) ET format != base-*
   const emailFullCoat = emailOn && !decos.includes('zircons') && !decos.includes('pvd');
-  document.getElementById('icelea-email-bord').style.display = emailFullCoat ? 'block' : 'none';
+  const formatChoisi = document.querySelector('input[name="icelea-format"]:checked')?.value || '';
+  const isBaseFormat = formatChoisi === 'base-large' || formatChoisi === 'base-small' || formatChoisi === 'base-xs';
+  document.getElementById('icelea-email-bord').style.display = (emailFullCoat && !isBaseFormat) ? 'block' : 'none';
   // PVD coché → afficher grille pastilles PVD (palier 3)
   const pvdShow = decos.includes('pvd');
   document.getElementById('icelea-pvd-zone').style.display = pvdShow ? 'block' : 'none';

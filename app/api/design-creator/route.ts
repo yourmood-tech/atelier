@@ -61,7 +61,7 @@ function loadFormatRef(format: string): { inlineData: { mimeType: string; data: 
   } catch { return null; }
 }
 
-const EMAIL_BORD_REFS_COUNT: Record<string, number> = { "avec": 2, "sans": 14 };
+const EMAIL_BORD_REFS_COUNT: Record<string, number> = { "avec": 5, "sans": 14, "base": 2 };
 
 function loadEmailBordRef(bord: string): { inlineData: { mimeType: string; data: string } } | null {
   const count = EMAIL_BORD_REFS_COUNT[bord] || 0;
@@ -217,12 +217,15 @@ INSTRUCTIONS :
     emailSection = "\n\n🎨 ENAMEL : applied to the band but no specific codes provided — choose a tasteful color that fits the artist's idea.";
   }
 
-  // Structure email : avec/sans bord argent (uniquement si email FULL coat, pas de zircons/PVD)
+  // Structure email selon format et toggle
   const emailFullCoat = decos.includes("email") && !decos.includes("zircons") && !decos.includes("pvd");
-  if (emailFullCoat && icelea.emailBord === "avec") {
-    emailSection += "\n\n💍 STRUCTURE — WITH SILVER BORDER (Mood signature) : the ring has TWO POLISHED SILVER RAILS visible on the top and bottom edges of the band, framing the enamel coating in the center. The enamel sits in the central groove between the two mirror-polished rails. This is the classic Mood interchangeable structure. An attached reference image shows this exact structure.";
+  const isBaseFmt = icelea.format === "base-large" || icelea.format === "base-small" || icelea.format === "base-xs";
+  if (emailFullCoat && isBaseFmt) {
+    emailSection += "\n\n💎 STRUCTURE — BASE WITH ENAMEL STRIPES (Mood base signature) : this is a Mood BASE (not an addon), and the enamel is applied as TWO DISTINCT COLORED STRIPES on the TWO RAILS of the base (one stripe on the top rail, one stripe on the bottom rail). Between the two enamel stripes there is a CENTRAL GROOVE (the addon-receiving groove, typically rendered with a ceramic-white or polished metal fill). The enamel is NOT a continuous coverage — it's specifically on the two rails of the base. An attached reference image shows this exact base-with-enamel-stripes structure.";
+  } else if (emailFullCoat && icelea.emailBord === "avec") {
+    emailSection += "\n\n💍 STRUCTURE — ADDON WITH SILVER BORDER (Mood signature) : the addon has TWO THIN POLISHED SILVER RAILS visible on the top and bottom edges of the band, framing the enamel zone in the center. The enamel sits in the central groove between the two mirror-polished thin rails. This is the classic Mood addon structure. An attached reference image shows this exact structure.";
   } else if (emailFullCoat && icelea.emailBord === "sans") {
-    emailSection += "\n\n🌊 STRUCTURE — WITHOUT SILVER BORDER (full enamel coverage) : the enamel covers the ENTIRE outer surface of the ring from edge to edge. NO polished rails visible on the outside — the enamel is the only visible exterior material. The interior of the ring (inside the hole) remains polished silver. An attached reference image shows this exact full-coverage structure.";
+    emailSection += "\n\n🌊 STRUCTURE — ADDON WITHOUT SILVER BORDER (full enamel coverage) : the enamel covers the ENTIRE outer surface of the addon from edge to edge. NO polished rails visible on the outside. The interior of the ring (inside the hole) remains polished silver. An attached reference image shows this exact full-coverage structure.";
   }
 
   // Section PVD : couleurs sélectionnées dans la palette PVD Icelea
@@ -537,12 +540,17 @@ export async function POST(req: Request) {
   // Icelea + email coché → joindre les nuanciers comme refs visuelles
   let emailBordRefAdded: string | null = null;
   if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
-    // Ref structure email (avec/sans bord) si full revêtement
+    // Ref structure email selon format ET toggle utilisateur
     const decosE = body.icelea.decorations || [];
     const emailFullCoatE = !decosE.includes("zircons") && !decosE.includes("pvd");
-    if (emailFullCoatE && body.icelea.emailBord) {
-      const refBord = loadEmailBordRef(body.icelea.emailBord);
-      if (refBord) { parts.push(refBord); emailBordRefAdded = body.icelea.emailBord; }
+    const fmtE = body.icelea.format || "";
+    const isBase = fmtE === "base-large" || fmtE === "base-small" || fmtE === "base-xs";
+    if (emailFullCoatE) {
+      // Si format = base → utiliser ref "base" (style 2 bandes émail sur les rails)
+      // Sinon utiliser le toggle avec/sans bord
+      const bordChoice = isBase ? "base" : (body.icelea.emailBord || "avec");
+      const refBord = loadEmailBordRef(bordChoice);
+      if (refBord) { parts.push(refBord); emailBordRefAdded = bordChoice; }
     }
     // Nuanciers émail
     const nuanciers = loadEmailNuanciers();
@@ -569,14 +577,16 @@ export async function POST(req: Request) {
       if (fmt === "base-small") refPreamble += `🚨 BASE SMALL (11mm — MEDIUM base) : intermediate thickness, NOT as wide as base-large NOR as slim as base-xs.\n`;
       if (fmt === "base-xs") refPreamble += `🚨 BASE EXTRA-SMALL (9mm — THE NARROWEST base) : show a SLIM elegant base with thin delicate rails. Notably slimmer than base-small and base-large.\n`;
     }
-    if (emailBordRefAdded === "avec") refPreamble += `- One of the attached reference images shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
-    if (emailBordRefAdded === "sans") refPreamble += `- One of the attached reference images shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;
+    if (emailBordRefAdded === "avec") refPreamble += `- One of the attached reference images shows the EXACT 'WITH SILVER BORDER' addon structure (Mood classic : an addon with a colored enamel channel between two thin polished silver rails on top and bottom edges of the band). Reproduce this structural framing exactly : a clearly visible polished silver border framing the enamel zone.\n`;
+    if (emailBordRefAdded === "sans") refPreamble += `- One of the attached reference images shows the EXACT 'WITHOUT SILVER BORDER' addon structure (full enamel coverage, no visible rails on the exterior — enamel covers edge-to-edge). Reproduce this structural design exactly.\n`;
+    if (emailBordRefAdded === "base") refPreamble += `- One of the attached reference images shows the EXACT Mood BASE with enamel structure : the BASE has TWO COLORED ENAMEL STRIPES on its two rails (one enamel band on each side of the band), framing a central groove (typically ceramic or open). NOT a continuous enamel coating — two distinct enamel bands separated by a structural middle zone. Reproduce this exact structural design.\n`;
     refPreamble += "These references show how Mood Collection actually produces these designs in real life — match the photographic style, material rendering, and structural proportions.\n";
   } else if (emailBordRefAdded) {
     // Cas où finition/format pas activés mais bord email l'est
     refPreamble = "\n\n🖼️ VISUAL REFERENCE PROVIDED IN THIS REQUEST (CRITICAL — match the structure) :\n";
-    if (emailBordRefAdded === "avec") refPreamble += `- An attached reference image shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
-    if (emailBordRefAdded === "sans") refPreamble += `- An attached reference image shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;
+    if (emailBordRefAdded === "avec") refPreamble += `- An attached reference image shows the EXACT 'WITH SILVER BORDER' addon structure (enamel between two thin polished silver rails). Reproduce this structural framing exactly.\n`;
+    if (emailBordRefAdded === "sans") refPreamble += `- An attached reference image shows the EXACT 'WITHOUT SILVER BORDER' addon structure (full enamel coverage, no visible rails). Reproduce this structural design exactly.\n`;
+    if (emailBordRefAdded === "base") refPreamble += `- An attached reference image shows the EXACT Mood BASE-with-enamel structure : TWO colored enamel stripes on the two rails of the base, separated by a central structural zone. Reproduce this exact design.\n`;
   }
   parts.push({ text: prompt + refPreamble });
 
