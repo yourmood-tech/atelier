@@ -185,8 +185,82 @@
   </div>
 </div>
 
-<!-- Panel 3 : caractéristiques produit -->
-<div class="panel">
+<!-- Panel Icelea : caractéristiques spécifiques (affiché uniquement si catégorie = Icelea 3D) -->
+<div class="panel" id="icelea-panel" style="display:none;">
+  <div class="panel-titre">3 · Caractéristiques Icelea</div>
+
+  <!-- Matériau (radio, choisir 1) -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">🔩 Matériau</label>
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-mat" value="argent" checked onchange="updateIceleaConditional()"> Argent</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-mat" value="acier" onchange="updateIceleaConditional()"> Acier</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-mat" value="ceramique" onchange="updateIceleaConditional()"> Céramique</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-mat" value="autre" onchange="updateIceleaConditional()"> Autre :</label>
+      <input type="text" id="icelea-mat-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
+    </div>
+  </div>
+
+  <!-- Format de la bague (radio, choisir 1) -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">📏 Format de la bague</label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.4rem;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-large" checked> Base large</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-small"> Base small</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="base-xs"> Base extra small</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="addon"> Addon (seul)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="open-mood"> Open mood</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="deux-tiers"> Deux tiers</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="medium"> Medium</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-format" value="mini"> Mini</label>
+    </div>
+  </div>
+
+  <!-- Finition / décor (checkboxes multi) -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">✨ Finition / décor <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— plusieurs choix possibles (ex: 3D + zircons + émail)</span></label>
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="checkbox" name="icelea-deco" value="3d" onchange="updateIceleaConditional()"> 3D (forme sculptée)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="checkbox" name="icelea-deco" value="email" onchange="updateIceleaConditional()"> Revêtement émail</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="checkbox" name="icelea-deco" value="zircons" onchange="updateIceleaConditional()"> Zircons (sertissage)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="checkbox" name="icelea-deco" value="pvd" onchange="updateIceleaConditional()"> Revêtement PVD</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="checkbox" name="icelea-deco" value="autre" onchange="updateIceleaConditional()"> Autre :</label>
+      <input type="text" id="icelea-deco-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
+    </div>
+  </div>
+
+  <!-- Conditionnel : argent neutre (sans revêtement) → finition argent -->
+  <div id="icelea-finition-argent" style="display:none;margin-bottom:1.2rem;padding:0.8rem;background:#f9f5ec;border-left:3px solid var(--or);border-radius:6px;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">💫 Finition argent <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— argent neutre sans revêtement</span></label>
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="poli" checked> Poli</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="matt"> Matt</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="glitter"> Glitter (neige éternelle)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="froisse"> Froissé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="autre-fin"> Autre :</label>
+      <input type="text" id="icelea-fin-argent-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
+    </div>
+  </div>
+
+  <!-- Placeholders pour paliers 2/3/4 -->
+  <div id="icelea-email-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">🎨 Sélecteur couleurs émail — palier 2 (à venir)</div>
+  <div id="icelea-pvd-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">🌈 Sélecteur couleurs PVD — palier 3 (à venir)</div>
+  <div id="icelea-zircons-placeholder" style="display:none;padding:0.6rem;background:#fff8e7;border:1px dashed var(--or);border-radius:6px;margin-bottom:0.6rem;font-size:0.8rem;color:var(--gris);">💎 Sélecteur zircons (taille, forme, couleur) — palier 4 (à venir)</div>
+
+  <!-- Format image -->
+  <div style="margin-top:1rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">📐 Format de l'image</label>
+    <select id="icelea-img-format" style="padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">
+      <option value="1:1" selected>1:1 carré (Insta post)</option>
+      <option value="3:2">3:2 paysage</option>
+      <option value="4:5">4:5 portrait</option>
+      <option value="9:16">9:16 story</option>
+    </select>
+  </div>
+</div>
+
+<!-- Panel 3 : caractéristiques produit (standard — masqué si Icelea) -->
+<div class="panel" id="panel-standard">
   <div class="panel-titre">3 · Caractéristiques produit</div>
   <div class="form-grid">
     <div class="form-row">
@@ -274,10 +348,37 @@ function choisirCategorie(cat) {
   categorie = cat;
   document.querySelectorAll('.cat-card').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
   document.getElementById('form-zone').style.display = 'block';
-  // Si "sans base" → masquer les selecteurs base
-  toggleBaseFields();
+
+  // Icelea = formulaire spécifique, masque le toggle base universel + panel-standard
+  const isIcelea = cat === 'icelea-3d';
+  const togglePanel = document.querySelector('.panel:has(#toggle-base)');
+  if (togglePanel) togglePanel.style.display = isIcelea ? 'none' : 'block';
+  document.getElementById('icelea-panel').style.display = isIcelea ? 'block' : 'none';
+  document.getElementById('panel-standard').style.display = isIcelea ? 'none' : 'block';
+
+  // Si non-Icelea, appliquer le toggle base habituel
+  if (!isIcelea) toggleBaseFields();
+  if (isIcelea) updateIceleaConditional();
+
   // Scroll doux vers la zone formulaire
   setTimeout(() => document.getElementById('form-zone').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function updateIceleaConditional() {
+  const mat = document.querySelector('input[name="icelea-mat"]:checked')?.value;
+  const decos = Array.from(document.querySelectorAll('input[name="icelea-deco"]:checked')).map(c => c.value);
+
+  // Émail coché → afficher placeholder émail (palier 2)
+  document.getElementById('icelea-email-placeholder').style.display = decos.includes('email') ? 'block' : 'none';
+  // PVD coché → afficher placeholder PVD (palier 3)
+  document.getElementById('icelea-pvd-placeholder').style.display = decos.includes('pvd') ? 'block' : 'none';
+  // Zircons coché → afficher placeholder zircons (palier 4)
+  document.getElementById('icelea-zircons-placeholder').style.display = decos.includes('zircons') ? 'block' : 'none';
+
+  // Argent neutre (sans revêtement émail/PVD/zircons) → afficher finition argent
+  const aRevetement = decos.includes('email') || decos.includes('pvd') || decos.includes('zircons');
+  const argentNeutre = mat === 'argent' && !aRevetement;
+  document.getElementById('icelea-finition-argent').style.display = argentNeutre ? 'block' : 'none';
 }
 
 function toggleBaseFields() {
@@ -351,18 +452,46 @@ async function genererDesign() {
     return;
   }
 
-  const payload = {
-    categorie,
-    withBase,
-    sketch: sketchData,
-    idea,
-    largeur: withBase === 'avec' ? document.getElementById('largeur').value : null,
-    matiereBase: withBase === 'avec' ? document.getElementById('matiere-base').value : null,
-    typeAddon: document.getElementById('type-addon').value,
-    matiereAddon: document.getElementById('matiere-addon').value,
-    finitionAddon: document.getElementById('finition-addon').value,
-    format: document.getElementById('format').value,
-  };
+  let payload;
+  if (categorie === 'icelea-3d') {
+    // Formulaire spécifique Icelea
+    const matRadio = document.querySelector('input[name="icelea-mat"]:checked');
+    const formatRadio = document.querySelector('input[name="icelea-format"]:checked');
+    const decos = Array.from(document.querySelectorAll('input[name="icelea-deco"]:checked')).map(c => c.value);
+    const matAutre = document.getElementById('icelea-mat-autre')?.value?.trim() || null;
+    const decoAutre = document.getElementById('icelea-deco-autre')?.value?.trim() || null;
+    const finArgent = document.querySelector('input[name="icelea-fin-argent"]:checked')?.value || null;
+    const finArgentAutre = document.getElementById('icelea-fin-argent-autre')?.value?.trim() || null;
+
+    payload = {
+      categorie,
+      sketch: sketchData,
+      idea,
+      icelea: {
+        materiau: matRadio?.value || 'argent',
+        materiauAutre: matAutre,
+        format: formatRadio?.value || 'base-large',
+        decorations: decos,
+        decorationAutre: decoAutre,
+        finitionArgent: finArgent,
+        finitionArgentAutre: finArgentAutre,
+      },
+      format: document.getElementById('icelea-img-format').value,
+    };
+  } else {
+    payload = {
+      categorie,
+      withBase,
+      sketch: sketchData,
+      idea,
+      largeur: withBase === 'avec' ? document.getElementById('largeur').value : null,
+      matiereBase: withBase === 'avec' ? document.getElementById('matiere-base').value : null,
+      typeAddon: document.getElementById('type-addon').value,
+      matiereAddon: document.getElementById('matiere-addon').value,
+      finitionAddon: document.getElementById('finition-addon').value,
+      format: document.getElementById('format').value,
+    };
+  }
 
   const btn = document.getElementById('btn-generer');
   btn.disabled = true;

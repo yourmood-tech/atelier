@@ -5,6 +5,16 @@ const MODEL = "gemini-3-pro-image-preview";
 
 export const maxDuration = 60;
 
+type IceleaData = {
+  materiau?: string | null;        // argent | acier | ceramique | autre
+  materiauAutre?: string | null;
+  format?: string | null;          // base-large | base-small | base-xs | addon | open-mood | deux-tiers | medium | mini
+  decorations?: string[] | null;   // 3d | email | zircons | pvd | autre (multi)
+  decorationAutre?: string | null;
+  finitionArgent?: string | null;  // poli | matt | glitter | froisse | autre-fin
+  finitionArgentAutre?: string | null;
+};
+
 type DesignInput = {
   categorie?: string | null;     // icelea-3d | bijouterie-mood | mood-joaillerie | technocut
   withBase?: string | null;      // "avec" | "sans"
@@ -16,6 +26,38 @@ type DesignInput = {
   matiereAddon?: string | null;  // acier | argent-925 | or-jaune-18k | or-rose-18k | or-blanc-18k | ceramique-noire | tantale | alu-couleur
   finitionAddon?: string | null; // poli-miroir | brosse | satine | martele
   format?: string | null;        // 1:1 | 3:2 | 4:5 | 9:16
+  icelea?: IceleaData | null;
+};
+
+const ICELEA_MATERIAU_LABELS: Record<string, string> = {
+  "argent": "925 sterling silver (warm silver tone, classic jewelry-grade)",
+  "acier": "316L surgical stainless steel (silver mirror-polished, durable)",
+  "ceramique": "high-tech ceramic (typically black or white, unscratchable, slightly velvety finish)",
+};
+
+const ICELEA_FORMAT_LABELS: Record<string, string> = {
+  "base-large": "BASE LARGE — the wide structural base ring (13mm width) with two flanking rails and central groove for an addon",
+  "base-small": "BASE SMALL — the medium structural base ring (11mm width) with two rails and central groove",
+  "base-xs": "BASE EXTRA-SMALL — the narrow structural base ring (9mm width) with two thin rails and central groove",
+  "addon": "ADDON — a decorated band designed to clip into the central groove of a Mood base. Render the ADDON ALONE (no base, no rails).",
+  "open-mood": "OPEN MOOD — a ring with an open gap / split design, asymmetric or adjustable opening",
+  "deux-tiers": "TWO-THIRDS (deux tiers) — a partial ring covering ~two thirds of the finger circumference (open-back partial ring)",
+  "medium": "MEDIUM addon — standard medium width decorative band",
+  "mini": "MINI — very fine narrow band, delicate jewelry style",
+};
+
+const ICELEA_DECO_LABELS: Record<string, string> = {
+  "3d": "3D SCULPTED FORM — the band itself has dimensional sculpted shape (relief, curves, sculpted volume, not a flat surface)",
+  "email": "ENAMEL COATING — colored enamel layer applied to the band surface (smooth glossy finish, jewelry-grade enameling)",
+  "zircons": "ZIRCON GEMSTONE SETTING — small/medium cubic zirconia stones set into the band (sparkling, brilliant cut)",
+  "pvd": "PVD COATING — physical vapor deposition coating that colors the surface (durable colored finish: gold, rose gold, black, blue, rainbow, etc.)",
+};
+
+const ICELEA_FINITION_ARGENT_LABELS: Record<string, string> = {
+  "poli": "MIRROR-POLISHED silver finish (high-shine specular reflections)",
+  "matt": "MATT silver finish (uniform soft matte, no shine)",
+  "glitter": "GLITTER / SNOWFLAKE finish (also called 'neige éternelle' — fine sparkling micro-texture, like frosted snow catching light)",
+  "froisse": "CRINKLED / 'FROISSÉ' finish (irregular crumpled-paper-like texture, organic random surface, premium artisan look)",
 };
 
 const CATEGORIE_INTROS: Record<string, string> = {
@@ -66,8 +108,111 @@ const FINITION_LABELS: Record<string, string> = {
   "martele": "hammered finish (faceted texture with small irregular planes catching light)",
 };
 
+function buildIceleaPrompt(input: DesignInput): string {
+  const icelea = input.icelea || {};
+  const matKey = icelea.materiau || "argent";
+  const matLabel = matKey === "autre" && icelea.materiauAutre
+    ? `${icelea.materiauAutre} (per artist's specification)`
+    : ICELEA_MATERIAU_LABELS[matKey] || matKey;
+
+  const fmtLabel = icelea.format ? ICELEA_FORMAT_LABELS[icelea.format] || icelea.format : ICELEA_FORMAT_LABELS["base-large"];
+  const isAddonOnly = icelea.format === "addon";
+
+  const decos = (icelea.decorations || []) as string[];
+  const decoLabels = decos
+    .map(d => d === "autre" && icelea.decorationAutre ? `- OTHER : ${icelea.decorationAutre}` : `- ${ICELEA_DECO_LABELS[d] || d}`)
+    .join("\n");
+
+  // Argent neutre sans revêtement → finition argent appliquée
+  const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
+  const isArgentNeutre = matKey === "argent" && !aRevetement;
+  let finitionArgentSection = "";
+  if (isArgentNeutre) {
+    const finKey = icelea.finitionArgent || "poli";
+    const finLabel = finKey === "autre-fin" && icelea.finitionArgentAutre
+      ? `${icelea.finitionArgentAutre} finish (custom)`
+      : ICELEA_FINITION_ARGENT_LABELS[finKey] || finKey;
+    finitionArgentSection = `\n💫 SILVER FINISH (neutral silver, no coating) : ${finLabel}.`;
+  }
+
+  const idea = (input.idea && input.idea.trim()) || "(no extra description — follow the sketch + selectors strictly)";
+  const sketchPresent = !!(input.sketch && input.sketch.trim());
+
+  return `ICELEA 3D DEVELOPMENT RENDER — Generate a PHOTOREALISTIC CAD-style 3D rendered preview of a Mood Collection ring design for the Icelea jewelry developer. This is a PROTOTYPE VISUALIZATION used to validate the design before manufacturing. Style : clean technical CAD render (like Rhino + KeyShot or Matrix Gold output), perfect geometry, premium prototype look.
+
+═══════════════════════════════════════════════
+ICELEA SPECIFICATIONS
+═══════════════════════════════════════════════
+
+🔩 MATERIAL : ${matLabel}.
+
+📏 FORMAT : ${fmtLabel}.
+
+✨ DECORATIONS / SURFACE TREATMENT (combine all of the following) :
+${decoLabels || "- (none specified — clean plain band)"}${finitionArgentSection}
+
+🎨 DESIGN IDEA (artist's intent — interpret faithfully) :
+${idea}
+
+${sketchPresent ? "🖼️ SKETCH REFERENCE (IMAGE 1) : The user provided a sketch / drawing of the intended design. Interpret it FAITHFULLY — respect proportions, motifs, decorations, gemstone positions, and overall style. The sketch is the PRIMARY visual reference." : ""}
+
+═══════════════════════════════════════════════
+${isAddonOnly ? "ADDON-ONLY ANATOMY (no base, no rails)" : "MOOD RING ANATOMY"}
+═══════════════════════════════════════════════
+
+${isAddonOnly
+    ? "This is the ADDON ONLY — a single decorated ring band, standalone, no base, no flanking rails. Show only the addon as a complete decorated ring with the decoration as its primary surface. Interior of the ring is polished smooth (silver tone)."
+    : `The Mood ring is a patented INTERCHANGEABLE clip-on system. The BASE is the structural component with two polished rails (top/bottom of the band) and a central groove where the addon clips in.
+
+CRITICAL geometry rules :
+- TWO rails on top and bottom edges of the band, ALWAYS nickel-mirror-polished (specular highlights, clean).
+- Central groove between rails where the addon decoration sits.
+- Addon FLUSH with rails at the same height (no relief, no step).
+- Addon uniform width along the entire visible length.
+- Interior of the ring is polished smooth, color-matched to the base material.`}
+
+═══════════════════════════════════════════════
+PHOTOGRAPHY STYLE — CAD RENDER PREVIEW
+═══════════════════════════════════════════════
+
+📐 ANGLE & FRAMING :
+- Camera at near eye-level with a slight downward tilt (~10-15° plunge).
+- Ring laid flat horizontally.
+- Slight 3/4 perspective : decorated outer band visible on TOP, polished inner hole as horizontal OVAL on the right side.
+- The ring fills 80-95% of the frame width, well-centered.
+
+🎯 BACKGROUND : Pure WHITE seamless studio background (#FFFFFF), no texture, no gradient.
+
+💡 LIGHTING : CAD-render studio lighting — soft HDRI environment, subtle multi-direction reflections that showcase facets, gemstones, and geometric details. Clean and bright, like a Rhino + KeyShot premium render.
+
+✨ STYLE : Photorealistic CAD render, slightly idealized perfect geometry, precise edges, no surface imperfections (no scratches, dust, fingerprints). The aesthetic is precision + premium prototype, NOT a worn-in artisan piece.
+
+✨ QUALITY :
+- ULTRA HIGH RESOLUTION photoreal output.
+- Gemstones (if any) : crystal-clear, brilliant sparkle, prong/bezel setting visible.
+- Polished metal : crisp specular reflections, smooth gradients.
+
+═══════════════════════════════════════════════
+ABSOLUTE BANS
+═══════════════════════════════════════════════
+
+- NO text, NO logo, NO watermark in the image.
+- NO hands, NO human, NO mannequin holding the ring.
+- NO scene props, NO leaves, NO water, NO fabric — just the ring on pure white.
+- NO simplification or generic ring design — the output must reflect the sketch + specifications precisely.
+${isAddonOnly ? "- NO base, NO rails — the addon is standalone." : ""}
+
+Output : ONE photoreal CAD-render preview of the Icelea ring design described above.`;
+}
+
 function buildPrompt(input: DesignInput): string {
   const categorie = input.categorie || "bijouterie-mood";
+
+  // Si Icelea avec données spécifiques → prompt dédié
+  if (categorie === "icelea-3d" && input.icelea) {
+    return buildIceleaPrompt(input);
+  }
+
   const catIntro = CATEGORIE_INTROS[categorie] || CATEGORIE_INTROS["bijouterie-mood"];
   const withBase = input.withBase !== "sans"; // default = avec base
   const largeur = input.largeur ? LARGEUR_LABELS[input.largeur] || input.largeur : "S medium (11mm width)";
