@@ -109,14 +109,14 @@ const ICELEA_MATERIAU_LABELS: Record<string, string> = {
 };
 
 const ICELEA_FORMAT_LABELS: Record<string, string> = {
-  "base-large": "BASE LARGE — the wide structural base ring (13mm width) with two flanking rails and central groove for an addon",
-  "base-small": "BASE SMALL — the medium structural base ring (11mm width) with two rails and central groove",
-  "base-xs": "BASE EXTRA-SMALL — the narrow structural base ring (9mm width) with two thin rails and central groove",
-  "addon": "ADDON — a decorated band designed to clip into the central groove of a Mood base. Render the ADDON ALONE (no base, no rails).",
-  "open-mood": "OPEN MOOD — a ring with an open gap / split design, asymmetric or adjustable opening",
-  "deux-tiers": "TWO-THIRDS (deux tiers) — a partial ring covering ~two thirds of the finger circumference (open-back partial ring)",
-  "medium": "MEDIUM addon — standard medium width decorative band",
-  "mini": "MINI — very fine narrow band, delicate jewelry style",
+  "base-large": "BASE LARGE (13mm wide) — a thick structural ring with TWO POLISHED METAL RAILS on top and bottom edges and a central groove between them where an addon clips. Always show base + flanking rails + addon-receiving groove. Visual signature : THICK band, ~13mm wide.",
+  "base-small": "BASE SMALL (11mm wide) — a MEDIUM-thick structural ring with two rails and central groove for addon. Visual signature : narrower than base large but still substantial.",
+  "base-xs": "BASE EXTRA-SMALL (9mm wide) — a NARROW structural ring with two thin rails and slim central groove. Visual signature : thin elegant band, ~9mm.",
+  "addon": "🚨 ADDON STANDALONE — Render the ADDON ALONE. NO BASE, NO RAILS, NO FLANKING METAL STRIPS. The addon is a SINGLE DECORATED BAND on its own, like a regular ring band. ⛔ DO NOT add polished rails. ⛔ DO NOT add a base structure. ⛔ DO NOT render as 'medium' or any other format. The output is JUST the standalone decorated addon band — exactly as the artist requested. Visual signature : single decorated band, no metal frame around it.",
+  "open-mood": "OPEN MOOD — an OPEN ring with a visible GAP / SPLIT in the band (not a closed circle). The band stops before completing the full circle, leaving a small opening (asymmetric adjustable design). Visual signature : C-shape or split-band silhouette.",
+  "deux-tiers": "TWO-THIRDS (deux tiers) — a PARTIAL ring covering only the front ~two thirds of the finger circumference. The BACK of the ring (below the finger) is OPEN/MISSING. Visual signature : open-back band, like a horseshoe shape when viewed from above.",
+  "medium": "MEDIUM addon — a STANDARD-WIDTH decorated band (medium thickness). Visual signature : balanced proportions, neither narrow nor wide. NOT to be confused with addon-standalone : medium is a complete ring band with consistent medium width.",
+  "mini": "MINI — VERY FINE NARROW band, the thinnest delicate ring profile. Visual signature : ultra-thin elegant ring band, like a stacking ring. The band is significantly thinner than a regular band.",
 };
 
 const ICELEA_DECO_LABELS: Record<string, string> = {
@@ -555,7 +555,16 @@ export async function POST(req: Request) {
     refPreamble = "\n\n🖼️ VISUAL REFERENCES PROVIDED IN THIS REQUEST (CRITICAL — match the look) :\n";
     if (sketch) refPreamble += "- The FIRST attached image is the USER'S SKETCH/DRAWING of the design intent.\n";
     if (finitionRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING with the EXACT '${body.icelea?.finitionArgent}' FINISH the user wants. Replicate this texture/surface treatment faithfully (look at how light interacts with the material, the micro-texture, the reflections).\n`;
-    if (formatRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING in the '${body.icelea?.format}' FORMAT the user wants. Match the proportions, structure, and silhouette of this format reference.\n`;
+    if (formatRefAdded) {
+      const fmt = body.icelea?.format;
+      refPreamble += `- One of the attached reference images shows a REAL MOOD RING in the '${fmt}' FORMAT the user wants. Match the proportions, structure, and silhouette of this format reference EXACTLY. Do not output a different format — if user asked '${fmt}' do not deliver 'medium' or any other format.\n`;
+      if (fmt === "addon") {
+        refPreamble += `🚨 FORMAT ADDON STANDALONE : the reference shows an addon ALONE (no base, no rails). Reproduce exactly this : a single decorated band with NO flanking polished rails, NO outer base structure. DO NOT add rails. DO NOT add a base.\n`;
+      }
+      if (fmt === "open-mood") refPreamble += `🚨 OPEN MOOD : the ring has a VISIBLE GAP / SPLIT. Show the opening explicitly.\n`;
+      if (fmt === "deux-tiers") refPreamble += `🚨 DEUX TIERS : the ring is OPEN AT THE BACK (partial ring, only covers ~2/3 of the finger).\n`;
+      if (fmt === "mini") refPreamble += `🚨 MINI : ULTRA-THIN delicate band. Significantly thinner than a normal band.\n`;
+    }
     if (emailBordRefAdded === "avec") refPreamble += `- One of the attached reference images shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
     if (emailBordRefAdded === "sans") refPreamble += `- One of the attached reference images shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;
     refPreamble += "These references show how Mood Collection actually produces these designs in real life — match the photographic style, material rendering, and structural proportions.\n";
