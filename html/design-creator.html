@@ -205,6 +205,34 @@
 <!-- Tout ce qui suit est masqué tant qu'une catégorie n'est pas choisie -->
 <div id="form-zone" style="display:none;">
 
+<!-- Identification du projet (nom + taille bague) -->
+<div class="panel">
+  <div class="panel-titre">📋 Identification du projet</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.8rem;">
+    <div class="form-row">
+      <label>🏷️ Nom du projet <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— pour identifier et sauvegarder</span></label>
+      <input id="projet-nom" type="text" placeholder="Ex: Salt & Sun, Pearla, Bula Bubba…" maxlength="60">
+    </div>
+    <div class="form-row">
+      <label>💍 Taille bague <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— circonférence doigt</span></label>
+      <select id="projet-taille">
+        <option value="">— non précisée —</option>
+        <option value="50">50</option>
+        <option value="52">52</option>
+        <option value="54">54</option>
+        <option value="56" selected>56</option>
+        <option value="58">58</option>
+        <option value="60">60</option>
+        <option value="62">62</option>
+        <option value="64">64</option>
+        <option value="66">66</option>
+        <option value="68">68</option>
+        <option value="70">70</option>
+      </select>
+    </div>
+  </div>
+</div>
+
 <!-- Toggle avec/sans base -->
 <div class="panel">
   <div class="panel-titre">Avec ou sans base ?</div>
@@ -922,13 +950,26 @@ async function genererDesign() {
     if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
     if (!data.image) throw new Error('Pas d\'image retournée');
 
-    const fname = `mood-design-${Date.now()}.png`;
+    const nomProjet = document.getElementById('projet-nom')?.value?.trim() || 'mood-design';
+    const slug = nomProjet.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mood-design';
+    const fname = `${slug}-${Date.now()}.png`;
+    const imgId = 'img-' + Date.now();
+    cacheImagePut(imgId, data.image);
     bloc.innerHTML = `
-      <div class="resultat-titre">✨ Ta visualisation</div>
-      <img src="${data.image}" alt="design Mood" class="resultat-img">
+      <div class="resultat-titre">✨ Ta visualisation${nomProjet !== 'mood-design' ? ' — ' + escapeHtml(nomProjet) : ''}</div>
+      <img id="${imgId}-display" src="${data.image}" alt="design Mood" class="resultat-img">
       <div class="resultat-actions">
-        <button class="btn-action" onclick="telecharger('${data.image.replace(/'/g, "\\'")}', '${fname}')">⬇️ Télécharger</button>
+        <button class="btn-action" onclick="telechargerCache('${imgId}','${fname}')">⬇️ Télécharger</button>
         <button class="btn-action secondary" onclick="genererDesign()">🔄 Regénérer (variation)</button>
+        <button class="btn-action" style="background:#6366f1;" onclick="toggleModification('${imgId}')">✏️ Modification</button>
+      </div>
+      <div id="${imgId}-modif-zone" style="display:none;margin-top:0.7rem;padding:0.8rem;background:#f4f4f7;border-radius:8px;">
+        <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
+        <textarea id="${imgId}-modif-text" rows="2" placeholder="Ex: zoomer un peu plus · changer le bleu en plus turquoise · ajouter une pierre au centre · agrandir les diamants…" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <button class="btn-action" onclick="appliquerModification('${imgId}','${fname}')">🪄 Appliquer</button>
+          <button class="btn-action secondary" onclick="toggleModification('${imgId}')">Annuler</button>
+        </div>
       </div>
     `;
   } catch (e) {
@@ -938,6 +979,62 @@ async function genererDesign() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '🎨 Générer la visualisation';
+  }
+}
+
+// === Cache d'images pour téléchargement + modification ===
+const imageCache = {};
+function cacheImagePut(id, dataUrl) { imageCache[id] = dataUrl; }
+function cacheImageGet(id) { return imageCache[id]; }
+
+function telechargerCache(id, filename) {
+  const dataUrl = cacheImageGet(id);
+  if (!dataUrl) { alert('Image introuvable'); return; }
+  telecharger(dataUrl, filename);
+}
+
+function toggleModification(imgId) {
+  const zone = document.getElementById(`${imgId}-modif-zone`);
+  zone.style.display = zone.style.display === 'none' ? 'block' : 'none';
+}
+
+async function appliquerModification(imgId, filename) {
+  const text = document.getElementById(`${imgId}-modif-text`).value.trim();
+  if (!text) { alert('Décris la modification souhaitée'); return; }
+  const dataUrl = cacheImageGet(imgId);
+  if (!dataUrl) { alert('Image introuvable'); return; }
+
+  const zone = document.getElementById(`${imgId}-modif-zone`);
+  zone.innerHTML = '<div style="text-align:center;padding:0.6rem;"><span class="loader"></span>Application de la modification…</div>';
+
+  try {
+    const r = await fetch('/api/design-creator-modify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl, instruction: text }),
+    });
+    const respText = await r.text();
+    let data;
+    try { data = JSON.parse(respText); }
+    catch { throw new Error(`Réponse non-JSON : ${respText.slice(0, 150)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    // Remplacer l'image affichée et mettre à jour le cache
+    cacheImagePut(imgId, data.image);
+    document.getElementById(`${imgId}-display`).src = data.image;
+    zone.style.display = 'none';
+    zone.innerHTML = `
+      <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
+      <textarea id="${imgId}-modif-text" rows="2" placeholder="Ex: zoomer un peu plus · changer le bleu en plus turquoise…" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+        <button class="btn-action" onclick="appliquerModification('${imgId}','${filename}')">🪄 Appliquer</button>
+        <button class="btn-action secondary" onclick="toggleModification('${imgId}')">Annuler</button>
+      </div>
+    `;
+  } catch (e) {
+    zone.innerHTML = `<div class="erreur">⚠️ ${escapeHtml(e.message || String(e))}</div>
+      <button class="btn-action secondary" style="margin-top:0.5rem;" onclick="toggleModification('${imgId}')">Fermer</button>`;
   }
 }
 
