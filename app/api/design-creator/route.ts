@@ -29,6 +29,26 @@ function loadEmailNuanciers(): Array<{ inlineData: { mimeType: string; data: str
   return refs;
 }
 
+// Charge les PNG individuels des pastilles sélectionnées par l'utilisateur
+// (cropés au centre de chaque pastille du nuancier — couleur isolée sans bruit)
+function loadEmailPastilles(codesStr: string, maxCount = 8): Array<{ inlineData: { mimeType: string; data: string } }> {
+  const codes = codesStr
+    .split(/[,;\s]+/)
+    .map(c => c.trim().toUpperCase())
+    .filter(c => /^(RB|RP|RBF)-\d+$/.test(c))
+    .slice(0, maxCount);
+  const refs: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+  for (const code of codes) {
+    const p = path.join(process.cwd(), "public", "refs", "email", "pastilles", `${code}.png`);
+    if (!existsSync(p)) continue;
+    try {
+      const buf = readFileSync(p);
+      refs.push({ inlineData: { mimeType: "image/png", data: buf.toString("base64") } });
+    } catch { /* skip */ }
+  }
+  return refs;
+}
+
 // Nombre de refs disponibles par finition et format (sélection random)
 const FINITION_REFS_COUNT: Record<string, number> = {
   "poli": 11, "mat": 6, "froisse": 11, "glitter": 3,
@@ -129,7 +149,15 @@ The ring in the attached image is ${structureDesc}.
 
 🎨 NEW ENAMEL COLOR(S) : ${emailCodes}
 
-The reference enamel charts (RB-* solid colors, RP-* pearlescent, RBF-* patterns) are attached as additional images. Identify the listed code(s) on the appropriate chart and apply the EXACT corresponding color(s) to the enamel zone of the ring.
+🎯 EXACT COLOR REFERENCES ATTACHED : the images attached AFTER the source ring (IMAGE 1) are ISOLATED COLOR SWATCHES — one per selected code. Each swatch shows the EXACT color/pattern as it appears on the real Mood enamel sample. The order of the swatches matches the order of the codes listed above.
+
+🚨 COLOR MATCHING RULES (CRITICAL — Gemini tends to drift the hue, force exact match) :
+- Sample the color DIRECTLY from the attached swatch images. Do NOT interpret, do NOT shift the hue/saturation/brightness.
+- The output enamel color MUST match the swatch IDENTICALLY — same hue, same saturation, same brightness, same finish (glossy/pearlescent/patterned).
+- If the swatch is a deep saturated color, the output must be EXACTLY that depth — NOT lighter, NOT darker.
+- For RP-* (pearlescent) : keep the sparkle / metallic sheen.
+- For RBF-* (patterned) : reproduce the EXACT motif (animal print, plaid, geometric).
+- For RB-* (solid) : a uniform pure flat color, glossy, identical to the swatch.
 
 ═══════════════════════════════════════════════
 ABSOLUTE PRESERVATION RULES (NE CHANGE RIEN, EVERYTHING STAYS IDENTICAL)
@@ -665,10 +693,11 @@ export async function POST(req: Request) {
     for (const n of nuanciers) parts.push(n);
   }
 
-  // En mode transform email : joindre quand même les nuanciers pour identifier la couleur cible
-  if (useEmailTransform) {
-    const nuanciers = loadEmailNuanciers();
-    for (const n of nuanciers) parts.push(n);
+  // En mode transform email : joindre les PASTILLES INDIVIDUELLES (couleur isolée, max 8)
+  // PLUS PRÉCIS que les nuanciers entiers qui ont du bruit autour de chaque couleur
+  if (useEmailTransform && body.icelea?.emailCodes) {
+    const pastilles = loadEmailPastilles(body.icelea.emailCodes);
+    for (const p of pastilles) parts.push(p);
   }
 
   // Ajouter un préfixe au prompt pour indiquer les refs visuelles ajoutées
