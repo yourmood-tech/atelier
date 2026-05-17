@@ -283,6 +283,16 @@
 
   <!-- Émail : nuancier + sélection (palier 2) -->
   <div id="icelea-email-zone" style="display:none;margin-bottom:1.2rem;padding:0.9rem;background:#fffdf6;border-left:3px solid var(--or);border-radius:6px;">
+
+    <!-- Toggle "avec bord argent / sans bord argent" : visible UNIQUEMENT si email full revêtement (pas de zircons, pas de PVD) -->
+    <div id="icelea-email-bord" style="display:none;margin-bottom:1rem;padding:0.7rem;background:white;border-radius:8px;">
+      <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.5rem;">🪞 Structure de la bague <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— émail full revêtement</span></label>
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+        <label style="font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem;"><input type="radio" name="icelea-email-bord-val" value="avec" checked> 💍 Avec bord argent (rails poli encadrant l'émail)</label>
+        <label style="font-size:0.85rem;cursor:pointer;display:flex;align-items:center;gap:0.4rem;"><input type="radio" name="icelea-email-bord-val" value="sans"> 🌊 Sans bord argent (émail couvre toute la surface)</label>
+      </div>
+    </div>
+
     <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">🎨 Couleurs / motifs émail <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— clique sur un nuancier pour zoomer, puis recopie les codes choisis</span></label>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.5rem;margin-bottom:0.7rem;">
       <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-01-80.jpg', 'Couleurs unies RB-01 → RB-80')">
@@ -451,7 +461,11 @@ function updateIceleaConditional() {
   const decos = Array.from(document.querySelectorAll('input[name="icelea-deco"]:checked')).map(c => c.value);
 
   // Émail coché → afficher zone nuancier émail (palier 2)
-  document.getElementById('icelea-email-zone').style.display = decos.includes('email') ? 'block' : 'none';
+  const emailOn = decos.includes('email');
+  document.getElementById('icelea-email-zone').style.display = emailOn ? 'block' : 'none';
+  // Toggle "avec bord / sans bord" : visible seulement si email SEUL (pas de zircons ni PVD)
+  const emailFullCoat = emailOn && !decos.includes('zircons') && !decos.includes('pvd');
+  document.getElementById('icelea-email-bord').style.display = emailFullCoat ? 'block' : 'none';
   // PVD coché → afficher grille pastilles PVD (palier 3)
   const pvdShow = decos.includes('pvd');
   document.getElementById('icelea-pvd-zone').style.display = pvdShow ? 'block' : 'none';
@@ -613,6 +627,7 @@ async function genererDesign() {
     const finArgentAutre = document.getElementById('icelea-fin-argent-autre')?.value?.trim() || null;
 
     const emailCodes = document.getElementById('icelea-email-codes')?.value?.trim() || null;
+    const emailBord = document.querySelector('input[name="icelea-email-bord-val"]:checked')?.value || null;
     const pvdColors = Array.from(pvdSelected);
     payload = {
       categorie,
@@ -627,6 +642,7 @@ async function genererDesign() {
         finitionArgent: finArgent,
         finitionArgentAutre: finArgentAutre,
         emailCodes,
+        emailBord,
         pvdColors,
       },
       format: document.getElementById('icelea-img-format').value,

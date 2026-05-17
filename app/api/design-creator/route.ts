@@ -61,6 +61,20 @@ function loadFormatRef(format: string): { inlineData: { mimeType: string; data: 
   } catch { return null; }
 }
 
+const EMAIL_BORD_REFS_COUNT: Record<string, number> = { "avec": 2, "sans": 14 };
+
+function loadEmailBordRef(bord: string): { inlineData: { mimeType: string; data: string } } | null {
+  const count = EMAIL_BORD_REFS_COUNT[bord] || 0;
+  if (!count) return null;
+  const idx = Math.floor(Math.random() * count) + 1;
+  const p = path.join(process.cwd(), "public", "refs", "email-bord", bord, `${bord}-${idx}.jpg`);
+  if (!existsSync(p)) return null;
+  try {
+    const buf = readFileSync(p);
+    return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
+  } catch { return null; }
+}
+
 type IceleaData = {
   materiau?: string | null;        // argent | acier | ceramique | autre
   materiauAutre?: string | null;
@@ -70,6 +84,7 @@ type IceleaData = {
   finitionArgent?: string | null;  // poli | matt | glitter | froisse | autre-fin
   finitionArgentAutre?: string | null;
   emailCodes?: string | null;      // ex: "RB-013, RB-067, RP-22, RBF-008"
+  emailBord?: string | null;       // "avec" | "sans" — uniquement si email FULL revêtement (sans zircons/PVD)
   pvdColors?: string[] | null;     // ex: ["18K Rose Gold", "Royal Blue", "Rainbow"]
 };
 
@@ -200,6 +215,14 @@ INSTRUCTIONS :
 - DO NOT invent enamel colors. STRICTLY use what's visible on the charts for the listed codes.`;
   } else if (decos.includes("email") && !icelea.emailCodes) {
     emailSection = "\n\n🎨 ENAMEL : applied to the band but no specific codes provided — choose a tasteful color that fits the artist's idea.";
+  }
+
+  // Structure email : avec/sans bord argent (uniquement si email FULL coat, pas de zircons/PVD)
+  const emailFullCoat = decos.includes("email") && !decos.includes("zircons") && !decos.includes("pvd");
+  if (emailFullCoat && icelea.emailBord === "avec") {
+    emailSection += "\n\n💍 STRUCTURE — WITH SILVER BORDER (Mood signature) : the ring has TWO POLISHED SILVER RAILS visible on the top and bottom edges of the band, framing the enamel coating in the center. The enamel sits in the central groove between the two mirror-polished rails. This is the classic Mood interchangeable structure. An attached reference image shows this exact structure.";
+  } else if (emailFullCoat && icelea.emailBord === "sans") {
+    emailSection += "\n\n🌊 STRUCTURE — WITHOUT SILVER BORDER (full enamel coverage) : the enamel covers the ENTIRE outer surface of the ring from edge to edge. NO polished rails visible on the outside — the enamel is the only visible exterior material. The interior of the ring (inside the hole) remains polished silver. An attached reference image shows this exact full-coverage structure.";
   }
 
   // Section PVD : couleurs sélectionnées dans la palette PVD Icelea
@@ -510,7 +533,16 @@ export async function POST(req: Request) {
     }
   }
   // Icelea + email coché → joindre les nuanciers comme refs visuelles
+  let emailBordRefAdded: string | null = null;
   if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
+    // Ref structure email (avec/sans bord) si full revêtement
+    const decosE = body.icelea.decorations || [];
+    const emailFullCoatE = !decosE.includes("zircons") && !decosE.includes("pvd");
+    if (emailFullCoatE && body.icelea.emailBord) {
+      const refBord = loadEmailBordRef(body.icelea.emailBord);
+      if (refBord) { parts.push(refBord); emailBordRefAdded = body.icelea.emailBord; }
+    }
+    // Nuanciers émail
     const nuanciers = loadEmailNuanciers();
     for (const n of nuanciers) parts.push(n);
   }
@@ -522,7 +554,14 @@ export async function POST(req: Request) {
     if (sketch) refPreamble += "- The FIRST attached image is the USER'S SKETCH/DRAWING of the design intent.\n";
     if (finitionRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING with the EXACT '${body.icelea?.finitionArgent}' FINISH the user wants. Replicate this texture/surface treatment faithfully (look at how light interacts with the material, the micro-texture, the reflections).\n`;
     if (formatRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING in the '${body.icelea?.format}' FORMAT the user wants. Match the proportions, structure, and silhouette of this format reference.\n`;
+    if (emailBordRefAdded === "avec") refPreamble += `- One of the attached reference images shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
+    if (emailBordRefAdded === "sans") refPreamble += `- One of the attached reference images shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;
     refPreamble += "These references show how Mood Collection actually produces these designs in real life — match the photographic style, material rendering, and structural proportions.\n";
+  } else if (emailBordRefAdded) {
+    // Cas où finition/format pas activés mais bord email l'est
+    refPreamble = "\n\n🖼️ VISUAL REFERENCE PROVIDED IN THIS REQUEST (CRITICAL — match the structure) :\n";
+    if (emailBordRefAdded === "avec") refPreamble += `- An attached reference image shows the EXACT 'WITH SILVER BORDER' structure (Mood classic : enamel between two polished rails). Reproduce this structural framing exactly.\n`;
+    if (emailBordRefAdded === "sans") refPreamble += `- An attached reference image shows the EXACT 'WITHOUT SILVER BORDER' structure (full enamel coverage, no visible rails on the exterior). Reproduce this structural design exactly.\n`;
   }
   parts.push({ text: prompt + refPreamble });
 
