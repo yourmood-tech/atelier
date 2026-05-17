@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💡 Création design Mood — Atelier</title>
+<style>
+  :root {
+    --or: #c9a96e; --noir: #1a1a1a; --gris: #6b6b6b; --gris-clair: #f5f5f5;
+    --vert: #2d8a4e; --rouge: #c0392b; --bleu: #2563eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--noir); background: #fafafa; line-height: 1.5; padding: 1.5rem 1rem; max-width: 1200px; margin: 0 auto; }
+  header { margin-bottom: 1.5rem; }
+  h1 { font-size: 1.6rem; font-weight: 600; }
+  .sous-titre { font-size: 0.9rem; color: var(--gris); margin-top: 0.3rem; }
+  .retour { font-size: 0.85rem; color: var(--gris); text-decoration: none; }
+
+  .panel {
+    background: white; border-radius: 14px; padding: 1.1rem 1.3rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 1rem;
+  }
+  .panel-titre {
+    font-size: 0.8rem; font-weight: 700; color: var(--or);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.7rem;
+  }
+
+  /* Upload croquis */
+  .upload-zone {
+    border: 3px dashed #d4d4d4; border-radius: 14px; padding: 1.8rem 1rem;
+    text-align: center; background: #fafafa; cursor: pointer; transition: all 0.2s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--or); background: #fff8e7; }
+  .upload-zone.has-image { padding: 0.9rem; border-style: solid; background: white; }
+  .upload-zone .emoji-up { font-size: 2.2rem; opacity: 0.6; }
+  .upload-zone .titre-up { font-size: 0.95rem; font-weight: 600; margin-top: 0.4rem; }
+  .upload-zone .hint { font-size: 0.78rem; color: var(--gris); margin-top: 0.3rem; }
+  #file-input { display: none; }
+  .preview-sketch { max-width: 100%; max-height: 220px; border-radius: 8px; margin: 0 auto; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+  /* Form */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .form-row { display: flex; flex-direction: column; gap: 0.3rem; }
+  .form-row label { font-size: 0.8rem; font-weight: 600; color: var(--noir); }
+  .form-row select, .form-row input, .form-row textarea {
+    width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #ccc; border-radius: 8px;
+    font-size: 0.88rem; font-family: inherit; background: white;
+  }
+  .form-row textarea { resize: vertical; min-height: 80px; }
+  .form-row select:focus, .form-row input:focus, .form-row textarea:focus {
+    outline: none; border-color: var(--or);
+  }
+
+  /* Bouton principal */
+  .btn-generer {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--or); color: white; border: none; padding: 0.9rem 1.6rem;
+    border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; box-shadow: 0 2px 8px rgba(201, 169, 110, 0.3);
+  }
+  .btn-generer:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201, 169, 110, 0.4); }
+  .btn-generer:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Résultats */
+  .resultats-zone { margin-top: 1rem; }
+  .resultat-bloc { background: white; border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .resultat-titre { font-size: 0.85rem; font-weight: 600; color: var(--or); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.7rem; }
+  .resultat-img { max-width: 100%; max-height: 500px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: block; margin: 0 auto; }
+  .resultat-actions { display: flex; gap: 0.6rem; justify-content: center; margin-top: 0.8rem; flex-wrap: wrap; }
+  .btn-action {
+    padding: 0.5rem 1rem; background: var(--or); color: white; border: none;
+    border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+  }
+  .btn-action.secondary { background: var(--gris); }
+  .btn-action:hover { opacity: 0.9; }
+
+  .erreur { color: var(--rouge); font-size: 0.85rem; padding: 0.7rem; background: #fee; border-radius: 6px; margin-top: 0.5rem; }
+  .loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--or); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.4rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Hint inline */
+  .hint-inline { font-size: 0.72rem; color: var(--gris); font-style: italic; margin-top: 0.2rem; }
+
+  @media (max-width: 600px) { body { padding: 1rem 0.6rem; } .form-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="retour">← Atelier</a>
+  <h1>💡 Création design Mood</h1>
+  <div class="sous-titre">Donne ton croquis ou ton idée — l'IA te fait une visualisation photo-réaliste de ta bague mood</div>
+</header>
+
+<!-- Panel 1 : croquis (optionnel) -->
+<div class="panel">
+  <div class="panel-titre">1 · Croquis (optionnel)</div>
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+    <div id="upload-empty">
+      <div class="emoji-up">📤</div>
+      <div class="titre-up">Glisse-dépose ton croquis ici</div>
+      <div class="hint">ou clique pour choisir — JPG, PNG · papier scanné OK</div>
+      <div class="hint" style="margin-top:0.3rem;color:var(--or);">💡 Si pas de croquis, écris juste ton idée dans le panel 2 ci-dessous</div>
+    </div>
+    <div id="upload-preview" style="display:none;">
+      <img id="img-sketch" class="preview-sketch" alt="">
+      <div class="hint" style="margin-top:0.4rem;">Clique pour changer · <a href="#" onclick="resetSketch(event)" style="color:var(--rouge);">supprimer</a></div>
+    </div>
+  </div>
+  <input type="file" id="file-input" accept="image/*" onchange="handleSketch(event)">
+</div>
+
+<!-- Panel 2 : description -->
+<div class="panel">
+  <div class="panel-titre">2 · Ton idée en mots</div>
+  <div class="form-row">
+    <textarea id="idea" rows="4" placeholder="Exemples :&#10;• Pavé diamants en relief sur addon argent, base titane noir mat&#10;• Gravure étoiles + lune croissante, addon or rose 18K, base acier&#10;• Pierre centrale topaze bleue ovale, addon or blanc 18K, base titane bleu anodisé&#10;• Bague de mariage simple, addon lisse or jaune 18K poli, base acier"></textarea>
+    <div class="hint-inline">Décris l'esprit, les pierres, le décor, les couleurs, l'ambiance — l'IA combine ton texte + le croquis (si fourni) + tes choix ci-dessous</div>
+  </div>
+</div>
+
+<!-- Panel 3 : caractéristiques produit -->
+<div class="panel">
+  <div class="panel-titre">3 · Caractéristiques produit</div>
+  <div class="form-grid">
+    <div class="form-row">
+      <label>📏 Largeur de la base</label>
+      <select id="largeur">
+        <option value="XS">XS · extra-fine (9mm)</option>
+        <option value="S" selected>S · medium (11mm)</option>
+        <option value="L">L · large (13mm)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>🔩 Matière de la base</label>
+      <select id="matiere-base">
+        <option value="acier-316L" selected>Acier 316L (argenté poli)</option>
+        <option value="titane-naturel">Titane brossé naturel</option>
+        <option value="titane-noir">Titane anodisé NOIR</option>
+        <option value="titane-bleu">Titane anodisé BLEU royal</option>
+        <option value="titane-rose">Titane anodisé ROSE</option>
+        <option value="titane-dore">Titane anodisé DORÉ</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>💎 Type d'addon (décor central)</label>
+      <select id="type-addon">
+        <option value="lisse" selected>Lisse (uni, sans décor)</option>
+        <option value="pave-diamants">Pavé diamants (sertissage)</option>
+        <option value="grave">Gravé / texturé</option>
+        <option value="pierre-centrale">Pierre centrale</option>
+        <option value="libre">Libre (suivre croquis + idée)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>✨ Matière de l'addon</label>
+      <select id="matiere-addon">
+        <option value="acier" selected>Acier 316L (argenté poli)</option>
+        <option value="argent-925">Argent 925</option>
+        <option value="or-jaune-18k">Or jaune 18K</option>
+        <option value="or-rose-18k">Or rose 18K</option>
+        <option value="or-blanc-18k">Or blanc 18K</option>
+        <option value="ceramique-noire">Céramique noire</option>
+        <option value="tantale">Tantale (bleu-gris foncé)</option>
+        <option value="alu-couleur">Aluminium anodisé (couleur libre)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>💫 Finition de l'addon</label>
+      <select id="finition-addon">
+        <option value="poli-miroir" selected>Poli miroir</option>
+        <option value="brosse">Brossé</option>
+        <option value="satine">Satiné</option>
+        <option value="martele">Martelé</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>📐 Format de l'image</label>
+      <select id="format">
+        <option value="1:1" selected>1:1 carré (Insta post)</option>
+        <option value="3:2">3:2 paysage</option>
+        <option value="4:5">4:5 portrait</option>
+        <option value="9:16">9:16 story</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Bouton générer -->
+<div style="text-align:center;margin: 1.4rem 0;">
+  <button class="btn-generer" id="btn-generer" onclick="genererDesign()">
+    🎨 Générer la visualisation
+  </button>
+  <div class="hint-inline" style="margin-top:0.4rem;">⏱️ La génération prend ~20-30 secondes</div>
+</div>
+
+<!-- Résultats -->
+<div class="resultats-zone" id="resultats"></div>
+
+<script>
+let sketchData = null;
+
+function handleSketch(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    alert('Fichier image uniquement (JPG, PNG)');
+    return;
+  }
+  // Compression simple pour limiter la taille
+  compresserImage(file, 1600).then(dataUrl => {
+    sketchData = dataUrl;
+    document.getElementById('img-sketch').src = dataUrl;
+    document.getElementById('upload-empty').style.display = 'none';
+    document.getElementById('upload-preview').style.display = 'block';
+    document.getElementById('upload-zone').classList.add('has-image');
+  }).catch(e => alert('Erreur lecture image : ' + e.message));
+}
+
+function resetSketch(event) {
+  if (event) event.preventDefault();
+  sketchData = null;
+  document.getElementById('file-input').value = '';
+  document.getElementById('upload-empty').style.display = 'block';
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-zone').classList.remove('has-image');
+}
+
+async function compresserImage(file, maxDim = 1600) {
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) throw new Error('Image illisible');
+  let w = bitmap.width, h = bitmap.height;
+  if (w > maxDim || h > maxDim) {
+    const ratio = Math.min(maxDim / w, maxDim / h);
+    w = Math.round(w * ratio);
+    h = Math.round(h * ratio);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', 0.9);
+}
+
+async function genererDesign() {
+  const idea = document.getElementById('idea').value.trim();
+  if (!idea && !sketchData) {
+    alert('Donne au moins une idée écrite OU un croquis');
+    return;
+  }
+
+  const payload = {
+    sketch: sketchData,
+    idea,
+    largeur: document.getElementById('largeur').value,
+    matiereBase: document.getElementById('matiere-base').value,
+    typeAddon: document.getElementById('type-addon').value,
+    matiereAddon: document.getElementById('matiere-addon').value,
+    finitionAddon: document.getElementById('finition-addon').value,
+    format: document.getElementById('format').value,
+  };
+
+  const btn = document.getElementById('btn-generer');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Génération en cours…';
+
+  const resultsZone = document.getElementById('resultats');
+  const blocId = 'res-' + Date.now();
+  const bloc = document.createElement('div');
+  bloc.className = 'resultat-bloc';
+  bloc.id = blocId;
+  bloc.innerHTML = '<div class="resultat-titre"><span class="loader"></span>Génération IA en cours… (~20-30s)</div>';
+  resultsZone.insertBefore(bloc, resultsZone.firstChild);
+
+  try {
+    const r = await fetch('/api/design-creator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON du serveur (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const fname = `mood-design-${Date.now()}.png`;
+    bloc.innerHTML = `
+      <div class="resultat-titre">✨ Ta visualisation</div>
+      <img src="${data.image}" alt="design Mood" class="resultat-img">
+      <div class="resultat-actions">
+        <button class="btn-action" onclick="telecharger('${data.image.replace(/'/g, "\\'")}', '${fname}')">⬇️ Télécharger</button>
+        <button class="btn-action secondary" onclick="genererDesign()">🔄 Regénérer (variation)</button>
+      </div>
+    `;
+  } catch (e) {
+    bloc.innerHTML = `<div class="resultat-titre" style="color:var(--rouge);">Erreur</div>
+      <div class="erreur">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+    console.error('Design creator error', e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🎨 Générer la visualisation';
+  }
+}
+
+function telecharger(dataUrl, filename) {
+  // Convertir dataURL → Blob → URL.createObjectURL pour fix Safari "unknown" filename
+  fetch(dataUrl)
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    })
+    .catch(e => alert('Erreur téléchargement : ' + e.message));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Drag & drop
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const input = document.getElementById('file-input');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handleSketch({ target: input });
+  }
+});
+</script>
+
+</body>
+</html>

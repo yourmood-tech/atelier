@@ -114,6 +114,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Calendrier annuel jeudi→mercredi pour planifier les nouveautés. Suivi des 9 étapes (idée → mise en ligne) + objectifs CA mensuels par produit.",
       },
       {
+        href: "/design-creator",
+        emoji: "💡",
+        title: "Création design Mood",
+        description: "Donne ton croquis ou ton idée en mots : visualisation photo-réaliste de la bague mood (base + addon + finition). Pour explorer un design avant prototype.",
+      },
+      {
         href: "/offres",
         emoji: "🎁",
         title: "Offres par nouveauté",
