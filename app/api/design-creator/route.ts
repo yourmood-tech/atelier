@@ -75,30 +75,47 @@ function loadEmailBordRef(bord: string): { inlineData: { mimeType: string; data:
   } catch { return null; }
 }
 
-// Canvas templates pour mode "transform" email (change-couleur)
+// Canvas templates pour mode "transform" email — un par combo (structure, format)
+// Structure : avec / sans / base — pour bases, le canvas est unique (pas de variante avec/sans)
 const EMAIL_CANVAS_FILES: Record<string, string> = {
-  "avec": "addon-avec-bord.jpg",
-  "sans": "addon-sans-bord.jpg",
-  "base": "base-email.jpg",
+  // Addons avec bord argent (canal émail entre 2 rails)
+  "avec-addon": "avec-addon.jpg",
+  "avec-deux-tiers": "avec-deux-tiers.jpg",
+  "avec-medium": "avec-medium.jpg",
+  "avec-mini": "avec-mini.jpg",
+  // Addons sans bord (full enamel coverage)
+  "sans-addon": "sans-addon.jpg",
+  "sans-deux-tiers": "sans-deux-tiers.jpg",
+  "sans-medium": "sans-medium.jpg",
+  "sans-mini": "sans-mini.jpg",
+  // Bases : style propre (2 bandes émail sur rails + centre céramique)
+  "base-base-large": "base-large.png",
+  "base-base-small": "base-small.png",
+  "base-base-xs": "base-xs.png",
 };
 
-function loadEmailCanvas(structure: string): { inlineData: { mimeType: string; data: string } } | null {
-  const file = EMAIL_CANVAS_FILES[structure];
+function loadEmailCanvas(structure: string, format: string): { inlineData: { mimeType: string; data: string } } | null {
+  // Pour les bases : on prefixe avec "base-" pour la map
+  const isBase = format === "base-large" || format === "base-small" || format === "base-xs";
+  const key = isBase ? `base-${format}` : `${structure}-${format}`;
+  const file = EMAIL_CANVAS_FILES[key];
   if (!file) return null;
   const p = path.join(process.cwd(), "public", "refs", "email-canvas", file);
   if (!existsSync(p)) return null;
   try {
     const buf = readFileSync(p);
-    return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
+    const mime = file.endsWith(".png") ? "image/png" : "image/jpeg";
+    return { inlineData: { mimeType: mime, data: buf.toString("base64") } };
   } catch { return null; }
 }
 
-function buildEmailTransformPrompt(structure: string, emailCodes: string, idea: string): string {
+function buildEmailTransformPrompt(structure: string, emailCodes: string, idea: string, format: string): string {
+  const fmtLabel = ICELEA_FORMAT_LABELS[format] || format;
   const structureDesc = structure === "avec"
-    ? "an addon ring with TWO thin polished silver rails on top and bottom edges framing a central enamel channel (Mood signature addon)"
+    ? `a Mood addon in the '${format}' format with TWO thin polished silver rails on top and bottom edges framing a central enamel channel (Mood signature addon style)`
     : structure === "sans"
-    ? "an addon ring with full enamel coverage edge-to-edge (no visible polished rails on the exterior)"
-    : "a Mood BASE with two colored enamel stripes on its two rails";
+    ? `a Mood ring in the '${format}' format with full enamel coverage edge-to-edge (no visible polished rails on the exterior)`
+    : `a Mood BASE in the '${format}' format with two colored enamel stripes on its two rails (and a central element between the stripes)`;
 
   return `MOOD COLLECTION ENAMEL COLOR TRANSFORM — Take THIS EXACT RING from the attached image (IMAGE 1) and CHANGE ONLY THE ENAMEL COLOR. Nothing else.
 
@@ -578,21 +595,23 @@ export async function POST(req: Request) {
 
   // === Mode TRANSFORM email : si Icelea + email coché (full coat) + couleur précise spécifiée
   // → on utilise un canvas template comme source et on demande à Gemini de changer juste la couleur
+  // Limité aux formats avec canvas dispo : addon / deux-tiers / medium / mini / base-large/small/xs
   let useEmailTransform = false;
   let emailTransformStructure: string | null = null;
   if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email") && body.icelea.emailCodes?.trim()) {
     const decosT = body.icelea.decorations || [];
     const emailFullCoatT = !decosT.includes("zircons") && !decosT.includes("pvd");
-    if (emailFullCoatT) {
-      const fmtT = body.icelea.format || "";
-      const isBaseT = fmtT === "base-large" || fmtT === "base-small" || fmtT === "base-xs";
+    const fmtT = body.icelea.format || "";
+    const isBaseT = fmtT === "base-large" || fmtT === "base-small" || fmtT === "base-xs";
+    const isFormatWithCanvas = ["addon", "deux-tiers", "medium", "mini"].includes(fmtT) || isBaseT;
+    if (emailFullCoatT && isFormatWithCanvas) {
       emailTransformStructure = isBaseT ? "base" : (body.icelea.emailBord || "avec");
       useEmailTransform = true;
     }
   }
 
   const prompt = useEmailTransform && emailTransformStructure
-    ? buildEmailTransformPrompt(emailTransformStructure, body.icelea!.emailCodes!, body.idea || "")
+    ? buildEmailTransformPrompt(emailTransformStructure, body.icelea!.emailCodes!, body.idea || "", body.icelea?.format || "addon")
     : buildPrompt(body);
 
   // Construire les parts pour Gemini : croquis + refs finition + ref format + nuanciers émail + prompt
@@ -600,7 +619,8 @@ export async function POST(req: Request) {
 
   // Mode TRANSFORM email : canvas en PREMIER (IMAGE 1 — la bague à transformer)
   if (useEmailTransform && emailTransformStructure) {
-    const canvas = loadEmailCanvas(emailTransformStructure);
+    const fmtCanvas = body.icelea?.format || "addon";
+    const canvas = loadEmailCanvas(emailTransformStructure, fmtCanvas);
     if (canvas) parts.push(canvas);
   }
 
