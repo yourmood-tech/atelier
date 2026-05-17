@@ -29,6 +29,38 @@ function loadEmailNuanciers(): Array<{ inlineData: { mimeType: string; data: str
   return refs;
 }
 
+// Nombre de refs disponibles par finition et format (sélection random)
+const FINITION_REFS_COUNT: Record<string, number> = {
+  "poli": 11, "mat": 6, "froisse": 9, "glitter": 3,
+};
+const FORMAT_REFS_COUNT: Record<string, number> = {
+  "addon": 6, "deux-tiers": 4, "medium": 3, "mini": 11, "base-large": 11, "base-small": 8, "base-xs": 0,
+};
+
+function loadFinitionRef(finition: string): { inlineData: { mimeType: string; data: string } } | null {
+  const count = FINITION_REFS_COUNT[finition] || 0;
+  if (!count) return null;
+  const idx = Math.floor(Math.random() * count) + 1;
+  const p = path.join(process.cwd(), "public", "refs", "finitions", finition, `${finition}-${idx}.jpg`);
+  if (!existsSync(p)) return null;
+  try {
+    const buf = readFileSync(p);
+    return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
+  } catch { return null; }
+}
+
+function loadFormatRef(format: string): { inlineData: { mimeType: string; data: string } } | null {
+  const count = FORMAT_REFS_COUNT[format] || 0;
+  if (!count) return null;
+  const idx = Math.floor(Math.random() * count) + 1;
+  const p = path.join(process.cwd(), "public", "refs", "formats", format, `${format}-${idx}.jpg`);
+  if (!existsSync(p)) return null;
+  try {
+    const buf = readFileSync(p);
+    return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
+  } catch { return null; }
+}
+
 type IceleaData = {
   materiau?: string | null;        // argent | acier | ceramique | autre
   materiauAutre?: string | null;
@@ -38,6 +70,7 @@ type IceleaData = {
   finitionArgent?: string | null;  // poli | matt | glitter | froisse | autre-fin
   finitionArgentAutre?: string | null;
   emailCodes?: string | null;      // ex: "RB-013, RB-067, RP-22, RBF-008"
+  pvdColors?: string[] | null;     // ex: ["18K Rose Gold", "Royal Blue", "Rainbow"]
 };
 
 type DesignInput = {
@@ -169,6 +202,20 @@ INSTRUCTIONS :
     emailSection = "\n\n🎨 ENAMEL : applied to the band but no specific codes provided — choose a tasteful color that fits the artist's idea.";
   }
 
+  // Section PVD : couleurs sélectionnées dans la palette PVD Icelea
+  let pvdSection = "";
+  if (decos.includes("pvd")) {
+    const pvdList = icelea.pvdColors || [];
+    if (pvdList.length === 0) {
+      pvdSection = "\n\n🌈 PVD COATING : applied but no specific color selected — choose a tasteful PVD finish.";
+    } else if (pvdList.length === 1) {
+      pvdSection = `\n\n🌈 PVD COATING : ${pvdList[0]}. Apply a uniform PVD coating in this exact color/finish to the metal surface.`;
+    } else {
+      pvdSection = `\n\n🌈 PVD COATING (MULTIPLE COLORS — combine elegantly) : ${pvdList.join(", ")}.
+The user wants several PVD colors on the same ring. Combine them in a creative tasteful way : alternating segments, color blocks, gradient transitions, or zones — interpret the artist's idea to decide. Each color should be clearly identifiable and represent the actual PVD finish (deep saturated colors typical of physical vapor deposition coatings).`;
+    }
+  }
+
   // Matériau neutre sans revêtement (tout matériau) → finition appliquée
   const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
   const finitionDispo = !!matKey && !aRevetement;
@@ -196,7 +243,7 @@ ICELEA SPECIFICATIONS
 📏 FORMAT : ${fmtLabel}.
 
 ✨ DECORATIONS / SURFACE TREATMENT (combine all of the following) :
-${decoLabels || "- (none specified — clean plain band)"}${finitionSection}${emailSection}
+${decoLabels || "- (none specified — clean plain band)"}${finitionSection}${emailSection}${pvdSection}
 
 🎨 DESIGN IDEA (artist's intent — interpret faithfully) :
 ${idea}
@@ -439,7 +486,7 @@ export async function POST(req: Request) {
   const format = (body.format && /^\d+:\d+$/.test(body.format)) ? body.format : "1:1";
   const prompt = buildPrompt(body);
 
-  // Construire les parts pour Gemini : croquis (si fourni) en premier, puis nuanciers émail (si Icelea + email coché), puis prompt
+  // Construire les parts pour Gemini : croquis + refs finition + ref format + nuanciers émail + prompt
   const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
   if (sketch) {
     const m = sketch.match(/^data:([^;]+);base64,(.+)$/);
@@ -447,12 +494,37 @@ export async function POST(req: Request) {
       parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
     }
   }
+  // Icelea : refs finition + format (1 chacune, random parmi le pool disponible)
+  let finitionRefAdded = false;
+  let formatRefAdded = false;
+  if (body.categorie === "icelea-3d" && body.icelea) {
+    const decos = body.icelea.decorations || [];
+    const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
+    if (!aRevetement && body.icelea.finitionArgent && body.icelea.finitionArgent !== "autre-fin") {
+      const refF = loadFinitionRef(body.icelea.finitionArgent);
+      if (refF) { parts.push(refF); finitionRefAdded = true; }
+    }
+    if (body.icelea.format) {
+      const refFmt = loadFormatRef(body.icelea.format);
+      if (refFmt) { parts.push(refFmt); formatRefAdded = true; }
+    }
+  }
   // Icelea + email coché → joindre les nuanciers comme refs visuelles
   if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
     const nuanciers = loadEmailNuanciers();
     for (const n of nuanciers) parts.push(n);
   }
-  parts.push({ text: prompt });
+
+  // Ajouter un préfixe au prompt pour indiquer les refs visuelles ajoutées
+  let refPreamble = "";
+  if (finitionRefAdded || formatRefAdded) {
+    refPreamble = "\n\n🖼️ VISUAL REFERENCES PROVIDED IN THIS REQUEST (CRITICAL — match the look) :\n";
+    if (sketch) refPreamble += "- The FIRST attached image is the USER'S SKETCH/DRAWING of the design intent.\n";
+    if (finitionRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING with the EXACT '${body.icelea?.finitionArgent}' FINISH the user wants. Replicate this texture/surface treatment faithfully (look at how light interacts with the material, the micro-texture, the reflections).\n`;
+    if (formatRefAdded) refPreamble += `- One of the attached reference images shows a REAL MOOD RING in the '${body.icelea?.format}' FORMAT the user wants. Match the proportions, structure, and silhouette of this format reference.\n`;
+    refPreamble += "These references show how Mood Collection actually produces these designs in real life — match the photographic style, material rendering, and structural proportions.\n";
+  }
+  parts.push({ text: prompt + refPreamble });
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
