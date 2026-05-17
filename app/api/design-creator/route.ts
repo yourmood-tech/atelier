@@ -34,7 +34,7 @@ const FINITION_REFS_COUNT: Record<string, number> = {
   "poli": 11, "mat": 6, "froisse": 11, "glitter": 3,
 };
 const FORMAT_REFS_COUNT: Record<string, number> = {
-  "addon": 6, "deux-tiers": 4, "medium": 3, "mini": 11, "base-large": 11, "base-small": 8, "base-xs": 10,
+  "addon": 6, "deux-tiers": 4, "medium": 3, "mini": 11, "base-large": 13, "base-small": 9, "base-xs": 3,
 };
 
 function loadFinitionRef(finition: string): { inlineData: { mimeType: string; data: string } } | null {
@@ -73,6 +73,65 @@ function loadEmailBordRef(bord: string): { inlineData: { mimeType: string; data:
     const buf = readFileSync(p);
     return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
   } catch { return null; }
+}
+
+// Canvas templates pour mode "transform" email (change-couleur)
+const EMAIL_CANVAS_FILES: Record<string, string> = {
+  "avec": "addon-avec-bord.jpg",
+  "sans": "addon-sans-bord.jpg",
+  "base": "base-email.jpg",
+};
+
+function loadEmailCanvas(structure: string): { inlineData: { mimeType: string; data: string } } | null {
+  const file = EMAIL_CANVAS_FILES[structure];
+  if (!file) return null;
+  const p = path.join(process.cwd(), "public", "refs", "email-canvas", file);
+  if (!existsSync(p)) return null;
+  try {
+    const buf = readFileSync(p);
+    return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
+  } catch { return null; }
+}
+
+function buildEmailTransformPrompt(structure: string, emailCodes: string, idea: string): string {
+  const structureDesc = structure === "avec"
+    ? "an addon ring with TWO thin polished silver rails on top and bottom edges framing a central enamel channel"
+    : structure === "sans"
+    ? "an addon ring with full enamel coverage edge-to-edge (no visible polished rails on the exterior)"
+    : "a Mood BASE with two colored enamel stripes on its two rails";
+
+  return `MOOD COLLECTION ENAMEL COLOR TRANSFORM — Take THIS EXACT RING from the attached image (IMAGE 1) and CHANGE ONLY THE ENAMEL COLOR.
+
+The ring in the attached image is ${structureDesc}. The original enamel color must be REPLACED with the new color(s) specified below.
+
+🎨 NEW ENAMEL COLOR(S) : ${emailCodes}
+
+The reference enamel charts (RB-* solid colors, RP-* pearlescent, RBF-* patterns) are attached as additional images. Identify the listed code(s) on the appropriate chart and apply the EXACT corresponding color(s) to the enamel zone of the ring.
+
+═══════════════════════════════════════════════
+ABSOLUTE PRESERVATION RULES (everything else stays IDENTICAL)
+═══════════════════════════════════════════════
+
+- 🚨 The METAL RAILS (polished silver borders) must remain EXACTLY as shown : same width, same shine, same placement.
+- 🚨 The RING SHAPE, SILHOUETTE, AND PROPORTIONS must remain IDENTICAL.
+- 🚨 The PHOTOGRAPHIC STYLE (lighting, background, angle, framing) must remain IDENTICAL.
+- 🚨 The INTERIOR of the ring stays polished silver as shown.
+- 🚨 The ENAMEL TEXTURE (matte/glossy/sparkle) should match the new code : RB-* = glossy smooth solid color, RP-* = pearlescent/glitter texture, RBF-* = printed motif pattern.
+
+═══════════════════════════════════════════════
+ARTIST'S DESIGN IDEA (additional context, secondary to the color change)
+═══════════════════════════════════════════════
+${idea || "(no additional idea — just change the enamel color)"}
+
+═══════════════════════════════════════════════
+ABSOLUTE BANS
+═══════════════════════════════════════════════
+- NO text, NO logo, NO watermark.
+- NO hands, NO human.
+- NO changes to the ring's shape, structure, or rails.
+- NO changes to the photographic style.
+
+Output : the SAME ring with the new enamel color applied.`;
 }
 
 type IceleaData = {
@@ -512,10 +571,35 @@ export async function POST(req: Request) {
   }
 
   const format = (body.format && /^\d+:\d+$/.test(body.format)) ? body.format : "1:1";
-  const prompt = buildPrompt(body);
+
+  // === Mode TRANSFORM email : si Icelea + email coché (full coat) + couleur précise spécifiée
+  // → on utilise un canvas template comme source et on demande à Gemini de changer juste la couleur
+  let useEmailTransform = false;
+  let emailTransformStructure: string | null = null;
+  if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email") && body.icelea.emailCodes?.trim()) {
+    const decosT = body.icelea.decorations || [];
+    const emailFullCoatT = !decosT.includes("zircons") && !decosT.includes("pvd");
+    if (emailFullCoatT) {
+      const fmtT = body.icelea.format || "";
+      const isBaseT = fmtT === "base-large" || fmtT === "base-small" || fmtT === "base-xs";
+      emailTransformStructure = isBaseT ? "base" : (body.icelea.emailBord || "avec");
+      useEmailTransform = true;
+    }
+  }
+
+  const prompt = useEmailTransform && emailTransformStructure
+    ? buildEmailTransformPrompt(emailTransformStructure, body.icelea!.emailCodes!, body.idea || "")
+    : buildPrompt(body);
 
   // Construire les parts pour Gemini : croquis + refs finition + ref format + nuanciers émail + prompt
   const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
+
+  // Mode TRANSFORM email : canvas en PREMIER (IMAGE 1 — la bague à transformer)
+  if (useEmailTransform && emailTransformStructure) {
+    const canvas = loadEmailCanvas(emailTransformStructure);
+    if (canvas) parts.push(canvas);
+  }
+
   if (sketch) {
     const m = sketch.match(/^data:([^;]+);base64,(.+)$/);
     if (m) {
@@ -525,7 +609,7 @@ export async function POST(req: Request) {
   // Icelea : refs finition + format (1 chacune, random parmi le pool disponible)
   let finitionRefAdded = false;
   let formatRefAdded = false;
-  if (body.categorie === "icelea-3d" && body.icelea) {
+  if (!useEmailTransform && body.categorie === "icelea-3d" && body.icelea) {
     const decos = body.icelea.decorations || [];
     const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
     if (!aRevetement && body.icelea.finitionArgent && body.icelea.finitionArgent !== "autre-fin") {
@@ -539,7 +623,7 @@ export async function POST(req: Request) {
   }
   // Icelea + email coché → joindre les nuanciers comme refs visuelles
   let emailBordRefAdded: string | null = null;
-  if (body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
+  if (!useEmailTransform && body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
     // Ref structure email selon format ET toggle utilisateur
     const decosE = body.icelea.decorations || [];
     const emailFullCoatE = !decosE.includes("zircons") && !decosE.includes("pvd");
@@ -553,6 +637,12 @@ export async function POST(req: Request) {
       if (refBord) { parts.push(refBord); emailBordRefAdded = bordChoice; }
     }
     // Nuanciers émail
+    const nuanciers = loadEmailNuanciers();
+    for (const n of nuanciers) parts.push(n);
+  }
+
+  // En mode transform email : joindre quand même les nuanciers pour identifier la couleur cible
+  if (useEmailTransform) {
     const nuanciers = loadEmailNuanciers();
     for (const n of nuanciers) parts.push(n);
   }
