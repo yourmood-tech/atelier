@@ -53,11 +53,14 @@ const ICELEA_DECO_LABELS: Record<string, string> = {
   "pvd": "PVD COATING — physical vapor deposition coating that colors the surface (durable colored finish: gold, rose gold, black, blue, rainbow, etc.)",
 };
 
-const ICELEA_FINITION_ARGENT_LABELS: Record<string, string> = {
-  "poli": "MIRROR-POLISHED silver finish (high-shine specular reflections)",
-  "matt": "MATT silver finish (uniform soft matte, no shine)",
+const ICELEA_FINITION_LABELS: Record<string, string> = {
+  "poli": "MIRROR-POLISHED finish (high-shine specular reflections)",
+  "matt": "MATT finish (uniform soft matte, no shine)",
   "glitter": "GLITTER / SNOWFLAKE finish (also called 'neige éternelle' — fine sparkling micro-texture, like frosted snow catching light)",
   "froisse": "CRINKLED / 'FROISSÉ' finish (irregular crumpled-paper-like texture, organic random surface, premium artisan look)",
+  "brosse": "BRUSHED finish (fine parallel matte striations along the band length)",
+  "satine": "SATIN finish (smooth matte with soft silky sheen)",
+  "martele": "HAMMERED finish (faceted texture with small irregular planes catching light)",
 };
 
 const CATEGORIE_INTROS: Record<string, string> = {
@@ -123,16 +126,17 @@ function buildIceleaPrompt(input: DesignInput): string {
     .map(d => d === "autre" && icelea.decorationAutre ? `- OTHER : ${icelea.decorationAutre}` : `- ${ICELEA_DECO_LABELS[d] || d}`)
     .join("\n");
 
-  // Argent neutre sans revêtement → finition argent appliquée
+  // Matériau neutre sans revêtement (tout matériau) → finition appliquée
   const aRevetement = decos.includes("email") || decos.includes("pvd") || decos.includes("zircons");
-  const isArgentNeutre = matKey === "argent" && !aRevetement;
-  let finitionArgentSection = "";
-  if (isArgentNeutre) {
+  const finitionDispo = !!matKey && !aRevetement;
+  let finitionSection = "";
+  if (finitionDispo) {
     const finKey = icelea.finitionArgent || "poli";
     const finLabel = finKey === "autre-fin" && icelea.finitionArgentAutre
       ? `${icelea.finitionArgentAutre} finish (custom)`
-      : ICELEA_FINITION_ARGENT_LABELS[finKey] || finKey;
-    finitionArgentSection = `\n💫 SILVER FINISH (neutral silver, no coating) : ${finLabel}.`;
+      : ICELEA_FINITION_LABELS[finKey] || finKey;
+    const matName = matKey === "autre" ? "material" : matKey;
+    finitionSection = `\n💫 ${matName.toUpperCase()} FINISH (neutral material, no coating) : ${finLabel}.`;
   }
 
   const idea = (input.idea && input.idea.trim()) || "(no extra description — follow the sketch + selectors strictly)";
@@ -149,7 +153,7 @@ ICELEA SPECIFICATIONS
 📏 FORMAT : ${fmtLabel}.
 
 ✨ DECORATIONS / SURFACE TREATMENT (combine all of the following) :
-${decoLabels || "- (none specified — clean plain band)"}${finitionArgentSection}
+${decoLabels || "- (none specified — clean plain band)"}${finitionSection}
 
 🎨 DESIGN IDEA (artist's intent — interpret faithfully) :
 ${idea}

@@ -229,14 +229,17 @@
     </div>
   </div>
 
-  <!-- Conditionnel : argent neutre (sans revêtement) → finition argent -->
+  <!-- Conditionnel : matériau neutre (sans revêtement) → finition matériau -->
   <div id="icelea-finition-argent" style="display:none;margin-bottom:1.2rem;padding:0.8rem;background:#f9f5ec;border-left:3px solid var(--or);border-radius:6px;">
-    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">💫 Finition argent <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— argent neutre sans revêtement</span></label>
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;"><span id="icelea-finition-label">💫 Finition</span> <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— matériau neutre sans revêtement</span></label>
     <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="poli" checked> Poli</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="matt"> Matt</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="glitter"> Glitter (neige éternelle)</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="froisse"> Froissé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="brosse"> Brossé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="satine"> Satiné</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="martele"> Martelé</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="icelea-fin-argent" value="autre-fin"> Autre :</label>
       <input type="text" id="icelea-fin-argent-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
     </div>
@@ -375,10 +378,23 @@ function updateIceleaConditional() {
   // Zircons coché → afficher placeholder zircons (palier 4)
   document.getElementById('icelea-zircons-placeholder').style.display = decos.includes('zircons') ? 'block' : 'none';
 
-  // Argent neutre (sans revêtement émail/PVD/zircons) → afficher finition argent
+  // Matériau neutre (sans revêtement émail/PVD/zircons) → afficher finition matériau (pour tous les matériaux)
   const aRevetement = decos.includes('email') || decos.includes('pvd') || decos.includes('zircons');
-  const argentNeutre = mat === 'argent' && !aRevetement;
-  document.getElementById('icelea-finition-argent').style.display = argentNeutre ? 'block' : 'none';
+  const materiauChoisi = !!mat;
+  const finitionDispo = materiauChoisi && !aRevetement;
+  document.getElementById('icelea-finition-argent').style.display = finitionDispo ? 'block' : 'none';
+
+  // Label dynamique selon matériau choisi
+  if (finitionDispo) {
+    const matAutre = document.getElementById('icelea-mat-autre')?.value?.trim();
+    const labels = {
+      'argent': '💫 Finition argent',
+      'acier': '💫 Finition acier',
+      'ceramique': '💫 Finition céramique',
+      'autre': matAutre ? `💫 Finition (${matAutre})` : '💫 Finition (matériau choisi)',
+    };
+    document.getElementById('icelea-finition-label').textContent = labels[mat] || '💫 Finition';
+  }
 }
 
 function toggleBaseFields() {
