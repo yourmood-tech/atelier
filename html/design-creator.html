@@ -95,6 +95,28 @@
   .cat-card .cat-titre { font-size: 0.95rem; font-weight: 700; color: var(--noir); margin-bottom: 0.3rem; }
   .cat-card .cat-desc { font-size: 0.78rem; color: var(--gris); line-height: 1.4; }
 
+  /* Émail nuancier interactif (clic sur pastille) */
+  .email-nuancier-details { margin-bottom: 0.6rem; background: white; border-radius: 8px; overflow: hidden; }
+  .email-nuancier-details summary { padding: 0.5rem 0.8rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; background: #faf6ec; user-select: none; }
+  .email-nuancier-details summary:hover { background: #f5efd9; }
+  .email-nuancier-interactive { position: relative; padding: 0.5rem; background: white; }
+  .email-nuancier-interactive img { display: block; width: 100%; max-width: 700px; margin: 0 auto; border-radius: 4px; }
+  .email-nuancier-interactive .hotspots {
+    position: absolute; inset: 0.5rem; max-width: 700px; left: 50%; transform: translateX(-50%);
+    display: grid; pointer-events: none;
+  }
+  .email-nuancier-interactive .hotspots > .hotspot {
+    cursor: pointer; transition: all 0.12s; pointer-events: auto; position: relative;
+  }
+  .email-nuancier-interactive .hotspots > .hotspot:hover { background: rgba(201, 169, 110, 0.25); }
+  .email-nuancier-interactive .hotspots > .hotspot.active {
+    background: rgba(201, 169, 110, 0.35); box-shadow: inset 0 0 0 3px var(--or); border-radius: 6px;
+  }
+  .email-nuancier-interactive .hotspots > .hotspot.active::after {
+    content: "✓"; position: absolute; top: 2px; right: 4px; color: var(--or); font-weight: 700; font-size: 0.85rem;
+    text-shadow: 0 0 3px white;
+  }
+
   /* Grille pastilles PVD */
   .pvd-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 0.6rem;
@@ -293,31 +315,54 @@
       </div>
     </div>
 
-    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">🎨 Couleurs / motifs émail <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— clique sur un nuancier pour zoomer, puis recopie les codes choisis</span></label>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.5rem;margin-bottom:0.7rem;">
-      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-01-80.jpg', 'Couleurs unies RB-01 → RB-80')">
-        <img src="/refs/email/rb-01-80.jpg" alt="RB-01 à RB-80">
-        <div class="nuancier-label">RB-01 → RB-80<br><small>Couleurs unies</small></div>
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">🎨 Couleurs / motifs émail <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— clique directement sur une pastille pour la sélectionner (plusieurs choix possibles)</span></label>
+
+    <!-- Nuanciers interactifs (clic sur pastille = sélection) -->
+    <details class="email-nuancier-details" open>
+      <summary>🟦 Couleurs unies · RB-01 → RB-80</summary>
+      <div class="email-nuancier-interactive" data-prefix="RB" data-cols="8" data-rows="10" data-start="1" data-pad="2" data-img="/refs/email/rb-01-80.jpg">
+        <img src="/refs/email/rb-01-80.jpg" alt="">
+        <div class="hotspots"></div>
       </div>
-      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-81-160.jpg', 'Couleurs unies RB-81 → RB-160')">
-        <img src="/refs/email/rb-81-160.jpg" alt="RB-81 à RB-160">
-        <div class="nuancier-label">RB-81 → RB-160<br><small>Couleurs unies (suite)</small></div>
+    </details>
+
+    <details class="email-nuancier-details">
+      <summary>🟧 Couleurs unies · RB-81 → RB-160</summary>
+      <div class="email-nuancier-interactive" data-prefix="RB" data-cols="8" data-rows="10" data-start="81" data-pad="2" data-img="/refs/email/rb-81-160.jpg">
+        <img src="/refs/email/rb-81-160.jpg" alt="">
+        <div class="hotspots"></div>
       </div>
-      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rb-161-240.jpg', 'Couleurs unies RB-161 → RB-240')">
-        <img src="/refs/email/rb-161-240.jpg" alt="RB-161 à RB-240">
-        <div class="nuancier-label">RB-161 → RB-240<br><small>Couleurs unies (fin)</small></div>
+    </details>
+
+    <details class="email-nuancier-details">
+      <summary>🟫 Couleurs unies · RB-161 → RB-240</summary>
+      <div class="email-nuancier-interactive" data-prefix="RB" data-cols="8" data-rows="10" data-start="161" data-pad="3" data-img="/refs/email/rb-161-240.jpg">
+        <img src="/refs/email/rb-161-240.jpg" alt="">
+        <div class="hotspots"></div>
       </div>
-      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rp-pearl-glitter.jpg', 'Perlés / glitter RP-01 → RP-40')">
-        <img src="/refs/email/rp-pearl-glitter.jpg" alt="RP-01 à RP-40">
-        <div class="nuancier-label">RP-01 → RP-40<br><small>Perlés / glitter</small></div>
+    </details>
+
+    <details class="email-nuancier-details">
+      <summary>✨ Perlés / glitter · RP-01 → RP-40</summary>
+      <div class="email-nuancier-interactive" data-prefix="RP" data-cols="8" data-rows="5" data-start="1" data-pad="2" data-img="/refs/email/rp-pearl-glitter.jpg">
+        <img src="/refs/email/rp-pearl-glitter.jpg" alt="">
+        <div class="hotspots"></div>
       </div>
-      <div class="nuancier-card" onclick="zoomNuancier('/refs/email/rbf-motifs.jpg', 'Motifs RBF-001 → RBF-072')">
-        <img src="/refs/email/rbf-motifs.jpg" alt="RBF-001 à RBF-072">
-        <div class="nuancier-label">RBF-001 → RBF-072<br><small>Motifs (animaliers, plaids…)</small></div>
+    </details>
+
+    <details class="email-nuancier-details">
+      <summary>🐆 Motifs (animaliers, plaids…) · RBF-001 → RBF-072</summary>
+      <div class="email-nuancier-interactive" data-prefix="RBF" data-cols="8" data-rows="9" data-start="1" data-pad="3" data-img="/refs/email/rbf-motifs.jpg">
+        <img src="/refs/email/rbf-motifs.jpg" alt="">
+        <div class="hotspots"></div>
       </div>
-    </div>
-    <textarea id="icelea-email-codes" rows="2" placeholder="Exemples : RB-013, RB-067 + RP-22 (perlé vert) + RBF-008 (léopard rose)" style="width:100%;padding:0.55rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
-    <div class="hint-inline">Tape les codes séparés par virgules. Tu peux mixer plusieurs couleurs et motifs sur la même bague.</div>
+    </details>
+
+    <div class="hint-inline" id="email-selection" style="margin-top:0.6rem;font-weight:600;">Aucune pastille sélectionnée</div>
+    <details style="margin-top:0.5rem;">
+      <summary style="font-size:0.78rem;color:var(--gris);cursor:pointer;">💬 Saisie libre (optionnel — codes spécifiques, mélanges custom)</summary>
+      <textarea id="icelea-email-codes" rows="2" placeholder="Codes additionnels (séparés par virgules) ou description libre" style="margin-top:0.4rem;width:100%;padding:0.55rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+    </details>
   </div>
 
   <!-- PVD : grille pastilles couleurs (palier 3) -->
@@ -463,6 +508,7 @@ function updateIceleaConditional() {
   // Émail coché → afficher zone nuancier émail (palier 2)
   const emailOn = decos.includes('email');
   document.getElementById('icelea-email-zone').style.display = emailOn ? 'block' : 'none';
+  if (emailOn) buildEmailHotspots();
   // Toggle "avec bord / sans bord" : visible seulement si email SEUL (pas de zircons ni PVD)
   const emailFullCoat = emailOn && !decos.includes('zircons') && !decos.includes('pvd');
   document.getElementById('icelea-email-bord').style.display = emailFullCoat ? 'block' : 'none';
@@ -542,6 +588,41 @@ function buildPvdGrid() {
     card.addEventListener('click', () => togglePvd(p.code, card));
     grid.appendChild(card);
   });
+}
+
+// === Émail : hotspots cliquables ===
+const emailSelected = new Set();
+
+function buildEmailHotspots() {
+  document.querySelectorAll('.email-nuancier-interactive').forEach(container => {
+    const hotspotsEl = container.querySelector('.hotspots');
+    if (hotspotsEl.children.length > 0) return; // déjà construit
+    const prefix = container.dataset.prefix;
+    const cols = parseInt(container.dataset.cols, 10);
+    const rows = parseInt(container.dataset.rows, 10);
+    const start = parseInt(container.dataset.start, 10);
+    const pad = parseInt(container.dataset.pad, 10);
+    hotspotsEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    hotspotsEl.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+    const total = cols * rows;
+    for (let i = 0; i < total; i++) {
+      const code = `${prefix}-${String(start + i).padStart(pad, '0')}`;
+      const cell = document.createElement('div');
+      cell.className = 'hotspot';
+      cell.dataset.code = code;
+      cell.title = code;
+      cell.addEventListener('click', () => toggleEmailCode(code, cell));
+      hotspotsEl.appendChild(cell);
+    }
+  });
+}
+
+function toggleEmailCode(code, cell) {
+  if (emailSelected.has(code)) { emailSelected.delete(code); cell.classList.remove('active'); }
+  else { emailSelected.add(code); cell.classList.add('active'); }
+  const sel = Array.from(emailSelected);
+  document.getElementById('email-selection').textContent =
+    sel.length ? `${sel.length} pastille${sel.length > 1 ? 's' : ''} sélectionnée${sel.length > 1 ? 's' : ''} : ${sel.join(' · ')}` : 'Aucune pastille sélectionnée';
 }
 
 function togglePvd(code, card) {
@@ -626,7 +707,9 @@ async function genererDesign() {
     const finArgent = document.querySelector('input[name="icelea-fin-argent"]:checked')?.value || null;
     const finArgentAutre = document.getElementById('icelea-fin-argent-autre')?.value?.trim() || null;
 
-    const emailCodes = document.getElementById('icelea-email-codes')?.value?.trim() || null;
+    const emailCodesTexte = document.getElementById('icelea-email-codes')?.value?.trim() || '';
+    const emailCodesPastilles = Array.from(emailSelected).join(', ');
+    const emailCodes = [emailCodesPastilles, emailCodesTexte].filter(s => s).join(', ') || null;
     const emailBord = document.querySelector('input[name="icelea-email-bord-val"]:checked')?.value || null;
     const pvdColors = Array.from(pvdSelected);
     payload = {

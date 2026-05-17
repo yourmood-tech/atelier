@@ -31,7 +31,7 @@ function loadEmailNuanciers(): Array<{ inlineData: { mimeType: string; data: str
 
 // Nombre de refs disponibles par finition et format (sélection random)
 const FINITION_REFS_COUNT: Record<string, number> = {
-  "poli": 11, "mat": 6, "froisse": 9, "glitter": 3,
+  "poli": 11, "mat": 6, "froisse": 11, "glitter": 3,
 };
 const FORMAT_REFS_COUNT: Record<string, number> = {
   "addon": 6, "deux-tiers": 4, "medium": 3, "mini": 11, "base-large": 11, "base-small": 8, "base-xs": 0,
@@ -127,13 +127,13 @@ const ICELEA_DECO_LABELS: Record<string, string> = {
 };
 
 const ICELEA_FINITION_LABELS: Record<string, string> = {
-  "poli": "MIRROR-POLISHED finish (high-shine specular reflections)",
-  "matt": "MATT finish (uniform soft matte, no shine)",
-  "glitter": "GLITTER / SNOWFLAKE finish (also called 'neige éternelle' — fine sparkling micro-texture, like frosted snow catching light)",
-  "froisse": "CRINKLED / 'FROISSÉ' finish (irregular crumpled-paper-like texture, organic random surface, premium artisan look)",
-  "brosse": "BRUSHED finish (fine parallel matte striations along the band length)",
-  "satine": "SATIN finish (smooth matte with soft silky sheen)",
-  "martele": "HAMMERED finish (faceted texture with small irregular planes catching light)",
+  "poli": "MIRROR-POLISHED finish (high-shine specular reflections, smooth)",
+  "matt": "MATT finish (uniform soft matte surface, NO shine, NO reflections, velvety appearance)",
+  "glitter": "GLITTER / SNOWFLAKE finish ('neige éternelle' Mood) — fine sparkling micro-crystalline texture across the entire surface, like frosted snow catching light, micro-pearl particles embedded in the metal, subtle sparkle uniform across the band",
+  "froisse": "MOOD 'FROISSÉ' finish — DO NOT interpret as crumpled paper. The Mood 'froissé' is a FINE VERTICAL BRUSHED TEXTURE : ultra-thin parallel hairline striations running PERPENDICULAR to the band length (i.e., across the band's width), creating a delicate hand-brushed metal aesthetic. The surface has a soft satin sheen, with very fine micro-grooves catching the light in subtle vertical streaks. Refined, artisan, slightly directional reflective look — NOT chaotic, NOT crumpled, NOT crinkled, NOT papier-mâché. Think of finely-brushed dark steel watch bezels or premium titanium finish. Refer to the attached reference image for the exact look.",
+  "brosse": "BRUSHED finish (fine parallel matte striations along the band length, soft satin look)",
+  "satine": "SATIN finish (smooth matte with soft silky sheen, uniform low-gloss)",
+  "martele": "HAMMERED finish (faceted texture with small irregular planes catching light, artisan beaten-metal look)",
 };
 
 const CATEGORIE_INTROS: Record<string, string> = {
@@ -268,8 +268,10 @@ ICELEA SPECIFICATIONS
 ✨ DECORATIONS / SURFACE TREATMENT (combine all of the following) :
 ${decoLabels || "- (none specified — clean plain band)"}${finitionSection}${emailSection}${pvdSection}
 
-🎨 DESIGN IDEA (artist's intent — interpret faithfully) :
+🎨 DESIGN IDEA (artist's intent — interpret faithfully, RESPECT EVERY DETAIL) :
 ${idea}
+
+🚨 COLOR INSTRUCTION (CRITICAL) : if the idea above mentions a specific color (e.g. "noir", "rouge", "bleu marine", "vert sapin", "doré"), apply that EXACT color to the metal surface — even if the base material is "argent" or "acier", the FINAL color must match what the artist asked. For example : "acier noir" = black-coated stainless steel (matte/brushed black surface, like PVD black coating). Never default to the bare material color when a specific color is mentioned in the idea.
 
 ${sketchPresent ? "🖼️ SKETCH REFERENCE (IMAGE 1) : The user provided a sketch / drawing of the intended design. Interpret it FAITHFULLY — respect proportions, motifs, decorations, gemstone positions, and overall style. The sketch is the PRIMARY visual reference." : ""}
 
