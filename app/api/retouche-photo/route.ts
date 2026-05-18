@@ -87,7 +87,15 @@ ACTION-SPECIFIC ADAPTATIONS :
 - IF the action is a WORN-RING shot (hand / body model) : the model has BRONZED/TAN skin, bare shoulder visible, golden side light grazes the shoulder / collarbone / arm, deep graphic shadows fall across the skin and body. Hair and pose remain editorial. Drape of natural linen / silk in warm tones if visible.
 - IF the action is a COFFRET / BOX shot : the coffret interior catches warm golden side light, deep shadows on one side of the box, terracotta-tinted highlights instead of cool studio light. White leatherette interior is still white but warmly lit.
 - IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace the neutral background with terracotta clay surface / sand plaster ledge, golden side light, bold shadow cast by the ring on the warm clay.
-- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.`,
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot. NOT a wide architectural shot with a small ring inside.
+- The terracotta architecture / clay decor is a SUPPORTING BACKDROP, occupying ONLY the corners, edges, and negative space around the ring.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
+- For worn-ring shots : the ring + hand + portion of skin near the ring fill the frame ; the model's body/shoulder are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight on the ring. If a wider context is shown, the ring still dominates ; never let the decor take over the frame.`,
 };
 
 async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null): Promise<{ image?: string; error?: string }> {
