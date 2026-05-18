@@ -65,12 +65,40 @@ const RATIOS: Record<string, string> = {
   "multi-16-9": "16:9",
 };
 
-async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null): Promise<{ image?: string; error?: string }> {
+// Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
+const THEME_OVERLAYS: Record<string, string> = {
+  "terre-dombre": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "TERRE D'OMBRE" (Jacquemus editorial)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition (which subject is photographed, framing, ring centrality).
+
+VISUAL DIRECTION :
+- Setting : contemporary Mediterranean architecture — terracotta clay walls with textured warm-sand plaster, simple sculptural architectural volumes (corner / step / arch fragment / niche / raw clay ledge).
+- Light : LATE AFTERNOON GOLDEN LIGHT entering from the SIDE (low-angle, ~25-40° from horizontal), warm and dramatic — like the last hour before sunset in a Provence / Greek island / Moroccan courtyard.
+- Shadows : DEEP, GRAPHIC, BOLD shadows projected on surfaces (hard-edged shadow shapes — Jacquemus signature). HIGH CONTRAST between brightly-lit warm zones and deep shadow zones (some areas fully sunlit warm cream, others sinking into deep brown / black shadow).
+- Color palette : terracotta, sand beige, burnt sienna, warm brown, ochre, copper — with DEEP BLACK / dark brown in shadows. NO white seamless studio backdrop, NO cool studio strobes.
+- Mood : cinematic, editorial, elegant, mysterious, artisanal, raw yet refined.
+- Style references : Jacquemus summer campaign, Loewe earth-tone editorial, Bottega Veneta minimalist sculptural, raw Mediterranean luxe.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : the model has BRONZED/TAN skin, bare shoulder visible, golden side light grazes the shoulder / collarbone / arm, deep graphic shadows fall across the skin and body. Hair and pose remain editorial. Drape of natural linen / silk in warm tones if visible.
+- IF the action is a COFFRET / BOX shot : the coffret interior catches warm golden side light, deep shadows on one side of the box, terracotta-tinted highlights instead of cool studio light. White leatherette interior is still white but warmly lit.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace the neutral background with terracotta clay surface / sand plaster ledge, golden side light, bold shadow cast by the ring on the warm clay.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.`,
+};
+
+async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null): Promise<{ image?: string; error?: string }> {
   const basePrompt = PROMPTS[action];
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
-  const prompt = note && note.trim()
-    ? `${basePrompt}\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR (à respecter en priorité) ===\n${note.trim()}`
-    : basePrompt;
+  // Overlay thème global (si actif) — modifie l'ambiance/lumière/palette de l'action
+  const themeOverlay = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+  let prompt = basePrompt + themeOverlay;
+  if (note && note.trim()) {
+    prompt += `\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR (à respecter en priorité) ===\n${note.trim()}`;
+  }
   const aspectRatio = (formatOverride && /^\d+:\d+$/.test(formatOverride)) ? formatOverride : (RATIOS[action] || "1:1");
 
   // Extraire mimeType et data depuis dataUrl
@@ -135,14 +163,14 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; action?: string; note?: string | null; format?: string | null };
+  let body: { image?: string; action?: string; note?: string | null; format?: string | null; theme?: string | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, action, note, format } = body;
+  const { image, action, note, format, theme } = body;
   if (!image || !action) {
     return NextResponse.json({ error: "Champs requis : image (dataUrl), action" }, { status: 400 });
   }
@@ -156,12 +184,12 @@ export async function POST(req: Request) {
       "multi-9-16": "Vertical 9:16 (Story/Reel)",
       "multi-16-9": "Paysage 16:9 (FB cover)",
     };
-    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note).then(res => ({ ...res, ratio: r, label: labels[r] }))));
+    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme).then(res => ({ ...res, ratio: r, label: labels[r] }))));
     return NextResponse.json({ resultats: results });
   }
 
   // Cas simple : 1 appel — le format choisi par l'utilisateur override le ratio par défaut de l'action
-  const res = await appelGemini(image, action, note, format);
+  const res = await appelGemini(image, action, note, format, theme);
   if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
   return NextResponse.json({ image: res.image });
 }
