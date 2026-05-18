@@ -1264,7 +1264,7 @@ async function genererDesign() {
         <button class="btn-action" style="background:#6366f1;" onclick="toggleModification('${imgId}')">✏️ Modification</button>
         <button class="btn-action" style="background:#0a6b3f;" onclick="telechargerFiche('${imgId}')">📄 Fiche fournisseur</button>
         ${hasPierres ? `<button class="btn-action" style="background:#111;color:#fff;" onclick="telechargerPlanSertissage('${blocId}')">📐 Plan de sertissage</button>` : ''}
-        ${(categorie === 'mood-joaillerie') ? `<button class="btn-action" style="background:#b45309;color:#fff;" onclick="testerPlanComplet('${imgId}','${blocId}')">🧪 Test plan de sertissage</button>` : ''}
+        ${(categorie === 'mood-joaillerie') ? `<button class="btn-action" style="background:#b45309;color:#fff;" onclick="genererPlanAuto('${imgId}','${blocId}')">📐 Plan auto (line art + vector)</button>` : ''}
       </div>
       <div id="${imgId}-modif-zone" style="display:none;margin-top:0.7rem;padding:0.8rem;background:#f4f4f7;border-radius:8px;">
         <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
@@ -1782,7 +1782,157 @@ uploadZone.addEventListener('drop', e => {
   }
 });
 
-// === Plan de sertissage palier 2 — Gemini extrait motif + Canvas compose bande métal ===
+// === Plan de sertissage AUTO — Gemini line art + Potrace vectorize + Canvas/SVG compose ===
+async function genererPlanAuto(imgId, blocId) {
+  const bloc = document.getElementById(blocId);
+  if (!bloc) { alert('Bloc parent introuvable'); return; }
+  const sourceUrl = bloc.dataset.sketchOriginal || cacheImageGet(imgId);
+  if (!sourceUrl) { alert('Source introuvable'); return; }
+
+  let zone = document.getElementById(blocId + '-autoplan-zone');
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = blocId + '-autoplan-zone';
+    zone.style.cssText = 'margin-top:0.8rem;padding:0.8rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;';
+    bloc.appendChild(zone);
+  }
+  zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/3 : Gemini génère le line art noir/blanc…</div>';
+
+  try {
+    // === Étape 1 : line art ===
+    const lineArtResp = await fetch('/api/design-creator-line-art', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: sourceUrl }),
+    });
+    const lineArtData = await lineArtResp.json();
+    if (!lineArtResp.ok || !lineArtData.image) throw new Error(lineArtData.error || 'Pas de line art retourné');
+    const lineArtDataUrl = lineArtData.image;
+
+    zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 2/3 : Potrace vectorise le line art en SVG…</div>';
+
+    // === Étape 2 : vectorize ===
+    const vecResp = await fetch('/api/design-creator-vectorize', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: lineArtDataUrl, threshold: 180 }),
+    });
+    const vecData = await vecResp.json();
+    if (!vecResp.ok || !vecData.svg) throw new Error(vecData.error || 'Pas de SVG retourné');
+    const motifSvgString = vecData.svg;
+
+    zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 3/3 : composition du plan final…</div>';
+
+    // === Étape 3 : composition ===
+    // Lecture des paramètres formulaire
+    const matiere = bloc.dataset.mjMatiere || 'or-jaune-18k';
+    const format = bloc.dataset.mjFormat || 'addon';
+    const taille = parseFloat(bloc.dataset.mjTaille) || 54;
+    const nomProjet = (bloc.dataset.nomProjet || 'MOOD DESIGN').toUpperCase();
+    const couleurBande = MJ_MATIERE_HEX[matiere] || '#B8B8B8';
+    const largeurMm = MJ_FORMAT_LARGEUR_MM[format] || 7;
+    const circonferenceMm = taille + 6;
+
+    const PX_PAR_MM = 24;
+    const bandeW = Math.round(circonferenceMm * PX_PAR_MM);
+    const bandeH = Math.max(80, Math.round(largeurMm * PX_PAR_MM));
+    const PADDING_X = 80, PADDING_TOP = 220, PADDING_BOTTOM = 80;
+    const W = Math.max(1600, bandeW + 2 * PADDING_X);
+    const H = PADDING_TOP + bandeH + PADDING_BOTTOM;
+
+    // Auto-calcul nb motifs (motif carré, slot = bandeH)
+    const nbMotifs = Math.max(2, Math.round(circonferenceMm / Math.max(largeurMm * 2, 8)));
+    const slotW = bandeW / nbMotifs;
+    const motifSize = Math.min(slotW, bandeH);
+    const motifOffsetY = PADDING_TOP + (bandeH - motifSize) / 2;
+
+    // Extraire viewBox + paths du SVG potrace pour construire le SVG final propre
+    const viewBoxMatch = motifSvgString.match(/viewBox="([^"]+)"/);
+    const motifViewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 100 100';
+    const innerMatch = motifSvgString.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+    const motifInner = innerMatch ? innerMatch[1] : '';
+
+    // Génération du SVG final
+    const matLabel = MJ_MATIERE_LABEL[matiere] || matiere;
+    const fmtLabel = MJ_FORMAT_LABEL[format] || format;
+    const bandeX = (W - bandeW) / 2;
+    const bandeY = PADDING_TOP;
+
+    let motifsRepetes = '';
+    for (let i = 0; i < nbMotifs; i++) {
+      const cx = bandeX + i * slotW + (slotW - motifSize) / 2;
+      motifsRepetes += `<svg x="${cx}" y="${motifOffsetY}" width="${motifSize}" height="${motifSize}" viewBox="${motifViewBox}" preserveAspectRatio="xMidYMid meet">${motifInner}</svg>`;
+    }
+
+    const svgFinal = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect width="${W}" height="${H}" fill="#FFFFFF"/>
+  <text x="${PADDING_X}" y="${70 + 80}" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="300" font-size="88" fill="#000">${escapeXml(nomProjet)}</text>
+  <text x="${PADDING_X}" y="${70 + 80 + 35}" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="400" font-size="24" fill="#666">${escapeXml(matLabel)} · ${escapeXml(fmtLabel)} (${largeurMm}mm) · taille ${taille}</text>
+  <rect x="${bandeX}" y="${bandeY}" width="${bandeW}" height="${bandeH}" fill="${couleurBande}"/>
+  <g>${motifsRepetes}</g>
+  <text x="${PADDING_X}" y="${bandeY + bandeH + 50}" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="400" font-size="22" fill="#333">Pierres : à compléter dans le descriptif (palier 2.2 à venir)</text>
+</svg>`;
+
+    // PNG depuis le SVG via canvas
+    const svgBlob = new Blob([svgFinal], { type: 'image/svg+xml' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const planImg = new Image();
+    await new Promise((resolve, reject) => {
+      planImg.onload = resolve;
+      planImg.onerror = () => reject(new Error('SVG final non rendu'));
+      planImg.src = svgUrl;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    canvas.getContext('2d').drawImage(planImg, 0, 0);
+    const pngDataUrl = canvas.toDataURL('image/png');
+    URL.revokeObjectURL(svgUrl);
+
+    const slug = nomProjet.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mood';
+    const ts = Date.now();
+    const pngFname = `plan-sertissage-${slug}-${ts}.png`;
+    const svgFname = `plan-sertissage-${slug}-${ts}.svg`;
+
+    // Stocker en cache pour téléchargement
+    const planPngId = 'plan-png-' + ts;
+    cacheImagePut(planPngId, pngDataUrl);
+    // SVG en blob URL (gardé en mémoire)
+    const svgBlobFinal = new Blob([svgFinal], { type: 'image/svg+xml' });
+    const svgDownloadUrl = URL.createObjectURL(svgBlobFinal);
+
+    zone.innerHTML = `
+      <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.5rem;">📐 Plan de sertissage automatique :</div>
+      <div style="display:grid;grid-template-columns:160px 160px 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+        <div>
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">1. Line art Gemini</div>
+          <img src="${lineArtDataUrl}" alt="line art" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;">
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">2. SVG vectorisé Potrace</div>
+          <img src="${svgDownloadUrl}#vecpreview" alt="svg" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;display:none;">
+          <div style="border:1px solid #f59e0b;border-radius:6px;background:#fff;padding:4px;">${motifSvgString.replace(/<svg([^>]*)>/, '<svg$1 style="width:100%;height:auto;display:block;">')}</div>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">3. Plan final composé</div>
+          <img src="${pngDataUrl}" alt="plan final" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn-action" onclick="telechargerCache('${planPngId}','${pngFname}')">⬇️ Télécharger PNG</button>
+        <a class="btn-action" style="text-decoration:none;background:#0a6b3f;color:#fff;display:inline-flex;align-items:center;" href="${svgDownloadUrl}" download="${svgFname}">⬇️ Télécharger SVG (vectoriel)</a>
+        <button class="btn-action secondary" onclick="genererPlanAuto('${imgId}','${blocId}')">🔄 Regénérer</button>
+      </div>
+      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">${nbMotifs} motifs sur le tour · ${matLabel} · ${fmtLabel} ${largeurMm}mm · taille ${taille}</div>
+    `;
+  } catch (e) {
+    zone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec : ${escapeHtml(e.message || String(e))}</div>
+      <button class="btn-action secondary" style="margin-top:0.5rem;" onclick="genererPlanAuto('${imgId}','${blocId}')">🔄 Réessayer</button>`;
+  }
+}
+
+function escapeXml(str) {
+  return String(str).replace(/[<>&'"]/g, c => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', "'":'&apos;', '"':'&quot;' }[c]));
+}
+
+// === Plan de sertissage palier 2 (mini-form) — ancien flux, gardé pour debug ===
 
 // Couleur hex de la bande métal selon matière Mood Joaillerie
 const MJ_MATIERE_HEX = {
