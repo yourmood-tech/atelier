@@ -156,6 +156,25 @@
   <textarea id="indications" rows="3" placeholder="Exemples :&#10;• « fond bleu pastel » (pour Fond anthracite)&#10;• « garder le diamant rouge », « redresser vers la gauche » (pour Nettoyer)&#10;• « main de femme métisse, ongles french amande, main posée vers la clavicule, t-shirt blanc, zoom focus bague » (pour Bague portée)" style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;font-family:inherit;resize:vertical;"></textarea>
 </div>
 
+<!-- Sélecteur de thème global (positionné AVANT les autres sélecteurs et les styles photos) -->
+<div id="theme-global-zone" style="display:none;margin-top:1rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">🎨 Thème (optionnel) <span style="color:var(--gris);font-weight:400;">— sélectionne une ambiance, elle s'applique à tous les styles de photo ci-dessous</span></label>
+  <div class="actions-grid" style="margin-top:0.6rem;">
+    <div class="action-card theme-pick active" data-theme="" onclick="setThemeGlobal('')">
+      <span class="emoji">⚪</span>
+      <div class="titre">Aucun thème</div>
+      <div class="desc">Rendu neutre / studio par défaut</div>
+    </div>
+    <div class="action-card theme-pick" data-theme="terre-dombre" onclick="setThemeGlobal('terre-dombre')" style="padding:0;overflow:hidden;">
+      <img src="/themes/terre-dombre/preview-objet.png" alt="Terre d'ombre" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block;">
+      <div style="padding:0.7rem 0.9rem;">
+        <div class="titre">Terre d'ombre</div>
+        <div class="desc">Argile, Jacquemus, ombres graphiques</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Sélecteur de format global (appliqué à toutes les actions) -->
 <div id="format-global-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
   <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.5rem;">📐 Format de sortie <span style="color:var(--gris);font-weight:400;">— s'applique à toutes les actions (sauf Multi-formats qui génère les 4)</span></label>
@@ -223,25 +242,6 @@
     <span style="color:var(--gris);font-size:0.78rem;">_ring.png</span>
   </div>
   <div style="font-size:0.72rem;color:var(--gris);margin-top:0.4rem;">Le numéro s'incrémente automatiquement à chaque téléchargement. Si "Nom de la bague" est vide, le nommage par défaut est utilisé.</div>
-</div>
-
-<!-- Sélecteur de thème global (en haut) -->
-<div id="theme-global-zone" style="display:none;margin-top:1rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.3rem;">🎨 Thème (optionnel) <span style="color:var(--gris);font-weight:400;">— sélectionne une ambiance, elle s'applique à tous les styles de photo ci-dessous</span></label>
-  <div class="actions-grid" style="margin-top:0.6rem;">
-    <div class="action-card theme-pick active" data-theme="" onclick="setThemeGlobal('')">
-      <span class="emoji">⚪</span>
-      <div class="titre">Aucun thème</div>
-      <div class="desc">Rendu neutre / studio par défaut</div>
-    </div>
-    <div class="action-card theme-pick" data-theme="terre-dombre" onclick="setThemeGlobal('terre-dombre')" style="padding:0;overflow:hidden;">
-      <img src="/themes/terre-dombre/preview-objet.png" alt="Terre d'ombre" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block;">
-      <div style="padding:0.7rem 0.9rem;">
-        <div class="titre">Terre d'ombre</div>
-        <div class="desc">Argile, Jacquemus, ombres graphiques</div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Actions -->
