@@ -1854,8 +1854,9 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     const W = Math.max(1600, bandeW + 2 * PADDING_X);
     const H = PADDING_TOP + bandeH + PADDING_BOTTOM;
 
-    // Avec le pipeline polaire, le SVG = la bague ENTIÈRE déroulée → pas de tile, on l'étire sur toute la bande
-    const nbMotifs = 1;
+    // Le SVG = MOITIÉ visible de la bague (180°) → on duplique x2 pour reconstituer le tour
+    const nbMotifs = 2;
+    const slotW = bandeW / nbMotifs;
 
     // Extraire viewBox + paths du SVG potrace pour construire le SVG final propre
     const viewBoxMatch = motifSvgString.match(/viewBox="([^"]+)"/);
@@ -1869,8 +1870,11 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     const bandeX = (W - bandeW) / 2;
     const bandeY = PADDING_TOP;
 
-    // Le SVG du motif (= circonférence complète déroulée) est étiré pour occuper toute la bande
-    const motifsRepetes = `<svg x="${bandeX}" y="${bandeY}" width="${bandeW}" height="${bandeH}" viewBox="${motifViewBox}" preserveAspectRatio="none">${motifInner}</svg>`;
+    // Le SVG du motif (= moitié visible) est dupliqué 2 fois sur la bande, chaque moitié étirée pour occuper son slot
+    let motifsRepetes = '';
+    for (let i = 0; i < nbMotifs; i++) {
+      motifsRepetes += `<svg x="${bandeX + i * slotW}" y="${bandeY}" width="${slotW}" height="${bandeH}" viewBox="${motifViewBox}" preserveAspectRatio="none">${motifInner}</svg>`;
+    }
 
     const svgFinal = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect width="${W}" height="${H}" fill="#FFFFFF"/>

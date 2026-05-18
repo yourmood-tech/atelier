@@ -90,23 +90,27 @@ export async function POST(req: Request) {
     const bIn = rInnerMedian > 10 ? rInnerMedian * (bOut / Math.min(aOut, bOut)) : bOut * 0.5;
     const hadInnerHole = rInnerMedian > 10;
 
-    // 3. Projection polaire → cartésienne
+    // 3. Projection polaire → cartésienne (180° SEULEMENT — moitié visible de la bague)
     // Épaisseur de la bague (moyenne entre les 2 axes)
     const thickness = ((aOut - aIn) + (bOut - bIn)) / 2;
     // Rayon moyen pour la circonférence (formule simple de Ramanujan)
     const aMid = (aOut + aIn) / 2;
     const bMid = (bOut + bIn) / 2;
-    const circumference = Math.PI * (3 * (aMid + bMid) - Math.sqrt((3 * aMid + bMid) * (aMid + 3 * bMid)));
+    const fullCircumference = Math.PI * (3 * (aMid + bMid) - Math.sqrt((3 * aMid + bMid) * (aMid + 3 * bMid)));
+    // On ne déroule que 180° (la moitié visible) — l'arrière n'est pas dans la photo
+    const halfCircumference = fullCircumference / 2;
 
     // Dimensions de sortie (avec un peu de margin)
-    const OUT_W = Math.max(200, Math.round(circumference));
+    const OUT_W = Math.max(200, Math.round(halfCircumference));
     const OUT_H = Math.max(50, Math.round(thickness * 1.1));
 
     // Buffer RGBA de sortie
     const out = new Uint8ClampedArray(OUT_W * OUT_H * 4);
 
-    // Pivot : on déroule en partant du haut de la bague (theta = -π/2)
-    const THETA_OFFSET = -Math.PI / 2;
+    // On déroule la MOITIÉ SUPÉRIEURE du cercle (où la face visible se trouve typiquement)
+    // theta varie de -π (côté gauche) à 0 (côté droit), en passant par -π/2 (haut)
+    const THETA_START = -Math.PI;
+    const THETA_RANGE = Math.PI; // 180° seulement
 
     for (let py = 0; py < OUT_H; py++) {
       // t = 0 (bord externe) → 1 (bord interne)
@@ -114,7 +118,7 @@ export async function POST(req: Request) {
       const ra = aOut - t * (aOut - aIn);
       const rb = bOut - t * (bOut - bIn);
       for (let px = 0; px < OUT_W; px++) {
-        const theta = (px / OUT_W) * 2 * Math.PI + THETA_OFFSET;
+        const theta = THETA_START + (px / OUT_W) * THETA_RANGE;
         const sx = cx + ra * Math.cos(theta);
         const sy = cy + rb * Math.sin(theta);
         const dstIdx = (py * OUT_W + px) * 4;
