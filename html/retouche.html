@@ -148,7 +148,7 @@
     <div class="hint" style="margin-top:0.6rem;">Clique pour changer d'image</div>
   </div>
 </div>
-<input type="file" id="file-input" accept="image/*" onchange="handleFileChosen(event)">
+<input type="file" id="file-input" accept="image/*" multiple onchange="handleFileChosen(event)">
 
 <!-- Indications optionnelles pour l'IA -->
 <div id="indications-zone" style="display:none;margin-top:1rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
@@ -339,11 +339,7 @@
     <div class="titre">Multi-formats sociaux</div>
     <div class="desc">1 photo → 4 formats (Insta 1:1, 4:5, story 9:16, FB 16:9)</div>
   </div>
-  <div class="action-card" onclick="lancerProduitMultiple()" data-action="produit-multiple" style="pointer-events:auto;opacity:1;background:#fffaf0;border:2px dashed var(--or);">
-    <span class="emoji">🪞</span>
-    <div class="titre">Produit multiple</div>
-    <div class="desc">Compose 2 à 6 bagues dans une scène (dispersée éditoriale) · combinable avec un thème · upload propre — pas besoin de la bague ci-dessus</div>
-  </div>
+  <!-- Carte Produit multiple retirée : maintenant intégrée dans l'upload (glisse plusieurs photos → mode multi auto) -->
   <div class="action-card" onclick="lancerVideo360()" data-action="video-360">
     <span class="emoji">🎬</span>
     <div class="titre">Rotation 360° (vidéo)</div>
@@ -357,7 +353,8 @@
 <div class="resultats-zone" id="resultats"></div>
 
 <script>
-let imageActuelle = null;  // dataUrl base64
+let imageActuelle = null;  // dataUrl base64 (mode single)
+let imagesMultiples = [];  // tableau de dataURL (mode produit-multiple — 2-6 bagues uploadées en même temps)
 let themeGlobalActif = '';  // '' = aucun thème ; sinon 'terre-dombre', etc.
 
 function setThemeGlobal(t) {
@@ -479,13 +476,127 @@ dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-ove
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) chargerFichier(file);
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (files.length === 0) return;
+  if (files.length === 1) chargerFichier(files[0]);
+  else chargerFichiersMultiples(files);
 });
 
 function handleFileChosen(e) {
-  const file = e.target.files[0];
-  if (file && file.type.startsWith('image/')) chargerFichier(file);
+  const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+  if (files.length === 0) return;
+  if (files.length === 1) chargerFichier(files[0]);
+  else chargerFichiersMultiples(files);
+}
+
+async function chargerFichiersMultiples(rawFiles) {
+  let files = rawFiles;
+  if (files.length > 6) {
+    alert('Maximum 6 bagues — les suivantes seront ignorées');
+    files = files.slice(0, 6);
+  }
+  const dropZoneEl = document.getElementById('upload-zone');
+  const emptyEl = document.getElementById('upload-empty');
+  const previewEl = document.getElementById('upload-preview');
+  const totalMB = (files.reduce((s, f) => s + f.size, 0) / 1_000_000).toFixed(1);
+
+  emptyEl.innerHTML = `<div class="emoji-up">⏳</div>
+    <div class="titre-up">Chargement de ${files.length} bagues…</div>
+    <div class="hint">${totalMB} Mo · compression en cours</div>`;
+
+  try {
+    imagesMultiples = await Promise.all(files.map(f => compresserImage(f, 1024, 0.85)));
+    imageActuelle = null; // mode multi : on ignore l'image single
+
+    // Preview mosaïque + bouton Composer
+    const mosaicHtml = imagesMultiples.map((url, i) =>
+      `<img src="${url}" alt="bague ${i+1}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,0.08);">`
+    ).join('');
+
+    emptyEl.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.9rem;width:100%;">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">${mosaicHtml}</div>
+        <div style="font-size:0.95rem;font-weight:600;color:var(--or);">🪞 ${imagesMultiples.length} bagues prêtes pour Produit multiple</div>
+        <div class="hint" style="margin-top:-0.2rem;">Choisis un thème ci-dessous (optionnel) puis clique sur Composer</div>
+        <button onclick="lancerProduitMultipleAuto()" style="background:var(--or);color:#fff;border:none;border-radius:8px;font-weight:600;padding:0.8rem 1.6rem;cursor:pointer;font-size:0.95rem;">🪞 Composer les ${imagesMultiples.length} bagues</button>
+        <button onclick="resetMultiUpload()" style="background:transparent;color:var(--gris);border:1px solid #ddd;border-radius:6px;font-size:0.78rem;padding:0.35rem 0.8rem;cursor:pointer;">↻ Recommencer</button>
+      </div>`;
+    emptyEl.style.display = 'block';
+    previewEl.style.display = 'none';
+    dropZoneEl.classList.add('has-image');
+
+    // Les actions single-image sont désactivées en mode multi
+    document.getElementById('actions').classList.add('actions-disabled');
+    // Mais on active les sélecteurs globaux (thème, indications, format)
+    document.getElementById('indications-zone').style.display = 'block';
+    document.getElementById('theme-global-zone').style.display = 'block';
+    document.getElementById('resultats').innerHTML = '';
+  } catch (e) {
+    emptyEl.innerHTML = `<div class="emoji-up">⚠️</div>
+      <div class="titre-up">Impossible de charger</div>
+      <div class="hint">${escapeHtml(e.message || String(e))}</div>`;
+  }
+}
+
+function resetMultiUpload() {
+  imagesMultiples = [];
+  imageActuelle = null;
+  const dropZoneEl = document.getElementById('upload-zone');
+  const emptyEl = document.getElementById('upload-empty');
+  dropZoneEl.classList.remove('has-image');
+  emptyEl.style.display = 'block';
+  emptyEl.innerHTML = `<div class="emoji-up">📸</div>
+    <div class="titre-up">Glisse-dépose ton croquis ici</div>
+    <div class="hint">ou clique pour choisir un fichier · plusieurs photos = mode Produit multiple</div>
+    <div class="hint" style="margin-top:0.3rem;color:var(--or);">💡 Si pas de croquis, écris juste ton idée dans le panel 2 ci-dessous</div>`;
+  document.getElementById('file-input').value = '';
+  document.getElementById('actions').classList.add('actions-disabled');
+  document.getElementById('resultats').innerHTML = '';
+}
+
+async function lancerProduitMultipleAuto() {
+  if (!imagesMultiples || imagesMultiples.length < 2) {
+    alert('Sélectionne au moins 2 bagues');
+    return;
+  }
+
+  const blocId = 'res-' + Date.now();
+  const bloc = document.createElement('div');
+  bloc.className = 'resultat-bloc';
+  bloc.id = blocId;
+  bloc.innerHTML = `<div class="resultat-titre"><span class="loader"></span>Composition de ${imagesMultiples.length} bagues — IA Gemini (~30-45s)…</div>`;
+  document.getElementById('resultats').insertBefore(bloc, document.getElementById('resultats').firstChild);
+
+  try {
+    const note = document.getElementById('indications')?.value?.trim() || null;
+    const formatRadio = document.querySelector('input[name="theme-format"]:checked');
+    const format = formatRadio?.value || '1:1';
+
+    const r = await fetch('/api/retouche-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ images: imagesMultiples, action: 'produit-multiple', note, format, theme: themeGlobalActif || null }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}): ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const fname = `mood-produit-multiple-${imagesMultiples.length}bagues-${Date.now()}.png`;
+    const id = cacheImage(data.image);
+    const themeLabel = themeGlobalActif ? ` · thème ${themeGlobalActif}` : '';
+    bloc.innerHTML = `<div class="resultat-titre">🪞 Composition (${imagesMultiples.length} bagues${themeLabel})</div>
+      <img id="img-${id}" src="${data.image}" alt="produit multiple" class="resultat-img" style="width:100%;border-radius:8px;">
+      <div class="resultat-actions" style="margin-top:0.5rem;">
+        <button onclick="telechargerCache('${id}','${fname}')" class="btn-download">⬇️ Télécharger</button>
+        <button onclick="lancerProduitMultipleAuto()" class="btn-action secondary">🔄 Regénérer</button>
+      </div>`;
+  } catch (e) {
+    bloc.innerHTML = `<div class="resultat-titre" style="color:var(--rouge);">Erreur</div>
+      <div class="erreur">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+  }
 }
 
 async function chargerFichier(file) {
@@ -503,6 +614,7 @@ async function chargerFichier(file) {
     if (imageActuelle.length > 3_000_000) {
       imageActuelle = await compresserImage(file, 1024, 0.80);
     }
+    imagesMultiples = []; // reset mode multi quand on charge une seule image
     document.getElementById('img-original').src = imageActuelle;
     emptyEl.style.display = 'none';
     previewEl.style.display = 'block';
