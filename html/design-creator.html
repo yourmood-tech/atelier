@@ -1809,16 +1809,17 @@ const MJ_FORMAT_LARGEUR_MM = {
   'addon': 7.1, 'deux-tiers': 4.85, 'medium': 2.45, 'mini': 1.22,
 };
 
-async function testerPlanComplet(imgId, blocId) {
+// 1er clic : affiche le mini-form (nb motifs + upload optionnel) avant l'extraction
+function testerPlanComplet(imgId, blocId) {
   const bloc = document.getElementById(blocId);
   if (!bloc) { alert('Bloc parent introuvable'); return; }
-  // Priorité au croquis original (lignes nettes, motif fidèle) ; fallback sur rendu IA si pas de croquis
-  const sourceUrl = bloc.dataset.sketchOriginal || cacheImageGet(imgId);
-  if (!sourceUrl) { alert('Aucune source disponible (ni croquis ni rendu)'); return; }
-  const sourceLabel = bloc.dataset.sketchOriginal ? 'croquis original' : 'rendu IA';
 
-  const btn = bloc.querySelector('button[onclick*="testerPlanComplet"]');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Extraction motif (~25s)…'; }
+  // Auto-calcul du nb de motifs par défaut
+  const taille = parseFloat(bloc.dataset.mjTaille) || 54;
+  const format = bloc.dataset.mjFormat || 'addon';
+  const largeurMm = MJ_FORMAT_LARGEUR_MM[format] || 7;
+  const circonferenceMm = taille + 6;
+  const nbMotifsAuto = Math.max(2, Math.round(circonferenceMm / Math.max(largeurMm * 2, 8)));
 
   let testZone = document.getElementById(blocId + '-plan-zone');
   if (!testZone) {
@@ -1827,7 +1828,56 @@ async function testerPlanComplet(imgId, blocId) {
     testZone.style.cssText = 'margin-top:0.8rem;padding:0.8rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;';
     bloc.appendChild(testZone);
   }
-  testZone.innerHTML = `<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/2 : Gemini extrait le motif depuis le ${sourceLabel}…</div>`;
+  testZone.innerHTML = `
+    <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.6rem;">🧪 Plan de sertissage — paramètres avant extraction :</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+      <div>
+        <label style="display:block;font-size:0.78rem;color:#78350f;margin-bottom:0.2rem;">Nombre de motifs sur le tour</label>
+        <input type="number" id="${blocId}-nb-motifs" value="${nbMotifsAuto}" min="1" max="30" style="width:100%;padding:0.4rem;border:1px solid #f59e0b;border-radius:6px;font-size:0.85rem;">
+        <div style="font-size:0.7rem;color:#92400e;margin-top:0.2rem;">auto = ${nbMotifsAuto} (taille ${taille} / format ${MJ_FORMAT_LABEL[format] || format}), ajuste si tu vises moins/plus</div>
+      </div>
+      <div>
+        <label style="display:block;font-size:0.78rem;color:#78350f;margin-bottom:0.2rem;">Source du motif (optionnel)</label>
+        <input type="file" id="${blocId}-source-override" accept="image/*" style="width:100%;font-size:0.78rem;padding:0.3rem 0;">
+        <div style="font-size:0.7rem;color:#92400e;margin-top:0.2rem;">vide = utilise ${bloc.dataset.sketchOriginal ? 'ton croquis original' : 'le rendu IA'}. Charge une autre image si Gemini comprend mal.</div>
+      </div>
+    </div>
+    <button class="btn-action" style="background:#b45309;color:#fff;" onclick="lancerExtractionPlan('${imgId}','${blocId}')">▶️ Lancer l'extraction (~25s)</button>
+  `;
+}
+
+async function lancerExtractionPlan(imgId, blocId) {
+  const bloc = document.getElementById(blocId);
+  if (!bloc) { alert('Bloc parent introuvable'); return; }
+  const testZone = document.getElementById(blocId + '-plan-zone');
+  if (!testZone) { alert('Mini-form disparu'); return; }
+
+  // Récupérer paramètres user
+  const nbMotifsForce = parseInt(document.getElementById(blocId + '-nb-motifs')?.value, 10);
+  const fileInput = document.getElementById(blocId + '-source-override');
+  const fileOverride = fileInput?.files?.[0];
+
+  // Convertir le fichier override en dataURL si présent
+  let sourceUrl = null;
+  let sourceLabel = '';
+  if (fileOverride) {
+    sourceUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Lecture fichier impossible'));
+      reader.readAsDataURL(fileOverride);
+    });
+    sourceLabel = `image uploadée (${fileOverride.name})`;
+  } else if (bloc.dataset.sketchOriginal) {
+    sourceUrl = bloc.dataset.sketchOriginal;
+    sourceLabel = 'croquis original';
+  } else {
+    sourceUrl = cacheImageGet(imgId);
+    sourceLabel = 'rendu IA';
+  }
+  if (!sourceUrl) { alert('Aucune source disponible'); return; }
+
+  testZone.innerHTML = `<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Gemini extrait le motif depuis le ${sourceLabel}…</div>`;
 
   try {
     // Étape 1 : Gemini extrait le motif sur fond blanc
@@ -1908,19 +1958,20 @@ async function testerPlanComplet(imgId, blocId) {
     ctx.fillRect(bandeX, bandeY, bandeW, bandeH);
 
     // Motif tilé sur la bande (mode multiply : le blanc disparaît, le noir reste)
-    // Scale du motif pour qu'il fit la hauteur de la bande
-    const motifH = bandeH;
-    const motifW = motifH; // motif carré
-    const nbTiles = Math.max(2, Math.ceil(bandeW / motifW));
+    // Nombre de motifs imposé par l'utilisateur (ou auto si invalide)
+    const nbMotifs = (Number.isFinite(nbMotifsForce) && nbMotifsForce > 0) ? nbMotifsForce : Math.max(2, Math.ceil(bandeW / bandeH));
+    const slotW = bandeW / nbMotifs;
+    const motifSize = Math.min(slotW, bandeH);
+    const motifOffsetY = bandeY + (bandeH - motifSize) / 2;
 
     ctx.save();
-    // Clip sur la bande
     ctx.beginPath();
     ctx.rect(bandeX, bandeY, bandeW, bandeH);
     ctx.clip();
     ctx.globalCompositeOperation = 'multiply';
-    for (let i = 0; i < nbTiles; i++) {
-      ctx.drawImage(motifImg, bandeX + i * motifW, bandeY, motifW, motifH);
+    for (let i = 0; i < nbMotifs; i++) {
+      const motifX = bandeX + i * slotW + (slotW - motifSize) / 2;
+      ctx.drawImage(motifImg, motifX, motifOffsetY, motifSize, motifSize);
     }
     ctx.restore();
 
@@ -1953,12 +2004,11 @@ async function testerPlanComplet(imgId, blocId) {
         <button class="btn-action" onclick="telechargerCache('${planId}','${fname}')">⬇️ Télécharger plan</button>
         <button class="btn-action secondary" onclick="testerPlanComplet('${imgId}','${blocId}')">🔄 Regénérer</button>
       </div>
-      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">Matière, format et taille viennent du formulaire. Le motif est extrait du rendu IA puis tilé.</div>
+      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">Matière, format, taille : formulaire. Source : ${sourceLabel}. Motifs sur le tour : ${nbMotifs}.</div>
     `;
   } catch (e) {
-    testZone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec : ${escapeHtml(e.message || String(e))}</div>`;
-  } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '🧪 Test plan de sertissage'; }
+    testZone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec : ${escapeHtml(e.message || String(e))}</div>
+      <button class="btn-action secondary" style="margin-top:0.5rem;" onclick="testerPlanComplet('${imgId}','${blocId}')">↻ Revenir aux paramètres</button>`;
   }
 }
 
