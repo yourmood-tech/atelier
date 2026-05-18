@@ -30,20 +30,27 @@ OUTPUT REQUIRED:
 - A long horizontal rectangular strip on a pure white background.
 - The strip represents the ring's outer surface UNROLLED COMPLETELY FLAT (as if the ring was cut and laid open).
 - No 3D perspective whatsoever. No depth. No shadows. No curved edges. No reflections. Perfectly orthographic top-down view of the unrolled band.
-- The strip's aspect ratio should be approximately 6:1 to 8:1 (very long horizontal rectangle).
+- The strip should fill the entire horizontal width of the canvas (do NOT leave large white space on the left or right edges).
+- Aspect ratio of the strip itself : very long horizontal rectangle (approximately 6:1 to 8:1).
+
+🚨 CRITICAL — PATTERN COMPLETION AND REPETITION 🚨
+- The source image typically shows only ONE FACE of the ring — a partial view of the decorative motif visible on the front.
+- You MUST imagine the full continuation of the motif around the entire ring. The motif is typically REPEATED IDENTICALLY all around the circumference.
+- In the output strip, REPEAT THE EXACT SAME MOTIF AT LEAST 2 TO 3 TIMES end-to-end, continuously, with NO visible seam between repetitions.
+- The strip must look like a complete unrolled band — no truncation, no empty zones, the motif covers the full length seamlessly.
 
 CONTENT OF THE STRIP:
 - Show ONLY the engraving / decorative pattern from the ring as crisp black ink lines on the metal surface.
 - Keep the metal color and finish visible exactly as in the source (rose gold, white gold, silver, etc.).
-- If the source shows gemstones or diamonds set into the ring : ERASE THEM. Remove every stone. Do not draw stones, do not draw their settings.
-- If the source shows multiple repetitions of a motif around the ring, repeat the motif consistently across the full length of the strip.
+- If the source shows gemstones or diamonds set into the ring : ERASE THEM ALL. Remove every stone, every diamond, every gemstone setting. The setter will add stones afterwards from a separate spec sheet.
+- Output the engraving alone on the bare metal surface.
 
 LIGHTING / STYLE:
 - Even, uniform soft lighting across the entire strip. No highlights. No glints. No reflections.
 - Like a flat technical drawing or a brand reference template for stone setters.
 - Do NOT add any text, watermarks, dimensions, labels, or annotations.
 
-Output as a 16:9 image with the rectangular strip centered horizontally, white space above and below.`;
+Output as a 21:9 ultrawide image with the rectangular strip filling the canvas horizontally, minimal white space above and below.`;
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
@@ -57,7 +64,7 @@ Output as a 16:9 image with the rectangular strip centered horizontally, white s
         ] }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio: "16:9", imageSize: "2K" },
+          imageConfig: { aspectRatio: "21:9", imageSize: "2K" },
         },
       }),
     });
