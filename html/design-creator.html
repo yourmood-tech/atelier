@@ -1782,12 +1782,16 @@ uploadZone.addEventListener('drop', e => {
   }
 });
 
-// === Plan de sertissage AUTO — Gemini line art + Potrace vectorize + Canvas/SVG compose ===
-async function genererPlanAuto(imgId, blocId) {
+// === Plan de sertissage AUTO — Pipeline vision par ordinateur (sans IA) + Potrace + Canvas/SVG ===
+async function genererPlanAuto(imgId, blocId, threshold) {
   const bloc = document.getElementById(blocId);
   if (!bloc) { alert('Bloc parent introuvable'); return; }
-  const sourceUrl = bloc.dataset.sketchOriginal || cacheImageGet(imgId);
-  if (!sourceUrl) { alert('Source introuvable'); return; }
+  // On part TOUJOURS du rendu IA (la bague photoréaliste) — le pipeline classique extrait le motif gravé pixel par pixel
+  const sourceUrl = cacheImageGet(imgId);
+  if (!sourceUrl) { alert('Rendu IA introuvable'); return; }
+
+  // Threshold modulable (par défaut 100 = pixels < 100 luminance = traits foncés)
+  const thr = (typeof threshold === 'number') ? threshold : 100;
 
   let zone = document.getElementById(blocId + '-autoplan-zone');
   if (!zone) {
@@ -1796,16 +1800,16 @@ async function genererPlanAuto(imgId, blocId) {
     zone.style.cssText = 'margin-top:0.8rem;padding:0.8rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;';
     bloc.appendChild(zone);
   }
-  zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/3 : Gemini génère le line art noir/blanc…</div>';
+  zone.innerHTML = `<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/3 : extraction des traits gravés (threshold ${thr})…</div>`;
 
   try {
-    // === Étape 1 : line art ===
-    const lineArtResp = await fetch('/api/design-creator-line-art', {
+    // === Étape 1 : pré-traitement classique (grayscale + threshold + skeleton) ===
+    const lineArtResp = await fetch('/api/design-creator-skeletonize', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: sourceUrl }),
+      body: JSON.stringify({ image: sourceUrl, threshold: thr }),
     });
     const lineArtData = await lineArtResp.json();
-    if (!lineArtResp.ok || !lineArtData.image) throw new Error(lineArtData.error || 'Pas de line art retourné');
+    if (!lineArtResp.ok || !lineArtData.image) throw new Error(lineArtData.error || 'Pas de bitmap squelettisé retourné');
     const lineArtDataUrl = lineArtData.image;
 
     zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 2/3 : Potrace vectorise le line art en SVG…</div>';
@@ -1902,12 +1906,11 @@ async function genererPlanAuto(imgId, blocId) {
       <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.5rem;">📐 Plan de sertissage automatique :</div>
       <div style="display:grid;grid-template-columns:160px 160px 1fr;gap:0.6rem;margin-bottom:0.6rem;">
         <div>
-          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">1. Line art Gemini</div>
-          <img src="${lineArtDataUrl}" alt="line art" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;">
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">1. Traits extraits (B&W + skeleton)</div>
+          <img src="${lineArtDataUrl}" alt="traits extraits" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;">
         </div>
         <div>
           <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">2. SVG vectorisé Potrace</div>
-          <img src="${svgDownloadUrl}#vecpreview" alt="svg" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;display:none;">
           <div style="border:1px solid #f59e0b;border-radius:6px;background:#fff;padding:4px;">${motifSvgString.replace(/<svg([^>]*)>/, '<svg$1 style="width:100%;height:auto;display:block;">')}</div>
         </div>
         <div>
@@ -1915,16 +1918,21 @@ async function genererPlanAuto(imgId, blocId) {
           <img src="${pngDataUrl}" alt="plan final" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
         </div>
       </div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
         <button class="btn-action" onclick="telechargerCache('${planPngId}','${pngFname}')">⬇️ Télécharger PNG</button>
         <a class="btn-action" style="text-decoration:none;background:#0a6b3f;color:#fff;display:inline-flex;align-items:center;" href="${svgDownloadUrl}" download="${svgFname}">⬇️ Télécharger SVG (vectoriel)</a>
-        <button class="btn-action secondary" onclick="genererPlanAuto('${imgId}','${blocId}')">🔄 Regénérer</button>
       </div>
-      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">${nbMotifs} motifs sur le tour · ${matLabel} · ${fmtLabel} ${largeurMm}mm · taille ${taille}</div>
+      <div style="display:flex;gap:0.5rem;align-items:center;padding:0.5rem;background:#fff;border-radius:6px;border:1px dashed #f59e0b;">
+        <label style="font-size:0.78rem;color:#78350f;font-weight:600;">Threshold (sensibilité) :</label>
+        <input type="range" id="${blocId}-thr" min="40" max="200" value="${thr}" style="flex:1;" oninput="document.getElementById('${blocId}-thr-val').textContent = this.value;">
+        <span id="${blocId}-thr-val" style="font-family:monospace;font-size:0.85rem;color:#92400e;font-weight:700;min-width:35px;">${thr}</span>
+        <button class="btn-action secondary" onclick="genererPlanAuto('${imgId}','${blocId}', parseInt(document.getElementById('${blocId}-thr').value,10))">🔄 Regénérer</button>
+      </div>
+      <div style="font-size:0.72rem;color:#78350f;margin-top:0.3rem;font-style:italic;">Threshold bas = moins de traits captés. Threshold haut = plus de traits (mais risque de capter ombres/pierres). Ajuste si trop / pas assez de traits. ${nbMotifs} motifs sur le tour · ${matLabel} · ${fmtLabel} ${largeurMm}mm · taille ${taille}.</div>
     `;
   } catch (e) {
     zone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec : ${escapeHtml(e.message || String(e))}</div>
-      <button class="btn-action secondary" style="margin-top:0.5rem;" onclick="genererPlanAuto('${imgId}','${blocId}')">🔄 Réessayer</button>`;
+      <button class="btn-action secondary" style="margin-top:0.5rem;" onclick="genererPlanAuto('${imgId}','${blocId}', ${thr})">🔄 Réessayer</button>`;
   }
 }
 
