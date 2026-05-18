@@ -408,7 +408,74 @@
   </div>
 </div>
 
-<!-- Panel 3 : caractéristiques produit (standard — masqué si Icelea) -->
+<!-- Panel Mood Joaillerie : pierres + sertissage + matières + finition -->
+<div class="panel" id="mood-joaillerie-panel" style="display:none;">
+  <div class="panel-titre">3 · Caractéristiques Mood Joaillerie</div>
+
+  <!-- Matière (radio, choisir 1) -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">🥇 Matière <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— provisoire, à confirmer</span></label>
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="or-jaune-18k" checked> Or jaune 18K</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="or-rose-18k"> Or rose 18K</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="or-blanc-18k"> Or blanc 18K</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="or-gris-18k"> Or gris 18K</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="argent-925"> Argent 925</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="platine"> Platine 950</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-matiere" value="autre"> Autre :</label>
+      <input type="text" id="mj-matiere-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
+    </div>
+  </div>
+
+  <!-- Finition (radio) -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">💫 Finition <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— provisoire, à confirmer</span></label>
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="poli" checked> Poli miroir</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="satine"> Satiné</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="brosse"> Brossé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="martele"> Martelé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="sable"> Sablé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="autre"> Autre :</label>
+      <input type="text" id="mj-finition-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
+    </div>
+  </div>
+
+  <!-- Format de la bague -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">📏 Format de la bague</label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.4rem;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="base-large"> Base large</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="base-small"> Base small</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="base-xs"> Base XS</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="addon" checked> Addon</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="deux-tiers"> Deux tiers</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="medium"> Medium</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="mini"> Mini</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-format" value="open-mood"> Open mood</label>
+    </div>
+  </div>
+
+  <!-- Pierres cumulatives -->
+  <div style="margin-bottom:1rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">💎 Pierres Mood Joaillerie <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— catalogue complet avec tailles + couleurs + sertissage</span></label>
+    <div id="mj-pierres-list"></div>
+    <button type="button" onclick="ajouterPierreMJ()" style="margin-top:0.5rem;padding:0.4rem 0.9rem;background:white;color:var(--or);border:2px dashed var(--or);border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">+ ajouter une pierre</button>
+  </div>
+
+  <!-- Format image -->
+  <div style="margin-top:1rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">📐 Format de l'image</label>
+    <select id="mj-img-format" style="padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">
+      <option value="1:1" selected>1:1 carré (Insta post)</option>
+      <option value="3:2">3:2 paysage</option>
+      <option value="4:5">4:5 portrait</option>
+      <option value="9:16">9:16 story</option>
+    </select>
+  </div>
+</div>
+
+<!-- Panel 3 : caractéristiques produit (standard — masqué si Icelea ou Mood Joaillerie) -->
 <div class="panel" id="panel-standard">
   <div class="panel-titre">3 · Caractéristiques produit</div>
   <div class="form-grid">
@@ -479,7 +546,7 @@
 <div style="text-align:center;margin:1rem 0;">
   <label style="font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem;background:#fff8e7;padding:0.5rem 1rem;border-radius:10px;border:1px solid var(--or);">
     <input type="checkbox" id="prompt-mode-simple" style="width:1.1rem;height:1.1rem;cursor:pointer;">
-    <span><strong>Mode prompt simple</strong> <span style="color:var(--gris);font-size:0.78rem;">— laisse Gemini interpréter librement les refs visuelles (test A/B)</span></span>
+    <span><strong>Mode photo-réaliste du croquis</strong> <span style="color:var(--gris);font-size:0.78rem;">— reproduit fidèlement le dessin en photo, ignore les sélecteurs cochés</span></span>
   </label>
 </div>
 
@@ -530,18 +597,21 @@ function choisirCategorie(cat) {
   document.querySelectorAll('.cat-card').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
   document.getElementById('form-zone').style.display = 'block';
 
-  // Icelea = formulaire spécifique, masque le toggle base universel + panel-standard
+  // 3 modes : Icelea (panel spé), Mood Joaillerie (panel spé), autres (panel standard)
   const isIcelea = cat === 'icelea-3d';
+  const isMJ = cat === 'mood-joaillerie';
+  const isCustom = isIcelea || isMJ;
+
   const togglePanel = document.querySelector('.panel:has(#toggle-base)');
-  if (togglePanel) togglePanel.style.display = isIcelea ? 'none' : 'block';
+  if (togglePanel) togglePanel.style.display = isCustom ? 'none' : 'block';
   document.getElementById('icelea-panel').style.display = isIcelea ? 'block' : 'none';
-  document.getElementById('panel-standard').style.display = isIcelea ? 'none' : 'block';
+  document.getElementById('mood-joaillerie-panel').style.display = isMJ ? 'block' : 'none';
+  document.getElementById('panel-standard').style.display = isCustom ? 'none' : 'block';
 
-  // Si non-Icelea, appliquer le toggle base habituel
-  if (!isIcelea) toggleBaseFields();
+  if (!isCustom) toggleBaseFields();
   if (isIcelea) updateIceleaConditional();
+  if (isMJ && document.getElementById('mj-pierres-list').children.length === 0) ajouterPierreMJ();
 
-  // Scroll doux vers la zone formulaire
   setTimeout(() => document.getElementById('form-zone').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
@@ -820,6 +890,126 @@ function majCodeZircon(ligne) {
   ligne.dataset.code = code;
 }
 
+// === Mood Joaillerie : catalogue pierres + sélecteur cumulatif ===
+// Format : pierre → { tailles dispo, couleurs dispo (si applicable) }
+const MJ_PIERRES = {
+  'diamant':           { label: 'Diamant', tailles: ['2.1','1.9','1.6','1.3','0.9','0.8'], couleurs: null },
+  'diamant-noir':      { label: 'Diamant noir', tailles: ['1.9','1.6','0.8'], couleurs: null },
+  'diamant-brun':      { label: 'Diamant brun', tailles: ['1.9','1.6'], couleurs: null },
+  'diamant-ice-gris':  { label: 'Diamant ICE gris', tailles: ['1.9','1.6'], couleurs: null },
+  'cdiams-pur':        { label: 'C.DIAMS / Diamant PUR', tailles: ['1.9-2.1','2.2'], couleurs: null },
+  'diamant-pur-rose':  { label: 'Diamant pur rose', tailles: ['2.2'], couleurs: ['rose-clair'] },
+  'topaze':            { label: 'Topaze', tailles: ['1.75'], couleurs: null },
+  'saphir':            { label: 'Saphir', tailles: ['1.9','1.6','1.3','0.9'], couleurs: ['violet','rose','orange','brun','jaune','bleu-fonce','bleu-clair'] },
+  'amethyste':         { label: 'Améthyste', tailles: ['1.9','1.6'], couleurs: null },
+  'grenat':            { label: 'Grenat', tailles: ['1.9','1.6','1.3'], couleurs: ['vert-fonce'] },
+  'tsavorite':         { label: 'Tsavorite', tailles: ['1.6'], couleurs: ['vert-clair'] },
+  'emeraude':          { label: 'Émeraude', tailles: ['1.9','1.6','0.9'], couleurs: null },
+  'rubis':             { label: 'Rubis', tailles: ['1.9','1.6','0.9'], couleurs: null },
+  'cabochon':          { label: 'Cabochon', tailles: ['2.5'], couleurs: null },
+};
+
+const MJ_COULEUR_LABELS = {
+  'violet':'Violet', 'rose':'Rose', 'orange':'Orange', 'brun':'Brun', 'jaune':'Jaune',
+  'bleu-fonce':'Bleu foncé', 'bleu-clair':'Bleu clair',
+  'vert-clair':'Vert clair', 'vert-fonce':'Vert foncé',
+  'rose-clair':'Rose clair', 'jaune-clair':'Jaune clair',
+};
+
+const MJ_SERTISSAGES = [
+  ['etoile', 'Étoile'], ['grain', 'Grain'], ['2-grains', '2 grains'], ['3-grains', '3 grains'],
+  ['invisible', 'Invisible'], ['neige', 'Neige'],
+];
+
+// Abréviations pour code de réf
+const MJ_PIERRE_ABBR = {
+  'diamant':'DIA', 'diamant-noir':'DIAN', 'diamant-brun':'DIAB', 'diamant-ice-gris':'DIAI',
+  'cdiams-pur':'CDIA', 'diamant-pur-rose':'DPR', 'topaze':'TOP', 'saphir':'SAP',
+  'amethyste':'AME', 'grenat':'GRE', 'tsavorite':'TSV', 'emeraude':'EME',
+  'rubis':'RUB', 'cabochon':'CAB',
+};
+const MJ_COULEUR_ABBR = { 'violet':'VL','rose':'PK','orange':'OR','brun':'BR','jaune':'YL','bleu-fonce':'BF','bleu-clair':'BC','vert-clair':'VC','vert-fonce':'VF','rose-clair':'RC','jaune-clair':'JC' };
+const MJ_SERTISSAGE_ABBR = { 'etoile':'ET','grain':'GR','2-grains':'2GR','3-grains':'3GR','invisible':'INV','neige':'NEI' };
+
+function genererCodeMJ(pierre, taille, couleur, sertissage) {
+  const p = MJ_PIERRE_ABBR[pierre] || 'XXX';
+  const t = (taille || '').replace(/\./g, '').replace(/-/g, '');
+  const c = couleur ? '-' + (MJ_COULEUR_ABBR[couleur] || 'XX') : '';
+  const s = '-' + (MJ_SERTISSAGE_ABBR[sertissage] || 'XX');
+  return `P-${p}-${t}${c}${s}`;
+}
+
+let mjCounter = 0;
+function ajouterPierreMJ() {
+  mjCounter++;
+  const id = `mj-pierre-${mjCounter}`;
+  const ligne = document.createElement('div');
+  ligne.className = 'mj-pierre-ligne';
+  ligne.id = id;
+  ligne.style.cssText = 'display:flex;flex-direction:column;gap:0.5rem;padding:0.7rem;background:white;border-radius:10px;margin-bottom:0.6rem;border:1px solid #eee;';
+
+  const optPierres = Object.entries(MJ_PIERRES).map(([v, p]) => `<option value="${v}">${p.label}</option>`).join('');
+  const optSertissages = MJ_SERTISSAGES.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+
+  ligne.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.5rem;align-items:end;">
+      <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Pierre</label><select class="mj-pierre" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;">${optPierres}</select></div>
+      <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Taille (mm)</label><select class="mj-taille" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;"></select></div>
+      <div class="mj-couleur-wrap" style="display:none;"><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Couleur</label><select class="mj-couleur" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;"></select></div>
+      <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Sertissage</label><select class="mj-sertissage" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;">${optSertissages}</select></div>
+      <div><label style="font-size:0.72rem;color:var(--gris);font-weight:600;">Quantité</label><input type="number" class="mj-quantite" value="1" min="1" max="200" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.83rem;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+      <div class="mj-code" style="font-family:monospace;font-size:0.78rem;font-weight:700;color:var(--or);background:#fff8e7;padding:0.3rem 0.6rem;border-radius:5px;letter-spacing:0.05em;">—</div>
+      <button type="button" onclick="document.getElementById('${id}').remove()" style="padding:0.35rem 0.7rem;background:#fee;color:var(--rouge);border:1px solid #fcc;border-radius:6px;font-size:0.78rem;cursor:pointer;">🗑️ retirer</button>
+    </div>
+  `;
+  document.getElementById('mj-pierres-list').appendChild(ligne);
+
+  const pierreSel = ligne.querySelector('.mj-pierre');
+  const tailleSel = ligne.querySelector('.mj-taille');
+  const couleurWrap = ligne.querySelector('.mj-couleur-wrap');
+  const couleurSel = ligne.querySelector('.mj-couleur');
+
+  function updatePierre() {
+    const p = MJ_PIERRES[pierreSel.value];
+    if (!p) return;
+    tailleSel.innerHTML = p.tailles.map(t => `<option value="${t}">${t}</option>`).join('');
+    if (p.couleurs && p.couleurs.length > 0) {
+      couleurWrap.style.display = '';
+      couleurSel.innerHTML = p.couleurs.map(c => `<option value="${c}">${MJ_COULEUR_LABELS[c] || c}</option>`).join('');
+    } else {
+      couleurWrap.style.display = 'none';
+      couleurSel.innerHTML = '';
+    }
+    majCodeMJ(ligne);
+  }
+  pierreSel.addEventListener('change', updatePierre);
+  ligne.querySelectorAll('select, input').forEach(el => el.addEventListener('change', () => majCodeMJ(ligne)));
+  updatePierre();
+}
+
+function majCodeMJ(ligne) {
+  const pierre = ligne.querySelector('.mj-pierre').value;
+  const taille = ligne.querySelector('.mj-taille').value;
+  const couleur = ligne.querySelector('.mj-couleur')?.value || null;
+  const sertissage = ligne.querySelector('.mj-sertissage').value;
+  const code = genererCodeMJ(pierre, taille, couleur, sertissage);
+  ligne.querySelector('.mj-code').textContent = code;
+  ligne.dataset.code = code;
+}
+
+function recupererPierresMJ() {
+  return Array.from(document.querySelectorAll('.mj-pierre-ligne')).map(l => ({
+    pierre: l.querySelector('.mj-pierre').value,
+    taille: l.querySelector('.mj-taille').value,
+    couleur: l.querySelector('.mj-couleur')?.value || null,
+    sertissage: l.querySelector('.mj-sertissage').value,
+    quantite: parseInt(l.querySelector('.mj-quantite').value, 10) || 1,
+    code: l.dataset.code || '',
+  }));
+}
+
 function recupererZircons() {
   return Array.from(document.querySelectorAll('.zircon-ligne')).map(l => ({
     forme: l.dataset.forme || 'rond',
@@ -941,6 +1131,20 @@ async function genererDesign() {
       format: document.getElementById('icelea-img-format').value,
     };
   } else {
+    // Mood Joaillerie : panel spécifique
+    if (categorie === 'mood-joaillerie') {
+      const mat = document.querySelector('input[name="mj-matiere"]:checked')?.value;
+      const matAutre = document.getElementById('mj-matiere-autre')?.value?.trim();
+      const fin = document.querySelector('input[name="mj-finition"]:checked')?.value;
+      const finAutre = document.getElementById('mj-finition-autre')?.value?.trim();
+      const fmt = document.querySelector('input[name="mj-format"]:checked')?.value;
+      const pierres = recupererPierresMJ();
+      payload = {
+        categorie, promptMode, sketch: sketchData, idea,
+        moodJoaillerie: { matiere: mat, matiereAutre: matAutre, finition: fin, finitionAutre: finAutre, format: fmt, pierres },
+        format: document.getElementById('mj-img-format')?.value || '1:1',
+      };
+    } else {
     payload = {
       categorie,
       promptMode,
@@ -954,6 +1158,7 @@ async function genererDesign() {
       finitionAddon: document.getElementById('finition-addon').value,
       format: document.getElementById('format').value,
     };
+    } // fin else (non mood-joaillerie)
   }
 
   const btn = document.getElementById('btn-generer');

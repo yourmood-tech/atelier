@@ -531,58 +531,27 @@ ${isAddonOnly ? "- NO base, NO rails — the addon is standalone." : ""}
 Output : ONE photoreal CAD-render preview of the Icelea ring design described above.`;
 }
 
-// === Prompt SIMPLE : laisse Gemini interpréter librement les refs visuelles + une liste minimale de critères ===
+// === Prompt SIMPLE : rendu photo-réaliste pur du croquis, IGNORE tous les sélecteurs cochés ===
 function buildSimplePrompt(input: DesignInput): string {
-  const lignes: string[] = [];
   const hasSketch = !!(input.sketch && input.sketch.trim());
 
   if (hasSketch) {
-    lignes.push("🚨 LA PREMIÈRE IMAGE JOINTE EST UN CROQUIS / DESIGN DE RÉFÉRENCE. C'est le design exact à reproduire fidèlement (forme, motif, décor, gemmes, couleurs).");
-    lignes.push("Rends ce design en bague Mood Collection photo-réaliste, en respectant les critères ci-dessous et les autres refs visuelles jointes.");
-  } else {
-    lignes.push("Rends une bague Mood Collection photo-réaliste, en tenant compte des critères ci-dessous et des refs visuelles jointes.");
-  }
-  lignes.push("");
-  lignes.push("Critères :");
+    return `🚨 LA PREMIÈRE IMAGE JOINTE EST LE DESIGN DE LA BAGUE À REPRODUIRE.
 
-  if (input.categorie === "icelea-3d" && input.icelea) {
-    const i = input.icelea;
-    if (i.materiau) {
-      const mat = i.materiau === "autre" && i.materiauAutre ? i.materiauAutre : i.materiau;
-      lignes.push(`- Matériau : ${mat}`);
-    }
-    if (i.format) lignes.push(`- Format : ${i.format}`);
-    if (i.decorations && i.decorations.length > 0) {
-      lignes.push(`- Décor : ${i.decorations.join(", ")}`);
-    }
-    if (i.finitionArgent) {
-      const fin = i.finitionArgent === "autre-fin" && i.finitionArgentAutre ? i.finitionArgentAutre : i.finitionArgent;
-      lignes.push(`- Finition : ${fin}`);
-    }
-    if (i.emailCodes) lignes.push(`- Couleurs émail : ${i.emailCodes}${i.emailBord ? ` (${i.emailBord} bord argent)` : ""}`);
-    if (i.pvdColors && i.pvdColors.length > 0) lignes.push(`- PVD : ${i.pvdColors.join(", ")}`);
-    if (i.zircons && i.zircons.length > 0) {
-      const zSummary = i.zircons.map(z => `${z.quantite || 1}×${z.forme || "rond"} ${z.taille || ""}mm ${z.couleur || ""} ${z.saturation || ""}`.trim()).join(" + ");
-      lignes.push(`- Zircons : ${zSummary}`);
-    }
-  } else {
-    if (input.withBase) lignes.push(`- Avec base : ${input.withBase}`);
-    if (input.largeur) lignes.push(`- Largeur base : ${input.largeur}`);
-    if (input.matiereBase) lignes.push(`- Matière base : ${input.matiereBase}`);
-    if (input.typeAddon) lignes.push(`- Type addon : ${input.typeAddon}`);
-    if (input.matiereAddon) lignes.push(`- Matière addon : ${input.matiereAddon}`);
-    if (input.finitionAddon) lignes.push(`- Finition addon : ${input.finitionAddon}`);
+Mission : Rendre ce design en photo-réaliste, comme si c'était une vraie bague photographiée en studio.
+
+INSTRUCTIONS :
+- Reproduire EXACTEMENT le design du croquis (même forme, même décor, mêmes motifs, mêmes pierres, mêmes couleurs, même structure).
+- Transformer le rendu graphique/CAD/dessin en photo studio professionnelle.
+- Bague debout sur la tranche (verticale), fond blanc seamless.
+- Pas de texte, pas de logo, pas de mains.
+- IGNORER toute autre information ou paramètre — UNIQUEMENT reproduire fidèlement le croquis en photo-réaliste.${input.idea && input.idea.trim() ? `
+
+Note complémentaire de l'artiste : ${input.idea.trim()}` : ""}`;
   }
 
-  if (input.idea && input.idea.trim()) {
-    lignes.push("");
-    lignes.push(`Idée artiste : ${input.idea.trim()}`);
-  }
-
-  lignes.push("");
-  lignes.push("Style : bague Mood debout sur la tranche (verticale), fond blanc seamless, photo-réaliste catalogue. Pas de texte, pas de logo, pas de mains.");
-
-  return lignes.join("\n");
+  // Pas de croquis → on ne peut pas faire de "rendu pur du croquis", retour au prompt détaillé classique
+  return `Rends une bague Mood Collection photo-réaliste, fond blanc, bague debout. ${input.idea && input.idea.trim() ? "Idée : " + input.idea.trim() : "(pas d'instructions supplémentaires)"}`;
 }
 
 function buildPrompt(input: DesignInput): string {
@@ -801,10 +770,13 @@ export async function POST(req: Request) {
       parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
     }
   }
+  // Mode photo-réaliste du croquis : on ne joint AUCUNE autre ref pour ne pas polluer
+  const isPromptSimple = body.promptMode === "simple";
+
   // Icelea : refs finition + format (1 chacune, random parmi le pool disponible)
   let finitionRefAdded = false;
   let formatRefAdded = false;
-  if (!useEmailTransform && body.categorie === "icelea-3d" && body.icelea) {
+  if (!isPromptSimple && !useEmailTransform && body.categorie === "icelea-3d" && body.icelea) {
     const decos = body.icelea.decorations || [];
     const aRevetement = decos.includes("email") || decos.includes("pvd");
     if (!aRevetement && body.icelea.finitionArgent && body.icelea.finitionArgent !== "autre-fin") {
@@ -818,7 +790,7 @@ export async function POST(req: Request) {
   }
   // Icelea + email coché → joindre les nuanciers comme refs visuelles
   let emailBordRefAdded: string | null = null;
-  if (!useEmailTransform && body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
+  if (!isPromptSimple && !useEmailTransform && body.categorie === "icelea-3d" && body.icelea?.decorations?.includes("email")) {
     // Ref structure email selon format ET toggle utilisateur
     const decosE = body.icelea.decorations || [];
     const emailFullCoatE = !decosE.includes("zircons") && !decosE.includes("pvd");
@@ -838,7 +810,7 @@ export async function POST(req: Request) {
 
   // En mode transform email : joindre les PASTILLES INDIVIDUELLES (couleur isolée, max 8)
   // PLUS PRÉCIS que les nuanciers entiers qui ont du bruit autour de chaque couleur
-  if (useEmailTransform && body.icelea?.emailCodes) {
+  if (!isPromptSimple && useEmailTransform && body.icelea?.emailCodes) {
     const pastilles = loadEmailPastilles(body.icelea.emailCodes);
     for (const p of pastilles) parts.push(p);
   }
