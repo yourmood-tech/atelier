@@ -255,10 +255,28 @@ const ZIRCON_SATURATION_LABELS: Record<string, string> = {
   "tres-fonce": "very deep intense saturation",
 };
 
+type MJData = {
+  matiere?: string | null;
+  matiereAutre?: string | null;
+  finition?: string | null;
+  finitionAutre?: string | null;
+  format?: string | null;
+  profil?: string | null;       // droit | incurve | bombe
+  pierres?: Array<{
+    pierre?: string;
+    taille?: string;
+    couleur?: string | null;
+    sertissage?: string;
+    quantite?: number;
+    code?: string;
+  }>;
+};
+
 type DesignInput = {
   categorie?: string | null;     // icelea-3d | bijouterie-mood | mood-joaillerie | technocut
   promptMode?: string | null;    // "simple" | "detailed" (defaut)
   withBase?: string | null;      // "avec" | "sans"
+  moodJoaillerie?: MJData | null;
   sketch?: string | null;        // data URL image (optional)
   idea?: string | null;          // texte description libre
   largeur?: string | null;       // XS | S | L
@@ -554,10 +572,146 @@ Note complémentaire de l'artiste : ${input.idea.trim()}` : ""}`;
   return `Rends une bague Mood Collection photo-réaliste, fond blanc, bague debout. ${input.idea && input.idea.trim() ? "Idée : " + input.idea.trim() : "(pas d'instructions supplémentaires)"}`;
 }
 
+// === Mood Joaillerie — refs + builder dédiés ===
+const MJ_REFS_COUNT: Record<string, Record<string, number>> = {
+  "or-gris": { "poli": 5, "froisse": 5, "sable": 5, "martele": 6, "cristal-de-givre": 5, "incurve": 2 },
+};
+
+function loadMJRef(matiere: string, finition: string): { inlineData: { mimeType: string; data: string } } | null {
+  const count = MJ_REFS_COUNT[matiere]?.[finition] || 0;
+  if (!count) return null;
+  const idx = Math.floor(Math.random() * count) + 1;
+  const p = path.join(process.cwd(), "public", "refs", "mj", matiere, finition, `${finition}-${idx}.jpg`);
+  if (!existsSync(p)) return null;
+  try {
+    const buf = readFileSync(p);
+    return { inlineData: { mimeType: "image/jpeg", data: buf.toString("base64") } };
+  } catch { return null; }
+}
+
+const MJ_PIERRE_LABELS: Record<string, string> = {
+  "diamant": "natural diamond, brilliant white sparkle",
+  "diamant-noir": "black diamond",
+  "diamant-brun": "brown / champagne diamond",
+  "diamant-ice-gris": "icy gray diamond",
+  "cdiams-pur": "C.DIAMS / pure diamond, exceptional clarity",
+  "diamant-pur-rose": "pure pink diamond, soft pink hue",
+  "topaze": "topaz",
+  "saphir": "sapphire",
+  "amethyste": "amethyst (violet quartz)",
+  "grenat": "garnet",
+  "tsavorite": "tsavorite (light green garnet)",
+  "emeraude": "emerald (deep green)",
+  "rubis": "ruby (deep red)",
+  "cabochon": "cabochon-cut gemstone (smooth polished, not faceted)",
+};
+
+const MJ_COULEUR_LABELS: Record<string, string> = {
+  "violet":"violet","rose":"pink","orange":"orange","brun":"brown","jaune":"yellow",
+  "bleu-fonce":"deep blue (royal blue)","bleu-clair":"light blue (pale sky blue)",
+  "vert-clair":"light green","vert-fonce":"deep green",
+  "rose-clair":"soft light pink","jaune-clair":"soft light yellow",
+};
+
+const MJ_SERTISSAGE_LABELS: Record<string, string> = {
+  "etoile": "star setting (étoile — pavé arranged in star pattern with engraved rays)",
+  "grain": "grain setting (single bead-prong holding the stone)",
+  "2-grains": "2-grain setting (two beads holding the stone)",
+  "3-grains": "3-grain setting (three beads holding the stone)",
+  "invisible": "invisible setting (stones flush, no visible prongs)",
+  "neige": "snow setting (neige — densely packed stones of varied sizes covering the surface)",
+};
+
+const MJ_MATIERE_LABELS: Record<string, string> = {
+  "or-jaune-18k": "18K YELLOW GOLD (warm rich gold)",
+  "or-rose-18k": "18K ROSE GOLD (warm pink-tinted gold)",
+  "or-blanc-18k": "18K WHITE GOLD (cool platinum-tone)",
+  "or-gris-18k": "18K GRAY GOLD (slightly darker than white gold, distinct gray hue)",
+  "argent-925": "sterling silver 925",
+  "platine": "platinum 950 (cool dense silvery-white)",
+};
+
+const MJ_FINITION_LABELS: Record<string, string> = {
+  "poli": "mirror-polished finish",
+  "satine": "satin finish",
+  "brosse": "brushed finish",
+  "martele": "hammered finish (artisan beaten texture)",
+  "sable": "sandblasted finish (uniform matte microtexture)",
+  "froisse": "Mood 'froissé' finish (fine vertical brushed texture, NOT crumpled paper)",
+  "cristal-de-givre": "Mood 'cristal de givre' finish (frost-crystal texture, like frozen ice with fine etched lines, distinctive matte sparkle)",
+};
+
+const MJ_PROFIL_LABELS: Record<string, string> = {
+  "droit": "flat straight band profile",
+  "incurve": "INCURVE / CONCAVE PROFILE — the outer surface is recessed inward like an hourglass, with the edges polished and the central recessed area showing its finish",
+  "bombe": "domed / convex profile — the outer surface curves outward",
+};
+
+function buildMJPrompt(input: DesignInput): string {
+  const mj = input.moodJoaillerie || {};
+  const mat = mj.matiere === "autre" && mj.matiereAutre ? mj.matiereAutre : (MJ_MATIERE_LABELS[mj.matiere || ""] || mj.matiere || "");
+  const fin = mj.finition === "autre" && mj.finitionAutre ? mj.finitionAutre : (MJ_FINITION_LABELS[mj.finition || ""] || mj.finition || "");
+  const profil = MJ_PROFIL_LABELS[mj.profil || "droit"] || "";
+  const fmt = mj.format || "addon";
+
+  const pierres = mj.pierres || [];
+  let pierresSection = "";
+  if (pierres.length > 0) {
+    const total = pierres.reduce((s, p) => s + (p.quantite || 1), 0);
+    const lines = pierres.map(p => {
+      const pierreLab = MJ_PIERRE_LABELS[p.pierre || ""] || p.pierre;
+      const coulLab = p.couleur ? MJ_COULEUR_LABELS[p.couleur] : null;
+      const sertLab = MJ_SERTISSAGE_LABELS[p.sertissage || ""] || p.sertissage;
+      const q = p.quantite || 1;
+      const qSpelled = q === 1 ? "ONE (1)" : q === 2 ? "TWO (2)" : q <= 10 ? `${["","ONE","TWO","THREE","FOUR","FIVE","SIX","SEVEN","EIGHT","NINE","TEN"][q]} (${q})` : `${q} (number ${q})`;
+      return `  • ${qSpelled} × ${pierreLab}${coulLab ? ` ${coulLab}` : ""}, size ${p.taille || "?"}mm, ${sertLab}${p.code ? ` [code ${p.code}]` : ""}`;
+    }).join("\n");
+    pierresSection = `\n\n💎 GEMSTONES — EXACT TOTAL ${total} stones :\n${lines}\n\n🚨 STONE RULES :\n- Count EXACTLY (NOT more, NOT less).\n- Match each shape, color, saturation, setting.\n- Brilliant sparkle, faceted cuts visible.\n- Setting style respected per spec : star pattern, grain, 2/3-grain beads, invisible (flush), or neige (densely packed varied sizes).`;
+  }
+
+  return `MOOD JOAILLERIE — HIGH-END FINE JEWELRY VISUALIZATION
+Generate a photorealistic high-jewelry photograph of a Mood Collection fine jewelry ring with the EXACT specifications below.
+
+═══════════════════════════════════════════════
+RING SPECIFICATIONS
+═══════════════════════════════════════════════
+
+🥇 MATERIAL : ${mat}
+💫 FINISH : ${fin}
+📐 PROFILE : ${profil}
+📏 FORMAT : ${fmt}
+
+${input.idea && input.idea.trim() ? `🎨 ARTIST'S IDEA : ${input.idea.trim()}\n` : ""}${pierresSection}
+
+═══════════════════════════════════════════════
+PHOTOGRAPHY STYLE — HAUTE JOAILLERIE
+═══════════════════════════════════════════════
+
+📐 ANGLE & FRAMING — Ring STANDING UPRIGHT on its bottom edge (vertical orientation, like a luxury jewelry display).
+- Camera near eye-level with slight downward tilt (~5-15°).
+- 3/4 perspective : decorated surface visible front-left, polished inner hole visible right.
+- Ring fills 80-95% of frame width, centered.
+- ⛔ DO NOT lay the ring flat.
+
+🎯 BACKGROUND : Pure WHITE seamless (#FFFFFF), like Cartier / Van Cleef / Bulgari catalog.
+
+💡 LIGHTING : Premium jewelry lighting — multi-direction soft fills to maximize gemstone fire and brilliance. Stones sparkle with rainbow refractions. Metal shines with crisp specular reflections matching the finish (mirror polish vs matte satin vs hammered).
+
+✨ STYLE : Haute joaillerie editorial, magazine cover quality. Gemstone brilliance + metal craftsmanship are the heroes.
+
+⛔ BANS : NO text, NO logo, NO watermark, NO hands, NO mannequin, NO scene props. Just the ring on pure white.
+
+Output : ONE photoreal haute-joaillerie image.`;
+}
+
 function buildPrompt(input: DesignInput): string {
   // Mode simple : prompt court qui laisse Gemini interpréter librement les refs visuelles
   if (input.promptMode === "simple") {
     return buildSimplePrompt(input);
+  }
+  // Mood Joaillerie : prompt dédié
+  if (input.categorie === "mood-joaillerie" && input.moodJoaillerie) {
+    return buildMJPrompt(input);
   }
   const categorie = input.categorie || "bijouterie-mood";
 
@@ -772,6 +926,15 @@ export async function POST(req: Request) {
   }
   // Mode photo-réaliste du croquis : on ne joint AUCUNE autre ref pour ne pas polluer
   const isPromptSimple = body.promptMode === "simple";
+
+  // Mood Joaillerie : joindre 1 ref random combo matière + finition
+  if (!isPromptSimple && body.categorie === "mood-joaillerie" && body.moodJoaillerie) {
+    const mj = body.moodJoaillerie;
+    if (mj.matiere && mj.finition && mj.matiere !== "autre" && mj.finition !== "autre") {
+      const ref = loadMJRef(mj.matiere.replace("-18k", ""), mj.finition);
+      if (ref) parts.push(ref);
+    }
+  }
 
   // Icelea : refs finition + format (1 chacune, random parmi le pool disponible)
   let finitionRefAdded = false;

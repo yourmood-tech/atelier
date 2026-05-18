@@ -429,15 +429,27 @@
 
   <!-- Finition (radio) -->
   <div style="margin-bottom:1.2rem;">
-    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">💫 Finition <span style="color:var(--gris);font-weight:400;font-size:0.78rem;">— provisoire, à confirmer</span></label>
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">💫 Finition</label>
     <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="poli" checked> Poli miroir</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="satine"> Satiné</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="brosse"> Brossé</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="martele"> Martelé</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="sable"> Sablé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="froisse"> Froissé</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="cristal-de-givre"> Cristal de givre</label>
       <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-finition" value="autre"> Autre :</label>
       <input type="text" id="mj-finition-autre" placeholder="précise…" style="padding:0.3rem 0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.82rem;width:140px;">
+    </div>
+  </div>
+
+  <!-- Profil de bague (radio) -->
+  <div style="margin-bottom:1.2rem;">
+    <label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">📐 Profil de la bague</label>
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-profil" value="droit" checked> Droit (plat)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-profil" value="incurve"> Incurvé (concave)</label>
+      <label style="font-size:0.85rem;cursor:pointer;"><input type="radio" name="mj-profil" value="bombe"> Bombé (convexe)</label>
     </div>
   </div>
 
@@ -1138,10 +1150,11 @@ async function genererDesign() {
       const fin = document.querySelector('input[name="mj-finition"]:checked')?.value;
       const finAutre = document.getElementById('mj-finition-autre')?.value?.trim();
       const fmt = document.querySelector('input[name="mj-format"]:checked')?.value;
+      const profil = document.querySelector('input[name="mj-profil"]:checked')?.value;
       const pierres = recupererPierresMJ();
       payload = {
         categorie, promptMode, sketch: sketchData, idea,
-        moodJoaillerie: { matiere: mat, matiereAutre: matAutre, finition: fin, finitionAutre: finAutre, format: fmt, pierres },
+        moodJoaillerie: { matiere: mat, matiereAutre: matAutre, finition: fin, finitionAutre: finAutre, format: fmt, profil, pierres },
         format: document.getElementById('mj-img-format')?.value || '1:1',
       };
     } else {
