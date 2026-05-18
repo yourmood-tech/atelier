@@ -1256,6 +1256,7 @@ async function genererDesign() {
         <button class="btn-action" style="background:#6366f1;" onclick="toggleModification('${imgId}')">✏️ Modification</button>
         <button class="btn-action" style="background:#0a6b3f;" onclick="telechargerFiche('${imgId}')">📄 Fiche fournisseur</button>
         ${hasPierres ? `<button class="btn-action" style="background:#111;color:#fff;" onclick="telechargerPlanSertissage('${blocId}')">📐 Plan de sertissage</button>` : ''}
+        <button class="btn-action" style="background:#b45309;color:#fff;" onclick="testerVuePlate('${imgId}','${blocId}')">🧪 Test vue à plat</button>
       </div>
       <div id="${imgId}-modif-zone" style="display:none;margin-top:0.7rem;padding:0.8rem;background:#f4f4f7;border-radius:8px;">
         <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
@@ -1772,6 +1773,59 @@ uploadZone.addEventListener('drop', e => {
     handleSketch({ target: input });
   }
 });
+
+// === Test vue à plat — appel Gemini image-to-image (étape A palier 2) ===
+async function testerVuePlate(imgId, blocId) {
+  const dataUrl = cacheImageGet(imgId);
+  if (!dataUrl) { alert('Image source introuvable'); return; }
+  const bloc = document.getElementById(blocId);
+  if (!bloc) { alert('Bloc parent introuvable'); return; }
+
+  // Bouton de l'élément cliqué
+  const btn = bloc.querySelector('button[onclick*="testerVuePlate"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Génération vue à plat…'; }
+
+  // Bloc résultat dédié sous l'image
+  let testZone = document.getElementById(blocId + '-flatten-zone');
+  if (!testZone) {
+    testZone = document.createElement('div');
+    testZone.id = blocId + '-flatten-zone';
+    testZone.style.cssText = 'margin-top:0.8rem;padding:0.8rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;';
+    bloc.appendChild(testZone);
+  }
+  testZone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Gemini transforme la bague en vue déroulée à plat (~25s)…</div>';
+
+  try {
+    const r = await fetch('/api/design-creator-flatten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const flatId = 'flat-' + Date.now();
+    cacheImagePut(flatId, data.image);
+    const fname = `vue-plate-${Date.now()}.png`;
+    testZone.innerHTML = `
+      <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.5rem;">🧪 Vue déroulée à plat (test étape A) :</div>
+      <img src="${data.image}" alt="vue à plat" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
+      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+        <button class="btn-action" onclick="telechargerCache('${flatId}','${fname}')">⬇️ Télécharger</button>
+        <button class="btn-action secondary" onclick="testerVuePlate('${imgId}','${blocId}')">🔄 Regénérer</button>
+      </div>
+      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">Si le rendu est OK → on construit le palier 2 dessus. Si pas OK → on bascule sur autre chose.</div>
+    `;
+  } catch (e) {
+    testZone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec test : ${escapeHtml(e.message || String(e))}</div>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '🧪 Test vue à plat'; }
+  }
+}
 
 // === Plan de sertissage — Canvas 2D, style Myriam ===
 const MJ_PIERRE_PLURIEL = {
