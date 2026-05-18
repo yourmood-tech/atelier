@@ -67,6 +67,38 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "sakura": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "SAKURA" (luxe printanier minimaliste — Jacquemus / poésie cerisier)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : minimalist contemporary luxury spring universe — contemporary Mediterranean architecture, noble materials, sophisticated matte textures (pale plaster wall, smooth warm stone, soft drape).
+- Light : SOFT MORNING LIGHT entering FROM THE SIDE, delicate and natural, creating FINE SAKURA BRANCH SHADOWS projected on the surfaces (silhouettes of cherry blossom branches — not literal petals, just shadow shapes filtering through unseen blossoming branches).
+- Shadows : delicate, graphic, refined — sakura branch silhouettes drawn in shadow on the wall / surface / skin. The shadows are the only decorative element.
+- Color palette : warm CREAM WHITE, warm BEIGE, very subtle POWDER PINK, pale stone, soft golden reflections — naturally elegant pastel palette. NEVER overly pink or kitsch.
+- Mood : silent luxury, calm, aerial, poetic springtime, premium, clean, contemporary art / high-end magazine.
+- Style references : Jacquemus spring campaign, contemporary luxury jewelry editorial, Dior poetic feminine minimal, Khaite spring.
+- Decor accents (subtle, MAX 1 element) : just the delicate sakura branch shadow on the wall — nothing else. Ultra clean composition.
+- Composition : ULTRA MINIMALIST with LOTS OF NEGATIVE SPACE, contemporary art-direction.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : elegant feminine hand delicately posed near a BARE SHOULDER, skin slightly bronzed and luminous, wearing a FLUID LIGHT-PINK DRESS (light airy spring fabric, subtle movement of the textile in the air). Soft warm morning natural light, FINE SAKURA BRANCH SHADOWS projected on the skin and on the dress. Palette : powder pink, warm beige, cream white, subtle gold. Romantic, fresh, premium — never kitsch.
+- IF the action is a COFFRET / BOX shot : the white coffret on a pale stone or cream surface, soft morning side light, delicate sakura branch shadow falling across the coffret and surrounding, powder-pink tinted highlights very subtle.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with cream / warm beige textured wall with delicate sakura branch shadow projected on it, ring on a matching matte stone surface, soft morning side light, subtle powder-pink reflections.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
+- The cream / pale stone decor with sakura shadows is a SUPPORTING BACKDROP, occupying ONLY the corners and negative space around the ring.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
+- For worn-ring shots : the ring + hand + portion of skin/dress near the ring fill the frame ; the model's body / shoulder / dress are supporting, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight, macro precision. Spring decor is silent luxury minimalism, never competing.`,
+
   "riviera": `
 
 ═══════════════════════════════════════════
