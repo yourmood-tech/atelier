@@ -41,6 +41,7 @@ const PROMPTS: Record<string, string> = {
 
   "bague-portee": "Transform this Mood Collection ring photo into a HIGH-END EDITORIAL CLOSE-UP photograph of the ring BEING WORN on a hand, in the style of a luxury jewelry magazine campaign (Cartier / Tiffany / Bvlgari aesthetic).\n\n1. THE RING : keep it absolutely identical to the source — same shape, same colors, same material, same finish, same gemstones, same engravings if any, same proportions. The ring is the hero of the photo, perfectly sharp, well-lit.\n\n2. HAND (default if no user specification) : elegant feminine hand, well-manicured nails (subtle clean french or natural color), tan/olive skin tone, no jewelry on other fingers that distracts. Soft natural pose : the hand can be resting against the opposite arm, near the collarbone/jawline, close to the face partially veiling it, or naturally on a soft surface.\n\n3. OUTFIT in soft background focus : a simple white t-shirt OR cream/beige cashmere sweater OR delicate black blazer — never the main attention, always supportive.\n\n4. CADRAGE : tight close-up on the ring + hand, the ring takes 30-50% of frame, perfect focus on the ring (sharp), shallow depth of field (background blurred), warm directional studio light flattering the skin.\n\n5. LIGHTING : soft, warm, slightly directional — like a beauty shot. Catches the ring's highlights beautifully. Skin looks healthy and glowing.\n\n6. BACKGROUND : neutral, soft-focused, supportive of the ring (e.g., out-of-focus skin/clothing/wall). No distracting elements, no clutter, no logo, no text.\n\n7. STYLE : high-end editorial, magazine-grade, sophisticated, intimate, contemporary. Like an Instagram post from a luxury jewelry house.\n\nIf the user provides specific instructions (skin tone, nail style, hand pose, outfit, framing) in the additional instructions section, FOLLOW THEM PRECISELY as override of the defaults above. The ring stays the absolute hero. Output the worn-ring editorial photograph.",
   // Multi-formats : reframe pour un ratio précis
+  "produit-multiple": "🚨 MULTI-RING EDITORIAL COMPOSITION — Create a SINGLE image showing ALL the attached Mood Collection rings composed together in ONE editorial scene.\n\n═══════════════════════════════════════════\n🚨 PIXEL-IDENTITY PRESERVATION (NON-NEGOTIABLE)\n═══════════════════════════════════════════\n\nEach ring shown in the attached reference images must be reproduced PIXEL-IDENTICAL in the output :\n- Same exact shape, size, color, material, finish, gemstones, pattern, addon, decoration.\n- DO NOT redesign, simplify, merge, or duplicate rings.\n- Count the reference images : if 4 references are attached, show EXACTLY 4 different rings in the output (one per reference). Never invent extra rings.\n\n═══════════════════════════════════════════\n📐 DISPOSITION — DISPERSED EDITORIAL (campagne magazine, NOT grid)\n═══════════════════════════════════════════\n\n- Disperse the rings NATURALLY across the scene — NOT aligned in a grid, NOT in a perfect row, NOT stacked.\n- Each ring positioned at a different height / angle / depth — some standing upright, some lying flat, some leaning, on slightly different planes.\n- Composition feels like a luxury jewelry magazine campaign : artistic, balanced, breathing negative space between rings.\n- Hierarchy : one ring can be slightly more prominent in the foreground (focal point), others supporting around it.\n- Rings DO NOT touch or overlap — they have breathing space.\n- Total composition is harmonious, the eye travels naturally between rings.\n\n═══════════════════════════════════════════\n🌐 CONSISTENT SCENE\n═══════════════════════════════════════════\n\n- ALL rings share the SAME LIGHTING, SAME SURFACE / ENVIRONMENT, SAME ATMOSPHERE.\n- Default lighting : soft directional studio light (overridden by active theme if applicable).\n- Default background : neutral white seamless surface with subtle shadow (overridden by active theme if applicable).\n- All rings perfectly sharp, mirror-clean, gemstones brilliant, no dust no parasites.\n\n🎯 OUTPUT : a single editorial composition image, magazine print quality, all rings clearly visible and identifiable.",
   "multi-1-1": "Recompose this image for a 1:1 square aspect ratio (Instagram post). Keep the main subject perfectly centered and well-framed. Extend the background intelligently (matching its existing style, color, texture and lighting) to fit the new square dimensions. The subject stays exactly the same.",
   "multi-4-5": "Recompose this image for a 4:5 portrait aspect ratio (Instagram feed portrait). Keep the main subject perfectly centered, with comfortable margin top and bottom. Extend the background intelligently (matching its existing style and lighting) to fit the new portrait dimensions. Subject preserved.",
   "multi-9-16": "Recompose this image for a 9:16 vertical aspect ratio (Instagram Story / Reel / TikTok). Keep the main subject perfectly centered, with extra space top and bottom. Extend the background intelligently (matching existing style, lighting, gradient) to fit the new tall portrait dimensions. Subject preserved.",
@@ -59,6 +60,7 @@ const RATIOS: Record<string, string> = {
   "theme-terre-dombre": "1:1",
   "bague-portee": "1:1",
   "coffret": "1:1",
+  "produit-multiple": "1:1",
   "multi-1-1": "1:1",
   "multi-4-5": "4:5",
   "multi-9-16": "9:16",
@@ -67,6 +69,37 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "black-joaillerie": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "BLACK JOAILLERIE" (haute couture luxe — Cartier / Dior Haute Joaillerie / Vogue)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : MINIMALIST DARK STUDIO — deep black or anthracite gray gradient backdrop, no props, no decor, no texture, ULTRA CLEAN.
+- Light : SINGLE INTENSE DIRECTIONAL LIGHT (single source from one side or above), sculptural — creating CINEMATIC HARD SHADOWS. Strong contrast between deep shadow zones and brightly illuminated subject.
+- Shadows : dramatic, sculptural, cinematic — chiaroscuro lighting, like haute joaillerie campaigns. Deep blacks, bright highlights, very little mid-tones.
+- Color palette : DEEP BLACK, anthracite gray, dark charcoal, with single sculptural skin/object highlights in warm or neutral tone. NO color elements.
+- Mood : mysterious, powerful, timeless, sophisticated, silent elegance — NEVER glamour excessif or kitsch.
+- Style references : Cartier haute joaillerie campaign, Dior Haute Joaillerie editorial, Vogue mode portrait, contemporary luxury jewelry magazine.
+- Composition : ULTRA EPURÉE with MASSIVE NEGATIVE SPACE in deep black/gray. Subject occupies a precise zone, the rest is shadow.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : elegant woman, STATUESQUE ARTISTIC POSE inspired by haute joaillerie / haute couture campaigns. Elongated silhouette, elegant head carriage, slow refined gestures. DEEPLY LUMINOUS SATIN SKIN sculpted by intense directional light, bare shoulders, minimalist BLACK or MONOCHROME styling (sober structured or satin fabric). Deep black or anthracite background. Hand near the ring perfectly lit, body partially in shadow.
+- IF the action is a COFFRET / BOX shot : the coffret is dramatically lit by a single directional light against a deep black background, sculptural shadow on one side, haute joaillerie product shot aesthetic.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with DEEP BLACK or ANTHRACITE GRADIENT, ring lit by single intense directional light creating sculptural highlights on metal and stones, deep cast shadow.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury haute joaillerie magazine product hero shot.
+- The dark studio background is a SUPPORTING BACKDROP, occupying the negative space — pure deep black/gray.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit, with crisp sculptural highlights on metal and stones.
+- For worn-ring shots : the ring + hand + portion of skin/fabric near the ring fill the frame ; the woman's body / shoulders are supporting, partially in shadow — the RING REMAINS THE HERO.
+- Camera : zoom in tight, macro precision. Dark studio decor is silent luxury, dramatic — never competing.`,
+
   "sakura": `
 
 ═══════════════════════════════════════════
@@ -228,6 +261,62 @@ ACTION-SPECIFIC ADAPTATIONS :
 - Camera : zoom in tight on the ring. If a wider context is shown, the ring still dominates ; never let the decor take over the frame.`,
 };
 
+async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null): Promise<{ image?: string; error?: string }> {
+  const basePrompt = PROMPTS[action];
+  if (!basePrompt) return { error: `Action inconnue : ${action}` };
+  const themeOverlay = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+  let prompt = basePrompt + themeOverlay;
+  if (note && note.trim()) prompt += `\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR ===\n${note.trim()}`;
+  const aspectRatio = (formatOverride && /^\d+:\d+$/.test(formatOverride)) ? formatOverride : (RATIOS[action] || "1:1");
+
+  const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
+  for (let i = 0; i < imageDataUrls.length; i++) {
+    const m = imageDataUrls[i].match(/^data:([^;]+);base64,(.+)$/);
+    if (!m) return { error: `Image ${i + 1} invalide (doit être data:image/...;base64,...)` };
+    parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
+  }
+  parts.push({ text: prompt });
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts }],
+        generationConfig: {
+          responseModalities: ["IMAGE"],
+          imageConfig: { aspectRatio, imageSize: "2K" },
+        },
+      }),
+    });
+    const respText = await r.text();
+    let respData: { candidates?: Array<{ content?: { parts?: unknown[] }; finishReason?: string }>; promptFeedback?: { blockReason?: string }; error?: { message?: string } };
+    try { respData = JSON.parse(respText); }
+    catch { return { error: `Réponse Gemini non-JSON (HTTP ${r.status}): ${respText.slice(0, 200)}` }; }
+    if (!r.ok) {
+      const msg = respData?.error?.message || JSON.stringify(respData).slice(0, 300);
+      return { error: `Gemini ${r.status}: ${msg}` };
+    }
+    const candidate = respData?.candidates?.[0];
+    if (candidate?.finishReason && candidate.finishReason !== "STOP") {
+      return { error: `Gemini a refusé (finishReason: ${candidate.finishReason}).` };
+    }
+    if (respData?.promptFeedback?.blockReason) {
+      return { error: `Bloqué par les filtres (${respData.promptFeedback.blockReason}).` };
+    }
+    const partsOut = (candidate?.content?.parts || []) as Array<{ inlineData?: { mimeType?: string; data?: string }; text?: string }>;
+    const imagePart = partsOut.find(p => p.inlineData?.mimeType?.startsWith?.("image/"));
+    if (!imagePart?.inlineData?.data) {
+      const textPart = partsOut.find(p => p.text);
+      return { error: textPart?.text ? `Gemini a répondu par texte : « ${textPart.text.slice(0, 150)} »` : "Pas d'image en sortie." };
+    }
+    return { image: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` };
+  } catch (e) {
+    return { error: String((e as Error)?.message || e) };
+  }
+}
+
 async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null): Promise<{ image?: string; error?: string }> {
   const basePrompt = PROMPTS[action];
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
@@ -301,16 +390,33 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; action?: string; note?: string | null; format?: string | null; theme?: string | null };
+  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, action, note, format, theme } = body;
-  if (!image || !action) {
-    return NextResponse.json({ error: "Champs requis : image (dataUrl), action" }, { status: 400 });
+  const { image, images, action, note, format, theme } = body;
+  if (!action) {
+    return NextResponse.json({ error: "Champ requis : action" }, { status: 400 });
+  }
+
+  // Cas multi-bagues : produit-multiple (et toute future action multi)
+  if (action === "produit-multiple") {
+    if (!images || !Array.isArray(images) || images.length < 2) {
+      return NextResponse.json({ error: "produit-multiple : champ 'images' requis (tableau d'au moins 2 dataUrl)" }, { status: 400 });
+    }
+    if (images.length > 6) {
+      return NextResponse.json({ error: "produit-multiple : maximum 6 bagues" }, { status: 400 });
+    }
+    const res = await appelGeminiMulti(images, action, note, format, theme);
+    if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
+    return NextResponse.json({ image: res.image });
+  }
+
+  if (!image) {
+    return NextResponse.json({ error: "Champ requis : image (dataUrl)" }, { status: 400 });
   }
 
   // Cas spécial : multi-formats = 4 appels parallèles (le format global est ignoré, on génère les 4)
