@@ -69,6 +69,38 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "pur-white": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "PUR WHITE JOAILLERIE" (luxe cristallin — Swarovski / Dior / Vogue couture)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : ULTRA-LUMINOUS CRYSTALLINE editorial — frozen white or very pale pearl-gray background, pure aerial minimalist atmosphere.
+- Light : INTENSE NATURAL DIRECTIONAL LIGHT creating PRISMATIC FLARES, subtle rainbow refractions, sharp crisp shadows, crystalline light plays projected on surfaces.
+- Shadows : sharp + delicate, crystalline geometry, ice-like.
+- Color palette : pure white, silver, crystal, icy gray, with micro IRIDESCENT REFLECTIONS (subtle rainbow flare). Monochromatic and clean.
+- Mood : pure, aerial, ultra luxurious, cold/icy elegance, couture futuristic, silent luxury, spectacular light.
+- Style references : Swarovski campaign, contemporary diamond photography, Dior haute joaillerie, Vogue couture editorial.
+- Composition : SCULPTURAL and modern — extreme focus on the stone cuts, transparency, facet details. Subtle mirror reflections, satin surfaces, high-end diffused light.
+- Ultra clean, ZERO unnecessary decor. Short depth of field, hyper-real, ultra-sharp.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : ELEGANT WOMAN in flowing TEXTURED WHITE FABRICS — couture pleated, light mousseline, matte satin, vaporous organza. Palette : cream monochrome, ivory, off-white, very light beige. Soft diffused almost-solar natural light, delicate shadows + subtle contrasts on the fabric and skin. Calm pure luxurious atmosphere. Optional : oversized sculptural hat, floating light veils, artistic minimalist composition. Hand near the ring as the absolute focus.
+- IF the action is a COFFRET / BOX shot : the white coffret photographed on a frozen white / pearl gray background, intense directional natural light creating prismatic flares on the white leatherette and the ring inside, sharp crystalline shadow, ultra clean composition.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : background = frozen pure white or pale pearl gray, intense natural directional light creating prismatic light flares on the metal and stones, sharp crystalline shadow, rainbow micro-reflections on the surface.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
+- The pure-white crystalline decor is a SUPPORTING BACKDROP, occupying the negative space.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit, with crisp prismatic highlights on metal and stones.
+- For worn-ring shots : ring + hand + portion of white fabric near the ring fill the frame ; the woman's body / couture fabric / hat are supporting, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight, macro precision on the stone facets and metal. Crystalline decor is silent luxury cold elegance, never competing.`,
+
   "black-joaillerie": `
 
 ═══════════════════════════════════════════
