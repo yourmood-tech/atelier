@@ -1240,12 +1240,17 @@ async function genererDesign() {
     const fname = `${slug}-${Date.now()}.png`;
     const imgId = 'img-' + Date.now();
     cacheImagePut(imgId, data.image);
-    // Mémoriser les pierres MJ au moment de la génération (pour le plan de sertissage)
+    // Mémoriser les pierres MJ + matière/format/taille au moment de la génération (pour les plans de sertissage)
     const pierresMJSnapshot = (categorie === 'mood-joaillerie') ? recupererPierresMJ() : [];
     const hasPierres = pierresMJSnapshot.length > 0;
+    bloc.dataset.nomProjet = nomProjet;
     if (hasPierres) {
       bloc.dataset.pierresMj = JSON.stringify(pierresMJSnapshot);
-      bloc.dataset.nomProjet = nomProjet;
+    }
+    if (categorie === 'mood-joaillerie') {
+      bloc.dataset.mjMatiere = document.getElementById('mj-matiere')?.value || '';
+      bloc.dataset.mjFormat  = document.getElementById('mj-format')?.value  || '';
+      bloc.dataset.mjTaille  = document.getElementById('projet-taille')?.value || '';
     }
     bloc.innerHTML = `
       <div class="resultat-titre">✨ Ta visualisation${nomProjet !== 'mood-design' ? ' — ' + escapeHtml(nomProjet) : ''}</div>
@@ -1256,7 +1261,7 @@ async function genererDesign() {
         <button class="btn-action" style="background:#6366f1;" onclick="toggleModification('${imgId}')">✏️ Modification</button>
         <button class="btn-action" style="background:#0a6b3f;" onclick="telechargerFiche('${imgId}')">📄 Fiche fournisseur</button>
         ${hasPierres ? `<button class="btn-action" style="background:#111;color:#fff;" onclick="telechargerPlanSertissage('${blocId}')">📐 Plan de sertissage</button>` : ''}
-        <button class="btn-action" style="background:#b45309;color:#fff;" onclick="testerVuePlate('${imgId}','${blocId}')">🧪 Test vue à plat</button>
+        ${(categorie === 'mood-joaillerie') ? `<button class="btn-action" style="background:#b45309;color:#fff;" onclick="testerPlanComplet('${imgId}','${blocId}')">🧪 Test plan de sertissage</button>` : ''}
       </div>
       <div id="${imgId}-modif-zone" style="display:none;margin-top:0.7rem;padding:0.8rem;background:#f4f4f7;border-radius:8px;">
         <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
@@ -1774,29 +1779,46 @@ uploadZone.addEventListener('drop', e => {
   }
 });
 
-// === Test vue à plat — appel Gemini image-to-image (étape A palier 2) ===
-async function testerVuePlate(imgId, blocId) {
+// === Plan de sertissage palier 2 — Gemini extrait motif + Canvas compose bande métal ===
+
+// Couleur hex de la bande métal selon matière Mood Joaillerie
+const MJ_MATIERE_HEX = {
+  'or-jaune-18k': '#D4AF37',
+  'or-rose-18k':  '#C2876C',
+  'or-blanc-18k': '#E5E5E2',
+  'or-gris-18k':  '#B7B5B0',
+  'argent':       '#C0C0C0',
+  'platine':      '#E5E4E2',
+  'autre':        '#B8B8B8',
+};
+
+// Largeur en mm selon format Mood
+const MJ_FORMAT_LARGEUR_MM = {
+  'base-large': 13, 'base-small': 11, 'base-xs': 9, 'open-mood': 10,
+  'addon': 7.1, 'deux-tiers': 4.85, 'medium': 2.45, 'mini': 1.22,
+};
+
+async function testerPlanComplet(imgId, blocId) {
   const dataUrl = cacheImageGet(imgId);
   if (!dataUrl) { alert('Image source introuvable'); return; }
   const bloc = document.getElementById(blocId);
   if (!bloc) { alert('Bloc parent introuvable'); return; }
 
-  // Bouton de l'élément cliqué
-  const btn = bloc.querySelector('button[onclick*="testerVuePlate"]');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Génération vue à plat…'; }
+  const btn = bloc.querySelector('button[onclick*="testerPlanComplet"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Extraction motif (~25s)…'; }
 
-  // Bloc résultat dédié sous l'image
-  let testZone = document.getElementById(blocId + '-flatten-zone');
+  let testZone = document.getElementById(blocId + '-plan-zone');
   if (!testZone) {
     testZone = document.createElement('div');
-    testZone.id = blocId + '-flatten-zone';
+    testZone.id = blocId + '-plan-zone';
     testZone.style.cssText = 'margin-top:0.8rem;padding:0.8rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;';
     bloc.appendChild(testZone);
   }
-  testZone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Gemini transforme la bague en vue déroulée à plat (~25s)…</div>';
+  testZone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/2 : Gemini extrait le motif…</div>';
 
   try {
-    const r = await fetch('/api/design-creator-flatten', {
+    // Étape 1 : Gemini extrait le motif sur fond blanc
+    const r = await fetch('/api/design-creator-extract-motif', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: dataUrl }),
@@ -1806,24 +1828,122 @@ async function testerVuePlate(imgId, blocId) {
     try { data = JSON.parse(text); }
     catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
     if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
-    if (!data.image) throw new Error('Pas d\'image retournée');
+    if (!data.image) throw new Error('Pas de motif retourné');
 
-    const flatId = 'flat-' + Date.now();
-    cacheImagePut(flatId, data.image);
-    const fname = `vue-plate-${Date.now()}.png`;
+    testZone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 2/2 : composition du plan…</div>';
+
+    // Étape 2 : Canvas compose le plan final
+    const motifImg = new Image();
+    motifImg.crossOrigin = 'anonymous';
+    await new Promise((resolve, reject) => {
+      motifImg.onload = resolve;
+      motifImg.onerror = () => reject(new Error('Motif Gemini illisible'));
+      motifImg.src = data.image;
+    });
+
+    const matiere = bloc.dataset.mjMatiere || 'or-jaune-18k';
+    const format = bloc.dataset.mjFormat || 'addon';
+    const taille = parseFloat(bloc.dataset.mjTaille) || 54;
+    const nomProjet = (bloc.dataset.nomProjet || 'MOOD DESIGN').toUpperCase();
+
+    const couleurBande = MJ_MATIERE_HEX[matiere] || '#B8B8B8';
+    const largeurMm = MJ_FORMAT_LARGEUR_MM[format] || 7;
+    const circonferenceMm = taille + 6; // +6mm épaisseur externe
+
+    const PX_PAR_MM = 24;
+    let bandeW = Math.round(circonferenceMm * PX_PAR_MM);
+    let bandeH = Math.max(80, Math.round(largeurMm * PX_PAR_MM)); // min 80px pour visibilité
+
+    // Canvas final
+    const PADDING_X = 80;
+    const PADDING_TOP = 220;
+    const PADDING_BOTTOM = 80;
+    const W = Math.max(1600, bandeW + 2 * PADDING_X);
+    const H = PADDING_TOP + bandeH + PADDING_BOTTOM;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Fond blanc
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, H);
+
+    // Titre haut-gauche
+    ctx.fillStyle = '#000';
+    ctx.textBaseline = 'top';
+    let titreSize = 88;
+    ctx.font = `300 ${titreSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+    while (ctx.measureText(nomProjet).width > W * 0.7 && titreSize > 40) {
+      titreSize -= 4;
+      ctx.font = `300 ${titreSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+    }
+    ctx.fillText(nomProjet, PADDING_X, 70);
+
+    // Sous-titre : matière + format + taille
+    ctx.font = '400 24px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.fillStyle = '#666';
+    const sousTitre = `${matiere.replace(/-/g, ' ')} · ${format.replace(/-/g, ' ')} (${largeurMm}mm) · taille ${taille}`;
+    ctx.fillText(sousTitre, PADDING_X, 70 + titreSize + 10);
+
+    // Bande métal
+    const bandeX = (W - bandeW) / 2;
+    const bandeY = PADDING_TOP;
+    ctx.fillStyle = couleurBande;
+    ctx.fillRect(bandeX, bandeY, bandeW, bandeH);
+
+    // Motif tilé sur la bande (mode multiply : le blanc disparaît, le noir reste)
+    // Scale du motif pour qu'il fit la hauteur de la bande
+    const motifH = bandeH;
+    const motifW = motifH; // motif carré
+    const nbTiles = Math.max(2, Math.ceil(bandeW / motifW));
+
+    ctx.save();
+    // Clip sur la bande
+    ctx.beginPath();
+    ctx.rect(bandeX, bandeY, bandeW, bandeH);
+    ctx.clip();
+    ctx.globalCompositeOperation = 'multiply';
+    for (let i = 0; i < nbTiles; i++) {
+      ctx.drawImage(motifImg, bandeX + i * motifW, bandeY, motifW, motifH);
+    }
+    ctx.restore();
+
+    // Légende sous la bande
+    ctx.fillStyle = '#333';
+    ctx.font = '400 22px "Helvetica Neue", Helvetica, Arial, sans-serif';
+    ctx.fillText('🔸 Pierres : à compléter dans le descriptif (palier 2.2 à venir)', PADDING_X, bandeY + bandeH + 30);
+
+    // Affichage + téléchargement
+    const planDataUrl = canvas.toDataURL('image/png');
+    const planId = 'plan-' + Date.now();
+    cacheImagePut(planId, planDataUrl);
+    const slug = nomProjet.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mood';
+    const fname = `plan-sertissage-${slug}-${Date.now()}.png`;
+
+    // Afficher aussi le motif brut extrait pour debug visuel
     testZone.innerHTML = `
-      <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.5rem;">🧪 Vue déroulée à plat (test étape A) :</div>
-      <img src="${data.image}" alt="vue à plat" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
-      <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
-        <button class="btn-action" onclick="telechargerCache('${flatId}','${fname}')">⬇️ Télécharger</button>
-        <button class="btn-action secondary" onclick="testerVuePlate('${imgId}','${blocId}')">🔄 Regénérer</button>
+      <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.5rem;">🧪 Plan de sertissage palier 2 :</div>
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:0.7rem;margin-bottom:0.5rem;">
+        <div>
+          <div style="font-size:0.72rem;color:#78350f;margin-bottom:0.3rem;">Motif extrait par Gemini :</div>
+          <img src="${data.image}" alt="motif extrait" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;">
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:#78350f;margin-bottom:0.3rem;">Plan composé (motif tilé sur bande ${matiere}) :</div>
+          <img src="${planDataUrl}" alt="plan composé" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
+        </div>
       </div>
-      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">Si le rendu est OK → on construit le palier 2 dessus. Si pas OK → on bascule sur autre chose.</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn-action" onclick="telechargerCache('${planId}','${fname}')">⬇️ Télécharger plan</button>
+        <button class="btn-action secondary" onclick="testerPlanComplet('${imgId}','${blocId}')">🔄 Regénérer</button>
+      </div>
+      <div style="font-size:0.78rem;color:#78350f;margin-top:0.5rem;font-style:italic;">Matière, format et taille viennent du formulaire. Le motif est extrait du rendu IA puis tilé.</div>
     `;
   } catch (e) {
-    testZone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec test : ${escapeHtml(e.message || String(e))}</div>`;
+    testZone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec : ${escapeHtml(e.message || String(e))}</div>`;
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '🧪 Test vue à plat'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '🧪 Test plan de sertissage'; }
   }
 }
 
