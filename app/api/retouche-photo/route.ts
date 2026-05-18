@@ -67,6 +67,38 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "terre-olive": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "TERRE OLIVE" (Jacquemus / Bottega editorial — silent luxury)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition (which subject is photographed, framing, ring centrality).
+
+VISUAL DIRECTION :
+- Setting : ultra-minimalist editorial backdrop — uniform textured surface in soft OLIVE / warm BEIGE SAND / IVORY tones (smooth plaster, raw paper, matte wall). Just one calm tone.
+- Light : LATE AFTERNOON NATURAL DIRECTIONAL LIGHT from the side, warm and cinematographic, creating DEEP GRAPHIC SHADOWS on the surface.
+- Shadows : signature Jacquemus / Bottega — bold hard-edged shadow shapes projected on the backdrop. High contrast between sunlit zones and shadow zones. Often a SOFT BLURRED LEAF SHADOW or vegetal silhouette in the background acts as the only decorative element.
+- Color palette : olive doux / muted olive green, warm beige sand, ivory, warm cream, soft brown — with deep shadow zones. NO white seamless studio backdrop.
+- Mood : SILENT LUXURY, calm, organic, modern, cinematic, contemplative, sophisticated minimalism.
+- Style references : Jacquemus campaign, Bottega Veneta editorial, Khaite minimal, The Row silent luxury, high-end jewelry magazine.
+- Decor accent (subtle, blurred, MAX ONE element per shot) : an out-of-focus leaf, a vegetal shadow on the wall, a smooth matte surface with relief, a water reflection, or just a play of light. NEVER cluttered.
+- Composition : ULTRA MINIMALIST, lots of negative space, total focus on the jewelry.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : the model is ASIAN, with LONG SMOOTH BLACK HAIR, BARE SHOULDER VISIBLE, wearing a FLUID FLOWING WHITE COTTON BLOUSE (like a soft scarf — drape, soft movement, off-shoulder). NATURAL CLEAN MANICURE (subtle nude polish). Skin lit warmly by late afternoon directional light, deep graphic shadows on the body and blouse. Hand gracefully posed near the collarbone / shoulder, the RING is the absolute focus. Hair drapes naturally on one side.
+- IF the action is a COFFRET / BOX shot : the coffret interior catches warm directional light, deep clean shadow on one side of the box, olive/beige tinted highlights. White leatherette interior is still white but warmly lit.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace the neutral background with a textured olive / beige / ivory wall surface, optional out-of-focus leaf shadow on the wall, ring resting on a matching matte surface in the foreground, warm directional side light, deep graphic shadow cast by the ring.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot. NOT a wide editorial portrait with a small ring inside.
+- The olive/beige decor is a SUPPORTING BACKDROP, occupying ONLY the corners, edges, and negative space around the ring.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
+- For worn-ring shots : the ring + hand + portion of skin/blouse near the ring fill the frame ; the model's body/shoulder/hair are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight on the ring. The decor is silent luxury minimalism, never competing.`,
+
   "terre-dombre": `
 
 ═══════════════════════════════════════════
