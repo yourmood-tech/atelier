@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/**': ['html/**'],
   },
+  // Potrace + Jimp doivent être en CommonJS externe (pas bundlés) sinon `instanceof Jimp` échoue
+  serverExternalPackages: ['potrace', 'jimp'],
   async headers() {
     return [
       {
