@@ -1800,21 +1800,33 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     zone.style.cssText = 'margin-top:0.8rem;padding:0.8rem;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;';
     bloc.appendChild(zone);
   }
-  zone.innerHTML = `<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/3 : extraction des traits gravés (threshold ${thr})…</div>`;
+  zone.innerHTML = `<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 1/4 : déroulement polaire de la bague…</div>`;
 
   try {
-    // === Étape 1 : pré-traitement classique (grayscale + threshold + skeleton) ===
+    // === Étape 1 : déroulement polaire (projection cylindre → plan) ===
+    const unwrapResp = await fetch('/api/design-creator-unwrap', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: sourceUrl }),
+    });
+    const unwrapData = await unwrapResp.json();
+    if (!unwrapResp.ok || !unwrapData.image) throw new Error('Déroulement : ' + (unwrapData.error || 'échec'));
+    const unwrappedDataUrl = unwrapData.image;
+    const detection = unwrapData.detection || {};
+
+    zone.innerHTML = `<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 2/4 : extraction des traits gravés (threshold ${thr})…</div>`;
+
+    // === Étape 2 : pré-traitement (grayscale + threshold + skeleton) sur l'image DÉROULÉE ===
     const lineArtResp = await fetch('/api/design-creator-skeletonize', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: sourceUrl, threshold: thr }),
+      body: JSON.stringify({ image: unwrappedDataUrl, threshold: thr }),
     });
     const lineArtData = await lineArtResp.json();
     if (!lineArtResp.ok || !lineArtData.image) throw new Error(lineArtData.error || 'Pas de bitmap squelettisé retourné');
     const lineArtDataUrl = lineArtData.image;
 
-    zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 2/3 : Potrace vectorise le line art en SVG…</div>';
+    zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 3/4 : Potrace vectorise…</div>';
 
-    // === Étape 2 : vectorize ===
+    // === Étape 3 : vectorize ===
     const vecResp = await fetch('/api/design-creator-vectorize', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: lineArtDataUrl, threshold: 180 }),
@@ -1823,7 +1835,7 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     if (!vecResp.ok || !vecData.svg) throw new Error(vecData.error || 'Pas de SVG retourné');
     const motifSvgString = vecData.svg;
 
-    zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 3/3 : composition du plan final…</div>';
+    zone.innerHTML = '<div style="font-size:0.85rem;color:#92400e;"><span class="loader"></span> Étape 4/4 : composition du plan final…</div>';
 
     // === Étape 3 : composition ===
     // Lecture des paramètres formulaire
@@ -1842,11 +1854,8 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     const W = Math.max(1600, bandeW + 2 * PADDING_X);
     const H = PADDING_TOP + bandeH + PADDING_BOTTOM;
 
-    // Auto-calcul nb motifs (motif carré, slot = bandeH)
-    const nbMotifs = Math.max(2, Math.round(circonferenceMm / Math.max(largeurMm * 2, 8)));
-    const slotW = bandeW / nbMotifs;
-    const motifSize = Math.min(slotW, bandeH);
-    const motifOffsetY = PADDING_TOP + (bandeH - motifSize) / 2;
+    // Avec le pipeline polaire, le SVG = la bague ENTIÈRE déroulée → pas de tile, on l'étire sur toute la bande
+    const nbMotifs = 1;
 
     // Extraire viewBox + paths du SVG potrace pour construire le SVG final propre
     const viewBoxMatch = motifSvgString.match(/viewBox="([^"]+)"/);
@@ -1860,11 +1869,8 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     const bandeX = (W - bandeW) / 2;
     const bandeY = PADDING_TOP;
 
-    let motifsRepetes = '';
-    for (let i = 0; i < nbMotifs; i++) {
-      const cx = bandeX + i * slotW + (slotW - motifSize) / 2;
-      motifsRepetes += `<svg x="${cx}" y="${motifOffsetY}" width="${motifSize}" height="${motifSize}" viewBox="${motifViewBox}" preserveAspectRatio="xMidYMid meet">${motifInner}</svg>`;
-    }
+    // Le SVG du motif (= circonférence complète déroulée) est étiré pour occuper toute la bande
+    const motifsRepetes = `<svg x="${bandeX}" y="${bandeY}" width="${bandeW}" height="${bandeH}" viewBox="${motifViewBox}" preserveAspectRatio="none">${motifInner}</svg>`;
 
     const svgFinal = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect width="${W}" height="${H}" fill="#FFFFFF"/>
@@ -1902,21 +1908,28 @@ async function genererPlanAuto(imgId, blocId, threshold) {
     const svgBlobFinal = new Blob([svgFinal], { type: 'image/svg+xml' });
     const svgDownloadUrl = URL.createObjectURL(svgBlobFinal);
 
+    const detectionInfo = detection.hadInnerHole
+      ? `Détection auto : centre (${detection.cx}, ${detection.cy}) · ellipse ext ${detection.aOut}×${detection.bOut} · trou ${detection.aIn}×${detection.bIn} → image déroulée ${detection.outW}×${detection.outH}px`
+      : `⚠️ Pas de trou interne détecté — utilisé 50% du rayon en fallback (bague pleine ou mal cadrée)`;
     zone.innerHTML = `
       <div style="font-size:0.85rem;color:#92400e;font-weight:600;margin-bottom:0.5rem;">📐 Plan de sertissage automatique :</div>
-      <div style="display:grid;grid-template-columns:160px 160px 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
         <div>
-          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">1. Traits extraits (B&W + skeleton)</div>
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">1. Bague déroulée (projection polaire)</div>
+          <img src="${unwrappedDataUrl}" alt="bague déroulée" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;">
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">2. Traits extraits (B&W + skeleton)</div>
           <img src="${lineArtDataUrl}" alt="traits extraits" style="width:100%;border-radius:6px;border:1px solid #f59e0b;background:#fff;">
         </div>
         <div>
-          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">2. SVG vectorisé Potrace</div>
-          <div style="border:1px solid #f59e0b;border-radius:6px;background:#fff;padding:4px;">${motifSvgString.replace(/<svg([^>]*)>/, '<svg$1 style="width:100%;height:auto;display:block;">')}</div>
+          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">3. SVG vectorisé Potrace</div>
+          <div style="border:1px solid #f59e0b;border-radius:6px;background:#fff;padding:4px;overflow:hidden;">${motifSvgString.replace(/<svg([^>]*)>/, '<svg$1 style="width:100%;height:auto;display:block;">')}</div>
         </div>
-        <div>
-          <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.2rem;">3. Plan final composé</div>
-          <img src="${pngDataUrl}" alt="plan final" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
-        </div>
+      </div>
+      <div style="font-size:0.7rem;color:#78350f;margin-bottom:0.4rem;">4. Plan final composé</div>
+      <div style="margin-bottom:0.6rem;">
+        <img src="${pngDataUrl}" alt="plan final" style="width:100%;border-radius:6px;border:1px solid #f59e0b;">
       </div>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.5rem;">
         <button class="btn-action" onclick="telechargerCache('${planPngId}','${pngFname}')">⬇️ Télécharger PNG</button>
@@ -1928,7 +1941,8 @@ async function genererPlanAuto(imgId, blocId, threshold) {
         <span id="${blocId}-thr-val" style="font-family:monospace;font-size:0.85rem;color:#92400e;font-weight:700;min-width:35px;">${thr}</span>
         <button class="btn-action secondary" onclick="genererPlanAuto('${imgId}','${blocId}', parseInt(document.getElementById('${blocId}-thr').value,10))">🔄 Regénérer</button>
       </div>
-      <div style="font-size:0.72rem;color:#78350f;margin-top:0.3rem;font-style:italic;">Threshold bas = moins de traits captés. Threshold haut = plus de traits (mais risque de capter ombres/pierres). Ajuste si trop / pas assez de traits. ${nbMotifs} motifs sur le tour · ${matLabel} · ${fmtLabel} ${largeurMm}mm · taille ${taille}.</div>
+      <div style="font-size:0.72rem;color:#78350f;margin-top:0.3rem;font-style:italic;">Threshold bas = moins de traits captés. Threshold haut = plus de traits (mais risque de capter ombres/pierres). ${matLabel} · ${fmtLabel} ${largeurMm}mm · taille ${taille}.</div>
+      <div style="font-size:0.7rem;color:#92400e;margin-top:0.2rem;">${detectionInfo}</div>
     `;
   } catch (e) {
     zone.innerHTML = `<div style="color:#b91c1c;font-size:0.85rem;">⚠️ Échec : ${escapeHtml(e.message || String(e))}</div>
