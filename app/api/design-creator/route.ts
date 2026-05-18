@@ -257,6 +257,7 @@ const ZIRCON_SATURATION_LABELS: Record<string, string> = {
 
 type DesignInput = {
   categorie?: string | null;     // icelea-3d | bijouterie-mood | mood-joaillerie | technocut
+  promptMode?: string | null;    // "simple" | "detailed" (defaut)
   withBase?: string | null;      // "avec" | "sans"
   sketch?: string | null;        // data URL image (optional)
   idea?: string | null;          // texte description libre
@@ -530,7 +531,58 @@ ${isAddonOnly ? "- NO base, NO rails — the addon is standalone." : ""}
 Output : ONE photoreal CAD-render preview of the Icelea ring design described above.`;
 }
 
+// === Prompt SIMPLE : laisse Gemini interpréter librement les refs visuelles + une liste minimale de critères ===
+function buildSimplePrompt(input: DesignInput): string {
+  const lignes: string[] = [];
+  lignes.push("Rends cette bague Mood Collection de manière photo-réaliste, en tenant compte des critères cochés ci-dessous et des images de référence jointes.");
+  lignes.push("");
+  lignes.push("Critères :");
+
+  if (input.categorie === "icelea-3d" && input.icelea) {
+    const i = input.icelea;
+    if (i.materiau) {
+      const mat = i.materiau === "autre" && i.materiauAutre ? i.materiauAutre : i.materiau;
+      lignes.push(`- Matériau : ${mat}`);
+    }
+    if (i.format) lignes.push(`- Format : ${i.format}`);
+    if (i.decorations && i.decorations.length > 0) {
+      lignes.push(`- Décor : ${i.decorations.join(", ")}`);
+    }
+    if (i.finitionArgent) {
+      const fin = i.finitionArgent === "autre-fin" && i.finitionArgentAutre ? i.finitionArgentAutre : i.finitionArgent;
+      lignes.push(`- Finition : ${fin}`);
+    }
+    if (i.emailCodes) lignes.push(`- Couleurs émail : ${i.emailCodes}${i.emailBord ? ` (${i.emailBord} bord argent)` : ""}`);
+    if (i.pvdColors && i.pvdColors.length > 0) lignes.push(`- PVD : ${i.pvdColors.join(", ")}`);
+    if (i.zircons && i.zircons.length > 0) {
+      const zSummary = i.zircons.map(z => `${z.quantite || 1}×${z.forme || "rond"} ${z.taille || ""}mm ${z.couleur || ""} ${z.saturation || ""}`.trim()).join(" + ");
+      lignes.push(`- Zircons : ${zSummary}`);
+    }
+  } else {
+    if (input.withBase) lignes.push(`- Avec base : ${input.withBase}`);
+    if (input.largeur) lignes.push(`- Largeur base : ${input.largeur}`);
+    if (input.matiereBase) lignes.push(`- Matière base : ${input.matiereBase}`);
+    if (input.typeAddon) lignes.push(`- Type addon : ${input.typeAddon}`);
+    if (input.matiereAddon) lignes.push(`- Matière addon : ${input.matiereAddon}`);
+    if (input.finitionAddon) lignes.push(`- Finition addon : ${input.finitionAddon}`);
+  }
+
+  if (input.idea && input.idea.trim()) {
+    lignes.push("");
+    lignes.push(`Idée artiste : ${input.idea.trim()}`);
+  }
+
+  lignes.push("");
+  lignes.push("Style : bague Mood debout sur la tranche (verticale), fond blanc seamless, photo-réaliste catalogue. Pas de texte, pas de logo, pas de mains.");
+
+  return lignes.join("\n");
+}
+
 function buildPrompt(input: DesignInput): string {
+  // Mode simple : prompt court qui laisse Gemini interpréter librement les refs visuelles
+  if (input.promptMode === "simple") {
+    return buildSimplePrompt(input);
+  }
   const categorie = input.categorie || "bijouterie-mood";
 
   // Si Icelea avec données spécifiques → prompt dédié

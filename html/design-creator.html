@@ -475,6 +475,14 @@
   </div>
 </div>
 
+<!-- Toggle mode prompt -->
+<div style="text-align:center;margin:1rem 0;">
+  <label style="font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem;background:#fff8e7;padding:0.5rem 1rem;border-radius:10px;border:1px solid var(--or);">
+    <input type="checkbox" id="prompt-mode-simple" style="width:1.1rem;height:1.1rem;cursor:pointer;">
+    <span><strong>Mode prompt simple</strong> <span style="color:var(--gris);font-size:0.78rem;">— laisse Gemini interpréter librement les refs visuelles (test A/B)</span></span>
+  </label>
+</div>
+
 <!-- Bouton générer + sauvegarder -->
 <div style="text-align:center;margin: 1.4rem 0;display:flex;justify-content:center;gap:0.7rem;flex-wrap:wrap;">
   <button class="btn-generer" id="btn-generer" onclick="genererDesign()">
@@ -894,6 +902,7 @@ async function genererDesign() {
     return;
   }
 
+  const promptMode = document.getElementById('prompt-mode-simple')?.checked ? 'simple' : 'detailed';
   let payload;
   if (categorie === 'icelea-3d') {
     // Formulaire spécifique Icelea
@@ -913,6 +922,7 @@ async function genererDesign() {
     const zircons = decos.includes('zircons') ? recupererZircons() : [];
     payload = {
       categorie,
+      promptMode,
       sketch: sketchData,
       idea,
       icelea: {
@@ -933,6 +943,7 @@ async function genererDesign() {
   } else {
     payload = {
       categorie,
+      promptMode,
       withBase,
       sketch: sketchData,
       idea,
