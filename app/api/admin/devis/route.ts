@@ -7,10 +7,9 @@ const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
 const CACHE_KEY = "perso:devis:list";
-const CACHE_TTL_MS = 60_000; // 60 secondes
+const CACHE_TTL_MS = 60_000;
 
-// Seuls les champs utiles pour la liste — réduit la taille des réponses Shopify
-const FIELDS = "id,name,status,email,total_price,currency,updated_at,tags,customer,line_items";
+const FIELDS = "id,name,status,email,total_price,currency,created_at,updated_at,tags,customer,line_items";
 
 async function redisGet(key: string): Promise<string | null> {
   if (!REDIS_URL || !REDIS_TOKEN) return null;
@@ -52,10 +51,62 @@ async function fetchDraftOrders(status: "open" | "invoice_sent" | "completed"): 
   return all;
 }
 
+type OrderLineItem = { properties?: Array<{ name: string; value: string }> };
+type ShopifyOrder = { created_at: string; line_items?: OrderLineItem[] };
+type DraftEntry = { id: number; email: string; created_at: string; tags: string };
+
+// Détecte si la cliente a passé une commande perso directe après la date du devis
+async function filterConvertedDevis(devis: DraftEntry[]): Promise<Set<number>> {
+  const convertedIds = new Set<number>();
+  if (devis.length === 0) return convertedIds;
+
+  const byEmail = new Map<string, DraftEntry[]>();
+  for (const d of devis) {
+    if (!d.email) continue;
+    if (!byEmail.has(d.email)) byEmail.set(d.email, []);
+    byEmail.get(d.email)!.push(d);
+  }
+
+  await Promise.all(
+    Array.from(byEmail.entries()).map(async ([email, group]) => {
+      const earliest = group.reduce(
+        (min, d) => (d.created_at < min ? d.created_at : min),
+        group[0].created_at
+      );
+      const url = `https://${STORE}/admin/api/${API_VERSION}/orders.json?status=any&email=${encodeURIComponent(email)}&created_at_min=${encodeURIComponent(earliest)}&fields=id,email,created_at,line_items&limit=50`;
+
+      try {
+        const r = await fetch(url, {
+          headers: { "X-Shopify-Access-Token": TOKEN },
+          cache: "no-store",
+        });
+        if (!r.ok) return;
+        const { orders } = await r.json() as { orders: ShopifyOrder[] };
+
+        for (const order of orders ?? []) {
+          const hasPersoProps = order.line_items?.some(
+            (li) => (li.properties?.length ?? 0) > 0
+          );
+          if (!hasPersoProps) continue;
+
+          for (const d of group) {
+            if (order.created_at > d.created_at) {
+              convertedIds.add(d.id);
+            }
+          }
+        }
+      } catch {
+        // Si l'appel échoue, on conserve le devis dans la liste
+      }
+    })
+  );
+
+  return convertedIds;
+}
+
 export async function GET(req: Request) {
   const refresh = new URL(req.url).searchParams.get("refresh") === "1";
 
-  // Cache Redis — sauf si refresh explicite
   if (!refresh && REDIS_URL) {
     const cached = await redisGet(CACHE_KEY);
     if (cached) {
@@ -75,14 +126,18 @@ export async function GET(req: Request) {
 
     const hasTag = (d: unknown) => {
       const tags: string = (d as Record<string, unknown>).tags as string ?? "";
-      return tags.includes("devis-sur-mesure");
+      return tags.includes("devis-sur-mesure") && !tags.includes("devis-clos");
     };
 
-    const enCours = [...open, ...invoiceSent].filter(hasTag);
+    const enCoursBrut = [...open, ...invoiceSent].filter(hasTag) as DraftEntry[];
     const valides = completed.filter(hasTag);
+
+    // Retire les devis où la cliente a commandé directement après
+    const convertedIds = await filterConvertedDevis(enCoursBrut);
+    const enCours = enCoursBrut.filter((d) => !convertedIds.has(d.id));
+
     const result = { enCours, valides };
 
-    // Mettre en cache
     redisSet(CACHE_KEY, JSON.stringify({ data: result, ts: Date.now() }));
 
     return NextResponse.json(result, { headers: { "X-Cache": "MISS" } });

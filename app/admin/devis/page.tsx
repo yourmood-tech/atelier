@@ -26,6 +26,15 @@ type DraftOrder = {
   line_items: LineItem[];
 };
 
+async function cloreDevis(id: number): Promise<boolean> {
+  const r = await fetch("/api/admin/devis/clore", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id }),
+  });
+  return r.ok;
+}
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
@@ -34,7 +43,7 @@ function prop(li: LineItem, key: string) {
   return li.properties?.find((p) => p.name === key)?.value ?? "—";
 }
 
-function DevisCard({ d, valide }: { d: DraftOrder; valide: boolean }) {
+function DevisCard({ d, valide, onClose }: { d: DraftOrder; valide: boolean; onClose?: () => void }) {
   const li = d.line_items?.[0];
   const client = d.customer
     ? `${d.customer.first_name ?? ""} ${d.customer.last_name ?? ""}`.trim() || d.email
@@ -70,8 +79,24 @@ function DevisCard({ d, valide }: { d: DraftOrder; valide: boolean }) {
           </div>
         )}
 
-        <div style={{ marginTop: "0.5rem", color: "#52525b", fontSize: "0.72rem" }}>
-          {d.name} · {formatDate(d.updated_at)}
+        <div style={{ marginTop: "0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ color: "#52525b", fontSize: "0.72rem" }}>{d.name} · {formatDate(d.updated_at)}</span>
+          {!valide && onClose && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirm("Clore ce devis ? Il sera retiré de la liste.")) {
+                  cloreDevis(d.id).then((ok) => { if (ok) onClose(); });
+                }
+              }}
+              style={{ background: "none", border: "1px solid #3f3f46", borderRadius: 4, color: "#71717a", fontSize: "0.68rem", padding: "0.15rem 0.5rem", cursor: "pointer" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#3f3f46"; e.currentTarget.style.color = "#71717a"; }}
+            >
+              Clore
+            </button>
+          )}
         </div>
       </div>
     </Link>
@@ -132,7 +157,7 @@ export default function DevisPage() {
               </div>
               {enCours.length === 0
                 ? <p style={{ color: "#52525b", fontSize: "0.82rem" }}>Aucun devis en attente</p>
-                : enCours.map((d) => <DevisCard key={d.id} d={d} valide={false} />)}
+                : enCours.map((d) => <DevisCard key={d.id} d={d} valide={false} onClose={() => load(true)} />)}
             </div>
 
             <div>
