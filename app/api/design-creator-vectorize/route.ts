@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 // @ts-expect-error — pas de types pour potrace, on type le callback à la main
 import potrace from "potrace";
 
+export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
