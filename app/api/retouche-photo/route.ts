@@ -67,6 +67,39 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "tropical": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "TROPICAL" (luxe végétal sombre, Jacquemus / Saint Laurent tropical)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition (which subject is photographed, framing, ring centrality).
+
+VISUAL DIRECTION :
+- Setting : LUSH DARK TROPICAL VEGETATION — large satin-finished tropical leaves (monstera, philodendron, banana leaves) in deep forest green, dark olive, vegetal black. Atmosphere humid, organic, mysterious.
+- Light : DRAMATIC DIRECTIONAL LIGHT (low-angle natural sunlight piercing through foliage), creating intense shadow zones + precise highlights on the leaves' satin surface and on the metal/stones of the ring.
+- Shadows : deep, sharp, graphic — high contrast between sunlit zones and shadow zones of vegetation.
+- Color palette : deep forest green, dark olive, vegetal black, with subtle GOLDEN warm reflections accenting the leaves' satin texture and the ring's metal. NO white/pastel backdrop.
+- Mood : organic luxury, mysterious, silent, contemplative, sophisticated humidity, cinematic premium.
+- Style references : Jacquemus tropical campaign, Saint Laurent jungle editorial, Zara Studio premium, Bottega vegetal high-end jewelry shoot.
+- Decor accents (subtle, MAX 1-2 elements) : a curved leaf where the ring rests, a few water droplets on leaves or on the ring's stones, soft out-of-focus deeper vegetation in background — NEVER cluttered, focus stays on the jewelry.
+- Composition : ultra-minimalist within the lush vegetal setting, lots of dark out-of-focus negative space (deep shadowy foliage), the ring is the bright focus point.
+- Depth of field : SHORT (shallow DOF), dark blurred background of distant leaves, sharp foreground on the ring + immediate leaf it rests on.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : an ELEGANT woman in a sophisticated tropical setting, surrounded by large deep-green leaves and luxuriant natural textures. NATURAL LUMINOUS SATIN SKIN. Minimalist but modern fashion stylism : open-knit / crochet mesh, fluid natural fabric, modern silhouettes. Hair styled naturally. Warm contrasted light creates strong graphic shadows on the skin. Tones : forest green, olive, vegetal black, subtle gold light. Composition aesthetic and premium, Jacquemus/Saint Laurent tropical mood — mysterious, sensual, refined, NOT kitsch or excessive glamour.
+- IF the action is a COFFRET / BOX shot : the white leatherette coffret sits on or near tropical leaves, warm contrasted directional light catches both the coffret and the surrounding deep vegetation, dark blurred jungle background.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace the neutral background with a large satin tropical leaf or layered dark green foliage, ring resting on a curved leaf or floating in front, dramatic directional natural light, water droplets optional on the leaf.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot. NOT a wide vegetal scene with a small ring inside.
+- The tropical leaves / dark foliage are a SUPPORTING BACKDROP, occupying ONLY the corners, edges, and negative space around the ring.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit, with crisp golden highlights on metal and stones.
+- For worn-ring shots : the ring + hand + portion of skin/fabric near the ring fill the frame ; the model's body, leaves, and tropical context are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight, macro precision on the ring details. Background vegetation is silent luxury organic, never competing.`,
+
   "terre-olive": `
 
 ═══════════════════════════════════════════
