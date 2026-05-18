@@ -67,6 +67,39 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "riviera": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "RIVIERA" (luxe estival méditerranéen — Cartier / Jacquemus / resort luxe)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : luxurious Mediterranean summer universe — fine WIND-SCULPTED SAND, CRYSTAL TURQUOISE WATER, PALE TEXTURED STONE (calcaire / travertin / pierre claire), intense GOLDEN LIGHT. Chic balnéaire haut de gamme.
+- Light : strong direct MIDDAY MEDITERRANEAN SUN, creating SHARP GRAPHIC SHADOWS on surfaces. Moving aqua reflections from the pool water projecting bright luminous patterns on stone and skin.
+- Shadows : crisp hard-edged shadow shapes from direct overhead sun.
+- Color palette : warm sand beige, sun cream, pale turquoise, warm gold, caramel bronzed skin, mineral white — soft sophisticated solar palette.
+- Mood : silent luxury, calm, summery, refined, sensual, exclusive Mediterranean vacation atmosphere.
+- Style references : Cartier Riviera campaign, Jacquemus summer, contemporary luxury resort editorial, Mediterranean high-end magazine.
+- Decor accents (subtle, MAX 1-2 elements per shot) : sand sculpted by the wind with relief texture, pool edge with aqua water reflections, pale stone surface with mineral relief, water droplets on skin, bronzed satin skin. NEVER cluttered.
+- Composition : ULTRA MINIMALIST, lots of negative space, total focus on textures + light + jewelry.
+- Filter : slightly warm-toned, gently desaturated, soft contrast, subtle film grain like luxury analog/argentique photography.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : ELEGANT WOMAN IN A PALE-STONE SWIMMING POOL, BRONZED SATIN SUN-KISSED SKIN, minimalist chic swimsuit (white / cream / pale turquoise / pale beige — single tone, sophisticated cut). Crystal turquoise water around her creating MOVING AQUA REFLECTIONS on her skin and the stone. OVERHEAD / PLUNGE camera view (from above looking down), refined sensual composition, midday natural light + sharp graphic shadows on body. Hair wet / loose / softly tied up — naturally undone, not styled. Hand near the ring as the absolute focus. NEVER kitsch — Vogue/Bottega editorial sensuality, never beach postcard.
+- IF the action is a COFFRET / BOX shot : the white coffret on a pale stone edge or fine sand surface, intense midday Mediterranean light, sharp shadows, aqua reflections from a nearby pool optional in the background, premium resort feel.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace the neutral background with fine wind-sculpted sand surface OR pale calcaire / travertin stone edge with crystal turquoise pool water visible in the backdrop, ring resting on the warm sand or stone surface, midday sun casting crisp graphic shadow, aqua reflections playing on the surface.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
+- Sand / water / pool / stone decor is a SUPPORTING BACKDROP, occupying ONLY the corners and negative space around the ring.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit, with crisp golden highlights and optional aqua reflections.
+- For worn-ring shots : the ring + hand + portion of bronzed skin near the ring fill the frame ; the woman's body / pool / swimsuit are supporting, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight, macro precision on the ring. The Mediterranean resort decor is silent luxury, never competing.`,
+
   "tropical": `
 
 ═══════════════════════════════════════════
