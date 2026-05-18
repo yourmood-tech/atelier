@@ -943,6 +943,42 @@ const MJ_PIERRE_ABBR = {
 const MJ_COULEUR_ABBR = { 'violet':'VL','rose':'PK','orange':'OR','brun':'BR','jaune':'YL','bleu-fonce':'BF','bleu-clair':'BC','vert-clair':'VC','vert-fonce':'VF','rose-clair':'RC','jaune-clair':'JC' };
 const MJ_SERTISSAGE_ABBR = { 'etoile':'ET','grain':'GR','2-grains':'2GR','3-grains':'3GR','invisible':'INV','neige':'NEI' };
 
+// Couleurs hex pour les pastilles du plan de sertissage (style Myriam)
+const MJ_PIERRE_HEX = {
+  'diamant':           '#F5E8EF',
+  'diamant-noir':      '#1A1A1A',
+  'diamant-brun':      '#6B4423',
+  'diamant-ice-gris':  '#9AA5B1',
+  'cdiams-pur':        '#FFFFFF',
+  'diamant-pur-rose':  '#F5C6D8',
+  'topaze':            '#2BB8C6',
+  'amethyste':         '#9A6FB0',
+  'emeraude':          '#0C8B5C',
+  'rubis':             '#E0186B',
+  'cabochon':          '#444444',
+};
+const MJ_SAPHIR_HEX = {
+  'bleu-fonce':'#0E2E6E', 'bleu-clair':'#5BB8E3', 'rose':'#E5A8C0', 'violet':'#8E5DAA',
+  'orange':'#E8742C', 'brun':'#7A4A2A', 'jaune':'#E5C842',
+};
+const MJ_GRENAT_HEX = { 'vert-fonce':'#1D5A3E' };
+const MJ_TSAVORITE_HEX = { 'vert-clair':'#3BB073' };
+function couleurPierreHex(pierre, couleur) {
+  if (pierre === 'saphir' && couleur && MJ_SAPHIR_HEX[couleur]) return MJ_SAPHIR_HEX[couleur];
+  if (pierre === 'grenat' && couleur && MJ_GRENAT_HEX[couleur]) return MJ_GRENAT_HEX[couleur];
+  if (pierre === 'tsavorite' && couleur && MJ_TSAVORITE_HEX[couleur]) return MJ_TSAVORITE_HEX[couleur];
+  return MJ_PIERRE_HEX[pierre] || '#888';
+}
+// Conversion taille mm → diamètre px (échelle plan de sertissage)
+function tailleMmEnPx(tailleStr) {
+  // tailleStr peut être "1.9-2.1" → on prend la moyenne ; sinon parseFloat
+  if (typeof tailleStr === 'string' && tailleStr.includes('-')) {
+    const [a, b] = tailleStr.split('-').map(parseFloat);
+    return ((a + b) / 2) * 24; // 24 px/mm
+  }
+  return (parseFloat(tailleStr) || 1.5) * 24;
+}
+
 function genererCodeMJ(pierre, taille, couleur, sertissage) {
   const p = MJ_PIERRE_ABBR[pierre] || 'XXX';
   const t = (taille || '').replace(/\./g, '').replace(/-/g, '');
@@ -1204,6 +1240,13 @@ async function genererDesign() {
     const fname = `${slug}-${Date.now()}.png`;
     const imgId = 'img-' + Date.now();
     cacheImagePut(imgId, data.image);
+    // Mémoriser les pierres MJ au moment de la génération (pour le plan de sertissage)
+    const pierresMJSnapshot = (categorie === 'mood-joaillerie') ? recupererPierresMJ() : [];
+    const hasPierres = pierresMJSnapshot.length > 0;
+    if (hasPierres) {
+      bloc.dataset.pierresMj = JSON.stringify(pierresMJSnapshot);
+      bloc.dataset.nomProjet = nomProjet;
+    }
     bloc.innerHTML = `
       <div class="resultat-titre">✨ Ta visualisation${nomProjet !== 'mood-design' ? ' — ' + escapeHtml(nomProjet) : ''}</div>
       <img id="${imgId}-display" src="${data.image}" alt="design Mood" class="resultat-img">
@@ -1212,6 +1255,7 @@ async function genererDesign() {
         <button class="btn-action secondary" onclick="genererDesign()">🔄 Regénérer (variation)</button>
         <button class="btn-action" style="background:#6366f1;" onclick="toggleModification('${imgId}')">✏️ Modification</button>
         <button class="btn-action" style="background:#0a6b3f;" onclick="telechargerFiche('${imgId}')">📄 Fiche fournisseur</button>
+        ${hasPierres ? `<button class="btn-action" style="background:#111;color:#fff;" onclick="telechargerPlanSertissage('${blocId}')">📐 Plan de sertissage</button>` : ''}
       </div>
       <div id="${imgId}-modif-zone" style="display:none;margin-top:0.7rem;padding:0.8rem;background:#f4f4f7;border-radius:8px;">
         <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;">✏️ Décris la modification souhaitée :</label>
@@ -1728,6 +1772,170 @@ uploadZone.addEventListener('drop', e => {
     handleSketch({ target: input });
   }
 });
+
+// === Plan de sertissage — Canvas 2D, style Myriam ===
+const MJ_PIERRE_PLURIEL = {
+  'diamant':'diamants', 'diamant-noir':'diamants noirs', 'diamant-brun':'diamants bruns',
+  'diamant-ice-gris':'diamants ICE gris', 'cdiams-pur':'diamants pur', 'diamant-pur-rose':'diamants pur rose',
+  'topaze':'topazes', 'saphir':'saphirs', 'amethyste':'améthystes', 'grenat':'grenats',
+  'tsavorite':'tsavorites', 'emeraude':'émeraudes', 'rubis':'rubis', 'cabochon':'cabochons',
+};
+const MJ_COULEUR_PLURIEL = {
+  'violet':'violets', 'rose':'roses', 'orange':'oranges', 'brun':'bruns', 'jaune':'jaunes',
+  'bleu-fonce':'bleus foncés', 'bleu-clair':'bleus clairs',
+  'vert-clair':'verts clairs', 'vert-fonce':'verts foncés',
+  'rose-clair':'rose clair', 'jaune-clair':'jaune clair',
+};
+function libellePierre(p, c) {
+  const base = MJ_PIERRE_PLURIEL[p] || p;
+  if (!c) return base;
+  return base + ' ' + (MJ_COULEUR_PLURIEL[c] || c);
+}
+
+async function telechargerPlanSertissage(blocId) {
+  const bloc = document.getElementById(blocId);
+  if (!bloc) { alert('Bloc résultat introuvable'); return; }
+  let pierres;
+  try { pierres = JSON.parse(bloc.dataset.pierresMj || '[]'); }
+  catch { alert('Données pierres illisibles'); return; }
+  if (!pierres.length) { alert('Aucune pierre dans ce projet'); return; }
+  const nomProjet = (bloc.dataset.nomProjet || 'MOOD DESIGN').toUpperCase();
+
+  const W = 1600, H = 1100;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Fond blanc
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, W, H);
+
+  // Titre haut-gauche
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'top';
+  let titreSize = 88;
+  ctx.font = `300 ${titreSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  while (ctx.measureText(nomProjet).width > W * 0.7 && titreSize > 40) {
+    titreSize -= 4;
+    ctx.font = `300 ${titreSize}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  }
+  ctx.fillText(nomProjet, 80, 70);
+
+  // Bande noire (bague déroulée à plat)
+  const bandeX = 80, bandeY = 240, bandeW = W - 160, bandeH = 220;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(bandeX, bandeY, bandeW, bandeH);
+
+  // Construction des pastilles atomiques (1 pastille par pierre × quantité)
+  // Groupées par (pierre+couleur) pour cluster visuel façon Myriam
+  const groupes = new Map();
+  pierres.forEach(p => {
+    const cle = p.pierre + '|' + (p.couleur || '');
+    if (!groupes.has(cle)) groupes.set(cle, { pierre: p.pierre, couleur: p.couleur, items: [] });
+    for (let i = 0; i < (p.quantite || 1); i++) {
+      groupes.get(cle).items.push({ taille: p.taille, diametre: tailleMmEnPx(p.taille) });
+    }
+  });
+  const groupesArr = Array.from(groupes.values());
+
+  // Placement : centre de chaque groupe réparti sur la bande
+  const k = groupesArr.length || 1;
+  const placed = []; // pour éviter (un peu) les chevauchements
+  groupesArr.forEach((g, idx) => {
+    const cxGroup = bandeX + bandeW * ((idx + 0.5) / k);
+    const cyGroup = bandeY + bandeH / 2;
+    const hex = couleurPierreHex(g.pierre, g.couleur);
+    g.items.forEach(it => {
+      const r = it.diametre / 2;
+      // Tirages aléatoires bornés dans une zone autour du centre du groupe
+      let x = cxGroup, y = cyGroup;
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const dx = (Math.random() - 0.5) * (bandeW / k) * 0.9;
+        const dy = (Math.random() - 0.5) * (bandeH + r * 0.8);
+        x = cxGroup + dx;
+        y = cyGroup + dy;
+        // Vérif chevauchement approx
+        let ok = true;
+        for (const q of placed) {
+          const d = Math.hypot(x - q.x, y - q.y);
+          if (d < (r + q.r) * 0.85) { ok = false; break; }
+        }
+        if (ok) break;
+      }
+      placed.push({ x, y, r });
+      // Pastille
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = hex;
+      ctx.fill();
+      // Léger contour clair si pierre très sombre (lisibilité sur fond noir)
+      if (hex === '#1A1A1A' || hex === '#0E2E6E' || hex === '#1D5A3E' || hex === '#444444') {
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    });
+  });
+
+  // Légende : 3 colonnes sous la bande
+  // Entrées distinctes par (pierre + couleur + taille) avec quantité totale
+  const legendeMap = new Map();
+  pierres.forEach(p => {
+    const cle = p.pierre + '|' + (p.couleur || '') + '|' + p.taille;
+    if (!legendeMap.has(cle)) {
+      legendeMap.set(cle, { pierre: p.pierre, couleur: p.couleur, taille: p.taille, quantite: 0 });
+    }
+    legendeMap.get(cle).quantite += (p.quantite || 1);
+  });
+  const legendes = Array.from(legendeMap.values());
+  // Tri par couleur de pierre puis taille décroissante
+  legendes.sort((a, b) => {
+    if (a.pierre !== b.pierre) return a.pierre.localeCompare(b.pierre);
+    return parseFloat(b.taille) - parseFloat(a.taille);
+  });
+
+  const legendeX0 = 80;
+  const legendeY0 = bandeY + bandeH + 80;
+  const colWidth = (W - 160) / 3;
+  const lineH = 70;
+  ctx.font = '600 26px "Helvetica Neue", Helvetica, Arial, sans-serif';
+  ctx.fillStyle = '#000';
+  ctx.textBaseline = 'middle';
+
+  legendes.forEach((l, i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const x = legendeX0 + col * colWidth;
+    const y = legendeY0 + row * lineH;
+    const r = Math.max(8, Math.min(28, tailleMmEnPx(l.taille) / 2));
+    const hex = couleurPierreHex(l.pierre, l.couleur);
+    // Pastille
+    ctx.beginPath();
+    ctx.arc(x + r, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = hex;
+    ctx.fill();
+    if (hex === '#FFFFFF' || hex === '#F5E8EF' || hex === '#F5C6D8') {
+      ctx.strokeStyle = '#bbb';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    // Texte : "3 saphirs roses 1.3mm"
+    ctx.fillStyle = '#000';
+    const txt = `${l.quantite} ${libellePierre(l.pierre, l.couleur)} ${l.taille}mm`;
+    ctx.fillText(txt, x + r * 2 + 14, y);
+  });
+
+  // Téléchargement
+  const slug = nomProjet.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mood';
+  const fname = `plan-sertissage-${slug}-${Date.now()}.png`;
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, 'image/png');
+}
 </script>
 
 </body>
