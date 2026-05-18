@@ -24,59 +24,48 @@ export async function POST(req: Request) {
   const mimeType = m[1];
   const data = m[2];
 
-  const prompt = `TASK : Transform the source ring photo into a FLAT UNROLLED TECHNICAL VIEW for an engraver. The output is a reference template that will be combined later with a SEPARATE stone-setting spec sheet.
+  const prompt = `🎨 GENERATE A NEW IMAGE — DO NOT TRANSFORM THE REFERENCE.
+
+The attached image is a REFERENCE PHOTO of a 3D ring with an engraved decorative motif. You will use this reference ONLY to identify the engraving motif. The reference image itself MUST NOT appear in your output in any form.
 
 ═══════════════════════════════════════════
-🚫 ABSOLUTE BAN LIST — VIOLATING ANY OF THESE = FAILED OUTPUT 🚫
+WHAT TO GENERATE — a completely new image :
 ═══════════════════════════════════════════
 
-1. NO DIAMONDS anywhere in the output. Not one.
-2. NO GEMSTONES anywhere. Not one.
-3. NO STONE SETTINGS, NO BEZELS, NO PRONGS, NO CIRCULAR CUT-OUTS where a stone could go.
-4. NO original 3D ring visible. Not in the background. Not in the corners. Not at the bottom. The original ring photo MUST disappear entirely.
-5. NO perspective. NO depth. NO shadows. NO curved edges. NO reflections. NO highlights.
-6. NO text, NO watermark, NO dimensions, NO labels.
+A single flat horizontal rectangular metal strip, centered on a pure white background.
 
-If you can see anything that could be interpreted as a diamond, a stone, a sparkle, a bezel, or a hole for setting — REMOVE IT.
+The strip represents the ring's outer band UNROLLED FLAT (cut open and laid down), shown in perfectly orthographic top-down view.
 
-═══════════════════════════════════════════
-✅ OUTPUT REQUIRED
-═══════════════════════════════════════════
+Strip proportions :
+- Very long horizontal rectangle, aspect ratio ~6:1 to 8:1.
+- Fills the full horizontal width of the canvas.
+- White space above and below the strip — nothing else there.
 
-A single long horizontal rectangular strip on a pure white background.
-
-- The strip = the ring's outer surface UNROLLED COMPLETELY FLAT.
-- Strip aspect ratio approximately 6:1 to 8:1 (very long horizontal rectangle).
-- Strip fills the full horizontal width of the canvas.
-- Above and below the strip : pure white. Nothing else.
-- Perfectly orthographic top-down view. No 3D whatsoever.
+Strip content — ONLY these two visual elements :
+1. The metal surface : same color and finish as identified from the reference (e.g. rose gold matte if the reference is rose gold matte).
+2. The engraving motif from the reference, drawn as crisp fine BLACK INK LINES etched into the metal. Repeat the SAME motif 2 to 3 times end-to-end along the strip, with no seam. The motif is ENGRAVED LINES ONLY — no inset stones, no holes, no bezels.
 
 ═══════════════════════════════════════════
-CONTENT OF THE STRIP — METAL + ENGRAVING ONLY
+🚫 ABSOLUTE BAN LIST 🚫
 ═══════════════════════════════════════════
 
-ON THE STRIP, show ONLY two things :
-(a) The metal surface (same color and finish as the source — rose gold, white gold, silver, etc.).
-(b) The decorative ENGRAVING pattern as crisp black ink lines etched into the metal.
+Your output canvas must NOT show any of the following :
 
-NOTHING ELSE. No diamonds. No stones. No settings.
+- ❌ The reference ring itself. Not a top half. Not a bottom half. Not a side view. Not a faint copy. Not a transparent ghost. NOTHING from the reference photo appears.
+- ❌ Any 3D object. Any curved surface. Any depth. Any shadow on the floor. Any reflection.
+- ❌ Diamonds, gemstones, jewels, sparkles, brilliance, circular insets, bezel settings, prong settings, claw settings. The strip is bare metal + engraving only.
+- ❌ Any blurred or ghosted second strip above or below the main strip.
+- ❌ Any text, label, dimension, watermark, annotation, arrow, ruler.
 
-═══════════════════════════════════════════
-PATTERN REPETITION (engraving only, NEVER stones)
-═══════════════════════════════════════════
-
-The source photo shows only ONE FACE of the ring. The engraving motif typically repeats identically around the full circumference.
-
-→ In the output, repeat the SAME ENGRAVING MOTIF 2 to 3 times end-to-end along the full length of the strip, with no visible seam.
-→ When repeating the motif : copy ONLY the engraved lines. Do NOT copy any stones, holes, or settings from the source. Even if the source shows stones inside the motif, the output strip's motif must be PURELY ENGRAVED LINES on bare metal.
+Mental check before outputting : "Can the viewer see any trace of the original 3D ring photo, or any second floating element, anywhere in the canvas ?" → If yes, the output is WRONG. Redo it as a single clean strip on white, nothing else.
 
 ═══════════════════════════════════════════
 STYLE
 ═══════════════════════════════════════════
 
-Even, uniform, soft, diffuse lighting across the entire strip. Like a flat reference template.
+Flat technical reference template. Even, uniform, soft, diffuse lighting across the entire strip. No highlights, no glints, no reflections, no spot lighting.
 
-Output canvas : 21:9 ultrawide. The strip fills the canvas horizontally. The original 3D ring photo does NOT appear in the output — it has been completely replaced by the flat unrolled strip.`;
+Canvas aspect : 21:9 ultrawide. Output = the strip + pure white surroundings, nothing else exists in the frame.`;
 
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
