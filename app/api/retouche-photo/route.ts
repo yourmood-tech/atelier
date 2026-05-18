@@ -265,7 +265,23 @@ async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: 
   const basePrompt = PROMPTS[action];
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
   const themeOverlay = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
-  let prompt = basePrompt + themeOverlay;
+  // Clause multi-rings : précise à Gemini que toutes les bagues doivent être composées dans la même scène avec cohérence d'action
+  const multiClause = (action !== "produit-multiple") ? `\n\n═══════════════════════════════════════════
+🪞 MULTI-RING MODE (${imageDataUrls.length} rings attached as references)
+═══════════════════════════════════════════
+Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE scene :
+- Show EXACTLY ${imageDataUrls.length} rings in the output (one per reference image attached, NEVER more, NEVER less).
+- Each ring keeps its EXACT IDENTITY (shape, color, material, finish, gemstones, decoration) — pixel-identical to its reference.
+- All rings share the SAME LIGHTING, SAME SURFACE / BACKGROUND, SAME ATMOSPHERE — consistent scene from action.
+- Disperse the rings NATURALLY across the frame (breathing space, NOT grid alignment, NOT touching).
+- Action-specific adaptations :
+  • Fond Blanc / Fond Anthracite → all rings on the same uniform background, slight composition variety.
+  • Coffret → all rings inside the same open Mood coffret (white leatherette interior), arranged elegantly together.
+  • Bague Portée → multiple rings on the SAME ELEGANT HAND (different fingers), OR on the hands of the same model — one editorial close-up shot.
+  • Style Photographe Mood → all rings in the same Léa narrative scene with consistent theme.
+  • Amélioration / Lumière contraste → all rings cleaned and lit consistently in one scene.
+  • Multi-formats → action does not apply to multi-ring mode (use single mode).` : "";
+  let prompt = basePrompt + themeOverlay + multiClause;
   if (note && note.trim()) prompt += `\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR ===\n${note.trim()}`;
   const aspectRatio = (formatOverride && /^\d+:\d+$/.test(formatOverride)) ? formatOverride : (RATIOS[action] || "1:1");
 
@@ -402,13 +418,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Champ requis : action" }, { status: 400 });
   }
 
-  // Cas multi-bagues : produit-multiple (et toute future action multi)
-  if (action === "produit-multiple") {
-    if (!images || !Array.isArray(images) || images.length < 2) {
-      return NextResponse.json({ error: "produit-multiple : champ 'images' requis (tableau d'au moins 2 dataUrl)" }, { status: 400 });
-    }
+  // Cas multi-bagues : N>=2 images → toutes les actions standards s'appliquent à la composition multi
+  const hasMulti = images && Array.isArray(images) && images.length >= 2;
+  if (hasMulti) {
     if (images.length > 6) {
-      return NextResponse.json({ error: "produit-multiple : maximum 6 bagues" }, { status: 400 });
+      return NextResponse.json({ error: "Maximum 6 bagues en mode multi" }, { status: 400 });
+    }
+    if (action === "multi-formats") {
+      return NextResponse.json({ error: "Multi-formats ne fonctionne pas en mode multi-bagues — passe d'abord en mode 1 bague" }, { status: 400 });
     }
     const res = await appelGeminiMulti(images, action, note, format, theme);
     if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });

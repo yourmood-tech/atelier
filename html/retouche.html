@@ -489,6 +489,66 @@ function handleFileChosen(e) {
   else chargerFichiersMultiples(files);
 }
 
+function renderMultiPreview() {
+  const emptyEl = document.getElementById('upload-empty');
+  if (!emptyEl || imagesMultiples.length < 2) return;
+  const mosaicHtml = imagesMultiples.map((url, i) => `
+    <div style="position:relative;display:inline-block;">
+      <img src="${url}" alt="bague ${i+1}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+      <button onclick="retirerBagueMulti(${i});event.stopPropagation();" title="Retirer cette bague" style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:#000;color:#fff;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
+    </div>`).join('');
+  const peutAjouter = imagesMultiples.length < 6;
+  const ajouterBtn = peutAjouter
+    ? `<button onclick="ajouterBaguesMulti();event.stopPropagation();" style="width:80px;height:80px;border-radius:8px;border:2px dashed var(--or);background:#fffaf0;color:var(--or);font-size:1.6rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">＋</button>`
+    : '';
+  emptyEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.7rem;width:100%;">
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;align-items:center;">${mosaicHtml}${ajouterBtn}</div>
+      <div style="font-size:0.88rem;color:var(--or);font-weight:600;">🪞 ${imagesMultiples.length} bague${imagesMultiples.length>1?'s':''} chargée${imagesMultiples.length>1?'s':''} ${peutAjouter ? `(jusqu'à 6 max — clique sur ＋ pour ajouter)` : '(max atteint)'}</div>
+      <div class="hint" style="margin-top:-0.2rem;">Choisis un thème + clique sur n'importe quel style ci-dessous — l'action sera appliquée aux ${imagesMultiples.length} bagues ensemble</div>
+      <button onclick="resetMultiUpload();event.stopPropagation();" style="background:transparent;color:var(--gris);border:1px solid #ddd;border-radius:6px;font-size:0.74rem;padding:0.3rem 0.7rem;cursor:pointer;">↻ Recommencer</button>
+    </div>`;
+}
+
+function retirerBagueMulti(idx) {
+  imagesMultiples.splice(idx, 1);
+  if (imagesMultiples.length === 0) {
+    resetMultiUpload();
+    return;
+  }
+  if (imagesMultiples.length === 1) {
+    // Retour mode single avec cette unique bague
+    imageActuelle = imagesMultiples[0];
+    imagesMultiples = [];
+    document.getElementById('img-original').src = imageActuelle;
+    document.getElementById('upload-empty').style.display = 'none';
+    document.getElementById('upload-preview').style.display = 'block';
+    return;
+  }
+  renderMultiPreview();
+}
+
+function ajouterBaguesMulti() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.onchange = async () => {
+    const newFiles = Array.from(input.files).filter(f => f.type.startsWith('image/'));
+    if (newFiles.length === 0) return;
+    const placesLibres = 6 - imagesMultiples.length;
+    let toAdd = newFiles;
+    if (newFiles.length > placesLibres) {
+      alert(`Maximum 6 bagues — j'ajoute seulement les ${placesLibres} première(s)`);
+      toAdd = newFiles.slice(0, placesLibres);
+    }
+    const compressed = await Promise.all(toAdd.map(f => compresserImage(f, 1024, 0.85)));
+    imagesMultiples.push(...compressed);
+    renderMultiPreview();
+  };
+  input.click();
+}
+
 async function chargerFichiersMultiples(rawFiles) {
   let files = rawFiles;
   if (files.length > 6) {
@@ -513,23 +573,18 @@ async function chargerFichiersMultiples(rawFiles) {
       `<img src="${url}" alt="bague ${i+1}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,0.08);">`
     ).join('');
 
-    emptyEl.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:0.9rem;width:100%;">
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">${mosaicHtml}</div>
-        <div style="font-size:0.95rem;font-weight:600;color:var(--or);">🪞 ${imagesMultiples.length} bagues prêtes pour Produit multiple</div>
-        <div class="hint" style="margin-top:-0.2rem;">Choisis un thème ci-dessous (optionnel) puis clique sur Composer</div>
-        <button onclick="lancerProduitMultipleAuto()" style="background:var(--or);color:#fff;border:none;border-radius:8px;font-weight:600;padding:0.8rem 1.6rem;cursor:pointer;font-size:0.95rem;">🪞 Composer les ${imagesMultiples.length} bagues</button>
-        <button onclick="resetMultiUpload()" style="background:transparent;color:var(--gris);border:1px solid #ddd;border-radius:6px;font-size:0.78rem;padding:0.35rem 0.8rem;cursor:pointer;">↻ Recommencer</button>
-      </div>`;
+    renderMultiPreview();
     emptyEl.style.display = 'block';
     previewEl.style.display = 'none';
     dropZoneEl.classList.add('has-image');
 
-    // Les actions single-image sont désactivées en mode multi
-    document.getElementById('actions').classList.add('actions-disabled');
-    // Mais on active les sélecteurs globaux (thème, indications, format)
+    // En mode multi, TOUS les styles restent dispos — la grille est active, les actions sont automatiquement adaptées multi côté serveur
+    document.getElementById('actions').classList.remove('actions-disabled');
     document.getElementById('indications-zone').style.display = 'block';
+    document.getElementById('format-global-zone').style.display = 'block';
     document.getElementById('theme-global-zone').style.display = 'block';
+    document.getElementById('theme-mood-zone').style.display = 'block';
+    document.getElementById('naming-zone').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
   } catch (e) {
     emptyEl.innerHTML = `<div class="emoji-up">⚠️</div>
@@ -746,7 +801,12 @@ async function lancerProduitMultiple() {
 }
 
 async function lancerAction(action) {
-  if (!imageActuelle) return;
+  const isMulti = imagesMultiples && imagesMultiples.length >= 2;
+  if (!isMulti && !imageActuelle) return;
+  if (isMulti && action === 'multi-formats') {
+    alert('Multi-formats ne marche qu\'avec 1 bague. Retire des bagues ou recommence avec 1 seule.');
+    return;
+  }
   const card = document.querySelector(`.action-card[data-action="${action}"]`);
   if (!card) return;
   card.classList.add('loading');
@@ -769,7 +829,9 @@ async function lancerAction(action) {
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageActuelle, action, note, format, theme: themeGlobalActif || null }),
+      body: JSON.stringify(isMulti
+        ? { images: imagesMultiples, action, note, format, theme: themeGlobalActif || null }
+        : { image: imageActuelle, action, note, format, theme: themeGlobalActif || null }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();
