@@ -534,7 +534,14 @@ Output : ONE photoreal CAD-render preview of the Icelea ring design described ab
 // === Prompt SIMPLE : laisse Gemini interpréter librement les refs visuelles + une liste minimale de critères ===
 function buildSimplePrompt(input: DesignInput): string {
   const lignes: string[] = [];
-  lignes.push("Rends cette bague Mood Collection de manière photo-réaliste, en tenant compte des critères cochés ci-dessous et des images de référence jointes.");
+  const hasSketch = !!(input.sketch && input.sketch.trim());
+
+  if (hasSketch) {
+    lignes.push("🚨 LA PREMIÈRE IMAGE JOINTE EST UN CROQUIS / DESIGN DE RÉFÉRENCE. C'est le design exact à reproduire fidèlement (forme, motif, décor, gemmes, couleurs).");
+    lignes.push("Rends ce design en bague Mood Collection photo-réaliste, en respectant les critères ci-dessous et les autres refs visuelles jointes.");
+  } else {
+    lignes.push("Rends une bague Mood Collection photo-réaliste, en tenant compte des critères ci-dessous et des refs visuelles jointes.");
+  }
   lignes.push("");
   lignes.push("Critères :");
 
