@@ -296,14 +296,17 @@ ACTION-SPECIFIC ADAPTATIONS :
 async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
   let basePrompt: string;
-  if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
+  let themeOverlay = "";
+  if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
+    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "");
+  } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
     basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "");
   } else {
     basePrompt = PROMPTS[action];
+    const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+    themeOverlay = filterOverlayByMode(overlayRaw, "objet");
   }
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
-  const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
-  const themeOverlay = filterOverlayByMode(overlayRaw, isPortee ? "portee" : "objet");
   // Clause multi-rings : précise à Gemini que toutes les bagues doivent être composées dans la même scène avec cohérence d'action
   const multiClause = (action !== "produit-multiple") ? `\n\n═══════════════════════════════════════════
 🪞 MULTI-RING MODE (${imageDataUrls.length} rings attached as references)
@@ -372,7 +375,110 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
   }
 }
 
-// Notes de décor à ajouter au prompt bague-portee selon le style cliqué en mode portée
+// Prompts portée COMPLETS et PRÉCIS pour chaque thème (les prompts FR fournis par Amila, intégralement).
+// En mode portée + thème actif, ces prompts REMPLACENT le base prompt bague-portee générique
+// pour éviter tout mélange avec les directives objet/coffret du thème.
+const THEME_PORTEE_PROMPTS: Record<string, string> = {
+  "terre-dombre": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME TERRE D'OMBRE (Jacquemus)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in the visual language of a Jacquemus campaign :
+
+Femme à la peau bronzée, épaule dénudée. Lumière dorée de fin de journée entrant latéralement, ombres profondes et graphiques projetées sur les surfaces et sur la peau. Ambiance cinématographique et éditoriale haut de gamme, esthétique mode type Jacquemus ou campagne de luxe. Contraste fort entre lumière chaude et obscurité, atmosphère élégante, mystérieuse et artisanale. Tons terracotta, beige, brun chaud et noir profond. Lumière dramatique, composition épurée et sophistiquée.
+
+🔍 FRAMING : the ring + hand + portion of skin near the ring fill the frame (ring ~70-85% of frame width). The model's body, shoulder, decor are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO, perfectly sharp. Magazine print quality.`,
+
+  "terre-olive": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME TERRE OLIVE (Bottega / Khaite silent luxury)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in silent luxury visual language :
+
+Femme asiatique, longs cheveux noirs lisses. Photographie éditoriale minimaliste de bijoux de luxe, ambiance très épurée et sophistiquée. Lumière naturelle directionnelle de fin de journée créant des ombres profondes et graphiques. Esthétique inspirée de Jacquemus, Bottega Veneta et campagnes joaillerie haut de gamme. Composition ultra minimaliste avec beaucoup d'espace vide, focus total sur le bijou. Atmosphère calme, organique, moderne et luxueuse. Rendu photo éditorial premium, ultra réaliste, lumière chaude et cinématographique, profondeur de champ douce, détails précieux, esthétique luxe silencieux et contemporain.
+
+TENUE : blouse très fluide (comme un foulard) avec mouvement en coton blanc. Épaule dénudée. MANUCURE : naturel très soignée.
+
+🔍 FRAMING : ZOOM sur la bague — the ring + hand + portion of skin/blouse near the ring fill the frame (ring ~70-85% of frame width). The model's body, hair, blouse are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO, perfectly sharp. Magazine print quality.`,
+
+  "tropical": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME TROPICAL (Jacquemus / Saint Laurent jungle)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in tropical luxe visual language :
+
+Photographie mode éditoriale haut de gamme inspirée de campagnes beauté et luxe contemporaines. Femme élégante dans un univers tropical sophistiqué, entourée de grandes feuilles vert profondes et textures naturelles luxuriantes. Ambiance cinématographique, organique et artistique, lumière chaude et contrastée créant de fortes ombres graphiques sur la peau et le décor.
+
+Beauté naturelle, PEAU LUMINEUSE ET SATINÉE. Stylisme minimaliste mais mode : maille ajourée, tissu fluide, matières naturelles, silhouettes élégantes et modernes. Tons vert forêt, olive, noir végétal et lumière dorée subtile.
+
+Composition très esthétique et premium, inspirée de campagnes Jacquemus, Zara Studio, Saint Laurent ou photographie mode tropicale luxe. Atmosphère mystérieuse, sensuelle et raffinée, SANS effet kitsch ni glamour excessif. Rendu ultra réaliste, éditorial, sophistiqué et artistique.
+
+🔍 FRAMING : focus et zoom sur la bague — the ring + hand + portion of skin/fabric near the ring fill the frame (ring ~70-85% of frame width). The model's body, leaves, tropical decor are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+
+  "riviera": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME RIVIERA (Cartier / Jacquemus resort luxe)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in Mediterranean resort luxe visual language :
+
+Photographie éditoriale estivale haut de gamme inspirée des campagnes resort de luxe et beauté méditerranéenne. Femme élégante DANS UNE PISCINE en pierre claire, peau bronzée satinée par le soleil, maillot minimaliste chic. Eau turquoise cristalline créant des reflets mouvants et lumineux sur la peau et les surfaces minérales.
+
+PRISE DE VUE EN PLONGÉE, composition épurée et sophistiquée, ambiance calme et sensuelle. Lumière naturelle forte de milieu de journée, ombres nettes et graphiques, esthétique luxe silencieux. Palette douce et solaire : beige pierre chaude, turquoise pâle, peau dorée et blanc crème.
+
+Filtre éditorial premium légèrement chaud et désaturé, contraste doux, grain subtil type photographie argentique luxe, rendu lumineux et cinématographique inspiré de Jacquemus, campaigns resortwear et magazines mode haut de gamme.
+
+Atmosphère minimaliste, méditerranéenne et exclusive, ultra réaliste, élégante et moderne.
+
+🔍 FRAMING : the ring + hand + portion of bronzed skin near the ring fill the frame (ring ~70-85% of frame width). The woman's body, pool, swimsuit are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+
+  "sakura": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME SAKURA (Jacquemus poésie cerisier)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in poetic spring luxury visual language :
+
+Photographie macro éditoriale de luxe d'une bague portée sur une main féminine élégante, FOCUS TRÈS NET ET RAPPROCHÉ SUR LA BAGUE. Main délicatement posée près d'une épaule dénudée, peau légèrement bronzée et lumineuse. Robe fluide ROSE CLAIR en tissu léger et aérien, mouvement subtil du textile dans une ambiance printanière douce et sophistiquée.
+
+Lumière naturelle du matin, chaude et délicate, créant de FINES OMBRES DE BRANCHES DE SAKURA sur la peau et le décor. Palette pastel raffinée : rose poudré, beige chaud, blanc crème et reflets dorés subtils.
+
+Composition minimaliste et haut de gamme inspirée de Jacquemus et des campagnes joaillerie luxe contemporaines. Profondeur de champ courte, arrière-plan flou et lumineux, esthétique propre, élégante et moderne. Atmosphère romantique, fraîche et premium, rendu ultra réaliste et cinématographique.
+
+🔍 FRAMING : zoom serré sur la bague (ring ~70-85% of frame width). The model's hand, shoulder, dress are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp, with delicate sakura branch shadows on skin nearby.`,
+
+  "black-joaillerie": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME BLACK JOAILLERIE (Cartier / Dior Haute Joaillerie / Vogue)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in haute couture haute joaillerie visual language :
+
+Photographie éditoriale haute couture portée, ambiance très luxueuse, dramatique et sophistiquée. Femme élégante photographiée dans un STUDIO SOMBRE ET MINIMALISTE, peau profondément lumineuse sculptée par une LUMIÈRE DIRECTIONNELLE INTENSE. Jeux d'ombres cinématographiques créant un contraste fort entre obscurité et lumière.
+
+Poses statuesques et artistiques inspirées des campagnes haute joaillerie et couture contemporaines. Styling minimaliste NOIR ou monochrome, ÉPAULES DÉNUDÉES, tissus structurés ou satinés très sobres.
+
+Fond NOIR PROFOND ou gris anthracite. Atmosphère mystérieuse, puissante et intemporelle. Esthétique inspirée de campagnes Cartier, Dior Haute Joaillerie, Vogue et photographie mode luxe contemporaine.
+
+Rendu ultra réaliste, peau satinée, lumière sculpturale, profondeur de champ douce, élégance silencieuse et artistique, SANS surcharge visuelle ni glamour excessif.
+
+🔍 FRAMING : focus et zoom sur la bague (ring ~70-85% of frame width). The model's body, shoulders, dark studio background are supporting, partially in shadow — the RING REMAINS THE HERO, perfectly sharp, with crisp sculptural highlights on metal and stones.`,
+
+  "pur-white": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME PUR WHITE JOAILLERIE (Swarovski / Dior couture)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in crystalline couture visual language :
+
+Photographie éditoriale mode ULTRA HAUT DE GAMME dans une ambiance minimaliste, aérienne et sculpturale. Bague portée. Femme élégante vêtue de TISSUS BLANCS FLUIDES ET TEXTURÉS : plissés couture, mousseline légère, satin mat et organza vaporeux. Inspirées de la haute couture contemporaine et des campagnes Jacquemus, Dior et Vogue.
+
+Palette monochrome CRÈME, IVOIRE, BLANC CASSÉ ET BEIGE TRÈS CLAIR. Lumière naturelle douce et diffuse, presque solaire, créant des ombres délicates et des contrastes subtils sur les tissus et la peau. Atmosphère calme, pure et luxueuse.
+
+Très peu d'éléments dans l'image. FOCUS SUR LA BAGUE ET ZOOM SUR LA BAGUE. Chapeaux oversize sculpturaux, voiles légers flottants, compositions épurées et artistiques.
+
+Esthétique cinématographique premium, moderne et intemporelle. Arrière-plan minimal blanc ou sable clair, profondeur de champ douce, rendu ultra réaliste et raffiné. Sensation de luxe discret, sophistication naturelle et poésie contemporaine.
+
+🔍 FRAMING : zoom serré sur la bague (ring ~70-85% of frame width). The model's body, white fabrics, hat are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp, with delicate prismatic highlights.`,
+};
+
+// Notes de décor à ajouter au prompt portée selon le style cliqué (mode portée)
 const PORTEE_STYLE_NOTES: Record<string, string> = {
   "fond-blanc": "\n\n[BACKGROUND VARIATION — STYLE FOND BLANC] : behind the model + ring, use a clean pure white seamless background, minimalist and neutral, soft daylight on the composition.",
   "fond-anthracite": "\n\n[BACKGROUND VARIATION — STYLE FOND ANTHRACITE] : behind the model + ring, use a deep anthracite / dark gray seamless background, soft directional light from one side, sophisticated cinematic mood.",
@@ -397,17 +503,23 @@ function filterOverlayByMode(overlay: string, mode: "objet" | "portee"): string 
 
 async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
-  // En mode portée : base prompt = bague-portee + note de décor selon le style cliqué (sauf si déjà bague-portee)
   let basePrompt: string;
-  if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
+  let themeOverlay = "";
+  if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
+    // Mode portée + thème actif → utiliser le prompt portée PRÉCIS du thème (intégral, fourni par Amila)
+    // + note de décor selon le style cliqué (Fond blanc, Fond anthracite, etc.)
+    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "");
+    // PAS d'overlay thème : tout est déjà dans le prompt portée précis ci-dessus
+  } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
+    // Mode portée sans thème → bague-portee générique + note de décor
     basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "");
   } else {
+    // Mode objet (par défaut) → prompt de l'action + overlay thème filtré objet
     basePrompt = PROMPTS[action];
+    const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+    themeOverlay = filterOverlayByMode(overlayRaw, "objet");
   }
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
-  // Overlay thème global filtré selon le mode (zéro mélange portée/objet)
-  const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
-  const themeOverlay = filterOverlayByMode(overlayRaw, isPortee ? "portee" : "objet");
   let prompt = basePrompt + themeOverlay;
   if (note && note.trim()) {
     prompt += `\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR (à respecter en priorité) ===\n${note.trim()}`;
