@@ -264,6 +264,30 @@
       <div class="desc">Bague sur main / modèle (peau, tissu, pose éditoriale)</div>
     </div>
   </div>
+  <!-- Sélecteurs Genre + Âge — visibles uniquement en mode Portée -->
+  <div id="model-options" style="display:none;margin-top:0.8rem;padding-top:0.7rem;border-top:1px solid #f0f0f0;">
+    <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--or);margin-bottom:0.4rem;">🧑‍🤝‍🧑 Profil du modèle <span style="color:var(--gris);font-weight:400;">— override du genre/âge par défaut du thème</span></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+      <div>
+        <label style="display:block;font-size:0.74rem;color:var(--gris);margin-bottom:0.2rem;">Genre</label>
+        <select id="model-genre" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;">
+          <option value="auto" selected>Au choix (selon thème)</option>
+          <option value="femme">Femme</option>
+          <option value="homme">Homme</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:0.74rem;color:var(--gris);margin-bottom:0.2rem;">Tranche d'âge</label>
+        <select id="model-age" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;">
+          <option value="auto" selected>Au choix</option>
+          <option value="18-30">18-30 ans</option>
+          <option value="30-45">30-45 ans</option>
+          <option value="45-60">45-60 ans</option>
+          <option value="60+">60+ ans</option>
+        </select>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Sélecteur de format global (appliqué à toutes les actions) -->
@@ -403,6 +427,15 @@ function setModePortee(m) {
     if (card.dataset.mode === m) card.classList.add('active');
     else card.classList.remove('active');
   });
+  // Affiche les sélecteurs Genre + Âge uniquement quand mode = portée
+  const modelOpts = document.getElementById('model-options');
+  if (modelOpts) modelOpts.style.display = (m === 'portee') ? 'block' : 'none';
+}
+
+function getModelProfile() {
+  const g = document.getElementById('model-genre')?.value || 'auto';
+  const a = document.getElementById('model-age')?.value || 'auto';
+  return { gender: g, age: a };
 }
 
 function setThemeGlobal(t) {
@@ -679,7 +712,7 @@ async function lancerProduitMultipleAuto() {
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images: imagesMultiples, action: 'produit-multiple', note, format, theme: themeGlobalActif || null, mode: modePortee }),
+      body: JSON.stringify({ images: imagesMultiples, action: 'produit-multiple', note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }),
     });
     const text = await r.text();
     let data;
@@ -921,7 +954,7 @@ async function lancerProduitMultiple() {
       const r = await fetch('/api/retouche-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images, action: 'produit-multiple', note, format, theme: themeGlobalActif || null, mode: modePortee }),
+        body: JSON.stringify({ images, action: 'produit-multiple', note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }),
       });
       const text = await r.text();
       let data;
@@ -979,8 +1012,8 @@ async function lancerAction(action) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(isMulti
-        ? { images: imagesMultiples, action, note, format, theme: themeGlobalActif || null, mode: modePortee }
-        : { image: imageActuelle, action, note, format, theme: themeGlobalActif || null, mode: modePortee }),
+        ? { images: imagesMultiples, action, note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }
+        : { image: imageActuelle, action, note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();

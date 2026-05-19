@@ -328,16 +328,17 @@ ACTION-SPECIFIC ADAPTATIONS :
 - Camera : zoom in tight on the ring. If a wider context is shown, the ring still dominates ; never let the decor take over the frame.`,
 };
 
-async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null): Promise<{ image?: string; error?: string }> {
+async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
+  const modelNote = isPortee ? buildModelProfileNote(gender, age) : "";
   let basePrompt: string;
   let themeOverlay = "";
   if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
-    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
+    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE;
+    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE + modelNote;
   } else {
     basePrompt = PROMPTS[action];
     const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
@@ -527,6 +528,35 @@ Esthétique cinématographique premium, moderne et intemporelle. Arrière-plan m
 🔍 FRAMING : zoom serré sur la bague (ring ~70-85% of frame width). The model's body, white fabrics, hat are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp, with delicate prismatic highlights.`,
 };
 
+// Override genre + âge du modèle (mode portée seulement) — injecté en suffixe pour OVERRIDER toute mention contraire du thème
+const GENDER_LABELS: Record<string, string> = {
+  "femme": "FEMME",
+  "homme": "HOMME",
+};
+const AGE_LABELS: Record<string, string> = {
+  "18-30": "18-30 ans (jeune adulte)",
+  "30-45": "30-45 ans (jeune)",
+  "45-60": "45-60 ans (mature)",
+  "60+": "60+ ans (senior)",
+};
+function buildModelProfileNote(gender?: string | null, age?: string | null): string {
+  const hasGender = gender && gender !== "auto" && GENDER_LABELS[gender];
+  const hasAge = age && age !== "auto" && AGE_LABELS[age];
+  if (!hasGender && !hasAge) return "";
+  const parts: string[] = [];
+  if (hasGender) parts.push(`Genre du modèle : **${GENDER_LABELS[gender!]}** — override toute mention contraire dans les directives ci-dessus (peu importe ce qui est écrit sur le genre dans le prompt thème, le modèle est ${GENDER_LABELS[gender!]}).`);
+  if (hasAge) parts.push(`Tranche d'âge du modèle : **${AGE_LABELS[age!]}** — le modèle doit clairement apparaître dans cette tranche d'âge (peau, cheveux, allure correspondants).`);
+  return `
+
+═══════════════════════════════════════════
+🚨 PROFIL MODÈLE — OVERRIDE UTILISATEUR (priorité absolue)
+═══════════════════════════════════════════
+
+${parts.join("\n\n")}
+
+Ces caractéristiques OVERRIDENT toute mention contraire de genre / âge / origine ethnique dans les directives ci-dessus. Tout le reste du prompt (lumière, décor, tissu, ambiance, palette) reste valide à 100%.`;
+}
+
 // Rappel CRITIQUE de la largeur réelle des bagues Mood (à injecter dans tous les prompts portée)
 // Sans cette consigne, Gemini agrandit la bague (~15-18mm) pour la rendre plus visible sur la main → faux
 const MOOD_RING_WIDTH_NOTE = `
@@ -569,16 +599,17 @@ function filterOverlayByMode(overlay: string, mode: "objet" | "portee"): string 
   return overlay.replace(/- IF the action is a WORN-RING[\s\S]*?(?=\n- IF|\n🔍|$)/g, "");
 }
 
-async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null): Promise<{ image?: string; error?: string }> {
+async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
+  const modelNote = isPortee ? buildModelProfileNote(gender, age) : "";
   let basePrompt: string;
   let themeOverlay = "";
   if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
-    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
+    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE;
+    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE + modelNote;
   } else {
     basePrompt = PROMPTS[action];
     const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
@@ -653,14 +684,14 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null; mode?: "objet" | "portee" | null };
+  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null; mode?: "objet" | "portee" | null; gender?: string | null; age?: string | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, images, action, note, format, theme, mode } = body;
+  const { image, images, action, note, format, theme, mode, gender, age } = body;
   if (!action) {
     return NextResponse.json({ error: "Champ requis : action" }, { status: 400 });
   }
@@ -674,7 +705,7 @@ export async function POST(req: Request) {
     if (action === "multi-formats") {
       return NextResponse.json({ error: "Multi-formats ne fonctionne pas en mode multi-bagues — passe d'abord en mode 1 bague" }, { status: 400 });
     }
-    const res = await appelGeminiMulti(images, action, note, format, theme, mode);
+    const res = await appelGeminiMulti(images, action, note, format, theme, mode, gender, age);
     if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
     return NextResponse.json({ image: res.image });
   }
@@ -692,12 +723,12 @@ export async function POST(req: Request) {
       "multi-9-16": "Vertical 9:16 (Story/Reel)",
       "multi-16-9": "Paysage 16:9 (FB cover)",
     };
-    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme, mode).then(res => ({ ...res, ratio: r, label: labels[r] }))));
+    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme, mode, gender, age).then(res => ({ ...res, ratio: r, label: labels[r] }))));
     return NextResponse.json({ resultats: results });
   }
 
   // Cas simple : 1 appel — le format choisi par l'utilisateur override le ratio par défaut de l'action
-  const res = await appelGemini(image, action, note, format, theme, mode);
+  const res = await appelGemini(image, action, note, format, theme, mode, gender, age);
   if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
   return NextResponse.json({ image: res.image });
 }
