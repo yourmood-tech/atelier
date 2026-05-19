@@ -367,6 +367,11 @@
     <div class="titre">Multi-formats sociaux</div>
     <div class="desc">1 photo → 4 formats (Insta 1:1, 4:5, story 9:16, FB 16:9)</div>
   </div>
+  <div class="action-card" onclick="ouvrirRedimensionnerForm()" data-action="redimensionner-bague">
+    <span class="emoji">📏</span>
+    <div class="titre">Redimensionner bague</div>
+    <div class="desc">Change la largeur de la bande (ex : addon 7mm → deux-tiers 4.85mm) sans déformer les motifs</div>
+  </div>
   <!-- Carte Produit multiple retirée : maintenant intégrée dans l'upload (glisse plusieurs photos → mode multi auto) -->
   <div class="action-card" onclick="lancerVideo360()" data-action="video-360">
     <span class="emoji">🎬</span>
@@ -779,6 +784,105 @@ function compresserImageLegacy(file, maxDim, quality) {
 }
 
 // ============ ACTIONS ============
+// Formats Mood (largeur de la bande en mm)
+const FORMATS_MOOD = [
+  { value: 'base-large',  label: 'Base Large (13mm)',    mm: 13 },
+  { value: 'base-small',  label: 'Base Small (11mm)',    mm: 11 },
+  { value: 'base-xs',     label: 'Base XS (9mm)',         mm: 9 },
+  { value: 'open-mood',   label: 'Open Mood (10mm)',     mm: 10 },
+  { value: 'addon',       label: 'Addon (7mm)',           mm: 7 },
+  { value: 'deux-tiers',  label: 'Deux tiers (4.85mm)',   mm: 4.85 },
+  { value: 'medium',      label: 'Medium (2.45mm)',       mm: 2.45 },
+  { value: 'mini',        label: 'Mini (1.22mm)',         mm: 1.22 },
+];
+
+// Ouvre un mini-form pour le redimensionnement (sélecteurs format source + format cible)
+function ouvrirRedimensionnerForm() {
+  if (!imageActuelle && (!imagesMultiples || imagesMultiples.length === 0)) {
+    alert('Charge d\'abord une bague (drag-drop ou clique sur la zone d\'upload)');
+    return;
+  }
+  // Affiche le mini-form dans une zone résultat dédiée
+  const blocId = 'redim-form-' + Date.now();
+  const bloc = document.createElement('div');
+  bloc.className = 'resultat-bloc';
+  bloc.id = blocId;
+  const optsHtml = FORMATS_MOOD.map(f => `<option value="${f.value}" data-mm="${f.mm}">${f.label}</option>`).join('');
+  bloc.innerHTML = `
+    <div class="resultat-titre">📏 Redimensionner la bague</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin:0.8rem 0;">
+      <div>
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Format SOURCE (largeur actuelle de la bague sur la photo)</label>
+        <select id="${blocId}-source" style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">${optsHtml}</select>
+      </div>
+      <div>
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Format CIBLE (largeur souhaitée)</label>
+        <select id="${blocId}-cible" style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">${optsHtml}</select>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+      <button onclick="lancerRedimensionner('${blocId}')" class="btn-action" style="background:var(--or);color:#fff;font-weight:600;">📏 Lancer le redimensionnement</button>
+      <button onclick="document.getElementById('${blocId}').remove()" class="btn-action secondary">Annuler</button>
+    </div>
+    <div style="font-size:0.72rem;color:var(--gris);margin-top:0.5rem;font-style:italic;">Les motifs (bulles, cercles, pierres) gardent leur forme exacte — ne se déforment pas. Seule la largeur de la bande change.</div>
+  `;
+  document.getElementById('resultats').insertBefore(bloc, document.getElementById('resultats').firstChild);
+  // Préselection : source = format affiché par défaut (Addon), cible = un cran plus fin (Deux tiers)
+  document.getElementById(blocId + '-source').value = 'addon';
+  document.getElementById(blocId + '-cible').value = 'deux-tiers';
+}
+
+async function lancerRedimensionner(blocId) {
+  const isMulti = imagesMultiples && imagesMultiples.length >= 2;
+  if (!isMulti && !imageActuelle) { alert('Pas d\'image source'); return; }
+
+  const sourceSel = document.getElementById(blocId + '-source');
+  const cibleSel = document.getElementById(blocId + '-cible');
+  if (!sourceSel || !cibleSel) return;
+  const sourceLabel = sourceSel.options[sourceSel.selectedIndex].text;
+  const cibleLabel = cibleSel.options[cibleSel.selectedIndex].text;
+  const sourceMm = parseFloat(sourceSel.options[sourceSel.selectedIndex].dataset.mm);
+  const cibleMm = parseFloat(cibleSel.options[cibleSel.selectedIndex].dataset.mm);
+  if (sourceMm === cibleMm) { alert('Source et cible identiques — choisis 2 formats différents'); return; }
+
+  const note = `Largeur SOURCE de la bague sur la photo : ${sourceMm}mm (${sourceLabel}). Largeur CIBLE souhaitée : ${cibleMm}mm (${cibleLabel}). Ratio : ${(cibleMm/sourceMm).toFixed(3)} (la bande doit être ${cibleMm < sourceMm ? 'plus fine' : 'plus large'}). Les motifs (bulles, cercles, pierres, ornements) gardent leur taille et leur forme circulaire — ne pas les déformer en ovale.`;
+  const userNote = document.getElementById('indications')?.value?.trim();
+  const noteFinal = userNote ? `${note}\n\nInstructions complémentaires : ${userNote}` : note;
+
+  const bloc = document.getElementById(blocId);
+  bloc.innerHTML = `<div class="resultat-titre"><span class="loader"></span>Redimensionnement ${sourceMm}mm → ${cibleMm}mm — IA Gemini (~25s)…</div>`;
+
+  try {
+    const formatRadio = document.querySelector('input[name="theme-format"]:checked');
+    const format = formatRadio?.value || '1:1';
+    const r = await fetch('/api/retouche-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(isMulti
+        ? { images: imagesMultiples, action: 'redimensionner-bague', note: noteFinal, format, theme: themeGlobalActif || null, mode: modePortee }
+        : { image: imageActuelle, action: 'redimensionner-bague', note: noteFinal, format, theme: themeGlobalActif || null, mode: modePortee }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status})`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+    const id = cacheImage(data.image);
+    const fname = `mood-redim-${sourceMm}mm-vers-${cibleMm}mm-${Date.now()}.png`;
+    bloc.innerHTML = `<div class="resultat-titre">📏 Redimensionnée : ${sourceLabel} → ${cibleLabel}</div>
+      <img id="img-${id}" src="${data.image}" alt="bague redimensionnée" class="resultat-img" style="width:100%;border-radius:8px;">
+      <div class="resultat-actions" style="margin-top:0.5rem;">
+        <button onclick="telechargerCache('${id}','${fname}')" class="btn-download">⬇️ Télécharger</button>
+        <button onclick="ouvrirRedimensionnerForm()" class="btn-action secondary">📏 Refaire avec d'autres tailles</button>
+      </div>`;
+  } catch (e) {
+    bloc.innerHTML = `<div class="resultat-titre" style="color:var(--rouge);">Erreur</div>
+      <div class="erreur">⚠️ ${escapeHtml(e.message || String(e))}</div>
+      <button onclick="ouvrirRedimensionnerForm()" class="btn-action secondary" style="margin-top:0.5rem;">↻ Recommencer</button>`;
+  }
+}
+
 // Produit multiple : upload 2-6 bagues + composition éditoriale dans 1 scène
 async function lancerProduitMultiple() {
   const input = document.createElement('input');
