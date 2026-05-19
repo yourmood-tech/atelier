@@ -67,6 +67,7 @@
   .action-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,0.1); border-color: var(--or); }
   .action-card.loading { opacity: 0.5; pointer-events: none; }
   .action-card.theme-pick.active { border-color: var(--or); border-width: 3px; background: #fffdf6; box-shadow: 0 4px 12px rgba(193, 153, 76, 0.25); }
+  .action-card.mode-pick.active { border-color: var(--or); border-width: 3px; background: #fffdf6; box-shadow: 0 4px 12px rgba(193, 153, 76, 0.25); }
   .action-card .emoji { font-size: 2.2rem; margin-bottom: 0.5rem; display: block; }
   .action-card .titre { font-size: 0.95rem; font-weight: 600; color: var(--noir); }
   .action-card .desc { font-size: 0.78rem; color: var(--gris); margin-top: 0.3rem; line-height: 1.3; }
@@ -238,6 +239,23 @@
   </div>
 </div>
 
+<!-- Sélecteur de Mode (Objet vs Portée) — positionné juste après Thème -->
+<div id="mode-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+  <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.4rem;">📷 Mode de prise de vue <span style="color:var(--gris);font-weight:400;">— change le prompt servi à l'IA (zéro mélange portée/objet)</span></label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-top:0.5rem;">
+    <div class="action-card mode-pick active" data-mode="objet" onclick="setModePortee('objet')">
+      <span class="emoji">📦</span>
+      <div class="titre">Photos non portée</div>
+      <div class="desc">Bague seule sur fond / décor / coffret — focus produit</div>
+    </div>
+    <div class="action-card mode-pick" data-mode="portee" onclick="setModePortee('portee')">
+      <span class="emoji">👩‍🦱</span>
+      <div class="titre">Photos portée</div>
+      <div class="desc">Bague sur main / modèle (peau, tissu, pose éditoriale)</div>
+    </div>
+  </div>
+</div>
+
 <!-- Sélecteur de format global (appliqué à toutes les actions) -->
 <div id="format-global-zone" style="display:none;margin-top:0.8rem;padding:0.9rem 1.1rem;background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
   <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--or);margin-bottom:0.5rem;">📐 Format de sortie <span style="color:var(--gris);font-weight:400;">— s'applique à toutes les actions (sauf Multi-formats qui génère les 4)</span></label>
@@ -366,6 +384,15 @@
 let imageActuelle = null;  // dataUrl base64 (mode single)
 let imagesMultiples = [];  // tableau de dataURL (mode produit-multiple — 2-6 bagues uploadées en même temps)
 let themeGlobalActif = '';  // '' = aucun thème ; sinon 'terre-dombre', etc.
+let modePortee = 'objet';  // 'objet' (par défaut) ou 'portee' — détermine le prompt servi à Gemini
+
+function setModePortee(m) {
+  modePortee = m;
+  document.querySelectorAll('.mode-pick').forEach(card => {
+    if (card.dataset.mode === m) card.classList.add('active');
+    else card.classList.remove('active');
+  });
+}
 
 function setThemeGlobal(t) {
   themeGlobalActif = t;
@@ -593,6 +620,7 @@ async function chargerFichiersMultiples(rawFiles) {
     document.getElementById('indications-zone').style.display = 'block';
     document.getElementById('format-global-zone').style.display = 'block';
     document.getElementById('theme-global-zone').style.display = 'block';
+    document.getElementById('mode-zone').style.display = 'block';
     document.getElementById('theme-mood-zone').style.display = 'block';
     document.getElementById('naming-zone').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
@@ -640,7 +668,7 @@ async function lancerProduitMultipleAuto() {
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ images: imagesMultiples, action: 'produit-multiple', note, format, theme: themeGlobalActif || null }),
+      body: JSON.stringify({ images: imagesMultiples, action: 'produit-multiple', note, format, theme: themeGlobalActif || null, mode: modePortee }),
     });
     const text = await r.text();
     let data;
@@ -690,6 +718,7 @@ async function chargerFichier(file) {
     document.getElementById('theme-mood-zone').style.display = 'block';
     document.getElementById('naming-zone').style.display = 'block';
     document.getElementById('theme-global-zone').style.display = 'block';
+    document.getElementById('mode-zone').style.display = 'block';
     document.getElementById('resultats').innerHTML = '';
   } catch (e) {
     emptyEl.innerHTML = `<div class="emoji-up">⚠️</div>
@@ -782,7 +811,7 @@ async function lancerProduitMultiple() {
       const r = await fetch('/api/retouche-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ images, action: 'produit-multiple', note, format, theme: themeGlobalActif || null }),
+        body: JSON.stringify({ images, action: 'produit-multiple', note, format, theme: themeGlobalActif || null, mode: modePortee }),
       });
       const text = await r.text();
       let data;
@@ -840,8 +869,8 @@ async function lancerAction(action) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(isMulti
-        ? { images: imagesMultiples, action, note, format, theme: themeGlobalActif || null }
-        : { image: imageActuelle, action, note, format, theme: themeGlobalActif || null }),
+        ? { images: imagesMultiples, action, note, format, theme: themeGlobalActif || null, mode: modePortee }
+        : { image: imageActuelle, action, note, format, theme: themeGlobalActif || null, mode: modePortee }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();

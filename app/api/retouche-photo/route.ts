@@ -293,10 +293,17 @@ ACTION-SPECIFIC ADAPTATIONS :
 - Camera : zoom in tight on the ring. If a wider context is shown, the ring still dominates ; never let the decor take over the frame.`,
 };
 
-async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null): Promise<{ image?: string; error?: string }> {
-  const basePrompt = PROMPTS[action];
+async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null): Promise<{ image?: string; error?: string }> {
+  const isPortee = mode === "portee";
+  let basePrompt: string;
+  if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "");
+  } else {
+    basePrompt = PROMPTS[action];
+  }
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
-  const themeOverlay = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+  const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+  const themeOverlay = filterOverlayByMode(overlayRaw, isPortee ? "portee" : "objet");
   // Clause multi-rings : précise à Gemini que toutes les bagues doivent être composées dans la même scène avec cohérence d'action
   const multiClause = (action !== "produit-multiple") ? `\n\n═══════════════════════════════════════════
 🪞 MULTI-RING MODE (${imageDataUrls.length} rings attached as references)
@@ -365,11 +372,42 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
   }
 }
 
-async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null): Promise<{ image?: string; error?: string }> {
-  const basePrompt = PROMPTS[action];
+// Notes de décor à ajouter au prompt bague-portee selon le style cliqué en mode portée
+const PORTEE_STYLE_NOTES: Record<string, string> = {
+  "fond-blanc": "\n\n[BACKGROUND VARIATION — STYLE FOND BLANC] : behind the model + ring, use a clean pure white seamless background, minimalist and neutral, soft daylight on the composition.",
+  "fond-anthracite": "\n\n[BACKGROUND VARIATION — STYLE FOND ANTHRACITE] : behind the model + ring, use a deep anthracite / dark gray seamless background, soft directional light from one side, sophisticated cinematic mood.",
+  "amelioration": "\n\n[QUALITY VARIATION — STYLE AMÉLIORATION] : ultra-clean magazine retouching pass — perfect satin skin (no blemishes), no fabric parasites, ring mirror-clean, gemstones brilliant, professional editorial finish.",
+  "lumiere-contraste": "\n\n[LIGHTING VARIATION — STYLE LUMIÈRE CONTRASTE] : dramatic high-contrast lighting on the worn-ring composition — single strong directional light, deep cast shadows on skin and fabric, crisp highlights on metal and stones.",
+  "style-mood": "\n\n[DECOR VARIATION — STYLE PHOTOGRAPHE MOOD (Léa)] : interpret the active theme overlay as the narrative background behind the model — narrative editorial scene with thematic decor, model + ring as hero of the scene.",
+  "coffret": "\n\n[COFFRET VARIATION] : the worn ring is on the model's hand, with an open Mood coffret (white leatherette) visible in the soft-focus background or held in the second hand as accent — not the main subject.",
+  "bague-portee": "",
+};
+
+// Filtre l'overlay thème selon le mode (objet ou portee) — supprime les sections non pertinentes
+// pour servir à Gemini un prompt cohérent qui ne mélange pas les directives portée et objet/coffret
+function filterOverlayByMode(overlay: string, mode: "objet" | "portee"): string {
+  if (!overlay) return "";
+  if (mode === "portee") {
+    return overlay
+      .replace(/- IF the action is a COFFRET[\s\S]*?(?=\n- IF|\n🔍|$)/g, "")
+      .replace(/- IF the action is a STUDIO[\s\S]*?(?=\n- IF|\n🔍|$)/g, "");
+  }
+  return overlay.replace(/- IF the action is a WORN-RING[\s\S]*?(?=\n- IF|\n🔍|$)/g, "");
+}
+
+async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null): Promise<{ image?: string; error?: string }> {
+  const isPortee = mode === "portee";
+  // En mode portée : base prompt = bague-portee + note de décor selon le style cliqué (sauf si déjà bague-portee)
+  let basePrompt: string;
+  if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "");
+  } else {
+    basePrompt = PROMPTS[action];
+  }
   if (!basePrompt) return { error: `Action inconnue : ${action}` };
-  // Overlay thème global (si actif) — modifie l'ambiance/lumière/palette de l'action
-  const themeOverlay = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+  // Overlay thème global filtré selon le mode (zéro mélange portée/objet)
+  const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
+  const themeOverlay = filterOverlayByMode(overlayRaw, isPortee ? "portee" : "objet");
   let prompt = basePrompt + themeOverlay;
   if (note && note.trim()) {
     prompt += `\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR (à respecter en priorité) ===\n${note.trim()}`;
@@ -438,14 +476,14 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null };
+  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null; mode?: "objet" | "portee" | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, images, action, note, format, theme } = body;
+  const { image, images, action, note, format, theme, mode } = body;
   if (!action) {
     return NextResponse.json({ error: "Champ requis : action" }, { status: 400 });
   }
@@ -459,7 +497,7 @@ export async function POST(req: Request) {
     if (action === "multi-formats") {
       return NextResponse.json({ error: "Multi-formats ne fonctionne pas en mode multi-bagues — passe d'abord en mode 1 bague" }, { status: 400 });
     }
-    const res = await appelGeminiMulti(images, action, note, format, theme);
+    const res = await appelGeminiMulti(images, action, note, format, theme, mode);
     if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
     return NextResponse.json({ image: res.image });
   }
@@ -477,12 +515,12 @@ export async function POST(req: Request) {
       "multi-9-16": "Vertical 9:16 (Story/Reel)",
       "multi-16-9": "Paysage 16:9 (FB cover)",
     };
-    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme).then(res => ({ ...res, ratio: r, label: labels[r] }))));
+    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme, mode).then(res => ({ ...res, ratio: r, label: labels[r] }))));
     return NextResponse.json({ resultats: results });
   }
 
   // Cas simple : 1 appel — le format choisi par l'utilisateur override le ratio par défaut de l'action
-  const res = await appelGemini(image, action, note, format, theme);
+  const res = await appelGemini(image, action, note, format, theme, mode);
   if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
   return NextResponse.json({ image: res.image });
 }
