@@ -72,6 +72,32 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "lifestyle": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "LIFESTYLE" (photo souvenir voyage authentique non-studio)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : Photo NATURELLE NON STUDIO. Décor VIVANT en arrière-plan (un environnement réel — café, terrasse, plage, montagne, rue, intérieur cozy — selon ce qui fait sens). PAS de seamless backdrop, PAS de fond uni studio.
+- Light : LUMIÈRE DU JOUR RÉELLE (sun, overcast, golden hour selon le contexte), authentique, non-artificielle.
+- Mood : SPONTANÉ ET AUTHENTIQUE, ambiance "daily life", style SOUVENIR DE VOYAGE, rendu simple et réaliste, sensation d'instant capturé sur smartphone (mais en qualité premium).
+- Style references : Pinterest lifestyle, Instagram authentique, daily life photography, travel memory.
+- Profondeur de champ légère naturelle (pas studio shallow DOF — DOF moyen comme un smartphone moderne).
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a COFFRET / BOX shot : the white coffret photographed naturally in a real environment (sur une table de café, sur une commode, sur un drap), lumière du jour, ambiance souvenir spontané.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with a REAL ENVIRONMENT — la bague posée sur une surface naturelle (table, livre, drap, sable, herbe) avec un arrière-plan vivant légèrement flou, lumière du jour réelle, photo spontanée premium.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- TIGHT close-up but with NATURAL lifestyle aesthetic (smartphone-quality framing élevé en qualité premium).
+- The real environment decor is a SUPPORTING BACKDROP — out-of-focus mais reconnaissable.
+- The ring is the absolute focus subject — perfectly sharp.`,
+
   "in-the-mood-for": `
 
 ═══════════════════════════════════════════
@@ -538,6 +564,20 @@ Cadrage FOCUS MAINS ET TORSE (pas le visage en gros plan, juste mains + manche +
 };
 
 const THEME_PORTEE_PROMPTS: Record<string, string> = {
+  "lifestyle": `🚨 PHOTO LIFESTYLE BAGUE PORTÉE — THÈME LIFESTYLE (voyage spontané authentique)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a lifestyle WORN-RING photograph in authentic spontaneous visual language :
+
+Photo LIFESTYLE SPONTANÉE prise à la main. MAIN TENDUE VERS LE PAYSAGE ou l'ENVIRONNEMENT (la main au premier plan avec le paysage vivant en arrière-plan — terrasse vue mer, café, montagne, rue urbaine, plage, intérieur cozy, selon ce qui fait sens).
+
+Focus NATUREL sur la main au PREMIER PLAN avec arrière-plan VIVANT ET IMMERSIF. Ambiance authentique "DAILY LIFE". Lumière NATURELLE RÉELLE (sun, golden hour, overcast — selon contexte). Style photo SOUVENIR PREMIUM, esthétique Pinterest lifestyle.
+
+Cadrage SIMPLE ET SPONTANÉ comme une photo prise sur le moment avec smartphone (mais qualité premium). Profondeur légère naturelle. Environnement légèrement flou mais RECONNAISSABLE. Rendu photoréaliste. Ambiance VOYAGE ET MOMENTS DE VIE. Composition décontractée et organique. Lumière extérieure réaliste. Style NON STUDIO. Sensation de vrai instant capturé.
+
+🔍 FRAMING : the ring + hand + portion of skin near the ring fill the frame (ring ~70-85% of frame width). The environment (paysage, café, rue, intérieur) is supporting, soft-focused but recognizable — the RING REMAINS THE HERO, perfectly sharp.`,
+
   "in-the-mood-for": `🚨 PHOTO EDITORIALE BAGUE PORTÉE FEMME — THÈME IN THE MOOD FOR (soft luxury cosy féminin)
 
 The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
