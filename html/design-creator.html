@@ -573,6 +573,57 @@
 
 </div><!-- /form-zone -->
 
+<!-- Panel : Redimensionner une bague existante (action indépendante) -->
+<div class="panel" id="redim-panel" style="margin-top:2rem;border:2px dashed var(--or);background:#fffdf6;">
+  <div class="panel-titre">📏 Redimensionner une bague existante</div>
+  <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">
+    Tu as déjà une bague et tu veux la décliner dans une autre largeur Mood (ex : Addon 7mm → Deux tiers 4.85mm) ? Charge-la ci-dessous. Les motifs gardent leur forme exacte — bulles rondes, pas ovalisées.
+  </p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+    <div>
+      <div id="redim-upload-zone" onclick="document.getElementById('redim-file-input').click()" style="border:2px dashed #ccc;border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;background:white;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="redim-upload-empty">
+          <div style="font-size:2rem;margin-bottom:0.3rem;">📸</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--gris);">Charge la bague à redimensionner</div>
+          <div style="font-size:0.72rem;color:var(--gris);margin-top:0.2rem;">JPG / PNG, ~4 Mo max</div>
+        </div>
+        <img id="redim-img-preview" style="display:none;max-width:100%;max-height:180px;border-radius:8px;">
+      </div>
+      <input type="file" id="redim-file-input" accept="image/*" style="display:none;" onchange="handleRedimFile(event)">
+    </div>
+    <div>
+      <div style="margin-bottom:0.8rem;">
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Format SOURCE (largeur actuelle)</label>
+        <select id="redim-source" style="width:100%;padding:0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">
+          <option value="base-large" data-mm="13">Base Large (13mm)</option>
+          <option value="base-small" data-mm="11">Base Small (11mm)</option>
+          <option value="open-mood" data-mm="10">Open Mood (10mm)</option>
+          <option value="base-xs" data-mm="9">Base XS (9mm)</option>
+          <option value="addon" data-mm="7" selected>Addon (7mm)</option>
+          <option value="deux-tiers" data-mm="4.85">Deux tiers (4.85mm)</option>
+          <option value="medium" data-mm="2.45">Medium (2.45mm)</option>
+          <option value="mini" data-mm="1.22">Mini (1.22mm)</option>
+        </select>
+      </div>
+      <div style="margin-bottom:0.8rem;">
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Format CIBLE (largeur souhaitée)</label>
+        <select id="redim-cible" style="width:100%;padding:0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">
+          <option value="base-large" data-mm="13">Base Large (13mm)</option>
+          <option value="base-small" data-mm="11">Base Small (11mm)</option>
+          <option value="open-mood" data-mm="10">Open Mood (10mm)</option>
+          <option value="base-xs" data-mm="9">Base XS (9mm)</option>
+          <option value="addon" data-mm="7">Addon (7mm)</option>
+          <option value="deux-tiers" data-mm="4.85" selected>Deux tiers (4.85mm)</option>
+          <option value="medium" data-mm="2.45">Medium (2.45mm)</option>
+          <option value="mini" data-mm="1.22">Mini (1.22mm)</option>
+        </select>
+      </div>
+      <button id="btn-redim" onclick="lancerRedimDesign()" style="width:100%;padding:0.8rem;background:var(--or);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;" disabled>📏 Redimensionner la bague</button>
+    </div>
+  </div>
+  <div id="redim-result" style="margin-top:1rem;"></div>
+</div>
+
 <!-- Résultats -->
 <div class="resultats-zone" id="resultats"></div>
 
@@ -1781,6 +1832,82 @@ uploadZone.addEventListener('drop', e => {
     handleSketch({ target: input });
   }
 });
+
+// === Redimensionner une bague existante (Addon → Deux tiers, etc.) ===
+let redimImageData = null;
+
+async function handleRedimFile(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    redimImageData = await compresserImage(file, 1280);
+    const preview = document.getElementById('redim-img-preview');
+    const empty = document.getElementById('redim-upload-empty');
+    preview.src = redimImageData;
+    preview.style.display = 'block';
+    empty.style.display = 'none';
+    document.getElementById('btn-redim').disabled = false;
+  } catch (err) {
+    alert('Erreur de chargement : ' + err.message);
+  }
+}
+
+async function lancerRedimDesign() {
+  if (!redimImageData) { alert('Charge d\'abord une bague'); return; }
+  const sourceSel = document.getElementById('redim-source');
+  const cibleSel = document.getElementById('redim-cible');
+  const sourceLabel = sourceSel.options[sourceSel.selectedIndex].text;
+  const cibleLabel = cibleSel.options[cibleSel.selectedIndex].text;
+  const sourceMm = parseFloat(sourceSel.options[sourceSel.selectedIndex].dataset.mm);
+  const cibleMm = parseFloat(cibleSel.options[cibleSel.selectedIndex].dataset.mm);
+  if (sourceMm === cibleMm) { alert('Source et cible identiques — choisis 2 formats différents'); return; }
+
+  const btn = document.getElementById('btn-redim');
+  const resultZone = document.getElementById('redim-result');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Redimensionnement (~25s)…';
+  resultZone.innerHTML = `<div style="font-size:0.85rem;color:var(--or);"><span class="loader"></span> Gemini redimensionne la bande de ${sourceMm}mm vers ${cibleMm}mm…</div>`;
+
+  try {
+    const note = `Largeur SOURCE de la bague sur la photo : ${sourceMm}mm (${sourceLabel}). Largeur CIBLE souhaitée : ${cibleMm}mm (${cibleLabel}). Ratio : ${(cibleMm/sourceMm).toFixed(3)} (la bande doit être ${cibleMm < sourceMm ? 'plus fine' : 'plus large'}). Les motifs (bulles, cercles, pierres, ornements) gardent leur taille et leur forme circulaire — ne pas les déformer en ovale.`;
+    const r = await fetch('/api/retouche-photo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: redimImageData, action: 'redimensionner-bague', note, format: '1:1' }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const redimId = 'redim-' + Date.now();
+    cacheImagePut(redimId, data.image);
+    const fname = `mood-redim-${sourceMm}mm-vers-${cibleMm}mm-${Date.now()}.png`;
+    resultZone.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+        <div>
+          <div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.3rem;">Original (${sourceLabel})</div>
+          <img src="${redimImageData}" alt="original" style="width:100%;border-radius:8px;border:1px solid #e0e0e0;">
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:var(--or);font-weight:600;margin-bottom:0.3rem;">📏 Redimensionnée (${cibleLabel})</div>
+          <img src="${data.image}" alt="redimensionnée" style="width:100%;border-radius:8px;border:2px solid var(--or);">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.7rem;">
+        <button class="btn-action" onclick="telechargerCache('${redimId}','${fname}')">⬇️ Télécharger la version ${cibleLabel}</button>
+        <button class="btn-action secondary" onclick="lancerRedimDesign()">🔄 Regénérer</button>
+      </div>
+    `;
+  } catch (e) {
+    resultZone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📏 Redimensionner la bague';
+  }
+}
 
 // === Plan de sertissage AUTO — Pipeline vision par ordinateur (sans IA) + Potrace + Canvas/SVG ===
 async function genererPlanAuto(imgId, blocId, threshold) {
