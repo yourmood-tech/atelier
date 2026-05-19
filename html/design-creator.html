@@ -628,6 +628,36 @@
   <div id="redim-result" style="margin-top:1rem;"></div>
 </div>
 
+<!-- Panel : Transformation libre (duplication, ajout, retrait, modifs custom) -->
+<div class="panel" id="transform-panel" style="margin-top:2rem;border:2px dashed #6366f1;background:#f5f5ff;">
+  <div class="panel-titre" style="color:#6366f1;">🎨 Transformation libre</div>
+  <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">
+    Modification libre via instruction texte. Idéal pour dupliquer, ajouter, retirer, ou recomposer (ex : « duplique chaque bague à côté pour 26 au total », « ajoute une 14e bague rouge en bout », « retire le fond »).
+  </p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+    <div>
+      <div id="transform-upload-zone" onclick="document.getElementById('transform-file-input').click()" style="border:2px dashed #c7c7ff;border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;background:white;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="transform-upload-empty">
+          <div style="font-size:2rem;margin-bottom:0.3rem;">📸</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--gris);">Charge la photo à transformer</div>
+        </div>
+        <img id="transform-img-preview" style="display:none;max-width:100%;max-height:180px;border-radius:8px;">
+      </div>
+      <input type="file" id="transform-file-input" accept="image/*" style="display:none;" onchange="handleTransformFile(event)">
+    </div>
+    <div>
+      <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Instruction de transformation (libre)</label>
+      <textarea id="transform-instruction" rows="6" placeholder="Ex : duplique chaque bague à côté de sa jumelle pour 26 bagues au total (rouge à côté du rouge, orange à côté du orange, etc.) avec le même espacement.
+
+Ou : ajoute une 14e bague violette en bout de pile.
+
+Ou : retire le fond et remplace par blanc seamless." style="width:100%;padding:0.6rem;border:1px solid #c7c7ff;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+      <button id="btn-transform" onclick="lancerTransformLibre()" style="width:100%;padding:0.8rem;background:#6366f1;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;margin-top:0.5rem;" disabled>🎨 Lancer la transformation</button>
+    </div>
+  </div>
+  <div id="transform-result" style="margin-top:1rem;"></div>
+</div>
+
 <!-- Résultats -->
 <div class="resultats-zone" id="resultats"></div>
 
@@ -1836,6 +1866,76 @@ uploadZone.addEventListener('drop', e => {
     handleSketch({ target: input });
   }
 });
+
+// === Transformation libre (duplication, ajout, retrait, modifs custom) ===
+let transformImageData = null;
+
+async function handleTransformFile(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    transformImageData = await compresserImage(file, 1280);
+    const preview = document.getElementById('transform-img-preview');
+    const empty = document.getElementById('transform-upload-empty');
+    preview.src = transformImageData;
+    preview.style.display = 'block';
+    empty.style.display = 'none';
+    document.getElementById('btn-transform').disabled = false;
+  } catch (err) {
+    alert('Erreur de chargement : ' + err.message);
+  }
+}
+
+async function lancerTransformLibre() {
+  if (!transformImageData) { alert('Charge d\'abord une image'); return; }
+  const instruction = document.getElementById('transform-instruction')?.value?.trim();
+  if (!instruction) { alert('Décris la transformation que tu veux'); return; }
+
+  const btn = document.getElementById('btn-transform');
+  const resultZone = document.getElementById('transform-result');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Transformation (~25s)…';
+  resultZone.innerHTML = `<div style="font-size:0.85rem;color:#6366f1;"><span class="loader"></span> Gemini applique : « ${escapeHtml(instruction.slice(0, 80))}${instruction.length > 80 ? '…' : ''} »</div>`;
+
+  try {
+    const r = await fetch('/api/design-creator-transform', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: transformImageData, instruction }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const tId = 'transform-' + Date.now();
+    cacheImagePut(tId, data.image);
+    const fname = `mood-transform-${Date.now()}.png`;
+    resultZone.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;">
+        <div>
+          <div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.3rem;">Original</div>
+          <img src="${transformImageData}" alt="original" style="width:100%;border-radius:8px;border:1px solid #e0e0e0;">
+        </div>
+        <div>
+          <div style="font-size:0.72rem;color:#6366f1;font-weight:600;margin-bottom:0.3rem;">🎨 Transformée</div>
+          <img src="${data.image}" alt="transformée" style="width:100%;border-radius:8px;border:2px solid #6366f1;">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.7rem;">
+        <button class="btn-action" onclick="telechargerCache('${tId}','${fname}')">⬇️ Télécharger</button>
+        <button class="btn-action secondary" onclick="lancerTransformLibre()">🔄 Regénérer</button>
+      </div>
+    `;
+  } catch (e) {
+    resultZone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🎨 Lancer la transformation';
+  }
+}
 
 // === Redimensionner une bague existante (Addon → Deux tiers, etc.) ===
 let redimImageData = null;
