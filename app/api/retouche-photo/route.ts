@@ -72,6 +72,37 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "pastel": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "PASTEL" (luxe minimaliste / anneaux assortis bokeh)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : Photo macro produit haut de gamme. Surface en BOIS CLAIR NATUREL (chêne clair, hêtre, érable — matte naturel, légèrement texturé).
+- Arrière-plan composé UNIQUEMENT d'ANNEAUX COLORÉS reprenant exactement la même couleur, la même texture, la même taille et la même largeur que l'anneau central de la bague principale (extracted from the ring's center band), SANS les bordures métalliques visibles.
+- Les anneaux en arrière-plan sont disposés ALÉATOIREMENT de façon naturelle et harmonieuse — certains DEBOUT, certains COUCHÉS, créant une composition organique et équilibrée.
+- Light : LUMIÈRE STUDIO DIFFUSE ET CHALEUREUSE (warm soft daylight), almost-solar, cinematographic gentle.
+- PROFONDEUR DE CHAMP TRÈS FAIBLE (very shallow DOF) avec arrière-plan FORTEMENT FLOU, bokeh DOUX ET CRÉMEUX.
+- Focus ULTRA PRÉCIS sur la bague centrale (le ring du source pixel-identical).
+- Color palette : palette pastel inherited from the ring's center color (same hue), with warm wood undertones and cream highlights.
+- Mood : minimaliste premium, éditorial luxe moderne, organique et harmonieux.
+- Style references : éditorial luxe moderne, macro 85mm f/2.8 aesthetic, premium product photography Pinterest style.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a COFFRET / BOX shot : the white coffret on the warm light wood surface, soft diffuse light, blurred pastel ring bokeh in background.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with warm light wood surface + soft pastel ring bokeh in deep background (anneaux assortis identiques à la bague centrale, sans métal visible, debout/couchés, naturellement dispersés), shallow DOF, ring sharp in foreground.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- Macro 85mm f/2.8 aesthetic — tight close-up with shallow DOF.
+- The pastel ring bokeh decor is a SUPPORTING BACKDROP, heavily blurred, occupying ONLY the negative space.
+- The ring is the absolute focus subject — perfectly sharp, crisp on the front.
+- Camera : zoom in tight, macro precision. Pastel decor is silent organic harmony, never competing.`,
+
   "beton": `
 
 ═══════════════════════════════════════════
@@ -464,6 +495,22 @@ Cadrage FOCUS MAINS ET TORSE (pas le visage en gros plan, juste mains + manche +
 };
 
 const THEME_PORTEE_PROMPTS: Record<string, string> = {
+  "pastel": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME PASTEL (streetwear hoodie pastel premium)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end lifestyle WORN-RING photograph in modern streetwear visual language :
+
+Photo LIFESTYLE URBAINE MODERNE. CADRAGE DYNAMIQUE EN PERSPECTIVE avec les POINGS TENDUS VERS L'OBJECTIF (modèle tend les poings/mains en direction de la caméra, vue immersive forced-perspective).
+
+Focus NET sur les mains au PREMIER PLAN, arrière-plan volontairement FLOU. Profondeur de champ très faible avec BOKEH DOUX. Attitude CONFIANTE ET PLAYFUL. Lumière naturelle douce légèrement cinématographique.
+
+Ambiance STREETWEAR MINIMALISTE. HOODIE OVERSIZE PASTEL (sweat à capuche large, couleur pastel douce — rose poudré, lavande, bleu pâle, mint, beige cream, jaune doux — coordonné à la couleur de la bague centrale).
+
+Esthétique MODERNE ET TENDANCE, style éditorial Pinterest premium. Composition immersive avec effet de profondeur. Rendu photoréaliste. Ombres douces. Ambiance JEUNE ET COOL.
+
+🔍 FRAMING : focus principal sur les mains et les détails au premier plan (ring ~70-85% of frame width), arrière-plan flou artistique (modèle, hoodie pastel partiellement out-of-focus) — the RING REMAINS THE HERO, perfectly sharp.`,
+
   "beton": `🚨 PHOTO EDITORIALE BAGUE PORTÉE FEMME — THÈME BÉTON (luxe urbain chic)
 
 The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
