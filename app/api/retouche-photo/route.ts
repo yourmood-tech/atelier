@@ -72,6 +72,36 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "beton": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "BÉTON" (luxe urbain minéral / sculpté à la main)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : Studio photo minimaliste SOMBRE, textures métalliques organiques et SCULPTÉES À LA MAIN, inspiration ROCHE BRUTE et matière fondue.
+- Fond : BÉTON ANTHRACITE TEXTURÉ (relief minéral subtil, dark gray cement wall with organic imperfections).
+- Light : lumière CINÉMATOGRAPHIQUE DOUCE, single soft directional light from the side, creating gentle moody shadows.
+- Shadows : delicate cinematic falloff, no harsh contrast, moody premium.
+- Color palette : ANTHRACITE / DARK GRAY / CEMENT / minéral noir, with touches of warm metal highlights on the ring (gold / silver / copper depending on source).
+- Mood : luxe artisanal, moderne et minéral, sculptural, premium urban, contemporary craft.
+- Style references : Bottega Veneta architectural editorial, Maison Margiela material study, premium concrete craft.
+- Composition : sobre et élégante, sculptural, beaucoup d'espace négatif.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a COFFRET / BOX shot : the white coffret on the dark anthracite concrete surface, soft cinematic side light, gentle shadow, moody minéral mood.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with anthracite concrete texture, the ring resting on a sculpted hand-crafted metallic / stone surface (organic relief), soft cinematic side light, gentle moody shadow.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
+- The concrete / sculpted minéral decor is a SUPPORTING BACKDROP, occupying ONLY the corners and negative space.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
+- Camera : zoom in tight, macro precision. Minéral architectural decor is silent luxury, never competing.`,
+
   "zanzibar": `
 
 ═══════════════════════════════════════════
@@ -333,8 +363,9 @@ async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: 
   const modelNote = isPortee ? buildModelProfileNote(gender, age) : "";
   let basePrompt: string;
   let themeOverlay = "";
-  if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
-    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
+  const porteePrompt = (isPortee && theme) ? selectPorteePrompt(theme, gender) : null;
+  if (isPortee && porteePrompt) {
+    basePrompt = porteePrompt + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
     basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
@@ -416,7 +447,35 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
 // Prompts portée COMPLETS et PRÉCIS pour chaque thème (les prompts FR fournis par Amila, intégralement).
 // En mode portée + thème actif, ces prompts REMPLACENT le base prompt bague-portee générique
 // pour éviter tout mélange avec les directives objet/coffret du thème.
+// Prompts portée VERSION HOMME (utilisée quand gender = "homme" et le thème a une variante homme dédiée).
+// Si gender = "femme" ou "auto" ou que le thème n'a pas de variante homme, on retombe sur THEME_PORTEE_PROMPTS (version féminine par défaut).
+const THEME_PORTEE_PROMPTS_HOMME: Record<string, string> = {
+  "beton": `🚨 PHOTO EDITORIALE BAGUE PORTÉE HOMME — THÈME BÉTON (luxe urbain minéral)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in masculine urban moody visual language :
+
+Editorial masculin minimaliste. LUMIÈRE NATURELLE TAMISÉE, ambiance MOODY ET ÉLÉGANTE. HOMME élégant portant des vêtements OVERSIZE TEXTURÉS dans des TONS TERREUX ET NEUTRES (taupe, beige sombre, gris ardoise, noir mat — pull en maille épaisse, manteau structuré, ou chemise lin froissée).
+
+Cadrage FOCUS MAINS ET TORSE (pas le visage en gros plan, juste mains + manche + buste hors-focus). Esthétique luxe contemporaine, style urbain raffiné. Rendu cinématographique photoréaliste. Fond ÉPURÉ SOMBRE (anthracite, béton, mur minéral). Attitude calme et confiante.
+
+🔍 FRAMING : the ring + hand + portion of fabric sleeve / wrist near the ring fill the frame (ring ~70-85% of frame width). The man's body / oversize textured clothing are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+};
+
 const THEME_PORTEE_PROMPTS: Record<string, string> = {
+  "beton": `🚨 PHOTO EDITORIALE BAGUE PORTÉE FEMME — THÈME BÉTON (luxe urbain chic)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in feminine urban chic visual language :
+
+Editorial fashion lifestyle. FEMME ÉLÉGANTE style URBAIN CHIC. TOP NOIR MINIMALISTE (débardeur, top satin noir, ou tee-shirt structuré noir mat). Lumière DOUCE ET SOMBRE, ambiance LUXE MODERNE. Accumulation de BIJOUX FINS ET AUDACIEUX possible (mais discrète — la bague Mood reste hero).
+
+Pose naturelle (miroir, ou cadrage rapproché main / poignet près du visage). Esthétique PINTEREST PREMIUM, rendu cinématographique photoréaliste. FOND DISCRET ET FLOU (anthracite, béton, intérieur sombre minimaliste). Style sophistiqué et tendance.
+
+🔍 FRAMING : the ring + hand + portion of black top / skin near the ring fill the frame (ring ~70-85% of frame width). The woman's body / dark background are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+
   "zanzibar": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME ZANZIBAR (luxe minimaliste océan / coquillage)
 
 The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
@@ -599,13 +658,20 @@ function filterOverlayByMode(overlay: string, mode: "objet" | "portee"): string 
   return overlay.replace(/- IF the action is a WORN-RING[\s\S]*?(?=\n- IF|\n🔍|$)/g, "");
 }
 
+// Sélecteur du prompt portée selon le genre choisi par l'utilisateur
+function selectPorteePrompt(theme: string, gender?: string | null): string | null {
+  if (gender === "homme" && THEME_PORTEE_PROMPTS_HOMME[theme]) return THEME_PORTEE_PROMPTS_HOMME[theme];
+  return THEME_PORTEE_PROMPTS[theme] || null;
+}
+
 async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
   const modelNote = isPortee ? buildModelProfileNote(gender, age) : "";
   let basePrompt: string;
   let themeOverlay = "";
-  if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
-    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
+  const porteePrompt = (isPortee && theme) ? selectPorteePrompt(theme, gender) : null;
+  if (isPortee && porteePrompt) {
+    basePrompt = porteePrompt + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
     basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
   } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
