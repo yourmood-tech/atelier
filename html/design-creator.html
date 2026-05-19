@@ -621,6 +621,10 @@
       <button id="btn-redim" onclick="lancerRedimDesign()" style="width:100%;padding:0.8rem;background:var(--or);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;" disabled>📏 Redimensionner la bague</button>
     </div>
   </div>
+  <div style="margin-top:1rem;">
+    <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">💬 Indications supplémentaires <span style="color:var(--gris);font-weight:400;">— optionnel (override Gemini)</span></label>
+    <textarea id="redim-note" rows="2" placeholder="Ex : ne rajoute pas de bulles supplémentaires · garde exactement le même nombre de motifs · ne change pas la finition · pas de pierres ajoutées · etc." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+  </div>
   <div id="redim-result" style="margin-top:1rem;"></div>
 </div>
 
@@ -1869,7 +1873,11 @@ async function lancerRedimDesign() {
   resultZone.innerHTML = `<div style="font-size:0.85rem;color:var(--or);"><span class="loader"></span> Gemini redimensionne la bande de ${sourceMm}mm vers ${cibleMm}mm…</div>`;
 
   try {
-    const note = `Largeur SOURCE de la bague sur la photo : ${sourceMm}mm (${sourceLabel}). Largeur CIBLE souhaitée : ${cibleMm}mm (${cibleLabel}). Ratio : ${(cibleMm/sourceMm).toFixed(3)} (la bande doit être ${cibleMm < sourceMm ? 'plus fine' : 'plus large'}). Les motifs (bulles, cercles, pierres, ornements) gardent leur taille et leur forme circulaire — ne pas les déformer en ovale.`;
+    const noteAuto = `Largeur SOURCE de la bague sur la photo : ${sourceMm}mm (${sourceLabel}). Largeur CIBLE souhaitée : ${cibleMm}mm (${cibleLabel}). Ratio : ${(cibleMm/sourceMm).toFixed(3)} (la bande doit être ${cibleMm < sourceMm ? 'plus fine' : 'plus large'}). Les motifs (bulles, cercles, pierres, ornements) gardent leur taille et leur forme circulaire — ne pas les déformer en ovale.`;
+    const userNote = document.getElementById('redim-note')?.value?.trim();
+    const note = userNote
+      ? `${noteAuto}\n\n🚨 INSTRUCTIONS PRIORITAIRES DE L'UTILISATEUR (à respecter strictement) : ${userNote}`
+      : noteAuto;
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
