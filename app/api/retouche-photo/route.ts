@@ -72,6 +72,35 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "in-the-mood-for": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "IN THE MOOD FOR" (soft luxury cozy Pinterest editorial)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : Photo produit lifestyle premium, décor MINIMALISTE CHALEUREUX ET ÉLÉGANT. Surface BEIGE CLAIR (papier mat, lin, ou bois clair beige). Arrière-plan TEXTILE CRÈME légèrement flou (drapé soie, lin, cachemire crème).
+- Light : LUMIÈRE NATURELLE DOUCE ET CHAUDE, almost-solar diffuse, golden hour interior glow.
+- Shadows : DÉLICATES, soft falloff, no harsh contrast.
+- Color palette : BEIGE, CRÈME, NUDE, IVOIRE, soft taupe, with warm cream highlights. Monochromatic warm neutrals.
+- Profondeur de champ très faible (very shallow DOF), bokeh CRÉMEUX en arrière-plan.
+- Mood : COSY ET LUXE MODERNE, SOFT LUXURY CONTEMPORAINE, Pinterest éditorial, textures DOUCES ET RAFFINÉES, esthétique minimaliste féminine, composition épurée et harmonieuse.
+- Style references : Pinterest soft luxury, Anine Bing, Khaite cozy, contemporary minimal feminine.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a COFFRET / BOX shot : the white coffret on warm beige surface, draped soft cream fabric in background, soft warm natural light, delicate shadows, cozy soft luxury.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with warm beige surface + cream textile drape in soft-focus background, very shallow DOF, ring sharp in foreground, soft warm natural light, delicate shadows.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
+- The beige/cream cozy decor is a SUPPORTING BACKDROP, heavily blurred bokeh.
+- The ring is the absolute focus subject — perfectly sharp.
+- Camera : zoom in tight. Soft luxury decor is silent warm minimalism, never competing.`,
+
   "pastel": `
 
 ═══════════════════════════════════════════
@@ -481,6 +510,20 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
 // Prompts portée VERSION HOMME (utilisée quand gender = "homme" et le thème a une variante homme dédiée).
 // Si gender = "femme" ou "auto" ou que le thème n'a pas de variante homme, on retombe sur THEME_PORTEE_PROMPTS (version féminine par défaut).
 const THEME_PORTEE_PROMPTS_HOMME: Record<string, string> = {
+  "in-the-mood-for": `🚨 PHOTO EDITORIALE BAGUE PORTÉE HOMME — THÈME IN THE MOOD FOR (soft luxury cosy masculin)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end lifestyle WORN-RING photograph in soft luxury masculine visual language :
+
+Photo LIFESTYLE ÉDITORIALE MODERNE. HOMME BRONZÉ aux mains soignées (ongles courts, propres, NATURELS — PAS DE MANUCURE FRENCH, peau saine légèrement bronzée). POINGS TENDUS VERS L'OBJECTIF devant le visage pour le CACHER PARTIELLEMENT.
+
+Focus ULTRA NET sur les mains au PREMIER PLAN. Visage et arrière-plan FORTEMENT FLOUS. Profondeur de champ très faible avec bokeh DOUX ET CRÉMEUX. Lumière naturelle DIFFUSE ET CHALEUREUSE. Ambiance COSY ET PREMIUM.
+
+Vêtements DOUX BEIGE NUDE (sweat oversize beige, lin clair, knit crème — soft warm neutrals). Esthétique MINIMALISTE et raffinée. Pose CONFIANTE ET MODERNE. Style Pinterest LUXE. Rendu photoréaliste. Ombres délicates. Cadrage immersif centré sur les mains. Objectif portrait 85mm. Ambiance douce et tendance.
+
+🔍 FRAMING : focus principal sur les mains et la bague (ring ~70-85% of frame width), visage flou en arrière-plan, the RING REMAINS THE HERO, perfectly sharp.`,
+
   "beton": `🚨 PHOTO EDITORIALE BAGUE PORTÉE HOMME — THÈME BÉTON (luxe urbain minéral)
 
 The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
@@ -495,6 +538,20 @@ Cadrage FOCUS MAINS ET TORSE (pas le visage en gros plan, juste mains + manche +
 };
 
 const THEME_PORTEE_PROMPTS: Record<string, string> = {
+  "in-the-mood-for": `🚨 PHOTO EDITORIALE BAGUE PORTÉE FEMME — THÈME IN THE MOOD FOR (soft luxury cosy féminin)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end lifestyle WORN-RING photograph in soft luxury feminine visual language :
+
+Photo LIFESTYLE ÉDITORIALE MODERNE. BELLE FEMME BRONZÉE. ONGLES MANUCURÉS forme AMANDE avec FRENCH ÉLÉGANTE (nude pink base + fine white tip). Petit TATOUAGE DISCRET au doigt (tiny minimal tattoo, very subtle).
+
+POINGS TENDUS VERS L'OBJECTIF devant le visage pour le CACHER PARTIELLEMENT. Focus ULTRA NET sur les mains au PREMIER PLAN, visage et arrière-plan FORTEMENT FLOUS. Profondeur de champ très faible avec bokeh DOUX ET CRÉMEUX.
+
+Lumière naturelle DIFFUSE ET CHALEUREUSE. Ambiance COSY ET PREMIUM. Vêtements DOUX BEIGE NUDE (knit cream, lin clair, soft cashmere beige). Esthétique MINIMALISTE ET FÉMININE. Pose CONFIANTE ET MODERNE. Style Pinterest LUXE. Rendu photoréaliste. Ombres délicates. Cadrage immersif centré sur les mains. Objectif portrait 85mm. Ambiance douce et tendance.
+
+🔍 FRAMING : focus principal sur les mains et la bague (ring ~70-85% of frame width), visage flou en arrière-plan, the RING REMAINS THE HERO, perfectly sharp, with French manicure visible on the fingers.`,
+
   "pastel": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME PASTEL (streetwear hoodie pastel premium)
 
 The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
