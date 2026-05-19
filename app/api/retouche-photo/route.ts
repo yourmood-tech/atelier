@@ -72,6 +72,38 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 const THEME_OVERLAYS: Record<string, string> = {
+  "zanzibar": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "ZANZIBAR" (luxe minimaliste océan / coquillage sculptural)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+VISUAL DIRECTION :
+- Setting : Studio photo luxe minimaliste, décor blanc sculptural inspiré d'un coquillage, courbes organiques fluides, support en céramique blanche mate.
+- Light : lumière naturelle DOUCE ET DIFFUSE, almost-solar, ambiance aérienne et élégante.
+- Shadows : ombres DÉLICATES (pas dramatiques), soft falloff, gentle play of light on the matte ceramic surface.
+- Color palette : WHITE / IVORY / CREAM monochrome, with subtle warm beige accents from the ceramic, soft golden highlights on the ring's metal.
+- Mood : aerial, organic, oceanic, premium modern, contemporary minimalist, refined silence.
+- Style references : luxe minimaliste contemporain, océan / coquillage / nacre, premium studio editorial.
+- Decor accents (subtle, MAX 1-2 elements) : a single sculpted white shell-shape curve, a smooth matte ceramic ledge, an organic flowing form — ALWAYS white / ivory tones, NEVER colored.
+- Composition : ULTRA MINIMALISTE, sculptural, beaucoup d'espace vide.
+
+ACTION-SPECIFIC ADAPTATIONS :
+- IF the action is a WORN-RING shot (hand / body model) : ELEGANT WOMAN wearing a CRISP OVERSIZED WHITE SHIRT (chemise blanche oversize, soft cotton or poplin). Natural skin tone, gentle warm light. Tight close-up sur les mains et poignets, pose naturelle et détendue. Fond clair et épuré (white seamless or soft beige). Profondeur de champ légère. Tons chauds et lumineux. Style premium éditorial moderne, esthétique simple et raffinée. Très peu d'accessoires (no necklace, no bracelet competing). Ambiance douce et féminine.
+- IF the action is a COFFRET / BOX shot : the coffret on a matte white ceramic ledge with sculptural organic shapes around, soft diffuse natural light, delicate shadows, oceanic minimalism.
+- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with a sculptural white ceramic shell-inspired backdrop, the ring resting on a smooth matte ceramic surface, soft diffuse natural light, delicate shadows.
+- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+
+🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
+- The ring DOMINATES the composition — it fills 70-85% of the frame width.
+- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
+- The white ceramic / shell decor is a SUPPORTING BACKDROP, occupying ONLY the corners and negative space.
+- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
+- For worn-ring shots : ring + hand + portion of skin/shirt near the ring fill the frame ; the woman's body / oversize shirt are supporting, soft-focused — the RING REMAINS THE HERO.
+- Camera : zoom in tight, macro precision. Oceanic minimalism is silent luxury, never competing.`,
+
   "pur-white": `
 
 ═══════════════════════════════════════════
@@ -384,6 +416,18 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
 // En mode portée + thème actif, ces prompts REMPLACENT le base prompt bague-portee générique
 // pour éviter tout mélange avec les directives objet/coffret du thème.
 const THEME_PORTEE_PROMPTS: Record<string, string> = {
+  "zanzibar": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME ZANZIBAR (luxe minimaliste océan / coquillage)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph in oceanic minimalist visual language :
+
+Photo lifestyle minimaliste et élégante, LUMIÈRE NATURELLE DOUCE, femme portant une CHEMISE BLANCHE OVERSIZE (chemise blanche très ample, en coton ou popeline souple, légèrement froissée naturellement). Ambiance éditoriale moderne. CADRAGE RAPPROCHÉ SUR LES MAINS ET POIGNETS — main posée naturellement, poignet visible, détendu.
+
+Pose naturelle et détendue. Fond CLAIR ET ÉPURÉ (white seamless ou beige très clair). PROFONDEUR DE CHAMP LÉGÈRE (background très doucement flou). Tons chauds et lumineux. Style premium, esthétique simple et raffinée. Rendu photoréaliste. TRÈS PEU D'ACCESSOIRES (no concurrent jewelry on other fingers). Ambiance douce et féminine.
+
+🔍 FRAMING : the ring + hand + portion of wrist + portion of white shirt sleeve near the ring fill the frame (ring ~70-85% of frame width). The woman's body / oversized shirt are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+
   "terre-dombre": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME TERRE D'OMBRE (Jacquemus)
 
 The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
