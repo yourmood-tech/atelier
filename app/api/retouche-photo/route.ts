@@ -298,9 +298,11 @@ async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: 
   let basePrompt: string;
   let themeOverlay = "";
   if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
-    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "");
+    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "");
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
+  } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
+    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE;
   } else {
     basePrompt = PROMPTS[action];
     const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
@@ -478,6 +480,25 @@ Esthétique cinématographique premium, moderne et intemporelle. Arrière-plan m
 🔍 FRAMING : zoom serré sur la bague (ring ~70-85% of frame width). The model's body, white fabrics, hat are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp, with delicate prismatic highlights.`,
 };
 
+// Rappel CRITIQUE de la largeur réelle des bagues Mood (à injecter dans tous les prompts portée)
+// Sans cette consigne, Gemini agrandit la bague (~15-18mm) pour la rendre plus visible sur la main → faux
+const MOOD_RING_WIDTH_NOTE = `
+
+═══════════════════════════════════════════
+🚨 LARGEUR RÉELLE DE LA BAGUE — NON-NEGOTIABLE
+═══════════════════════════════════════════
+
+Mood Collection rings come in THREE PRECISE WIDTHS ONLY :
+- Extra-small (XS) : 9 mm wide
+- Small (S) : 11 mm wide
+- Large (L) : 13 mm wide
+
+The ring shown on the finger MUST KEEP ITS REAL PROPORTIONAL WIDTH from the source image — typically between 9 mm and 13 mm (about as wide as the width of one finger phalanx, NOT wider).
+
+DO NOT enlarge / thicken / bulk up the ring to make it more visible. DO NOT show a 15-18 mm wide ring on the finger — that is INCORRECT. A Mood ring is SLIM and ELEGANT on the finger, occupying ~1/3 to ~1/2 of the finger's length between the joints. It should look comfortable on a real hand, never oversized or chunky.
+
+If you zoom in tight on the ring (which you should — the ring is the hero), keep its width-to-finger ratio realistic. The ring fills the frame because the camera is close, NOT because the ring itself is enlarged.`;
+
 // Notes de décor à ajouter au prompt portée selon le style cliqué (mode portée)
 const PORTEE_STYLE_NOTES: Record<string, string> = {
   "fond-blanc": "\n\n[BACKGROUND VARIATION — STYLE FOND BLANC] : behind the model + ring, use a clean pure white seamless background, minimalist and neutral, soft daylight on the composition.",
@@ -506,15 +527,12 @@ async function appelGemini(imageDataUrl: string, action: string, note?: string |
   let basePrompt: string;
   let themeOverlay = "";
   if (isPortee && theme && THEME_PORTEE_PROMPTS[theme]) {
-    // Mode portée + thème actif → utiliser le prompt portée PRÉCIS du thème (intégral, fourni par Amila)
-    // + note de décor selon le style cliqué (Fond blanc, Fond anthracite, etc.)
-    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "");
-    // PAS d'overlay thème : tout est déjà dans le prompt portée précis ci-dessus
+    basePrompt = THEME_PORTEE_PROMPTS[theme] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
-    // Mode portée sans thème → bague-portee générique + note de décor
-    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "");
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE;
+  } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
+    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE;
   } else {
-    // Mode objet (par défaut) → prompt de l'action + overlay thème filtré objet
     basePrompt = PROMPTS[action];
     const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
     themeOverlay = filterOverlayByMode(overlayRaw, "objet");
