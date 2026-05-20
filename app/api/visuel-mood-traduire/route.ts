@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const MODEL = "gemini-2.5-flash";
+import { callClaudeJson } from "@/lib/claude-ai";
 
 export const maxDuration = 30;
 
@@ -12,8 +10,8 @@ const LANG_LABEL: Record<string, string> = {
 };
 
 export async function POST(req: NextRequest) {
-  if (!GEMINI_KEY) {
-    return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY manquante côté serveur — Philippe doit l'ajouter dans Vercel" }, { status: 500 });
   }
 
   let body: { textes?: Record<string, string>; cible?: string; contexte?: string };
@@ -49,40 +47,9 @@ ${JSON.stringify(textes, null, 2)}
 Output STRICT JSON with the SAME keys, values are the translations. No prose, no markdown fences, just the JSON object.`;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          responseMimeType: "application/json",
-        },
-      }),
-    });
-    const respText = await r.text();
-    let respData: { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>; error?: { message?: string } };
-    try { respData = JSON.parse(respText); }
-    catch { return NextResponse.json({ error: `Gemini non-JSON (HTTP ${r.status})` }, { status: 502 }); }
-
-    if (!r.ok) {
-      return NextResponse.json({ error: `Gemini ${r.status}: ${respData?.error?.message || ""}` }, { status: 502 });
-    }
-    const out = respData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!out) return NextResponse.json({ error: "Pas de sortie Gemini" }, { status: 502 });
-
-    let parsed: Record<string, string>;
-    try {
-      parsed = JSON.parse(out);
-    } catch {
-      const m = out.match(/\{[\s\S]*\}/);
-      if (m) {
-        try { parsed = JSON.parse(m[0]); }
-        catch { return NextResponse.json({ error: `Sortie Gemini non parsable : ${out.slice(0, 200)}` }, { status: 502 }); }
-      } else {
-        return NextResponse.json({ error: `Pas de JSON dans la sortie : ${out.slice(0, 200)}` }, { status: 502 });
-      }
+    const parsed = await callClaudeJson<Record<string, string>>({ prompt, maxTokens: 2048, temperature: 0.4 });
+    if (!parsed) {
+      return NextResponse.json({ error: "Claude n'a pas pu traduire (vérifier ANTHROPIC_API_KEY dans Vercel)" }, { status: 502 });
     }
     return NextResponse.json({ traductions: parsed });
   } catch (e) {

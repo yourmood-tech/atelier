@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const MODEL = "gemini-2.5-flash";
+import { callClaude } from "@/lib/claude-ai";
 
 const STYLE_MOOD = `Tu es l'adjoint marketing de Mood Collection — marque suisse de joaillerie contemporaine, minimaliste poétique.
 
@@ -61,8 +59,8 @@ RÈGLES :
 - Génère SANS phrase d'introduction de ta part — juste le texte de la fiche produit brut.`;
 
 export async function POST(request: Request) {
-  if (!GEMINI_KEY)
-    return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
+  if (!process.env.ANTHROPIC_API_KEY)
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY manquante côté serveur — Philippe doit l'ajouter dans Vercel" }, { status: 500 });
 
   const body = await request.json();
   const { nom, format, matiere, finition, couleur, motsCles, mode, pierres, sertissage, type_sertissage } = body || {};
@@ -95,25 +93,10 @@ export async function POST(request: Request) {
   const prompt = `${stylePrompt}\n\n--- CONTEXTE DU PRODUIT ---\n${contexte}\n\n--- TEXTE ---\n`;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.85,
-          maxOutputTokens: 2048,
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
-    });
-    const data = await r.json();
-    if (!r.ok)
-      return NextResponse.json({ error: "erreur Gemini", detail: data }, { status: r.status });
-    const texte = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!texte)
-      return NextResponse.json({ error: "réponse Gemini vide", detail: data }, { status: 500 });
+    const texte = await callClaude({ prompt, maxTokens: 2048, temperature: 0.85 });
+    if (!texte) {
+      return NextResponse.json({ error: "Claude n'a pas pu générer le texte (vérifier ANTHROPIC_API_KEY dans Vercel)" }, { status: 500 });
+    }
     return NextResponse.json({ texte });
   } catch (e) {
     return NextResponse.json(

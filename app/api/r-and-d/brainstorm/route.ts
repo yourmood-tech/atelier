@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const MODEL = "gemini-2.5-flash";
+import { callClaudeJson } from "@/lib/claude-ai";
 
 const ADN_MOOD = `Tu es l'adjoint créatif d'Amila Pousaz, designer chez Mood Collection — marque suisse de bagues à clic interchangeables, fondée en 2004 à Orbe. Ton rôle : aider Amila à TROUVER des idées de NOUVEAUTÉS qui cartonnent.
 
@@ -213,28 +211,10 @@ RÉPONSE OBLIGATOIRE — JSON STRICT, RIEN D'AUTRE :
 ]}`;
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
-    const r = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.9,
-          maxOutputTokens: 2048,
-          thinkingConfig: { thinkingBudget: 0 },
-          responseMimeType: "application/json",
-        },
-      }),
-    });
-    if (!r.ok) {
-      const data = await r.json();
-      return NextResponse.json({ error: "erreur Gemini", detail: data }, { status: r.status });
+    const parsed = await callClaudeJson({ prompt, maxTokens: 2048, temperature: 0.9 });
+    if (!parsed) {
+      return NextResponse.json({ error: "Claude n'a pas pu générer (vérifier ANTHROPIC_API_KEY dans Vercel)" }, { status: 500 });
     }
-    const data = await r.json();
-    const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!txt) return NextResponse.json({ error: "réponse Gemini vide" }, { status: 500 });
-    const parsed = JSON.parse(txt);
     return NextResponse.json(parsed);
   } catch (e) {
     return NextResponse.json(
