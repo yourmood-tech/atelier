@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { incrementGeminiImageCount } from "@/lib/gemini-counter";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
@@ -104,6 +105,7 @@ Canvas aspect : 21:9 ultrawide. Output = the strip + pure white surroundings, no
       const textPart = partsOut.find(p => p.text);
       return NextResponse.json({ error: textPart?.text ? `Gemini a répondu par texte : « ${textPart.text.slice(0, 150)} »` : "Pas d'image en sortie" }, { status: 502 });
     }
+    await incrementGeminiImageCount();
     return NextResponse.json({ image: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` });
   } catch (e) {
     return NextResponse.json({ error: String((e as Error)?.message || e) }, { status: 500 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import path from "path";
+import { incrementGeminiImageCount } from "@/lib/gemini-counter";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
@@ -1049,6 +1050,7 @@ export async function POST(req: Request) {
       const msg = textPart?.text ? `Gemini a répondu par texte au lieu d'image : « ${textPart.text.slice(0, 150)} »` : "Pas d'image en sortie.";
       return NextResponse.json({ error: msg }, { status: 502 });
     }
+    await incrementGeminiImageCount();
     return NextResponse.json({ image: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` });
   } catch (e) {
     return NextResponse.json({ error: String((e as Error)?.message || e) }, { status: 500 });
