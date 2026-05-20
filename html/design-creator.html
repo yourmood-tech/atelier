@@ -686,6 +686,28 @@ Ou : retire le fond et remplace par blanc seamless." style="width:100%;padding:0
       <input type="file" id="compose-base-input" accept="image/*" style="display:none;" onchange="handleComposeBase(event)">
     </div>
   </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+    <div>
+      <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Format de l'addon</label>
+      <select id="compose-addon-mm" style="width:100%;padding:0.6rem;border:1px solid #a7f3d0;border-radius:6px;font-size:0.88rem;background:white;">
+        <option value="">— préciser pour garantir le ratio —</option>
+        <option value="7" selected>Addon plein (7mm)</option>
+        <option value="4.85">Deux tiers (4.85mm)</option>
+        <option value="2.45">Medium (2.45mm)</option>
+        <option value="1.22">Mini (1.22mm)</option>
+      </select>
+    </div>
+    <div>
+      <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">Format de la base</label>
+      <select id="compose-base-mm" style="width:100%;padding:0.6rem;border:1px solid #a7f3d0;border-radius:6px;font-size:0.88rem;background:white;">
+        <option value="">— préciser pour garantir le ratio —</option>
+        <option value="9">Base XS (9mm)</option>
+        <option value="11" selected>Base S (11mm)</option>
+        <option value="13">Base L (13mm)</option>
+        <option value="10">Open Mood (10mm)</option>
+      </select>
+    </div>
+  </div>
   <div style="margin-top:1rem;">
     <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">💬 Note (optionnel)</label>
     <textarea id="compose-note" rows="2" placeholder="Ex : vue de trois-quarts plus marquée · base un peu plus visible en-dessous · finition plus brillante · etc." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #a7f3d0;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
@@ -2045,10 +2067,12 @@ async function lancerCompose() {
   btn.innerHTML = '<span class="loader"></span> Composition (~25s)…';
   resultZone.innerHTML = `<div style="font-size:0.85rem;color:#10b981;"><span class="loader"></span> Gemini compose addon + base…</div>`;
   try {
+    const addonMm = parseFloat(document.getElementById('compose-addon-mm')?.value) || null;
+    const baseMm = parseFloat(document.getElementById('compose-base-mm')?.value) || null;
     const r = await fetch('/api/design-creator-compose-base', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ addon: composeAddonData, base: composeBaseData, note }),
+      body: JSON.stringify({ addon: composeAddonData, base: composeBaseData, note, addonMm, baseMm }),
     });
     const text = await r.text();
     let data;
