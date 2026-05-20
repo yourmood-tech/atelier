@@ -178,6 +178,34 @@
   <button onclick="ouvrirProjets()" style="padding:0.5rem 1rem;background:white;color:var(--or);border:2px solid var(--or);border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;align-self:flex-start;">📂 Mes projets <span id="projets-count" style="background:var(--or);color:white;padding:0.1rem 0.5rem;border-radius:10px;margin-left:0.3rem;font-size:0.75rem;">0</span></button>
 </header>
 
+<!-- Compteur conso Gemini Image (mois en cours) -->
+<div id="gemini-stats-widget" style="background:#fff8e1;border:1px solid #f4d35e;border-radius:10px;padding:0.6rem 1rem;margin:0.8rem 0;font-size:0.85rem;color:#5a4f00;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+  <span>📊 <strong id="gs-month">…</strong> photos ce mois · ~<strong id="gs-cost">…</strong> USD utilisés sur <strong id="gs-cap">…</strong> · <span>cap restant ~<strong id="gs-remaining">…</strong> USD</span></span>
+  <span style="font-size:0.78rem;color:#8a7a00;">aujourd'hui : <strong id="gs-today-val">…</strong></span>
+</div>
+<script>
+(async function geminiStatsInit() {
+  async function refreshGeminiStats() {
+    try {
+      const r = await fetch('/api/gemini-stats', { cache: 'no-store' });
+      if (!r.ok) return;
+      const s = await r.json();
+      document.getElementById('gs-month').textContent = s.month ?? 0;
+      document.getElementById('gs-cost').textContent = (s.monthCostUsd ?? 0).toFixed(2);
+      document.getElementById('gs-cap').textContent = (s.capUsd ?? 0).toFixed(0) + ' USD';
+      document.getElementById('gs-remaining').textContent = (s.remainingUsd ?? 0).toFixed(2);
+      document.getElementById('gs-today-val').textContent = s.today ?? 0;
+      const widget = document.getElementById('gemini-stats-widget');
+      const pct = s.capUsd > 0 ? (s.monthCostUsd / s.capUsd) : 0;
+      if (pct >= 0.9) { widget.style.background = '#fde8e8'; widget.style.borderColor = '#c75a5a'; widget.style.color = '#8b2a2a'; }
+      else if (pct >= 0.7) { widget.style.background = '#fff3e0'; widget.style.borderColor = '#ff9800'; widget.style.color = '#7a4500'; }
+    } catch {}
+  }
+  refreshGeminiStats();
+  setInterval(refreshGeminiStats, 30000);
+})();
+</script>
+
 <!-- Étape 0 : choix de la catégorie -->
 <div class="panel" id="cat-panel">
   <div class="panel-titre">0 · Catégorie de bague</div>
