@@ -181,8 +181,8 @@ Génère exactement 5 idées de pépites créatives mood, chacune avec :
 Sois CRÉATIF mais réaliste. Si une idée propose un nouveau format / matière / techno, indique-le clairement dans le raisonnement.`;
 
 export async function POST(request: Request) {
-  if (!GEMINI_KEY)
-    return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
+  if (!process.env.ANTHROPIC_API_KEY)
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY manquante côté serveur — Philippe doit l'ajouter dans Vercel" }, { status: 500 });
 
   const body = await request.json();
   const { theme, saison, contraintes } = body || {};

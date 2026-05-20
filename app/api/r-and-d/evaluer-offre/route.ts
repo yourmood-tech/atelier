@@ -47,8 +47,8 @@ FORMAT DE RÉPONSE (JSON STRICT) :
 }`;
 
 export async function POST(request: Request) {
-  if (!GEMINI_KEY)
-    return NextResponse.json({ error: "GEMINI_API_KEY manquante" }, { status: 500 });
+  if (!process.env.ANTHROPIC_API_KEY)
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY manquante côté serveur — Philippe doit l'ajouter dans Vercel" }, { status: 500 });
 
   const body = await request.json();
   const { offre, date, produitNom, contexte } = body || {};
