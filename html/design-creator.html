@@ -658,6 +658,79 @@ Ou : retire le fond et remplace par blanc seamless." style="width:100%;padding:0
   <div id="transform-result" style="margin-top:1rem;"></div>
 </div>
 
+<!-- Panel : Composer addon + base -->
+<div class="panel" id="compose-panel" style="margin-top:2rem;border:2px dashed #10b981;background:#f0fdf4;">
+  <div class="panel-titre" style="color:#10b981;">🔗 Composer addon + base</div>
+  <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">
+    Tu as une photo d'addon seul ? Charge l'addon + une photo de base, on te génère la combo addon-clipsé-sur-base, vue catalogue.
+  </p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+    <div>
+      <div id="compose-addon-zone" onclick="document.getElementById('compose-addon-input').click()" style="border:2px dashed #a7f3d0;border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;background:white;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="compose-addon-empty">
+          <div style="font-size:2rem;margin-bottom:0.3rem;">💍</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--gris);">Charge l'addon (anneau décoré)</div>
+        </div>
+        <img id="compose-addon-preview" style="display:none;max-width:100%;max-height:160px;border-radius:8px;">
+      </div>
+      <input type="file" id="compose-addon-input" accept="image/*" style="display:none;" onchange="handleComposeAddon(event)">
+    </div>
+    <div>
+      <div id="compose-base-zone" onclick="document.getElementById('compose-base-input').click()" style="border:2px dashed #a7f3d0;border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;background:white;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="compose-base-empty">
+          <div style="font-size:2rem;margin-bottom:0.3rem;">⭕</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--gris);">Charge la base (anneau large)</div>
+        </div>
+        <img id="compose-base-preview" style="display:none;max-width:100%;max-height:160px;border-radius:8px;">
+      </div>
+      <input type="file" id="compose-base-input" accept="image/*" style="display:none;" onchange="handleComposeBase(event)">
+    </div>
+  </div>
+  <div style="margin-top:1rem;">
+    <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">💬 Note (optionnel)</label>
+    <textarea id="compose-note" rows="2" placeholder="Ex : vue de trois-quarts plus marquée · base un peu plus visible en-dessous · finition plus brillante · etc." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #a7f3d0;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+  </div>
+  <button id="btn-compose" onclick="lancerCompose()" style="width:100%;padding:0.8rem;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;margin-top:1rem;" disabled>🔗 Composer addon + base</button>
+  <div id="compose-result" style="margin-top:1rem;"></div>
+</div>
+
+<!-- Panel : Changer la couleur d'un addon avec image de référence -->
+<div class="panel" id="recolor-panel" style="margin-top:2rem;border:2px dashed #ec4899;background:#fdf2f8;">
+  <div class="panel-titre" style="color:#ec4899;">🎨 Changer la couleur d'un addon (avec image de référence)</div>
+  <p style="font-size:0.85rem;color:var(--gris);margin-bottom:0.8rem;">
+    Charge l'addon à recolorier + une image de référence couleur (swatch, photo de matière, échantillon). On garde la forme + le décor, on remplace juste la teinte et la finition.
+  </p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+    <div>
+      <div id="recolor-addon-zone" onclick="document.getElementById('recolor-addon-input').click()" style="border:2px dashed #fbcfe8;border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;background:white;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="recolor-addon-empty">
+          <div style="font-size:2rem;margin-bottom:0.3rem;">💍</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--gris);">Charge l'addon à recolorier</div>
+        </div>
+        <img id="recolor-addon-preview" style="display:none;max-width:100%;max-height:160px;border-radius:8px;">
+      </div>
+      <input type="file" id="recolor-addon-input" accept="image/*" style="display:none;" onchange="handleRecolorAddon(event)">
+    </div>
+    <div>
+      <div id="recolor-couleur-zone" onclick="document.getElementById('recolor-couleur-input').click()" style="border:2px dashed #fbcfe8;border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;background:white;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div id="recolor-couleur-empty">
+          <div style="font-size:2rem;margin-bottom:0.3rem;">🎨</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--gris);">Charge l'image de référence couleur</div>
+          <div style="font-size:0.72rem;color:var(--gris);margin-top:0.2rem;">swatch, photo matière, échantillon</div>
+        </div>
+        <img id="recolor-couleur-preview" style="display:none;max-width:100%;max-height:160px;border-radius:8px;">
+      </div>
+      <input type="file" id="recolor-couleur-input" accept="image/*" style="display:none;" onchange="handleRecolorCouleur(event)">
+    </div>
+  </div>
+  <div style="margin-top:1rem;">
+    <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--gris);margin-bottom:0.3rem;">💬 Note (optionnel)</label>
+    <textarea id="recolor-note" rows="2" placeholder="Ex : finition brossée mat · garde la gravure noire · finition plus rosée que la ref · etc." style="width:100%;padding:0.5rem 0.7rem;border:1px solid #fbcfe8;border-radius:6px;font-size:0.85rem;font-family:inherit;resize:vertical;"></textarea>
+  </div>
+  <button id="btn-recolor" onclick="lancerRecolor()" style="width:100%;padding:0.8rem;background:#ec4899;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.95rem;margin-top:1rem;" disabled>🎨 Recolorier l'addon</button>
+  <div id="recolor-result" style="margin-top:1rem;"></div>
+</div>
+
 <!-- Résultats -->
 <div class="resultats-zone" id="resultats"></div>
 
@@ -1934,6 +2007,144 @@ async function lancerTransformLibre() {
   } finally {
     btn.disabled = false;
     btn.innerHTML = '🎨 Lancer la transformation';
+  }
+}
+
+// === Composer addon + base ===
+let composeAddonData = null;
+let composeBaseData = null;
+
+async function handleComposeAddon(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    composeAddonData = await compresserImage(file, 1280);
+    document.getElementById('compose-addon-preview').src = composeAddonData;
+    document.getElementById('compose-addon-preview').style.display = 'block';
+    document.getElementById('compose-addon-empty').style.display = 'none';
+    if (composeBaseData) document.getElementById('btn-compose').disabled = false;
+  } catch (err) { alert('Erreur de chargement : ' + err.message); }
+}
+async function handleComposeBase(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    composeBaseData = await compresserImage(file, 1280);
+    document.getElementById('compose-base-preview').src = composeBaseData;
+    document.getElementById('compose-base-preview').style.display = 'block';
+    document.getElementById('compose-base-empty').style.display = 'none';
+    if (composeAddonData) document.getElementById('btn-compose').disabled = false;
+  } catch (err) { alert('Erreur de chargement : ' + err.message); }
+}
+async function lancerCompose() {
+  if (!composeAddonData || !composeBaseData) { alert('Charge l\'addon ET la base'); return; }
+  const note = document.getElementById('compose-note')?.value?.trim() || null;
+  const btn = document.getElementById('btn-compose');
+  const resultZone = document.getElementById('compose-result');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Composition (~25s)…';
+  resultZone.innerHTML = `<div style="font-size:0.85rem;color:#10b981;"><span class="loader"></span> Gemini compose addon + base…</div>`;
+  try {
+    const r = await fetch('/api/design-creator-compose-base', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addon: composeAddonData, base: composeBaseData, note }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const tId = 'compose-' + Date.now();
+    cacheImagePut(tId, data.image);
+    const fname = `mood-compose-${Date.now()}.png`;
+    resultZone.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;">
+        <div><div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.3rem;">Addon</div><img src="${composeAddonData}" style="width:100%;border-radius:8px;border:1px solid #e0e0e0;"></div>
+        <div><div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.3rem;">Base</div><img src="${composeBaseData}" style="width:100%;border-radius:8px;border:1px solid #e0e0e0;"></div>
+        <div><div style="font-size:0.72rem;color:#10b981;font-weight:600;margin-bottom:0.3rem;">🔗 Composé</div><img src="${data.image}" style="width:100%;border-radius:8px;border:2px solid #10b981;"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.7rem;">
+        <button class="btn-action" onclick="telechargerCache('${tId}','${fname}')">⬇️ Télécharger</button>
+        <button class="btn-action secondary" onclick="lancerCompose()">🔄 Regénérer</button>
+      </div>
+    `;
+  } catch (e) {
+    resultZone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔗 Composer addon + base';
+  }
+}
+
+// === Changer la couleur d'un addon avec image de référence ===
+let recolorAddonData = null;
+let recolorCouleurData = null;
+
+async function handleRecolorAddon(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    recolorAddonData = await compresserImage(file, 1280);
+    document.getElementById('recolor-addon-preview').src = recolorAddonData;
+    document.getElementById('recolor-addon-preview').style.display = 'block';
+    document.getElementById('recolor-addon-empty').style.display = 'none';
+    if (recolorCouleurData) document.getElementById('btn-recolor').disabled = false;
+  } catch (err) { alert('Erreur de chargement : ' + err.message); }
+}
+async function handleRecolorCouleur(e) {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  try {
+    recolorCouleurData = await compresserImage(file, 1280);
+    document.getElementById('recolor-couleur-preview').src = recolorCouleurData;
+    document.getElementById('recolor-couleur-preview').style.display = 'block';
+    document.getElementById('recolor-couleur-empty').style.display = 'none';
+    if (recolorAddonData) document.getElementById('btn-recolor').disabled = false;
+  } catch (err) { alert('Erreur de chargement : ' + err.message); }
+}
+async function lancerRecolor() {
+  if (!recolorAddonData || !recolorCouleurData) { alert('Charge l\'addon ET la référence couleur'); return; }
+  const note = document.getElementById('recolor-note')?.value?.trim() || null;
+  const btn = document.getElementById('btn-recolor');
+  const resultZone = document.getElementById('recolor-result');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Recoloration (~25s)…';
+  resultZone.innerHTML = `<div style="font-size:0.85rem;color:#ec4899;"><span class="loader"></span> Gemini applique la nouvelle couleur…</div>`;
+  try {
+    const r = await fetch('/api/design-creator-recolor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addon: recolorAddonData, couleurRef: recolorCouleurData, note }),
+    });
+    const text = await r.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Réponse non-JSON (HTTP ${r.status}) : ${text.slice(0, 200)}`); }
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    if (!data.image) throw new Error('Pas d\'image retournée');
+
+    const tId = 'recolor-' + Date.now();
+    cacheImagePut(tId, data.image);
+    const fname = `mood-recolor-${Date.now()}.png`;
+    resultZone.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;">
+        <div><div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.3rem;">Addon original</div><img src="${recolorAddonData}" style="width:100%;border-radius:8px;border:1px solid #e0e0e0;"></div>
+        <div><div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.3rem;">Référence couleur</div><img src="${recolorCouleurData}" style="width:100%;border-radius:8px;border:1px solid #e0e0e0;"></div>
+        <div><div style="font-size:0.72rem;color:#ec4899;font-weight:600;margin-bottom:0.3rem;">🎨 Recoloré</div><img src="${data.image}" style="width:100%;border-radius:8px;border:2px solid #ec4899;"></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:0.7rem;">
+        <button class="btn-action" onclick="telechargerCache('${tId}','${fname}')">⬇️ Télécharger</button>
+        <button class="btn-action secondary" onclick="lancerRecolor()">🔄 Regénérer</button>
+      </div>
+    `;
+  } catch (e) {
+    resultZone.innerHTML = `<div style="color:var(--rouge);font-size:0.85rem;">⚠️ ${escapeHtml(e.message || String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🎨 Recolorier l\'addon';
   }
 }
 
