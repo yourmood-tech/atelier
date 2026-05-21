@@ -8,12 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  /* ===== CHARTE OFFICIELLE MOOD ===== */
   :root {
     --noir: #252525;
     --anthracite: #4D4C4C;
     --gris: #D5D3D3;
-    --gris-soft: #BABDB6;
     --turquoise: #76BABA;
     --rose: #F99C98;
     --vert: #C0D230;
@@ -33,7 +31,6 @@
     line-height: 1.5;
   }
 
-  /* ---- APP (écran) ---- */
   header {
     background: white;
     padding: 0.9rem 1.5rem;
@@ -89,7 +86,6 @@
   .panel-search .row-opt { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; font-size: 0.9rem; }
   .panel-search .row-opt input[type=checkbox] { width: auto; }
 
-  /* === ONGLETS SOURCES PHOTOS === */
   .source-tabs {
     display: flex;
     gap: 0.3rem;
@@ -110,11 +106,7 @@
     font-family: inherit;
   }
   .source-tab:hover { color: var(--anthracite); }
-  .source-tab.active {
-    color: var(--noir);
-    border-bottom-color: var(--noir);
-  }
-
+  .source-tab.active { color: var(--noir); border-bottom-color: var(--noir); }
   .source-panel { display: none; }
   .source-panel.active { display: block; }
 
@@ -130,13 +122,11 @@
     transition: all 0.15s;
   }
   .result-card:hover { border-color: var(--anthracite); background: var(--blanc-casse); }
-  .result-card.active { border-color: var(--noir); background: var(--beige); }
   .result-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background: #f5f5f5; flex-shrink: 0; }
   .result-card .info { flex: 1; min-width: 0; }
   .result-card .title { font-size: 0.85rem; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .result-card .price { font-size: 0.78rem; color: var(--anthracite); margin-top: 0.15rem; }
 
-  /* === DROP ZONE UPLOAD === */
   .drop-zone {
     border: 2px dashed var(--gris-light);
     border-radius: 10px;
@@ -148,15 +138,10 @@
     transition: all 0.15s;
     background: var(--blanc-casse);
   }
-  .drop-zone:hover, .drop-zone.dragover {
-    border-color: var(--noir);
-    background: var(--beige);
-    color: var(--noir);
-  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--noir); background: var(--beige); color: var(--noir); }
   .drop-zone input[type=file] { display: none; }
   .drop-zone .ico { font-size: 1.8rem; display: block; margin-bottom: 0.3rem; }
 
-  /* === CHAMP URL === */
   .url-add { display: flex; gap: 0.4rem; }
   .url-add input { flex: 1; }
   .url-add button {
@@ -173,7 +158,6 @@
   .url-hint { font-size: 0.72rem; color: var(--gris-text); margin-top: 0.4rem; line-height: 1.4; }
   .url-hint a { color: var(--anthracite); }
 
-  /* === SELECTEUR PHOTOS (vignettes) === */
   .photo-picker {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -206,7 +190,6 @@
     font-family: 'Comfortaa', sans-serif;
   }
   .photo-picker .thumb .badge.verso { background: var(--anthracite); }
-  .photo-picker .thumb .badge.local { background: var(--turquoise); }
   .photo-picker .thumb .src-badge {
     position: absolute;
     bottom: 2px; left: 2px;
@@ -233,17 +216,10 @@
   }
   .photo-picker .thumb:hover .del-btn { display: block; }
   .picker-hint { font-size: 0.72rem; color: var(--gris-text); margin-top: 0.4rem; line-height: 1.4; }
-
   .picker-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; font-size: 0.8rem; }
   .picker-row .lbl { color: var(--gris-text); flex-shrink: 0; min-width: 50px; font-weight: 600; }
 
-  /* === SELECTEUR COULEUR FOND RECTO === */
-  .color-picker {
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-    margin-top: 0.4rem;
-  }
+  .color-picker { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.4rem; }
   .color-swatch {
     width: 28px; height: 28px;
     border-radius: 50%;
@@ -266,18 +242,20 @@
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
   }
 
-  .preview-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+  /* === BANDEAU AIDE ÉDITEUR === */
+  .editor-help {
+    background: var(--beige);
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--anthracite);
+    margin-top: 0.4rem;
   }
-  .actions {
-    display: flex;
-    gap: 0.6rem;
-    align-items: center;
-    flex-wrap: wrap;
-  }
+  .editor-help strong { color: var(--noir); }
+
+  .preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
   .actions button {
     padding: 0.6rem 1.2rem;
     border-radius: 8px;
@@ -299,13 +277,7 @@
   .actions button:hover { border-color: var(--noir); color: var(--noir); }
   .actions .hint { color: var(--gris-text); font-size: 0.78rem; }
 
-  .pages-wrap {
-    display: flex;
-    gap: 1.5rem;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+  .pages-wrap { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
   .page-label {
     text-align: center;
     font-size: 0.72rem;
@@ -329,7 +301,7 @@
     border: 2px dashed var(--gris-light);
   }
 
-  /* ====== FLYER A5 PORTRAIT — 148×210mm ====== */
+  /* ====== FLYER A5 PORTRAIT — 148×210mm @ 96dpi ≈ 559×794px ====== */
   .flyer {
     width: 148mm;
     height: 210mm;
@@ -338,11 +310,8 @@
     overflow: hidden;
     font-family: 'Comfortaa', 'Inter', sans-serif;
     color: var(--noir);
-    display: flex;
-    flex-direction: column;
   }
 
-  /* === FONDS COULEUR RECTO === */
   .flyer.bg-blanc { background: var(--blanc-casse); color: var(--noir); }
   .flyer.bg-sable { background: var(--sable); color: var(--noir); }
   .flyer.bg-beige { background: var(--beige); color: var(--noir); }
@@ -353,118 +322,99 @@
   .flyer.bg-turquoise { background: var(--turquoise); color: white; }
   .flyer.bg-vert { background: var(--vert); color: var(--noir); }
 
-  /* === LOGO MOOD === */
-  .logo-mood-img {
-    height: 10mm;
-    width: auto;
-    display: block;
-    margin: 0 auto;
-  }
-  .logo-mood-img.white { filter: brightness(0) invert(1); }
+  /* ====== RECTO — ÉDITEUR LIBRE ====== */
+  .flyer-recto { padding: 0; }
 
-  /* ====== MOTIF "O" ANNEAU — pattern décoratif Mood ====== */
-  .o-pattern {
+  .editable {
     position: absolute;
-    pointer-events: none;
-    opacity: 0.06;
-    z-index: 1;
+    cursor: move;
+    user-select: none;
+    -webkit-user-select: none;
+    border: 2px dashed transparent;
+    transition: border-color 0.15s;
+    z-index: 2;
   }
-  .o-pattern svg { width: 100%; height: 100%; }
+  .editable:hover { border-color: rgba(37,37,37,0.4); }
+  .editable.selected { border-color: var(--noir); }
+  .editable.is-photo { z-index: 1; cursor: move; }
 
-  /* ====== RECTO — STYLE POSTER (inspiré "Adornment Beyond Time") ====== */
-  .flyer-recto {
-    padding: 12mm 12mm 10mm;
-    position: relative;
-  }
-  .flyer-recto.bg-noir, .flyer-recto.bg-anthracite, .flyer-recto.bg-turquoise {
-    color: white;
-  }
-  .recto-badge {
-    position: relative;
-    z-index: 3;
-    font-family: 'Comfortaa', sans-serif;
-    font-size: 8pt;
-    font-weight: 600;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    text-align: center;
-    margin-bottom: 4mm;
-    opacity: 0.85;
-  }
-  .recto-title {
-    position: relative;
-    z-index: 3;
-    font-family: 'Comfortaa', sans-serif;
-    font-weight: 700;
-    font-size: 32pt;
-    line-height: 0.95;
-    text-align: center;
-    letter-spacing: 0.005em;
-    text-transform: lowercase;
-    margin: 0 0 6mm;
-  }
-  .recto-photo {
-    position: relative;
-    z-index: 3;
-    flex: 1;
-    margin: 2mm 0 6mm;
-    overflow: hidden;
-    border-radius: 1mm;
+  .editable img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+
+  /* Texte éditable */
+  .editable.is-text {
+    padding: 4px 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
   }
-  .recto-photo img {
+  .editable.is-text .text-inner {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .recto-caption {
-    position: relative;
-    z-index: 3;
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-weight: 300;
-    font-size: 10pt;
-    line-height: 1.45;
-    text-align: center;
-    margin: 0 6mm 4mm;
-    opacity: 0.9;
-  }
-  .recto-tagline {
-    position: relative;
-    z-index: 3;
+    pointer-events: none;
     font-family: 'Comfortaa', sans-serif;
-    font-weight: 600;
-    font-size: 8pt;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    text-align: center;
-    opacity: 0.75;
+    font-weight: 700;
+    text-transform: lowercase;
+    line-height: 1.05;
+    word-break: break-word;
   }
 
-  /* Motif O en arrière-plan recto */
-  .flyer-recto .o-pattern.top-right {
-    top: -20mm; right: -20mm;
-    width: 80mm; height: 80mm;
+  /* Poignée resize bottom-right */
+  .resize-handle {
+    position: absolute;
+    bottom: -7px; right: -7px;
+    width: 14px; height: 14px;
+    background: var(--noir);
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: nwse-resize;
+    z-index: 10;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    display: none;
   }
-  .flyer-recto .o-pattern.bottom-left {
-    bottom: -25mm; left: -25mm;
-    width: 70mm; height: 70mm;
-  }
+  .editable:hover .resize-handle,
+  .editable.selected .resize-handle { display: block; }
 
-  /* ====== VERSO — fond blanc, mosaïque 1+3 ====== */
+  /* Bouton ordre z-index (avant/arrière) */
+  .layer-btns {
+    position: absolute;
+    top: -10px; right: -10px;
+    display: none;
+    gap: 4px;
+    z-index: 11;
+  }
+  .editable.selected .layer-btns { display: flex; }
+  .layer-btn {
+    width: 22px; height: 22px;
+    background: var(--noir);
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    padding: 0;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .layer-btn:hover { background: var(--anthracite); }
+
+  /* Logo mood */
+  .logo-mood-img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
+  .logo-mood-img.white { filter: brightness(0) invert(1); }
+
+  /* ====== VERSO — FIXE ====== */
   .flyer-verso {
     background: var(--blanc-casse);
     padding: 10mm 10mm 8mm;
     color: var(--noir);
+    display: flex;
+    flex-direction: column;
   }
   .verso-top {
     text-align: center;
-    position: relative;
-    z-index: 3;
   }
+  .verso-top img { height: 10mm; width: auto; display: inline-block; margin: 0 auto; }
   .verso-product-name {
     margin: 4mm 0 1mm;
     font-family: 'Comfortaa', sans-serif;
@@ -486,39 +436,17 @@
     margin-bottom: 4mm;
     font-weight: 500;
   }
-
-  /* Grille 1 grande + 3 petites */
   .verso-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2mm;
     margin: 4mm 0 5mm;
     height: 75mm;
-    position: relative;
-    z-index: 3;
   }
-  .verso-grid .grid-large {
-    grid-row: span 3;
-    background: #f5f5f5;
-    overflow: hidden;
-    border-radius: 1mm;
-  }
-  .verso-grid .grid-small {
-    background: #f5f5f5;
-    overflow: hidden;
-    border-radius: 1mm;
-    height: 23.7mm;
-  }
-  .verso-grid img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
+  .verso-grid .grid-large { grid-row: span 3; background: #f5f5f5; overflow: hidden; border-radius: 1mm; }
+  .verso-grid .grid-small { background: #f5f5f5; overflow: hidden; border-radius: 1mm; height: 23.7mm; }
+  .verso-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .verso-interchangeable {
-    position: relative;
-    z-index: 3;
     text-align: center;
     margin: 1mm 0 3mm;
     padding: 2mm 4mm;
@@ -542,10 +470,7 @@
     color: var(--noir);
     vertical-align: middle;
   }
-
   .verso-desc {
-    position: relative;
-    z-index: 3;
     font-size: 8.5pt;
     line-height: 1.55;
     color: #444;
@@ -556,13 +481,7 @@
     overflow: hidden;
     font-family: 'Inter', sans-serif;
   }
-
-  .verso-price-wrap {
-    position: relative;
-    z-index: 3;
-    text-align: center;
-    margin: 2mm 0 3mm;
-  }
+  .verso-price-wrap { text-align: center; margin: 2mm 0 3mm; }
   .verso-price {
     display: inline-block;
     font-family: 'Comfortaa', sans-serif;
@@ -572,10 +491,7 @@
     padding: 1mm 8mm;
     letter-spacing: 0.02em;
   }
-
   .verso-footer {
-    position: relative;
-    z-index: 3;
     margin-top: auto;
     padding-top: 4mm;
     display: flex;
@@ -584,18 +500,8 @@
     gap: 4mm;
     border-top: 0.3mm solid var(--gris);
   }
-  .verso-qr {
-    width: 22mm;
-    flex-shrink: 0;
-  }
-  .verso-qr-img {
-    width: 22mm;
-    height: 22mm;
-    background: white;
-    padding: 0.5mm;
-    border: 0.3mm solid var(--gris);
-    border-radius: 1mm;
-  }
+  .verso-qr { width: 22mm; flex-shrink: 0; }
+  .verso-qr-img { width: 22mm; height: 22mm; background: white; padding: 0.5mm; border: 0.3mm solid var(--gris); border-radius: 1mm; }
   .verso-qr-img img { width: 100%; height: 100%; display: block; }
   .verso-qr-label {
     font-family: 'Comfortaa', sans-serif;
@@ -629,33 +535,20 @@
     font-weight: 600;
     font-size: 8pt;
     margin-top: 1mm;
-    letter-spacing: 0.02em;
-  }
-
-  /* Motif O verso (discret) */
-  .flyer-verso .o-pattern.top-left {
-    top: -15mm; left: -15mm;
-    width: 50mm; height: 50mm;
-    opacity: 0.04;
   }
 
   /* ====== IMPRESSION ====== */
-  @page {
-    size: A5 portrait;
-    margin: 0;
-  }
+  @page { size: A5 portrait; margin: 0; }
   @media print {
     body { background: white; }
     header, .panel-search, .actions, .empty-preview, .page-label { display: none !important; }
     .app-wrap { display: block; padding: 0; max-width: none; }
     .preview-wrap, .pages-wrap { display: block; }
     .page-side { display: block; }
-    .flyer {
-      box-shadow: none !important;
-      margin: 0 !important;
-      page-break-after: always;
-    }
+    .flyer { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
     .flyer:last-of-type { page-break-after: auto; }
+    .editable { border-color: transparent !important; }
+    .resize-handle, .layer-btns { display: none !important; }
   }
 </style>
 </head>
@@ -704,10 +597,10 @@
     </div>
 
     <div id="photo-picker-wrap" style="display:none;margin-top:1.2rem;">
-      <h2>2 · Choisir les photos</h2>
+      <h2>2 · Photos sélectionnées</h2>
       <div class="picker-row">
         <span class="lbl">Recto</span>
-        <span style="color:var(--noir);font-size:0.75rem;">1 photo (badge R noir)</span>
+        <span style="color:var(--noir);font-size:0.75rem;">1 photo (badge R)</span>
       </div>
       <div class="photo-picker" id="picker-recto"></div>
       <div class="picker-row" style="margin-top:0.8rem;">
@@ -715,14 +608,14 @@
         <span style="color:var(--anthracite);font-size:0.75rem;">4 photos — 1 grande + 3 petites</span>
       </div>
       <div class="photo-picker" id="picker-verso"></div>
-      <div class="picker-hint">Clique sur les vignettes pour choisir. Tu peux mélanger Shopify + upload Mac + URL Dash dans le même flyer.</div>
     </div>
 
-    <h2>3 · Produit (texte)</h2>
-    <input type="text" id="opt-title" oninput="renderFlyer()" placeholder="Nom (ex : bague aura)">
-    <textarea id="opt-desc" oninput="renderFlyer()" placeholder="Description courte (texte qui apparaît au verso)" style="margin-top:0.5rem;"></textarea>
+    <h2>3 · Textes</h2>
+    <input type="text" id="opt-title" oninput="renderAll()" placeholder="Nom produit (recto + verso)">
+    <input type="text" id="opt-tagline" oninput="renderAll()" placeholder="Phrase courte du recto (ex : mood évolue avec toi)" style="margin-top:0.5rem;" value="mood évolue avec toi">
+    <textarea id="opt-desc" oninput="renderAll()" placeholder="Description verso" style="margin-top:0.5rem;"></textarea>
 
-    <h2>4 · Couleur du fond recto</h2>
+    <h2>4 · Couleur de fond recto</h2>
     <div class="color-picker" id="color-picker">
       <div class="color-swatch active" data-bg="bg-blanc" style="background:#FAF7F2;border:1px solid #ddd;" title="Blanc cassé"></div>
       <div class="color-swatch" data-bg="bg-sable" style="background:#E8DCC9;" title="Sable"></div>
@@ -732,26 +625,40 @@
       <div class="color-swatch" data-bg="bg-noir" style="background:#252525;" title="Noir"></div>
       <div class="color-swatch" data-bg="bg-rose" style="background:#F99C98;" title="Rose"></div>
       <div class="color-swatch" data-bg="bg-turquoise" style="background:#76BABA;" title="Turquoise"></div>
-      <div class="color-swatch" data-bg="bg-vert" style="background:#C0D230;" title="Vert mood"></div>
+      <div class="color-swatch" data-bg="bg-vert" style="background:#C0D230;" title="Vert"></div>
     </div>
 
-    <h2>5 · Textes du recto</h2>
-    <input type="text" id="opt-badge" oninput="renderFlyer()" placeholder="Badge haut (ex : MOOD COLLECTION)" value="MOOD COLLECTION">
-    <textarea id="opt-caption" oninput="renderFlyer()" placeholder="Légende italique sous photo" style="margin-top:0.5rem;">Un système breveté de bagues interchangeables qui évolue avec toi.</textarea>
-    <input type="text" id="opt-tagline" oninput="renderFlyer()" placeholder="Phrase bas recto" value="MOOD ÉVOLUE AVEC TOI" style="margin-top:0.5rem;">
+    <h2>5 · Éléments recto</h2>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-photo-recto" checked onchange="toggleEl('photo', this.checked)">
+      Photo
+    </label>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-logo-recto" checked onchange="toggleEl('logo', this.checked)">
+      Logo mood
+    </label>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-title-recto" onchange="toggleEl('title', this.checked)">
+      Nom produit
+    </label>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-tagline-recto" checked onchange="toggleEl('tagline', this.checked)">
+      Phrase courte
+    </label>
+    <button id="reset-layout" style="margin-top:0.8rem;padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;">↺ Réinitialiser la mise en page</button>
 
-    <h2>6 · Options</h2>
+    <div class="editor-help">
+      <strong>Édition du recto :</strong> clique sur la photo, le logo ou un texte pour le déplacer. Glisse depuis le <strong>cercle noir</strong> en bas à droite pour redimensionner. Boutons <strong>↑ ↓</strong> = passer devant / derrière.
+    </div>
+
+    <h2>6 · Verso (fixe)</h2>
     <label class="row-opt">
-      <input type="checkbox" id="opt-show-price" checked onchange="renderFlyer()">
-      Afficher le prix au verso
+      <input type="checkbox" id="opt-show-price" checked onchange="renderVerso()">
+      Afficher le prix
     </label>
     <label class="row-opt">
-      <input type="checkbox" id="opt-show-logo-recto" checked onchange="renderFlyer()">
-      Logo mood au bas du recto
-    </label>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-interchange" checked onchange="renderFlyer()">
-      Bande "système interchangeable" au verso
+      <input type="checkbox" id="opt-show-interchange" checked onchange="renderVerso()">
+      Bande "système interchangeable"
     </label>
 
   </aside>
@@ -759,7 +666,7 @@
   <main class="preview-wrap">
     <div class="actions">
       <button class="primary" onclick="window.print()">🖨️ Imprimer / PDF</button>
-      <span class="hint">Chrome/Safari : choisir A5 portrait, marges aucune, échelle 100%</span>
+      <span class="hint">Chrome/Safari : A5 portrait, marges aucune, échelle 100%</span>
     </div>
 
     <div id="preview-area">
@@ -775,20 +682,33 @@
 
 <script>
 // ===== ÉTAT =====
-let allImages = []; // {url, alt, source: 'shopify'|'upload'|'url', id}
+let allImages = [];
 let imgCounter = 0;
 let selectedRectoId = null;
-let selectedVersoIds = []; // max 4
-let currentProductMeta = null; // pour pré-remplir titre/desc/prix/url Shopify
+let selectedVersoIds = [];
+let currentProductMeta = null;
 let bgRecto = 'bg-blanc';
 let searchTimer = null;
 
-const searchInput = document.getElementById('search-input');
-const resultsDiv = document.getElementById('results');
+// Layout par défaut du recto (en mm, converti px à l'affichage)
+// Page A5 = 148×210mm. 1mm = 3.7795px.
+const MM = 3.7795;
+function mm(v) { return v * MM; }
+
+function defaultLayout() {
+  return {
+    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1 },
+    logo:    { x: 56, y: 8, w: 36, h: 14, visible: true, z: 3 },
+    title:   { x: 14, y: 180, w: 120, h: 18, visible: false, z: 3, fontSize: 22, color: 'white' },
+    tagline: { x: 14, y: 192, w: 120, h: 10, visible: true, z: 3, fontSize: 10, color: 'white', upper: true, ls: 0.3 }
+  };
+}
+let layout = defaultLayout();
+
 const previewArea = document.getElementById('preview-area');
 const photoPickerWrap = document.getElementById('photo-picker-wrap');
 
-// ===== ONGLETS SOURCES =====
+// ===== ONGLETS =====
 document.querySelectorAll('.source-tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.source-tab').forEach(x => x.classList.remove('active'));
@@ -798,7 +718,9 @@ document.querySelectorAll('.source-tab').forEach(t => {
   });
 });
 
-// ===== SHOPIFY SEARCH =====
+// ===== SHOPIFY =====
+const searchInput = document.getElementById('search-input');
+const resultsDiv = document.getElementById('results');
 searchInput.addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = searchInput.value.trim();
@@ -820,7 +742,7 @@ async function doSearch(q) {
     }
     const products = data.products || [];
     if (products.length === 0) {
-      resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
+      resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé</div>';
       return;
     }
     resultsDiv.innerHTML = products.map((p, i) => `
@@ -833,10 +755,7 @@ async function doSearch(q) {
       </div>
     `).join('');
     Array.from(resultsDiv.querySelectorAll('.result-card')).forEach((card) => {
-      card.addEventListener('click', () => {
-        const idx = parseInt(card.dataset.idx, 10);
-        selectShopifyProduct(products[idx]);
-      });
+      card.addEventListener('click', () => selectShopifyProduct(products[parseInt(card.dataset.idx, 10)]));
     });
   } catch (e) {
     resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur réseau</div>';
@@ -845,34 +764,19 @@ async function doSearch(q) {
 
 function selectShopifyProduct(p) {
   currentProductMeta = p;
-  // Pré-remplit les champs de texte
-  if (!document.getElementById('opt-title').value.trim()) {
-    document.getElementById('opt-title').value = p.title;
-  }
-  if (!document.getElementById('opt-desc').value.trim()) {
-    document.getElementById('opt-desc').value = (p.description || '').slice(0, 260);
-  }
-  // Ajoute toutes les images Shopify à la liste
-  const newImages = (p.images || []).map(img => ({
-    url: img.url,
-    alt: img.alt || p.title,
-    source: 'shopify',
-    id: ++imgCounter
-  }));
+  if (!document.getElementById('opt-title').value.trim()) document.getElementById('opt-title').value = p.title;
+  if (!document.getElementById('opt-desc').value.trim()) document.getElementById('opt-desc').value = (p.description || '').slice(0, 260);
+  const newImages = (p.images || []).map(img => ({ url: img.url, alt: img.alt || p.title, source: 'shopify', id: ++imgCounter }));
   allImages = allImages.concat(newImages);
-  // Sélectionne auto la 1ère pour recto + 4 suivantes pour verso si rien encore choisi
   if (!selectedRectoId && newImages[0]) selectedRectoId = newImages[0].id;
-  if (selectedVersoIds.length === 0) {
-    selectedVersoIds = newImages.slice(0, 4).map(im => im.id);
-  }
+  if (selectedVersoIds.length === 0) selectedVersoIds = newImages.slice(0, 4).map(im => im.id);
   refreshPicker();
-  renderFlyer();
+  renderAll();
 }
 
-// ===== UPLOAD MAC =====
+// ===== UPLOAD =====
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
-
 fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
@@ -881,30 +785,23 @@ dropZone.addEventListener('drop', (e) => {
   dropZone.classList.remove('dragover');
   handleFiles(e.dataTransfer.files);
 });
-
 function handleFiles(files) {
   Array.from(files).forEach(file => {
     if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const img = {
-        url: ev.target.result, // base64
-        alt: file.name,
-        source: 'upload',
-        id: ++imgCounter
-      };
+      const img = { url: ev.target.result, alt: file.name, source: 'upload', id: ++imgCounter };
       allImages.push(img);
-      // Auto-sélection si rien
       if (!selectedRectoId) selectedRectoId = img.id;
       else if (selectedVersoIds.length < 4) selectedVersoIds.push(img.id);
       refreshPicker();
-      renderFlyer();
+      renderAll();
     };
     reader.readAsDataURL(file);
   });
 }
 
-// ===== URL (DASH) =====
+// ===== URL =====
 document.getElementById('url-add-btn').addEventListener('click', () => {
   const urlInput = document.getElementById('url-input');
   const url = urlInput.value.trim();
@@ -915,36 +812,45 @@ document.getElementById('url-add-btn').addEventListener('click', () => {
   else if (selectedVersoIds.length < 4) selectedVersoIds.push(img.id);
   urlInput.value = '';
   refreshPicker();
-  renderFlyer();
+  renderAll();
 });
 document.getElementById('url-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('url-add-btn').click(); }
 });
 
-// ===== SELECTEUR COULEUR =====
+// ===== COULEUR =====
 document.querySelectorAll('.color-swatch').forEach(s => {
   s.addEventListener('click', () => {
     document.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('active'));
     s.classList.add('active');
     bgRecto = s.dataset.bg;
-    renderFlyer();
+    renderRecto();
   });
+});
+
+// ===== TOGGLE éléments =====
+function toggleEl(key, v) {
+  if (layout[key]) { layout[key].visible = v; renderRecto(); }
+}
+
+document.getElementById('reset-layout').addEventListener('click', () => {
+  layout = defaultLayout();
+  // Sync checkboxes avec layout par défaut
+  document.getElementById('opt-show-photo-recto').checked = layout.photo.visible;
+  document.getElementById('opt-show-logo-recto').checked = layout.logo.visible;
+  document.getElementById('opt-show-title-recto').checked = layout.title.visible;
+  document.getElementById('opt-show-tagline-recto').checked = layout.tagline.visible;
+  renderRecto();
 });
 
 // ===== PICKER PHOTOS =====
 function refreshPicker() {
-  if (allImages.length === 0) {
-    photoPickerWrap.style.display = 'none';
-    return;
-  }
+  if (allImages.length === 0) { photoPickerWrap.style.display = 'none'; return; }
   photoPickerWrap.style.display = 'block';
-
   const renderThumbs = (containerId, target) => {
     const container = document.getElementById(containerId);
     container.innerHTML = allImages.map(img => {
-      let cls = '';
-      let badge = '';
-      let srcBadge = '';
+      let cls = '', badge = '', srcBadge = '';
       if (target === 'recto') {
         if (img.id === selectedRectoId) { cls = ' selected-recto'; badge = '<span class="badge">R</span>'; }
       } else {
@@ -953,33 +859,25 @@ function refreshPicker() {
       }
       if (img.source === 'upload') srcBadge = '<span class="src-badge">mac</span>';
       else if (img.source === 'url') srcBadge = '<span class="src-badge">url</span>';
-      return `
-        <div class="thumb${cls}" data-id="${img.id}" data-target="${target}">
-          <img src="${escapeHtml(img.url)}" alt="">
-          ${badge}
-          ${srcBadge}
-          <button class="del-btn" data-del="${img.id}" title="Retirer">×</button>
-        </div>
-      `;
+      return `<div class="thumb${cls}" data-id="${img.id}" data-target="${target}">
+        <img src="${escapeHtml(img.url)}" alt="">${badge}${srcBadge}
+        <button class="del-btn" data-del="${img.id}">×</button></div>`;
     }).join('');
-    // Click → sélection
     container.querySelectorAll('.thumb').forEach(t => {
       t.addEventListener('click', (e) => {
         if (e.target.classList.contains('del-btn')) return;
         const id = parseInt(t.dataset.id, 10);
-        if (target === 'recto') {
-          selectedRectoId = id;
-        } else {
+        if (target === 'recto') selectedRectoId = id;
+        else {
           const pos = selectedVersoIds.indexOf(id);
           if (pos >= 0) selectedVersoIds.splice(pos, 1);
           else if (selectedVersoIds.length < 4) selectedVersoIds.push(id);
           else { selectedVersoIds.shift(); selectedVersoIds.push(id); }
         }
         refreshPicker();
-        renderFlyer();
+        renderAll();
       });
     });
-    // Delete button
     container.querySelectorAll('.del-btn').forEach(b => {
       b.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -988,7 +886,7 @@ function refreshPicker() {
         if (selectedRectoId === id) selectedRectoId = allImages[0] ? allImages[0].id : null;
         selectedVersoIds = selectedVersoIds.filter(x => x !== id);
         refreshPicker();
-        renderFlyer();
+        renderAll();
       });
     });
   };
@@ -996,38 +894,208 @@ function refreshPicker() {
   renderThumbs('picker-verso', 'verso');
 }
 
-// ===== RENDER FLYER =====
 function getImageById(id) { return allImages.find(i => i.id === id); }
 
-function renderFlyer() {
+// ===== RENDER RECTO (éditeur) =====
+function renderRecto() {
   if (allImages.length === 0) return;
   const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
-  const desc = document.getElementById('opt-desc').value.trim();
-  const badge = document.getElementById('opt-badge').value.trim() || 'MOOD COLLECTION';
-  const caption = document.getElementById('opt-caption').value.trim();
   const tagline = document.getElementById('opt-tagline').value.trim();
+  const rectoImg = getImageById(selectedRectoId) || allImages[0];
+  const darkBg = ['bg-noir', 'bg-anthracite', 'bg-turquoise'].includes(bgRecto);
+  const logoWhite = darkBg;
+  const textColor = darkBg ? 'white' : 'var(--noir)';
+
+  // Détermine container recto
+  let rectoEl = document.getElementById('recto-flyer');
+  if (!rectoEl) {
+    // Première fois : rendre toute la structure
+    let preview = document.getElementById('preview-area');
+    preview.innerHTML = `
+      <div class="pages-wrap">
+        <div class="page-side">
+          <div class="page-label">recto</div>
+          <div class="flyer flyer-recto ${bgRecto}" id="recto-flyer"></div>
+        </div>
+        <div class="page-side">
+          <div class="page-label">verso</div>
+          <div class="flyer flyer-verso" id="verso-flyer"></div>
+        </div>
+      </div>
+    `;
+    rectoEl = document.getElementById('recto-flyer');
+  } else {
+    // Met à jour la classe de fond
+    rectoEl.className = `flyer flyer-recto ${bgRecto}`;
+  }
+
+  // Reconstruit les éléments éditables
+  rectoEl.innerHTML = '';
+
+  const elems = [
+    {
+      key: 'photo',
+      type: 'photo',
+      content: rectoImg ? `<img src="${escapeHtml(rectoImg.url)}" alt="">` : '',
+    },
+    {
+      key: 'logo',
+      type: 'logo',
+      content: `<img src="/logo-mood.png" alt="mood" class="logo-mood-img${logoWhite ? ' white' : ''}">`,
+    },
+    {
+      key: 'title',
+      type: 'text',
+      content: `<div class="text-inner" style="font-size:${layout.title.fontSize}pt;color:${textColor};font-weight:700;text-transform:lowercase;">${escapeHtml(title)}</div>`,
+    },
+    {
+      key: 'tagline',
+      type: 'text',
+      content: `<div class="text-inner" style="font-size:${layout.tagline.fontSize}pt;color:${textColor};font-weight:600;text-transform:${layout.tagline.upper ? 'uppercase' : 'none'};letter-spacing:${layout.tagline.ls || 0.05}em;">${escapeHtml(tagline)}</div>`,
+    }
+  ];
+
+  // Tri par z-index
+  const sorted = elems.slice().sort((a,b) => layout[a.key].z - layout[b.key].z);
+
+  sorted.forEach(el => {
+    const cfg = layout[el.key];
+    if (!cfg.visible) return;
+    const d = document.createElement('div');
+    d.className = `editable is-${el.type}`;
+    d.dataset.key = el.key;
+    d.style.left = mm(cfg.x) + 'px';
+    d.style.top = mm(cfg.y) + 'px';
+    d.style.width = mm(cfg.w) + 'px';
+    d.style.height = mm(cfg.h) + 'px';
+    d.style.zIndex = cfg.z;
+    d.innerHTML = el.content + `
+      <div class="layer-btns">
+        <button class="layer-btn" data-act="up" title="Avancer">↑</button>
+        <button class="layer-btn" data-act="down" title="Reculer">↓</button>
+      </div>
+      <div class="resize-handle"></div>
+    `;
+    rectoEl.appendChild(d);
+    attachInteractions(d, el.key);
+  });
+}
+
+// ===== DRAG + RESIZE =====
+let activeEl = null;
+function attachInteractions(el, key) {
+  // Sélection au mousedown
+  el.addEventListener('mousedown', (e) => {
+    if (e.target.classList.contains('resize-handle') || e.target.classList.contains('layer-btn')) return;
+    document.querySelectorAll('.editable.selected').forEach(x => x.classList.remove('selected'));
+    el.classList.add('selected');
+    activeEl = el;
+
+    const startX = e.clientX, startY = e.clientY;
+    const startLeft = parseFloat(el.style.left || 0);
+    const startTop = parseFloat(el.style.top || 0);
+    function onMove(ev) {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      el.style.left = (startLeft + dx) + 'px';
+      el.style.top = (startTop + dy) + 'px';
+    }
+    function onUp(ev) {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      // Sauve position en mm
+      layout[key].x = parseFloat(el.style.left) / MM;
+      layout[key].y = parseFloat(el.style.top) / MM;
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    e.preventDefault();
+  });
+
+  // Resize via poignée
+  const handle = el.querySelector('.resize-handle');
+  if (handle) {
+    handle.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      const startX = e.clientX, startY = e.clientY;
+      const startW = el.offsetWidth, startH = el.offsetHeight;
+      const aspect = (el.classList.contains('is-photo') || el.classList.contains('is-logo')) ? startW / startH : null;
+      function onMove(ev) {
+        let newW = Math.max(20, startW + ev.clientX - startX);
+        let newH = Math.max(20, startH + ev.clientY - startY);
+        if (aspect && !ev.shiftKey) {
+          // Préserve ratio sauf si Shift
+          newH = newW / aspect;
+        }
+        el.style.width = newW + 'px';
+        el.style.height = newH + 'px';
+        // Update font-size pour textes si on agrandit la hauteur
+        if (el.classList.contains('is-text')) {
+          const inner = el.querySelector('.text-inner');
+          if (inner) {
+            const baseH = mm(layout[key].h);
+            const newFs = (layout[key].fontSize) * (newH / baseH);
+            inner.style.fontSize = newFs + 'pt';
+          }
+        }
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        layout[key].w = parseFloat(el.style.width) / MM;
+        layout[key].h = parseFloat(el.style.height) / MM;
+        if (el.classList.contains('is-text')) {
+          const inner = el.querySelector('.text-inner');
+          if (inner) layout[key].fontSize = parseFloat(inner.style.fontSize);
+        }
+      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      e.preventDefault();
+    });
+  }
+
+  // Layer buttons (z-index ↑↓)
+  el.querySelectorAll('.layer-btn').forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const act = b.dataset.act;
+      if (act === 'up') layout[key].z = (layout[key].z || 1) + 1;
+      else layout[key].z = Math.max(1, (layout[key].z || 1) - 1);
+      renderRecto();
+    });
+  });
+}
+
+// Clic ailleurs → désélectionne
+document.addEventListener('mousedown', (e) => {
+  if (!e.target.closest('.editable') && !e.target.closest('.layer-btn')) {
+    document.querySelectorAll('.editable.selected').forEach(x => x.classList.remove('selected'));
+  }
+});
+
+// ===== RENDER VERSO (fixe) =====
+function renderVerso() {
+  if (allImages.length === 0) return;
+  let versoEl = document.getElementById('verso-flyer');
+  if (!versoEl) { renderRecto(); versoEl = document.getElementById('verso-flyer'); }
+
+  const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
+  const desc = document.getElementById('opt-desc').value.trim();
   const showPrice = document.getElementById('opt-show-price').checked;
-  const showLogoRecto = document.getElementById('opt-show-logo-recto').checked;
   const showInterchange = document.getElementById('opt-show-interchange').checked;
 
-  const rectoImg = getImageById(selectedRectoId) || allImages[0];
   const versoImgs = selectedVersoIds.map(id => getImageById(id)).filter(Boolean);
   while (versoImgs.length < 4 && allImages.length > 0) {
     const fallback = allImages.find(im => !versoImgs.includes(im));
     if (!fallback) break;
     versoImgs.push(fallback);
   }
-  while (versoImgs.length < 4) versoImgs.push(versoImgs[0] || rectoImg);
+  while (versoImgs.length < 4) versoImgs.push(versoImgs[0]);
 
-  // Couleur de fond : sombre ou clair ?
-  const darkBg = ['bg-noir', 'bg-anthracite', 'bg-turquoise'].includes(bgRecto);
-  const logoWhite = darkBg;
-
-  // URL produit pour QR
   const productUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
   const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(productUrl);
 
-  // Prix
   let priceTxt = '';
   if (currentProductMeta) {
     priceTxt = currentProductMeta.priceMin === currentProductMeta.priceMax
@@ -1035,84 +1103,42 @@ function renderFlyer() {
       : `dès ${formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)}`;
   }
 
-  // Motif O pour fond
-  const oSvg = `
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="8"/>
-    </svg>
-  `;
-
-  previewArea.innerHTML = `
-    <div class="pages-wrap">
-
-      <div class="page-side">
-        <div class="page-label">recto</div>
-        <div class="flyer flyer-recto ${bgRecto}">
-          <div class="o-pattern top-right" style="color:${darkBg ? 'white' : 'var(--noir)'};">${oSvg}</div>
-          <div class="o-pattern bottom-left" style="color:${darkBg ? 'white' : 'var(--noir)'};">${oSvg}</div>
-
-          <div class="recto-badge">${escapeHtml(badge)}</div>
-          <h1 class="recto-title">${escapeHtml(title)}</h1>
-          <div class="recto-photo">
-            ${rectoImg ? `<img src="${escapeHtml(rectoImg.url)}" alt="${escapeHtml(rectoImg.alt || title)}">` : ''}
-          </div>
-          ${caption ? `<div class="recto-caption">${escapeHtml(caption)}</div>` : ''}
-          ${tagline ? `<div class="recto-tagline">${escapeHtml(tagline)}</div>` : ''}
-          ${showLogoRecto ? `<div style="position:relative;z-index:3;text-align:center;margin-top:4mm;"><img src="/logo-mood.png" alt="mood" class="logo-mood-img${logoWhite ? ' white' : ''}" style="height:8mm;"></div>` : ''}
-        </div>
+  versoEl.innerHTML = `
+    <div class="verso-top">
+      <img src="/logo-mood.png" alt="mood">
+      <div class="verso-product-name">${escapeHtml(title)}</div>
+      <div class="verso-sub">Système breveté · Garantie à vie</div>
+    </div>
+    <div class="verso-grid">
+      <div class="grid-large">${versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : ''}</div>
+      <div class="grid-small">${versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : ''}</div>
+      <div class="grid-small">${versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : ''}</div>
+      <div class="grid-small">${versoImgs[3] ? `<img src="${escapeHtml(versoImgs[3].url)}" alt="">` : ''}</div>
+    </div>
+    ${showInterchange ? `<div class="verso-interchangeable"><span class="ico"></span><span class="txt">Bagues interchangeables · Mood évolue avec toi</span></div>` : ''}
+    ${desc ? `<div class="verso-desc">${escapeHtml(desc)}</div>` : ''}
+    ${showPrice && priceTxt ? `<div class="verso-price-wrap"><div class="verso-price">${priceTxt}</div></div>` : ''}
+    <div class="verso-footer">
+      <div class="verso-qr">
+        <div class="verso-qr-img"><img src="${qrUrl}" alt="QR"></div>
+        <div class="verso-qr-label">scanne-moi</div>
       </div>
-
-      <div class="page-side">
-        <div class="page-label">verso</div>
-        <div class="flyer flyer-verso">
-          <div class="o-pattern top-left" style="color:var(--noir);">${oSvg}</div>
-          <div class="verso-top">
-            <img src="/logo-mood.png" alt="mood" class="logo-mood-img">
-            <div class="verso-product-name">${escapeHtml(title)}</div>
-            <div class="verso-sub">Système breveté · Garantie à vie</div>
-          </div>
-
-          <div class="verso-grid">
-            <div class="grid-large">${versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : ''}</div>
-            <div class="grid-small">${versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : ''}</div>
-            <div class="grid-small">${versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : ''}</div>
-            <div class="grid-small">${versoImgs[3] ? `<img src="${escapeHtml(versoImgs[3].url)}" alt="">` : ''}</div>
-          </div>
-
-          ${showInterchange ? `
-            <div class="verso-interchangeable">
-              <span class="ico"></span><span class="txt">Bagues interchangeables · Mood évolue avec toi</span>
-            </div>
-          ` : ''}
-
-          ${desc ? `<div class="verso-desc">${escapeHtml(desc)}</div>` : ''}
-
-          ${showPrice && priceTxt ? `<div class="verso-price-wrap"><div class="verso-price">${priceTxt}</div></div>` : ''}
-
-          <div class="verso-footer">
-            <div class="verso-qr">
-              <div class="verso-qr-img"><img src="${qrUrl}" alt="QR"></div>
-              <div class="verso-qr-label">scanne-moi</div>
-            </div>
-            <div class="verso-shops">
-              <div class="label">Mood Stores</div>
-              <div>Carouge · Martigny · Orbe</div>
-              <div>Fribourg · Zürich · Zermatt</div>
-              <div class="url">yourmood.net</div>
-            </div>
-          </div>
-        </div>
+      <div class="verso-shops">
+        <div class="label">Mood Stores</div>
+        <div>Carouge · Martigny · Orbe</div>
+        <div>Fribourg · Zürich · Zermatt</div>
+        <div class="url">yourmood.net</div>
       </div>
-
     </div>
   `;
 }
+
+function renderAll() { renderRecto(); renderVerso(); }
 
 function formatPrice(amount, currency) {
   const c = currency === 'CHF' ? 'CHF' : currency === 'EUR' ? '€' : currency;
   return new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' ' + c;
 }
-
 function escapeHtml(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
