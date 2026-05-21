@@ -138,6 +138,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Crée un visuel post / story prêt à publier : 4 templates (promo flash, collection lancée, édition limitée, multi-bagues) · fond IA + vrai logo Mood + textes éditables.",
       },
       {
+        href: "/mood-studio",
+        emoji: "📄",
+        title: "Mood Studio (catalogue print)",
+        description: "Génère automatiquement des flyers A5 produit prêts à imprimer depuis Shopify : photo + nom + prix + QR code, style Mood Collection. À venir : certificats, dépliants, catalogues.",
+      },
+      {
         href: "/perso",
         emoji: "🖋️",
         title: "Personnalisation",
