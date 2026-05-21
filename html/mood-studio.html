@@ -6,16 +6,21 @@
 <title>Mood Studio — Flyer A5 recto/verso</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* ===== CHARTE OFFICIELLE MOOD ===== */
   :root {
-    --vert-mood: #a3d440;
-    --vert-mood-dark: #8bbf2c;
-    --rose: #f5e6e0;
-    --rose-medium: #e8c5b8;
-    --or: #c9a87c;
-    --noir: #1a1a1a;
-    --gris: #8a8a8a;
+    --noir: #252525;
+    --anthracite: #4D4C4C;
+    --gris: #D5D3D3;
+    --gris-soft: #BABDB6;
+    --turquoise: #76BABA;
+    --rose: #F99C98;
+    --vert: #C0D230;
+    --beige: #EFE7DD;
+    --sable: #E8DCC9;
+    --blanc-casse: #FAF7F2;
+    --gris-text: #8a8a8a;
     --gris-light: #d0d0d0;
   }
   * { box-sizing: border-box; }
@@ -37,13 +42,13 @@
     align-items: center;
     gap: 1rem;
   }
-  header h1 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: 0.04em; }
-  header .retour { color: var(--gris); text-decoration: none; font-size: 0.85rem; }
-  header .retour:hover { color: var(--vert-mood-dark); }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: 0.04em; font-family: 'Comfortaa', sans-serif; }
+  header .retour { color: var(--gris-text); text-decoration: none; font-size: 0.85rem; }
+  header .retour:hover { color: var(--anthracite); }
 
   .app-wrap {
     display: grid;
-    grid-template-columns: 400px 1fr;
+    grid-template-columns: 420px 1fr;
     gap: 1.5rem;
     padding: 1.5rem;
     max-width: 1700px;
@@ -60,7 +65,11 @@
     position: sticky;
     top: 1rem;
   }
-  .panel-search h2 { font-size: 0.78rem; font-weight: 700; margin: 0 0 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gris); }
+  .panel-search h2 {
+    font-size: 0.78rem; font-weight: 700; margin: 0 0 0.6rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--gris-text);
+    font-family: 'Comfortaa', sans-serif;
+  }
   .panel-search h2:not(:first-of-type) { margin-top: 1.4rem; }
   .panel-search input[type=text],
   .panel-search select,
@@ -75,10 +84,39 @@
   }
   .panel-search input[type=text]:focus,
   .panel-search select:focus,
-  .panel-search textarea:focus { outline: none; border-color: var(--vert-mood-dark); }
+  .panel-search textarea:focus { outline: none; border-color: var(--anthracite); }
   .panel-search textarea { min-height: 60px; resize: vertical; line-height: 1.4; }
   .panel-search .row-opt { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; font-size: 0.9rem; }
   .panel-search .row-opt input[type=checkbox] { width: auto; }
+
+  /* === ONGLETS SOURCES PHOTOS === */
+  .source-tabs {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 0.6rem;
+    border-bottom: 1px solid #eee;
+  }
+  .source-tab {
+    flex: 1;
+    padding: 0.5rem 0.4rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gris-text);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .source-tab:hover { color: var(--anthracite); }
+  .source-tab.active {
+    color: var(--noir);
+    border-bottom-color: var(--noir);
+  }
+
+  .source-panel { display: none; }
+  .source-panel.active { display: block; }
 
   .results { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
   .result-card {
@@ -91,14 +129,51 @@
     align-items: center;
     transition: all 0.15s;
   }
-  .result-card:hover { border-color: var(--vert-mood); background: #f8fce9; }
-  .result-card.active { border-color: var(--vert-mood-dark); background: #f0f9d4; }
+  .result-card:hover { border-color: var(--anthracite); background: var(--blanc-casse); }
+  .result-card.active { border-color: var(--noir); background: var(--beige); }
   .result-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background: #f5f5f5; flex-shrink: 0; }
   .result-card .info { flex: 1; min-width: 0; }
   .result-card .title { font-size: 0.85rem; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .result-card .price { font-size: 0.78rem; color: var(--vert-mood-dark); margin-top: 0.15rem; }
+  .result-card .price { font-size: 0.78rem; color: var(--anthracite); margin-top: 0.15rem; }
 
-  /* === SELECTEUR PHOTOS === */
+  /* === DROP ZONE UPLOAD === */
+  .drop-zone {
+    border: 2px dashed var(--gris-light);
+    border-radius: 10px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--gris-text);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--blanc-casse);
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--noir);
+    background: var(--beige);
+    color: var(--noir);
+  }
+  .drop-zone input[type=file] { display: none; }
+  .drop-zone .ico { font-size: 1.8rem; display: block; margin-bottom: 0.3rem; }
+
+  /* === CHAMP URL === */
+  .url-add { display: flex; gap: 0.4rem; }
+  .url-add input { flex: 1; }
+  .url-add button {
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--noir);
+    background: var(--noir);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .url-add button:hover { background: var(--anthracite); border-color: var(--anthracite); }
+  .url-hint { font-size: 0.72rem; color: var(--gris-text); margin-top: 0.4rem; line-height: 1.4; }
+  .url-hint a { color: var(--anthracite); }
+
+  /* === SELECTEUR PHOTOS (vignettes) === */
   .photo-picker {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -116,29 +191,80 @@
     transition: all 0.15s;
   }
   .photo-picker .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .photo-picker .thumb.selected-recto { border-color: var(--vert-mood-dark); }
-  .photo-picker .thumb.selected-verso { border-color: var(--or); }
+  .photo-picker .thumb.selected-recto { border-color: var(--noir); }
+  .photo-picker .thumb.selected-verso { border-color: var(--anthracite); }
   .photo-picker .thumb .badge {
     position: absolute;
     top: 2px; right: 2px;
-    background: var(--vert-mood-dark);
+    background: var(--noir);
     color: white;
     font-size: 0.55rem;
     font-weight: 700;
     padding: 1px 4px;
     border-radius: 3px;
     line-height: 1.2;
+    font-family: 'Comfortaa', sans-serif;
   }
-  .photo-picker .thumb .badge.verso { background: var(--or); }
-  .picker-hint { font-size: 0.72rem; color: var(--gris); margin-top: 0.4rem; line-height: 1.4; }
+  .photo-picker .thumb .badge.verso { background: var(--anthracite); }
+  .photo-picker .thumb .badge.local { background: var(--turquoise); }
+  .photo-picker .thumb .src-badge {
+    position: absolute;
+    bottom: 2px; left: 2px;
+    font-size: 0.55rem;
+    background: rgba(255,255,255,0.85);
+    padding: 0 3px;
+    border-radius: 2px;
+    color: var(--anthracite);
+    line-height: 1.4;
+    text-transform: lowercase;
+  }
+  .photo-picker .thumb .del-btn {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    color: var(--noir);
+    display: none;
+  }
+  .photo-picker .thumb:hover .del-btn { display: block; }
+  .picker-hint { font-size: 0.72rem; color: var(--gris-text); margin-top: 0.4rem; line-height: 1.4; }
 
-  .picker-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; font-size: 0.8rem; }
-  .picker-row .lbl { color: var(--gris); flex-shrink: 0; min-width: 50px; }
-  .picker-row .swatch {
-    width: 22px; height: 22px; border-radius: 4px; border: 1.5px solid transparent; cursor: pointer; background-size: cover; background-position: center; background-color: #f5f5f5;
+  .picker-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; font-size: 0.8rem; }
+  .picker-row .lbl { color: var(--gris-text); flex-shrink: 0; min-width: 50px; font-weight: 600; }
+
+  /* === SELECTEUR COULEUR FOND RECTO === */
+  .color-picker {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.4rem;
   }
-  .picker-row .swatch.active { border-color: var(--vert-mood-dark); }
-  .picker-row .swatch.verso.active { border-color: var(--or); }
+  .color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.active { border-color: var(--noir); }
+  .color-swatch.active::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
 
   .preview-wrap {
     display: flex;
@@ -167,10 +293,11 @@
     color: white;
     border-color: var(--noir);
     font-weight: 600;
+    font-family: 'Comfortaa', sans-serif;
   }
-  .actions button.primary:hover { background: var(--vert-mood-dark); border-color: var(--vert-mood-dark); }
-  .actions button:hover { border-color: var(--vert-mood-dark); color: var(--vert-mood-dark); }
-  .actions .hint { color: var(--gris); font-size: 0.78rem; }
+  .actions button.primary:hover { background: var(--anthracite); border-color: var(--anthracite); }
+  .actions button:hover { border-color: var(--noir); color: var(--noir); }
+  .actions .hint { color: var(--gris-text); font-size: 0.78rem; }
 
   .pages-wrap {
     display: flex;
@@ -182,11 +309,12 @@
   .page-label {
     text-align: center;
     font-size: 0.72rem;
-    color: var(--gris);
+    color: var(--gris-text);
     text-transform: uppercase;
     letter-spacing: 0.15em;
     margin-bottom: 0.4rem;
     font-weight: 600;
+    font-family: 'Comfortaa', sans-serif;
   }
   .page-side { display: flex; flex-direction: column; align-items: center; }
 
@@ -197,7 +325,7 @@
     background: white;
     border-radius: 12px;
     text-align: center;
-    color: var(--gris);
+    color: var(--gris-text);
     border: 2px dashed var(--gris-light);
   }
 
@@ -205,162 +333,181 @@
   .flyer {
     width: 148mm;
     height: 210mm;
-    background: white;
     box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     position: relative;
     overflow: hidden;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Comfortaa', 'Inter', sans-serif;
     color: var(--noir);
     display: flex;
     flex-direction: column;
   }
 
-  /* === LOGO MOOD (image PNG réelle) === */
+  /* === FONDS COULEUR RECTO === */
+  .flyer.bg-blanc { background: var(--blanc-casse); color: var(--noir); }
+  .flyer.bg-sable { background: var(--sable); color: var(--noir); }
+  .flyer.bg-beige { background: var(--beige); color: var(--noir); }
+  .flyer.bg-gris { background: var(--gris); color: var(--noir); }
+  .flyer.bg-anthracite { background: var(--anthracite); color: white; }
+  .flyer.bg-noir { background: var(--noir); color: white; }
+  .flyer.bg-rose { background: var(--rose); color: var(--noir); }
+  .flyer.bg-turquoise { background: var(--turquoise); color: white; }
+  .flyer.bg-vert { background: var(--vert); color: var(--noir); }
+
+  /* === LOGO MOOD === */
   .logo-mood-img {
-    height: 12mm;
+    height: 10mm;
     width: auto;
     display: block;
     margin: 0 auto;
   }
-  .logo-mood-img.white {
-    filter: brightness(0) invert(1);
-  }
-  .logo-joaillerie {
-    text-align: center;
-    font-family: 'Inter', sans-serif;
-  }
-  .logo-joaillerie .word {
-    display: inline-flex;
-    align-items: baseline;
-    font-weight: 300;
-    font-size: 28pt;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    color: inherit;
-  }
-  .logo-joaillerie .word .diamond {
-    display: inline-block;
-    width: 18pt; height: 18pt;
-    margin: 0 1pt;
-    position: relative;
-    top: -1pt;
-  }
-  .logo-joaillerie .word .diamond svg { width: 100%; height: 100%; }
-  .logo-joaillerie .tag {
-    font-size: 6pt;
-    letter-spacing: 0.25em;
-    margin-top: 2mm;
-    color: inherit;
-    opacity: 0.7;
-    text-transform: lowercase;
-  }
+  .logo-mood-img.white { filter: brightness(0) invert(1); }
 
-  /* ====== RECTO — style full-bleed inspiré des vrais flyers ====== */
-  .flyer-recto {
-    position: relative;
-    overflow: hidden;
-  }
-  .flyer-recto .recto-photo-full {
+  /* ====== MOTIF "O" ANNEAU — pattern décoratif Mood ====== */
+  .o-pattern {
     position: absolute;
-    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
     z-index: 1;
   }
-  .flyer-recto .recto-photo-full img {
+  .o-pattern svg { width: 100%; height: 100%; }
+
+  /* ====== RECTO — STYLE POSTER (inspiré "Adornment Beyond Time") ====== */
+  .flyer-recto {
+    padding: 12mm 12mm 10mm;
+    position: relative;
+  }
+  .flyer-recto.bg-noir, .flyer-recto.bg-anthracite, .flyer-recto.bg-turquoise {
+    color: white;
+  }
+  .recto-badge {
+    position: relative;
+    z-index: 3;
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 4mm;
+    opacity: 0.85;
+  }
+  .recto-title {
+    position: relative;
+    z-index: 3;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    font-size: 32pt;
+    line-height: 0.95;
+    text-align: center;
+    letter-spacing: 0.005em;
+    text-transform: lowercase;
+    margin: 0 0 6mm;
+  }
+  .recto-photo {
+    position: relative;
+    z-index: 3;
+    flex: 1;
+    margin: 2mm 0 6mm;
+    overflow: hidden;
+    border-radius: 1mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .recto-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
-  .flyer-recto .recto-logo-overlay {
+  .recto-caption {
     position: relative;
     z-index: 3;
-    padding-top: 12mm;
-    text-align: center;
-  }
-  .flyer-recto .recto-band {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    z-index: 3;
-    padding: 8mm 10mm 10mm;
-    text-align: center;
-  }
-  .flyer-recto .recto-band-text {
-    font-family: 'Quicksand', sans-serif;
-    font-weight: 500;
-    font-size: 16pt;
-    line-height: 1.25;
-    letter-spacing: 0.01em;
-    color: white;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  }
-
-  /* MOOD COLLECTION — bande vert mood en bas */
-  .flyer-recto.univers-mood .recto-band {
-    background: linear-gradient(to top, var(--vert-mood) 0%, var(--vert-mood) 60%, rgba(163, 212, 64, 0) 100%);
-    padding-top: 18mm;
-  }
-  .flyer-recto.univers-mood .recto-band-text {
-    color: var(--noir);
-    text-shadow: 0 1px 4px rgba(255,255,255,0.6);
-    font-weight: 600;
-  }
-
-  /* MOOD JOAILLERIE — voile noir élégant, typo serif */
-  .flyer-recto.univers-joaillerie .recto-band {
-    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%);
-    padding-top: 22mm;
-  }
-  .flyer-recto.univers-joaillerie .recto-band-text {
     font-family: 'Cormorant Garamond', serif;
-    font-weight: 300;
     font-style: italic;
-    font-size: 17pt;
-    letter-spacing: 0.05em;
-    color: white;
+    font-weight: 300;
+    font-size: 10pt;
+    line-height: 1.45;
+    text-align: center;
+    margin: 0 6mm 4mm;
+    opacity: 0.9;
+  }
+  .recto-tagline {
+    position: relative;
+    z-index: 3;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 600;
+    font-size: 8pt;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0.75;
   }
 
-  /* ====== VERSO — fond blanc structuré ====== */
+  /* Motif O en arrière-plan recto */
+  .flyer-recto .o-pattern.top-right {
+    top: -20mm; right: -20mm;
+    width: 80mm; height: 80mm;
+  }
+  .flyer-recto .o-pattern.bottom-left {
+    bottom: -25mm; left: -25mm;
+    width: 70mm; height: 70mm;
+  }
+
+  /* ====== VERSO — fond blanc, mosaïque 1+3 ====== */
   .flyer-verso {
-    background: white;
+    background: var(--blanc-casse);
     padding: 10mm 10mm 8mm;
+    color: var(--noir);
   }
-  .flyer-verso .verso-top {
+  .verso-top {
     text-align: center;
+    position: relative;
+    z-index: 3;
   }
-  .flyer-verso .verso-product-name {
+  .verso-product-name {
     margin: 4mm 0 1mm;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Comfortaa', sans-serif;
     font-size: 18pt;
     font-weight: 600;
     color: var(--noir);
     line-height: 1.15;
     letter-spacing: -0.005em;
     text-transform: lowercase;
+    text-align: center;
   }
-  .flyer.univers-joaillerie .flyer-verso .verso-product-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 400;
-    font-size: 20pt;
-    text-transform: none;
-    letter-spacing: 0.04em;
-    font-style: italic;
+  .verso-sub {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 7pt;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--anthracite);
+    text-align: center;
+    margin-bottom: 4mm;
+    font-weight: 500;
   }
 
+  /* Grille 1 grande + 3 petites */
   .verso-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 2fr 1fr;
     gap: 2mm;
-    margin: 5mm 0 5mm;
-    height: 70mm;
+    margin: 4mm 0 5mm;
+    height: 75mm;
+    position: relative;
+    z-index: 3;
   }
-  .verso-grid .grid-cell {
+  .verso-grid .grid-large {
+    grid-row: span 3;
     background: #f5f5f5;
     overflow: hidden;
     border-radius: 1mm;
   }
-  .verso-grid .grid-cell.large {
-    grid-row: span 2;
+  .verso-grid .grid-small {
+    background: #f5f5f5;
+    overflow: hidden;
+    border-radius: 1mm;
+    height: 23.7mm;
   }
   .verso-grid img {
     width: 100%;
@@ -369,47 +516,73 @@
     display: block;
   }
 
+  .verso-interchangeable {
+    position: relative;
+    z-index: 3;
+    text-align: center;
+    margin: 1mm 0 3mm;
+    padding: 2mm 4mm;
+    border-top: 0.3mm solid var(--gris);
+    border-bottom: 0.3mm solid var(--gris);
+  }
+  .verso-interchangeable .ico {
+    display: inline-block;
+    width: 4mm; height: 4mm;
+    border: 0.6mm solid var(--noir);
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 2mm;
+  }
+  .verso-interchangeable .txt {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 8pt;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--noir);
+    vertical-align: middle;
+  }
+
   .verso-desc {
+    position: relative;
+    z-index: 3;
     font-size: 8.5pt;
     line-height: 1.55;
     color: #444;
     font-weight: 300;
     text-align: center;
-    margin: 0 4mm;
-    max-height: 28mm;
+    margin: 0 4mm 3mm;
+    max-height: 22mm;
     overflow: hidden;
+    font-family: 'Inter', sans-serif;
   }
 
   .verso-price-wrap {
+    position: relative;
+    z-index: 3;
     text-align: center;
-    margin: 3mm 0 2mm;
+    margin: 2mm 0 3mm;
   }
   .verso-price {
     display: inline-block;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Comfortaa', sans-serif;
     font-size: 14pt;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--noir);
     padding: 1mm 8mm;
-    border-top: 0.4mm solid var(--vert-mood);
-    border-bottom: 0.4mm solid var(--vert-mood);
     letter-spacing: 0.02em;
-  }
-  .flyer.univers-joaillerie .verso-price {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 400;
-    font-style: italic;
-    border-color: var(--noir);
   }
 
   .verso-footer {
+    position: relative;
+    z-index: 3;
     margin-top: auto;
     padding-top: 4mm;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     gap: 4mm;
-    border-top: 0.3mm solid #eee;
+    border-top: 0.3mm solid var(--gris);
   }
   .verso-qr {
     width: 22mm;
@@ -420,19 +593,21 @@
     height: 22mm;
     background: white;
     padding: 0.5mm;
-    border: 0.3mm solid #ddd;
+    border: 0.3mm solid var(--gris);
     border-radius: 1mm;
   }
   .verso-qr-img img { width: 100%; height: 100%; display: block; }
   .verso-qr-label {
+    font-family: 'Comfortaa', sans-serif;
     font-size: 6pt;
-    color: var(--gris);
+    color: var(--gris-text);
     text-align: center;
     margin-top: 1mm;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
   }
   .verso-shops {
+    font-family: 'Inter', sans-serif;
     font-size: 7pt;
     color: #444;
     line-height: 1.55;
@@ -440,27 +615,28 @@
     flex: 1;
   }
   .verso-shops .label {
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Comfortaa', sans-serif;
     font-weight: 700;
     color: var(--noir);
-    letter-spacing: 0.18em;
+    letter-spacing: 0.2em;
     font-size: 6pt;
     text-transform: uppercase;
     margin-bottom: 1mm;
   }
   .verso-shops .url {
-    font-family: 'Quicksand', sans-serif;
-    color: var(--vert-mood-dark);
+    font-family: 'Comfortaa', sans-serif;
+    color: var(--noir);
     font-weight: 600;
     font-size: 8pt;
     margin-top: 1mm;
     letter-spacing: 0.02em;
   }
-  .flyer.univers-joaillerie .verso-shops .url {
-    color: var(--noir);
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 500;
-    font-style: italic;
+
+  /* Motif O verso (discret) */
+  .flyer-verso .o-pattern.top-left {
+    top: -15mm; left: -15mm;
+    width: 50mm; height: 50mm;
+    opacity: 0.04;
   }
 
   /* ====== IMPRESSION ====== */
@@ -493,54 +669,104 @@
 <div class="app-wrap">
 
   <aside class="panel-search">
-    <h2>1 · Produit Shopify</h2>
-    <input type="text" id="search-input" placeholder="Tape un nom (aura, edelweiss, signature…)">
-    <div class="results" id="results">
-      <div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>
+
+    <h2>1 · Sources photos</h2>
+    <div class="source-tabs">
+      <button class="source-tab active" data-tab="shopify">Shopify</button>
+      <button class="source-tab" data-tab="upload">Mon Mac</button>
+      <button class="source-tab" data-tab="url">URL (Dash…)</button>
     </div>
 
-    <div id="photo-picker-wrap" style="display:none;">
+    <div class="source-panel active" id="panel-shopify">
+      <input type="text" id="search-input" placeholder="Tape un nom (aura, edelweiss, signature…)">
+      <div class="results" id="results">
+        <div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>
+      </div>
+    </div>
+
+    <div class="source-panel" id="panel-upload">
+      <label class="drop-zone" id="drop-zone">
+        <span class="ico">📁</span>
+        <strong>Glisse tes photos ici</strong><br>
+        <span style="font-size:0.78rem;">ou clique pour parcourir ton Mac</span>
+        <input type="file" id="file-input" multiple accept="image/*">
+      </label>
+    </div>
+
+    <div class="source-panel" id="panel-url">
+      <div class="url-add">
+        <input type="text" id="url-input" placeholder="Colle une URL d'image…">
+        <button id="url-add-btn">+</button>
+      </div>
+      <div class="url-hint">
+        Dash : ouvre <a href="https://yourmood.dash.app" target="_blank">yourmood.dash.app</a>, clic droit sur l'image → "Copier l'adresse de l'image", colle ici.
+      </div>
+    </div>
+
+    <div id="photo-picker-wrap" style="display:none;margin-top:1.2rem;">
       <h2>2 · Choisir les photos</h2>
       <div class="picker-row">
         <span class="lbl">Recto</span>
-        <span style="color:var(--vert-mood-dark);font-weight:600;font-size:0.75rem;">photo principale (grande)</span>
+        <span style="color:var(--noir);font-size:0.75rem;">1 photo (badge R noir)</span>
       </div>
       <div class="photo-picker" id="picker-recto"></div>
       <div class="picker-row" style="margin-top:0.8rem;">
         <span class="lbl">Verso</span>
-        <span style="color:var(--or);font-weight:600;font-size:0.75rem;">jusqu'à 3 photos en mosaïque</span>
+        <span style="color:var(--anthracite);font-size:0.75rem;">4 photos — 1 grande + 3 petites</span>
       </div>
       <div class="photo-picker" id="picker-verso"></div>
-      <div class="picker-hint">Clique sur les vignettes pour choisir. Recto = 1 photo · Verso = jusqu'à 3 photos.</div>
+      <div class="picker-hint">Clique sur les vignettes pour choisir. Tu peux mélanger Shopify + upload Mac + URL Dash dans le même flyer.</div>
     </div>
 
-    <h2>3 · Univers</h2>
-    <select id="opt-univers" onchange="renderFlyer()">
-      <option value="mood">Mood Collection (bande vert mood)</option>
-      <option value="joaillerie">Mood Joaillerie (voile noir, serif italique)</option>
-    </select>
+    <h2>3 · Produit (texte)</h2>
+    <input type="text" id="opt-title" oninput="renderFlyer()" placeholder="Nom (ex : bague aura)">
+    <textarea id="opt-desc" oninput="renderFlyer()" placeholder="Description courte (texte qui apparaît au verso)" style="margin-top:0.5rem;"></textarea>
 
-    <h2>4 · Phrase inspirante (recto)</h2>
-    <textarea id="opt-phrase" oninput="renderFlyer()" placeholder="ex : un éclat qui te ressemble · l'élégance se porte au quotidien · choisis ton mood"></textarea>
+    <h2>4 · Couleur du fond recto</h2>
+    <div class="color-picker" id="color-picker">
+      <div class="color-swatch active" data-bg="bg-blanc" style="background:#FAF7F2;border:1px solid #ddd;" title="Blanc cassé"></div>
+      <div class="color-swatch" data-bg="bg-sable" style="background:#E8DCC9;" title="Sable"></div>
+      <div class="color-swatch" data-bg="bg-beige" style="background:#EFE7DD;" title="Beige"></div>
+      <div class="color-swatch" data-bg="bg-gris" style="background:#D5D3D3;" title="Gris"></div>
+      <div class="color-swatch" data-bg="bg-anthracite" style="background:#4D4C4C;" title="Anthracite"></div>
+      <div class="color-swatch" data-bg="bg-noir" style="background:#252525;" title="Noir"></div>
+      <div class="color-swatch" data-bg="bg-rose" style="background:#F99C98;" title="Rose"></div>
+      <div class="color-swatch" data-bg="bg-turquoise" style="background:#76BABA;" title="Turquoise"></div>
+      <div class="color-swatch" data-bg="bg-vert" style="background:#C0D230;" title="Vert mood"></div>
+    </div>
 
-    <h2>5 · Options</h2>
+    <h2>5 · Textes du recto</h2>
+    <input type="text" id="opt-badge" oninput="renderFlyer()" placeholder="Badge haut (ex : MOOD COLLECTION)" value="MOOD COLLECTION">
+    <textarea id="opt-caption" oninput="renderFlyer()" placeholder="Légende italique sous photo" style="margin-top:0.5rem;">Un système breveté de bagues interchangeables qui évolue avec toi.</textarea>
+    <input type="text" id="opt-tagline" oninput="renderFlyer()" placeholder="Phrase bas recto" value="MOOD ÉVOLUE AVEC TOI" style="margin-top:0.5rem;">
+
+    <h2>6 · Options</h2>
     <label class="row-opt">
       <input type="checkbox" id="opt-show-price" checked onchange="renderFlyer()">
       Afficher le prix au verso
     </label>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-logo-recto" checked onchange="renderFlyer()">
+      Logo mood au bas du recto
+    </label>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-interchange" checked onchange="renderFlyer()">
+      Bande "système interchangeable" au verso
+    </label>
+
   </aside>
 
   <main class="preview-wrap">
     <div class="actions">
-      <button class="primary" onclick="window.print()">🖨️ Imprimer (ou enregistrer en PDF)</button>
-      <span class="hint">Chrome/Safari : choisir A5 portrait, marges aucune</span>
+      <button class="primary" onclick="window.print()">🖨️ Imprimer / PDF</button>
+      <span class="hint">Chrome/Safari : choisir A5 portrait, marges aucune, échelle 100%</span>
     </div>
 
     <div id="preview-area">
       <div class="empty-preview">
         <div style="font-size:2.5rem;margin-bottom:0.5rem;">📄</div>
         <div style="font-weight:600;color:var(--noir);margin-bottom:0.3rem;">Aperçu recto + verso</div>
-        <div style="font-size:0.85rem;">Choisis un produit à gauche → le flyer 2 pages se construit ici.</div>
+        <div style="font-size:0.85rem;">Ajoute au moins une photo (Shopify, Mac ou URL) → le flyer 2 pages se construit ici.</div>
       </div>
     </div>
   </main>
@@ -548,28 +774,43 @@
 </div>
 
 <script>
-let currentProduct = null;
+// ===== ÉTAT =====
+let allImages = []; // {url, alt, source: 'shopify'|'upload'|'url', id}
+let imgCounter = 0;
+let selectedRectoId = null;
+let selectedVersoIds = []; // max 4
+let currentProductMeta = null; // pour pré-remplir titre/desc/prix/url Shopify
+let bgRecto = 'bg-blanc';
 let searchTimer = null;
-let selectedRectoIdx = 0;     // index dans p.images
-let selectedVersoIdx = [0, 1, 2]; // indices verso (max 3)
 
 const searchInput = document.getElementById('search-input');
 const resultsDiv = document.getElementById('results');
 const previewArea = document.getElementById('preview-area');
 const photoPickerWrap = document.getElementById('photo-picker-wrap');
 
+// ===== ONGLETS SOURCES =====
+document.querySelectorAll('.source-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.source-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.source-panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+// ===== SHOPIFY SEARCH =====
 searchInput.addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = searchInput.value.trim();
   if (q.length < 2) {
-    resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>';
+    resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>';
     return;
   }
   searchTimer = setTimeout(() => doSearch(q), 280);
 });
 
 async function doSearch(q) {
-  resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Recherche…</div>';
+  resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Recherche…</div>';
   try {
     const r = await fetch('/api/mood-flyer-search?q=' + encodeURIComponent(q));
     const data = await r.json();
@@ -579,23 +820,22 @@ async function doSearch(q) {
     }
     const products = data.products || [];
     if (products.length === 0) {
-      resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
+      resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
       return;
     }
     resultsDiv.innerHTML = products.map((p, i) => `
-      <div class="result-card${currentProduct && currentProduct.id === p.id ? ' active' : ''}" data-idx="${i}">
-        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">` : '<div style="width:50px;height:50px;border-radius:6px;background:#f5f5f5;flex-shrink:0;"></div>'}
+      <div class="result-card" data-idx="${i}">
+        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="">` : '<div style="width:50px;height:50px;border-radius:6px;background:#f5f5f5;flex-shrink:0;"></div>'}
         <div class="info">
           <div class="title">${escapeHtml(p.title)}</div>
           <div class="price">${formatPrice(p.priceMin, p.currency)}${p.priceMax > p.priceMin ? ' – ' + formatPrice(p.priceMax, p.currency) : ''}</div>
         </div>
       </div>
     `).join('');
-    // Attacher événements
     Array.from(resultsDiv.querySelectorAll('.result-card')).forEach((card) => {
       card.addEventListener('click', () => {
         const idx = parseInt(card.dataset.idx, 10);
-        selectProduct(products[idx]);
+        selectShopifyProduct(products[idx]);
       });
     });
   } catch (e) {
@@ -603,170 +843,255 @@ async function doSearch(q) {
   }
 }
 
-function selectProduct(p) {
-  currentProduct = p;
-  selectedRectoIdx = 0;
-  selectedVersoIdx = [0, 1, 2].filter(i => p.images && p.images[i]);
-  document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
-  // Marque la carte active
-  document.querySelectorAll('.result-card').forEach((c, i) => {
-    if (c.dataset.idx !== undefined) {
-      // trouve la carte qui correspond au produit
-    }
-  });
-  // Auto-suggestion phrase si vide
-  const phraseField = document.getElementById('opt-phrase');
-  if (!phraseField.value.trim()) {
-    phraseField.value = suggestPhrase(p.title);
+function selectShopifyProduct(p) {
+  currentProductMeta = p;
+  // Pré-remplit les champs de texte
+  if (!document.getElementById('opt-title').value.trim()) {
+    document.getElementById('opt-title').value = p.title;
   }
-  renderPhotoPicker();
+  if (!document.getElementById('opt-desc').value.trim()) {
+    document.getElementById('opt-desc').value = (p.description || '').slice(0, 260);
+  }
+  // Ajoute toutes les images Shopify à la liste
+  const newImages = (p.images || []).map(img => ({
+    url: img.url,
+    alt: img.alt || p.title,
+    source: 'shopify',
+    id: ++imgCounter
+  }));
+  allImages = allImages.concat(newImages);
+  // Sélectionne auto la 1ère pour recto + 4 suivantes pour verso si rien encore choisi
+  if (!selectedRectoId && newImages[0]) selectedRectoId = newImages[0].id;
+  if (selectedVersoIds.length === 0) {
+    selectedVersoIds = newImages.slice(0, 4).map(im => im.id);
+  }
+  refreshPicker();
   renderFlyer();
 }
 
-function renderPhotoPicker() {
-  if (!currentProduct || !currentProduct.images || currentProduct.images.length === 0) {
+// ===== UPLOAD MAC =====
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = {
+        url: ev.target.result, // base64
+        alt: file.name,
+        source: 'upload',
+        id: ++imgCounter
+      };
+      allImages.push(img);
+      // Auto-sélection si rien
+      if (!selectedRectoId) selectedRectoId = img.id;
+      else if (selectedVersoIds.length < 4) selectedVersoIds.push(img.id);
+      refreshPicker();
+      renderFlyer();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== URL (DASH) =====
+document.getElementById('url-add-btn').addEventListener('click', () => {
+  const urlInput = document.getElementById('url-input');
+  const url = urlInput.value.trim();
+  if (!url) return;
+  const img = { url, alt: 'Image URL', source: 'url', id: ++imgCounter };
+  allImages.push(img);
+  if (!selectedRectoId) selectedRectoId = img.id;
+  else if (selectedVersoIds.length < 4) selectedVersoIds.push(img.id);
+  urlInput.value = '';
+  refreshPicker();
+  renderFlyer();
+});
+document.getElementById('url-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('url-add-btn').click(); }
+});
+
+// ===== SELECTEUR COULEUR =====
+document.querySelectorAll('.color-swatch').forEach(s => {
+  s.addEventListener('click', () => {
+    document.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    bgRecto = s.dataset.bg;
+    renderFlyer();
+  });
+});
+
+// ===== PICKER PHOTOS =====
+function refreshPicker() {
+  if (allImages.length === 0) {
     photoPickerWrap.style.display = 'none';
     return;
   }
   photoPickerWrap.style.display = 'block';
 
-  const imgs = currentProduct.images;
-
-  const pickerRecto = document.getElementById('picker-recto');
-  pickerRecto.innerHTML = imgs.map((img, i) => `
-    <div class="thumb${i === selectedRectoIdx ? ' selected-recto' : ''}" data-idx="${i}" data-target="recto">
-      <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.alt || '')}">
-      ${i === selectedRectoIdx ? '<span class="badge">R</span>' : ''}
-    </div>
-  `).join('');
-  pickerRecto.querySelectorAll('.thumb').forEach(t => {
-    t.addEventListener('click', () => {
-      selectedRectoIdx = parseInt(t.dataset.idx, 10);
-      renderPhotoPicker();
-      renderFlyer();
-    });
-  });
-
-  const pickerVerso = document.getElementById('picker-verso');
-  pickerVerso.innerHTML = imgs.map((img, i) => {
-    const pos = selectedVersoIdx.indexOf(i);
-    const cls = pos >= 0 ? ' selected-verso' : '';
-    const badge = pos >= 0 ? `<span class="badge verso">V${pos+1}</span>` : '';
-    return `
-      <div class="thumb${cls}" data-idx="${i}" data-target="verso">
-        <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.alt || '')}">
-        ${badge}
-      </div>
-    `;
-  }).join('');
-  pickerVerso.querySelectorAll('.thumb').forEach(t => {
-    t.addEventListener('click', () => {
-      const i = parseInt(t.dataset.idx, 10);
-      const pos = selectedVersoIdx.indexOf(i);
-      if (pos >= 0) {
-        // Désélectionne
-        selectedVersoIdx.splice(pos, 1);
-      } else if (selectedVersoIdx.length < 3) {
-        // Ajoute
-        selectedVersoIdx.push(i);
+  const renderThumbs = (containerId, target) => {
+    const container = document.getElementById(containerId);
+    container.innerHTML = allImages.map(img => {
+      let cls = '';
+      let badge = '';
+      let srcBadge = '';
+      if (target === 'recto') {
+        if (img.id === selectedRectoId) { cls = ' selected-recto'; badge = '<span class="badge">R</span>'; }
       } else {
-        // Remplace le premier
-        selectedVersoIdx.shift();
-        selectedVersoIdx.push(i);
+        const pos = selectedVersoIds.indexOf(img.id);
+        if (pos >= 0) { cls = ' selected-verso'; badge = `<span class="badge verso">V${pos+1}</span>`; }
       }
-      renderPhotoPicker();
-      renderFlyer();
-    });
-  });
-}
-
-function suggestPhrase(title) {
-  return `${title.toLowerCase()} — l'éclat qui te ressemble`;
-}
-
-function logoHtml(univers, white = false) {
-  if (univers === 'joaillerie') {
-    return `
-      <div class="logo-joaillerie" style="color:${white ? 'white' : 'var(--noir)'};">
-        <div class="word">
-          <span>m</span>
-          <span class="diamond">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-              <path d="M12 2 L22 9 L12 22 L2 9 Z M2 9 L22 9 M7 4 L12 9 L17 4 M7 4 L12 22 M17 4 L12 22"/>
-            </svg>
-          </span>
-          <span class="diamond">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-              <path d="M12 2 L22 9 L12 22 L2 9 Z M2 9 L22 9 M7 4 L12 9 L17 4 M7 4 L12 22 M17 4 L12 22"/>
-            </svg>
-          </span>
-          <span>d</span>
+      if (img.source === 'upload') srcBadge = '<span class="src-badge">mac</span>';
+      else if (img.source === 'url') srcBadge = '<span class="src-badge">url</span>';
+      return `
+        <div class="thumb${cls}" data-id="${img.id}" data-target="${target}">
+          <img src="${escapeHtml(img.url)}" alt="">
+          ${badge}
+          ${srcBadge}
+          <button class="del-btn" data-del="${img.id}" title="Retirer">×</button>
         </div>
-        <div class="tag">moodjoaillerie.net</div>
-      </div>
-    `;
-  }
-  return `<img src="/logo-mood.png" alt="mood" class="logo-mood-img${white ? ' white' : ''}">`;
+      `;
+    }).join('');
+    // Click → sélection
+    container.querySelectorAll('.thumb').forEach(t => {
+      t.addEventListener('click', (e) => {
+        if (e.target.classList.contains('del-btn')) return;
+        const id = parseInt(t.dataset.id, 10);
+        if (target === 'recto') {
+          selectedRectoId = id;
+        } else {
+          const pos = selectedVersoIds.indexOf(id);
+          if (pos >= 0) selectedVersoIds.splice(pos, 1);
+          else if (selectedVersoIds.length < 4) selectedVersoIds.push(id);
+          else { selectedVersoIds.shift(); selectedVersoIds.push(id); }
+        }
+        refreshPicker();
+        renderFlyer();
+      });
+    });
+    // Delete button
+    container.querySelectorAll('.del-btn').forEach(b => {
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(b.dataset.del, 10);
+        allImages = allImages.filter(i => i.id !== id);
+        if (selectedRectoId === id) selectedRectoId = allImages[0] ? allImages[0].id : null;
+        selectedVersoIds = selectedVersoIds.filter(x => x !== id);
+        refreshPicker();
+        renderFlyer();
+      });
+    });
+  };
+  renderThumbs('picker-recto', 'recto');
+  renderThumbs('picker-verso', 'verso');
 }
+
+// ===== RENDER FLYER =====
+function getImageById(id) { return allImages.find(i => i.id === id); }
 
 function renderFlyer() {
-  if (!currentProduct) return;
-  const p = currentProduct;
-  const univers = document.getElementById('opt-univers').value;
-  const phrase = document.getElementById('opt-phrase').value.trim() || suggestPhrase(p.title);
+  if (allImages.length === 0) return;
+  const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
+  const desc = document.getElementById('opt-desc').value.trim();
+  const badge = document.getElementById('opt-badge').value.trim() || 'MOOD COLLECTION';
+  const caption = document.getElementById('opt-caption').value.trim();
+  const tagline = document.getElementById('opt-tagline').value.trim();
   const showPrice = document.getElementById('opt-show-price').checked;
+  const showLogoRecto = document.getElementById('opt-show-logo-recto').checked;
+  const showInterchange = document.getElementById('opt-show-interchange').checked;
 
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(p.url);
-  const priceTxt = p.priceMin === p.priceMax
-    ? formatPrice(p.priceMin, p.currency)
-    : `dès ${formatPrice(p.priceMin, p.currency)}`;
-
-  const imgs = p.images && p.images.length > 0 ? p.images : (p.image ? [{url: p.image, alt: p.imageAlt}] : []);
-  const rectoImg = imgs[selectedRectoIdx] || imgs[0] || null;
-  const versoImgs = selectedVersoIdx.map(i => imgs[i]).filter(Boolean);
-  // Si moins de 3, compléter avec les autres images dispo
-  while (versoImgs.length < 3 && imgs.length > 0) {
-    const fallback = imgs.find(im => !versoImgs.includes(im));
+  const rectoImg = getImageById(selectedRectoId) || allImages[0];
+  const versoImgs = selectedVersoIds.map(id => getImageById(id)).filter(Boolean);
+  while (versoImgs.length < 4 && allImages.length > 0) {
+    const fallback = allImages.find(im => !versoImgs.includes(im));
     if (!fallback) break;
     versoImgs.push(fallback);
   }
-  while (versoImgs.length < 3) versoImgs.push(versoImgs[0] || rectoImg);
+  while (versoImgs.length < 4) versoImgs.push(versoImgs[0] || rectoImg);
 
-  // Logo recto : selon univers, sur photo claire ou sombre → on choisit blanc en MC (le band est vert mood, logo noir lisible). En Joaillerie, fond probablement clair, logo blanc en overlay sur photo + voile noir = OK
-  const rectoLogoWhite = univers === 'joaillerie';
+  // Couleur de fond : sombre ou clair ?
+  const darkBg = ['bg-noir', 'bg-anthracite', 'bg-turquoise'].includes(bgRecto);
+  const logoWhite = darkBg;
+
+  // URL produit pour QR
+  const productUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(productUrl);
+
+  // Prix
+  let priceTxt = '';
+  if (currentProductMeta) {
+    priceTxt = currentProductMeta.priceMin === currentProductMeta.priceMax
+      ? formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)
+      : `dès ${formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)}`;
+  }
+
+  // Motif O pour fond
+  const oSvg = `
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="8"/>
+    </svg>
+  `;
 
   previewArea.innerHTML = `
     <div class="pages-wrap">
+
       <div class="page-side">
         <div class="page-label">recto</div>
-        <div class="flyer flyer-recto univers-${univers}">
-          ${rectoImg ? `<div class="recto-photo-full"><img src="${escapeHtml(rectoImg.url)}" alt="${escapeHtml(rectoImg.alt || p.title)}"></div>` : ''}
-          <div class="recto-logo-overlay">${logoHtml(univers, rectoLogoWhite)}</div>
-          <div class="recto-band">
-            <div class="recto-band-text">${escapeHtml(phrase)}</div>
+        <div class="flyer flyer-recto ${bgRecto}">
+          <div class="o-pattern top-right" style="color:${darkBg ? 'white' : 'var(--noir)'};">${oSvg}</div>
+          <div class="o-pattern bottom-left" style="color:${darkBg ? 'white' : 'var(--noir)'};">${oSvg}</div>
+
+          <div class="recto-badge">${escapeHtml(badge)}</div>
+          <h1 class="recto-title">${escapeHtml(title)}</h1>
+          <div class="recto-photo">
+            ${rectoImg ? `<img src="${escapeHtml(rectoImg.url)}" alt="${escapeHtml(rectoImg.alt || title)}">` : ''}
           </div>
+          ${caption ? `<div class="recto-caption">${escapeHtml(caption)}</div>` : ''}
+          ${tagline ? `<div class="recto-tagline">${escapeHtml(tagline)}</div>` : ''}
+          ${showLogoRecto ? `<div style="position:relative;z-index:3;text-align:center;margin-top:4mm;"><img src="/logo-mood.png" alt="mood" class="logo-mood-img${logoWhite ? ' white' : ''}" style="height:8mm;"></div>` : ''}
         </div>
       </div>
 
       <div class="page-side">
         <div class="page-label">verso</div>
-        <div class="flyer flyer-verso univers-${univers}">
-          <div class="verso-top">${logoHtml(univers, false)}</div>
-          <div class="verso-product-name">${escapeHtml(p.title)}</div>
-
-          <div class="verso-grid">
-            <div class="grid-cell large">${versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : ''}</div>
-            <div class="grid-cell">${versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : ''}</div>
-            <div class="grid-cell">${versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : ''}</div>
+        <div class="flyer flyer-verso">
+          <div class="o-pattern top-left" style="color:var(--noir);">${oSvg}</div>
+          <div class="verso-top">
+            <img src="/logo-mood.png" alt="mood" class="logo-mood-img">
+            <div class="verso-product-name">${escapeHtml(title)}</div>
+            <div class="verso-sub">Système breveté · Garantie à vie</div>
           </div>
 
-          <div class="verso-desc">${escapeHtml((p.description || '').slice(0, 260))}${(p.description || '').length > 260 ? '…' : ''}</div>
+          <div class="verso-grid">
+            <div class="grid-large">${versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : ''}</div>
+            <div class="grid-small">${versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : ''}</div>
+            <div class="grid-small">${versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : ''}</div>
+            <div class="grid-small">${versoImgs[3] ? `<img src="${escapeHtml(versoImgs[3].url)}" alt="">` : ''}</div>
+          </div>
 
-          ${showPrice ? `<div class="verso-price-wrap"><div class="verso-price">${priceTxt}</div></div>` : ''}
+          ${showInterchange ? `
+            <div class="verso-interchangeable">
+              <span class="ico"></span><span class="txt">Bagues interchangeables · Mood évolue avec toi</span>
+            </div>
+          ` : ''}
+
+          ${desc ? `<div class="verso-desc">${escapeHtml(desc)}</div>` : ''}
+
+          ${showPrice && priceTxt ? `<div class="verso-price-wrap"><div class="verso-price">${priceTxt}</div></div>` : ''}
 
           <div class="verso-footer">
             <div class="verso-qr">
-              <div class="verso-qr-img"><img src="${qrUrl}" alt="QR code page produit"></div>
+              <div class="verso-qr-img"><img src="${qrUrl}" alt="QR"></div>
               <div class="verso-qr-label">scanne-moi</div>
             </div>
             <div class="verso-shops">
@@ -778,6 +1103,7 @@ function renderFlyer() {
           </div>
         </div>
       </div>
+
     </div>
   `;
 }
