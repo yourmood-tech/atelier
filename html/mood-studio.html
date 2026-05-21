@@ -213,16 +213,45 @@
     border-radius: 10px;
     background: var(--blanc-casse);
     border: 1px solid var(--gris);
+    border-left-width: 5px;
   }
   #element-panel.active { display: block; }
+  #element-panel.side-recto { border-left-color: var(--vert); background: #FBFDF1; }
+  #element-panel.side-verso { border-left-color: var(--turquoise); background: #F2F9F9; }
   #element-panel h3 {
-    margin: 0 0 0.6rem;
-    font-size: 0.8rem;
+    margin: 0 0 0.2rem;
+    font-size: 0.65rem;
     font-family: 'Comfortaa', sans-serif;
     font-weight: 700;
-    color: var(--noir);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.18em;
+  }
+  #element-panel.side-recto h3 { color: #5a7a18; }
+  #element-panel.side-verso h3 { color: #2d6868; }
+  #element-panel #el-panel-element {
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--noir);
+    margin-bottom: 0.6rem;
+  }
+
+  .guides-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    display: none;
+  }
+  .guides-overlay.on { display: block; }
+  .guides-overlay .g-line {
+    position: absolute;
+    background: rgba(118, 186, 186, 0.6);
+  }
+  .guides-overlay .g-v { width: 1px; top: 0; bottom: 0; }
+  .guides-overlay .g-h { height: 1px; left: 0; right: 0; }
+  .guides-overlay .g-margin {
+    background: rgba(220, 24, 24, 0.35);
   }
   #element-panel .sub-label {
     font-size: 0.72rem;
@@ -332,9 +361,10 @@
   }
   .editable.is-logo .swiss-cross-overlay {
     position: absolute;
-    top: 2%; right: 1%;
+    top: 4%; right: 5%;
     width: 11%;
     aspect-ratio: 1;
+    /* Position calibrée pour MASQUER la croix native du PNG (coin sup-droit du "d") */
   }
   .editable.is-logo .swiss-cross-overlay svg { width: 100%; height: 100%; display: block; }
 
@@ -499,7 +529,7 @@
     .flyer { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
     .flyer:last-of-type { page-break-after: auto; }
     .editable { border-color: transparent !important; }
-    .resize-handle, .layer-btns, .del-elem-btn { display: none !important; }
+    .resize-handle, .layer-btns, .del-elem-btn, .guides-overlay { display: none !important; }
   }
 </style>
 </head>
@@ -593,15 +623,20 @@
       <div class="color-swatch" data-bg="bg-vert" style="background:#C0D230;" title="Vert"></div>
     </div>
 
-    <h2>6 · Reset</h2>
+    <h2>6 · Reset & repères</h2>
     <button id="reset-recto" style="padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;margin-right:0.4rem;">↺ Recto</button>
     <button id="reset-verso" style="padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;">↺ Verso</button>
+    <label class="row-opt" style="margin-top:0.6rem;">
+      <input type="checkbox" id="opt-guides">
+      Afficher les repères (centre, tiers, marges)
+    </label>
 
     <div id="element-panel">
-      <h3 id="el-panel-name">Élément</h3>
+      <h3 id="el-panel-name">◐ Recto</h3>
+      <div id="el-panel-element">Élément</div>
 
       <div id="el-panel-text-section">
-        <div class="sub-label">Couleur</div>
+        <div class="sub-label">Couleur charte Mood</div>
         <div class="text-color-picker" id="el-color-picker">
           <div class="text-color-swatch" data-color="#252525" style="background:#252525;" title="Noir"></div>
           <div class="text-color-swatch" data-color="#4D4C4C" style="background:#4D4C4C;" title="Anthracite"></div>
@@ -611,6 +646,11 @@
           <div class="text-color-swatch" data-color="#F99C98" style="background:#F99C98;" title="Rose"></div>
           <div class="text-color-swatch" data-color="#C0D230" style="background:#C0D230;" title="Vert"></div>
           <div class="text-color-swatch" data-color="#E8DCC9" style="background:#E8DCC9;" title="Sable"></div>
+        </div>
+        <div class="sub-label">Couleur libre (pipette)</div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <input type="color" id="el-color-custom" style="width:40px;height:32px;border:1px solid var(--gris-light);border-radius:6px;cursor:pointer;padding:2px;">
+          <input type="text" id="el-color-hex" placeholder="#000000" style="flex:1;font-family:monospace;font-size:0.85rem;">
         </div>
       </div>
 
@@ -902,6 +942,24 @@ function refreshPicker() {
 
 function getImageById(id) { return allImages.find(i => i.id === id); }
 
+function guidesHtml() {
+  // Centre + tiers + marges sur 148×210mm
+  return `
+    <div class="guides-overlay">
+      <div class="g-line g-v" style="left:50%;"></div>
+      <div class="g-line g-h" style="top:50%;"></div>
+      <div class="g-line g-v" style="left:33.33%;"></div>
+      <div class="g-line g-v" style="left:66.67%;"></div>
+      <div class="g-line g-h" style="top:33.33%;"></div>
+      <div class="g-line g-h" style="top:66.67%;"></div>
+      <div class="g-line g-v g-margin" style="left:${mm(10)}px;"></div>
+      <div class="g-line g-v g-margin" style="right:${mm(10)}px;"></div>
+      <div class="g-line g-h g-margin" style="top:${mm(10)}px;"></div>
+      <div class="g-line g-h g-margin" style="bottom:${mm(10)}px;"></div>
+    </div>
+  `;
+}
+
 function ensureStructure() {
   if (!document.getElementById('recto-flyer')) {
     previewArea.innerHTML = `
@@ -917,6 +975,10 @@ function ensureStructure() {
       </div>
     `;
   }
+}
+function applyGuides() {
+  const on = document.getElementById('opt-guides').checked;
+  document.querySelectorAll('.guides-overlay').forEach(g => g.classList.toggle('on', on));
 }
 
 // ===== RENDER RECTO =====
@@ -945,30 +1007,30 @@ function renderRecto() {
     const d = makeEditableEl('recto.' + el.key, el.type, cfg, el.content);
     rectoEl.appendChild(d);
   });
+  rectoEl.insertAdjacentHTML('beforeend', guidesHtml());
+  applyGuides();
 }
 
 // SVG croix suisse + logo coloré
 function buildLogoHtml(color) {
   const crossSvg = `
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="100" fill="${'#DC1818'}"/>
-      <rect x="40" y="20" width="20" height="60" fill="white"/>
-      <rect x="20" y="40" width="60" height="20" fill="white"/>
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <rect width="100" height="100" fill="#DC1818"/>
+      <rect x="40" y="22" width="20" height="56" fill="white"/>
+      <rect x="22" y="40" width="56" height="20" fill="white"/>
     </svg>
   `;
-  // Logo principal coloré via mask CSS (toutes les couleurs supportées sauf noir = direct)
-  let logoImgHtml;
+  // TOUJOURS overlay croix suisse rouge bien positionnée pour MASQUER la croix native du PNG
+  // Cela garantit qu'elle reste rouge avec croix blanche quelle que soit la couleur du logo
+  let logoBg;
   if (color === '#252525' || !color) {
-    // Garde le PNG original (noir avec croix rouge native)
-    logoImgHtml = `<img src="/logo-mood.png" alt="mood" class="logo-img" style="object-fit:contain;">`;
-    // Pas besoin d'overlay croix suisse, elle est dans le PNG
-    return `<div class="logo-inner">${logoImgHtml}</div>`;
+    // PNG original (noir natif)
+    logoBg = `<img src="/logo-mood.png" alt="mood" class="logo-img" style="object-fit:contain;">`;
   } else {
-    // Mask pour colorer
-    logoImgHtml = `<div class="logo-img" style="-webkit-mask-image:url('/logo-mood.png');mask-image:url('/logo-mood.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${color};"></div>`;
-    // Ajoute overlay croix suisse rouge (pour préserver la croix originale)
-    return `<div class="logo-inner">${logoImgHtml}<div class="swiss-cross-overlay">${crossSvg}</div></div>`;
+    // Mask CSS pour colorer le logo
+    logoBg = `<div class="logo-img" style="-webkit-mask-image:url('/logo-mood.png');mask-image:url('/logo-mood.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${color};"></div>`;
   }
+  return `<div class="logo-inner">${logoBg}<div class="swiss-cross-overlay">${crossSvg}</div></div>`;
 }
 
 // ===== RENDER VERSO =====
@@ -1021,6 +1083,8 @@ function renderVerso() {
     const d = makeEditableEl('verso.' + el.key, el.type, cfg, el.content);
     versoEl.appendChild(d);
   });
+  versoEl.insertAdjacentHTML('beforeend', guidesHtml());
+  applyGuides();
 }
 
 // ===== GÉNÉRIQUE ÉLÉMENT =====
@@ -1259,13 +1323,17 @@ function showElementPanel(fullKey) {
   const key = fullKey.split('.')[1];
   const side = fullKey.split('.')[0];
   const nameLabel = {
-    photo: 'Photo recto', logo: 'Logo', title: 'Nom produit', tagline: 'Phrase courte',
-    sub: 'Sous-titre garantie', photoMain: 'Photo principale',
-    photoSmall1: 'Photo petite 1', photoSmall2: 'Photo petite 2', photoSmall3: 'Photo petite 3',
+    photo: 'Photo principale', logo: 'Logo', title: 'Nom produit', tagline: 'Phrase courte',
+    sub: 'Sous-titre garantie', photoMain: 'Photo grande',
+    photoSmall1: 'Photo petite n°1', photoSmall2: 'Photo petite n°2', photoSmall3: 'Photo petite n°3',
     interchange: 'Bande interchangeable', desc: 'Description', price: 'Prix',
     qr: 'QR code', shops: 'Boutiques'
   };
-  document.getElementById('el-panel-name').textContent = (side === 'recto' ? '◐ Recto · ' : '◑ Verso · ') + (nameLabel[key] || key);
+  // Header coloré par face : vert mood pour recto, turquoise pour verso
+  elementPanel.classList.remove('side-recto', 'side-verso');
+  elementPanel.classList.add('side-' + side);
+  document.getElementById('el-panel-name').textContent = side === 'recto' ? '◐ RECTO' : '◑ VERSO';
+  document.getElementById('el-panel-element').textContent = nameLabel[key] || key;
 
   const colorSection = document.getElementById('el-panel-text-section');
   const hasColor = cfg.color !== undefined;
@@ -1274,6 +1342,9 @@ function showElementPanel(fullKey) {
     document.querySelectorAll('.text-color-swatch').forEach(s => {
       s.classList.toggle('active', s.dataset.color.toLowerCase() === (cfg.color || '').toLowerCase());
     });
+    // Sync pipette + hex avec la couleur actuelle
+    document.getElementById('el-color-custom').value = cfg.color || '#252525';
+    document.getElementById('el-color-hex').value = cfg.color || '';
   }
 
   const fontSection = document.getElementById('el-panel-font-section');
@@ -1313,7 +1384,7 @@ function hideElementPanel() {
   activeKey = null;
 }
 
-// Couleur texte/logo
+// Couleur texte/logo (swatches charte)
 document.querySelectorAll('.text-color-swatch').forEach(s => {
   s.addEventListener('click', () => {
     if (!activeKey) return;
@@ -1321,11 +1392,40 @@ document.querySelectorAll('.text-color-swatch').forEach(s => {
     cfg.color = s.dataset.color;
     document.querySelectorAll('.text-color-swatch').forEach(x => x.classList.remove('active'));
     s.classList.add('active');
+    document.getElementById('el-color-custom').value = cfg.color;
+    document.getElementById('el-color-hex').value = cfg.color;
     const side = activeKey.split('.')[0];
     side === 'recto' ? renderRecto() : renderVerso();
     setTimeout(() => reselect(activeKey), 0);
   });
 });
+// Pipette couleur libre
+document.getElementById('el-color-custom').addEventListener('input', (e) => {
+  if (!activeKey) return;
+  const cfg = getCfg(activeKey);
+  if (cfg.color === undefined) return;
+  cfg.color = e.target.value;
+  document.getElementById('el-color-hex').value = e.target.value;
+  document.querySelectorAll('.text-color-swatch').forEach(x => x.classList.remove('active'));
+  const side = activeKey.split('.')[0];
+  side === 'recto' ? renderRecto() : renderVerso();
+  setTimeout(() => reselect(activeKey), 0);
+});
+document.getElementById('el-color-hex').addEventListener('change', (e) => {
+  if (!activeKey) return;
+  const val = e.target.value.trim();
+  if (!/^#[0-9a-fA-F]{6}$/.test(val)) return;
+  const cfg = getCfg(activeKey);
+  if (cfg.color === undefined) return;
+  cfg.color = val;
+  document.getElementById('el-color-custom').value = val;
+  document.querySelectorAll('.text-color-swatch').forEach(x => x.classList.remove('active'));
+  const side = activeKey.split('.')[0];
+  side === 'recto' ? renderRecto() : renderVerso();
+  setTimeout(() => reselect(activeKey), 0);
+});
+// Toggle repères
+document.getElementById('opt-guides').addEventListener('change', applyGuides);
 // Taille
 document.getElementById('el-font-size').addEventListener('input', (e) => {
   if (!activeKey) return;
