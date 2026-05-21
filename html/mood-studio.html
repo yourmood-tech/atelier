@@ -26,8 +26,7 @@
     font-family: 'Inter', -apple-system, "Segoe UI", system-ui, sans-serif;
     background: #ece8e3;
     color: var(--noir);
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     line-height: 1.5;
   }
 
@@ -35,9 +34,7 @@
     background: white;
     padding: 0.9rem 1.5rem;
     border-bottom: 1px solid #eee;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    display: flex; align-items: center; gap: 1rem;
   }
   header h1 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: 0.04em; font-family: 'Comfortaa', sans-serif; }
   header .retour { color: var(--gris-text); text-decoration: none; font-size: 0.85rem; }
@@ -86,23 +83,12 @@
   .panel-search .row-opt { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; font-size: 0.9rem; }
   .panel-search .row-opt input[type=checkbox] { width: auto; }
 
-  .source-tabs {
-    display: flex;
-    gap: 0.3rem;
-    margin-bottom: 0.6rem;
-    border-bottom: 1px solid #eee;
-  }
+  .source-tabs { display: flex; gap: 0.3rem; margin-bottom: 0.6rem; border-bottom: 1px solid #eee; }
   .source-tab {
-    flex: 1;
-    padding: 0.5rem 0.4rem;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--gris-text);
-    cursor: pointer;
-    transition: all 0.15s;
+    flex: 1; padding: 0.5rem 0.4rem;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    font-size: 0.78rem; font-weight: 600;
+    color: var(--gris-text); cursor: pointer; transition: all 0.15s;
     font-family: inherit;
   }
   .source-tab:hover { color: var(--anthracite); }
@@ -112,13 +98,9 @@
 
   .results { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
   .result-card {
-    border: 1px solid #eee;
-    border-radius: 10px;
-    padding: 0.6rem;
-    cursor: pointer;
-    display: flex;
-    gap: 0.7rem;
-    align-items: center;
+    border: 1px solid #eee; border-radius: 10px;
+    padding: 0.6rem; cursor: pointer;
+    display: flex; gap: 0.7rem; align-items: center;
     transition: all 0.15s;
   }
   .result-card:hover { border-color: var(--anthracite); background: var(--blanc-casse); }
@@ -158,64 +140,40 @@
   .url-hint { font-size: 0.72rem; color: var(--gris-text); margin-top: 0.4rem; line-height: 1.4; }
   .url-hint a { color: var(--anthracite); }
 
-  .photo-picker {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.35rem;
-    margin-top: 0.5rem;
-  }
+  .photo-picker { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.35rem; margin-top: 0.5rem; }
   .photo-picker .thumb {
-    aspect-ratio: 1;
-    border-radius: 6px;
-    overflow: hidden;
-    cursor: pointer;
-    border: 2px solid transparent;
-    background: #f5f5f5;
-    position: relative;
+    aspect-ratio: 1; border-radius: 6px; overflow: hidden; cursor: pointer;
+    border: 2px solid transparent; background: #f5f5f5; position: relative;
     transition: all 0.15s;
   }
   .photo-picker .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .photo-picker .thumb.selected-recto { border-color: var(--noir); }
   .photo-picker .thumb.selected-verso { border-color: var(--anthracite); }
   .photo-picker .thumb .badge {
-    position: absolute;
-    top: 2px; right: 2px;
-    background: var(--noir);
-    color: white;
-    font-size: 0.55rem;
-    font-weight: 700;
-    padding: 1px 4px;
-    border-radius: 3px;
-    line-height: 1.2;
+    position: absolute; top: 2px; right: 2px;
+    background: var(--noir); color: white;
+    font-size: 0.55rem; font-weight: 700;
+    padding: 1px 4px; border-radius: 3px; line-height: 1.2;
     font-family: 'Comfortaa', sans-serif;
   }
   .photo-picker .thumb .badge.verso { background: var(--anthracite); }
   .photo-picker .thumb .src-badge {
-    position: absolute;
-    bottom: 2px; left: 2px;
+    position: absolute; bottom: 2px; left: 2px;
     font-size: 0.55rem;
     background: rgba(255,255,255,0.85);
-    padding: 0 3px;
-    border-radius: 2px;
-    color: var(--anthracite);
-    line-height: 1.4;
+    padding: 0 3px; border-radius: 2px;
+    color: var(--anthracite); line-height: 1.4;
     text-transform: lowercase;
   }
   .photo-picker .thumb .del-btn {
-    position: absolute;
-    top: 2px; left: 2px;
+    position: absolute; top: 2px; left: 2px;
     width: 16px; height: 16px;
     background: rgba(255,255,255,0.9);
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    font-size: 11px;
-    line-height: 1;
-    color: var(--noir);
-    display: none;
+    border-radius: 50%; border: none;
+    cursor: pointer; font-size: 11px; line-height: 1;
+    color: var(--noir); display: none;
   }
   .photo-picker .thumb:hover .del-btn { display: block; }
-  .picker-hint { font-size: 0.72rem; color: var(--gris-text); margin-top: 0.4rem; line-height: 1.4; }
   .picker-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; font-size: 0.8rem; }
   .picker-row .lbl { color: var(--gris-text); flex-shrink: 0; min-width: 50px; font-weight: 600; }
 
@@ -231,18 +189,11 @@
   .color-swatch:hover { transform: scale(1.1); }
   .color-swatch.active { border-color: var(--noir); }
   .color-swatch.active::after {
-    content: '✓';
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 12px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    content: '✓'; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
   }
 
-  /* === BANDEAU AIDE ÉDITEUR === */
   .editor-help {
     background: var(--beige);
     border-radius: 8px;
@@ -254,23 +205,57 @@
   }
   .editor-help strong { color: var(--noir); }
 
-  .preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-  .actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
-  .actions button {
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    border: 1px solid var(--gris-light);
-    background: white;
-    font-size: 0.88rem;
-    font-family: inherit;
+  /* ===== PANEL ÉLÉMENT SÉLECTIONNÉ ===== */
+  #element-panel {
+    display: none;
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border-radius: 10px;
+    background: var(--blanc-casse);
+    border: 1px solid var(--gris);
+  }
+  #element-panel.active { display: block; }
+  #element-panel h3 {
+    margin: 0 0 0.6rem;
+    font-size: 0.8rem;
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    color: var(--noir);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  #element-panel .sub-label {
+    font-size: 0.72rem;
+    color: var(--gris-text);
+    margin: 0.7rem 0 0.3rem;
+    font-weight: 600;
+  }
+  .text-color-picker { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .text-color-swatch {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
     cursor: pointer;
     transition: all 0.15s;
   }
+  .text-color-swatch:hover { transform: scale(1.1); }
+  .text-color-swatch.active { border-color: var(--noir); box-shadow: 0 0 0 2px white inset; }
+  .font-row { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
+  .font-row label { font-size: 0.78rem; color: var(--gris-text); }
+  .font-row input[type=range] { flex: 1; }
+  .font-row input[type=number] { width: 60px; padding: 0.3rem 0.5rem; border: 1px solid var(--gris-light); border-radius: 6px; font-family: inherit; font-size: 0.85rem; }
+
+  .preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+  .actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+  .actions button {
+    padding: 0.6rem 1.2rem; border-radius: 8px;
+    border: 1px solid var(--gris-light);
+    background: white; font-size: 0.88rem; font-family: inherit;
+    cursor: pointer; transition: all 0.15s;
+  }
   .actions button.primary {
-    background: var(--noir);
-    color: white;
-    border-color: var(--noir);
-    font-weight: 600;
+    background: var(--noir); color: white;
+    border-color: var(--noir); font-weight: 600;
     font-family: 'Comfortaa', sans-serif;
   }
   .actions button.primary:hover { background: var(--anthracite); border-color: var(--anthracite); }
@@ -279,52 +264,40 @@
 
   .pages-wrap { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
   .page-label {
-    text-align: center;
-    font-size: 0.72rem;
-    color: var(--gris-text);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-bottom: 0.4rem;
-    font-weight: 600;
-    font-family: 'Comfortaa', sans-serif;
+    text-align: center; font-size: 0.72rem;
+    color: var(--gris-text); text-transform: uppercase;
+    letter-spacing: 0.15em; margin-bottom: 0.4rem;
+    font-weight: 600; font-family: 'Comfortaa', sans-serif;
   }
   .page-side { display: flex; flex-direction: column; align-items: center; }
 
   .empty-preview {
-    width: 100%;
-    max-width: 420px;
-    padding: 3rem 2rem;
-    background: white;
-    border-radius: 12px;
-    text-align: center;
+    width: 100%; max-width: 420px;
+    padding: 3rem 2rem; background: white;
+    border-radius: 12px; text-align: center;
     color: var(--gris-text);
     border: 2px dashed var(--gris-light);
   }
 
-  /* ====== FLYER A5 PORTRAIT — 148×210mm @ 96dpi ≈ 559×794px ====== */
+  /* ====== FLYER A5 PORTRAIT ====== */
   .flyer {
-    width: 148mm;
-    height: 210mm;
+    width: 148mm; height: 210mm;
     box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
     font-family: 'Comfortaa', 'Inter', sans-serif;
     color: var(--noir);
   }
+  .flyer.bg-blanc { background: var(--blanc-casse); }
+  .flyer.bg-sable { background: var(--sable); }
+  .flyer.bg-beige { background: var(--beige); }
+  .flyer.bg-gris { background: var(--gris); }
+  .flyer.bg-anthracite { background: var(--anthracite); }
+  .flyer.bg-noir { background: var(--noir); }
+  .flyer.bg-rose { background: var(--rose); }
+  .flyer.bg-turquoise { background: var(--turquoise); }
+  .flyer.bg-vert { background: var(--vert); }
 
-  .flyer.bg-blanc { background: var(--blanc-casse); color: var(--noir); }
-  .flyer.bg-sable { background: var(--sable); color: var(--noir); }
-  .flyer.bg-beige { background: var(--beige); color: var(--noir); }
-  .flyer.bg-gris { background: var(--gris); color: var(--noir); }
-  .flyer.bg-anthracite { background: var(--anthracite); color: white; }
-  .flyer.bg-noir { background: var(--noir); color: white; }
-  .flyer.bg-rose { background: var(--rose); color: var(--noir); }
-  .flyer.bg-turquoise { background: var(--turquoise); color: white; }
-  .flyer.bg-vert { background: var(--vert); color: var(--noir); }
-
-  /* ====== RECTO — ÉDITEUR LIBRE ====== */
-  .flyer-recto { padding: 0; }
-
+  /* ====== ÉLÉMENT ÉDITABLE ====== */
   .editable {
     position: absolute;
     cursor: move;
@@ -332,33 +305,34 @@
     -webkit-user-select: none;
     border: 2px dashed transparent;
     transition: border-color 0.15s;
-    z-index: 2;
   }
   .editable:hover { border-color: rgba(37,37,37,0.4); }
   .editable.selected { border-color: var(--noir); }
-  .editable.is-photo { z-index: 1; cursor: move; }
 
   .editable img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .editable.is-logo img { object-fit: contain; }
+  .editable.is-logo.logo-white img { filter: brightness(0) invert(1); }
 
-  /* Texte éditable */
   .editable.is-text {
     padding: 4px 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     text-align: center;
   }
   .editable.is-text .text-inner {
     width: 100%;
     pointer-events: none;
     font-family: 'Comfortaa', sans-serif;
-    font-weight: 700;
-    text-transform: lowercase;
     line-height: 1.05;
     word-break: break-word;
   }
+  .editable.is-text.style-uppercase .text-inner { text-transform: uppercase; letter-spacing: 0.2em; }
+  .editable.is-text.style-lowercase .text-inner { text-transform: lowercase; }
+  .editable.is-text.weight-700 .text-inner { font-weight: 700; }
+  .editable.is-text.weight-600 .text-inner { font-weight: 600; }
+  .editable.is-text.weight-500 .text-inner { font-weight: 500; }
+  .editable.is-text.weight-400 .text-inner { font-weight: 400; }
+  .editable.is-text.weight-300 .text-inner { font-weight: 300; }
 
-  /* Poignée resize bottom-right */
   .resize-handle {
     position: absolute;
     bottom: -7px; right: -7px;
@@ -374,167 +348,106 @@
   .editable:hover .resize-handle,
   .editable.selected .resize-handle { display: block; }
 
-  /* Bouton ordre z-index (avant/arrière) */
   .layer-btns {
     position: absolute;
     top: -10px; right: -10px;
     display: none;
-    gap: 4px;
-    z-index: 11;
+    gap: 4px; z-index: 11;
   }
   .editable.selected .layer-btns { display: flex; }
   .layer-btn {
     width: 22px; height: 22px;
-    background: var(--noir);
-    color: white;
-    border: 2px solid white;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 11px;
-    line-height: 1;
-    padding: 0;
-    font-family: 'Comfortaa', sans-serif;
+    background: var(--noir); color: white;
+    border: 2px solid white; border-radius: 50%;
+    cursor: pointer; font-size: 11px; line-height: 1;
+    padding: 0; font-family: 'Comfortaa', sans-serif;
     font-weight: 700;
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
   }
   .layer-btn:hover { background: var(--anthracite); }
 
-  /* Logo mood */
-  .logo-mood-img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; }
-  .logo-mood-img.white { filter: brightness(0) invert(1); }
+  /* ====== VERSO (sera reconstruit en JS comme le recto avec éléments éditables) ====== */
+  .flyer-verso { background: var(--blanc-casse); }
 
-  /* ====== VERSO — FIXE ====== */
-  .flyer-verso {
-    background: var(--blanc-casse);
-    padding: 10mm 10mm 8mm;
-    color: var(--noir);
-    display: flex;
-    flex-direction: column;
+  /* QR + petits éléments fixes par défaut */
+  .qr-box {
+    width: 100%; height: 100%;
+    background: white; padding: 0.5mm;
+    border: 0.3mm solid var(--gris);
+    border-radius: 1mm;
+    display: flex; flex-direction: column;
   }
-  .verso-top {
-    text-align: center;
-  }
-  .verso-top img { height: 10mm; width: auto; display: inline-block; margin: 0 auto; }
-  .verso-product-name {
-    margin: 4mm 0 1mm;
+  .qr-box img { width: 100%; height: 100%; flex: 1; object-fit: contain; }
+  .qr-label {
     font-family: 'Comfortaa', sans-serif;
-    font-size: 18pt;
-    font-weight: 600;
-    color: var(--noir);
-    line-height: 1.15;
-    letter-spacing: -0.005em;
-    text-transform: lowercase;
+    font-size: 5pt;
     text-align: center;
-  }
-  .verso-sub {
-    font-family: 'Comfortaa', sans-serif;
-    font-size: 7pt;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: var(--anthracite);
-    text-align: center;
-    margin-bottom: 4mm;
-    font-weight: 500;
+    margin-top: 0.5mm;
+    color: var(--gris-text);
   }
-  .verso-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2mm;
-    margin: 4mm 0 5mm;
-    height: 75mm;
+
+  .shops-box {
+    width: 100%; height: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 7pt; line-height: 1.55;
+    color: inherit; text-align: right;
+    display: flex; flex-direction: column; justify-content: center;
   }
-  .verso-grid .grid-large { grid-row: span 3; background: #f5f5f5; overflow: hidden; border-radius: 1mm; }
-  .verso-grid .grid-small { background: #f5f5f5; overflow: hidden; border-radius: 1mm; height: 23.7mm; }
-  .verso-grid img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .verso-interchangeable {
-    text-align: center;
-    margin: 1mm 0 3mm;
-    padding: 2mm 4mm;
+  .shops-box .label {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700; letter-spacing: 0.2em;
+    font-size: 6pt; text-transform: uppercase;
+    margin-bottom: 1mm;
+  }
+  .shops-box .url {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 600; font-size: 8pt;
+    margin-top: 1mm;
+  }
+
+  .interchange-box {
+    width: 100%; height: 100%;
+    padding: 1mm;
     border-top: 0.3mm solid var(--gris);
     border-bottom: 0.3mm solid var(--gris);
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
   }
-  .verso-interchangeable .ico {
+  .interchange-box .ico {
     display: inline-block;
-    width: 4mm; height: 4mm;
-    border: 0.6mm solid var(--noir);
+    width: 3mm; height: 3mm;
+    border: 0.6mm solid currentColor;
     border-radius: 50%;
     vertical-align: middle;
     margin-right: 2mm;
+    flex-shrink: 0;
   }
-  .verso-interchangeable .txt {
+  .interchange-box .txt {
     font-family: 'Comfortaa', sans-serif;
-    font-size: 8pt;
-    font-weight: 500;
+    font-size: 7pt; font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--noir);
-    vertical-align: middle;
   }
-  .verso-desc {
-    font-size: 8.5pt;
-    line-height: 1.55;
-    color: #444;
-    font-weight: 300;
-    text-align: center;
-    margin: 0 4mm 3mm;
-    max-height: 22mm;
-    overflow: hidden;
-    font-family: 'Inter', sans-serif;
-  }
-  .verso-price-wrap { text-align: center; margin: 2mm 0 3mm; }
-  .verso-price {
-    display: inline-block;
+
+  .price-box {
+    width: 100%; height: 100%;
     font-family: 'Comfortaa', sans-serif;
-    font-size: 14pt;
-    font-weight: 700;
-    color: var(--noir);
-    padding: 1mm 8mm;
+    font-size: 14pt; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
     letter-spacing: 0.02em;
   }
-  .verso-footer {
-    margin-top: auto;
-    padding-top: 4mm;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 4mm;
-    border-top: 0.3mm solid var(--gris);
-  }
-  .verso-qr { width: 22mm; flex-shrink: 0; }
-  .verso-qr-img { width: 22mm; height: 22mm; background: white; padding: 0.5mm; border: 0.3mm solid var(--gris); border-radius: 1mm; }
-  .verso-qr-img img { width: 100%; height: 100%; display: block; }
-  .verso-qr-label {
-    font-family: 'Comfortaa', sans-serif;
-    font-size: 6pt;
-    color: var(--gris-text);
-    text-align: center;
-    margin-top: 1mm;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-  .verso-shops {
+
+  .desc-box {
+    width: 100%; height: 100%;
     font-family: 'Inter', sans-serif;
-    font-size: 7pt;
-    color: #444;
+    font-size: 8.5pt;
     line-height: 1.55;
-    text-align: right;
-    flex: 1;
-  }
-  .verso-shops .label {
-    font-family: 'Comfortaa', sans-serif;
-    font-weight: 700;
-    color: var(--noir);
-    letter-spacing: 0.2em;
-    font-size: 6pt;
-    text-transform: uppercase;
-    margin-bottom: 1mm;
-  }
-  .verso-shops .url {
-    font-family: 'Comfortaa', sans-serif;
-    color: var(--noir);
-    font-weight: 600;
-    font-size: 8pt;
-    margin-top: 1mm;
+    font-weight: 300;
+    text-align: center;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
   }
 
   /* ====== IMPRESSION ====== */
@@ -592,7 +505,7 @@
         <button id="url-add-btn">+</button>
       </div>
       <div class="url-hint">
-        Dash : ouvre <a href="https://yourmood.dash.app" target="_blank">yourmood.dash.app</a>, clic droit sur l'image → "Copier l'adresse de l'image", colle ici.
+        Dash : ouvre <a href="https://yourmood.dash.app" target="_blank">yourmood.dash.app</a>, clic droit sur une image → "Copier l'adresse de l'image", colle ici.
       </div>
     </div>
 
@@ -605,18 +518,18 @@
       <div class="photo-picker" id="picker-recto"></div>
       <div class="picker-row" style="margin-top:0.8rem;">
         <span class="lbl">Verso</span>
-        <span style="color:var(--anthracite);font-size:0.75rem;">4 photos — 1 grande + 3 petites</span>
+        <span style="color:var(--anthracite);font-size:0.75rem;">4 photos (V1–V4)</span>
       </div>
       <div class="photo-picker" id="picker-verso"></div>
     </div>
 
     <h2>3 · Textes</h2>
-    <input type="text" id="opt-title" oninput="renderAll()" placeholder="Nom produit (recto + verso)">
-    <input type="text" id="opt-tagline" oninput="renderAll()" placeholder="Phrase courte du recto (ex : mood évolue avec toi)" style="margin-top:0.5rem;" value="mood évolue avec toi">
+    <input type="text" id="opt-title" oninput="renderAll()" placeholder="Nom produit">
+    <input type="text" id="opt-tagline" oninput="renderAll()" placeholder="Phrase courte recto" style="margin-top:0.5rem;" value="mood évolue avec toi">
     <textarea id="opt-desc" oninput="renderAll()" placeholder="Description verso" style="margin-top:0.5rem;"></textarea>
 
-    <h2>4 · Couleur de fond recto</h2>
-    <div class="color-picker" id="color-picker">
+    <h2>4 · Fond recto</h2>
+    <div class="color-picker" id="color-picker-recto">
       <div class="color-swatch active" data-bg="bg-blanc" style="background:#FAF7F2;border:1px solid #ddd;" title="Blanc cassé"></div>
       <div class="color-swatch" data-bg="bg-sable" style="background:#E8DCC9;" title="Sable"></div>
       <div class="color-swatch" data-bg="bg-beige" style="background:#EFE7DD;" title="Beige"></div>
@@ -628,38 +541,67 @@
       <div class="color-swatch" data-bg="bg-vert" style="background:#C0D230;" title="Vert"></div>
     </div>
 
-    <h2>5 · Éléments recto</h2>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-photo-recto" checked onchange="toggleEl('photo', this.checked)">
-      Photo
-    </label>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-logo-recto" checked onchange="toggleEl('logo', this.checked)">
-      Logo mood
-    </label>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-title-recto" onchange="toggleEl('title', this.checked)">
-      Nom produit
-    </label>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-tagline-recto" checked onchange="toggleEl('tagline', this.checked)">
-      Phrase courte
-    </label>
-    <button id="reset-layout" style="margin-top:0.8rem;padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;">↺ Réinitialiser la mise en page</button>
-
-    <div class="editor-help">
-      <strong>Édition du recto :</strong> clique sur la photo, le logo ou un texte pour le déplacer. Glisse depuis le <strong>cercle noir</strong> en bas à droite pour redimensionner. Boutons <strong>↑ ↓</strong> = passer devant / derrière.
+    <h2>5 · Fond verso</h2>
+    <div class="color-picker" id="color-picker-verso">
+      <div class="color-swatch active" data-bg="bg-blanc" style="background:#FAF7F2;border:1px solid #ddd;" title="Blanc cassé"></div>
+      <div class="color-swatch" data-bg="bg-sable" style="background:#E8DCC9;" title="Sable"></div>
+      <div class="color-swatch" data-bg="bg-beige" style="background:#EFE7DD;" title="Beige"></div>
+      <div class="color-swatch" data-bg="bg-gris" style="background:#D5D3D3;" title="Gris"></div>
+      <div class="color-swatch" data-bg="bg-anthracite" style="background:#4D4C4C;" title="Anthracite"></div>
+      <div class="color-swatch" data-bg="bg-noir" style="background:#252525;" title="Noir"></div>
+      <div class="color-swatch" data-bg="bg-rose" style="background:#F99C98;" title="Rose"></div>
+      <div class="color-swatch" data-bg="bg-turquoise" style="background:#76BABA;" title="Turquoise"></div>
+      <div class="color-swatch" data-bg="bg-vert" style="background:#C0D230;" title="Vert"></div>
     </div>
 
-    <h2>6 · Verso (fixe)</h2>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-price" checked onchange="renderVerso()">
-      Afficher le prix
-    </label>
-    <label class="row-opt">
-      <input type="checkbox" id="opt-show-interchange" checked onchange="renderVerso()">
-      Bande "système interchangeable"
-    </label>
+    <h2>6 · Reset</h2>
+    <button id="reset-recto" style="padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;margin-right:0.4rem;">↺ Recto</button>
+    <button id="reset-verso" style="padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;">↺ Verso</button>
+
+    <!-- Panel élément sélectionné -->
+    <div id="element-panel">
+      <h3 id="el-panel-name">Élément</h3>
+
+      <div id="el-panel-text-section">
+        <div class="sub-label">Couleur du texte / logo</div>
+        <div class="text-color-picker" id="el-color-picker">
+          <div class="text-color-swatch" data-color="#252525" style="background:#252525;" title="Noir"></div>
+          <div class="text-color-swatch" data-color="#4D4C4C" style="background:#4D4C4C;" title="Anthracite"></div>
+          <div class="text-color-swatch" data-color="#FFFFFF" style="background:white;border:1px solid #ddd;" title="Blanc"></div>
+          <div class="text-color-swatch" data-color="#D5D3D3" style="background:#D5D3D3;" title="Gris"></div>
+          <div class="text-color-swatch" data-color="#76BABA" style="background:#76BABA;" title="Turquoise"></div>
+          <div class="text-color-swatch" data-color="#F99C98" style="background:#F99C98;" title="Rose"></div>
+          <div class="text-color-swatch" data-color="#C0D230" style="background:#C0D230;" title="Vert"></div>
+          <div class="text-color-swatch" data-color="#E8DCC9" style="background:#E8DCC9;" title="Sable"></div>
+        </div>
+      </div>
+
+      <div id="el-panel-font-section" style="display:none;">
+        <div class="sub-label">Taille du texte (pt)</div>
+        <div class="font-row">
+          <input type="range" id="el-font-size" min="6" max="80" step="1">
+          <input type="number" id="el-font-size-num" min="6" max="80">
+        </div>
+        <div class="sub-label">Style</div>
+        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+          <button class="style-btn" data-style="weight-700" style="padding:0.4rem 0.7rem;border:1px solid var(--gris-light);background:white;border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:700;">Gras</button>
+          <button class="style-btn" data-style="weight-500" style="padding:0.4rem 0.7rem;border:1px solid var(--gris-light);background:white;border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:500;">Normal</button>
+          <button class="style-btn" data-style="weight-300" style="padding:0.4rem 0.7rem;border:1px solid var(--gris-light);background:white;border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:inherit;font-weight:300;">Fin</button>
+          <button class="style-btn" data-style="style-uppercase" style="padding:0.4rem 0.7rem;border:1px solid var(--gris-light);background:white;border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:0.1em;">MAJ</button>
+          <button class="style-btn" data-style="style-lowercase" style="padding:0.4rem 0.7rem;border:1px solid var(--gris-light);background:white;border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:inherit;text-transform:lowercase;">min</button>
+        </div>
+      </div>
+
+      <div class="sub-label">Visibilité</div>
+      <label class="row-opt">
+        <input type="checkbox" id="el-visible" checked>
+        Afficher cet élément
+      </label>
+    </div>
+
+    <div class="editor-help">
+      <strong>Édition :</strong> clique sur n'importe quel élément (recto OU verso) pour le déplacer (glisser-déposer), redimensionner (cercle noir bas-droite), changer sa couleur (panel ci-dessous) ou le passer devant/derrière (↑ ↓).
+    </div>
 
   </aside>
 
@@ -668,12 +610,11 @@
       <button class="primary" onclick="window.print()">🖨️ Imprimer / PDF</button>
       <span class="hint">Chrome/Safari : A5 portrait, marges aucune, échelle 100%</span>
     </div>
-
     <div id="preview-area">
       <div class="empty-preview">
         <div style="font-size:2.5rem;margin-bottom:0.5rem;">📄</div>
         <div style="font-weight:600;color:var(--noir);margin-bottom:0.3rem;">Aperçu recto + verso</div>
-        <div style="font-size:0.85rem;">Ajoute au moins une photo (Shopify, Mac ou URL) → le flyer 2 pages se construit ici.</div>
+        <div style="font-size:0.85rem;">Ajoute au moins une photo (Shopify, Mac ou URL) pour démarrer.</div>
       </div>
     </div>
   </main>
@@ -688,25 +629,47 @@ let selectedRectoId = null;
 let selectedVersoIds = [];
 let currentProductMeta = null;
 let bgRecto = 'bg-blanc';
+let bgVerso = 'bg-blanc';
 let searchTimer = null;
+let activeKey = null; // clé de l'élément sélectionné (ex: "recto.logo" ou "verso.price")
 
-// Layout par défaut du recto (en mm, converti px à l'affichage)
-// Page A5 = 148×210mm. 1mm = 3.7795px.
 const MM = 3.7795;
 function mm(v) { return v * MM; }
 
-function defaultLayout() {
+// LAYOUT par défaut RECTO (positions/tailles en mm sur 148×210)
+function defaultLayoutRecto() {
   return {
-    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1 },
-    logo:    { x: 56, y: 8, w: 36, h: 14, visible: true, z: 3 },
-    title:   { x: 14, y: 180, w: 120, h: 18, visible: false, z: 3, fontSize: 22, color: 'white' },
-    tagline: { x: 14, y: 192, w: 120, h: 10, visible: true, z: 3, fontSize: 10, color: 'white', upper: true, ls: 0.3 }
+    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1, side: 'recto' },
+    logo:    { x: 56, y: 8, w: 36, h: 14, visible: true, z: 3, side: 'recto', color: '#252525' },
+    title:   { x: 14, y: 178, w: 120, h: 18, visible: false, z: 3, side: 'recto', color: '#FFFFFF', fontSize: 22, weight: 700, txStyle: 'style-lowercase' },
+    tagline: { x: 14, y: 192, w: 120, h: 10, visible: true, z: 3, side: 'recto', color: '#FFFFFF', fontSize: 10, weight: 600, txStyle: 'style-uppercase' }
   };
 }
-let layout = defaultLayout();
+
+// LAYOUT par défaut VERSO
+function defaultLayoutVerso() {
+  return {
+    logo:         { x: 56, y: 8, w: 36, h: 12, visible: true, z: 3, side: 'verso', color: '#252525' },
+    title:        { x: 10, y: 22, w: 128, h: 14, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 18, weight: 600, txStyle: 'style-lowercase' },
+    sub:          { x: 10, y: 37, w: 128, h: 5, visible: true, z: 3, side: 'verso', color: '#4D4C4C', fontSize: 7, weight: 500, txStyle: 'style-uppercase' },
+    photoMain:    { x: 10, y: 46, w: 86, h: 78, visible: true, z: 2, side: 'verso' },
+    photoSmall1:  { x: 98, y: 46, w: 40, h: 25, visible: true, z: 2, side: 'verso' },
+    photoSmall2:  { x: 98, y: 73, w: 40, h: 25, visible: true, z: 2, side: 'verso' },
+    photoSmall3:  { x: 98, y: 100, w: 40, h: 25, visible: true, z: 2, side: 'verso' },
+    interchange:  { x: 10, y: 128, w: 128, h: 8, visible: true, z: 3, side: 'verso', color: '#252525' },
+    desc:         { x: 10, y: 140, w: 128, h: 22, visible: true, z: 3, side: 'verso', color: '#444444', fontSize: 9, weight: 300 },
+    price:        { x: 54, y: 164, w: 40, h: 10, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 14, weight: 700 },
+    qr:           { x: 10, y: 178, w: 22, h: 25, visible: true, z: 3, side: 'verso' },
+    shops:        { x: 70, y: 178, w: 70, h: 25, visible: true, z: 3, side: 'verso', color: '#252525' }
+  };
+}
+
+let layoutRecto = defaultLayoutRecto();
+let layoutVerso = defaultLayoutVerso();
 
 const previewArea = document.getElementById('preview-area');
 const photoPickerWrap = document.getElementById('photo-picker-wrap');
+const elementPanel = document.getElementById('element-panel');
 
 // ===== ONGLETS =====
 document.querySelectorAll('.source-tab').forEach(t => {
@@ -730,21 +693,14 @@ searchInput.addEventListener('input', () => {
   }
   searchTimer = setTimeout(() => doSearch(q), 280);
 });
-
 async function doSearch(q) {
   resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Recherche…</div>';
   try {
     const r = await fetch('/api/mood-flyer-search?q=' + encodeURIComponent(q));
     const data = await r.json();
-    if (data.error) {
-      resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur : ' + escapeHtml(data.error) + '</div>';
-      return;
-    }
+    if (data.error) { resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur : ' + escapeHtml(data.error) + '</div>'; return; }
     const products = data.products || [];
-    if (products.length === 0) {
-      resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé</div>';
-      return;
-    }
+    if (products.length === 0) { resultsDiv.innerHTML = '<div style="color:var(--gris-text);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé</div>'; return; }
     resultsDiv.innerHTML = products.map((p, i) => `
       <div class="result-card" data-idx="${i}">
         ${p.image ? `<img src="${escapeHtml(p.image)}" alt="">` : '<div style="width:50px;height:50px;border-radius:6px;background:#f5f5f5;flex-shrink:0;"></div>'}
@@ -754,14 +710,11 @@ async function doSearch(q) {
         </div>
       </div>
     `).join('');
-    Array.from(resultsDiv.querySelectorAll('.result-card')).forEach((card) => {
+    Array.from(resultsDiv.querySelectorAll('.result-card')).forEach(card => {
       card.addEventListener('click', () => selectShopifyProduct(products[parseInt(card.dataset.idx, 10)]));
     });
-  } catch (e) {
-    resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur réseau</div>';
-  }
+  } catch (e) { resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur réseau</div>'; }
 }
-
 function selectShopifyProduct(p) {
   currentProductMeta = p;
   if (!document.getElementById('opt-title').value.trim()) document.getElementById('opt-title').value = p.title;
@@ -780,11 +733,7 @@ const fileInput = document.getElementById('file-input');
 fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', (e) => {
-  e.preventDefault();
-  dropZone.classList.remove('dragover');
-  handleFiles(e.dataTransfer.files);
-});
+dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
 function handleFiles(files) {
   Array.from(files).forEach(file => {
     if (!file.type.startsWith('image/')) return;
@@ -818,29 +767,34 @@ document.getElementById('url-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('url-add-btn').click(); }
 });
 
-// ===== COULEUR =====
-document.querySelectorAll('.color-swatch').forEach(s => {
+// ===== COULEUR FOND =====
+document.querySelectorAll('#color-picker-recto .color-swatch').forEach(s => {
   s.addEventListener('click', () => {
-    document.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('#color-picker-recto .color-swatch').forEach(x => x.classList.remove('active'));
     s.classList.add('active');
     bgRecto = s.dataset.bg;
     renderRecto();
   });
 });
+document.querySelectorAll('#color-picker-verso .color-swatch').forEach(s => {
+  s.addEventListener('click', () => {
+    document.querySelectorAll('#color-picker-verso .color-swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    bgVerso = s.dataset.bg;
+    renderVerso();
+  });
+});
 
-// ===== TOGGLE éléments =====
-function toggleEl(key, v) {
-  if (layout[key]) { layout[key].visible = v; renderRecto(); }
-}
-
-document.getElementById('reset-layout').addEventListener('click', () => {
-  layout = defaultLayout();
-  // Sync checkboxes avec layout par défaut
-  document.getElementById('opt-show-photo-recto').checked = layout.photo.visible;
-  document.getElementById('opt-show-logo-recto').checked = layout.logo.visible;
-  document.getElementById('opt-show-title-recto').checked = layout.title.visible;
-  document.getElementById('opt-show-tagline-recto').checked = layout.tagline.visible;
+// ===== RESET =====
+document.getElementById('reset-recto').addEventListener('click', () => {
+  layoutRecto = defaultLayoutRecto();
+  hideElementPanel();
   renderRecto();
+});
+document.getElementById('reset-verso').addEventListener('click', () => {
+  layoutVerso = defaultLayoutVerso();
+  hideElementPanel();
+  renderVerso();
 });
 
 // ===== PICKER PHOTOS =====
@@ -896,22 +850,10 @@ function refreshPicker() {
 
 function getImageById(id) { return allImages.find(i => i.id === id); }
 
-// ===== RENDER RECTO (éditeur) =====
-function renderRecto() {
-  if (allImages.length === 0) return;
-  const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
-  const tagline = document.getElementById('opt-tagline').value.trim();
-  const rectoImg = getImageById(selectedRectoId) || allImages[0];
-  const darkBg = ['bg-noir', 'bg-anthracite', 'bg-turquoise'].includes(bgRecto);
-  const logoWhite = darkBg;
-  const textColor = darkBg ? 'white' : 'var(--noir)';
-
-  // Détermine container recto
-  let rectoEl = document.getElementById('recto-flyer');
-  if (!rectoEl) {
-    // Première fois : rendre toute la structure
-    let preview = document.getElementById('preview-area');
-    preview.innerHTML = `
+// ===== ENSURE STRUCTURE =====
+function ensureStructure() {
+  if (!document.getElementById('recto-flyer')) {
+    previewArea.innerHTML = `
       <div class="pages-wrap">
         <div class="page-side">
           <div class="page-label">recto</div>
@@ -919,122 +861,210 @@ function renderRecto() {
         </div>
         <div class="page-side">
           <div class="page-label">verso</div>
-          <div class="flyer flyer-verso" id="verso-flyer"></div>
+          <div class="flyer flyer-verso ${bgVerso}" id="verso-flyer"></div>
         </div>
       </div>
     `;
-    rectoEl = document.getElementById('recto-flyer');
-  } else {
-    // Met à jour la classe de fond
-    rectoEl.className = `flyer flyer-recto ${bgRecto}`;
   }
+}
 
-  // Reconstruit les éléments éditables
+// ===== RENDER RECTO =====
+function renderRecto() {
+  if (allImages.length === 0) return;
+  ensureStructure();
+  const rectoEl = document.getElementById('recto-flyer');
+  rectoEl.className = `flyer flyer-recto ${bgRecto}`;
   rectoEl.innerHTML = '';
 
+  const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
+  const tagline = document.getElementById('opt-tagline').value.trim();
+  const rectoImg = getImageById(selectedRectoId) || allImages[0];
+
   const elems = [
-    {
-      key: 'photo',
-      type: 'photo',
-      content: rectoImg ? `<img src="${escapeHtml(rectoImg.url)}" alt="">` : '',
-    },
-    {
-      key: 'logo',
-      type: 'logo',
-      content: `<img src="/logo-mood.png" alt="mood" class="logo-mood-img${logoWhite ? ' white' : ''}">`,
-    },
-    {
-      key: 'title',
-      type: 'text',
-      content: `<div class="text-inner" style="font-size:${layout.title.fontSize}pt;color:${textColor};font-weight:700;text-transform:lowercase;">${escapeHtml(title)}</div>`,
-    },
-    {
-      key: 'tagline',
-      type: 'text',
-      content: `<div class="text-inner" style="font-size:${layout.tagline.fontSize}pt;color:${textColor};font-weight:600;text-transform:${layout.tagline.upper ? 'uppercase' : 'none'};letter-spacing:${layout.tagline.ls || 0.05}em;">${escapeHtml(tagline)}</div>`,
-    }
+    { key: 'photo',   type: 'photo', content: rectoImg ? `<img src="${escapeHtml(rectoImg.url)}" alt="">` : '' },
+    { key: 'logo',    type: 'logo',  content: buildLogoHtml(layoutRecto.logo.color) },
+    { key: 'title',   type: 'text',  content: title },
+    { key: 'tagline', type: 'text',  content: tagline }
   ];
 
-  // Tri par z-index
-  const sorted = elems.slice().sort((a,b) => layout[a.key].z - layout[b.key].z);
-
+  const sorted = elems.slice().sort((a,b) => layoutRecto[a.key].z - layoutRecto[b.key].z);
   sorted.forEach(el => {
-    const cfg = layout[el.key];
+    const cfg = layoutRecto[el.key];
     if (!cfg.visible) return;
-    const d = document.createElement('div');
-    d.className = `editable is-${el.type}`;
-    d.dataset.key = el.key;
-    d.style.left = mm(cfg.x) + 'px';
-    d.style.top = mm(cfg.y) + 'px';
-    d.style.width = mm(cfg.w) + 'px';
-    d.style.height = mm(cfg.h) + 'px';
-    d.style.zIndex = cfg.z;
-    d.innerHTML = el.content + `
-      <div class="layer-btns">
-        <button class="layer-btn" data-act="up" title="Avancer">↑</button>
-        <button class="layer-btn" data-act="down" title="Reculer">↓</button>
-      </div>
-      <div class="resize-handle"></div>
-    `;
+    const d = makeEditableEl('recto.' + el.key, el.type, cfg, el.content);
     rectoEl.appendChild(d);
-    attachInteractions(d, el.key);
   });
 }
 
-// ===== DRAG + RESIZE =====
-let activeEl = null;
-function attachInteractions(el, key) {
-  // Sélection au mousedown
+function buildLogoHtml(color) {
+  // Logo en image. Si couleur blanche → filter brightness 0 invert 1
+  // Pour autres couleurs (anthracite/turquoise/etc.) on garde l'image originale (couleur du PNG = noir).
+  // Pour vraie coloration, on utilise un mask
+  if (color === '#FFFFFF' || color === 'white') {
+    return `<img src="/logo-mood.png" alt="mood" style="filter: brightness(0) invert(1);">`;
+  } else if (color === '#252525' || !color) {
+    return `<img src="/logo-mood.png" alt="mood">`;
+  } else {
+    // Coloration via mask
+    return `<div style="width:100%;height:100%;-webkit-mask-image:url('/logo-mood.png');mask-image:url('/logo-mood.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${color};"></div>`;
+  }
+}
+
+// ===== RENDER VERSO =====
+function renderVerso() {
+  if (allImages.length === 0) return;
+  ensureStructure();
+  const versoEl = document.getElementById('verso-flyer');
+  versoEl.className = `flyer flyer-verso ${bgVerso}`;
+  versoEl.innerHTML = '';
+
+  const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
+  const desc = document.getElementById('opt-desc').value.trim();
+  const versoImgs = selectedVersoIds.map(id => getImageById(id)).filter(Boolean);
+  while (versoImgs.length < 4 && allImages.length > 0) {
+    const fallback = allImages.find(im => !versoImgs.includes(im));
+    if (!fallback) break;
+    versoImgs.push(fallback);
+  }
+  while (versoImgs.length < 4) versoImgs.push(versoImgs[0] || null);
+
+  const productUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(productUrl);
+  let priceTxt = '';
+  if (currentProductMeta) {
+    priceTxt = currentProductMeta.priceMin === currentProductMeta.priceMax
+      ? formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)
+      : `dès ${formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)}`;
+  }
+
+  const elems = [
+    { key: 'logo',        type: 'logo',     content: buildLogoHtml(layoutVerso.logo.color) },
+    { key: 'title',       type: 'text',     content: title },
+    { key: 'sub',         type: 'text',     content: 'Système breveté · Garantie à vie' },
+    { key: 'photoMain',   type: 'photo',    content: versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : '' },
+    { key: 'photoSmall1', type: 'photo',    content: versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : '' },
+    { key: 'photoSmall2', type: 'photo',    content: versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : '' },
+    { key: 'photoSmall3', type: 'photo',    content: versoImgs[3] ? `<img src="${escapeHtml(versoImgs[3].url)}" alt="">` : '' },
+    { key: 'interchange', type: 'interchange', content: '' },
+    { key: 'desc',        type: 'desc',     content: desc },
+    { key: 'price',       type: 'price',    content: priceTxt },
+    { key: 'qr',          type: 'qr',       content: qrUrl },
+    { key: 'shops',       type: 'shops',    content: '' }
+  ];
+
+  const sorted = elems.slice().sort((a,b) => layoutVerso[a.key].z - layoutVerso[b.key].z);
+  sorted.forEach(el => {
+    const cfg = layoutVerso[el.key];
+    if (!cfg.visible) return;
+    const d = makeEditableEl('verso.' + el.key, el.type, cfg, el.content);
+    versoEl.appendChild(d);
+  });
+}
+
+// ===== ÉLÉMENT ÉDITABLE GÉNÉRIQUE =====
+function makeEditableEl(fullKey, type, cfg, content) {
+  const [side, key] = fullKey.split('.');
+  const d = document.createElement('div');
+  let classes = ['editable', `is-${type}`];
+  if (type === 'text') {
+    if (cfg.txStyle) classes.push(cfg.txStyle);
+    classes.push('weight-' + (cfg.weight || 500));
+  }
+  if (type === 'logo' && cfg.color === '#FFFFFF') classes.push('logo-white');
+  d.className = classes.join(' ');
+  d.dataset.fullKey = fullKey;
+  d.style.left = mm(cfg.x) + 'px';
+  d.style.top = mm(cfg.y) + 'px';
+  d.style.width = mm(cfg.w) + 'px';
+  d.style.height = mm(cfg.h) + 'px';
+  d.style.zIndex = cfg.z;
+
+  let innerHtml = '';
+  if (type === 'photo' || type === 'logo') {
+    innerHtml = content;
+  } else if (type === 'text') {
+    innerHtml = `<div class="text-inner" style="font-size:${cfg.fontSize}pt;color:${cfg.color};">${escapeHtml(content)}</div>`;
+  } else if (type === 'interchange') {
+    innerHtml = `<div class="interchange-box" style="color:${cfg.color};"><span class="ico"></span><span class="txt">Bagues interchangeables · Mood évolue avec toi</span></div>`;
+  } else if (type === 'desc') {
+    innerHtml = `<div class="desc-box" style="color:${cfg.color};font-size:${cfg.fontSize}pt;font-weight:${cfg.weight};">${escapeHtml(content)}</div>`;
+  } else if (type === 'price') {
+    innerHtml = `<div class="price-box" style="color:${cfg.color};font-size:${cfg.fontSize}pt;">${escapeHtml(content)}</div>`;
+  } else if (type === 'qr') {
+    innerHtml = `<div class="qr-box"><img src="${content}" alt="QR"><div class="qr-label">scanne-moi</div></div>`;
+  } else if (type === 'shops') {
+    innerHtml = `<div class="shops-box" style="color:${cfg.color};">
+      <div class="label">Mood Stores</div>
+      <div>Carouge · Martigny · Orbe</div>
+      <div>Fribourg · Zürich · Zermatt</div>
+      <div class="url">yourmood.net</div>
+    </div>`;
+  }
+
+  d.innerHTML = innerHtml + `
+    <div class="layer-btns">
+      <button class="layer-btn" data-act="up" title="Avancer">↑</button>
+      <button class="layer-btn" data-act="down" title="Reculer">↓</button>
+    </div>
+    <div class="resize-handle"></div>
+  `;
+  attachInteractions(d, fullKey);
+  return d;
+}
+
+function getCfg(fullKey) {
+  const [side, key] = fullKey.split('.');
+  return (side === 'recto' ? layoutRecto : layoutVerso)[key];
+}
+
+// ===== INTERACTIONS DRAG + RESIZE + SELECTION =====
+function attachInteractions(el, fullKey) {
   el.addEventListener('mousedown', (e) => {
     if (e.target.classList.contains('resize-handle') || e.target.classList.contains('layer-btn')) return;
     document.querySelectorAll('.editable.selected').forEach(x => x.classList.remove('selected'));
     el.classList.add('selected');
-    activeEl = el;
+    activeKey = fullKey;
+    showElementPanel(fullKey);
 
     const startX = e.clientX, startY = e.clientY;
     const startLeft = parseFloat(el.style.left || 0);
     const startTop = parseFloat(el.style.top || 0);
     function onMove(ev) {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-      el.style.left = (startLeft + dx) + 'px';
-      el.style.top = (startTop + dy) + 'px';
+      el.style.left = (startLeft + ev.clientX - startX) + 'px';
+      el.style.top = (startTop + ev.clientY - startY) + 'px';
     }
-    function onUp(ev) {
+    function onUp() {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      // Sauve position en mm
-      layout[key].x = parseFloat(el.style.left) / MM;
-      layout[key].y = parseFloat(el.style.top) / MM;
+      const cfg = getCfg(fullKey);
+      cfg.x = parseFloat(el.style.left) / MM;
+      cfg.y = parseFloat(el.style.top) / MM;
     }
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
     e.preventDefault();
   });
 
-  // Resize via poignée
   const handle = el.querySelector('.resize-handle');
   if (handle) {
     handle.addEventListener('mousedown', (e) => {
       e.stopPropagation();
       const startX = e.clientX, startY = e.clientY;
       const startW = el.offsetWidth, startH = el.offsetHeight;
-      const aspect = (el.classList.contains('is-photo') || el.classList.contains('is-logo')) ? startW / startH : null;
+      const isImg = el.classList.contains('is-photo') || el.classList.contains('is-logo');
+      const aspect = isImg ? startW / startH : null;
       function onMove(ev) {
         let newW = Math.max(20, startW + ev.clientX - startX);
         let newH = Math.max(20, startH + ev.clientY - startY);
-        if (aspect && !ev.shiftKey) {
-          // Préserve ratio sauf si Shift
-          newH = newW / aspect;
-        }
+        if (aspect && !ev.shiftKey) newH = newW / aspect;
         el.style.width = newW + 'px';
         el.style.height = newH + 'px';
-        // Update font-size pour textes si on agrandit la hauteur
         if (el.classList.contains('is-text')) {
+          const cfg = getCfg(fullKey);
           const inner = el.querySelector('.text-inner');
           if (inner) {
-            const baseH = mm(layout[key].h);
-            const newFs = (layout[key].fontSize) * (newH / baseH);
+            const baseH = mm(cfg.h);
+            const newFs = (cfg.fontSize) * (newH / baseH);
             inner.style.fontSize = newFs + 'pt';
           }
         }
@@ -1042,11 +1072,13 @@ function attachInteractions(el, key) {
       function onUp() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
-        layout[key].w = parseFloat(el.style.width) / MM;
-        layout[key].h = parseFloat(el.style.height) / MM;
+        const cfg = getCfg(fullKey);
+        cfg.w = parseFloat(el.style.width) / MM;
+        cfg.h = parseFloat(el.style.height) / MM;
         if (el.classList.contains('is-text')) {
           const inner = el.querySelector('.text-inner');
-          if (inner) layout[key].fontSize = parseFloat(inner.style.fontSize);
+          if (inner) cfg.fontSize = parseFloat(inner.style.fontSize);
+          if (activeKey === fullKey) showElementPanel(fullKey);
         }
       }
       document.addEventListener('mousemove', onMove);
@@ -1055,84 +1087,155 @@ function attachInteractions(el, key) {
     });
   }
 
-  // Layer buttons (z-index ↑↓)
   el.querySelectorAll('.layer-btn').forEach(b => {
     b.addEventListener('click', (e) => {
       e.stopPropagation();
-      const act = b.dataset.act;
-      if (act === 'up') layout[key].z = (layout[key].z || 1) + 1;
-      else layout[key].z = Math.max(1, (layout[key].z || 1) - 1);
-      renderRecto();
+      const cfg = getCfg(fullKey);
+      if (b.dataset.act === 'up') cfg.z = (cfg.z || 1) + 1;
+      else cfg.z = Math.max(1, (cfg.z || 1) - 1);
+      const side = fullKey.split('.')[0];
+      side === 'recto' ? renderRecto() : renderVerso();
+      // Re-select after rerender
+      setTimeout(() => {
+        const elNew = document.querySelector(`[data-full-key="${fullKey}"]`);
+        if (elNew) { elNew.classList.add('selected'); activeKey = fullKey; }
+      }, 0);
     });
   });
 }
 
-// Clic ailleurs → désélectionne
 document.addEventListener('mousedown', (e) => {
-  if (!e.target.closest('.editable') && !e.target.closest('.layer-btn')) {
+  if (!e.target.closest('.editable') && !e.target.closest('#element-panel') && !e.target.closest('.layer-btn')) {
     document.querySelectorAll('.editable.selected').forEach(x => x.classList.remove('selected'));
+    hideElementPanel();
   }
 });
 
-// ===== RENDER VERSO (fixe) =====
-function renderVerso() {
-  if (allImages.length === 0) return;
-  let versoEl = document.getElementById('verso-flyer');
-  if (!versoEl) { renderRecto(); versoEl = document.getElementById('verso-flyer'); }
+// ===== PANEL ÉLÉMENT =====
+function showElementPanel(fullKey) {
+  const cfg = getCfg(fullKey);
+  const key = fullKey.split('.')[1];
+  const side = fullKey.split('.')[0];
+  const nameLabel = {
+    photo: 'Photo recto', logo: 'Logo', title: 'Nom produit', tagline: 'Phrase courte',
+    sub: 'Sous-titre garantie', photoMain: 'Photo principale verso',
+    photoSmall1: 'Petite photo 1', photoSmall2: 'Petite photo 2', photoSmall3: 'Petite photo 3',
+    interchange: 'Bande interchangeable', desc: 'Description', price: 'Prix',
+    qr: 'QR code', shops: 'Boutiques'
+  };
+  document.getElementById('el-panel-name').textContent = (side === 'recto' ? '◐ Recto · ' : '◑ Verso · ') + (nameLabel[key] || key);
 
-  const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
-  const desc = document.getElementById('opt-desc').value.trim();
-  const showPrice = document.getElementById('opt-show-price').checked;
-  const showInterchange = document.getElementById('opt-show-interchange').checked;
-
-  const versoImgs = selectedVersoIds.map(id => getImageById(id)).filter(Boolean);
-  while (versoImgs.length < 4 && allImages.length > 0) {
-    const fallback = allImages.find(im => !versoImgs.includes(im));
-    if (!fallback) break;
-    versoImgs.push(fallback);
-  }
-  while (versoImgs.length < 4) versoImgs.push(versoImgs[0]);
-
-  const productUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(productUrl);
-
-  let priceTxt = '';
-  if (currentProductMeta) {
-    priceTxt = currentProductMeta.priceMin === currentProductMeta.priceMax
-      ? formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)
-      : `dès ${formatPrice(currentProductMeta.priceMin, currentProductMeta.currency)}`;
+  // Section couleur
+  const colorSection = document.getElementById('el-panel-text-section');
+  const hasColor = cfg.color !== undefined;
+  colorSection.style.display = hasColor ? 'block' : 'none';
+  if (hasColor) {
+    document.querySelectorAll('.text-color-swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.color.toLowerCase() === (cfg.color || '').toLowerCase());
+    });
   }
 
-  versoEl.innerHTML = `
-    <div class="verso-top">
-      <img src="/logo-mood.png" alt="mood">
-      <div class="verso-product-name">${escapeHtml(title)}</div>
-      <div class="verso-sub">Système breveté · Garantie à vie</div>
-    </div>
-    <div class="verso-grid">
-      <div class="grid-large">${versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : ''}</div>
-      <div class="grid-small">${versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : ''}</div>
-      <div class="grid-small">${versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : ''}</div>
-      <div class="grid-small">${versoImgs[3] ? `<img src="${escapeHtml(versoImgs[3].url)}" alt="">` : ''}</div>
-    </div>
-    ${showInterchange ? `<div class="verso-interchangeable"><span class="ico"></span><span class="txt">Bagues interchangeables · Mood évolue avec toi</span></div>` : ''}
-    ${desc ? `<div class="verso-desc">${escapeHtml(desc)}</div>` : ''}
-    ${showPrice && priceTxt ? `<div class="verso-price-wrap"><div class="verso-price">${priceTxt}</div></div>` : ''}
-    <div class="verso-footer">
-      <div class="verso-qr">
-        <div class="verso-qr-img"><img src="${qrUrl}" alt="QR"></div>
-        <div class="verso-qr-label">scanne-moi</div>
-      </div>
-      <div class="verso-shops">
-        <div class="label">Mood Stores</div>
-        <div>Carouge · Martigny · Orbe</div>
-        <div>Fribourg · Zürich · Zermatt</div>
-        <div class="url">yourmood.net</div>
-      </div>
-    </div>
-  `;
+  // Section font size pour textes
+  const fontSection = document.getElementById('el-panel-font-section');
+  const hasFont = cfg.fontSize !== undefined;
+  fontSection.style.display = hasFont ? 'block' : 'none';
+  if (hasFont) {
+    document.getElementById('el-font-size').value = cfg.fontSize;
+    document.getElementById('el-font-size-num').value = cfg.fontSize;
+    document.querySelectorAll('.style-btn').forEach(b => {
+      const styleAttr = b.dataset.style;
+      const isWeight = styleAttr.startsWith('weight-');
+      const isStyle = styleAttr.startsWith('style-');
+      let active = false;
+      if (isWeight) active = ('weight-' + (cfg.weight || 500)) === styleAttr;
+      if (isStyle) active = (cfg.txStyle === styleAttr);
+      b.style.borderColor = active ? 'var(--noir)' : 'var(--gris-light)';
+      b.style.background = active ? 'var(--noir)' : 'white';
+      b.style.color = active ? 'white' : 'var(--noir)';
+    });
+  }
+
+  document.getElementById('el-visible').checked = cfg.visible;
+
+  elementPanel.classList.add('active');
+}
+function hideElementPanel() {
+  elementPanel.classList.remove('active');
+  activeKey = null;
 }
 
+// Couleur du texte/logo
+document.querySelectorAll('.text-color-swatch').forEach(s => {
+  s.addEventListener('click', () => {
+    if (!activeKey) return;
+    const cfg = getCfg(activeKey);
+    cfg.color = s.dataset.color;
+    document.querySelectorAll('.text-color-swatch').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    const side = activeKey.split('.')[0];
+    side === 'recto' ? renderRecto() : renderVerso();
+    setTimeout(() => reselectActive(), 0);
+  });
+});
+
+// Taille du texte
+document.getElementById('el-font-size').addEventListener('input', (e) => {
+  if (!activeKey) return;
+  const cfg = getCfg(activeKey);
+  if (cfg.fontSize === undefined) return;
+  cfg.fontSize = parseFloat(e.target.value);
+  document.getElementById('el-font-size-num').value = cfg.fontSize;
+  const side = activeKey.split('.')[0];
+  side === 'recto' ? renderRecto() : renderVerso();
+  setTimeout(() => reselectActive(), 0);
+});
+document.getElementById('el-font-size-num').addEventListener('input', (e) => {
+  if (!activeKey) return;
+  const cfg = getCfg(activeKey);
+  if (cfg.fontSize === undefined) return;
+  cfg.fontSize = parseFloat(e.target.value);
+  document.getElementById('el-font-size').value = cfg.fontSize;
+  const side = activeKey.split('.')[0];
+  side === 'recto' ? renderRecto() : renderVerso();
+  setTimeout(() => reselectActive(), 0);
+});
+
+// Style (poids + casse)
+document.querySelectorAll('.style-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    if (!activeKey) return;
+    const cfg = getCfg(activeKey);
+    const s = b.dataset.style;
+    if (s.startsWith('weight-')) cfg.weight = parseInt(s.replace('weight-', ''), 10);
+    else if (s.startsWith('style-')) cfg.txStyle = (cfg.txStyle === s) ? null : s;
+    const side = activeKey.split('.')[0];
+    side === 'recto' ? renderRecto() : renderVerso();
+    setTimeout(() => reselectActive(), 0);
+  });
+});
+
+// Visibilité
+document.getElementById('el-visible').addEventListener('change', (e) => {
+  if (!activeKey) return;
+  const cfg = getCfg(activeKey);
+  cfg.visible = e.target.checked;
+  const side = activeKey.split('.')[0];
+  side === 'recto' ? renderRecto() : renderVerso();
+  if (!cfg.visible) hideElementPanel();
+  else setTimeout(() => reselectActive(), 0);
+});
+
+function reselectActive() {
+  if (!activeKey) return;
+  document.querySelectorAll('.editable').forEach(el => {
+    if (el.dataset.fullKey === activeKey) {
+      el.classList.add('selected');
+      showElementPanel(activeKey);
+    }
+  });
+}
+
+// ===== RENDER ALL =====
 function renderAll() { renderRecto(); renderVerso(); }
 
 function formatPrice(amount, currency) {
