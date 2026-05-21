@@ -361,10 +361,10 @@
   }
   .editable.is-logo .swiss-cross-overlay {
     position: absolute;
-    top: 4%; right: 5%;
-    width: 11%;
-    aspect-ratio: 1;
-    /* Position calibrée pour MASQUER la croix native du PNG (coin sup-droit du "d") */
+    /* Coordonnées EXACTES mesurées pixel-par-pixel du PNG logo-mood.png (2815x1114) */
+    /* Croix native bbox : x=2349-2503, y=117-270 → top:10.5% right:11.1% w:5.5% h:13.7% */
+    top: 10.5%; right: 11.1%;
+    width: 5.5%; height: 13.7%;
   }
   .editable.is-logo .swiss-cross-overlay svg { width: 100%; height: 100%; display: block; }
 
@@ -578,17 +578,11 @@
     </div>
 
     <div id="photo-picker-wrap" style="display:none;margin-top:1.2rem;">
-      <h2>2 · Photos sélectionnées</h2>
-      <div class="picker-row">
-        <span class="lbl">Recto</span>
-        <span style="color:var(--noir);font-size:0.75rem;">1 photo (R)</span>
+      <h2>2 · Photos disponibles</h2>
+      <div style="font-size:0.74rem;color:var(--gris-text);line-height:1.4;margin-bottom:0.4rem;">
+        Pour <strong>changer une image</strong> dans le flyer : clique sur le carré (recto ou verso) → un sélecteur apparaît dans le panel ci-dessous.
       </div>
-      <div class="photo-picker" id="picker-recto"></div>
-      <div class="picker-row" style="margin-top:0.8rem;">
-        <span class="lbl">Verso</span>
-        <span style="color:var(--anthracite);font-size:0.75rem;">4 photos (V1–V4)</span>
-      </div>
-      <div class="photo-picker" id="picker-verso"></div>
+      <div class="photo-picker" id="picker-all"></div>
     </div>
 
     <h2>3 · Textes (modifiables aussi par double-clic sur le flyer)</h2>
@@ -671,6 +665,8 @@
       </div>
 
       <div id="el-panel-image-section" style="display:none;">
+        <div class="sub-label">Choisir l'image dans ce carré</div>
+        <div class="photo-picker" id="el-image-chooser" style="grid-template-columns:repeat(4, 1fr);"></div>
         <div class="sub-label">Position image (dans le cadre)</div>
         <div class="font-row">
           <label>↔️ X</label>
@@ -740,24 +736,24 @@ function mm(v) { return v * MM; }
 
 function defaultLayoutRecto() {
   return {
-    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1, side: 'recto', imgX: 50, imgY: 50, imgZoom: 100 },
-    logo:    { x: 56, y: 8, w: 36, h: 14, visible: true, z: 4, side: 'recto', color: '#FFFFFF' },
+    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1, side: 'recto', imgX: 50, imgY: 50, imgZoom: 100, imageId: null },
+    logo:    { x: 56, y: 8, w: 36, h: 14.25, visible: true, z: 4, side: 'recto', color: '#FFFFFF' },
     title:   { x: 14, y: 24, w: 120, h: 12, visible: true, z: 4, side: 'recto', color: '#FFFFFF', fontSize: 14, weight: 600, txStyle: 'style-lowercase' },
     tagline: { x: 14, y: 192, w: 120, h: 10, visible: true, z: 4, side: 'recto', color: '#FFFFFF', fontSize: 10, weight: 600, txStyle: 'style-uppercase' }
   };
 }
 function defaultLayoutVerso() {
   return {
-    logo:         { x: 56, y: 8, w: 36, h: 12, visible: true, z: 3, side: 'verso', color: '#252525' },
-    title:        { x: 10, y: 22, w: 128, h: 14, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 18, weight: 600, txStyle: 'style-lowercase' },
-    sub:          { x: 10, y: 37, w: 128, h: 5, visible: true, z: 3, side: 'verso', color: '#4D4C4C', fontSize: 7, weight: 500, txStyle: 'style-uppercase', text: 'Système breveté · Garantie à vie' },
-    photoMain:    { x: 10, y: 46, w: 86, h: 78, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
-    photoSmall1:  { x: 98, y: 46, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
-    photoSmall2:  { x: 98, y: 73, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
-    photoSmall3:  { x: 98, y: 100, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
-    interchange:  { x: 10, y: 128, w: 128, h: 8, visible: true, z: 3, side: 'verso', color: '#252525', text: 'Bagues interchangeables · Mood évolue avec toi' },
-    desc:         { x: 10, y: 140, w: 128, h: 22, visible: true, z: 3, side: 'verso', color: '#444444', fontSize: 9, weight: 300 },
-    price:        { x: 54, y: 164, w: 40, h: 10, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 14, weight: 700 },
+    logo:         { x: 56, y: 8, w: 36, h: 14.25, visible: true, z: 3, side: 'verso', color: '#252525' },
+    title:        { x: 10, y: 24, w: 128, h: 14, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 18, weight: 600, txStyle: 'style-lowercase' },
+    sub:          { x: 10, y: 39, w: 128, h: 5, visible: true, z: 3, side: 'verso', color: '#4D4C4C', fontSize: 7, weight: 500, txStyle: 'style-uppercase', text: 'Système breveté · Garantie à vie' },
+    photoMain:    { x: 10, y: 48, w: 86, h: 78, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100, imageId: null },
+    photoSmall1:  { x: 98, y: 48, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100, imageId: null },
+    photoSmall2:  { x: 98, y: 75, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100, imageId: null },
+    photoSmall3:  { x: 98, y: 102, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100, imageId: null },
+    interchange:  { x: 10, y: 130, w: 128, h: 8, visible: true, z: 3, side: 'verso', color: '#252525', text: 'Bagues interchangeables · Mood évolue avec toi' },
+    desc:         { x: 10, y: 141, w: 128, h: 22, visible: true, z: 3, side: 'verso', color: '#444444', fontSize: 9, weight: 300 },
+    price:        { x: 54, y: 165, w: 40, h: 10, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 14, weight: 700 },
     qr:           { x: 10, y: 178, w: 22, h: 25, visible: true, z: 3, side: 'verso' },
     shops:        { x: 70, y: 178, w: 70, h: 25, visible: true, z: 3, side: 'verso', color: '#252525' }
   };
@@ -821,10 +817,24 @@ function selectShopifyProduct(p) {
   if (!document.getElementById('opt-qr-url').value.trim()) document.getElementById('opt-qr-url').value = p.url || '';
   const newImages = (p.images || []).map(img => ({ url: img.url, alt: img.alt || p.title, source: 'shopify', id: ++imgCounter }));
   allImages = allImages.concat(newImages);
-  if (!selectedRectoId && newImages[0]) selectedRectoId = newImages[0].id;
-  if (selectedVersoIds.length === 0) selectedVersoIds = newImages.slice(0, 4).map(im => im.id);
+  // Auto-assigne les slots vides : recto.photo + 4 verso photos
+  autoAssignSlots(newImages);
   refreshPicker();
   renderAll();
+}
+
+// Assigne les premières images dispo aux slots vides (sans toucher aux slots déjà occupés)
+function autoAssignSlots(newImages) {
+  if (layoutRecto.photo.imageId === null && newImages[0]) layoutRecto.photo.imageId = newImages[0].id;
+  const versoSlots = ['photoMain', 'photoSmall1', 'photoSmall2', 'photoSmall3'];
+  let nextIdx = 0;
+  versoSlots.forEach((slot, i) => {
+    if (layoutVerso[slot].imageId === null) {
+      // Prend la i-ème nouvelle image, ou la 1ère si pas assez
+      const img = newImages[i] || newImages[nextIdx] || newImages[0];
+      if (img) layoutVerso[slot].imageId = img.id;
+    }
+  });
 }
 
 // ===== UPLOAD =====
@@ -841,8 +851,7 @@ function handleFiles(files) {
     reader.onload = (ev) => {
       const img = { url: ev.target.result, alt: file.name, source: 'upload', id: ++imgCounter };
       allImages.push(img);
-      if (!selectedRectoId) selectedRectoId = img.id;
-      else if (selectedVersoIds.length < 4) selectedVersoIds.push(img.id);
+      autoAssignSlots([img]);
       refreshPicker();
       renderAll();
     };
@@ -857,8 +866,7 @@ document.getElementById('url-add-btn').addEventListener('click', () => {
   if (!url) return;
   const img = { url, alt: 'Image URL', source: 'url', id: ++imgCounter };
   allImages.push(img);
-  if (!selectedRectoId) selectedRectoId = img.id;
-  else if (selectedVersoIds.length < 4) selectedVersoIds.push(img.id);
+  autoAssignSlots([img]);
   urlInput.value = '';
   refreshPicker();
   renderAll();
@@ -889,55 +897,44 @@ document.querySelectorAll('#color-picker-verso .color-swatch').forEach(s => {
 document.getElementById('reset-recto').addEventListener('click', () => { layoutRecto = defaultLayoutRecto(); hideElementPanel(); renderRecto(); });
 document.getElementById('reset-verso').addEventListener('click', () => { layoutVerso = defaultLayoutVerso(); hideElementPanel(); renderVerso(); });
 
-// ===== PICKER =====
+// ===== PICKER (unique liste, suppression seule) =====
 function refreshPicker() {
   if (allImages.length === 0) { photoPickerWrap.style.display = 'none'; return; }
   photoPickerWrap.style.display = 'block';
-  const renderThumbs = (containerId, target) => {
-    const container = document.getElementById(containerId);
-    container.innerHTML = allImages.map(img => {
-      let cls = '', badge = '', srcBadge = '';
-      if (target === 'recto') {
-        if (img.id === selectedRectoId) { cls = ' selected-recto'; badge = '<span class="badge">R</span>'; }
-      } else {
-        const pos = selectedVersoIds.indexOf(img.id);
-        if (pos >= 0) { cls = ' selected-verso'; badge = `<span class="badge verso">V${pos+1}</span>`; }
-      }
-      if (img.source === 'upload') srcBadge = '<span class="src-badge">mac</span>';
-      else if (img.source === 'url') srcBadge = '<span class="src-badge">url</span>';
-      return `<div class="thumb${cls}" data-id="${img.id}" data-target="${target}">
-        <img src="${escapeHtml(img.url)}" alt="">${badge}${srcBadge}
-        <button class="del-btn" data-del="${img.id}">×</button></div>`;
-    }).join('');
-    container.querySelectorAll('.thumb').forEach(t => {
-      t.addEventListener('click', (e) => {
-        if (e.target.classList.contains('del-btn')) return;
-        const id = parseInt(t.dataset.id, 10);
-        if (target === 'recto') selectedRectoId = id;
-        else {
-          const pos = selectedVersoIds.indexOf(id);
-          if (pos >= 0) selectedVersoIds.splice(pos, 1);
-          else if (selectedVersoIds.length < 4) selectedVersoIds.push(id);
-          else { selectedVersoIds.shift(); selectedVersoIds.push(id); }
-        }
-        refreshPicker();
-        renderAll();
+  const container = document.getElementById('picker-all');
+  // Calcule où chaque image est utilisée
+  const usage = {};
+  if (layoutRecto.photo.imageId) usage[layoutRecto.photo.imageId] = 'R';
+  ['photoMain','photoSmall1','photoSmall2','photoSmall3'].forEach((slot, i) => {
+    const id = layoutVerso[slot].imageId;
+    if (id) {
+      const label = slot === 'photoMain' ? 'V★' : `V${i}`;
+      usage[id] = usage[id] ? usage[id] + ' ' + label : label;
+    }
+  });
+  container.innerHTML = allImages.map(img => {
+    let srcBadge = '';
+    if (img.source === 'upload') srcBadge = '<span class="src-badge">mac</span>';
+    else if (img.source === 'url') srcBadge = '<span class="src-badge">url</span>';
+    const usageBadge = usage[img.id] ? `<span class="badge" style="background:var(--anthracite);">${usage[img.id]}</span>` : '';
+    return `<div class="thumb" data-id="${img.id}">
+      <img src="${escapeHtml(img.url)}" alt="">${usageBadge}${srcBadge}
+      <button class="del-btn" data-del="${img.id}" title="Retirer">×</button></div>`;
+  }).join('');
+  container.querySelectorAll('.del-btn').forEach(b => {
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(b.dataset.del, 10);
+      allImages = allImages.filter(i => i.id !== id);
+      // Retire l'image de tous les slots qui l'utilisaient
+      if (layoutRecto.photo.imageId === id) layoutRecto.photo.imageId = null;
+      ['photoMain','photoSmall1','photoSmall2','photoSmall3'].forEach(s => {
+        if (layoutVerso[s].imageId === id) layoutVerso[s].imageId = null;
       });
+      refreshPicker();
+      renderAll();
     });
-    container.querySelectorAll('.del-btn').forEach(b => {
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const id = parseInt(b.dataset.del, 10);
-        allImages = allImages.filter(i => i.id !== id);
-        if (selectedRectoId === id) selectedRectoId = allImages[0] ? allImages[0].id : null;
-        selectedVersoIds = selectedVersoIds.filter(x => x !== id);
-        refreshPicker();
-        renderAll();
-      });
-    });
-  };
-  renderThumbs('picker-recto', 'recto');
-  renderThumbs('picker-verso', 'verso');
+  });
 }
 
 function getImageById(id) { return allImages.find(i => i.id === id); }
@@ -991,7 +988,7 @@ function renderRecto() {
 
   const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
   const tagline = document.getElementById('opt-tagline').value.trim();
-  const rectoImg = getImageById(selectedRectoId) || allImages[0];
+  const rectoImg = getImageById(layoutRecto.photo.imageId) || allImages[0];
 
   const elems = [
     { key: 'photo',   type: 'photo', content: rectoImg },
@@ -1043,13 +1040,12 @@ function renderVerso() {
 
   const title = document.getElementById('opt-title').value.trim() || (currentProductMeta ? currentProductMeta.title : 'bague mood');
   const desc = document.getElementById('opt-desc').value.trim();
-  const versoImgs = selectedVersoIds.map(id => getImageById(id)).filter(Boolean);
-  while (versoImgs.length < 4 && allImages.length > 0) {
-    const fallback = allImages.find(im => !versoImgs.includes(im));
-    if (!fallback) break;
-    versoImgs.push(fallback);
-  }
-  while (versoImgs.length < 4) versoImgs.push(versoImgs[0] || null);
+  // Chaque slot lit son propre imageId — pas de rotation
+  const photoMain   = getImageById(layoutVerso.photoMain.imageId)   || allImages[0] || null;
+  const photoSmall1 = getImageById(layoutVerso.photoSmall1.imageId) || allImages[1] || allImages[0] || null;
+  const photoSmall2 = getImageById(layoutVerso.photoSmall2.imageId) || allImages[2] || allImages[0] || null;
+  const photoSmall3 = getImageById(layoutVerso.photoSmall3.imageId) || allImages[3] || allImages[0] || null;
+  const versoImgs = [photoMain, photoSmall1, photoSmall2, photoSmall3];
 
   let qrUrl = document.getElementById('opt-qr-url').value.trim();
   if (!qrUrl) qrUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
@@ -1374,6 +1370,29 @@ function showElementPanel(fullKey) {
     document.getElementById('el-img-y-val').textContent = cfg.imgY;
     document.getElementById('el-img-zoom').value = cfg.imgZoom;
     document.getElementById('el-img-zoom-val').textContent = cfg.imgZoom + '%';
+    // Affiche la grille de toutes les images pour assigner à ce slot
+    const chooser = document.getElementById('el-image-chooser');
+    chooser.innerHTML = allImages.map(img => {
+      const isCurrent = img.id === cfg.imageId;
+      let srcBadge = '';
+      if (img.source === 'upload') srcBadge = '<span class="src-badge">mac</span>';
+      else if (img.source === 'url') srcBadge = '<span class="src-badge">url</span>';
+      return `<div class="thumb${isCurrent ? ' selected-recto' : ''}" data-id="${img.id}">
+        <img src="${escapeHtml(img.url)}" alt="">
+        ${isCurrent ? '<span class="badge">✓</span>' : ''}
+        ${srcBadge}
+      </div>`;
+    }).join('');
+    chooser.querySelectorAll('.thumb').forEach(t => {
+      t.addEventListener('click', () => {
+        const id = parseInt(t.dataset.id, 10);
+        cfg.imageId = id;
+        const side = activeKey.split('.')[0];
+        side === 'recto' ? renderRecto() : renderVerso();
+        refreshPicker();
+        setTimeout(() => reselect(activeKey), 0);
+      });
+    });
   }
 
   document.getElementById('el-visible').checked = cfg.visible;
