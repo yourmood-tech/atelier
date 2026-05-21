@@ -6,14 +6,15 @@
 <title>Mood Studio — Flyer A5 recto/verso</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bowlby+One:wght@400&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
+    --vert-mood: #a3d440;
+    --vert-mood-dark: #8bbf2c;
     --rose: #f5e6e0;
-    --rose-light: #fdf2ee;
     --rose-medium: #e8c5b8;
     --or: #c9a87c;
-    --noir: #2a2a2a;
+    --noir: #1a1a1a;
     --gris: #8a8a8a;
     --gris-light: #d0d0d0;
   }
@@ -27,7 +28,7 @@
     line-height: 1.5;
   }
 
-  /* ---- LAYOUT APP (écran) ---- */
+  /* ---- APP (écran) ---- */
   header {
     background: white;
     padding: 0.9rem 1.5rem;
@@ -38,14 +39,14 @@
   }
   header h1 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: 0.04em; }
   header .retour { color: var(--gris); text-decoration: none; font-size: 0.85rem; }
-  header .retour:hover { color: var(--or); }
+  header .retour:hover { color: var(--vert-mood-dark); }
 
   .app-wrap {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 400px 1fr;
     gap: 1.5rem;
     padding: 1.5rem;
-    max-width: 1600px;
+    max-width: 1700px;
     margin: 0 auto;
   }
 
@@ -74,7 +75,7 @@
   }
   .panel-search input[type=text]:focus,
   .panel-search select:focus,
-  .panel-search textarea:focus { outline: none; border-color: var(--or); }
+  .panel-search textarea:focus { outline: none; border-color: var(--vert-mood-dark); }
   .panel-search textarea { min-height: 60px; resize: vertical; line-height: 1.4; }
   .panel-search .row-opt { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; font-size: 0.9rem; }
   .panel-search .row-opt input[type=checkbox] { width: auto; }
@@ -90,12 +91,54 @@
     align-items: center;
     transition: all 0.15s;
   }
-  .result-card:hover { border-color: var(--or); background: var(--rose-light); }
-  .result-card.active { border-color: var(--or); background: var(--rose); }
+  .result-card:hover { border-color: var(--vert-mood); background: #f8fce9; }
+  .result-card.active { border-color: var(--vert-mood-dark); background: #f0f9d4; }
   .result-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background: #f5f5f5; flex-shrink: 0; }
   .result-card .info { flex: 1; min-width: 0; }
   .result-card .title { font-size: 0.85rem; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .result-card .price { font-size: 0.78rem; color: var(--or); margin-top: 0.15rem; }
+  .result-card .price { font-size: 0.78rem; color: var(--vert-mood-dark); margin-top: 0.15rem; }
+
+  /* === SELECTEUR PHOTOS === */
+  .photo-picker {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+  }
+  .photo-picker .thumb {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    background: #f5f5f5;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .photo-picker .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-picker .thumb.selected-recto { border-color: var(--vert-mood-dark); }
+  .photo-picker .thumb.selected-verso { border-color: var(--or); }
+  .photo-picker .thumb .badge {
+    position: absolute;
+    top: 2px; right: 2px;
+    background: var(--vert-mood-dark);
+    color: white;
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1.2;
+  }
+  .photo-picker .thumb .badge.verso { background: var(--or); }
+  .picker-hint { font-size: 0.72rem; color: var(--gris); margin-top: 0.4rem; line-height: 1.4; }
+
+  .picker-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; align-items: center; font-size: 0.8rem; }
+  .picker-row .lbl { color: var(--gris); flex-shrink: 0; min-width: 50px; }
+  .picker-row .swatch {
+    width: 22px; height: 22px; border-radius: 4px; border: 1.5px solid transparent; cursor: pointer; background-size: cover; background-position: center; background-color: #f5f5f5;
+  }
+  .picker-row .swatch.active { border-color: var(--vert-mood-dark); }
+  .picker-row .swatch.verso.active { border-color: var(--or); }
 
   .preview-wrap {
     display: flex;
@@ -125,8 +168,8 @@
     border-color: var(--noir);
     font-weight: 600;
   }
-  .actions button.primary:hover { background: var(--or); border-color: var(--or); }
-  .actions button:hover { border-color: var(--or); color: var(--or); }
+  .actions button.primary:hover { background: var(--vert-mood-dark); border-color: var(--vert-mood-dark); }
+  .actions button:hover { border-color: var(--vert-mood-dark); color: var(--vert-mood-dark); }
   .actions .hint { color: var(--gris); font-size: 0.78rem; }
 
   .pages-wrap {
@@ -172,240 +215,253 @@
     flex-direction: column;
   }
 
-  /* ====== UNIVERS MOOD COLLECTION (rose pastel, formes rondes) ====== */
-  .flyer.univers-mood::before {
-    content: '';
-    position: absolute;
-    top: -40mm;
-    left: -30mm;
-    width: 90mm;
-    height: 90mm;
-    background: var(--rose);
-    border-radius: 50%;
-    opacity: 0.65;
-    z-index: 0;
-  }
-  .flyer.univers-mood::after {
-    content: '';
-    position: absolute;
-    bottom: -25mm;
-    right: -20mm;
-    width: 60mm;
-    height: 60mm;
-    background: var(--rose-medium);
-    border-radius: 50%;
-    opacity: 0.35;
-    z-index: 0;
-  }
-
-  /* ====== UNIVERS MOOD JOAILLERIE (noir/blanc minimaliste) ====== */
-  .flyer.univers-joaillerie {
-    background: white;
-  }
-  .flyer.univers-joaillerie .flyer-photo,
-  .flyer.univers-joaillerie .flyer-verso-grid {
-    background: #1a1a1a;
-  }
-
-  /* === LOGOS === */
-  .flyer-logo-wrap {
-    text-align: center;
-    padding-top: 8mm;
-  }
-  .flyer-logo-mood {
-    font-family: 'Bowlby One', 'Inter', sans-serif;
-    font-size: 30pt;
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    color: var(--noir);
-    margin: 0;
-    line-height: 1;
-    text-transform: lowercase;
-  }
-  .flyer-logo-mood-joaillerie {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-family: 'Inter', sans-serif;
-    font-size: 24pt;
-    font-weight: 200;
-    letter-spacing: 0.05em;
-    color: var(--noir);
-    margin: 0;
-    line-height: 1;
-    text-transform: lowercase;
-  }
-  .flyer-logo-mood-joaillerie svg { width: 18pt; height: 18pt; }
-  .flyer-logo-mood-joaillerie .domain {
+  /* === LOGO MOOD (image PNG réelle) === */
+  .logo-mood-img {
+    height: 12mm;
+    width: auto;
     display: block;
-    font-size: 7pt;
-    letter-spacing: 0.15em;
-    color: var(--gris);
+    margin: 0 auto;
+  }
+  .logo-mood-img.white {
+    filter: brightness(0) invert(1);
+  }
+  .logo-joaillerie {
     text-align: center;
+    font-family: 'Inter', sans-serif;
+  }
+  .logo-joaillerie .word {
+    display: inline-flex;
+    align-items: baseline;
+    font-weight: 300;
+    font-size: 28pt;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: inherit;
+  }
+  .logo-joaillerie .word .diamond {
+    display: inline-block;
+    width: 18pt; height: 18pt;
+    margin: 0 1pt;
+    position: relative;
+    top: -1pt;
+  }
+  .logo-joaillerie .word .diamond svg { width: 100%; height: 100%; }
+  .logo-joaillerie .tag {
+    font-size: 6pt;
+    letter-spacing: 0.25em;
     margin-top: 2mm;
+    color: inherit;
+    opacity: 0.7;
+    text-transform: lowercase;
   }
 
-  /* === RECTO === */
-  .flyer-recto .flyer-photo {
+  /* ====== RECTO — style full-bleed inspiré des vrais flyers ====== */
+  .flyer-recto {
     position: relative;
-    z-index: 2;
-    margin: 6mm 0 0;
-    height: 130mm;
-    background: #f5f5f5;
     overflow: hidden;
   }
-  .flyer-recto .flyer-photo img {
+  .flyer-recto .recto-photo-full {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+  .flyer-recto .recto-photo-full img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
-  .flyer-recto .flyer-phrase {
+  .flyer-recto .recto-logo-overlay {
     position: relative;
-    z-index: 2;
-    margin-top: auto;
-    padding: 6mm 12mm 12mm;
+    z-index: 3;
+    padding-top: 12mm;
     text-align: center;
-    font-family: 'Bowlby One', 'Inter', sans-serif;
-    font-size: 14pt;
-    line-height: 1.3;
+  }
+  .flyer-recto .recto-band {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    z-index: 3;
+    padding: 8mm 10mm 10mm;
+    text-align: center;
+  }
+  .flyer-recto .recto-band-text {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 500;
+    font-size: 16pt;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
+    color: white;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  /* MOOD COLLECTION — bande vert mood en bas */
+  .flyer-recto.univers-mood .recto-band {
+    background: linear-gradient(to top, var(--vert-mood) 0%, var(--vert-mood) 60%, rgba(163, 212, 64, 0) 100%);
+    padding-top: 18mm;
+  }
+  .flyer-recto.univers-mood .recto-band-text {
     color: var(--noir);
+    text-shadow: 0 1px 4px rgba(255,255,255,0.6);
+    font-weight: 600;
+  }
+
+  /* MOOD JOAILLERIE — voile noir élégant, typo serif */
+  .flyer-recto.univers-joaillerie .recto-band {
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%);
+    padding-top: 22mm;
+  }
+  .flyer-recto.univers-joaillerie .recto-band-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: 17pt;
+    letter-spacing: 0.05em;
+    color: white;
+  }
+
+  /* ====== VERSO — fond blanc structuré ====== */
+  .flyer-verso {
+    background: white;
+    padding: 10mm 10mm 8mm;
+  }
+  .flyer-verso .verso-top {
+    text-align: center;
+  }
+  .flyer-verso .verso-product-name {
+    margin: 4mm 0 1mm;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 18pt;
+    font-weight: 600;
+    color: var(--noir);
+    line-height: 1.15;
     letter-spacing: -0.005em;
     text-transform: lowercase;
   }
-  .flyer.univers-joaillerie .flyer-recto .flyer-phrase {
+  .flyer.univers-joaillerie .flyer-verso .verso-product-name {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 400;
-    font-size: 13pt;
+    font-size: 20pt;
     text-transform: none;
     letter-spacing: 0.04em;
+    font-style: italic;
   }
 
-  /* === VERSO === */
-  .flyer-verso .flyer-product-name {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    margin: 4mm 10mm 1mm;
-    font-family: 'Bowlby One', 'Inter', sans-serif;
-    font-size: 18pt;
-    font-weight: 400;
-    color: var(--noir);
-    line-height: 1.1;
-    letter-spacing: -0.01em;
-    text-transform: lowercase;
-  }
-  .flyer.univers-joaillerie .flyer-verso .flyer-product-name {
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
-    font-size: 16pt;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-
-  .flyer-verso-grid {
-    position: relative;
-    z-index: 2;
+  .verso-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 2mm;
-    margin: 4mm 10mm 4mm;
-    height: 60mm;
+    margin: 5mm 0 5mm;
+    height: 70mm;
   }
-  .flyer-verso-grid .grid-cell {
+  .verso-grid .grid-cell {
     background: #f5f5f5;
     overflow: hidden;
+    border-radius: 1mm;
   }
-  .flyer-verso-grid .grid-cell:first-child {
+  .verso-grid .grid-cell.large {
     grid-row: span 2;
-    height: 60mm;
   }
-  .flyer-verso-grid .grid-cell:nth-child(2),
-  .flyer-verso-grid .grid-cell:nth-child(3) {
-    height: 29mm;
-  }
-  .flyer-verso-grid img {
+  .verso-grid img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
 
-  .flyer-verso-info {
-    position: relative;
-    z-index: 2;
-    padding: 0 12mm;
+  .verso-desc {
     font-size: 8.5pt;
-    line-height: 1.5;
-    color: var(--noir);
+    line-height: 1.55;
+    color: #444;
     font-weight: 300;
-  }
-  .flyer-verso-info p { margin: 0 0 2mm; }
-  .flyer-verso-info .desc {
-    color: #555;
-    max-height: 35mm;
+    text-align: center;
+    margin: 0 4mm;
+    max-height: 28mm;
     overflow: hidden;
   }
 
-  .flyer-verso-price {
-    position: relative;
-    z-index: 2;
+  .verso-price-wrap {
+    text-align: center;
+    margin: 3mm 0 2mm;
+  }
+  .verso-price {
     display: inline-block;
-    margin: 2mm auto;
-    font-family: 'Bowlby One', 'Inter', sans-serif;
-    font-size: 13pt;
-    color: var(--or);
-    font-weight: 400;
-    padding: 1mm 6mm;
-    border-top: 1px solid var(--rose-medium);
-    border-bottom: 1px solid var(--rose-medium);
-    text-transform: lowercase;
-    letter-spacing: -0.005em;
-  }
-  .flyer.univers-joaillerie .flyer-verso-price {
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 14pt;
+    font-weight: 600;
     color: var(--noir);
-    border-color: #999;
-    text-transform: none;
-    letter-spacing: 0.05em;
+    padding: 1mm 8mm;
+    border-top: 0.4mm solid var(--vert-mood);
+    border-bottom: 0.4mm solid var(--vert-mood);
+    letter-spacing: 0.02em;
   }
-  .price-wrap { text-align: center; margin: 1mm 0 2mm; }
+  .flyer.univers-joaillerie .verso-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-style: italic;
+    border-color: var(--noir);
+  }
 
-  .flyer-verso-footer {
-    position: relative;
-    z-index: 2;
+  .verso-footer {
     margin-top: auto;
-    padding: 3mm 10mm 8mm;
+    padding-top: 4mm;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    gap: 5mm;
+    gap: 4mm;
+    border-top: 0.3mm solid #eee;
   }
-  .flyer-qr {
+  .verso-qr {
+    width: 22mm;
+    flex-shrink: 0;
+  }
+  .verso-qr-img {
     width: 22mm;
     height: 22mm;
     background: white;
-    border-radius: 2mm;
-    padding: 1mm;
-    border: 1px solid var(--rose-medium);
+    padding: 0.5mm;
+    border: 0.3mm solid #ddd;
+    border-radius: 1mm;
   }
-  .flyer-qr img { width: 100%; height: 100%; display: block; }
-  .flyer-qr-label {
+  .verso-qr-img img { width: 100%; height: 100%; display: block; }
+  .verso-qr-label {
     font-size: 6pt;
     color: var(--gris);
     text-align: center;
     margin-top: 1mm;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
-  .flyer-shops {
-    font-size: 6.5pt;
-    color: var(--gris);
+  .verso-shops {
+    font-size: 7pt;
+    color: #444;
     line-height: 1.55;
-    flex: 1;
     text-align: right;
+    flex: 1;
   }
-  .flyer-shops .label { font-weight: 700; color: var(--noir); letter-spacing: 0.12em; font-size: 5.5pt; text-transform: uppercase; }
-  .flyer-shops .url { color: var(--or); font-weight: 500; font-size: 7pt; margin-top: 1mm; font-family: 'Bowlby One', sans-serif; letter-spacing: -0.005em; }
-  .flyer.univers-joaillerie .flyer-shops .url { color: var(--noir); font-family: 'Inter', sans-serif; font-weight: 500; }
+  .verso-shops .label {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    color: var(--noir);
+    letter-spacing: 0.18em;
+    font-size: 6pt;
+    text-transform: uppercase;
+    margin-bottom: 1mm;
+  }
+  .verso-shops .url {
+    font-family: 'Quicksand', sans-serif;
+    color: var(--vert-mood-dark);
+    font-weight: 600;
+    font-size: 8pt;
+    margin-top: 1mm;
+    letter-spacing: 0.02em;
+  }
+  .flyer.univers-joaillerie .verso-shops .url {
+    color: var(--noir);
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-style: italic;
+  }
 
   /* ====== IMPRESSION ====== */
   @page {
@@ -431,7 +487,7 @@
 
 <header>
   <a href="/" class="retour">← Atelier</a>
-  <h1>📄 Mood Studio — Flyer A5 recto/verso</h1>
+  <h1>Mood Studio — Flyer A5 recto/verso</h1>
 </header>
 
 <div class="app-wrap">
@@ -443,16 +499,31 @@
       <div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>
     </div>
 
-    <h2>2 · Univers</h2>
+    <div id="photo-picker-wrap" style="display:none;">
+      <h2>2 · Choisir les photos</h2>
+      <div class="picker-row">
+        <span class="lbl">Recto</span>
+        <span style="color:var(--vert-mood-dark);font-weight:600;font-size:0.75rem;">photo principale (grande)</span>
+      </div>
+      <div class="photo-picker" id="picker-recto"></div>
+      <div class="picker-row" style="margin-top:0.8rem;">
+        <span class="lbl">Verso</span>
+        <span style="color:var(--or);font-weight:600;font-size:0.75rem;">jusqu'à 3 photos en mosaïque</span>
+      </div>
+      <div class="photo-picker" id="picker-verso"></div>
+      <div class="picker-hint">Clique sur les vignettes pour choisir. Recto = 1 photo · Verso = jusqu'à 3 photos.</div>
+    </div>
+
+    <h2>3 · Univers</h2>
     <select id="opt-univers" onchange="renderFlyer()">
-      <option value="mood">Mood Collection (rose pastel)</option>
-      <option value="joaillerie">Mood Joaillerie (noir/blanc)</option>
+      <option value="mood">Mood Collection (bande vert mood)</option>
+      <option value="joaillerie">Mood Joaillerie (voile noir, serif italique)</option>
     </select>
 
-    <h2>3 · Phrase inspirante (recto)</h2>
+    <h2>4 · Phrase inspirante (recto)</h2>
     <textarea id="opt-phrase" oninput="renderFlyer()" placeholder="ex : un éclat qui te ressemble · l'élégance se porte au quotidien · choisis ton mood"></textarea>
 
-    <h2>4 · Options</h2>
+    <h2>5 · Options</h2>
     <label class="row-opt">
       <input type="checkbox" id="opt-show-price" checked onchange="renderFlyer()">
       Afficher le prix au verso
@@ -479,10 +550,13 @@
 <script>
 let currentProduct = null;
 let searchTimer = null;
+let selectedRectoIdx = 0;     // index dans p.images
+let selectedVersoIdx = [0, 1, 2]; // indices verso (max 3)
 
 const searchInput = document.getElementById('search-input');
 const resultsDiv = document.getElementById('results');
 const previewArea = document.getElementById('preview-area');
+const photoPickerWrap = document.getElementById('photo-picker-wrap');
 
 searchInput.addEventListener('input', () => {
   clearTimeout(searchTimer);
@@ -508,8 +582,8 @@ async function doSearch(q) {
       resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
       return;
     }
-    resultsDiv.innerHTML = products.map(p => `
-      <div class="result-card${currentProduct && currentProduct.id === p.id ? ' active' : ''}" onclick='selectProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+    resultsDiv.innerHTML = products.map((p, i) => `
+      <div class="result-card${currentProduct && currentProduct.id === p.id ? ' active' : ''}" data-idx="${i}">
         ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">` : '<div style="width:50px;height:50px;border-radius:6px;background:#f5f5f5;flex-shrink:0;"></div>'}
         <div class="info">
           <div class="title">${escapeHtml(p.title)}</div>
@@ -517,6 +591,13 @@ async function doSearch(q) {
         </div>
       </div>
     `).join('');
+    // Attacher événements
+    Array.from(resultsDiv.querySelectorAll('.result-card')).forEach((card) => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.idx, 10);
+        selectProduct(products[idx]);
+      });
+    });
   } catch (e) {
     resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur réseau</div>';
   }
@@ -524,33 +605,108 @@ async function doSearch(q) {
 
 function selectProduct(p) {
   currentProduct = p;
+  selectedRectoIdx = 0;
+  selectedVersoIdx = [0, 1, 2].filter(i => p.images && p.images[i]);
   document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
-  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  // Marque la carte active
+  document.querySelectorAll('.result-card').forEach((c, i) => {
+    if (c.dataset.idx !== undefined) {
+      // trouve la carte qui correspond au produit
+    }
+  });
   // Auto-suggestion phrase si vide
   const phraseField = document.getElementById('opt-phrase');
   if (!phraseField.value.trim()) {
     phraseField.value = suggestPhrase(p.title);
   }
+  renderPhotoPicker();
   renderFlyer();
 }
 
+function renderPhotoPicker() {
+  if (!currentProduct || !currentProduct.images || currentProduct.images.length === 0) {
+    photoPickerWrap.style.display = 'none';
+    return;
+  }
+  photoPickerWrap.style.display = 'block';
+
+  const imgs = currentProduct.images;
+
+  const pickerRecto = document.getElementById('picker-recto');
+  pickerRecto.innerHTML = imgs.map((img, i) => `
+    <div class="thumb${i === selectedRectoIdx ? ' selected-recto' : ''}" data-idx="${i}" data-target="recto">
+      <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.alt || '')}">
+      ${i === selectedRectoIdx ? '<span class="badge">R</span>' : ''}
+    </div>
+  `).join('');
+  pickerRecto.querySelectorAll('.thumb').forEach(t => {
+    t.addEventListener('click', () => {
+      selectedRectoIdx = parseInt(t.dataset.idx, 10);
+      renderPhotoPicker();
+      renderFlyer();
+    });
+  });
+
+  const pickerVerso = document.getElementById('picker-verso');
+  pickerVerso.innerHTML = imgs.map((img, i) => {
+    const pos = selectedVersoIdx.indexOf(i);
+    const cls = pos >= 0 ? ' selected-verso' : '';
+    const badge = pos >= 0 ? `<span class="badge verso">V${pos+1}</span>` : '';
+    return `
+      <div class="thumb${cls}" data-idx="${i}" data-target="verso">
+        <img src="${escapeHtml(img.url)}" alt="${escapeHtml(img.alt || '')}">
+        ${badge}
+      </div>
+    `;
+  }).join('');
+  pickerVerso.querySelectorAll('.thumb').forEach(t => {
+    t.addEventListener('click', () => {
+      const i = parseInt(t.dataset.idx, 10);
+      const pos = selectedVersoIdx.indexOf(i);
+      if (pos >= 0) {
+        // Désélectionne
+        selectedVersoIdx.splice(pos, 1);
+      } else if (selectedVersoIdx.length < 3) {
+        // Ajoute
+        selectedVersoIdx.push(i);
+      } else {
+        // Remplace le premier
+        selectedVersoIdx.shift();
+        selectedVersoIdx.push(i);
+      }
+      renderPhotoPicker();
+      renderFlyer();
+    });
+  });
+}
+
 function suggestPhrase(title) {
-  // Suggestion simple à partir du nom
   return `${title.toLowerCase()} — l'éclat qui te ressemble`;
 }
 
-function logoSvgJoaillerie() {
-  return `
-    <div class="flyer-logo-mood-joaillerie">
-      <span>mo</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M3 9l9 12 9-12-4.5-6h-9L3 9z"/>
-        <path d="M3 9h18M8.5 3l3.5 6 3.5-6M8.5 3l3.5 18M15.5 3L12 21"/>
-      </svg>
-      <span>d</span>
-    </div>
-    <div class="flyer-logo-mood-joaillerie domain" style="font-size:7pt;letter-spacing:0.15em;color:#999;text-align:center;margin-top:2mm;display:block;">moodjoaillerie.net</div>
-  `;
+function logoHtml(univers, white = false) {
+  if (univers === 'joaillerie') {
+    return `
+      <div class="logo-joaillerie" style="color:${white ? 'white' : 'var(--noir)'};">
+        <div class="word">
+          <span>m</span>
+          <span class="diamond">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M12 2 L22 9 L12 22 L2 9 Z M2 9 L22 9 M7 4 L12 9 L17 4 M7 4 L12 22 M17 4 L12 22"/>
+            </svg>
+          </span>
+          <span class="diamond">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M12 2 L22 9 L12 22 L2 9 Z M2 9 L22 9 M7 4 L12 9 L17 4 M7 4 L12 22 M17 4 L12 22"/>
+            </svg>
+          </span>
+          <span>d</span>
+        </div>
+        <div class="tag">moodjoaillerie.net</div>
+      </div>
+    `;
+  }
+  return `<img src="/logo-mood.png" alt="mood" class="logo-mood-img${white ? ' white' : ''}">`;
 }
 
 function renderFlyer() {
@@ -565,53 +721,55 @@ function renderFlyer() {
     ? formatPrice(p.priceMin, p.currency)
     : `dès ${formatPrice(p.priceMin, p.currency)}`;
 
-  const logoHtml = univers === 'joaillerie'
-    ? logoSvgJoaillerie()
-    : `<div class="flyer-logo-mood">mood</div>`;
+  const imgs = p.images && p.images.length > 0 ? p.images : (p.image ? [{url: p.image, alt: p.imageAlt}] : []);
+  const rectoImg = imgs[selectedRectoIdx] || imgs[0] || null;
+  const versoImgs = selectedVersoIdx.map(i => imgs[i]).filter(Boolean);
+  // Si moins de 3, compléter avec les autres images dispo
+  while (versoImgs.length < 3 && imgs.length > 0) {
+    const fallback = imgs.find(im => !versoImgs.includes(im));
+    if (!fallback) break;
+    versoImgs.push(fallback);
+  }
+  while (versoImgs.length < 3) versoImgs.push(versoImgs[0] || rectoImg);
 
-  // Verso : récupère jusqu'à 3 images en plus de la principale
-  const allImages = p.images && p.images.length > 0 ? p.images : (p.image ? [{url: p.image, alt: p.imageAlt}] : []);
-  const versoImg1 = allImages[0] || null;
-  const versoImg2 = allImages[1] || allImages[0] || null;
-  const versoImg3 = allImages[2] || allImages[1] || allImages[0] || null;
+  // Logo recto : selon univers, sur photo claire ou sombre → on choisit blanc en MC (le band est vert mood, logo noir lisible). En Joaillerie, fond probablement clair, logo blanc en overlay sur photo + voile noir = OK
+  const rectoLogoWhite = univers === 'joaillerie';
 
   previewArea.innerHTML = `
     <div class="pages-wrap">
       <div class="page-side">
         <div class="page-label">recto</div>
-        <div class="flyer univers-${univers} flyer-recto">
-          <div class="flyer-logo-wrap">${logoHtml}</div>
-          <div class="flyer-photo">
-            ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">` : ''}
+        <div class="flyer flyer-recto univers-${univers}">
+          ${rectoImg ? `<div class="recto-photo-full"><img src="${escapeHtml(rectoImg.url)}" alt="${escapeHtml(rectoImg.alt || p.title)}"></div>` : ''}
+          <div class="recto-logo-overlay">${logoHtml(univers, rectoLogoWhite)}</div>
+          <div class="recto-band">
+            <div class="recto-band-text">${escapeHtml(phrase)}</div>
           </div>
-          <div class="flyer-phrase">${escapeHtml(phrase)}</div>
         </div>
       </div>
 
       <div class="page-side">
         <div class="page-label">verso</div>
-        <div class="flyer univers-${univers} flyer-verso">
-          <div class="flyer-logo-wrap">${logoHtml}</div>
-          <div class="flyer-product-name">${escapeHtml(p.title)}</div>
+        <div class="flyer flyer-verso univers-${univers}">
+          <div class="verso-top">${logoHtml(univers, false)}</div>
+          <div class="verso-product-name">${escapeHtml(p.title)}</div>
 
-          <div class="flyer-verso-grid">
-            <div class="grid-cell">${versoImg1 ? `<img src="${escapeHtml(versoImg1.url)}" alt="${escapeHtml(versoImg1.alt || '')}">` : ''}</div>
-            <div class="grid-cell">${versoImg2 ? `<img src="${escapeHtml(versoImg2.url)}" alt="${escapeHtml(versoImg2.alt || '')}">` : ''}</div>
-            <div class="grid-cell">${versoImg3 ? `<img src="${escapeHtml(versoImg3.url)}" alt="${escapeHtml(versoImg3.alt || '')}">` : ''}</div>
+          <div class="verso-grid">
+            <div class="grid-cell large">${versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : ''}</div>
+            <div class="grid-cell">${versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : ''}</div>
+            <div class="grid-cell">${versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : ''}</div>
           </div>
 
-          <div class="flyer-verso-info">
-            <p class="desc">${escapeHtml((p.description || '').slice(0, 280))}${(p.description || '').length > 280 ? '…' : ''}</p>
-          </div>
+          <div class="verso-desc">${escapeHtml((p.description || '').slice(0, 260))}${(p.description || '').length > 260 ? '…' : ''}</div>
 
-          ${showPrice ? `<div class="price-wrap"><div class="flyer-verso-price">${priceTxt}</div></div>` : ''}
+          ${showPrice ? `<div class="verso-price-wrap"><div class="verso-price">${priceTxt}</div></div>` : ''}
 
-          <div class="flyer-verso-footer">
-            <div>
-              <div class="flyer-qr"><img src="${qrUrl}" alt="QR code page produit"></div>
-              <div class="flyer-qr-label">scanne-moi</div>
+          <div class="verso-footer">
+            <div class="verso-qr">
+              <div class="verso-qr-img"><img src="${qrUrl}" alt="QR code page produit"></div>
+              <div class="verso-qr-label">scanne-moi</div>
             </div>
-            <div class="flyer-shops">
+            <div class="verso-shops">
               <div class="label">Mood Stores</div>
               <div>Carouge · Martigny · Orbe</div>
               <div>Fribourg · Zürich · Zermatt</div>
