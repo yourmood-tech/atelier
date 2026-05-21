@@ -447,13 +447,13 @@ export async function createBulkFulfillment(
           company: "Swiss Post",
           url: `https://service.post.ch/ekp-web/ui/list/rap/item/details/${trackingNumber}`,
         },
-        notify_customer: true,
       }
     : {};
 
   await shopifyPost(`/fulfillments.json`, {
     fulfillment: {
       line_items_by_fulfillment_order: lineItemsByFo,
+      notify_customer: true,
       ...tracking,
     },
   });
