@@ -18,6 +18,7 @@
     --beige: #EFE7DD;
     --sable: #E8DCC9;
     --blanc-casse: #FAF7F2;
+    --rouge-suisse: #DC1818;
     --gris-text: #8a8a8a;
     --gris-light: #d0d0d0;
   }
@@ -205,7 +206,6 @@
   }
   .editor-help strong { color: var(--noir); }
 
-  /* ===== PANEL ÉLÉMENT SÉLECTIONNÉ ===== */
   #element-panel {
     display: none;
     margin-top: 1rem;
@@ -241,7 +241,7 @@
   .text-color-swatch:hover { transform: scale(1.1); }
   .text-color-swatch.active { border-color: var(--noir); box-shadow: 0 0 0 2px white inset; }
   .font-row { display: flex; gap: 0.4rem; align-items: center; margin-top: 0.4rem; }
-  .font-row label { font-size: 0.78rem; color: var(--gris-text); }
+  .font-row label { font-size: 0.78rem; color: var(--gris-text); min-width: 50px; }
   .font-row input[type=range] { flex: 1; }
   .font-row input[type=number] { width: 60px; padding: 0.3rem 0.5rem; border: 1px solid var(--gris-light); border-radius: 6px; font-family: inherit; font-size: 0.85rem; }
 
@@ -279,7 +279,7 @@
     border: 2px dashed var(--gris-light);
   }
 
-  /* ====== FLYER A5 PORTRAIT ====== */
+  /* ====== FLYER ====== */
   .flyer {
     width: 148mm; height: 210mm;
     box-shadow: 0 8px 32px rgba(0,0,0,0.12);
@@ -297,7 +297,7 @@
   .flyer.bg-turquoise { background: var(--turquoise); }
   .flyer.bg-vert { background: var(--vert); }
 
-  /* ====== ÉLÉMENT ÉDITABLE ====== */
+  /* ====== ÉDITABLE ====== */
   .editable {
     position: absolute;
     cursor: move;
@@ -308,10 +308,35 @@
   }
   .editable:hover { border-color: rgba(37,37,37,0.4); }
   .editable.selected { border-color: var(--noir); }
+  .editable.editing { cursor: text; border-color: var(--turquoise); }
 
-  .editable img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
-  .editable.is-logo img { object-fit: contain; }
-  .editable.is-logo.logo-white img { filter: brightness(0) invert(1); }
+  .editable .img-clip {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    position: relative;
+  }
+  .editable .img-clip img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .editable.is-logo .logo-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  .editable.is-logo .logo-img {
+    width: 100%; height: 100%;
+  }
+  .editable.is-logo .swiss-cross-overlay {
+    position: absolute;
+    top: 2%; right: 1%;
+    width: 11%;
+    aspect-ratio: 1;
+  }
+  .editable.is-logo .swiss-cross-overlay svg { width: 100%; height: 100%; display: block; }
 
   .editable.is-text {
     padding: 4px 8px;
@@ -324,7 +349,9 @@
     font-family: 'Comfortaa', sans-serif;
     line-height: 1.05;
     word-break: break-word;
+    outline: none;
   }
+  .editable.is-text.editing .text-inner { pointer-events: auto; background: rgba(118,186,186,0.1); }
   .editable.is-text.style-uppercase .text-inner { text-transform: uppercase; letter-spacing: 0.2em; }
   .editable.is-text.style-lowercase .text-inner { text-transform: lowercase; }
   .editable.is-text.weight-700 .text-inner { font-weight: 700; }
@@ -333,6 +360,25 @@
   .editable.is-text.weight-400 .text-inner { font-weight: 400; }
   .editable.is-text.weight-300 .text-inner { font-weight: 300; }
 
+  /* Bouton supprimer (×) — top-left */
+  .del-elem-btn {
+    position: absolute;
+    top: -10px; left: -10px;
+    width: 22px; height: 22px;
+    background: #c75a5a; color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer; font-size: 13px; line-height: 1;
+    padding: 0;
+    font-family: sans-serif; font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 12;
+  }
+  .del-elem-btn:hover { background: #a04545; }
+  .editable.selected .del-elem-btn { display: block; }
+
+  /* Resize handle — bottom-right */
   .resize-handle {
     position: absolute;
     bottom: -7px; right: -7px;
@@ -348,6 +394,7 @@
   .editable:hover .resize-handle,
   .editable.selected .resize-handle { display: block; }
 
+  /* Layer buttons — top-right */
   .layer-btns {
     position: absolute;
     top: -10px; right: -10px;
@@ -366,10 +413,7 @@
   }
   .layer-btn:hover { background: var(--anthracite); }
 
-  /* ====== VERSO (sera reconstruit en JS comme le recto avec éléments éditables) ====== */
-  .flyer-verso { background: var(--blanc-casse); }
-
-  /* QR + petits éléments fixes par défaut */
+  /* Boxes spéciaux verso */
   .qr-box {
     width: 100%; height: 100%;
     background: white; padding: 0.5mm;
@@ -377,7 +421,7 @@
     border-radius: 1mm;
     display: flex; flex-direction: column;
   }
-  .qr-box img { width: 100%; height: 100%; flex: 1; object-fit: contain; }
+  .qr-box img { width: 100%; flex: 1; object-fit: contain; }
   .qr-label {
     font-family: 'Comfortaa', sans-serif;
     font-size: 5pt;
@@ -387,12 +431,11 @@
     margin-top: 0.5mm;
     color: var(--gris-text);
   }
-
   .shops-box {
     width: 100%; height: 100%;
     font-family: 'Inter', sans-serif;
     font-size: 7pt; line-height: 1.55;
-    color: inherit; text-align: right;
+    text-align: right;
     display: flex; flex-direction: column; justify-content: center;
   }
   .shops-box .label {
@@ -406,7 +449,6 @@
     font-weight: 600; font-size: 8pt;
     margin-top: 1mm;
   }
-
   .interchange-box {
     width: 100%; height: 100%;
     padding: 1mm;
@@ -430,19 +472,16 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
-
   .price-box {
     width: 100%; height: 100%;
     font-family: 'Comfortaa', sans-serif;
-    font-size: 14pt; font-weight: 700;
+    font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     letter-spacing: 0.02em;
   }
-
   .desc-box {
     width: 100%; height: 100%;
     font-family: 'Inter', sans-serif;
-    font-size: 8.5pt;
     line-height: 1.55;
     font-weight: 300;
     text-align: center;
@@ -450,7 +489,6 @@
     display: flex; align-items: center; justify-content: center;
   }
 
-  /* ====== IMPRESSION ====== */
   @page { size: A5 portrait; margin: 0; }
   @media print {
     body { background: white; }
@@ -461,7 +499,7 @@
     .flyer { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
     .flyer:last-of-type { page-break-after: auto; }
     .editable { border-color: transparent !important; }
-    .resize-handle, .layer-btns { display: none !important; }
+    .resize-handle, .layer-btns, .del-elem-btn { display: none !important; }
   }
 </style>
 </head>
@@ -513,7 +551,7 @@
       <h2>2 · Photos sélectionnées</h2>
       <div class="picker-row">
         <span class="lbl">Recto</span>
-        <span style="color:var(--noir);font-size:0.75rem;">1 photo (badge R)</span>
+        <span style="color:var(--noir);font-size:0.75rem;">1 photo (R)</span>
       </div>
       <div class="photo-picker" id="picker-recto"></div>
       <div class="picker-row" style="margin-top:0.8rem;">
@@ -523,10 +561,11 @@
       <div class="photo-picker" id="picker-verso"></div>
     </div>
 
-    <h2>3 · Textes</h2>
+    <h2>3 · Textes (modifiables aussi par double-clic sur le flyer)</h2>
     <input type="text" id="opt-title" oninput="renderAll()" placeholder="Nom produit">
     <input type="text" id="opt-tagline" oninput="renderAll()" placeholder="Phrase courte recto" style="margin-top:0.5rem;" value="mood évolue avec toi">
     <textarea id="opt-desc" oninput="renderAll()" placeholder="Description verso" style="margin-top:0.5rem;"></textarea>
+    <input type="text" id="opt-qr-url" oninput="renderAll()" placeholder="URL du QR (auto si produit Shopify)" style="margin-top:0.5rem;">
 
     <h2>4 · Fond recto</h2>
     <div class="color-picker" id="color-picker-recto">
@@ -558,12 +597,11 @@
     <button id="reset-recto" style="padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;margin-right:0.4rem;">↺ Recto</button>
     <button id="reset-verso" style="padding:0.5rem 0.9rem;border:1px solid var(--gris-light);background:white;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:inherit;">↺ Verso</button>
 
-    <!-- Panel élément sélectionné -->
     <div id="element-panel">
       <h3 id="el-panel-name">Élément</h3>
 
       <div id="el-panel-text-section">
-        <div class="sub-label">Couleur du texte / logo</div>
+        <div class="sub-label">Couleur</div>
         <div class="text-color-picker" id="el-color-picker">
           <div class="text-color-swatch" data-color="#252525" style="background:#252525;" title="Noir"></div>
           <div class="text-color-swatch" data-color="#4D4C4C" style="background:#4D4C4C;" title="Anthracite"></div>
@@ -592,6 +630,26 @@
         </div>
       </div>
 
+      <div id="el-panel-image-section" style="display:none;">
+        <div class="sub-label">Position image (dans le cadre)</div>
+        <div class="font-row">
+          <label>↔️ X</label>
+          <input type="range" id="el-img-x" min="0" max="100" step="1">
+          <span id="el-img-x-val" style="font-size:0.75rem;width:30px;text-align:right;">50</span>
+        </div>
+        <div class="font-row">
+          <label>↕️ Y</label>
+          <input type="range" id="el-img-y" min="0" max="100" step="1">
+          <span id="el-img-y-val" style="font-size:0.75rem;width:30px;text-align:right;">50</span>
+        </div>
+        <div class="sub-label">Zoom image</div>
+        <div class="font-row">
+          <label>🔍</label>
+          <input type="range" id="el-img-zoom" min="100" max="400" step="5">
+          <span id="el-img-zoom-val" style="font-size:0.75rem;width:40px;text-align:right;">100%</span>
+        </div>
+      </div>
+
       <div class="sub-label">Visibilité</div>
       <label class="row-opt">
         <input type="checkbox" id="el-visible" checked>
@@ -600,7 +658,11 @@
     </div>
 
     <div class="editor-help">
-      <strong>Édition :</strong> clique sur n'importe quel élément (recto OU verso) pour le déplacer (glisser-déposer), redimensionner (cercle noir bas-droite), changer sa couleur (panel ci-dessous) ou le passer devant/derrière (↑ ↓).
+      <strong>Édition :</strong><br>
+      • Clic = sélectionne · Glisser = déplace · Cercle noir = redimensionne<br>
+      • <strong>Double-clic sur texte</strong> = modifier directement<br>
+      • <strong>Bouton rouge ×</strong> en haut-gauche = cacher l'élément<br>
+      • Sliders du panel = couleur / taille / position image / zoom
     </div>
 
   </aside>
@@ -614,7 +676,7 @@
       <div class="empty-preview">
         <div style="font-size:2.5rem;margin-bottom:0.5rem;">📄</div>
         <div style="font-weight:600;color:var(--noir);margin-bottom:0.3rem;">Aperçu recto + verso</div>
-        <div style="font-size:0.85rem;">Ajoute au moins une photo (Shopify, Mac ou URL) pour démarrer.</div>
+        <div style="font-size:0.85rem;">Ajoute au moins une photo pour démarrer.</div>
       </div>
     </div>
   </main>
@@ -622,7 +684,6 @@
 </div>
 
 <script>
-// ===== ÉTAT =====
 let allImages = [];
 let imgCounter = 0;
 let selectedRectoId = null;
@@ -631,32 +692,30 @@ let currentProductMeta = null;
 let bgRecto = 'bg-blanc';
 let bgVerso = 'bg-blanc';
 let searchTimer = null;
-let activeKey = null; // clé de l'élément sélectionné (ex: "recto.logo" ou "verso.price")
+let activeKey = null;
+let editingKey = null; // élément en cours d'édition de texte
 
 const MM = 3.7795;
 function mm(v) { return v * MM; }
 
-// LAYOUT par défaut RECTO (positions/tailles en mm sur 148×210)
 function defaultLayoutRecto() {
   return {
-    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1, side: 'recto' },
-    logo:    { x: 56, y: 8, w: 36, h: 14, visible: true, z: 3, side: 'recto', color: '#252525' },
-    title:   { x: 14, y: 178, w: 120, h: 18, visible: false, z: 3, side: 'recto', color: '#FFFFFF', fontSize: 22, weight: 700, txStyle: 'style-lowercase' },
-    tagline: { x: 14, y: 192, w: 120, h: 10, visible: true, z: 3, side: 'recto', color: '#FFFFFF', fontSize: 10, weight: 600, txStyle: 'style-uppercase' }
+    photo:   { x: 0, y: 0, w: 148, h: 210, visible: true, z: 1, side: 'recto', imgX: 50, imgY: 50, imgZoom: 100 },
+    logo:    { x: 56, y: 8, w: 36, h: 14, visible: true, z: 4, side: 'recto', color: '#FFFFFF' },
+    title:   { x: 14, y: 24, w: 120, h: 12, visible: true, z: 4, side: 'recto', color: '#FFFFFF', fontSize: 14, weight: 600, txStyle: 'style-lowercase' },
+    tagline: { x: 14, y: 192, w: 120, h: 10, visible: true, z: 4, side: 'recto', color: '#FFFFFF', fontSize: 10, weight: 600, txStyle: 'style-uppercase' }
   };
 }
-
-// LAYOUT par défaut VERSO
 function defaultLayoutVerso() {
   return {
     logo:         { x: 56, y: 8, w: 36, h: 12, visible: true, z: 3, side: 'verso', color: '#252525' },
     title:        { x: 10, y: 22, w: 128, h: 14, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 18, weight: 600, txStyle: 'style-lowercase' },
-    sub:          { x: 10, y: 37, w: 128, h: 5, visible: true, z: 3, side: 'verso', color: '#4D4C4C', fontSize: 7, weight: 500, txStyle: 'style-uppercase' },
-    photoMain:    { x: 10, y: 46, w: 86, h: 78, visible: true, z: 2, side: 'verso' },
-    photoSmall1:  { x: 98, y: 46, w: 40, h: 25, visible: true, z: 2, side: 'verso' },
-    photoSmall2:  { x: 98, y: 73, w: 40, h: 25, visible: true, z: 2, side: 'verso' },
-    photoSmall3:  { x: 98, y: 100, w: 40, h: 25, visible: true, z: 2, side: 'verso' },
-    interchange:  { x: 10, y: 128, w: 128, h: 8, visible: true, z: 3, side: 'verso', color: '#252525' },
+    sub:          { x: 10, y: 37, w: 128, h: 5, visible: true, z: 3, side: 'verso', color: '#4D4C4C', fontSize: 7, weight: 500, txStyle: 'style-uppercase', text: 'Système breveté · Garantie à vie' },
+    photoMain:    { x: 10, y: 46, w: 86, h: 78, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
+    photoSmall1:  { x: 98, y: 46, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
+    photoSmall2:  { x: 98, y: 73, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
+    photoSmall3:  { x: 98, y: 100, w: 40, h: 25, visible: true, z: 2, side: 'verso', imgX: 50, imgY: 50, imgZoom: 100 },
+    interchange:  { x: 10, y: 128, w: 128, h: 8, visible: true, z: 3, side: 'verso', color: '#252525', text: 'Bagues interchangeables · Mood évolue avec toi' },
     desc:         { x: 10, y: 140, w: 128, h: 22, visible: true, z: 3, side: 'verso', color: '#444444', fontSize: 9, weight: 300 },
     price:        { x: 54, y: 164, w: 40, h: 10, visible: true, z: 3, side: 'verso', color: '#252525', fontSize: 14, weight: 700 },
     qr:           { x: 10, y: 178, w: 22, h: 25, visible: true, z: 3, side: 'verso' },
@@ -719,6 +778,7 @@ function selectShopifyProduct(p) {
   currentProductMeta = p;
   if (!document.getElementById('opt-title').value.trim()) document.getElementById('opt-title').value = p.title;
   if (!document.getElementById('opt-desc').value.trim()) document.getElementById('opt-desc').value = (p.description || '').slice(0, 260);
+  if (!document.getElementById('opt-qr-url').value.trim()) document.getElementById('opt-qr-url').value = p.url || '';
   const newImages = (p.images || []).map(img => ({ url: img.url, alt: img.alt || p.title, source: 'shopify', id: ++imgCounter }));
   allImages = allImages.concat(newImages);
   if (!selectedRectoId && newImages[0]) selectedRectoId = newImages[0].id;
@@ -786,18 +846,10 @@ document.querySelectorAll('#color-picker-verso .color-swatch').forEach(s => {
 });
 
 // ===== RESET =====
-document.getElementById('reset-recto').addEventListener('click', () => {
-  layoutRecto = defaultLayoutRecto();
-  hideElementPanel();
-  renderRecto();
-});
-document.getElementById('reset-verso').addEventListener('click', () => {
-  layoutVerso = defaultLayoutVerso();
-  hideElementPanel();
-  renderVerso();
-});
+document.getElementById('reset-recto').addEventListener('click', () => { layoutRecto = defaultLayoutRecto(); hideElementPanel(); renderRecto(); });
+document.getElementById('reset-verso').addEventListener('click', () => { layoutVerso = defaultLayoutVerso(); hideElementPanel(); renderVerso(); });
 
-// ===== PICKER PHOTOS =====
+// ===== PICKER =====
 function refreshPicker() {
   if (allImages.length === 0) { photoPickerWrap.style.display = 'none'; return; }
   photoPickerWrap.style.display = 'block';
@@ -850,7 +902,6 @@ function refreshPicker() {
 
 function getImageById(id) { return allImages.find(i => i.id === id); }
 
-// ===== ENSURE STRUCTURE =====
 function ensureStructure() {
   if (!document.getElementById('recto-flyer')) {
     previewArea.innerHTML = `
@@ -881,8 +932,8 @@ function renderRecto() {
   const rectoImg = getImageById(selectedRectoId) || allImages[0];
 
   const elems = [
-    { key: 'photo',   type: 'photo', content: rectoImg ? `<img src="${escapeHtml(rectoImg.url)}" alt="">` : '' },
-    { key: 'logo',    type: 'logo',  content: buildLogoHtml(layoutRecto.logo.color) },
+    { key: 'photo',   type: 'photo', content: rectoImg },
+    { key: 'logo',    type: 'logo',  content: null },
     { key: 'title',   type: 'text',  content: title },
     { key: 'tagline', type: 'text',  content: tagline }
   ];
@@ -896,17 +947,27 @@ function renderRecto() {
   });
 }
 
+// SVG croix suisse + logo coloré
 function buildLogoHtml(color) {
-  // Logo en image. Si couleur blanche → filter brightness 0 invert 1
-  // Pour autres couleurs (anthracite/turquoise/etc.) on garde l'image originale (couleur du PNG = noir).
-  // Pour vraie coloration, on utilise un mask
-  if (color === '#FFFFFF' || color === 'white') {
-    return `<img src="/logo-mood.png" alt="mood" style="filter: brightness(0) invert(1);">`;
-  } else if (color === '#252525' || !color) {
-    return `<img src="/logo-mood.png" alt="mood">`;
+  const crossSvg = `
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="${'#DC1818'}"/>
+      <rect x="40" y="20" width="20" height="60" fill="white"/>
+      <rect x="20" y="40" width="60" height="20" fill="white"/>
+    </svg>
+  `;
+  // Logo principal coloré via mask CSS (toutes les couleurs supportées sauf noir = direct)
+  let logoImgHtml;
+  if (color === '#252525' || !color) {
+    // Garde le PNG original (noir avec croix rouge native)
+    logoImgHtml = `<img src="/logo-mood.png" alt="mood" class="logo-img" style="object-fit:contain;">`;
+    // Pas besoin d'overlay croix suisse, elle est dans le PNG
+    return `<div class="logo-inner">${logoImgHtml}</div>`;
   } else {
-    // Coloration via mask
-    return `<div style="width:100%;height:100%;-webkit-mask-image:url('/logo-mood.png');mask-image:url('/logo-mood.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${color};"></div>`;
+    // Mask pour colorer
+    logoImgHtml = `<div class="logo-img" style="-webkit-mask-image:url('/logo-mood.png');mask-image:url('/logo-mood.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;background-color:${color};"></div>`;
+    // Ajoute overlay croix suisse rouge (pour préserver la croix originale)
+    return `<div class="logo-inner">${logoImgHtml}<div class="swiss-cross-overlay">${crossSvg}</div></div>`;
   }
 }
 
@@ -928,8 +989,9 @@ function renderVerso() {
   }
   while (versoImgs.length < 4) versoImgs.push(versoImgs[0] || null);
 
-  const productUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
-  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(productUrl);
+  let qrUrl = document.getElementById('opt-qr-url').value.trim();
+  if (!qrUrl) qrUrl = currentProductMeta ? currentProductMeta.url : 'https://yourmood.net';
+  const qrSrc = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(qrUrl);
   let priceTxt = '';
   if (currentProductMeta) {
     priceTxt = currentProductMeta.priceMin === currentProductMeta.priceMax
@@ -938,18 +1000,18 @@ function renderVerso() {
   }
 
   const elems = [
-    { key: 'logo',        type: 'logo',     content: buildLogoHtml(layoutVerso.logo.color) },
+    { key: 'logo',        type: 'logo',     content: null },
     { key: 'title',       type: 'text',     content: title },
-    { key: 'sub',         type: 'text',     content: 'Système breveté · Garantie à vie' },
-    { key: 'photoMain',   type: 'photo',    content: versoImgs[0] ? `<img src="${escapeHtml(versoImgs[0].url)}" alt="">` : '' },
-    { key: 'photoSmall1', type: 'photo',    content: versoImgs[1] ? `<img src="${escapeHtml(versoImgs[1].url)}" alt="">` : '' },
-    { key: 'photoSmall2', type: 'photo',    content: versoImgs[2] ? `<img src="${escapeHtml(versoImgs[2].url)}" alt="">` : '' },
-    { key: 'photoSmall3', type: 'photo',    content: versoImgs[3] ? `<img src="${escapeHtml(versoImgs[3].url)}" alt="">` : '' },
-    { key: 'interchange', type: 'interchange', content: '' },
-    { key: 'desc',        type: 'desc',     content: desc },
-    { key: 'price',       type: 'price',    content: priceTxt },
-    { key: 'qr',          type: 'qr',       content: qrUrl },
-    { key: 'shops',       type: 'shops',    content: '' }
+    { key: 'sub',         type: 'text',     content: null },
+    { key: 'photoMain',   type: 'photo',    content: versoImgs[0] },
+    { key: 'photoSmall1', type: 'photo',    content: versoImgs[1] },
+    { key: 'photoSmall2', type: 'photo',    content: versoImgs[2] },
+    { key: 'photoSmall3', type: 'photo',    content: versoImgs[3] },
+    { key: 'interchange', type: 'interchange', content: null },
+    { key: 'desc',        type: 'text',     content: desc },
+    { key: 'price',       type: 'text',     content: priceTxt },
+    { key: 'qr',          type: 'qr',       content: qrSrc },
+    { key: 'shops',       type: 'shops',    content: null }
   ];
 
   const sorted = elems.slice().sort((a,b) => layoutVerso[a.key].z - layoutVerso[b.key].z);
@@ -961,7 +1023,7 @@ function renderVerso() {
   });
 }
 
-// ===== ÉLÉMENT ÉDITABLE GÉNÉRIQUE =====
+// ===== GÉNÉRIQUE ÉLÉMENT =====
 function makeEditableEl(fullKey, type, cfg, content) {
   const [side, key] = fullKey.split('.');
   const d = document.createElement('div');
@@ -970,7 +1032,6 @@ function makeEditableEl(fullKey, type, cfg, content) {
     if (cfg.txStyle) classes.push(cfg.txStyle);
     classes.push('weight-' + (cfg.weight || 500));
   }
-  if (type === 'logo' && cfg.color === '#FFFFFF') classes.push('logo-white');
   d.className = classes.join(' ');
   d.dataset.fullKey = fullKey;
   d.style.left = mm(cfg.x) + 'px';
@@ -980,16 +1041,22 @@ function makeEditableEl(fullKey, type, cfg, content) {
   d.style.zIndex = cfg.z;
 
   let innerHtml = '';
-  if (type === 'photo' || type === 'logo') {
-    innerHtml = content;
+  if (type === 'photo') {
+    const imgX = cfg.imgX ?? 50;
+    const imgY = cfg.imgY ?? 50;
+    const zoom = cfg.imgZoom ?? 100;
+    const imgUrl = content ? content.url : '';
+    innerHtml = `<div class="img-clip"><img src="${escapeHtml(imgUrl)}" alt="" style="object-position:${imgX}% ${imgY}%; transform: scale(${zoom/100}); transform-origin: ${imgX}% ${imgY}%;"></div>`;
+  } else if (type === 'logo') {
+    innerHtml = buildLogoHtml(cfg.color);
   } else if (type === 'text') {
-    innerHtml = `<div class="text-inner" style="font-size:${cfg.fontSize}pt;color:${cfg.color};">${escapeHtml(content)}</div>`;
+    let textContent = content;
+    if (cfg.text !== undefined) textContent = cfg.text;
+    if (key === 'sub' && cfg.text === undefined) textContent = 'Système breveté · Garantie à vie';
+    innerHtml = `<div class="text-inner" style="font-size:${cfg.fontSize}pt;color:${cfg.color};">${escapeHtml(textContent || '')}</div>`;
   } else if (type === 'interchange') {
-    innerHtml = `<div class="interchange-box" style="color:${cfg.color};"><span class="ico"></span><span class="txt">Bagues interchangeables · Mood évolue avec toi</span></div>`;
-  } else if (type === 'desc') {
-    innerHtml = `<div class="desc-box" style="color:${cfg.color};font-size:${cfg.fontSize}pt;font-weight:${cfg.weight};">${escapeHtml(content)}</div>`;
-  } else if (type === 'price') {
-    innerHtml = `<div class="price-box" style="color:${cfg.color};font-size:${cfg.fontSize}pt;">${escapeHtml(content)}</div>`;
+    const txt = cfg.text || 'Bagues interchangeables · Mood évolue avec toi';
+    innerHtml = `<div class="interchange-box" style="color:${cfg.color};"><span class="ico"></span><span class="txt">${escapeHtml(txt)}</span></div>`;
   } else if (type === 'qr') {
     innerHtml = `<div class="qr-box"><img src="${content}" alt="QR"><div class="qr-label">scanne-moi</div></div>`;
   } else if (type === 'shops') {
@@ -1002,6 +1069,7 @@ function makeEditableEl(fullKey, type, cfg, content) {
   }
 
   d.innerHTML = innerHtml + `
+    <button class="del-elem-btn" title="Cacher cet élément">×</button>
     <div class="layer-btns">
       <button class="layer-btn" data-act="up" title="Avancer">↑</button>
       <button class="layer-btn" data-act="down" title="Reculer">↓</button>
@@ -1017,10 +1085,14 @@ function getCfg(fullKey) {
   return (side === 'recto' ? layoutRecto : layoutVerso)[key];
 }
 
-// ===== INTERACTIONS DRAG + RESIZE + SELECTION =====
+// ===== INTERACTIONS =====
 function attachInteractions(el, fullKey) {
   el.addEventListener('mousedown', (e) => {
-    if (e.target.classList.contains('resize-handle') || e.target.classList.contains('layer-btn')) return;
+    if (e.target.classList.contains('resize-handle') ||
+        e.target.classList.contains('layer-btn') ||
+        e.target.classList.contains('del-elem-btn') ||
+        e.target.isContentEditable) return;
+    if (el.classList.contains('editing')) return; // pas de drag pendant édition texte
     document.querySelectorAll('.editable.selected').forEach(x => x.classList.remove('selected'));
     el.classList.add('selected');
     activeKey = fullKey;
@@ -1045,6 +1117,40 @@ function attachInteractions(el, fullKey) {
     e.preventDefault();
   });
 
+  // DOUBLE-CLICK = ÉDITION TEXTE
+  el.addEventListener('dblclick', (e) => {
+    if (!el.classList.contains('is-text')) return;
+    const inner = el.querySelector('.text-inner');
+    if (!inner) return;
+    el.classList.add('editing');
+    editingKey = fullKey;
+    inner.contentEditable = 'true';
+    inner.focus();
+    const range = document.createRange();
+    range.selectNodeContents(inner);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    e.stopPropagation();
+
+    const onBlur = () => {
+      el.classList.remove('editing');
+      inner.contentEditable = 'false';
+      const newText = inner.textContent.trim();
+      saveTextEdit(fullKey, newText);
+      editingKey = null;
+      inner.removeEventListener('blur', onBlur);
+      inner.removeEventListener('keydown', onKey);
+    };
+    const onKey = (ev) => {
+      if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); inner.blur(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); inner.blur(); }
+    };
+    inner.addEventListener('blur', onBlur);
+    inner.addEventListener('keydown', onKey);
+  });
+
+  // Resize
   const handle = el.querySelector('.resize-handle');
   if (handle) {
     handle.addEventListener('mousedown', (e) => {
@@ -1078,8 +1184,8 @@ function attachInteractions(el, fullKey) {
         if (el.classList.contains('is-text')) {
           const inner = el.querySelector('.text-inner');
           if (inner) cfg.fontSize = parseFloat(inner.style.fontSize);
-          if (activeKey === fullKey) showElementPanel(fullKey);
         }
+        if (activeKey === fullKey) showElementPanel(fullKey);
       }
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
@@ -1087,6 +1193,7 @@ function attachInteractions(el, fullKey) {
     });
   }
 
+  // Layer
   el.querySelectorAll('.layer-btn').forEach(b => {
     b.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1095,12 +1202,47 @@ function attachInteractions(el, fullKey) {
       else cfg.z = Math.max(1, (cfg.z || 1) - 1);
       const side = fullKey.split('.')[0];
       side === 'recto' ? renderRecto() : renderVerso();
-      // Re-select after rerender
-      setTimeout(() => {
-        const elNew = document.querySelector(`[data-full-key="${fullKey}"]`);
-        if (elNew) { elNew.classList.add('selected'); activeKey = fullKey; }
-      }, 0);
+      setTimeout(() => reselect(fullKey), 0);
     });
+  });
+
+  // Delete (× bouton rouge)
+  const delBtn = el.querySelector('.del-elem-btn');
+  if (delBtn) {
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cfg = getCfg(fullKey);
+      cfg.visible = false;
+      const side = fullKey.split('.')[0];
+      side === 'recto' ? renderRecto() : renderVerso();
+      hideElementPanel();
+    });
+  }
+}
+
+function saveTextEdit(fullKey, newText) {
+  const [side, key] = fullKey.split('.');
+  const cfg = getCfg(fullKey);
+  if (key === 'title') {
+    document.getElementById('opt-title').value = newText;
+  } else if (key === 'tagline') {
+    document.getElementById('opt-tagline').value = newText;
+  } else if (key === 'desc') {
+    document.getElementById('opt-desc').value = newText;
+  } else {
+    cfg.text = newText;
+  }
+  side === 'recto' ? renderRecto() : renderVerso();
+  setTimeout(() => reselect(fullKey), 0);
+}
+
+function reselect(fullKey) {
+  document.querySelectorAll('.editable').forEach(el => {
+    if (el.dataset.fullKey === fullKey) {
+      el.classList.add('selected');
+      activeKey = fullKey;
+      showElementPanel(fullKey);
+    }
   });
 }
 
@@ -1111,21 +1253,20 @@ document.addEventListener('mousedown', (e) => {
   }
 });
 
-// ===== PANEL ÉLÉMENT =====
+// ===== PANEL =====
 function showElementPanel(fullKey) {
   const cfg = getCfg(fullKey);
   const key = fullKey.split('.')[1];
   const side = fullKey.split('.')[0];
   const nameLabel = {
     photo: 'Photo recto', logo: 'Logo', title: 'Nom produit', tagline: 'Phrase courte',
-    sub: 'Sous-titre garantie', photoMain: 'Photo principale verso',
-    photoSmall1: 'Petite photo 1', photoSmall2: 'Petite photo 2', photoSmall3: 'Petite photo 3',
+    sub: 'Sous-titre garantie', photoMain: 'Photo principale',
+    photoSmall1: 'Photo petite 1', photoSmall2: 'Photo petite 2', photoSmall3: 'Photo petite 3',
     interchange: 'Bande interchangeable', desc: 'Description', price: 'Prix',
     qr: 'QR code', shops: 'Boutiques'
   };
   document.getElementById('el-panel-name').textContent = (side === 'recto' ? '◐ Recto · ' : '◑ Verso · ') + (nameLabel[key] || key);
 
-  // Section couleur
   const colorSection = document.getElementById('el-panel-text-section');
   const hasColor = cfg.color !== undefined;
   colorSection.style.display = hasColor ? 'block' : 'none';
@@ -1135,7 +1276,6 @@ function showElementPanel(fullKey) {
     });
   }
 
-  // Section font size pour textes
   const fontSection = document.getElementById('el-panel-font-section');
   const hasFont = cfg.fontSize !== undefined;
   fontSection.style.display = hasFont ? 'block' : 'none';
@@ -1144,19 +1284,28 @@ function showElementPanel(fullKey) {
     document.getElementById('el-font-size-num').value = cfg.fontSize;
     document.querySelectorAll('.style-btn').forEach(b => {
       const styleAttr = b.dataset.style;
-      const isWeight = styleAttr.startsWith('weight-');
-      const isStyle = styleAttr.startsWith('style-');
       let active = false;
-      if (isWeight) active = ('weight-' + (cfg.weight || 500)) === styleAttr;
-      if (isStyle) active = (cfg.txStyle === styleAttr);
+      if (styleAttr.startsWith('weight-')) active = ('weight-' + (cfg.weight || 500)) === styleAttr;
+      if (styleAttr.startsWith('style-')) active = (cfg.txStyle === styleAttr);
       b.style.borderColor = active ? 'var(--noir)' : 'var(--gris-light)';
       b.style.background = active ? 'var(--noir)' : 'white';
       b.style.color = active ? 'white' : 'var(--noir)';
     });
   }
 
-  document.getElementById('el-visible').checked = cfg.visible;
+  const imgSection = document.getElementById('el-panel-image-section');
+  const hasImg = cfg.imgX !== undefined;
+  imgSection.style.display = hasImg ? 'block' : 'none';
+  if (hasImg) {
+    document.getElementById('el-img-x').value = cfg.imgX;
+    document.getElementById('el-img-x-val').textContent = cfg.imgX;
+    document.getElementById('el-img-y').value = cfg.imgY;
+    document.getElementById('el-img-y-val').textContent = cfg.imgY;
+    document.getElementById('el-img-zoom').value = cfg.imgZoom;
+    document.getElementById('el-img-zoom-val').textContent = cfg.imgZoom + '%';
+  }
 
+  document.getElementById('el-visible').checked = cfg.visible;
   elementPanel.classList.add('active');
 }
 function hideElementPanel() {
@@ -1164,7 +1313,7 @@ function hideElementPanel() {
   activeKey = null;
 }
 
-// Couleur du texte/logo
+// Couleur texte/logo
 document.querySelectorAll('.text-color-swatch').forEach(s => {
   s.addEventListener('click', () => {
     if (!activeKey) return;
@@ -1174,11 +1323,10 @@ document.querySelectorAll('.text-color-swatch').forEach(s => {
     s.classList.add('active');
     const side = activeKey.split('.')[0];
     side === 'recto' ? renderRecto() : renderVerso();
-    setTimeout(() => reselectActive(), 0);
+    setTimeout(() => reselect(activeKey), 0);
   });
 });
-
-// Taille du texte
+// Taille
 document.getElementById('el-font-size').addEventListener('input', (e) => {
   if (!activeKey) return;
   const cfg = getCfg(activeKey);
@@ -1187,7 +1335,7 @@ document.getElementById('el-font-size').addEventListener('input', (e) => {
   document.getElementById('el-font-size-num').value = cfg.fontSize;
   const side = activeKey.split('.')[0];
   side === 'recto' ? renderRecto() : renderVerso();
-  setTimeout(() => reselectActive(), 0);
+  setTimeout(() => reselect(activeKey), 0);
 });
 document.getElementById('el-font-size-num').addEventListener('input', (e) => {
   if (!activeKey) return;
@@ -1197,10 +1345,9 @@ document.getElementById('el-font-size-num').addEventListener('input', (e) => {
   document.getElementById('el-font-size').value = cfg.fontSize;
   const side = activeKey.split('.')[0];
   side === 'recto' ? renderRecto() : renderVerso();
-  setTimeout(() => reselectActive(), 0);
+  setTimeout(() => reselect(activeKey), 0);
 });
-
-// Style (poids + casse)
+// Style
 document.querySelectorAll('.style-btn').forEach(b => {
   b.addEventListener('click', () => {
     if (!activeKey) return;
@@ -1210,10 +1357,25 @@ document.querySelectorAll('.style-btn').forEach(b => {
     else if (s.startsWith('style-')) cfg.txStyle = (cfg.txStyle === s) ? null : s;
     const side = activeKey.split('.')[0];
     side === 'recto' ? renderRecto() : renderVerso();
-    setTimeout(() => reselectActive(), 0);
+    setTimeout(() => reselect(activeKey), 0);
   });
 });
-
+// Image position + zoom
+function bindImgSlider(id, prop, valId, suffix) {
+  document.getElementById(id).addEventListener('input', (e) => {
+    if (!activeKey) return;
+    const cfg = getCfg(activeKey);
+    if (cfg[prop] === undefined) return;
+    cfg[prop] = parseInt(e.target.value, 10);
+    document.getElementById(valId).textContent = cfg[prop] + (suffix || '');
+    const side = activeKey.split('.')[0];
+    side === 'recto' ? renderRecto() : renderVerso();
+    setTimeout(() => reselect(activeKey), 0);
+  });
+}
+bindImgSlider('el-img-x', 'imgX', 'el-img-x-val', '');
+bindImgSlider('el-img-y', 'imgY', 'el-img-y-val', '');
+bindImgSlider('el-img-zoom', 'imgZoom', 'el-img-zoom-val', '%');
 // Visibilité
 document.getElementById('el-visible').addEventListener('change', (e) => {
   if (!activeKey) return;
@@ -1222,22 +1384,10 @@ document.getElementById('el-visible').addEventListener('change', (e) => {
   const side = activeKey.split('.')[0];
   side === 'recto' ? renderRecto() : renderVerso();
   if (!cfg.visible) hideElementPanel();
-  else setTimeout(() => reselectActive(), 0);
+  else setTimeout(() => reselect(activeKey), 0);
 });
 
-function reselectActive() {
-  if (!activeKey) return;
-  document.querySelectorAll('.editable').forEach(el => {
-    if (el.dataset.fullKey === activeKey) {
-      el.classList.add('selected');
-      showElementPanel(activeKey);
-    }
-  });
-}
-
-// ===== RENDER ALL =====
 function renderAll() { renderRecto(); renderVerso(); }
-
 function formatPrice(amount, currency) {
   const c = currency === 'CHF' ? 'CHF' : currency === 'EUR' ? '€' : currency;
   return new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' ' + c;
