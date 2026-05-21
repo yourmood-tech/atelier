@@ -917,16 +917,36 @@ function refreshPicker() {
     if (img.source === 'upload') srcBadge = '<span class="src-badge">mac</span>';
     else if (img.source === 'url') srcBadge = '<span class="src-badge">url</span>';
     const usageBadge = usage[img.id] ? `<span class="badge" style="background:var(--anthracite);">${usage[img.id]}</span>` : '';
-    return `<div class="thumb" data-id="${img.id}">
+    return `<div class="thumb" data-id="${img.id}" title="Clique pour assigner au carré photo sélectionné">
       <img src="${escapeHtml(img.url)}" alt="">${usageBadge}${srcBadge}
       <button class="del-btn" data-del="${img.id}" title="Retirer">×</button></div>`;
   }).join('');
+  // Click sur thumb = assigne au slot photo actif (ou alerte si rien sélectionné)
+  container.querySelectorAll('.thumb').forEach(t => {
+    t.addEventListener('click', (e) => {
+      if (e.target.classList.contains('del-btn')) return;
+      const id = parseInt(t.dataset.id, 10);
+      if (!activeKey) {
+        alert('Clique d\'abord sur un carré photo dans le flyer (recto ou verso), puis sur la photo à mettre dedans.');
+        return;
+      }
+      const cfg = getCfg(activeKey);
+      if (cfg.imageId === undefined) {
+        alert('Sélectionne un carré PHOTO dans le flyer (pas un texte ou logo).');
+        return;
+      }
+      cfg.imageId = id;
+      const side = activeKey.split('.')[0];
+      side === 'recto' ? renderRecto() : renderVerso();
+      refreshPicker();
+      setTimeout(() => reselect(activeKey), 0);
+    });
+  });
   container.querySelectorAll('.del-btn').forEach(b => {
     b.addEventListener('click', (e) => {
       e.stopPropagation();
       const id = parseInt(b.dataset.del, 10);
       allImages = allImages.filter(i => i.id !== id);
-      // Retire l'image de tous les slots qui l'utilisaient
       if (layoutRecto.photo.imageId === id) layoutRecto.photo.imageId = null;
       ['photoMain','photoSmall1','photoSmall2','photoSmall3'].forEach(s => {
         if (layoutVerso[s].imageId === id) layoutVerso[s].imageId = null;
