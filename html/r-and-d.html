@@ -56,6 +56,65 @@
     padding: 1rem;
     margin-bottom: 1rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .month.themed {
+    border-left: 6px solid var(--theme-fonce, var(--or));
+  }
+  .theme-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    margin: -1rem -1rem 1rem -1rem;
+    background: linear-gradient(135deg, var(--theme-couleur, #f5f5f5) 0%, var(--theme-fonce, #ccc) 100%);
+    color: var(--theme-texte, white);
+    border-radius: 12px 12px 0 0;
+  }
+  .theme-banner .theme-info { flex: 1; min-width: 0; }
+  .theme-banner .theme-month {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    opacity: 0.85;
+  }
+  .theme-banner .theme-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0.15rem 0;
+    line-height: 1.1;
+  }
+  .theme-banner .theme-sous {
+    font-size: 0.85rem;
+    font-style: italic;
+    opacity: 0.92;
+    line-height: 1.3;
+  }
+  .theme-banner .theme-emojis {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .theme-banner .theme-emoji {
+    width: 56px; height: 56px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    border: 1.5px solid rgba(255,255,255,0.28);
+    backdrop-filter: blur(4px);
+  }
+  .theme-banner .theme-chevron {
+    font-size: 1rem;
+    margin-left: 0.5rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  @media (max-width: 700px) {
+    .theme-banner { flex-direction: column; align-items: flex-start; }
+    .theme-banner .theme-emoji { width: 44px; height: 44px; font-size: 1.4rem; }
   }
   .month-header {
     display: flex;
@@ -508,6 +567,41 @@
 const STORAGE_KEY = 'mood-rd-pipeline';
 const NOMS_MOIS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 
+// Thèmes éditoriaux mensuels — calés sur le plan stratégique Mood
+// Clé : `${année}-${mois}` où mois = 0-11 (Janvier = 0, Juin = 5, etc.)
+const THEMES_MOIS = {
+  '2026-5':  { nom: 'Bella Melodia', sous: 'Fête de la musique 21 juin · pureté & classe', couleur: '#D5D3D3', fonce: '#8a8a8a', emojis: ['🎵','🎶','🎸','✨'] },
+  '2026-6':  { nom: "Couleurs flash d'été", sous: 'Festival, énergie, vacances vibrantes', couleur: '#F99C98', fonce: '#E76B66', emojis: ['🌈','⚡','🎪','🌞'] },
+  '2026-7':  { nom: 'Suisse été · Lacs alpins', sous: 'Fête Nationale CH 1er août', couleur: '#76BABA', fonce: '#4D9494', emojis: ['🇨🇭','🏔️','💦','⛰️'] },
+  '2026-8':  { nom: 'Rentrée chic · Velours', sous: 'Sophistication retour bureau', couleur: '#7A2E2E', fonce: '#4D1818', emojis: ['🍷','📚','🎯','💼'] },
+  '2026-9':  { nom: 'Automne + Halloween + PVD Chocolat', sous: 'Halloween 31 oct · saison châtaigne', couleur: '#8B4513', fonce: '#5C2F0E', emojis: ['🍂','🎃','🍫','🌰'] },
+  '2026-10': { nom: 'Black Friday → Noël anticipé', sous: 'Black Friday 27 nov · Édition Rouge & Blanc', couleur: '#252525', fonce: '#000000', emojis: ['🛍️','⚫','⚪','🎄'] },
+  '2026-11': { nom: 'Noël rouge passion', sous: 'Noël 25 déc · cadeau & chaleur', couleur: '#DC1818', fonce: '#8B0000', emojis: ['🎄','❤️','🎁','🥂'] },
+  '2027-0':  { nom: 'Bleu givre · Minimalisme', sous: "Nouvel An · soldes d'hiver", couleur: '#ADD8E6', fonce: '#5F9EA0', emojis: ['❄️','💎','🌬️','🦢'] },
+  '2027-1':  { nom: 'Rose amour · St-Valentin', sous: 'St-Valentin 14 fév · romance', couleur: '#F99C98', fonce: '#C0392B', emojis: ['💕','🌹','🥂','💋'] },
+  '2027-2':  { nom: 'Violet · Droits des Femmes', sous: 'Journée Internat. Femmes 8 mars', couleur: '#8E44AD', fonce: '#5B2C6F', emojis: ['👩','💜','🌷','✊'] },
+  '2027-3':  { nom: 'Renouveau pastel + Rose Gold', sous: 'Pâques · Jour de la Terre 22 avril', couleur: '#E8B4B8', fonce: '#B98D8E', emojis: ['🌸','🐣','💐','🌿'] },
+  '2027-4':  { nom: 'Blanc muguet · Fête des Mères', sous: '1er mai · Fête des Mères 14 mai', couleur: '#FAF7F2', fonce: '#8FBC8F', emojis: ['🌿','🤍','🌱','🌾'] },
+  '2027-5':  { nom: 'Bella Melodia 2 + Mariage', sous: 'Fête musique · saison mariage CH', couleur: '#F5F5DC', fonce: '#C9A87C', emojis: ['🎵','👰','💒','💍'] },
+  '2027-6':  { nom: "Twilight d'été + PVD Dark Violet", sous: '14 juillet · festivals nuit', couleur: '#6B2C7F', fonce: '#3A1450', emojis: ['🌅','🌙','🍇','🌃'] },
+  '2027-7':  { nom: 'Exotisme tropical', sous: '1er août · évasion vacances', couleur: '#FFA500', fonce: '#CC7000', emojis: ['🌴','🐒','🍹','🥥'] },
+  '2027-8':  { nom: 'Rentrée 2 · Mitteleuropéenne', sous: 'Journées patrimoine · Vienne', couleur: '#2F4F4F', fonce: '#1C2E2E', emojis: ['📚','🎯','🍷','🏛️'] },
+  '2027-9':  { nom: 'Brun automne + PVD', sous: 'Halloween 31 oct · automne profond', couleur: '#8B4513', fonce: '#5C2F0E', emojis: ['🌰','🍂','🎃','🍁'] },
+  '2027-10': { nom: 'Black Friday Obscura', sous: 'Black Friday 26 nov · Aura Obscura noir', couleur: '#252525', fonce: '#000000', emojis: ['⚫','🛍️','🕴️','⚪'] },
+  '2027-11': { nom: 'Noël or & magie', sous: 'Noël 2027 · élégance étincelante', couleur: '#C9A87C', fonce: '#8B6F3B', emojis: ['🎄','🥇','✨','🎁'] },
+  '2028-0':  { nom: 'Noir minimalisme + PVD', sous: 'Nouvelle année zen · sobriété pure', couleur: '#252525', fonce: '#000000', emojis: ['⚫','🔲','🦢','❄️'] }
+};
+
+// Couleur de texte adaptée selon clarté du fond
+function couleurTexteSurFond(hex) {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? '#252525' : '#FFFFFF';
+}
+
 let donnees = chargerDonneesLocal();
 let modalContexte = null;
 let cloudOK = null;  // null = inconnu, true = synchro OK, false = pas dispo
@@ -730,6 +824,15 @@ function rendreCalendrier() {
     const moisDiv = document.createElement('div');
     moisDiv.className = 'month';
 
+    // Applique le thème mensuel s'il existe
+    const theme = THEMES_MOIS[`${annee}-${mois}`];
+    if (theme) {
+      moisDiv.classList.add('themed');
+      moisDiv.style.setProperty('--theme-couleur', theme.couleur);
+      moisDiv.style.setProperty('--theme-fonce', theme.fonce);
+      moisDiv.style.setProperty('--theme-texte', couleurTexteSurFond(theme.fonce));
+    }
+
     const estPasse = (annee < anneeCourante) || (annee === anneeCourante && mois < moisCourant);
     moisDiv.dataset.collapsed = estPasse ? 'true' : 'false';
 
@@ -740,7 +843,23 @@ function rendreCalendrier() {
       return d.getMonth() === mois && d.getFullYear() === annee;
     });
 
-    let html = `<div class="month-header" onclick="toggleMois(this)" style="cursor:pointer;user-select:none;">
+    // Bandeau thème en haut (si défini)
+    let html = '';
+    if (theme) {
+      html += `<div class="theme-banner" onclick="toggleMois(this.parentElement.querySelector('.month-header'))" style="cursor:pointer;">
+        <div class="theme-info">
+          <div class="theme-month">${NOMS_MOIS[mois]} ${annee}${estPasse ? ' · passé' : ''}</div>
+          <div class="theme-name">${theme.nom}</div>
+          <div class="theme-sous">${theme.sous}</div>
+        </div>
+        <div class="theme-emojis">
+          ${theme.emojis.map(e => `<div class="theme-emoji">${e}</div>`).join('')}
+        </div>
+        <span class="theme-chevron" style="${estPasse ? '' : 'transform:rotate(90deg);'}">▶</span>
+      </div>`;
+    }
+
+    html += `<div class="month-header" onclick="toggleMois(this)" style="cursor:pointer;user-select:none;${theme ? 'display:none;' : ''}">
       <div class="month-title">
         <span class="mois-chevron" style="display:inline-block;margin-right:0.5rem;transition:transform 0.2s;${estPasse ? '' : 'transform:rotate(90deg);'}">▶</span>
         ${NOMS_MOIS[mois]} ${annee}${estPasse ? ' <span style="font-size:0.7rem;color:var(--gris);font-weight:400;">(passé — clique pour ouvrir)</span>' : ''}
@@ -875,18 +994,21 @@ function toggleMois(headerEl) {
   const moisDiv = headerEl.parentElement;
   const content = moisDiv.querySelector('.month-content');
   const chevron = headerEl.querySelector('.mois-chevron');
+  const themeChevron = moisDiv.querySelector('.theme-banner .theme-chevron');
   if (!content) return;
   const collapsed = moisDiv.dataset.collapsed === 'true';
   if (collapsed) {
     content.style.display = '';
     moisDiv.dataset.collapsed = 'false';
     if (chevron) chevron.style.transform = 'rotate(90deg)';
+    if (themeChevron) themeChevron.style.transform = 'rotate(90deg)';
     const span = headerEl.querySelector('.month-title span:not(.mois-chevron)');
     if (span) span.remove();
   } else {
     content.style.display = 'none';
     moisDiv.dataset.collapsed = 'true';
     if (chevron) chevron.style.transform = '';
+    if (themeChevron) themeChevron.style.transform = '';
   }
 }
 
