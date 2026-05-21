@@ -1327,7 +1327,12 @@ function reselect(fullKey) {
 }
 
 document.addEventListener('mousedown', (e) => {
-  if (!e.target.closest('.editable') && !e.target.closest('#element-panel') && !e.target.closest('.layer-btn')) {
+  // Ne désélectionne PAS si on clique dans le sidebar (panel-search), le panel élément,
+  // un élément éditable, ou un bouton de couche.
+  if (!e.target.closest('.editable') &&
+      !e.target.closest('#element-panel') &&
+      !e.target.closest('.layer-btn') &&
+      !e.target.closest('.panel-search')) {
     document.querySelectorAll('.editable.selected').forEach(x => x.classList.remove('selected'));
     hideElementPanel();
   }
