@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Mood Studio — Flyer A5</title>
+<title>Mood Studio — Flyer A5 recto/verso</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One:wght@400&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     --rose: #f5e6e0;
@@ -20,7 +20,7 @@
   * { box-sizing: border-box; }
   body {
     font-family: 'Inter', -apple-system, "Segoe UI", system-ui, sans-serif;
-    background: var(--rose-light);
+    background: #ece8e3;
     color: var(--noir);
     margin: 0;
     padding: 0;
@@ -42,10 +42,10 @@
 
   .app-wrap {
     display: grid;
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 380px 1fr;
     gap: 1.5rem;
     padding: 1.5rem;
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
   }
 
@@ -59,19 +59,27 @@
     position: sticky;
     top: 1rem;
   }
-  .panel-search h2 { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gris); }
-  .panel-search input[type=text] {
+  .panel-search h2 { font-size: 0.78rem; font-weight: 700; margin: 0 0 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gris); }
+  .panel-search h2:not(:first-of-type) { margin-top: 1.4rem; }
+  .panel-search input[type=text],
+  .panel-search select,
+  .panel-search textarea {
     width: 100%;
-    padding: 0.7rem 0.9rem;
+    padding: 0.65rem 0.85rem;
     border: 1px solid var(--gris-light);
     border-radius: 8px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-family: inherit;
-    margin-bottom: 0.8rem;
+    background: white;
   }
-  .panel-search input[type=text]:focus { outline: none; border-color: var(--or); }
+  .panel-search input[type=text]:focus,
+  .panel-search select:focus,
+  .panel-search textarea:focus { outline: none; border-color: var(--or); }
+  .panel-search textarea { min-height: 60px; resize: vertical; line-height: 1.4; }
+  .panel-search .row-opt { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; font-size: 0.9rem; }
+  .panel-search .row-opt input[type=checkbox] { width: auto; }
 
-  .results { display: flex; flex-direction: column; gap: 0.5rem; }
+  .results { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.6rem; }
   .result-card {
     border: 1px solid #eee;
     border-radius: 10px;
@@ -101,7 +109,7 @@
     align-items: center;
     flex-wrap: wrap;
   }
-  .actions button, .actions select {
+  .actions button {
     padding: 0.6rem 1.2rem;
     border-radius: 8px;
     border: 1px solid var(--gris-light);
@@ -121,6 +129,24 @@
   .actions button:hover { border-color: var(--or); color: var(--or); }
   .actions .hint { color: var(--gris); font-size: 0.78rem; }
 
+  .pages-wrap {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .page-label {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--gris);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  .page-side { display: flex; flex-direction: column; align-items: center; }
+
   .empty-preview {
     width: 100%;
     max-width: 420px;
@@ -133,7 +159,6 @@
   }
 
   /* ====== FLYER A5 PORTRAIT — 148×210mm ====== */
-  /* On affiche en écran à 96dpi : 148mm ≈ 559px, 210mm ≈ 794px */
   .flyer {
     width: 148mm;
     height: 210mm;
@@ -147,8 +172,8 @@
     flex-direction: column;
   }
 
-  /* Décor rose pastel en haut */
-  .flyer::before {
+  /* ====== UNIVERS MOOD COLLECTION (rose pastel, formes rondes) ====== */
+  .flyer.univers-mood::before {
     content: '';
     position: absolute;
     top: -40mm;
@@ -157,10 +182,10 @@
     height: 90mm;
     background: var(--rose);
     border-radius: 50%;
-    opacity: 0.7;
+    opacity: 0.65;
     z-index: 0;
   }
-  .flyer::after {
+  .flyer.univers-mood::after {
     content: '';
     position: absolute;
     bottom: -25mm;
@@ -169,99 +194,187 @@
     height: 60mm;
     background: var(--rose-medium);
     border-radius: 50%;
-    opacity: 0.4;
+    opacity: 0.35;
     z-index: 0;
   }
 
-  .flyer-header {
-    position: relative;
-    z-index: 2;
-    padding: 8mm 10mm 4mm;
-    text-align: center;
+  /* ====== UNIVERS MOOD JOAILLERIE (noir/blanc minimaliste) ====== */
+  .flyer.univers-joaillerie {
+    background: white;
   }
-  .flyer-logo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28pt;
-    font-weight: 300;
+  .flyer.univers-joaillerie .flyer-photo,
+  .flyer.univers-joaillerie .flyer-verso-grid {
+    background: #1a1a1a;
+  }
+
+  /* === LOGOS === */
+  .flyer-logo-wrap {
+    text-align: center;
+    padding-top: 8mm;
+  }
+  .flyer-logo-mood {
+    font-family: 'Bowlby One', 'Inter', sans-serif;
+    font-size: 30pt;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--noir);
+    margin: 0;
+    line-height: 1;
+    text-transform: lowercase;
+  }
+  .flyer-logo-mood-joaillerie {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 24pt;
+    font-weight: 200;
     letter-spacing: 0.05em;
     color: var(--noir);
     margin: 0;
     line-height: 1;
+    text-transform: lowercase;
   }
-  .flyer-tagline {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 9pt;
+  .flyer-logo-mood-joaillerie svg { width: 18pt; height: 18pt; }
+  .flyer-logo-mood-joaillerie .domain {
+    display: block;
+    font-size: 7pt;
+    letter-spacing: 0.15em;
     color: var(--gris);
-    margin-top: 1mm;
-    letter-spacing: 0.08em;
+    text-align: center;
+    margin-top: 2mm;
   }
 
-  .flyer-photo {
+  /* === RECTO === */
+  .flyer-recto .flyer-photo {
     position: relative;
     z-index: 2;
-    margin: 4mm 10mm 4mm;
-    height: 95mm;
+    margin: 6mm 0 0;
+    height: 130mm;
     background: #f5f5f5;
-    border-radius: 4mm;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
-  .flyer-photo img {
+  .flyer-recto .flyer-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  .flyer-photo .placeholder {
-    color: var(--gris);
-    font-size: 9pt;
-    text-align: center;
-  }
-
-  .flyer-product {
-    position: relative;
-    z-index: 2;
-    padding: 0 10mm;
-    text-align: center;
-  }
-  .flyer-product-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22pt;
-    font-weight: 400;
-    color: var(--noir);
-    margin: 0 0 2mm;
-    line-height: 1.1;
-    letter-spacing: 0.01em;
-  }
-  .flyer-product-desc {
-    font-size: 8.5pt;
-    color: var(--gris);
-    line-height: 1.45;
-    margin: 0 0 3mm;
-    font-weight: 300;
-    max-width: 110mm;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  .flyer-price {
-    display: inline-block;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16pt;
-    color: var(--or);
-    font-weight: 500;
-    padding: 1mm 6mm;
-    border-top: 1px solid var(--rose-medium);
-    border-bottom: 1px solid var(--rose-medium);
-    margin-bottom: 4mm;
-  }
-
-  .flyer-footer {
+  .flyer-recto .flyer-phrase {
     position: relative;
     z-index: 2;
     margin-top: auto;
-    padding: 4mm 10mm 8mm;
+    padding: 6mm 12mm 12mm;
+    text-align: center;
+    font-family: 'Bowlby One', 'Inter', sans-serif;
+    font-size: 14pt;
+    line-height: 1.3;
+    color: var(--noir);
+    letter-spacing: -0.005em;
+    text-transform: lowercase;
+  }
+  .flyer.univers-joaillerie .flyer-recto .flyer-phrase {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 13pt;
+    text-transform: none;
+    letter-spacing: 0.04em;
+  }
+
+  /* === VERSO === */
+  .flyer-verso .flyer-product-name {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    margin: 4mm 10mm 1mm;
+    font-family: 'Bowlby One', 'Inter', sans-serif;
+    font-size: 18pt;
+    font-weight: 400;
+    color: var(--noir);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-transform: lowercase;
+  }
+  .flyer.univers-joaillerie .flyer-verso .flyer-product-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    font-size: 16pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .flyer-verso-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm;
+    margin: 4mm 10mm 4mm;
+    height: 60mm;
+  }
+  .flyer-verso-grid .grid-cell {
+    background: #f5f5f5;
+    overflow: hidden;
+  }
+  .flyer-verso-grid .grid-cell:first-child {
+    grid-row: span 2;
+    height: 60mm;
+  }
+  .flyer-verso-grid .grid-cell:nth-child(2),
+  .flyer-verso-grid .grid-cell:nth-child(3) {
+    height: 29mm;
+  }
+  .flyer-verso-grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .flyer-verso-info {
+    position: relative;
+    z-index: 2;
+    padding: 0 12mm;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    color: var(--noir);
+    font-weight: 300;
+  }
+  .flyer-verso-info p { margin: 0 0 2mm; }
+  .flyer-verso-info .desc {
+    color: #555;
+    max-height: 35mm;
+    overflow: hidden;
+  }
+
+  .flyer-verso-price {
+    position: relative;
+    z-index: 2;
+    display: inline-block;
+    margin: 2mm auto;
+    font-family: 'Bowlby One', 'Inter', sans-serif;
+    font-size: 13pt;
+    color: var(--or);
+    font-weight: 400;
+    padding: 1mm 6mm;
+    border-top: 1px solid var(--rose-medium);
+    border-bottom: 1px solid var(--rose-medium);
+    text-transform: lowercase;
+    letter-spacing: -0.005em;
+  }
+  .flyer.univers-joaillerie .flyer-verso-price {
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    color: var(--noir);
+    border-color: #999;
+    text-transform: none;
+    letter-spacing: 0.05em;
+  }
+  .price-wrap { text-align: center; margin: 1mm 0 2mm; }
+
+  .flyer-verso-footer {
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
+    padding: 3mm 10mm 8mm;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -286,12 +399,13 @@
   .flyer-shops {
     font-size: 6.5pt;
     color: var(--gris);
-    line-height: 1.5;
+    line-height: 1.55;
     flex: 1;
     text-align: right;
   }
-  .flyer-shops .label { font-weight: 600; color: var(--noir); letter-spacing: 0.08em; font-size: 6pt; text-transform: uppercase; }
-  .flyer-shops .url { color: var(--or); font-weight: 500; font-size: 7pt; margin-top: 1mm; }
+  .flyer-shops .label { font-weight: 700; color: var(--noir); letter-spacing: 0.12em; font-size: 5.5pt; text-transform: uppercase; }
+  .flyer-shops .url { color: var(--or); font-weight: 500; font-size: 7pt; margin-top: 1mm; font-family: 'Bowlby One', sans-serif; letter-spacing: -0.005em; }
+  .flyer.univers-joaillerie .flyer-shops .url { color: var(--noir); font-family: 'Inter', sans-serif; font-weight: 500; }
 
   /* ====== IMPRESSION ====== */
   @page {
@@ -300,14 +414,16 @@
   }
   @media print {
     body { background: white; }
-    header, .panel-search, .actions, .empty-preview { display: none !important; }
+    header, .panel-search, .actions, .empty-preview, .page-label { display: none !important; }
     .app-wrap { display: block; padding: 0; max-width: none; }
-    .preview-wrap { display: block; }
+    .preview-wrap, .pages-wrap { display: block; }
+    .page-side { display: block; }
     .flyer {
       box-shadow: none !important;
       margin: 0 !important;
       page-break-after: always;
     }
+    .flyer:last-of-type { page-break-after: auto; }
   }
 </style>
 </head>
@@ -315,30 +431,45 @@
 
 <header>
   <a href="/" class="retour">← Atelier</a>
-  <h1>🎨 Mood Studio — Flyer produit A5</h1>
+  <h1>📄 Mood Studio — Flyer A5 recto/verso</h1>
 </header>
 
 <div class="app-wrap">
 
   <aside class="panel-search">
-    <h2>1 · Choisir un produit</h2>
-    <input type="text" id="search-input" placeholder="Tape un nom (ex : aura, edelweiss, signature…)">
+    <h2>1 · Produit Shopify</h2>
+    <input type="text" id="search-input" placeholder="Tape un nom (aura, edelweiss, signature…)">
     <div class="results" id="results">
-      <div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Tape au moins 2 lettres pour chercher dans Shopify</div>
+      <div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>
     </div>
+
+    <h2>2 · Univers</h2>
+    <select id="opt-univers" onchange="renderFlyer()">
+      <option value="mood">Mood Collection (rose pastel)</option>
+      <option value="joaillerie">Mood Joaillerie (noir/blanc)</option>
+    </select>
+
+    <h2>3 · Phrase inspirante (recto)</h2>
+    <textarea id="opt-phrase" oninput="renderFlyer()" placeholder="ex : un éclat qui te ressemble · l'élégance se porte au quotidien · choisis ton mood"></textarea>
+
+    <h2>4 · Options</h2>
+    <label class="row-opt">
+      <input type="checkbox" id="opt-show-price" checked onchange="renderFlyer()">
+      Afficher le prix au verso
+    </label>
   </aside>
 
   <main class="preview-wrap">
     <div class="actions">
       <button class="primary" onclick="window.print()">🖨️ Imprimer (ou enregistrer en PDF)</button>
-      <span class="hint">Astuce : dans Chrome/Safari, choisis "Enregistrer au format PDF" + format A5 portrait</span>
+      <span class="hint">Chrome/Safari : choisir A5 portrait, marges aucune</span>
     </div>
 
     <div id="preview-area">
       <div class="empty-preview">
         <div style="font-size:2.5rem;margin-bottom:0.5rem;">📄</div>
-        <div style="font-weight:600;color:var(--noir);margin-bottom:0.3rem;">Aperçu du flyer</div>
-        <div style="font-size:0.85rem;">Choisis un produit à gauche, et le flyer se construit ici en temps réel.</div>
+        <div style="font-weight:600;color:var(--noir);margin-bottom:0.3rem;">Aperçu recto + verso</div>
+        <div style="font-size:0.85rem;">Choisis un produit à gauche → le flyer 2 pages se construit ici.</div>
       </div>
     </div>
   </main>
@@ -357,14 +488,14 @@ searchInput.addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = searchInput.value.trim();
   if (q.length < 2) {
-    resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Tape au moins 2 lettres pour chercher dans Shopify</div>';
+    resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Tape au moins 2 lettres</div>';
     return;
   }
   searchTimer = setTimeout(() => doSearch(q), 280);
 });
 
 async function doSearch(q) {
-  resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Recherche…</div>';
+  resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Recherche…</div>';
   try {
     const r = await fetch('/api/mood-flyer-search?q=' + encodeURIComponent(q));
     const data = await r.json();
@@ -374,10 +505,10 @@ async function doSearch(q) {
     }
     const products = data.products || [];
     if (products.length === 0) {
-      resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
+      resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:0.8rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
       return;
     }
-    resultsDiv.innerHTML = products.map((p, i) => `
+    resultsDiv.innerHTML = products.map(p => `
       <div class="result-card${currentProduct && currentProduct.id === p.id ? ' active' : ''}" onclick='selectProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
         ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">` : '<div style="width:50px;height:50px;border-radius:6px;background:#f5f5f5;flex-shrink:0;"></div>'}
         <div class="info">
@@ -393,46 +524,100 @@ async function doSearch(q) {
 
 function selectProduct(p) {
   currentProduct = p;
-  // Refresh active state on cards
   document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
-  event && event.currentTarget && event.currentTarget.classList.add('active');
-  renderFlyer(p);
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  // Auto-suggestion phrase si vide
+  const phraseField = document.getElementById('opt-phrase');
+  if (!phraseField.value.trim()) {
+    phraseField.value = suggestPhrase(p.title);
+  }
+  renderFlyer();
 }
 
-function renderFlyer(p) {
+function suggestPhrase(title) {
+  // Suggestion simple à partir du nom
+  return `${title.toLowerCase()} — l'éclat qui te ressemble`;
+}
+
+function logoSvgJoaillerie() {
+  return `
+    <div class="flyer-logo-mood-joaillerie">
+      <span>mo</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 9l9 12 9-12-4.5-6h-9L3 9z"/>
+        <path d="M3 9h18M8.5 3l3.5 6 3.5-6M8.5 3l3.5 18M15.5 3L12 21"/>
+      </svg>
+      <span>d</span>
+    </div>
+    <div class="flyer-logo-mood-joaillerie domain" style="font-size:7pt;letter-spacing:0.15em;color:#999;text-align:center;margin-top:2mm;display:block;">moodjoaillerie.net</div>
+  `;
+}
+
+function renderFlyer() {
+  if (!currentProduct) return;
+  const p = currentProduct;
+  const univers = document.getElementById('opt-univers').value;
+  const phrase = document.getElementById('opt-phrase').value.trim() || suggestPhrase(p.title);
+  const showPrice = document.getElementById('opt-show-price').checked;
+
   const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(p.url);
   const priceTxt = p.priceMin === p.priceMax
     ? formatPrice(p.priceMin, p.currency)
     : `dès ${formatPrice(p.priceMin, p.currency)}`;
+
+  const logoHtml = univers === 'joaillerie'
+    ? logoSvgJoaillerie()
+    : `<div class="flyer-logo-mood">mood</div>`;
+
+  // Verso : récupère jusqu'à 3 images en plus de la principale
+  const allImages = p.images && p.images.length > 0 ? p.images : (p.image ? [{url: p.image, alt: p.imageAlt}] : []);
+  const versoImg1 = allImages[0] || null;
+  const versoImg2 = allImages[1] || allImages[0] || null;
+  const versoImg3 = allImages[2] || allImages[1] || allImages[0] || null;
+
   previewArea.innerHTML = `
-    <div class="flyer">
-      <div class="flyer-header">
-        <div class="flyer-logo">mood</div>
-        <div class="flyer-tagline">— bague à clic suisse —</div>
-      </div>
-
-      <div class="flyer-photo">
-        ${p.image
-          ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">`
-          : '<div class="placeholder">Aucune image</div>'}
-      </div>
-
-      <div class="flyer-product">
-        <h2 class="flyer-product-name">${escapeHtml(p.title)}</h2>
-        ${p.description ? `<p class="flyer-product-desc">${escapeHtml(p.description.slice(0, 220))}${p.description.length > 220 ? '…' : ''}</p>` : ''}
-        <div class="flyer-price">${priceTxt}</div>
-      </div>
-
-      <div class="flyer-footer">
-        <div>
-          <div class="flyer-qr"><img src="${qrUrl}" alt="QR code page produit"></div>
-          <div class="flyer-qr-label">scanne-moi</div>
+    <div class="pages-wrap">
+      <div class="page-side">
+        <div class="page-label">recto</div>
+        <div class="flyer univers-${univers} flyer-recto">
+          <div class="flyer-logo-wrap">${logoHtml}</div>
+          <div class="flyer-photo">
+            ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">` : ''}
+          </div>
+          <div class="flyer-phrase">${escapeHtml(phrase)}</div>
         </div>
-        <div class="flyer-shops">
-          <div class="label">Mood Stores</div>
-          <div>Carouge · Martigny · Orbe</div>
-          <div>Fribourg · Zürich · Zermatt</div>
-          <div class="url">yourmood.net</div>
+      </div>
+
+      <div class="page-side">
+        <div class="page-label">verso</div>
+        <div class="flyer univers-${univers} flyer-verso">
+          <div class="flyer-logo-wrap">${logoHtml}</div>
+          <div class="flyer-product-name">${escapeHtml(p.title)}</div>
+
+          <div class="flyer-verso-grid">
+            <div class="grid-cell">${versoImg1 ? `<img src="${escapeHtml(versoImg1.url)}" alt="${escapeHtml(versoImg1.alt || '')}">` : ''}</div>
+            <div class="grid-cell">${versoImg2 ? `<img src="${escapeHtml(versoImg2.url)}" alt="${escapeHtml(versoImg2.alt || '')}">` : ''}</div>
+            <div class="grid-cell">${versoImg3 ? `<img src="${escapeHtml(versoImg3.url)}" alt="${escapeHtml(versoImg3.alt || '')}">` : ''}</div>
+          </div>
+
+          <div class="flyer-verso-info">
+            <p class="desc">${escapeHtml((p.description || '').slice(0, 280))}${(p.description || '').length > 280 ? '…' : ''}</p>
+          </div>
+
+          ${showPrice ? `<div class="price-wrap"><div class="flyer-verso-price">${priceTxt}</div></div>` : ''}
+
+          <div class="flyer-verso-footer">
+            <div>
+              <div class="flyer-qr"><img src="${qrUrl}" alt="QR code page produit"></div>
+              <div class="flyer-qr-label">scanne-moi</div>
+            </div>
+            <div class="flyer-shops">
+              <div class="label">Mood Stores</div>
+              <div>Carouge · Martigny · Orbe</div>
+              <div>Fribourg · Zürich · Zermatt</div>
+              <div class="url">yourmood.net</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
           id title handle vendor
           descriptionHtml
           featuredImage { url altText }
-          images(first: 3) { edges { node { url altText } } }
+          images(first: 5) { edges { node { url altText } } }
           priceRangeV2 {
             minVariantPrice { amount currencyCode }
             maxVariantPrice { amount currencyCode }
@@ -83,6 +83,7 @@ export async function GET(req: NextRequest) {
         description: descText,
         image: p.featuredImage?.url || p.images.edges[0]?.node?.url || null,
         imageAlt: p.featuredImage?.altText || p.images.edges[0]?.node?.altText || p.title,
+        images: p.images.edges.map(({ node }) => ({ url: node.url, alt: node.altText || p.title })),
         priceMin: parseFloat(p.priceRangeV2.minVariantPrice.amount),
         priceMax: parseFloat(p.priceRangeV2.maxVariantPrice.amount),
         currency: p.priceRangeV2.minVariantPrice.currencyCode,
