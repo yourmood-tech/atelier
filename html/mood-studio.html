@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mood Studio — Flyer A5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #f5e6e0;
+    --rose-light: #fdf2ee;
+    --rose-medium: #e8c5b8;
+    --or: #c9a87c;
+    --noir: #2a2a2a;
+    --gris: #8a8a8a;
+    --gris-light: #d0d0d0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, "Segoe UI", system-ui, sans-serif;
+    background: var(--rose-light);
+    color: var(--noir);
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+  }
+
+  /* ---- LAYOUT APP (écran) ---- */
+  header {
+    background: white;
+    padding: 0.9rem 1.5rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: 0.04em; }
+  header .retour { color: var(--gris); text-decoration: none; font-size: 0.85rem; }
+  header .retour:hover { color: var(--or); }
+
+  .app-wrap {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .panel-search {
+    background: white;
+    border-radius: 12px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    position: sticky;
+    top: 1rem;
+  }
+  .panel-search h2 { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gris); }
+  .panel-search input[type=text] {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--gris-light);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    margin-bottom: 0.8rem;
+  }
+  .panel-search input[type=text]:focus { outline: none; border-color: var(--or); }
+
+  .results { display: flex; flex-direction: column; gap: 0.5rem; }
+  .result-card {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 0.6rem;
+    cursor: pointer;
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    transition: all 0.15s;
+  }
+  .result-card:hover { border-color: var(--or); background: var(--rose-light); }
+  .result-card.active { border-color: var(--or); background: var(--rose); }
+  .result-card img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background: #f5f5f5; flex-shrink: 0; }
+  .result-card .info { flex: 1; min-width: 0; }
+  .result-card .title { font-size: 0.85rem; font-weight: 600; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .result-card .price { font-size: 0.78rem; color: var(--or); margin-top: 0.15rem; }
+
+  .preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .actions button, .actions select {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid var(--gris-light);
+    background: white;
+    font-size: 0.88rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .actions button.primary {
+    background: var(--noir);
+    color: white;
+    border-color: var(--noir);
+    font-weight: 600;
+  }
+  .actions button.primary:hover { background: var(--or); border-color: var(--or); }
+  .actions button:hover { border-color: var(--or); color: var(--or); }
+  .actions .hint { color: var(--gris); font-size: 0.78rem; }
+
+  .empty-preview {
+    width: 100%;
+    max-width: 420px;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 12px;
+    text-align: center;
+    color: var(--gris);
+    border: 2px dashed var(--gris-light);
+  }
+
+  /* ====== FLYER A5 PORTRAIT — 148×210mm ====== */
+  /* On affiche en écran à 96dpi : 148mm ≈ 559px, 210mm ≈ 794px */
+  .flyer {
+    width: 148mm;
+    height: 210mm;
+    background: white;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    color: var(--noir);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Décor rose pastel en haut */
+  .flyer::before {
+    content: '';
+    position: absolute;
+    top: -40mm;
+    left: -30mm;
+    width: 90mm;
+    height: 90mm;
+    background: var(--rose);
+    border-radius: 50%;
+    opacity: 0.7;
+    z-index: 0;
+  }
+  .flyer::after {
+    content: '';
+    position: absolute;
+    bottom: -25mm;
+    right: -20mm;
+    width: 60mm;
+    height: 60mm;
+    background: var(--rose-medium);
+    border-radius: 50%;
+    opacity: 0.4;
+    z-index: 0;
+  }
+
+  .flyer-header {
+    position: relative;
+    z-index: 2;
+    padding: 8mm 10mm 4mm;
+    text-align: center;
+  }
+  .flyer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28pt;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--noir);
+    margin: 0;
+    line-height: 1;
+  }
+  .flyer-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 9pt;
+    color: var(--gris);
+    margin-top: 1mm;
+    letter-spacing: 0.08em;
+  }
+
+  .flyer-photo {
+    position: relative;
+    z-index: 2;
+    margin: 4mm 10mm 4mm;
+    height: 95mm;
+    background: #f5f5f5;
+    border-radius: 4mm;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flyer-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .flyer-photo .placeholder {
+    color: var(--gris);
+    font-size: 9pt;
+    text-align: center;
+  }
+
+  .flyer-product {
+    position: relative;
+    z-index: 2;
+    padding: 0 10mm;
+    text-align: center;
+  }
+  .flyer-product-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22pt;
+    font-weight: 400;
+    color: var(--noir);
+    margin: 0 0 2mm;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+  }
+  .flyer-product-desc {
+    font-size: 8.5pt;
+    color: var(--gris);
+    line-height: 1.45;
+    margin: 0 0 3mm;
+    font-weight: 300;
+    max-width: 110mm;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .flyer-price {
+    display: inline-block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16pt;
+    color: var(--or);
+    font-weight: 500;
+    padding: 1mm 6mm;
+    border-top: 1px solid var(--rose-medium);
+    border-bottom: 1px solid var(--rose-medium);
+    margin-bottom: 4mm;
+  }
+
+  .flyer-footer {
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
+    padding: 4mm 10mm 8mm;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 5mm;
+  }
+  .flyer-qr {
+    width: 22mm;
+    height: 22mm;
+    background: white;
+    border-radius: 2mm;
+    padding: 1mm;
+    border: 1px solid var(--rose-medium);
+  }
+  .flyer-qr img { width: 100%; height: 100%; display: block; }
+  .flyer-qr-label {
+    font-size: 6pt;
+    color: var(--gris);
+    text-align: center;
+    margin-top: 1mm;
+    letter-spacing: 0.05em;
+  }
+  .flyer-shops {
+    font-size: 6.5pt;
+    color: var(--gris);
+    line-height: 1.5;
+    flex: 1;
+    text-align: right;
+  }
+  .flyer-shops .label { font-weight: 600; color: var(--noir); letter-spacing: 0.08em; font-size: 6pt; text-transform: uppercase; }
+  .flyer-shops .url { color: var(--or); font-weight: 500; font-size: 7pt; margin-top: 1mm; }
+
+  /* ====== IMPRESSION ====== */
+  @page {
+    size: A5 portrait;
+    margin: 0;
+  }
+  @media print {
+    body { background: white; }
+    header, .panel-search, .actions, .empty-preview { display: none !important; }
+    .app-wrap { display: block; padding: 0; max-width: none; }
+    .preview-wrap { display: block; }
+    .flyer {
+      box-shadow: none !important;
+      margin: 0 !important;
+      page-break-after: always;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="retour">← Atelier</a>
+  <h1>🎨 Mood Studio — Flyer produit A5</h1>
+</header>
+
+<div class="app-wrap">
+
+  <aside class="panel-search">
+    <h2>1 · Choisir un produit</h2>
+    <input type="text" id="search-input" placeholder="Tape un nom (ex : aura, edelweiss, signature…)">
+    <div class="results" id="results">
+      <div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Tape au moins 2 lettres pour chercher dans Shopify</div>
+    </div>
+  </aside>
+
+  <main class="preview-wrap">
+    <div class="actions">
+      <button class="primary" onclick="window.print()">🖨️ Imprimer (ou enregistrer en PDF)</button>
+      <span class="hint">Astuce : dans Chrome/Safari, choisis "Enregistrer au format PDF" + format A5 portrait</span>
+    </div>
+
+    <div id="preview-area">
+      <div class="empty-preview">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem;">📄</div>
+        <div style="font-weight:600;color:var(--noir);margin-bottom:0.3rem;">Aperçu du flyer</div>
+        <div style="font-size:0.85rem;">Choisis un produit à gauche, et le flyer se construit ici en temps réel.</div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+let currentProduct = null;
+let searchTimer = null;
+
+const searchInput = document.getElementById('search-input');
+const resultsDiv = document.getElementById('results');
+const previewArea = document.getElementById('preview-area');
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchInput.value.trim();
+  if (q.length < 2) {
+    resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Tape au moins 2 lettres pour chercher dans Shopify</div>';
+    return;
+  }
+  searchTimer = setTimeout(() => doSearch(q), 280);
+});
+
+async function doSearch(q) {
+  resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Recherche…</div>';
+  try {
+    const r = await fetch('/api/mood-flyer-search?q=' + encodeURIComponent(q));
+    const data = await r.json();
+    if (data.error) {
+      resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur : ' + escapeHtml(data.error) + '</div>';
+      return;
+    }
+    const products = data.products || [];
+    if (products.length === 0) {
+      resultsDiv.innerHTML = '<div style="color:var(--gris);font-size:0.85rem;text-align:center;padding:1rem;">Aucun produit trouvé pour « ' + escapeHtml(q) + ' »</div>';
+      return;
+    }
+    resultsDiv.innerHTML = products.map((p, i) => `
+      <div class="result-card${currentProduct && currentProduct.id === p.id ? ' active' : ''}" onclick='selectProduct(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+        ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">` : '<div style="width:50px;height:50px;border-radius:6px;background:#f5f5f5;flex-shrink:0;"></div>'}
+        <div class="info">
+          <div class="title">${escapeHtml(p.title)}</div>
+          <div class="price">${formatPrice(p.priceMin, p.currency)}${p.priceMax > p.priceMin ? ' – ' + formatPrice(p.priceMax, p.currency) : ''}</div>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    resultsDiv.innerHTML = '<div style="color:#c75a5a;font-size:0.85rem;padding:0.5rem;">Erreur réseau</div>';
+  }
+}
+
+function selectProduct(p) {
+  currentProduct = p;
+  // Refresh active state on cards
+  document.querySelectorAll('.result-card').forEach(c => c.classList.remove('active'));
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  renderFlyer(p);
+}
+
+function renderFlyer(p) {
+  const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=' + encodeURIComponent(p.url);
+  const priceTxt = p.priceMin === p.priceMax
+    ? formatPrice(p.priceMin, p.currency)
+    : `dès ${formatPrice(p.priceMin, p.currency)}`;
+  previewArea.innerHTML = `
+    <div class="flyer">
+      <div class="flyer-header">
+        <div class="flyer-logo">mood</div>
+        <div class="flyer-tagline">— bague à clic suisse —</div>
+      </div>
+
+      <div class="flyer-photo">
+        ${p.image
+          ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.imageAlt || p.title)}">`
+          : '<div class="placeholder">Aucune image</div>'}
+      </div>
+
+      <div class="flyer-product">
+        <h2 class="flyer-product-name">${escapeHtml(p.title)}</h2>
+        ${p.description ? `<p class="flyer-product-desc">${escapeHtml(p.description.slice(0, 220))}${p.description.length > 220 ? '…' : ''}</p>` : ''}
+        <div class="flyer-price">${priceTxt}</div>
+      </div>
+
+      <div class="flyer-footer">
+        <div>
+          <div class="flyer-qr"><img src="${qrUrl}" alt="QR code page produit"></div>
+          <div class="flyer-qr-label">scanne-moi</div>
+        </div>
+        <div class="flyer-shops">
+          <div class="label">Mood Stores</div>
+          <div>Carouge · Martigny · Orbe</div>
+          <div>Fribourg · Zürich · Zermatt</div>
+          <div class="url">yourmood.net</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function formatPrice(amount, currency) {
+  const c = currency === 'CHF' ? 'CHF' : currency === 'EUR' ? '€' : currency;
+  return new Intl.NumberFormat('fr-CH', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' ' + c;
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+</script>
+
+</body>
+</html>
