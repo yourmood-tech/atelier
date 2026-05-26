@@ -277,7 +277,9 @@
   }
   .week-header { font-size: 0.75rem; color: var(--gris); margin-bottom: 0.5rem; font-weight: 600; }
   .week-objective { font-size: 0.7rem; color: var(--gris); margin-top: 0.3rem; }
-  .week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; }
+  .week-days { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.4rem; }
+  .day.day-extra { background: #fffbe6; border: 1px dashed #d4a017; }
+  .day.day-extra .day-header { color: #8b6f00; font-style: italic; }
   .day {
     background: white;
     border-radius: 6px;
@@ -1216,18 +1218,7 @@ function rendreCalendrier() {
 
         const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
 
-        // Carte rappel "récurrentes" sur chaque jeudi (du mois en cours)
-        let cardRecurrentesHtml = '';
-        if (estJeudi && estDansMoisCourant) {
-          const items = COLLECTIONS_FIXES.map(c => {
-            const data = colFixes[c.key] || {};
-            const nom = c.key === 'libre' ? (data.nom || '(libre)') : c.nom;
-            return `<span class="item">${nom}</span>`;
-          }).join('');
-          cardRecurrentesHtml = `<div class="card-recurrentes"><div class="titre">📦 récurrentes du mois</div>${items}</div>`;
-        }
-
-        let cardsHtml = cardRecurrentesHtml;
+        let cardsHtml = '';
         for (const p of produitsDuJour) {
           const hasImage = !!p.image;
           const cardStyle = hasImage
@@ -1275,6 +1266,19 @@ function rendreCalendrier() {
           <div class="day-content">${cardsHtml}</div>
           <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')">+</button>
         </div>`;
+
+        // Case extra juste après jeudi : 8e case de la semaine, contient les 5 collections récurrentes du mois
+        if (estJeudi && estDansMoisCourant) {
+          const items = COLLECTIONS_FIXES.map(c => {
+            const data = colFixes[c.key] || {};
+            const nom = c.key === 'libre' ? (data.nom || '(libre)') : c.nom;
+            return `<div class="product-card" style="background:#fff;border:1px solid #e5b800;font-size:0.7rem;font-weight:600;color:#5c4400;padding:0.3rem;">${nom}</div>`;
+          }).join('');
+          joursHtml += `<div class="day day-extra">
+            <div class="day-header"><span class="day-name">📦</span><span class="day-number" style="font-size:0.65rem;font-weight:600;">récurrentes</span></div>
+            <div class="day-content">${items}</div>
+          </div>`;
+        }
       }
 
       // Récap hebdomadaire (objectifs + ventes des produits de la semaine)
