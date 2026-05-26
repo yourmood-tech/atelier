@@ -127,6 +127,111 @@
   .month-title { font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .month-objective { font-size: 0.85rem; color: var(--gris); }
   .weeks { display: flex; flex-direction: column; gap: 0.8rem; }
+
+  /* === Layout 2 colonnes : panneau vertical + calendrier === */
+  .month-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .month-grid { grid-template-columns: 1fr; } }
+
+  /* === Panneau vertical résumé du mois === */
+  .panneau-vertical {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e5e5e5;
+    padding: 0.6rem;
+    font-size: 0.78rem;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+    position: sticky;
+    top: 1rem;
+  }
+  .panneau-vertical h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gris);
+    margin: 0 0 0.4rem;
+    font-weight: 700;
+  }
+  .panneau-vertical .pv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.73rem;
+  }
+  .panneau-vertical .pv-table th,
+  .panneau-vertical .pv-table td {
+    padding: 0.25rem 0.35rem;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: left;
+    vertical-align: top;
+    line-height: 1.25;
+  }
+  .panneau-vertical .pv-table th {
+    background: #f5f5f5;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gris);
+    position: sticky;
+    top: 0;
+  }
+  .panneau-vertical .pv-table .col-date { width: 50px; color: var(--gris); }
+  .panneau-vertical .pv-table .col-nom { font-weight: 500; color: var(--noir); }
+  .panneau-vertical .pv-table .col-obj,
+  .panneau-vertical .pv-table .col-fait { width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+  .panneau-vertical .pv-table tr.fixe { background: #fffbe6; }
+  .panneau-vertical .pv-table tr.fixe .col-nom { font-weight: 600; }
+  .panneau-vertical .pv-table tr.vide-jour td { color: #ccc; font-style: italic; }
+  .panneau-vertical .pv-table tr.aujourdhui { background: #e6f7e6; }
+  .panneau-vertical .pv-obj-input {
+    width: 50px;
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 0.72rem;
+    text-align: right;
+    padding: 0.15rem 0.25rem;
+    border-radius: 3px;
+    font-family: inherit;
+  }
+  .panneau-vertical .pv-obj-input:focus,
+  .panneau-vertical .pv-obj-input:hover { border-color: var(--or); background: white; }
+  .panneau-vertical .pv-nom-libre {
+    width: 100%;
+    border: 1px solid transparent;
+    background: transparent;
+    font-size: 0.73rem;
+    padding: 0.15rem 0.25rem;
+    border-radius: 3px;
+    font-family: inherit;
+    font-weight: 600;
+  }
+  .panneau-vertical .pv-nom-libre:focus,
+  .panneau-vertical .pv-nom-libre:hover { border-color: var(--or); background: white; }
+  .panneau-vertical .pv-section-header {
+    font-size: 0.62rem;
+    color: var(--gris);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    padding: 0.5rem 0.3rem 0.25rem;
+    background: #fafafa;
+  }
+  .panneau-vertical .pv-totaux {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f5f5f5;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+  .panneau-vertical .pv-totaux .ligne { display: flex; justify-content: space-between; }
+  .panneau-vertical .pv-totaux .lbl { color: var(--gris); }
+  .panneau-vertical .pv-totaux .val { font-weight: 700; }
   .week {
     background: var(--gris-clair);
     border-radius: 8px;
@@ -610,8 +715,146 @@ let saveTimer = null;
 function chargerDonneesLocal() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { produits: [] };
-  } catch { return { produits: [] }; }
+    const d = raw ? JSON.parse(raw) : { produits: [] };
+    if (!d.collectionsRecurrentes) d.collectionsRecurrentes = {};
+    return d;
+  } catch { return { produits: [], collectionsRecurrentes: {} }; }
+}
+
+// Collections récurrentes : 5 cases fixes par mois
+const COLLECTIONS_FIXES = [
+  { key: 'coffret', nom: 'Coffret du mois' },
+  { key: 'starter', nom: 'Starter pack' },
+  { key: 'gardemood', nom: 'Garde Mood' },
+  { key: 'joaillerie', nom: 'Joaillerie' },
+  { key: 'libre', nom: '' } // 5e case libre (nom éditable)
+];
+
+function getCollectionsRecurrentes(annee, mois) {
+  const key = `${annee}-${String(mois + 1).padStart(2, '0')}`;
+  if (!donnees.collectionsRecurrentes) donnees.collectionsRecurrentes = {};
+  if (!donnees.collectionsRecurrentes[key]) {
+    donnees.collectionsRecurrentes[key] = {};
+    COLLECTIONS_FIXES.forEach(c => {
+      donnees.collectionsRecurrentes[key][c.key] = { nom: c.nom, obj: '', fait: '' };
+    });
+  }
+  return donnees.collectionsRecurrentes[key];
+}
+
+function setCollectionFixe(annee, mois, key, field, val) {
+  const col = getCollectionsRecurrentes(annee, mois);
+  if (!col[key]) col[key] = { nom: '', obj: '', fait: '' };
+  col[key][field] = val;
+  sauverDonneesDebounced();
+}
+
+function setProduitField(produitId, field, val) {
+  const p = donnees.produits.find(x => x.id === produitId);
+  if (!p) return;
+  p[field] = val;
+  sauverDonneesDebounced();
+}
+
+const NOMS_JOURS_PV = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+
+function fmtCA(val) {
+  if (val === '' || val === null || val === undefined) return '';
+  const n = parseFloat(val);
+  if (isNaN(n) || n === 0) return '';
+  return Math.round(n).toLocaleString('fr-CH');
+}
+
+function renderPanneauVertical(annee, mois) {
+  const col = getCollectionsRecurrentes(annee, mois);
+  // CA Shopify mensuel pour calculer le "fait" auto sur les produits
+  const ventesShopify = ventesParMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
+  const ventesShopifyOK = ventesShopify && ventesShopify.ventes;
+
+  // Ligne par collection fixe
+  let rowsFixes = '';
+  COLLECTIONS_FIXES.forEach(c => {
+    const data = col[c.key] || { nom: c.nom, obj: '', fait: '' };
+    const isLibre = c.key === 'libre';
+    const nomCell = isLibre
+      ? `<input class="pv-nom-libre" placeholder="(libre…)" value="${(data.nom || '').replace(/"/g, '&quot;')}" onchange="setCollectionFixe(${annee},${mois},'${c.key}','nom',this.value)">`
+      : c.nom;
+    rowsFixes += `<tr class="fixe">
+      <td class="col-date">—</td>
+      <td class="col-nom">${nomCell}</td>
+      <td class="col-obj"><input class="pv-obj-input" type="number" placeholder="—" value="${data.obj || ''}" onchange="setCollectionFixe(${annee},${mois},'${c.key}','obj',this.value)"></td>
+      <td class="col-fait">${fmtCA(data.fait)}</td>
+    </tr>`;
+  });
+
+  // Lignes jour par jour
+  let rowsJours = '';
+  const nbJours = new Date(annee, mois + 1, 0).getDate();
+  const today = new Date().toISOString().slice(0, 10);
+  let totalObjJours = 0;
+  let totalFaitJours = 0;
+
+  for (let j = 1; j <= nbJours; j++) {
+    const d = new Date(annee, mois, j);
+    const jourISO = `${annee}-${String(mois + 1).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
+    const nomJ = NOMS_JOURS_PV[d.getDay()];
+    const estAujourdhui = jourISO === today;
+    const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
+
+    if (produitsDuJour.length === 0) {
+      rowsJours += `<tr class="vide-jour${estAujourdhui ? ' aujourdhui' : ''}">
+        <td class="col-date">${nomJ} ${j}</td>
+        <td class="col-nom">—</td>
+        <td class="col-obj"></td>
+        <td class="col-fait"></td>
+      </tr>`;
+    } else {
+      produitsDuJour.forEach((p, idx) => {
+        // CA "fait" : prioritaire Shopify si dispo, sinon valeur manuelle p.ventes
+        let caFait = '';
+        if (ventesShopifyOK) {
+          const match = trouverVentesShopify(p.nom, ventesShopify.ventes);
+          if (match && match.ca > 0) caFait = match.ca;
+        }
+        if (!caFait && p.ventes) caFait = p.ventes;
+        const obj = +p.objectifCA || 0;
+        totalObjJours += obj;
+        totalFaitJours += +caFait || 0;
+        rowsJours += `<tr${estAujourdhui ? ' class="aujourdhui"' : ''}>
+          <td class="col-date">${idx === 0 ? `${nomJ} ${j}` : ''}</td>
+          <td class="col-nom">${p.nom || '(sans nom)'}</td>
+          <td class="col-obj">${fmtCA(p.objectifCA)}</td>
+          <td class="col-fait">${fmtCA(caFait)}</td>
+        </tr>`;
+      });
+    }
+  }
+
+  // Totaux fixes
+  const totalObjFixes = COLLECTIONS_FIXES.reduce((s, c) => s + (parseFloat((col[c.key] || {}).obj) || 0), 0);
+  const totalFaitFixes = COLLECTIONS_FIXES.reduce((s, c) => s + (parseFloat((col[c.key] || {}).fait) || 0), 0);
+  const totalObj = totalObjFixes + totalObjJours;
+  const totalFait = totalFaitFixes + totalFaitJours;
+
+  return `<div class="panneau-vertical">
+    <h3>📋 Résumé ${NOMS_MOIS[mois]} ${annee}</h3>
+    <table class="pv-table">
+      <thead>
+        <tr><th class="col-date">Jour</th><th class="col-nom">Sortie / Collection</th><th class="col-obj">Objectif</th><th class="col-fait">Fait</th></tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="4" class="pv-section-header">Collections récurrentes</td></tr>
+        ${rowsFixes}
+        <tr><td colspan="4" class="pv-section-header">Sorties du mois (jour par jour)</td></tr>
+        ${rowsJours}
+      </tbody>
+    </table>
+    <div class="pv-totaux">
+      <div class="ligne"><span class="lbl">Objectif total</span><span class="val">${fmtCA(totalObj) || '—'} CHF</span></div>
+      <div class="ligne"><span class="lbl">Réalisé</span><span class="val">${fmtCA(totalFait) || '—'} CHF</span></div>
+      ${totalObj > 0 ? `<div class="ligne"><span class="lbl">Progression</span><span class="val">${Math.round(totalFait / totalObj * 100)}%</span></div>` : ''}
+    </div>
+  </div>`;
 }
 
 function sauverDonneesLocal() {
@@ -865,7 +1108,10 @@ function rendreCalendrier() {
         ${NOMS_MOIS[mois]} ${annee}${estPasse ? ' <span style="font-size:0.7rem;color:var(--gris);font-weight:400;">(passé — clique pour ouvrir)</span>' : ''}
       </div>
     </div>
-    <div class="month-content" style="${estPasse ? 'display:none;' : ''}">`;
+    <div class="month-content" style="${estPasse ? 'display:none;' : ''}">
+    <div class="month-grid">
+      <div class="month-panneau-col">${renderPanneauVertical(annee, mois)}</div>
+      <div class="month-droite">`;
 
     if (produitsDuMois.length > 0) {
       // Si on a les ventes Shopify du mois, recalculer les ventes par produit auto
@@ -984,7 +1230,7 @@ function rendreCalendrier() {
       </div>`;
     }
 
-    html += `</div></div>`; // ferme .weeks + .month-content
+    html += `</div></div></div></div>`; // ferme .weeks + .month-droite + .month-grid + .month-content
     moisDiv.innerHTML = html;
     cal.appendChild(moisDiv);
   }
