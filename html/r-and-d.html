@@ -127,6 +127,43 @@
   .month-title { font-size: 1.1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
   .month-objective { font-size: 0.85rem; color: var(--gris); }
   .weeks { display: flex; flex-direction: column; gap: 0.8rem; }
+  .week.passee { display: none; }
+  .week.passee.show { display: block; opacity: 0.65; }
+  .toggle-passees {
+    background: white;
+    border: 1px dashed var(--gris);
+    color: var(--gris);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    margin-bottom: 0.6rem;
+    width: 100%;
+    text-align: center;
+  }
+  .toggle-passees:hover { border-color: var(--or); color: var(--or); }
+
+  /* Carte rappel "récurrentes du jeudi" */
+  .card-recurrentes {
+    background: #fffbe6;
+    border: 1px dashed #d4a017;
+    border-radius: 6px;
+    padding: 0.35rem 0.45rem;
+    font-size: 0.65rem;
+    line-height: 1.35;
+    color: #5c4400;
+    margin-bottom: 0.3rem;
+  }
+  .card-recurrentes .titre {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #8b6f00;
+    margin-bottom: 0.2rem;
+  }
+  .card-recurrentes .item { display: block; }
+  .card-recurrentes .item::before { content: '• '; }
 
   /* === Layout 2 colonnes : panneau vertical + calendrier === */
   .month-grid {
@@ -749,6 +786,14 @@ function setCollectionFixe(annee, mois, key, field, val) {
   sauverDonneesDebounced();
 }
 
+function togglePasseesDansMois(btn) {
+  const moisDiv = btn.closest('.month');
+  const show = btn.dataset.show === 'false';
+  moisDiv.querySelectorAll('.week.passee').forEach(w => w.classList.toggle('show', show));
+  btn.dataset.show = show ? 'true' : 'false';
+  btn.textContent = show ? '▲ Masquer les semaines passées' : '▼ Afficher les semaines passées';
+}
+
 function setProduitField(produitId, field, val) {
   const p = donnees.produits.find(x => x.id === produitId);
   if (!p) return;
@@ -1148,10 +1193,16 @@ function rendreCalendrier() {
       </div>`;
     }
 
+    html += `<button class="toggle-passees" onclick="togglePasseesDansMois(this)" data-show="false">▼ Afficher les semaines passées</button>`;
     html += `<div class="weeks">`;
+
+    const todayD2 = new Date(); todayD2.setHours(0, 0, 0, 0);
+    const colFixes = getCollectionsRecurrentes(annee, mois);
 
     for (const sem of semaines) {
       const debutDate = new Date(sem.debut + 'T00:00:00');
+      const finSem2 = new Date(debutDate); finSem2.setDate(finSem2.getDate() + 6);
+      const semainePassee = finSem2 < todayD2;
       let joursHtml = '';
       for (let i = 0; i < 7; i++) {
         const jour = new Date(debutDate);
@@ -1160,10 +1211,23 @@ function rendreCalendrier() {
         const nomJour = NOMS_JOURS_COURT[jour.getDay()];
         const numJour = jour.getDate();
         const estAujourdhui = jourISO === today;
+        const estJeudi = jour.getDay() === 4;
+        const estDansMoisCourant = jour.getMonth() === mois && jour.getFullYear() === annee;
 
         const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
 
-        let cardsHtml = '';
+        // Carte rappel "récurrentes" sur chaque jeudi (du mois en cours)
+        let cardRecurrentesHtml = '';
+        if (estJeudi && estDansMoisCourant) {
+          const items = COLLECTIONS_FIXES.map(c => {
+            const data = colFixes[c.key] || {};
+            const nom = c.key === 'libre' ? (data.nom || '(libre)') : c.nom;
+            return `<span class="item">${nom}</span>`;
+          }).join('');
+          cardRecurrentesHtml = `<div class="card-recurrentes"><div class="titre">📦 récurrentes du mois</div>${items}</div>`;
+        }
+
+        let cardsHtml = cardRecurrentesHtml;
         for (const p of produitsDuJour) {
           const hasImage = !!p.image;
           const cardStyle = hasImage
@@ -1223,8 +1287,8 @@ function rendreCalendrier() {
       });
       const recapHebdoHtml = construireRecap(produitsDeSemaine, `Semaine ${sem.label}`);
 
-      html += `<div class="week">
-        <div class="week-header">${sem.label}</div>
+      html += `<div class="week${semainePassee ? ' passee' : ''}">
+        <div class="week-header">${sem.label}${semainePassee ? ' <span style="font-size:0.65rem;color:var(--gris);">(passée)</span>' : ''}</div>
         <div class="week-days">${joursHtml}</div>
         ${recapHebdoHtml}
       </div>`;
