@@ -1216,7 +1216,8 @@ function rendreCalendrier() {
         const estJeudi = jour.getDay() === 4;
         const estDansMoisCourant = jour.getMonth() === mois && jour.getFullYear() === annee;
 
-        const produitsDuJour = donnees.produits.filter(p => p.date === jourISO);
+        // Produits du jour : exclure ceux marqués extraSemaine (ils vont dans la case à droite)
+        const produitsDuJour = donnees.produits.filter(p => p.date === jourISO && !p.extraSemaine);
 
         let cardsHtml = '';
         for (const p of produitsDuJour) {
@@ -1266,20 +1267,26 @@ function rendreCalendrier() {
           <div class="day-content">${cardsHtml}</div>
           <button class="add-product-btn" onclick="ouvrirModalAjout('${jourISO}')">+</button>
         </div>`;
-
-        // Case extra juste après jeudi : 8e case de la semaine, contient les 5 collections récurrentes du mois
-        if (estJeudi && estDansMoisCourant) {
-          const items = COLLECTIONS_FIXES.map(c => {
-            const data = colFixes[c.key] || {};
-            const nom = c.key === 'libre' ? (data.nom || '(libre)') : c.nom;
-            return `<div class="product-card" style="background:#fff;border:1px solid #e5b800;font-size:0.7rem;font-weight:600;color:#5c4400;padding:0.3rem;">${nom}</div>`;
-          }).join('');
-          joursHtml += `<div class="day day-extra">
-            <div class="day-header"><span class="day-name">📦</span><span class="day-number" style="font-size:0.65rem;font-weight:600;">récurrentes</span></div>
-            <div class="day-content">${items}</div>
-          </div>`;
-        }
       }
+
+      // Case extra TOUT À DROITE (8e colonne) — vide par défaut, Amila ajoute manuellement
+      // Sémantique : "nouveautés / récurrentes de la semaine" sans date précise
+      // Stockage : produit avec flag extraSemaine=true + date = jeudi de la semaine
+      const jeudiSem = new Date(debutDate);
+      jeudiSem.setDate(jeudiSem.getDate() + ((4 - debutDate.getDay() + 7) % 7));
+      const jeudiSemISO = dateISOLocal(jeudiSem);
+      const produitsExtra = donnees.produits.filter(p => p.date === jeudiSemISO && p.extraSemaine);
+      let extraCardsHtml = '';
+      for (const p of produitsExtra) {
+        extraCardsHtml += `<div class="product-card" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')">
+          <div class="product-name">${p.nom || '(sans nom)'}</div>
+        </div>`;
+      }
+      joursHtml += `<div class="day day-extra" data-day="${jeudiSemISO}" data-extra="true" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropExtra(event,'${jeudiSemISO}')">
+        <div class="day-header"><span class="day-name">📦</span><span class="day-number" style="font-size:0.65rem;font-weight:600;">extra</span></div>
+        <div class="day-content">${extraCardsHtml}</div>
+        <button class="add-product-btn" onclick="ouvrirModalAjoutExtra('${jeudiSemISO}')">+</button>
+      </div>`;
 
       // Récap hebdomadaire (objectifs + ventes des produits de la semaine)
       const debutSem = new Date(sem.debut + 'T00:00:00');
@@ -1469,6 +1476,7 @@ function sauverProduit() {
     notes: document.getElementById('produit-notes').value,
     image: document.getElementById('produit-image').value || null,
     date: modalContexte.date,
+    extraSemaine: !!modalContexte.extraSemaine,
     majAt: new Date().toISOString(),
   };
   if (id) {
@@ -1895,6 +1903,25 @@ function onDragLeave(e) {
   e.currentTarget.classList.remove('drop-target');
 }
 
+function ouvrirModalAjoutExtra(jeudiSemISO) {
+  ouvrirModalAjout(jeudiSemISO);
+  // Marquer pour qu'à la sauvegarde, le produit ait extraSemaine=true
+  modalContexte = { ...modalContexte, extraSemaine: true };
+}
+
+function onDropExtra(e, jeudiSemISO) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+  const productId = e.dataTransfer.getData('text/plain');
+  if (!productId) return;
+  const p = donnees.produits.find(x => x.id === productId);
+  if (!p) return;
+  p.date = jeudiSemISO;
+  p.extraSemaine = true;
+  sauverDonneesDebounced();
+  render();
+}
+
 function onDrop(e, jourISO) {
   e.preventDefault();
   e.currentTarget.classList.remove('drop-target');
@@ -1940,8 +1967,9 @@ function onDrop(e, jourISO) {
   if (!id) return;
   const p = donnees.produits.find(x => x.id === id);
   if (!p) return;
-  if (p.date === jourISO) return;
+  if (p.date === jourISO && !p.extraSemaine) return;
   p.date = jourISO;
+  p.extraSemaine = false;  // drop sur jour normal = retirer du extra
   p.majAt = new Date().toISOString();
   sauverDonnees();
   rendreCalendrier();
