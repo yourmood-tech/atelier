@@ -451,11 +451,11 @@ async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: 
   let themeOverlay = "";
   const porteePrompt = (isPortee && theme) ? selectPorteePrompt(theme, gender) : null;
   if (isPortee && porteePrompt) {
-    basePrompt = porteePrompt + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
+    basePrompt = porteePrompt + (PORTEE_STYLE_NOTES[action] || "") + modelNote;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + modelNote;
   } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE + modelNote;
+    basePrompt = PROMPTS["bague-portee"] + modelNote;
   } else {
     basePrompt = PROMPTS[action];
     const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
@@ -760,24 +760,11 @@ ${parts.join("\n\n")}
 Ces caractéristiques OVERRIDENT toute mention contraire de genre / âge / origine ethnique dans les directives ci-dessus. Tout le reste du prompt (lumière, décor, tissu, ambiance, palette) reste valide à 100%.`;
 }
 
-// Rappel CRITIQUE de la largeur réelle des bagues Mood (à injecter dans tous les prompts portée)
-// Sans cette consigne, Gemini agrandit la bague (~15-18mm) pour la rendre plus visible sur la main → faux
-const MOOD_RING_WIDTH_NOTE = `
-
-═══════════════════════════════════════════
-🚨 LARGEUR RÉELLE DE LA BAGUE — NON-NEGOTIABLE
-═══════════════════════════════════════════
-
-Mood Collection rings come in THREE PRECISE WIDTHS ONLY :
-- Extra-small (XS) : 9 mm wide
-- Small (S) : 11 mm wide
-- Large (L) : 13 mm wide
-
-The ring shown on the finger MUST KEEP ITS REAL PROPORTIONAL WIDTH from the source image — typically between 9 mm and 13 mm (about as wide as the width of one finger phalanx, NOT wider).
-
-DO NOT enlarge / thicken / bulk up the ring to make it more visible. DO NOT show a 15-18 mm wide ring on the finger — that is INCORRECT. A Mood ring is SLIM and ELEGANT on the finger, occupying ~1/3 to ~1/2 of the finger's length between the joints. It should look comfortable on a real hand, never oversized or chunky.
-
-If you zoom in tight on the ring (which you should — the ring is the hero), keep its width-to-finger ratio realistic. The ring fills the frame because the camera is close, NOT because the ring itself is enlarged.`;
+// MOOD_RING_WIDTH_NOTE désactivée le 27 mai 2026 (S119) : les contraintes anatomiques strictes
+// (largeurs 9/11/13mm, 1/3 phalange, pas plus large que doigt, ne pas enlarger/thicken/bulk up)
+// rendaient le prompt fade et moins naturel. Retiré pour revenir au rendu "luxe magazine" d'origine.
+// Constante conservée en commentaire au cas où il faudrait revenir.
+// const MOOD_RING_WIDTH_NOTE = `...`;
 
 // Notes de décor à ajouter au prompt portée selon le style cliqué (mode portée)
 const PORTEE_STYLE_NOTES: Record<string, string> = {
@@ -815,11 +802,11 @@ async function appelGemini(imageDataUrl: string, action: string, note?: string |
   let themeOverlay = "";
   const porteePrompt = (isPortee && theme) ? selectPorteePrompt(theme, gender) : null;
   if (isPortee && porteePrompt) {
-    basePrompt = porteePrompt + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
+    basePrompt = porteePrompt + (PORTEE_STYLE_NOTES[action] || "") + modelNote;
   } else if (isPortee && action !== "bague-portee" && action !== "multi-formats" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + MOOD_RING_WIDTH_NOTE + modelNote;
+    basePrompt = PROMPTS["bague-portee"] + (PORTEE_STYLE_NOTES[action] || "") + modelNote;
   } else if (isPortee && action === "bague-portee" && PROMPTS["bague-portee"]) {
-    basePrompt = PROMPTS["bague-portee"] + MOOD_RING_WIDTH_NOTE + modelNote;
+    basePrompt = PROMPTS["bague-portee"] + modelNote;
   } else {
     basePrompt = PROMPTS[action];
     const overlayRaw = (theme && THEME_OVERLAYS[theme]) ? THEME_OVERLAYS[theme] : "";
