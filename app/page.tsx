@@ -151,6 +151,19 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
       },
     ],
   },
+  {
+    id: "communaute",
+    title: "Communauté",
+    summary: "Modération et analytics de la Mood Lovers Gallery.",
+    tools: [
+      {
+        href: "/admin/mood-lovers",
+        emoji: "🫶",
+        title: "Mood Lovers Gallery",
+        description: "Valider ou refuser les compos soumises par les clientes. Vue Analytics : top contributeurs, votes, villes, taux de validation.",
+      },
+    ],
+  },
 ];
 
 function ToolCard({ tool }: { tool: Tool }) {
