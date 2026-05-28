@@ -142,8 +142,8 @@
   <div style="background:white;width:100%;max-width:1100px;max-height:90vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
     <div style="padding:1rem 1.5rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <h2 style="margin:0;font-size:1.1rem;">📋 Mes prompts originaux (12 thèmes)</h2>
-        <div style="font-size:0.72rem;color:#888;margin-top:0.2rem;">Tes prompts FR tels que tu les avais livrés — extraits des archives Claude</div>
+        <h2 style="margin:0;font-size:1.1rem;">📋 Mes prompts originaux</h2>
+        <div style="font-size:0.72rem;color:#888;margin-top:0.2rem;">Actions de retouche + 12 thèmes — tes prompts FR tels que tu les avais livrés</div>
       </div>
       <button onclick="fermerPromptsModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">✕</button>
     </div>
@@ -207,39 +207,96 @@ function fermerPromptsModal() {
 }
 
 function afficherThemes() {
-  if (!_promptsData || !_promptsData.themes) return;
+  if (!_promptsData) return;
   const c = document.getElementById('prompts-content');
-  let cards = [];
-  _promptsData.themes.forEach((t, idx) => {
-    cards.push(`
-      <div class="prompt-card" style="margin-bottom:1.5rem;">
-        <div class="prompt-card-header" style="background:#5c4400;color:white;border:none;">
-          <div class="prompt-card-label" style="color:white;font-size:1rem;">${escapeP(t.label)}</div>
-          <div class="prompt-card-key" style="color:#f4d35e;">${escapeP(t.key)}</div>
-        </div>
-        <div style="padding:0;background:white;">
-          <div style="border-bottom:1px solid #f0e0a0;padding:0.6rem 0.9rem;background:#fffbe6;display:flex;justify-content:space-between;align-items:center;">
-            <strong style="color:#5c4400;">💍 Bague portée (femme)</strong>
-            <button class="prompt-copy-btn" onclick="copierTxt(this, ${idx}, 'porte')">📋 Copier</button>
-          </div>
-          <div class="prompt-card-body">${escapeP(t.porte)}</div>
-          ${t.porte_homme ? `
-            <div style="border-top:1px solid #eee;border-bottom:1px solid #f0e0a0;padding:0.6rem 0.9rem;background:#fffbe6;display:flex;justify-content:space-between;align-items:center;">
-              <strong style="color:#5c4400;">👔 Bague portée (homme)</strong>
-              <button class="prompt-copy-btn" onclick="copierTxt(this, ${idx}, 'porte_homme')">📋 Copier</button>
-            </div>
-            <div class="prompt-card-body">${escapeP(t.porte_homme)}</div>
-          ` : ''}
-          <div style="border-top:1px solid #eee;border-bottom:1px solid #f0e0a0;padding:0.6rem 0.9rem;background:#fffbe6;display:flex;justify-content:space-between;align-items:center;">
-            <strong style="color:#5c4400;">🌸 Bague d'ambiance (objet)</strong>
-            <button class="prompt-copy-btn" onclick="copierTxt(this, ${idx}, 'ambiance')">📋 Copier</button>
-          </div>
-          <div class="prompt-card-body">${escapeP(t.ambiance)}</div>
-        </div>
+  let html = [];
+
+  // === SECTION 1 : ACTIONS DE RETOUCHE ===
+  if (_promptsData.actions && _promptsData.actions.length) {
+    html.push(`
+      <div style="margin-bottom:1rem;padding:0.7rem 1rem;background:#f4f0ff;border-left:4px solid #6b46c1;border-radius:4px;">
+        <div style="font-weight:700;color:#4a2d7d;font-size:0.95rem;">🛠️ Actions de retouche</div>
+        <div style="font-size:0.78rem;color:#7a5cab;margin-top:0.2rem;">Coffret · Fonds · Lumière · Redresser · Multi-bagues · Redimensionner</div>
       </div>
     `);
-  });
-  c.innerHTML = cards.join('');
+    _promptsData.actions.forEach((a, idx) => {
+      html.push(`
+        <div class="prompt-card" style="margin-bottom:1rem;">
+          <div class="prompt-card-header" style="background:#6b46c1;color:white;border:none;">
+            <div>
+              <div class="prompt-card-label" style="color:white;font-size:0.95rem;">${escapeP(a.label)}</div>
+              <div style="font-size:0.72rem;color:#dcd2f0;margin-top:0.2rem;">${escapeP(a.description)}</div>
+            </div>
+            <button class="prompt-copy-btn" onclick="copierAction(this, ${idx})" style="border-color:#fff;color:#fff;background:rgba(255,255,255,0.15);">📋 Copier</button>
+          </div>
+          <div class="prompt-card-body">${escapeP(a.prompt)}</div>
+        </div>
+      `);
+    });
+  }
+
+  // === SECTION 2 : THÈMES ===
+  if (_promptsData.themes && _promptsData.themes.length) {
+    html.push(`
+      <div style="margin:2rem 0 1rem 0;padding:0.7rem 1rem;background:#fff8e1;border-left:4px solid #d4a017;border-radius:4px;">
+        <div style="font-weight:700;color:#5c4400;font-size:0.95rem;">🎨 Thèmes (12)</div>
+        <div style="font-size:0.78rem;color:#8a6d3b;margin-top:0.2rem;">Pour chaque thème : prompt bague portée (femme + homme si dispo) + prompt bague d'ambiance</div>
+      </div>
+    `);
+    _promptsData.themes.forEach((t, idx) => {
+      html.push(`
+        <div class="prompt-card" style="margin-bottom:1.5rem;">
+          <div class="prompt-card-header" style="background:#5c4400;color:white;border:none;">
+            <div class="prompt-card-label" style="color:white;font-size:1rem;">${escapeP(t.label)}</div>
+            <div class="prompt-card-key" style="color:#f4d35e;">${escapeP(t.key)}</div>
+          </div>
+          <div style="padding:0;background:white;">
+            <div style="border-bottom:1px solid #f0e0a0;padding:0.6rem 0.9rem;background:#fffbe6;display:flex;justify-content:space-between;align-items:center;">
+              <strong style="color:#5c4400;">💍 Bague portée (femme)</strong>
+              <button class="prompt-copy-btn" onclick="copierTxt(this, ${idx}, 'porte')">📋 Copier</button>
+            </div>
+            <div class="prompt-card-body">${escapeP(t.porte)}</div>
+            ${t.porte_homme ? `
+              <div style="border-top:1px solid #eee;border-bottom:1px solid #f0e0a0;padding:0.6rem 0.9rem;background:#fffbe6;display:flex;justify-content:space-between;align-items:center;">
+                <strong style="color:#5c4400;">👔 Bague portée (homme)</strong>
+                <button class="prompt-copy-btn" onclick="copierTxt(this, ${idx}, 'porte_homme')">📋 Copier</button>
+              </div>
+              <div class="prompt-card-body">${escapeP(t.porte_homme)}</div>
+            ` : ''}
+            <div style="border-top:1px solid #eee;border-bottom:1px solid #f0e0a0;padding:0.6rem 0.9rem;background:#fffbe6;display:flex;justify-content:space-between;align-items:center;">
+              <strong style="color:#5c4400;">🌸 Bague d'ambiance (objet)</strong>
+              <button class="prompt-copy-btn" onclick="copierTxt(this, ${idx}, 'ambiance')">📋 Copier</button>
+            </div>
+            <div class="prompt-card-body">${escapeP(t.ambiance)}</div>
+          </div>
+        </div>
+      `);
+    });
+  }
+
+  c.innerHTML = html.join('');
+}
+
+async function copierAction(btn, idx) {
+  if (!_promptsData || !_promptsData.actions) return;
+  const a = _promptsData.actions[idx];
+  if (!a || !a.prompt) return;
+  try {
+    await navigator.clipboard.writeText(a.prompt);
+    const old = btn.textContent;
+    btn.textContent = '✓ Copié !';
+    btn.style.background = '#2D8A4E';
+    btn.style.color = 'white';
+    btn.style.borderColor = '#2D8A4E';
+    setTimeout(() => {
+      btn.textContent = old;
+      btn.style.background = 'rgba(255,255,255,0.15)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#fff';
+    }, 1500);
+  } catch (e) {
+    alert('Erreur copie');
+  }
 }
 
 function escapeP(s) {
