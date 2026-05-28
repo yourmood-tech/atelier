@@ -72,121 +72,21 @@ const RATIOS: Record<string, string> = {
 
 // Thèmes globaux — overlay ajouté à n'importe quel prompt d'action quand l'utilisateur sélectionne un thème en haut
 export const THEME_OVERLAYS: Record<string, string> = {
-  "lifestyle": `
+  "lifestyle": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-═══════════════════════════════════════════
-🎨 GLOBAL THEME OVERRIDE — "LIFESTYLE" (photo souvenir voyage authentique non-studio)
-═══════════════════════════════════════════
+Photo naturelle non studio, lumière du jour réelle, décor vivant en arrière-plan, ambiance spontanée et authentique, rendu simple et réaliste, style souvenir de voyage.`,
 
-Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+  "in-the-mood-for": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-VISUAL DIRECTION :
-- Setting : Photo NATURELLE NON STUDIO. Décor VIVANT en arrière-plan (un environnement réel — café, terrasse, plage, montagne, rue, intérieur cozy — selon ce qui fait sens). PAS de seamless backdrop, PAS de fond uni studio.
-- Light : LUMIÈRE DU JOUR RÉELLE (sun, overcast, golden hour selon le contexte), authentique, non-artificielle.
-- Mood : SPONTANÉ ET AUTHENTIQUE, ambiance "daily life", style SOUVENIR DE VOYAGE, rendu simple et réaliste, sensation d'instant capturé sur smartphone (mais en qualité premium).
-- Style references : Pinterest lifestyle, Instagram authentique, daily life photography, travel memory.
-- Profondeur de champ légère naturelle (pas studio shallow DOF — DOF moyen comme un smartphone moderne).
+Photo produit lifestyle premium, décor minimaliste chaleureux et élégant, surface beige clair, arrière-plan textile crème légèrement flou, ambiance cozy et luxe moderne, lumière naturelle douce et chaude, ombres délicates, profondeur de champ très faible, style Pinterest éditorial, textures douces et raffinées, esthétique minimaliste féminine, composition épurée et harmonieuse, rendu photoréaliste, arrière-plan flou crémeux, ambiance soft luxury contemporaine.`,
 
-ACTION-SPECIFIC ADAPTATIONS :
-- IF the action is a COFFRET / BOX shot : the white coffret photographed naturally in a real environment (sur une table de café, sur une commode, sur un drap), lumière du jour, ambiance souvenir spontané.
-- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with a REAL ENVIRONMENT — la bague posée sur une surface naturelle (table, livre, drap, sable, herbe) avec un arrière-plan vivant légèrement flou, lumière du jour réelle, photo spontanée premium.
-- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
+  "pastel": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
-- The ring DOMINATES the composition — it fills 70-85% of the frame width.
-- TIGHT close-up but with NATURAL lifestyle aesthetic (smartphone-quality framing élevé en qualité premium).
-- The real environment decor is a SUPPORTING BACKDROP — out-of-focus mais reconnaissable.
-- The ring is the absolute focus subject — perfectly sharp.`,
+Photo macro produit haut de gamme, bague principale parfaitement nette et centrée au premier plan, arrière-plan composé uniquement d'anneaux colorés reprenant exactement la même couleur, la même texture, la même taille et la même largeur que l'anneau central de la bague principale, sans les bordures métalliques visibles. Les anneaux en arrière-plan sont disposés aléatoirement de façon naturelle et harmonieuse, certains debout, certains couchés, créant une composition organique et équilibrée. Profondeur de champ très faible avec arrière-plan fortement flou, bokeh doux et crémeux, focus ultra précis sur la bague centrale, lumière studio diffuse et chaleureuse, ambiance minimaliste premium, surface en bois clair naturel, style éditorial luxe moderne, rendu photoréaliste, éclairage cinématographique doux, objectif macro 85mm, f/2.8.`,
 
-  "in-the-mood-for": `
+  "beton": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-═══════════════════════════════════════════
-🎨 GLOBAL THEME OVERRIDE — "IN THE MOOD FOR" (soft luxury cozy Pinterest editorial)
-═══════════════════════════════════════════
-
-Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
-
-VISUAL DIRECTION :
-- Setting : Photo produit lifestyle premium, décor MINIMALISTE CHALEUREUX ET ÉLÉGANT. Surface BEIGE CLAIR (papier mat, lin, ou bois clair beige). Arrière-plan TEXTILE CRÈME légèrement flou (drapé soie, lin, cachemire crème).
-- Light : LUMIÈRE NATURELLE DOUCE ET CHAUDE, almost-solar diffuse, golden hour interior glow.
-- Shadows : DÉLICATES, soft falloff, no harsh contrast.
-- Color palette : BEIGE, CRÈME, NUDE, IVOIRE, soft taupe, with warm cream highlights. Monochromatic warm neutrals.
-- Profondeur de champ très faible (very shallow DOF), bokeh CRÉMEUX en arrière-plan.
-- Mood : COSY ET LUXE MODERNE, SOFT LUXURY CONTEMPORAINE, Pinterest éditorial, textures DOUCES ET RAFFINÉES, esthétique minimaliste féminine, composition épurée et harmonieuse.
-- Style references : Pinterest soft luxury, Anine Bing, Khaite cozy, contemporary minimal feminine.
-
-ACTION-SPECIFIC ADAPTATIONS :
-- IF the action is a COFFRET / BOX shot : the white coffret on warm beige surface, draped soft cream fabric in background, soft warm natural light, delicate shadows, cozy soft luxury.
-- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with warm beige surface + cream textile drape in soft-focus background, very shallow DOF, ring sharp in foreground, soft warm natural light, delicate shadows.
-- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
-
-🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
-- The ring DOMINATES the composition — it fills 70-85% of the frame width.
-- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
-- The beige/cream cozy decor is a SUPPORTING BACKDROP, heavily blurred bokeh.
-- The ring is the absolute focus subject — perfectly sharp.
-- Camera : zoom in tight. Soft luxury decor is silent warm minimalism, never competing.`,
-
-  "pastel": `
-
-═══════════════════════════════════════════
-🎨 GLOBAL THEME OVERRIDE — "PASTEL" (luxe minimaliste / anneaux assortis bokeh)
-═══════════════════════════════════════════
-
-Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
-
-VISUAL DIRECTION :
-- Setting : Photo macro produit haut de gamme. Surface en BOIS CLAIR NATUREL (chêne clair, hêtre, érable — matte naturel, légèrement texturé).
-- Arrière-plan composé UNIQUEMENT d'ANNEAUX COLORÉS reprenant exactement la même couleur, la même texture, la même taille et la même largeur que l'anneau central de la bague principale (extracted from the ring's center band), SANS les bordures métalliques visibles.
-- Les anneaux en arrière-plan sont disposés ALÉATOIREMENT de façon naturelle et harmonieuse — certains DEBOUT, certains COUCHÉS, créant une composition organique et équilibrée.
-- Light : LUMIÈRE STUDIO DIFFUSE ET CHALEUREUSE (warm soft daylight), almost-solar, cinematographic gentle.
-- PROFONDEUR DE CHAMP TRÈS FAIBLE (very shallow DOF) avec arrière-plan FORTEMENT FLOU, bokeh DOUX ET CRÉMEUX.
-- Focus ULTRA PRÉCIS sur la bague centrale (le ring du source pixel-identical).
-- Color palette : palette pastel inherited from the ring's center color (same hue), with warm wood undertones and cream highlights.
-- Mood : minimaliste premium, éditorial luxe moderne, organique et harmonieux.
-- Style references : éditorial luxe moderne, macro 85mm f/2.8 aesthetic, premium product photography Pinterest style.
-
-ACTION-SPECIFIC ADAPTATIONS :
-- IF the action is a COFFRET / BOX shot : the white coffret on the warm light wood surface, soft diffuse light, blurred pastel ring bokeh in background.
-- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with warm light wood surface + soft pastel ring bokeh in deep background (anneaux assortis identiques à la bague centrale, sans métal visible, debout/couchés, naturellement dispersés), shallow DOF, ring sharp in foreground.
-- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
-
-🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
-- The ring DOMINATES the composition — it fills 70-85% of the frame width.
-- Macro 85mm f/2.8 aesthetic — tight close-up with shallow DOF.
-- The pastel ring bokeh decor is a SUPPORTING BACKDROP, heavily blurred, occupying ONLY the negative space.
-- The ring is the absolute focus subject — perfectly sharp, crisp on the front.
-- Camera : zoom in tight, macro precision. Pastel decor is silent organic harmony, never competing.`,
-
-  "beton": `
-
-═══════════════════════════════════════════
-🎨 GLOBAL THEME OVERRIDE — "BÉTON" (luxe urbain minéral / sculpté à la main)
-═══════════════════════════════════════════
-
-Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
-
-VISUAL DIRECTION :
-- Setting : Studio photo minimaliste SOMBRE, textures métalliques organiques et SCULPTÉES À LA MAIN, inspiration ROCHE BRUTE et matière fondue.
-- Fond : BÉTON ANTHRACITE TEXTURÉ (relief minéral subtil, dark gray cement wall with organic imperfections).
-- Light : lumière CINÉMATOGRAPHIQUE DOUCE, single soft directional light from the side, creating gentle moody shadows.
-- Shadows : delicate cinematic falloff, no harsh contrast, moody premium.
-- Color palette : ANTHRACITE / DARK GRAY / CEMENT / minéral noir, with touches of warm metal highlights on the ring (gold / silver / copper depending on source).
-- Mood : luxe artisanal, moderne et minéral, sculptural, premium urban, contemporary craft.
-- Style references : Bottega Veneta architectural editorial, Maison Margiela material study, premium concrete craft.
-- Composition : sobre et élégante, sculptural, beaucoup d'espace négatif.
-
-ACTION-SPECIFIC ADAPTATIONS :
-- IF the action is a COFFRET / BOX shot : the white coffret on the dark anthracite concrete surface, soft cinematic side light, gentle shadow, moody minéral mood.
-- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace neutral background with anthracite concrete texture, the ring resting on a sculpted hand-crafted metallic / stone surface (organic relief), soft cinematic side light, gentle moody shadow.
-- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
-
-🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
-- The ring DOMINATES the composition — it fills 70-85% of the frame width.
-- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot.
-- The concrete / sculpted minéral decor is a SUPPORTING BACKDROP, occupying ONLY the corners and negative space.
-- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
-- Camera : zoom in tight, macro precision. Minéral architectural decor is silent luxury, never competing.`,
+Studio photo minimaliste sombre, textures métalliques organiques et sculptées à la main, inspiration roche brute et matière fondue, fond béton anthracite texturé, lumière cinématographique douce, ambiance luxe artisanale, esthétique moderne et minérale, rendu premium photoréaliste, composition sobre et élégante.`,
 
   "zanzibar": `
 
@@ -381,37 +281,9 @@ ACTION-SPECIFIC ADAPTATIONS :
 - For worn-ring shots : the ring + hand + portion of skin/fabric near the ring fill the frame ; the model's body, leaves, and tropical context are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO.
 - Camera : zoom in tight, macro precision on the ring details. Background vegetation is silent luxury organic, never competing.`,
 
-  "terre-olive": `
+  "terre-olive": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-═══════════════════════════════════════════
-🎨 GLOBAL THEME OVERRIDE — "TERRE OLIVE" (Jacquemus / Bottega editorial — silent luxury)
-═══════════════════════════════════════════
-
-Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition (which subject is photographed, framing, ring centrality).
-
-VISUAL DIRECTION :
-- Setting : ultra-minimalist editorial backdrop — uniform textured surface in soft OLIVE / warm BEIGE SAND / IVORY tones (smooth plaster, raw paper, matte wall). Just one calm tone.
-- Light : LATE AFTERNOON NATURAL DIRECTIONAL LIGHT from the side, warm and cinematographic, creating DEEP GRAPHIC SHADOWS on the surface.
-- Shadows : signature Jacquemus / Bottega — bold hard-edged shadow shapes projected on the backdrop. High contrast between sunlit zones and shadow zones. Often a SOFT BLURRED LEAF SHADOW or vegetal silhouette in the background acts as the only decorative element.
-- Color palette : olive doux / muted olive green, warm beige sand, ivory, warm cream, soft brown — with deep shadow zones. NO white seamless studio backdrop.
-- Mood : SILENT LUXURY, calm, organic, modern, cinematic, contemplative, sophisticated minimalism.
-- Style references : Jacquemus campaign, Bottega Veneta editorial, Khaite minimal, The Row silent luxury, high-end jewelry magazine.
-- Decor accent (subtle, blurred, MAX ONE element per shot) : an out-of-focus leaf, a vegetal shadow on the wall, a smooth matte surface with relief, a water reflection, or just a play of light. NEVER cluttered.
-- Composition : ULTRA MINIMALIST, lots of negative space, total focus on the jewelry.
-
-ACTION-SPECIFIC ADAPTATIONS :
-- IF the action is a WORN-RING shot (hand / body model) : the model is ASIAN, with LONG SMOOTH BLACK HAIR, BARE SHOULDER VISIBLE, wearing a FLUID FLOWING WHITE COTTON BLOUSE (like a soft scarf — drape, soft movement, off-shoulder). NATURAL CLEAN MANICURE (subtle nude polish). Skin lit warmly by late afternoon directional light, deep graphic shadows on the body and blouse. Hand gracefully posed near the collarbone / shoulder, the RING is the absolute focus. Hair drapes naturally on one side.
-- IF the action is a COFFRET / BOX shot : the coffret interior catches warm directional light, deep clean shadow on one side of the box, olive/beige tinted highlights. White leatherette interior is still white but warmly lit.
-- IF the action is a STUDIO / OBJECT shot (Fond blanc, Fond anthracite, Amélioration, Lumière contraste, Style photographe Mood) : replace the neutral background with a textured olive / beige / ivory wall surface, optional out-of-focus leaf shadow on the wall, ring resting on a matching matte surface in the foreground, warm directional side light, deep graphic shadow cast by the ring.
-- The ring itself is NEVER modified — same shape, color, material, finish, gemstones.
-
-🔍 FRAMING — RING IS THE HERO, BIG IN THE FRAME (CRITICAL) :
-- The ring DOMINATES the composition — it fills 70-85% of the frame width.
-- This is a TIGHT MACRO / CLOSE-UP shot, like a luxury jewelry magazine product hero shot. NOT a wide editorial portrait with a small ring inside.
-- The olive/beige decor is a SUPPORTING BACKDROP, occupying ONLY the corners, edges, and negative space around the ring.
-- The ring is the absolute focus subject — perfectly sharp, perfectly lit.
-- For worn-ring shots : the ring + hand + portion of skin/blouse near the ring fill the frame ; the model's body/shoulder/hair are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO.
-- Camera : zoom in tight on the ring. The decor is silent luxury minimalism, never competing.`,
+Photographie éditoriale minimaliste de bijoux de luxe, ambiance très épurée et sophistiquée. Fond uni texturé dans des tons olive doux, beige sable ou ivoire chaud. Lumière naturelle directionnelle de fin de journée créant des ombres profondes et graphiques. Esthétique inspirée de Jacquemus, Bottega Veneta et campagnes joaillerie haut de gamme. Bijoux mis en scène avec très peu d'éléments : une feuille floue, une ombre végétale, une surface mate, un reflet dans l'eau ou un simple jeu de lumière. Composition ultra minimaliste avec beaucoup d'espace vide, focus total sur le bijou. Atmosphère calme, organique, moderne et luxueuse. Rendu photo éditorial premium, ultra réaliste, lumière chaude et cinématographique, profondeur de champ douce, détails précieux, esthétique luxe silencieux et contemporain.`,
 
   "terre-dombre": `
 
@@ -536,89 +408,31 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
 // Prompts portée VERSION HOMME (utilisée quand gender = "homme" et le thème a une variante homme dédiée).
 // Si gender = "femme" ou "auto" ou que le thème n'a pas de variante homme, on retombe sur THEME_PORTEE_PROMPTS (version féminine par défaut).
 export const THEME_PORTEE_PROMPTS_HOMME: Record<string, string> = {
-  "in-the-mood-for": `🚨 PHOTO EDITORIALE BAGUE PORTÉE HOMME — THÈME IN THE MOOD FOR (soft luxury cosy masculin)
+  "in-the-mood-for": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+Photo lifestyle éditoriale moderne, homme bronzé, poings tendus vers l'objectif devant le visage pour le cacher partiellement, focus ultra net sur les mains au premier plan, visage et arrière-plan fortement flous, profondeur de champ très faible avec bokeh doux et crémeux, lumière naturelle diffuse et chaleureuse, ambiance cosy et premium, vêtements doux beige nude, esthétique minimaliste, pose confiante et moderne, style Pinterest luxe, rendu photoréaliste, ombres délicates, cadrage immersif centré sur les mains, objectif portrait 85mm, ambiance douce et tendance. (Pas de manucure.)`,
 
-Compose a high-end lifestyle WORN-RING photograph in soft luxury masculine visual language :
+  "beton": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-Photo LIFESTYLE ÉDITORIALE MODERNE. HOMME BRONZÉ aux mains soignées (ongles courts, propres, NATURELS — PAS DE MANUCURE FRENCH, peau saine légèrement bronzée). POINGS TENDUS VERS L'OBJECTIF devant le visage pour le CACHER PARTIELLEMENT.
-
-Focus ULTRA NET sur les mains au PREMIER PLAN. Visage et arrière-plan FORTEMENT FLOUS. Profondeur de champ très faible avec bokeh DOUX ET CRÉMEUX. Lumière naturelle DIFFUSE ET CHALEUREUSE. Ambiance COSY ET PREMIUM.
-
-Vêtements DOUX BEIGE NUDE (sweat oversize beige, lin clair, knit crème — soft warm neutrals). Esthétique MINIMALISTE et raffinée. Pose CONFIANTE ET MODERNE. Style Pinterest LUXE. Rendu photoréaliste. Ombres délicates. Cadrage immersif centré sur les mains. Objectif portrait 85mm. Ambiance douce et tendance.
-
-🔍 FRAMING : focus principal sur les mains et la bague (ring ~70-85% of frame width), visage flou en arrière-plan, the RING REMAINS THE HERO, perfectly sharp.`,
-
-  "beton": `🚨 PHOTO EDITORIALE BAGUE PORTÉE HOMME — THÈME BÉTON (luxe urbain minéral)
-
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
-
-Compose a high-end editorial WORN-RING photograph in masculine urban moody visual language :
-
-Editorial masculin minimaliste. LUMIÈRE NATURELLE TAMISÉE, ambiance MOODY ET ÉLÉGANTE. HOMME élégant portant des vêtements OVERSIZE TEXTURÉS dans des TONS TERREUX ET NEUTRES (taupe, beige sombre, gris ardoise, noir mat — pull en maille épaisse, manteau structuré, ou chemise lin froissée).
-
-Cadrage FOCUS MAINS ET TORSE (pas le visage en gros plan, juste mains + manche + buste hors-focus). Esthétique luxe contemporaine, style urbain raffiné. Rendu cinématographique photoréaliste. Fond ÉPURÉ SOMBRE (anthracite, béton, mur minéral). Attitude calme et confiante.
-
-🔍 FRAMING : the ring + hand + portion of fabric sleeve / wrist near the ring fill the frame (ring ~70-85% of frame width). The man's body / oversize textured clothing are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+Editorial masculin minimaliste, lumière naturelle tamisée, ambiance moody et élégante, vêtements oversize texturés dans des tons terreux et neutres, cadrage focus mains et torse, esthétique luxe contemporaine, style urbain raffiné, rendu cinématographique photoréaliste, fond épuré sombre, attitude calme et confiante.`,
 };
 
 export const THEME_PORTEE_PROMPTS: Record<string, string> = {
-  "lifestyle": `🚨 PHOTO LIFESTYLE BAGUE PORTÉE — THÈME LIFESTYLE (voyage spontané authentique)
+  "lifestyle": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+Photo lifestyle spontanée prise à la main, main tendue vers le paysage ou l'environnement, focus naturel sur la main au premier plan avec arrière-plan vivant et immersif, ambiance authentique "daily life", lumière naturelle réelle, style photo souvenir premium, esthétique Pinterest lifestyle, cadrage simple et spontané comme une photo prise sur le moment avec smartphone, profondeur légère naturelle, environnement légèrement flou mais reconnaissable, rendu photoréaliste, ambiance voyage et moments de vie, composition décontractée et organique, lumière extérieure réaliste, style non studio, sensation de vrai instant capturé.`,
 
-Compose a lifestyle WORN-RING photograph in authentic spontaneous visual language :
+  "in-the-mood-for": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-Photo LIFESTYLE SPONTANÉE prise à la main. MAIN TENDUE VERS LE PAYSAGE ou l'ENVIRONNEMENT (la main au premier plan avec le paysage vivant en arrière-plan — terrasse vue mer, café, montagne, rue urbaine, plage, intérieur cozy, selon ce qui fait sens).
+Photo lifestyle éditoriale moderne, belle femme bronzée, ongles manucurés forme amande avec French élégante, petit tatouage discret au doigt, poings tendus vers l'objectif devant le visage pour le cacher partiellement, focus ultra net sur les mains au premier plan, visage et arrière-plan fortement flous, profondeur de champ très faible avec bokeh doux et crémeux, lumière naturelle diffuse et chaleureuse, ambiance cosy et premium, vêtements doux beige nude, esthétique minimaliste et féminine, pose confiante et moderne, style Pinterest luxe, rendu photoréaliste, ombres délicates, cadrage immersif centré sur les mains, objectif portrait 85mm, ambiance douce et tendance.`,
 
-Focus NATUREL sur la main au PREMIER PLAN avec arrière-plan VIVANT ET IMMERSIF. Ambiance authentique "DAILY LIFE". Lumière NATURELLE RÉELLE (sun, golden hour, overcast — selon contexte). Style photo SOUVENIR PREMIUM, esthétique Pinterest lifestyle.
+  "pastel": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-Cadrage SIMPLE ET SPONTANÉ comme une photo prise sur le moment avec smartphone (mais qualité premium). Profondeur légère naturelle. Environnement légèrement flou mais RECONNAISSABLE. Rendu photoréaliste. Ambiance VOYAGE ET MOMENTS DE VIE. Composition décontractée et organique. Lumière extérieure réaliste. Style NON STUDIO. Sensation de vrai instant capturé.
+Photo lifestyle urbaine moderne, cadrage dynamique en perspective avec les poings tendus vers l'objectif, focus net sur les mains au premier plan et arrière-plan volontairement flou, profondeur de champ très faible avec bokeh doux, attitude confiante et playful, lumière naturelle douce légèrement cinématographique, ambiance streetwear minimaliste, hoodie oversize pastel, esthétique moderne et tendance, style éditorial Pinterest premium, composition immersive avec effet de profondeur, rendu photoréaliste, ombres douces, ambiance jeune et cool, focus principal sur les mains et les détails au premier plan, arrière-plan flou artistique.`,
 
-🔍 FRAMING : the ring + hand + portion of skin near the ring fill the frame (ring ~70-85% of frame width). The environment (paysage, café, rue, intérieur) is supporting, soft-focused but recognizable — the RING REMAINS THE HERO, perfectly sharp.`,
+  "beton": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-  "in-the-mood-for": `🚨 PHOTO EDITORIALE BAGUE PORTÉE FEMME — THÈME IN THE MOOD FOR (soft luxury cosy féminin)
-
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
-
-Compose a high-end lifestyle WORN-RING photograph in soft luxury feminine visual language :
-
-Photo LIFESTYLE ÉDITORIALE MODERNE. BELLE FEMME BRONZÉE. ONGLES MANUCURÉS forme AMANDE avec FRENCH ÉLÉGANTE (nude pink base + fine white tip). Petit TATOUAGE DISCRET au doigt (tiny minimal tattoo, very subtle).
-
-POINGS TENDUS VERS L'OBJECTIF devant le visage pour le CACHER PARTIELLEMENT. Focus ULTRA NET sur les mains au PREMIER PLAN, visage et arrière-plan FORTEMENT FLOUS. Profondeur de champ très faible avec bokeh DOUX ET CRÉMEUX.
-
-Lumière naturelle DIFFUSE ET CHALEUREUSE. Ambiance COSY ET PREMIUM. Vêtements DOUX BEIGE NUDE (knit cream, lin clair, soft cashmere beige). Esthétique MINIMALISTE ET FÉMININE. Pose CONFIANTE ET MODERNE. Style Pinterest LUXE. Rendu photoréaliste. Ombres délicates. Cadrage immersif centré sur les mains. Objectif portrait 85mm. Ambiance douce et tendance.
-
-🔍 FRAMING : focus principal sur les mains et la bague (ring ~70-85% of frame width), visage flou en arrière-plan, the RING REMAINS THE HERO, perfectly sharp, with French manicure visible on the fingers.`,
-
-  "pastel": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME PASTEL (streetwear hoodie pastel premium)
-
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
-
-Compose a high-end lifestyle WORN-RING photograph in modern streetwear visual language :
-
-Photo LIFESTYLE URBAINE MODERNE. CADRAGE DYNAMIQUE EN PERSPECTIVE avec les POINGS TENDUS VERS L'OBJECTIF (modèle tend les poings/mains en direction de la caméra, vue immersive forced-perspective).
-
-Focus NET sur les mains au PREMIER PLAN, arrière-plan volontairement FLOU. Profondeur de champ très faible avec BOKEH DOUX. Attitude CONFIANTE ET PLAYFUL. Lumière naturelle douce légèrement cinématographique.
-
-Ambiance STREETWEAR MINIMALISTE. HOODIE OVERSIZE PASTEL (sweat à capuche large, couleur pastel douce — rose poudré, lavande, bleu pâle, mint, beige cream, jaune doux — coordonné à la couleur de la bague centrale).
-
-Esthétique MODERNE ET TENDANCE, style éditorial Pinterest premium. Composition immersive avec effet de profondeur. Rendu photoréaliste. Ombres douces. Ambiance JEUNE ET COOL.
-
-🔍 FRAMING : focus principal sur les mains et les détails au premier plan (ring ~70-85% of frame width), arrière-plan flou artistique (modèle, hoodie pastel partiellement out-of-focus) — the RING REMAINS THE HERO, perfectly sharp.`,
-
-  "beton": `🚨 PHOTO EDITORIALE BAGUE PORTÉE FEMME — THÈME BÉTON (luxe urbain chic)
-
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
-
-Compose a high-end editorial WORN-RING photograph in feminine urban chic visual language :
-
-Editorial fashion lifestyle. FEMME ÉLÉGANTE style URBAIN CHIC. TOP NOIR MINIMALISTE (débardeur, top satin noir, ou tee-shirt structuré noir mat). Lumière DOUCE ET SOMBRE, ambiance LUXE MODERNE. Accumulation de BIJOUX FINS ET AUDACIEUX possible (mais discrète — la bague Mood reste hero).
-
-Pose naturelle (miroir, ou cadrage rapproché main / poignet près du visage). Esthétique PINTEREST PREMIUM, rendu cinématographique photoréaliste. FOND DISCRET ET FLOU (anthracite, béton, intérieur sombre minimaliste). Style sophistiqué et tendance.
-
-🔍 FRAMING : the ring + hand + portion of black top / skin near the ring fill the frame (ring ~70-85% of frame width). The woman's body / dark background are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+Editorial fashion lifestyle, femme élégante style urbain chic, top noir minimaliste, lumière douce et sombre, ambiance luxe moderne, accumulation de bijoux fins et audacieux, pose naturelle miroir ou cadrage rapproché, esthétique Pinterest premium, rendu cinématographique photoréaliste, fond discret et flou, style sophistiqué et tendance.`,
 
   "zanzibar": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME ZANZIBAR (luxe minimaliste océan / coquillage)
 
@@ -642,17 +456,9 @@ Femme à la peau bronzée, épaule dénudée. Lumière dorée de fin de journée
 
 🔍 FRAMING : the ring + hand + portion of skin near the ring fill the frame (ring ~70-85% of frame width). The model's body, shoulder, decor are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO, perfectly sharp. Magazine print quality.`,
 
-  "terre-olive": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME TERRE OLIVE (Bottega / Khaite silent luxury)
+  "terre-olive": `Preserve this Mood Collection ring pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo, perfectly sharp.
 
-The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
-
-Compose a high-end editorial WORN-RING photograph in silent luxury visual language :
-
-Femme asiatique, longs cheveux noirs lisses. Photographie éditoriale minimaliste de bijoux de luxe, ambiance très épurée et sophistiquée. Lumière naturelle directionnelle de fin de journée créant des ombres profondes et graphiques. Esthétique inspirée de Jacquemus, Bottega Veneta et campagnes joaillerie haut de gamme. Composition ultra minimaliste avec beaucoup d'espace vide, focus total sur le bijou. Atmosphère calme, organique, moderne et luxueuse. Rendu photo éditorial premium, ultra réaliste, lumière chaude et cinématographique, profondeur de champ douce, détails précieux, esthétique luxe silencieux et contemporain.
-
-TENUE : blouse très fluide (comme un foulard) avec mouvement en coton blanc. Épaule dénudée. MANUCURE : naturel très soignée.
-
-🔍 FRAMING : ZOOM sur la bague — the ring + hand + portion of skin/blouse near the ring fill the frame (ring ~70-85% of frame width). The model's body, hair, blouse are supporting, partially out of frame, soft-focused — the RING REMAINS THE HERO, perfectly sharp. Magazine print quality.`,
+femme asiatique, longs cheveux noirs lisses. Photographie éditoriale minimaliste de bijoux de luxe, ambiance très épurée et sophistiquée. Lumière naturelle directionnelle de fin de journée créant des ombres profondes et graphiques. Esthétique inspirée de Jacquemus, Bottega Veneta et campagnes joaillerie haut de gamme. Composition ultra minimaliste avec beaucoup d'espace vide, focus total sur le bijou. Atmosphère calme, organique, moderne et luxueuse. Rendu photo éditorial premium, ultra réaliste, lumière chaude et cinématographique, profondeur de champ douce, détails précieux, esthétique luxe silencieux et contemporain. Tenue : blouse très fluide (comme un foulard) avec mouvement en coton blanc, épaule dénudée, manucure naturel très soignée. Zoom sur la bague.`,
 
   "tropical": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME TROPICAL (Jacquemus / Saint Laurent jungle)
 
