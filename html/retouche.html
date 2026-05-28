@@ -130,11 +130,146 @@
 </head>
 <body>
 
-<header>
+<header style="position:relative;">
   <a href="/" class="retour">← Atelier</a>
   <h1>📷 Retouche photo IA</h1>
   <div class="sous-titre">Upload une photo · 4 retouches automatiques disponibles · IA Gemini Image</div>
+  <button onclick="ouvrirPromptsModal()" style="position:absolute;top:1rem;right:1rem;background:#fff;border:1px solid #d4a017;color:#5c4400;padding:0.4rem 0.8rem;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">📋 Voir les prompts</button>
 </header>
+
+<!-- Modale Prompts -->
+<div id="prompts-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:2rem;">
+  <div style="background:white;width:100%;max-width:1100px;max-height:90vh;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:1rem 1.5rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+      <h2 style="margin:0;font-size:1.1rem;">📋 Prompts utilisés par l'app</h2>
+      <button onclick="fermerPromptsModal()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#666;">✕</button>
+    </div>
+    <div id="prompts-tabs" style="display:flex;gap:0.3rem;padding:0.6rem 1.5rem;border-bottom:1px solid #eee;background:#fafafa;flex-wrap:wrap;">
+      <button class="prompts-tab active" data-tab="actions" onclick="activerOnglet('actions')">🎨 Actions retouche</button>
+      <button class="prompts-tab" data-tab="ambiance" onclick="activerOnglet('ambiance')">🌸 Ambiance / Objet</button>
+      <button class="prompts-tab" data-tab="portee-f" onclick="activerOnglet('portee-f')">💍 Portée femme</button>
+      <button class="prompts-tab" data-tab="portee-h" onclick="activerOnglet('portee-h')">👔 Portée homme</button>
+    </div>
+    <div id="prompts-content" style="flex:1;overflow-y:auto;padding:1rem 1.5rem;">
+      <div style="color:#999;text-align:center;padding:2rem;">Chargement…</div>
+    </div>
+  </div>
+</div>
+<style>
+  .prompts-tab {
+    background:white; border:1px solid #ddd; padding:0.4rem 0.9rem;
+    border-radius:6px; font-size:0.82rem; cursor:pointer; font-weight:500;
+    color:#666;
+  }
+  .prompts-tab:hover { border-color: #d4a017; color: #5c4400; }
+  .prompts-tab.active {
+    background: #5c4400; border-color: #5c4400; color: white;
+  }
+  .prompt-card {
+    border:1px solid #eee; border-radius:8px; margin-bottom:0.8rem;
+    background:#fafafa;
+  }
+  .prompt-card-header {
+    padding:0.6rem 0.9rem; background:#fff8e1; border-bottom:1px solid #f0e0a0;
+    border-radius:8px 8px 0 0; display:flex; justify-content:space-between;
+    align-items:center;
+  }
+  .prompt-card-label { font-weight:600; color:#5c4400; font-size:0.92rem; }
+  .prompt-card-key { font-size:0.72rem; color:#999; font-family: monospace; }
+  .prompt-card-actions { display:flex; gap:0.3rem; }
+  .prompt-copy-btn {
+    background:#fff; border:1px solid #d4a017; color:#5c4400; padding:0.2rem 0.6rem;
+    border-radius:4px; font-size:0.72rem; cursor:pointer; font-weight:500;
+  }
+  .prompt-copy-btn:hover { background:#d4a017; color:white; }
+  .prompt-card-body {
+    padding:0.8rem 1rem; font-size:0.82rem; line-height:1.45; color:#333;
+    white-space: pre-wrap; font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    max-height: 400px; overflow-y: auto;
+  }
+</style>
+<script>
+let _promptsData = null;
+
+async function ouvrirPromptsModal() {
+  document.getElementById('prompts-modal').style.display = 'flex';
+  if (!_promptsData) {
+    try {
+      const r = await fetch('/api/retouche-prompts', { cache: 'no-store' });
+      _promptsData = await r.json();
+    } catch (e) {
+      document.getElementById('prompts-content').innerHTML = '<div style="color:#c00;text-align:center;padding:2rem;">Erreur de chargement</div>';
+      return;
+    }
+  }
+  activerOnglet('actions');
+}
+
+function fermerPromptsModal() {
+  document.getElementById('prompts-modal').style.display = 'none';
+}
+
+function activerOnglet(tab) {
+  document.querySelectorAll('.prompts-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (!_promptsData) return;
+  let liste = [];
+  if (tab === 'actions') liste = _promptsData.actions;
+  else if (tab === 'ambiance') liste = _promptsData.themesAmbiance;
+  else if (tab === 'portee-f') liste = _promptsData.themesPorteeFemme;
+  else if (tab === 'portee-h') liste = _promptsData.themesPorteeHomme;
+
+  const c = document.getElementById('prompts-content');
+  if (!liste || liste.length === 0) {
+    c.innerHTML = '<div style="color:#999;text-align:center;padding:2rem;">Aucun prompt dans cette catégorie</div>';
+    return;
+  }
+  c.innerHTML = liste.map((p, i) => `
+    <div class="prompt-card">
+      <div class="prompt-card-header">
+        <div>
+          <div class="prompt-card-label">${escapeP(p.label)}</div>
+          <div class="prompt-card-key">${escapeP(p.key)}</div>
+        </div>
+        <div class="prompt-card-actions">
+          <button class="prompt-copy-btn" onclick="copierPrompt(${i})" id="copy-btn-${i}">📋 Copier</button>
+        </div>
+      </div>
+      <div class="prompt-card-body">${escapeP(p.prompt)}</div>
+    </div>
+  `).join('');
+  window._currentList = liste;
+}
+
+function escapeP(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function copierPrompt(i) {
+  const liste = window._currentList || [];
+  const p = liste[i];
+  if (!p) return;
+  try {
+    await navigator.clipboard.writeText(p.prompt);
+    const btn = document.getElementById('copy-btn-' + i);
+    if (btn) {
+      const old = btn.textContent;
+      btn.textContent = '✓ Copié !';
+      btn.style.background = '#2D8A4E';
+      btn.style.color = 'white';
+      setTimeout(() => { btn.textContent = old; btn.style.background = ''; btn.style.color = ''; }, 1500);
+    }
+  } catch (e) {
+    alert('Impossible de copier dans le presse-papier');
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fermerPromptsModal();
+});
+document.getElementById('prompts-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'prompts-modal') fermerPromptsModal();
+});
+</script>
 
 <!-- Compteur conso Gemini Image (mois en cours) -->
 <div id="gemini-stats-widget" style="background:#fff8e1;border:1px solid #f4d35e;border-radius:10px;padding:0.6rem 1rem;margin:0.8rem auto;max-width:900px;font-size:0.85rem;color:#5a4f00;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
