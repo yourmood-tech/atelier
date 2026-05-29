@@ -4,11 +4,23 @@ import type { Ecriture } from "@/lib/wineur/accounting";
 
 const API_V = "2025-01";
 
-// Toutes les boutiques configurées
+// Toutes les boutiques configurées — supporte les deux noms de variables (local + Vercel)
 const STORES = [
-  { name: "yourmood",    shop: process.env.SHOPIFY_PAYOUTS_SHOP!,     token: process.env.SHOPIFY_PAYOUTS_TOKEN! },
-  { name: "joaillerie",  shop: process.env.SHOPIFY_JOAILLERIE_SHOP!,  token: process.env.SHOPIFY_JOAILLERIE_TOKEN! },
-  { name: "marketplace", shop: process.env.SHOPIFY_MARKETPLACE_SHOP!, token: process.env.SHOPIFY_MARKETPLACE_TOKEN! },
+  {
+    name:  "yourmood",
+    shop:  process.env.SHOPIFY_PAYOUTS_SHOP   || process.env.MOOD_SHOPIFY_DOMAIN!,
+    token: process.env.SHOPIFY_PAYOUTS_TOKEN  || process.env.MOOD_SHOPIFY_ACCESS_TOKEN!,
+  },
+  {
+    name:  "joaillerie",
+    shop:  process.env.SHOPIFY_JOAILLERIE_SHOP  || process.env.MOODJOAILLERIE_SHOPIFY_DOMAIN!,
+    token: process.env.SHOPIFY_JOAILLERIE_TOKEN || process.env.MOODJOAILLERIE_SHOPIFY_ACCESS_TOKEN!,
+  },
+  {
+    name:  "marketplace",
+    shop:  process.env.SHOPIFY_MARKETPLACE_SHOP  || process.env.MOODMARKETPLACE_SHOPIFY_DOMAIN!,
+    token: process.env.SHOPIFY_MARKETPLACE_TOKEN || process.env.MOODMARKETPLACE_SHOPIFY_ACCESS_TOKEN!,
+  },
 ].filter(s => s.shop && s.token);
 
 async function shopifyGet(shop: string, token: string, path: string) {
