@@ -50,11 +50,10 @@ OBJECTIF : générer un méta-titre + une méta-description qui maximisent le r�
 
 POOL DE MOTS-CLÉS PRIORITAIRES (intègre les 3-5 plus pertinents) :
 ${motsClesFR.map((k) => `- ${k}`).join("\n")}
-- haute joaillerie suisse
+- haute joaillerie
 - bague joaillerie
 - bague sertie
 - pierre précieuse
-- design suisse
 - mood joaillerie
 
 CONTRAINTES STRICTES :
@@ -68,7 +67,7 @@ CONTRAINTES STRICTES :
 EXEMPLE DE QUALITÉ ATTENDUE (medium serti d'émeraudes 1.6mm en or rose 18K) :
 {
   "title": "Medium serti émeraudes 1.6mm or rose 18K | mood joaillerie",
-  "description": "Medium en or rose 18K serti d'émeraudes 1.6mm sertissage grain. Pièce signée mood joaillerie, design suisse. Sertissage joaillier."
+  "description": "Medium en or rose 18K serti d'émeraudes 1.6mm sertissage grain. Pièce signée mood joaillerie. Sertissage joaillier."
 }
 
 PRODUIT À RÉFÉRENCER :
@@ -89,7 +88,7 @@ CONTRAINTES STRICTES :
 - Méta-titre : 50 à 60 caractères MAX (Google coupe au-delà)
 - Méta-description : 140 à 155 caractères MAX (Google coupe au-delà)
 - Inclure obligatoirement : nom du produit, format, matière, "mood" ou "Mood Collection"
-- Mentionner "design suisse" si pertinent (NE JAMAIS écrire "fabriqué en Suisse" ni "joaillerie suisse Mood Collection" — certains produits ne sont pas fabriqués en Suisse, seul le design est suisse)
+- NE JAMAIS écrire "fabriqué en Suisse", "joaillerie suisse Mood Collection", "design suisse" ni "garantie à vie" dans la description
 - 3-5 mots-clés du pool intégrés NATURELLEMENT (pas de stuffing — phrases lisibles)
 - Ton attractif qui donne envie de cliquer (minimaliste contemporain)
 - Pas de superlatifs creux ("incroyable", "exceptionnel", "magnifique")
@@ -99,7 +98,7 @@ CONTRAINTES STRICTES :
 EXEMPLE DE QUALITÉ ATTENDUE (pour un deux tiers Nirvana en argent poli) :
 {
   "title": "Bague mood Nirvana — deux tiers argent | Mood Collection",
-  "description": "Anneau deux tiers Nirvana en argent 925 poli. Bague interchangeable Mood Collection, design suisse. Garantie à vie."
+  "description": "Anneau deux tiers Nirvana en argent 925 poli. Bague interchangeable Mood Collection. Système breveté à clic."
 }
 
 PRODUIT À RÉFÉRENCER :

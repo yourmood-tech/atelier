@@ -105,11 +105,6 @@ ${
 </ul>`
     : ""
 }
-<h3>Caractéristiques</h3>
-<ul>
-  <li>Garantie à vie</li>
-  <li>Design suisse</li>
-</ul>
 <h3>Précautions et informations</h3>
 <p>Nous vous rendons attentifs au fait que la couleur de l'addon et de ses dessins peuvent varier selon la lumière.</p>`;
 }
@@ -202,7 +197,7 @@ export function construirePayloadCoffret(
       composants
         ? composants.replace(/\n/g, " ").slice(0, 100)
         : "Composition mood unique"
-    }. Mood Collection, design suisse.`.slice(0, 160),
+    }. Mood Collection.`.slice(0, 160),
   };
 
   return {

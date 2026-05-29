@@ -76,11 +76,6 @@ export function genererDescriptionPack({
   return `${titreNom}
 ${inspiration}
 ${composantsHtml ? `<h3>Composé de</h3>\n<ul>${composantsHtml}</ul>` : ""}
-<h3>Caractéristiques</h3>
-<ul>
-  <li>Garantie à vie</li>
-  <li>Design suisse</li>
-</ul>
 <h3>Précautions et informations</h3>
 <p>Nous vous rendons attentifs au fait que la couleur de l'addon et de ses dessins peuvent varier selon la lumière.</p>`;
 }
@@ -121,7 +116,7 @@ export function construirePayloadPack(
       composants
         ? composants.replace(/\n/g, " ").slice(0, 100)
         : "Plusieurs addons mood"
-    }. Mood Collection, design suisse.`.slice(0, 160),
+    }. Mood Collection.`.slice(0, 160),
   };
 
   return {

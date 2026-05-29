@@ -398,15 +398,11 @@ export function genererDescription({
     ? `<li>${formatsLabelBase} : ${formatsTexte}</li>
   <li>Matière : ${matiereLabel}</li>
   ${formeBase ? `<li>Forme : ${formeBase}</li>` : ""}
-  ${finitionCouleurTxtBase ? `<li>${finitionCouleurLabelBase} : ${finitionCouleurTxtBase}</li>` : ""}
-  <li>Garantie à vie</li>
-  <li>Design suisse</li>`
+  ${finitionCouleurTxtBase ? `<li>${finitionCouleurLabelBase} : ${finitionCouleurTxtBase}</li>` : ""}`
     : `<li>Format${multiFormats ? "s disponibles" : ""} : ${formatLabel}</li>
   <li>Matière : ${matiereLabel}</li>
   ${couleursList.length > 0 ? `<li>Couleur${couleursList.length > 1 ? "s disponibles" : ""} : ${couleursList.join(", ")}</li>` : ""}
-  ${finitionTxt ? `<li>Finition : ${finitionTxt}</li>` : ""}
-  <li>Garantie à vie</li>
-  <li>Design suisse</li>`;
+  ${finitionTxt ? `<li>Finition : ${finitionTxt}</li>` : ""}`;
 
   return `${titreNomGros}
 ${inspiration}
@@ -434,7 +430,7 @@ export function genererSeo({
   const finitionTxt = finition && finition !== "aucune" ? ` ${finition}` : "";
   return {
     title: `Anneau ${format} "${nom}" en ${matiere}${finitionTxt} — bague mood interchangeable`,
-    description: `Le ${format} ${nom} en ${matiere}${finitionTxt}. À clipser sur une base small, large ou extra small. Garantie à vie, design suisse.`,
+    description: `Le ${format} ${nom} en ${matiere}${finitionTxt}. À clipser sur une base small, large ou extra small.`,
   };
 }
 
