@@ -147,6 +147,19 @@
     { id: 'delivrance',     nom: 'Délivrance',     emoji: '🚚', desc: 'Commandes expédiées, livraisons' }
   ];
 
+  // Conditions disponibles (synchro avec lib/conditions.ts côté serveur)
+  const CONDITIONS_DISPO = [
+    { cle: 'PUISSANCE',      nom: 'Puissance',          emoji: '🟢' },
+    { cle: 'AFFLUENCE',      nom: 'Affluence',          emoji: '🟢' },
+    { cle: 'NORMAL',         nom: 'Normal (Opération)', emoji: '🟡' },
+    { cle: 'URGENCE',        nom: 'Urgence',            emoji: '🟠' },
+    { cle: 'DANGER',         nom: 'Danger',             emoji: '🔴' },
+    { cle: 'NON_EXISTENCE',  nom: 'Non-Existence',      emoji: '⚫' }
+  ];
+
+  // Stat analysée en cours — partagée entre afficherResultat et les boutons édition
+  let dataActuel = null;
+
   // Auth gérée par Google OAuth — initialiser directement
   const sessionUser = (window.__MOOD_USER__ || '');
   if (sessionUser && !localStorage.getItem('mood_nom_complet')) {
@@ -498,6 +511,7 @@
   }
 
   function afficherResultat(data) {
+    dataActuel = data;
     const couleurCondition = {
       'Puissance': 'var(--vert)',
       'Affluence': 'var(--vert)',
@@ -509,11 +523,21 @@
     const couleur = couleurCondition[data.condition.nom] || 'var(--gris)';
     const html = `
       <div style="background:${couleur}1a;border-left:4px solid ${couleur};padding:1rem 1.2rem;border-radius:8px;margin-bottom:1.2rem;">
-        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;">
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem;flex-wrap:wrap;">
           <span class="pilule" style="background:${couleur};color:white;">${data.condition.emoji} ${data.condition.nom}</span>
           <span style="font-size:0.85rem;color:var(--gris);">Variation S-1 → S : <strong>${data.variation_pct > 0 ? '+' : ''}${data.variation_pct}%</strong></span>
+          <button type="button" id="btn-toggle-changer-condition" style="margin:0;padding:0.25rem 0.6rem;width:auto;background:white;color:var(--noir);border:1px solid #ddd;font-size:0.75rem;border-radius:6px;cursor:pointer;">✏️ Pas la bonne ?</button>
         </div>
         <p style="margin:0;font-size:0.95rem;line-height:1.5;">${data.resume || ''}</p>
+
+        <div id="panneau-changer-condition" class="hidden" style="margin-top:0.8rem;padding:0.8rem;background:white;border-radius:8px;border:1px dashed #ccc;">
+          <label style="font-size:0.85rem;display:block;margin-bottom:0.4rem;">Choisis la bonne condition :</label>
+          <select id="sel-condition" style="width:100%;padding:0.5rem;border-radius:6px;border:1px solid #ccc;margin-bottom:0.6rem;font-size:0.9rem;">
+            ${CONDITIONS_DISPO.map(c => `<option value="${c.cle}" ${c.nom === data.condition.nom ? 'selected' : ''}>${c.emoji} ${c.nom}</option>`).join('')}
+          </select>
+          <button type="button" id="btn-confirmer-condition" style="margin:0;width:auto;padding:0.5rem 1rem;background:var(--or);font-size:0.85rem;">🔄 Recalculer la formule et le plan</button>
+          <p style="font-size:0.75rem;color:var(--gris);margin:0.6rem 0 0;">La formule officielle de la condition choisie sera appliquée, et le plan d'action sera réécrit autour.</p>
+        </div>
       </div>
 
       <h3>📊 Stat lue</h3>
@@ -522,7 +546,24 @@
 
       <h3>📋 Formule générale</h3>
       <p style="margin:0.4rem 0;color:var(--gris);font-size:0.9rem;">${data.condition.description}</p>
-      <ol>${data.condition.formule.map(e => `<li>${e}</li>`).join('')}</ol>
+      <ol id="liste-formule">${data.condition.formule.map(e => `<li>${e}</li>`).join('')}</ol>
+      <div style="margin-top:-0.4rem;margin-bottom:0.8rem;">
+        <button type="button" id="btn-toggle-formule" style="margin:0;padding:0.3rem 0.7rem;width:auto;background:white;color:var(--noir);border:1px solid #ddd;font-size:0.78rem;border-radius:6px;cursor:pointer;">✏️ Ma version de la formule</button>
+      </div>
+
+      <div id="panneau-formule" class="hidden" style="margin-bottom:1.2rem;padding:1rem;background:#fff8f0;border:1px solid var(--or);border-radius:8px;">
+        <label style="font-size:0.88rem;display:block;margin-bottom:0.3rem;"><strong>Ta version (édite directement)</strong></label>
+        <p style="font-size:0.75rem;color:var(--gris);margin:0 0 0.4rem;">Une étape par ligne. Tu peux ajouter, retirer, reformuler.</p>
+        <textarea id="ta-formule" rows="${Math.max(4, data.condition.formule.length + 1)}" style="width:100%;padding:0.6rem;border-radius:6px;border:1px solid #ccc;font-size:0.9rem;font-family:inherit;line-height:1.5;box-sizing:border-box;">${data.condition.formule.map(e => '• ' + e).join('\n')}</textarea>
+        <button type="button" id="btn-enregistrer-formule" style="margin:0.5rem 0 0;width:auto;padding:0.5rem 1rem;background:var(--noir);font-size:0.85rem;">💾 Enregistrer ma version</button>
+
+        <div style="margin-top:1rem;padding-top:0.8rem;border-top:1px dashed #ddd;">
+          <label style="font-size:0.88rem;display:block;margin-bottom:0.3rem;"><strong>Ou guide l'IA avec des mots-clés</strong></label>
+          <p style="font-size:0.75rem;color:var(--gris);margin:0 0 0.4rem;">Ex : « stocks bas, focus boutique Zermatt, fin de mois » — l'IA réécrit la formule en intégrant ton contexte.</p>
+          <input type="text" id="mots-cles-formule" placeholder="Tes mots-clés / contexte / contraintes…" style="width:100%;padding:0.5rem;border-radius:6px;border:1px solid #ccc;margin-bottom:0.5rem;font-size:0.9rem;box-sizing:border-box;">
+          <button type="button" id="btn-ameliorer-formule" style="margin:0;width:auto;padding:0.5rem 1rem;background:var(--or);font-size:0.85rem;">✨ Réécrire la formule avec ces mots-clés</button>
+        </div>
+      </div>
 
       <h3>✨ Plan d'action personnalisé Mood</h3>
       <div class="markdown">${marked.parse(data.plan_action || '')}</div>
@@ -564,6 +605,95 @@
     $('resultat-analyse').innerHTML = html;
     $('resultat-analyse').classList.remove('hidden');
     $('resultat-analyse').scrollIntoView({ behavior: 'smooth' });
+
+    // ===== Édition condition =====
+    const btnToggleCond = $('btn-toggle-changer-condition');
+    if (btnToggleCond) {
+      btnToggleCond.addEventListener('click', () => {
+        $('panneau-changer-condition').classList.toggle('hidden');
+      });
+    }
+    const btnConfirmCond = $('btn-confirmer-condition');
+    if (btnConfirmCond) {
+      btnConfirmCond.addEventListener('click', async () => {
+        const cle = $('sel-condition').value;
+        btnConfirmCond.disabled = true;
+        btnConfirmCond.textContent = '⏳ Recalcul…';
+        try {
+          const r = await fetch('/api/stats/changer-condition', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              condition_cle: cle,
+              categorie: categorieActive.id,
+              titre: dataActuel.titre,
+              valeurs: dataActuel.valeurs,
+              variation_pct: dataActuel.variation_pct,
+              notes: $('f-notes').value
+            })
+          });
+          const out = await r.json();
+          if (!r.ok) { alert('Erreur : ' + (out.error || JSON.stringify(out))); return; }
+          dataActuel.condition = out.condition;
+          dataActuel.plan_action = out.plan_action;
+          afficherResultat(dataActuel);
+        } catch (e) {
+          alert('Erreur réseau : ' + e.message);
+        } finally {
+          btnConfirmCond.disabled = false;
+          btnConfirmCond.textContent = '🔄 Recalculer la formule et le plan';
+        }
+      });
+    }
+
+    // ===== Édition formule =====
+    const btnToggleForm = $('btn-toggle-formule');
+    if (btnToggleForm) {
+      btnToggleForm.addEventListener('click', () => {
+        $('panneau-formule').classList.toggle('hidden');
+      });
+    }
+    const btnEnregForm = $('btn-enregistrer-formule');
+    if (btnEnregForm) {
+      btnEnregForm.addEventListener('click', () => {
+        const txt = $('ta-formule').value;
+        const lignes = txt.split('\n')
+          .map(l => l.replace(/^\s*[•\-\*]\s*/, '').replace(/^\s*\d+[\.\)]\s*/, '').trim())
+          .filter(Boolean);
+        if (lignes.length === 0) { alert('La formule ne peut pas être vide.'); return; }
+        dataActuel.condition.formule = lignes;
+        afficherResultat(dataActuel);
+      });
+    }
+    const btnAmeliorForm = $('btn-ameliorer-formule');
+    if (btnAmeliorForm) {
+      btnAmeliorForm.addEventListener('click', async () => {
+        const mots = $('mots-cles-formule').value.trim();
+        if (!mots) { alert('Donne au moins 2-3 mots-clés à l\'IA.'); return; }
+        btnAmeliorForm.disabled = true;
+        btnAmeliorForm.textContent = '⏳ Réécriture…';
+        try {
+          const r = await fetch('/api/stats/ameliorer-formule', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              formule_actuelle: dataActuel.condition.formule,
+              mots_cles: mots,
+              condition_nom: dataActuel.condition.nom,
+              titre: dataActuel.titre,
+              categorie: categorieActive.id
+            })
+          });
+          const out = await r.json();
+          if (!r.ok) { alert('Erreur : ' + (out.error || JSON.stringify(out))); return; }
+          dataActuel.condition.formule = out.formule;
+          afficherResultat(dataActuel);
+        } catch (e) {
+          alert('Erreur réseau : ' + e.message);
+        } finally {
+          btnAmeliorForm.disabled = false;
+          btnAmeliorForm.textContent = '✨ Réécrire la formule avec ces mots-clés';
+        }
+      });
+    }
 
     // Brancher le bouton stratégie après rendu
     const btnStrat = $('btn-strategie');
