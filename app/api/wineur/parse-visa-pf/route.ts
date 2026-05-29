@@ -1,39 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
+import { inflateRawSync, inflateSync } from "zlib";
 import { COMPTES, calculTva } from "@/lib/wineur/accounting";
 import type { Ecriture } from "@/lib/wineur/accounting";
 import { getMappings, lookupInMap } from "@/lib/wineur/mappings";
 import type { UnknownEntry } from "@/lib/wineur/mappings";
-import * as pdfParseModule from "pdf-parse";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const pdfParse: (buf: Buffer) => Promise<{ text: string }> = (pdfParseModule as any).default ?? pdfParseModule;
+// ── Extraction texte PDF — retourne toutes les strings dans l'ordre ───────────
+function extractPdfStrings(buffer: Buffer): string[] {
+  const raw = buffer.toString("binary");
+  const allStrings: string[] = [];
+  let pos = 0;
 
+  while (pos < raw.length) {
+    const si = raw.indexOf("stream", pos);
+    if (si === -1) break;
+    const objStart = raw.lastIndexOf("<<", si);
+    const meta = objStart >= 0 ? raw.slice(objStart, si) : "";
+    let cs = si + 6;
+    if (raw[cs] === "\r") cs++;
+    if (raw[cs] === "\n") cs++;
+    const ei = raw.indexOf("endstream", cs);
+    if (ei === -1) break;
+    const streamData = Buffer.from(raw.slice(cs, ei), "binary");
+    pos = ei + 9;
+
+    let streamText = "";
+    if (meta.includes("FlateDecode") || meta.includes("Fl")) {
+      for (const decompress of [inflateSync, inflateRawSync]) {
+        try { streamText = decompress(streamData).toString("utf8"); break; } catch { /* try next */ }
+      }
+    } else {
+      streamText = streamData.toString("utf8");
+    }
+
+    if (!streamText || !streamText.includes("Tj")) continue;
+
+    // Extraire les strings des opérateurs Tj
+    for (const m of streamText.matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)\s*Tj/g)) {
+      const s = m[1]
+        .replace(/\\n/g, "\n").replace(/\\r/g, "\r")
+        .replace(/\\\(/g, "(").replace(/\\\)/g, ")")
+        .replace(/\\\\/g, "\\").trim();
+      if (s) allStrings.push(s);
+    }
+    // Extraire les strings des arrays TJ
+    for (const tj of streamText.matchAll(/\[([^\]]+)\]\s*TJ/g)) {
+      for (const s of tj[1].matchAll(/\(([^)\\]*(?:\\.[^)\\]*)*)\)/g)) {
+        const v = s[1].trim();
+        if (v) allStrings.push(v);
+      }
+    }
+  }
+
+  return allStrings;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const TAUX = 8.1 / 100;
 function r2(n: number) { return Math.round(n * 100) / 100; }
 
 const FOREIGN_CODES = ["IRL", "USA", "DEU", "LUX", "GBR", "EST", "AUT", "FRA", "DNK", "FIN", "NLD", "BEL", "ITA", "ESP"];
-const SKIP_KEYWORDS  = ["recharge", "paiement", "total", "report", "page ", "cours ", "¹", "²", "comptabi", "lisation", "titulaire", "compte de carte", "période", "date de la facture", "solde", "limit", "payable", "veuillez", "conseil"];
+const SKIP_DESCS    = ["recharge en ligne", "recharge", "total des paiements", "report", "total postfinance", "report du solde"];
 
 function normalizeMerchant(text: string): string {
   return text.replace(/'/g, "").replace(/\s+/g, " ")
     .replace(/\s*(CHF|EUR|USD|GBP)\s*[-+]?\d[\d\s.,]*$/i, "").trim().toLowerCase();
 }
-
 function isPaypalTopup(description: string): boolean {
   return description.toUpperCase().replace(/\s+/g, "").includes("PAYPAL*");
 }
-
 function isExt(description: string): boolean {
   return FOREIGN_CODES.some(c => description.toUpperCase().includes(c));
 }
-
 function parseDate(ddmmyy: string): string {
   const [d, m, y] = ddmmyy.split(".");
   return `20${y}-${m}-${d}`;
 }
-
+function isDate(s: string): boolean {
+  return /^\d{2}\.\d{2}\.\d{2}$/.test(s.trim());
+}
 function cleanAmount(s: string): number {
-  return parseFloat(s.replace(/'/g, "").replace(/,/g, ".")) || 0;
+  return parseFloat(s.replace(/'/g, "").replace(/,/g, ".").replace(/[^\d.-]/g, "")) || 0;
+}
+function isAmount(s: string): boolean {
+  const v = cleanAmount(s);
+  return !isNaN(v) && s.match(/\d/) !== null;
 }
 
 export async function POST(req: NextRequest) {
@@ -41,79 +92,103 @@ export async function POST(req: NextRequest) {
   const file = form.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "Fichier manquant" }, { status: 400 });
 
-  // Charger les mappings fusionnés (statique + KV overrides)
-  const config = await getMappings("postfinance");
-
   const buffer = Buffer.from(await file.arrayBuffer());
-  const { text } = await pdfParse(buffer);
+  const strings = extractPdfStrings(buffer);
 
+  if (strings.length < 10) {
+    return NextResponse.json({ error: "Impossible d'extraire le texte du PDF Visa PostFinance" }, { status: 400 });
+  }
+
+  const config = await getMappings("postfinance");
   const ecritures: Ecriture[] = [];
   const unknowns: UnknownEntry[] = [];
   let imported = 0;
 
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+  // Parcourir les strings en cherchant le pattern : date1, date2, description, montant
+  // Les strings "Recharge" et autres à ignorer = date seule (pas suivie d'une 2ème date)
+  let i = 0;
+  while (i < strings.length) {
+    const s = strings[i];
 
-    const match = trimmed.match(/^(\d{2}\.\d{2}\.\d{2})\s+(\d{2}\.\d{2}\.\d{2})\s+(.+)$/);
-    if (!match) continue;
+    // On cherche deux dates consécutives (Comptabilisation + Achat)
+    if (isDate(s) && i + 1 < strings.length && isDate(strings[i + 1])) {
+      const dateC      = s.trim();
+      // i+1 = date achat, i+2 = description (peut être plusieurs fragments), dernier avant montant = montant
+      // Chercher le montant : premier nombre positif après les deux dates
+      let descParts: string[] = [];
+      let montantStr = "";
+      let j = i + 2;
 
-    const [, dateC, , reste] = match;
-    if (SKIP_KEYWORDS.some(k => reste.toLowerCase().includes(k))) continue;
+      // Collecter la description jusqu'au premier montant positif (nombre sans signe -)
+      while (j < strings.length && j < i + 10) {
+        const candidate = strings[j];
+        if (isDate(candidate)) break; // nouvelle date = fin de cette transaction
+        const amt = cleanAmount(candidate);
+        // Le montant Visa est positif et > 0 (les crédits ont un - donc <= 0)
+        if (candidate.match(/^\d/) && amt > 0 && !isNaN(amt)) {
+          montantStr = candidate;
+          j++;
+          break;
+        }
+        if (candidate.trim()) descParts.push(candidate.trim());
+        j++;
+      }
 
-    const parts     = reste.split(/\s+/);
-    const montantVal = cleanAmount(parts[parts.length - 1]);
-    if (isNaN(montantVal) || montantVal <= 0) continue;
+      const description = descParts.join(" ").trim();
+      const montantVal  = cleanAmount(montantStr);
 
-    const description = parts.slice(0, -1).join(" ").trim();
-    const date        = parseDate(dateC);
-    const lib         = `CC PF: ${normalizeMerchant(description).toUpperCase().slice(0, 35)}`;
+      // Avancer l'index
+      i = j;
 
-    // PAYPAL * → transfert inter-comptes
-    if (isPaypalTopup(description)) {
-      const libPP = `Recharge PayPal CC PF: ${description.slice(0, 30)}`;
-      ecritures.push({ date, compte: "100401", libelle: libPP, montant:  montantVal });
-      ecritures.push({ date, compte: "220001", libelle: libPP, montant: -montantVal });
+      if (!description || montantVal <= 0) continue;
+
+      // Ignorer les lignes de recharge et totaux
+      const descLc = description.toLowerCase();
+      if (SKIP_DESCS.some(k => descLc.includes(k))) continue;
+
+      const date = parseDate(dateC);
+      const lib  = `CC PF: ${normalizeMerchant(description).toUpperCase().slice(0, 35)}`;
+
+      // PAYPAL * → transfert inter-comptes
+      if (isPaypalTopup(description)) {
+        const libPP = `Recharge PayPal CC PF: ${description.slice(0, 30)}`;
+        ecritures.push({ date, compte: "100401", libelle: libPP, montant:  montantVal });
+        ecritures.push({ date, compte: "220001", libelle: libPP, montant: -montantVal });
+        imported++;
+        continue;
+      }
+
+      const cpte = lookupInMap(normalizeMerchant(description), config);
+
+      if (!cpte) {
+        unknowns.push({ key: normalizeMerchant(description), label: description.slice(0, 60), amount: montantVal, date, source: "postfinance" });
+        const tvaAcq = r2(montantVal * TAUX);
+        ecritures.push({ date, compte: "109999",        libelle: `ATTENTE ${lib}`, montant:  montantVal });
+        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA auto-liq. ${lib}`, montant:  tvaAcq });
+        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA auto-liq. ${lib} (due)`, montant: -tvaAcq });
+        ecritures.push({ date, compte: "220001",        libelle: `ATTENTE ${lib}`, montant: -montantVal });
+        imported++;
+        continue;
+      }
+
+      const mode      = isExt(description) ? "EXT" : "CH";
+      const { ht, tva } = calculTva(montantVal);
+      const tvaAcq    = r2(montantVal * TAUX);
+
+      if (mode === "CH") {
+        ecritures.push({ date, compte: "220001",        libelle: lib,                           montant:  montantVal });
+        ecritures.push({ date, compte: cpte,            libelle: `${lib} HT`,                  montant: -ht         });
+        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `${lib} TVA`,                 montant: -tva        });
+      } else {
+        ecritures.push({ date, compte: "220001",        libelle: lib,                           montant:  montantVal });
+        ecritures.push({ date, compte: cpte,            libelle: `${lib} (Acquis.)`,            montant: -montantVal });
+        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA s/acquis. ${lib}`,       montant:  tvaAcq    });
+        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA s/acquis. ${lib} (due)`, montant: -tvaAcq    });
+      }
       imported++;
-      continue;
-    }
-
-    const cpte = lookupInMap(normalizeMerchant(description), config);
-
-    if (!cpte) {
-      // Fournisseur inconnu → signaler pour résolution
-      unknowns.push({
-        key:    normalizeMerchant(description),
-        label:  description.slice(0, 60),
-        amount: montantVal,
-        date,
-        source: "postfinance",
-      });
-      // Enregistrer quand même avec 109999 en attendant
-      const tvaAcq = r2(montantVal * TAUX);
-      ecritures.push({ date, compte: "109999",         libelle: `ATTENTE ${lib}`, montant:  montantVal });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib}`, montant:  tvaAcq  });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib} (due)`, montant: -tvaAcq  });
-      ecritures.push({ date, compte: "220001",         libelle: `ATTENTE ${lib}`, montant: -montantVal });
-      imported++;
-      continue;
-    }
-
-    const mode     = isExt(description) ? "EXT" : "CH";
-    const { ht, tva } = calculTva(montantVal);
-    const tvaAcq   = r2(montantVal * TAUX);
-
-    if (mode === "CH") {
-      ecritures.push({ date, compte: "220001",        libelle: lib,                           montant:  montantVal });
-      ecritures.push({ date, compte: cpte,            libelle: `${lib} HT`,                  montant: -ht         });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `${lib} TVA`,                 montant: -tva        });
     } else {
-      ecritures.push({ date, compte: "220001",        libelle: lib,                           montant:  montantVal });
-      ecritures.push({ date, compte: cpte,            libelle: `${lib} (Acquis.)`,            montant: -montantVal });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA s/acquis. ${lib}`,       montant:  tvaAcq    });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA s/acquis. ${lib} (due)`, montant: -tvaAcq    });
+      i++;
     }
-    imported++;
   }
 
   return NextResponse.json({ ecritures, imported, unknowns });
