@@ -129,6 +129,94 @@ export function makeShopifyClient(domain: string, token: string) {
       if (filename) image.filename = filename;
       return fetch_("POST", `/products/${productId}/images.json`, { image });
     },
+
+    ajouterProduitAUneCollection: async (productId: number, titre: string) => {
+      const titreNorm = titre.trim();
+      if (!titreNorm)
+        return { ok: false, collectionTitre: titre, cree: false, erreur: "titre vide" };
+
+      let existanteId: number | null = null;
+      let existanteType: "custom" | "smart" | null = null;
+
+      const resCustom = await fetch_(
+        "GET",
+        `/custom_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
+      );
+      if (resCustom.ok) {
+        const list =
+          (resCustom.data as { custom_collections?: { id: number; title: string }[] })
+            .custom_collections || [];
+        const exact = list.find(
+          (c) => c.title.trim().toLowerCase() === titreNorm.toLowerCase()
+        );
+        if (exact) { existanteId = exact.id; existanteType = "custom"; }
+      }
+      if (!existanteId) {
+        const resSmart = await fetch_(
+          "GET",
+          `/smart_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
+        );
+        if (resSmart.ok) {
+          const list =
+            (resSmart.data as { smart_collections?: { id: number; title: string }[] })
+              .smart_collections || [];
+          const exact = list.find(
+            (c) => c.title.trim().toLowerCase() === titreNorm.toLowerCase()
+          );
+          if (exact) { existanteId = exact.id; existanteType = "smart"; }
+        }
+      }
+
+      let cree = false;
+      if (!existanteId) {
+        const creation = await fetch_("POST", "/custom_collections.json", {
+          custom_collection: { title: titreNorm, published: true },
+        });
+        if (!creation.ok)
+          return {
+            ok: false,
+            collectionTitre: titreNorm,
+            cree: false,
+            erreur: `création collection échouée (HTTP ${creation.status})`,
+          };
+        const cc = (creation.data as { custom_collection?: { id: number } })
+          .custom_collection;
+        if (!cc?.id)
+          return {
+            ok: false,
+            collectionTitre: titreNorm,
+            cree: false,
+            erreur: "création collection sans id",
+          };
+        existanteId = cc.id;
+        existanteType = "custom";
+        cree = true;
+      }
+
+      if (existanteType === "smart")
+        return {
+          ok: false,
+          collectionId: existanteId,
+          collectionTitre: titreNorm,
+          cree: false,
+          erreur:
+            "collection trouvée mais c'est une collection automatique — ajout manuel impossible",
+        };
+
+      const ajout = await fetch_("POST", "/collects.json", {
+        collect: { product_id: productId, collection_id: existanteId },
+      });
+      if (!ajout.ok)
+        return {
+          ok: false,
+          collectionId: existanteId,
+          collectionTitre: titreNorm,
+          cree,
+          erreur: `ajout produit à la collection échoué (HTTP ${ajout.status})`,
+        };
+
+      return { ok: true, collectionId: existanteId, collectionTitre: titreNorm, cree };
+    },
   };
 }
 
@@ -194,6 +282,128 @@ export async function publierSurCanal(publicationId: number, productId: number) 
     `/publications/${publicationId}/products.json`,
     { product_listing: { product_id: productId } }
   );
+}
+
+// ============ COLLECTIONS ============
+// Cherche une collection (custom OU smart) par titre exact. Retourne {id, type} ou null.
+export async function trouverCollectionParTitre(
+  titre: string
+): Promise<{ id: number; type: "custom" | "smart" } | null> {
+  const titreNorm = titre.trim();
+  if (!titreNorm) return null;
+  // Custom collections d'abord
+  const resCustom = await shopifyFetch(
+    "GET",
+    `/custom_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
+  );
+  if (resCustom.ok) {
+    const list = (resCustom.data as { custom_collections?: { id: number; title: string }[] })
+      .custom_collections || [];
+    const exact = list.find(
+      (c) => c.title.trim().toLowerCase() === titreNorm.toLowerCase()
+    );
+    if (exact) return { id: exact.id, type: "custom" };
+  }
+  // Smart collections en fallback
+  const resSmart = await shopifyFetch(
+    "GET",
+    `/smart_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
+  );
+  if (resSmart.ok) {
+    const list = (resSmart.data as { smart_collections?: { id: number; title: string }[] })
+      .smart_collections || [];
+    const exact = list.find(
+      (c) => c.title.trim().toLowerCase() === titreNorm.toLowerCase()
+    );
+    if (exact) return { id: exact.id, type: "smart" };
+  }
+  return null;
+}
+
+// Crée une custom collection vide avec le titre donné. Retourne {id} ou erreur.
+export async function creerCollection(titre: string) {
+  return shopifyFetch("POST", "/custom_collections.json", {
+    custom_collection: {
+      title: titre.trim(),
+      published: true,
+    },
+  });
+}
+
+// Ajoute un produit à une custom collection via Collect. Retourne {ok, status, data}.
+// Note : ne marche pas sur smart collections (elles sont basées sur des règles auto).
+export async function ajouterProduitACollection(
+  productId: number,
+  collectionId: number
+) {
+  return shopifyFetch("POST", "/collects.json", {
+    collect: { product_id: productId, collection_id: collectionId },
+  });
+}
+
+// Workflow complet : trouve ou crée la collection puis ajoute le produit.
+// Retourne { ok, collectionId, collectionTitre, cree, erreur? }
+export async function ajouterProduitAUneCollection(
+  productId: number,
+  titre: string
+): Promise<{
+  ok: boolean;
+  collectionId?: number;
+  collectionTitre: string;
+  cree: boolean;
+  erreur?: string;
+}> {
+  const titreNorm = titre.trim();
+  if (!titreNorm)
+    return { ok: false, collectionTitre: titre, cree: false, erreur: "titre vide" };
+
+  let existante = await trouverCollectionParTitre(titreNorm);
+  let cree = false;
+
+  if (!existante) {
+    const creation = await creerCollection(titreNorm);
+    if (!creation.ok) {
+      return {
+        ok: false,
+        collectionTitre: titreNorm,
+        cree: false,
+        erreur: `création collection échouée (HTTP ${creation.status})`,
+      };
+    }
+    const cc = (creation.data as { custom_collection?: { id: number } })
+      .custom_collection;
+    if (!cc?.id)
+      return {
+        ok: false,
+        collectionTitre: titreNorm,
+        cree: false,
+        erreur: "création collection sans id",
+      };
+    existante = { id: cc.id, type: "custom" };
+    cree = true;
+  }
+
+  if (existante.type === "smart")
+    return {
+      ok: false,
+      collectionId: existante.id,
+      collectionTitre: titreNorm,
+      cree: false,
+      erreur:
+        "collection trouvée mais c'est une collection automatique — l'ajout manuel est impossible (Shopify gère son contenu via des règles).",
+    };
+
+  const ajout = await ajouterProduitACollection(productId, existante.id);
+  if (!ajout.ok)
+    return {
+      ok: false,
+      collectionId: existante.id,
+      collectionTitre: titreNorm,
+      cree,
+      erreur: `ajout produit à la collection échoué (HTTP ${ajout.status})`,
+    };
+
+  return { ok: true, collectionId: existante.id, collectionTitre: titreNorm, cree };
 }
 
 export async function ajouterImage(

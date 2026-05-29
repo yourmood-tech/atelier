@@ -103,6 +103,25 @@ export async function POST(request: Request) {
         "permissions read_publications/write_publications manquantes";
     }
 
+    if (infos.collectionCible && String(infos.collectionCible).trim()) {
+      const res = await client.ajouterProduitAUneCollection(
+        product.id,
+        String(infos.collectionCible).trim()
+      );
+      if (res.ok) {
+        (journal.etapes as Record<string, string>).collection = res.cree
+          ? `✓ collection "${res.collectionTitre}" créée + produit ajouté`
+          : `✓ produit ajouté à la collection "${res.collectionTitre}"`;
+        (journal as Record<string, unknown>).collection = {
+          id: res.collectionId,
+          titre: res.collectionTitre,
+          cree: res.cree,
+        };
+      } else {
+        (journal.etapes as Record<string, string>).collection = `✗ ${res.erreur || "échec"}`;
+      }
+    }
+
     return NextResponse.json(journal);
   } catch (e) {
     return NextResponse.json(

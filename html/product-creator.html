@@ -160,6 +160,9 @@
       </div>
     </div>
 
+    <label>📚 Collection Shopify <span class="opt">(optionnel — sera créée si elle n'existe pas)</span></label>
+    <input id="cof-collectionCible" placeholder="ex : Coffrets de juin, Capsule été 2026…">
+
     <button id="btn-creer-cof" style="margin-top:1.5rem;">Créer le coffret dans Shopify</button>
 
     <div id="erreur-cof" class="alert alert-error hidden"></div>
@@ -218,6 +221,9 @@
 
     <label>Prix (CHF) *</label>
     <input id="pak-prix" type="number" step="0.01" placeholder="ex : 67.00">
+
+    <label>📚 Collection Shopify <span class="opt">(optionnel — sera créée si elle n'existe pas)</span></label>
+    <input id="pak-collectionCible" placeholder="ex : Packs de juin, Pépites créatives mai…">
 
     <button id="btn-creer-pak" style="margin-top:1.5rem;">Créer le pack dans Shopify</button>
 
@@ -357,6 +363,9 @@
 
     <label>Collection <span class="opt">(nom du tag de collection)</span></label>
     <input id="f-collection" placeholder="ex : test, aura, signature, droits-des-femmes">
+
+    <label>📚 Collection Shopify <span class="opt">(optionnel — regroupe ce produit avec d'autres dans la même collection ; sera créée si elle n'existe pas)</span></label>
+    <input id="f-collectionCible" placeholder="ex : Coffrets de juin, Pépites créatives mai, Aura 2026…">
 
     <div class="row">
       <div>
@@ -679,6 +688,9 @@
         <div id="j-dash-selectionnees" style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;"></div>
       </div>
       <input id="j-photos" type="file" accept="image/*" multiple style="margin-bottom:0.5rem;">
+
+      <label>📚 Collection Shopify <span class="opt">(optionnel — sera créée si elle n'existe pas)</span></label>
+      <input id="j-collectionCible" placeholder="ex : Joaillerie automne 2026, Pièces uniques juin…">
 
       <!-- Bouton créer -->
       <div id="j-erreur" class="alert alert-error hidden"></div>
@@ -1335,11 +1347,15 @@
       nom: $('pak-nom').value.trim(),
       composants: $('pak-composants').value,
       texteInspiration: $('pak-texteInspiration').value,
-      prix: $('pak-prix').value
+      prix: $('pak-prix').value,
+      collectionCible: $('pak-collectionCible').value.trim()
     };
     if (!infos.nom || !infos.prix) {
       erreur.textContent = 'Champs obligatoires : nom et prix.';
       erreur.classList.remove('hidden'); return;
+    }
+    if (infos.collectionCible) {
+      localStorage.setItem('mood_last_collection', infos.collectionCible);
     }
     const btn = $('btn-creer-pak');
     btn.disabled = true;
@@ -1517,8 +1533,12 @@
       prixAvecBase: $('cof-prixAvecBase').value,
       optionBoite: $('cof-optionBoite').checked,
       prixSansBoite: $('cof-prixSansBoite').value,
-      prixAvecBoite: $('cof-prixAvecBoite').value
+      prixAvecBoite: $('cof-prixAvecBoite').value,
+      collectionCible: $('cof-collectionCible').value.trim()
     };
+    if (infos.collectionCible) {
+      localStorage.setItem('mood_last_collection', infos.collectionCible);
+    }
     if (!infos.nom) {
       erreur.textContent = 'Champ obligatoire : nom du coffret.';
       erreur.classList.remove('hidden'); return;
@@ -1642,9 +1662,12 @@
   $('btn-creer').addEventListener('click', creerProduit);
 
   async function creerProduit() {
-    const champs = ['nom','matiere','finition','couleur','groupeCouleur','collection','prixVente','coutAchat','texteInspiration'];
+    const champs = ['nom','matiere','finition','couleur','groupeCouleur','collection','prixVente','coutAchat','texteInspiration','collectionCible'];
     const infos = {};
     for (const c of champs) infos[c] = $('f-' + c).value;
+    if (infos.collectionCible && infos.collectionCible.trim()) {
+      localStorage.setItem('mood_last_collection', infos.collectionCible.trim());
+    }
 
     // Format(s) — selon le mode (menu déroulant ou multi-format chips)
     const formatChoisi = $('f-format').value;
@@ -1915,6 +1938,16 @@
   document.addEventListener('DOMContentLoaded', () => {
     setStore(currentStore);
     jInitTaillesCheckboxes();
+
+    // Pré-remplit le champ Collection Shopify (les 4 formulaires) avec la dernière utilisée
+    const lastColl = localStorage.getItem('mood_last_collection') || '';
+    if (lastColl) {
+      ['f-collectionCible', 'cof-collectionCible', 'pak-collectionCible', 'j-collectionCible']
+        .forEach(id => {
+          const el = document.getElementById(id);
+          if (el && !el.value) el.value = lastColl;
+        });
+    }
   });
 
   // ============ JOAILLERIE NAVIGATION ============
@@ -2486,7 +2519,11 @@
       nom_client: document.getElementById('j-nom-client')?.value || '',
       num_serie: document.getElementById('j-num-serie')?.value || '',
       prix: prix ? parseFloat(prix) : null,
+      collectionCible: document.getElementById('j-collectionCible')?.value.trim() || '',
     };
+    if (infos.collectionCible) {
+      localStorage.setItem('mood_last_collection', infos.collectionCible);
+    }
 
     const btn = document.getElementById('btn-creer-j');
     btn.disabled = true;
@@ -2553,6 +2590,7 @@
           <dt>Variantes</dt><dd>${data.variantes}</dd>
           <dt>Tags</dt><dd style="word-break:break-all">${data.etiquettes}</dd>
           ${totalPhotos > 0 ? `<dt>Photos</dt><dd>${photosOk}/${totalPhotos} uploadées</dd>` : ''}
+          ${data.etapes?.collection ? `<dt>Collection</dt><dd>${data.etapes.collection}</dd>` : ''}
         </dl></div>`;
       btn.textContent = '💎 Créer le produit Joaillerie';
       // Reset pierres et dash
