@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       const amount = Math.abs(Number(tx.amount ?? 0));
       const fee = Math.abs(Number(tx.fee ?? 0));
       const date = String(tx.processed_at ?? payoutDate).slice(0, 10);
-      const orderId = tx.order_id ? `#${tx.order_id}` : `payout-${payoutId}`;
+      const orderId = tx.source_order_id ? `#${tx.source_order_id}` : `payout-${payoutId}`;
       const libelle = `Shopify ${orderId}`;
       const { ht, tva } = calculTva(amount);
 
