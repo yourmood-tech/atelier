@@ -4,9 +4,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/**': ['html/**'],
   },
-  // Potrace + Jimp + Sharp doivent être en CommonJS externe (pas bundlés)
-  // (Sharp a un binaire natif, Potrace fait des `instanceof Jimp` qui cassent en bundle)
-  serverExternalPackages: ['potrace', 'jimp', 'sharp'],
+  // Packages à ne pas bundler (natifs ou incompatibles avec le bundling)
+  serverExternalPackages: ['potrace', 'jimp', 'sharp', 'pdf-parse', 'pdfjs-dist'],
   async headers() {
     return [
       {
