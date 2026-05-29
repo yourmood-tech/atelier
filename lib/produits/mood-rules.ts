@@ -460,9 +460,10 @@ interface ProduitInfos {
   finitionBase?: string;
   coutAchat?: number | string;
   tagsParticuliers?: string[];
-  optionMinis?: boolean;
-  prix1Mini?: number | string;
-  prix2Minis?: number | string;
+  optionQuantite?: {
+    libelle: string;
+    choix: Array<{ nom: string; prix: number | string }>;
+  };
 }
 
 export function construirePayloadProduit(
@@ -614,25 +615,36 @@ export function construirePayloadProduit(
     }
   }
 
-  // ===== Option "Minis" (1 mini / 2 minis) — appliquée en cas par cas =====
-  // Si optionMinis=true, on duplique chaque variante de base en 2 (1 mini + 2 minis)
-  // avec leurs prix respectifs et un suffixe SKU (-1m / -2m).
-  if (infos.optionMinis) {
+  // ===== Option quantité au choix client (générique) =====
+  // Ex : libelle="Nombre de minis", choix=[{nom:"1 mini",prix:49},{nom:"2 minis",prix:79}]
+  // Duplique chaque variante de base par le nombre de choix, avec prix et suffixe SKU.
+  if (
+    infos.optionQuantite &&
+    infos.optionQuantite.libelle &&
+    Array.isArray(infos.optionQuantite.choix) &&
+    infos.optionQuantite.choix.length > 0
+  ) {
+    const { libelle, choix } = infos.optionQuantite;
     const variantsBase = [...variants];
     variants.length = 0;
     const nextOptKey = `option${options.length + 1}`;
-    const prix1m = infos.prix1Mini ?? infos.prixVente ?? 0;
-    const prix2m = infos.prix2Minis ?? infos.prixVente ?? 0;
     for (const v of variantsBase) {
-      for (const m of ["1 mini", "2 minis"] as const) {
+      for (const c of choix) {
+        if (!c || !c.nom) continue;
         const dup: Record<string, unknown> = { ...v };
-        dup.price = String(m === "1 mini" ? prix1m : prix2m);
-        dup.sku = `${v.sku}-${m === "1 mini" ? "1m" : "2m"}`;
-        dup[nextOptKey] = m;
+        const px = c.prix != null && c.prix !== "" ? c.prix : infos.prixVente ?? 0;
+        dup.price = String(px);
+        const slugChoix = String(c.nom)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 12) || "q";
+        dup.sku = `${v.sku}-${slugChoix}`;
+        dup[nextOptKey] = c.nom;
         variants.push(dup);
       }
     }
-    options.push({ name: "Minis" });
+    options.push({ name: libelle });
   }
 
   const seo =

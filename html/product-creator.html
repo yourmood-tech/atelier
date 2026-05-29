@@ -163,6 +163,20 @@
     <label>📚 Collection Shopify <span class="opt">(optionnel — sera créée si elle n'existe pas)</span></label>
     <input id="cof-collectionCible" placeholder="ex : Coffrets de juin, Capsule été 2026…">
 
+    <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;margin-top:1rem;margin-bottom:0.5rem;">
+      <input type="checkbox" id="cof-opt-quantite" style="width:auto;margin:0;">
+      ✨ Ajouter une option <strong>quantité au choix du client</strong> <span class="opt">(ex : 1 mini ou 2 minis, etc.)</span>
+    </label>
+    <div id="cof-zone-quantite" class="hidden" style="background:#fff8f0;border:1px solid var(--or);border-radius:8px;padding:0.8rem;margin-bottom:1rem;">
+      <label style="font-size:0.85rem;">Étiquette de l'option *</label>
+      <input id="cof-quantite-libelle" placeholder="ex : Nombre de minis, Quantité…">
+
+      <label style="font-size:0.85rem;margin-top:0.5rem;">Choix disponibles *</label>
+      <div id="cof-quantite-choix" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem;"></div>
+      <button type="button" id="cof-btn-quantite-add" style="margin:0;width:auto;padding:0.4rem 0.9rem;background:var(--noir);font-size:0.8rem;">+ Ajouter un choix</button>
+      <p style="margin:0.5rem 0 0;font-size:0.75rem;color:var(--gris);">Le prix s'ajuste tout seul sur la fiche Shopify quand le client clique sur un choix.</p>
+    </div>
+
     <button id="btn-creer-cof" style="margin-top:1.5rem;">Créer le coffret dans Shopify</button>
 
     <div id="erreur-cof" class="alert alert-error hidden"></div>
@@ -389,21 +403,18 @@
     </div>
 
     <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;margin-bottom:0.5rem;">
-      <input type="checkbox" id="opt-minis" style="width:auto;margin:0;">
-      ✨ Ajouter une option <strong>minis</strong> au choix du client <span class="opt">(le client choisit entre 1 mini ou 2 minis sur la fiche produit)</span>
+      <input type="checkbox" id="f-opt-quantite" style="width:auto;margin:0;">
+      ✨ Ajouter une option <strong>quantité au choix du client</strong> <span class="opt">(ex : 1 mini ou 2 minis, 1 deux-tiers ou 2 deux-tiers, etc.)</span>
     </label>
-    <div id="zone-minis" class="hidden" style="background:#fff8f0;border:1px solid var(--or);border-radius:8px;padding:0.8rem;margin-bottom:1rem;">
-      <div class="row">
-        <div>
-          <label style="font-size:0.85rem;">Prix avec 1 mini (CHF) *</label>
-          <input id="f-prix1Mini" type="number" step="0.01" placeholder="ex : 49.00">
-        </div>
-        <div>
-          <label style="font-size:0.85rem;">Prix avec 2 minis (CHF) *</label>
-          <input id="f-prix2Minis" type="number" step="0.01" placeholder="ex : 79.00">
-        </div>
-      </div>
-      <p style="margin:0.5rem 0 0;font-size:0.78rem;color:var(--gris);">Ces 2 prix remplacent le prix de vente quand le client choisit 1 mini ou 2 minis. Une variante distincte est créée pour chaque taille × choix.</p>
+    <div id="f-zone-quantite" class="hidden" style="background:#fff8f0;border:1px solid var(--or);border-radius:8px;padding:0.8rem;margin-bottom:1rem;">
+      <label style="font-size:0.85rem;">Étiquette de l'option *</label>
+      <input id="f-quantite-libelle" placeholder="ex : Nombre de minis, Nombre de deux-tiers, Quantité…">
+      <p style="margin:0.2rem 0 0.7rem;font-size:0.75rem;color:var(--gris);">C'est ce que le client verra comme nom du sélecteur sur la fiche produit.</p>
+
+      <label style="font-size:0.85rem;">Choix disponibles *</label>
+      <div id="f-quantite-choix" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.5rem;"></div>
+      <button type="button" id="f-btn-quantite-add" style="margin:0;width:auto;padding:0.4rem 0.9rem;background:var(--noir);font-size:0.8rem;">+ Ajouter un choix</button>
+      <p style="margin:0.5rem 0 0;font-size:0.75rem;color:var(--gris);">Chaque choix = un libellé court (ex : « 1 mini ») et son prix CHF. Une variante Shopify distincte est créée par taille × choix — le prix s'ajuste tout seul sur la fiche quand le client clique.</p>
     </div>
 
     <label>Mots-clés pour le texte <span class="opt">(2-4 mots qui décrivent l'esprit du produit)</span></label>
@@ -1557,6 +1568,16 @@
     if (infos.collectionCible) {
       localStorage.setItem('mood_last_collection', infos.collectionCible);
     }
+    // Option quantité au choix client
+    {
+      const r = lireOptionQuantite('cof');
+      if (!r.ok) {
+        erreur.textContent = r.erreur;
+        erreur.classList.remove('hidden');
+        return;
+      }
+      if (r.optionQuantite) infos.optionQuantite = r.optionQuantite;
+    }
     if (!infos.nom) {
       erreur.textContent = 'Champ obligatoire : nom du coffret.';
       erreur.classList.remove('hidden'); return;
@@ -1733,19 +1754,16 @@
     if ($('opt-auraoct').checked) tagsParticuliers.push('auraoct');
     if (tagsParticuliers.length > 0) infos.tagsParticuliers = tagsParticuliers;
 
-    // Option minis (1 mini / 2 minis comme choix supplémentaire client)
-    if ($('opt-minis').checked) {
-      const p1 = $('f-prix1Mini').value.trim();
-      const p2 = $('f-prix2Minis').value.trim();
-      if (!p1 || !p2) {
+    // Option quantité au choix client (générique)
+    {
+      const r = lireOptionQuantite('f');
+      if (!r.ok) {
         const erreur = $('erreur-form');
-        erreur.textContent = 'Option minis cochée — renseigne les 2 prix (1 mini + 2 minis).';
+        erreur.textContent = r.erreur;
         erreur.classList.remove('hidden');
         return;
       }
-      infos.optionMinis = true;
-      infos.prix1Mini = parseFloat(p1);
-      infos.prix2Minis = parseFloat(p2);
+      if (r.optionQuantite) infos.optionQuantite = r.optionQuantite;
     }
 
     const erreur = $('erreur-form');
@@ -1982,15 +2000,69 @@
         });
     }
 
-    // Toggle zone "Option minis" (bague mood)
-    const cbMinis = document.getElementById('opt-minis');
-    const zoneMinis = document.getElementById('zone-minis');
-    if (cbMinis && zoneMinis) {
-      cbMinis.addEventListener('change', () => {
-        zoneMinis.classList.toggle('hidden', !cbMinis.checked);
-      });
-    }
+    // ===== Option "quantité au choix client" (bague mood + coffret) =====
+    initOptionQuantite('f');    // formulaire bague mood
+    initOptionQuantite('cof');  // formulaire coffret
   });
+
+  // Initialise le bloc "option quantité au choix client" pour un préfixe donné (f-, cof-)
+  function initOptionQuantite(prefix) {
+    const cb = document.getElementById(`${prefix}-opt-quantite`);
+    const zone = document.getElementById(`${prefix}-zone-quantite`);
+    const liste = document.getElementById(`${prefix}-quantite-choix`);
+    const btnAdd = document.getElementById(`${prefix}-btn-quantite-add`);
+    if (!cb || !zone || !liste || !btnAdd) return;
+
+    function ligneChoix() {
+      const div = document.createElement('div');
+      div.className = 'quantite-ligne';
+      div.style.cssText = 'display:flex;gap:0.4rem;align-items:center;';
+      div.innerHTML = `
+        <input type="text" placeholder="Libellé (ex : 1 mini)" class="quantite-nom" style="flex:2;padding:0.45rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">
+        <input type="number" step="0.01" placeholder="Prix CHF" class="quantite-prix" style="flex:1;padding:0.45rem 0.6rem;border:1px solid #ccc;border-radius:6px;font-size:0.88rem;">
+        <button type="button" class="quantite-del" style="margin:0;padding:0.4rem 0.6rem;width:auto;background:#eee;color:var(--noir);font-size:0.78rem;">✕</button>
+      `;
+      div.querySelector('.quantite-del').addEventListener('click', () => {
+        if (liste.children.length > 1) div.remove();
+      });
+      return div;
+    }
+
+    // Toggle show/hide + injecte 2 lignes vides par défaut
+    cb.addEventListener('change', () => {
+      zone.classList.toggle('hidden', !cb.checked);
+      if (cb.checked && liste.children.length === 0) {
+        liste.appendChild(ligneChoix());
+        liste.appendChild(ligneChoix());
+      }
+    });
+    btnAdd.addEventListener('click', () => {
+      liste.appendChild(ligneChoix());
+    });
+  }
+
+  // Lit le bloc option quantité d'un formulaire et retourne { ok, optionQuantite, erreur }
+  function lireOptionQuantite(prefix) {
+    const cb = document.getElementById(`${prefix}-opt-quantite`);
+    if (!cb || !cb.checked) return { ok: true, optionQuantite: null };
+    const libelle = (document.getElementById(`${prefix}-quantite-libelle`).value || '').trim();
+    if (!libelle)
+      return { ok: false, erreur: 'Option quantité cochée — renseigne l\'étiquette (ex : Nombre de minis).' };
+    const liste = document.getElementById(`${prefix}-quantite-choix`);
+    const lignes = Array.from(liste.querySelectorAll('.quantite-ligne'));
+    const choix = [];
+    for (const ligne of lignes) {
+      const nom = (ligne.querySelector('.quantite-nom').value || '').trim();
+      const prix = (ligne.querySelector('.quantite-prix').value || '').trim();
+      if (!nom && !prix) continue; // ligne vide ignorée
+      if (!nom || !prix)
+        return { ok: false, erreur: 'Chaque choix doit avoir un libellé ET un prix.' };
+      choix.push({ nom, prix: parseFloat(prix) });
+    }
+    if (choix.length === 0)
+      return { ok: false, erreur: 'Option quantité cochée — ajoute au moins un choix avec libellé et prix.' };
+    return { ok: true, optionQuantite: { libelle, choix } };
+  }
 
   // ============ JOAILLERIE NAVIGATION ============
   const MJ_CAT_FIELDS = {

@@ -120,6 +120,10 @@ interface CoffretInfos {
   prixAvecBoite?: number | string;
   tailles?: string[];
   prix?: number | string;
+  optionQuantite?: {
+    libelle: string;
+    choix: Array<{ nom: string; prix: number | string }>;
+  };
 }
 
 export function construirePayloadCoffret(
@@ -186,6 +190,37 @@ export function construirePayloadCoffret(
         variants.push(variante);
       }
     }
+  }
+
+  // ===== Option quantité au choix client (générique) =====
+  if (
+    infos.optionQuantite &&
+    infos.optionQuantite.libelle &&
+    Array.isArray(infos.optionQuantite.choix) &&
+    infos.optionQuantite.choix.length > 0
+  ) {
+    const { libelle, choix } = infos.optionQuantite;
+    const variantsBase = [...variants];
+    variants.length = 0;
+    const nextOptKey = `option${options.length + 1}`;
+    const prixFallback = prixSansBase ?? infos.prix ?? 0;
+    for (const v of variantsBase) {
+      for (const c of choix) {
+        if (!c || !c.nom) continue;
+        const dup: Record<string, unknown> = { ...v };
+        const px = c.prix != null && c.prix !== "" ? c.prix : prixFallback;
+        dup.price = String(px);
+        const slugChoix = String(c.nom)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 12) || "q";
+        dup.sku = `${v.sku}-${slugChoix}`;
+        dup[nextOptKey] = c.nom;
+        variants.push(dup);
+      }
+    }
+    options.push({ name: libelle });
   }
 
   const titre = genererTitreCoffret({ nom });
