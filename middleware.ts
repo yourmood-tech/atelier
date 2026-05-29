@@ -1,9 +1,26 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 
+const WINEUR_ALLOWED = new Set([
+  "philippe@yourmood.net",
+  "stephanie@yourmood.net",
+  "eric@yourmood.net",
+  "fabienne@yourmood.net",
+]);
+
 export default auth((req) => {
   if (!req.auth) {
     return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  const { pathname } = req.nextUrl;
+  const isWineurRoute = pathname.startsWith("/wineur") || pathname.startsWith("/api/wineur");
+
+  if (isWineurRoute) {
+    const email = req.auth.user?.email ?? "";
+    if (!WINEUR_ALLOWED.has(email)) {
+      return new NextResponse("Accès non autorisé", { status: 403 });
+    }
   }
 });
 
