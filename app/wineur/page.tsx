@@ -10,8 +10,9 @@ const API_SOURCES = [
 ];
 
 const FILE_SOURCES = [
-  { id: "postfinance", label: "PostFinance (CAMT053 ZIP/XML)", emoji: "🏦", accept: ".zip,.xml" },
-  { id: "twint",       label: "Twint (CSV export)",            emoji: "📱", accept: ".csv" },
+  { id: "twint",       label: "Twint (CSV export portal.twint.ch)", emoji: "📱", accept: ".csv",      route: "/api/wineur/parse-twint" },
+  { id: "powerpay",    label: "Powerpay (PDF décompte)",             emoji: "💜", accept: ".pdf",      route: "/api/wineur/parse-powerpay" },
+  { id: "postfinance", label: "PostFinance (CAMT053 ZIP/XML)",       emoji: "🏦", accept: ".zip,.xml", route: null },
 ];
 
 function today() {
@@ -55,9 +56,20 @@ export default function WineurPage() {
   }
 
   async function parseFileSources(): Promise<Ecriture[]> {
-    // Placeholder — CAMT053 and Twint parsing happens client-side in a future iteration
-    // For now, we signal if files are present but not parsed
-    return [];
+    const all: Ecriture[] = [];
+    for (const src of FILE_SOURCES) {
+      if (!activeFiles.has(src.id) || !files[src.id] || !src.route) continue;
+      const form = new FormData();
+      form.append("file", files[src.id]);
+      const res = await fetch(src.route, { method: "POST", body: form });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`${src.label} : ${txt.slice(0, 200)}`);
+      }
+      const j = await res.json() as { ecritures?: Ecriture[]; imported?: number };
+      if (j.ecritures) all.push(...j.ecritures);
+    }
+    return all;
   }
 
   async function generate() {

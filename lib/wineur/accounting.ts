@@ -11,6 +11,7 @@ export const COMPTES = {
   PASSAGE_PAYPAL_USD:  "100404",
   PASSAGE_SHOPIFY:     "220006",
   PASSAGE_POSTFINANCE: "220001",
+  PASSAGE_POWERPAY:    "220005",
   TVA_ACQ:             "117001",
   TVA_VENTE:           "217001",
   FRAIS:               "640004",
