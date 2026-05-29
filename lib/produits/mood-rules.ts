@@ -460,6 +460,9 @@ interface ProduitInfos {
   finitionBase?: string;
   coutAchat?: number | string;
   tagsParticuliers?: string[];
+  optionMinis?: boolean;
+  prix1Mini?: number | string;
+  prix2Minis?: number | string;
 }
 
 export function construirePayloadProduit(
@@ -609,6 +612,27 @@ export function construirePayloadProduit(
         }
       }
     }
+  }
+
+  // ===== Option "Minis" (1 mini / 2 minis) — appliquée en cas par cas =====
+  // Si optionMinis=true, on duplique chaque variante de base en 2 (1 mini + 2 minis)
+  // avec leurs prix respectifs et un suffixe SKU (-1m / -2m).
+  if (infos.optionMinis) {
+    const variantsBase = [...variants];
+    variants.length = 0;
+    const nextOptKey = `option${options.length + 1}`;
+    const prix1m = infos.prix1Mini ?? infos.prixVente ?? 0;
+    const prix2m = infos.prix2Minis ?? infos.prixVente ?? 0;
+    for (const v of variantsBase) {
+      for (const m of ["1 mini", "2 minis"] as const) {
+        const dup: Record<string, unknown> = { ...v };
+        dup.price = String(m === "1 mini" ? prix1m : prix2m);
+        dup.sku = `${v.sku}-${m === "1 mini" ? "1m" : "2m"}`;
+        dup[nextOptKey] = m;
+        variants.push(dup);
+      }
+    }
+    options.push({ name: "Minis" });
   }
 
   const seo =

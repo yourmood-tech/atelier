@@ -388,6 +388,24 @@
       <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-auraoct" style="width:auto;margin:0;"> medium aura seul (auraoct)</label>
     </div>
 
+    <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;margin-bottom:0.5rem;">
+      <input type="checkbox" id="opt-minis" style="width:auto;margin:0;">
+      ✨ Ajouter une option <strong>minis</strong> au choix du client <span class="opt">(le client choisit entre 1 mini ou 2 minis sur la fiche produit)</span>
+    </label>
+    <div id="zone-minis" class="hidden" style="background:#fff8f0;border:1px solid var(--or);border-radius:8px;padding:0.8rem;margin-bottom:1rem;">
+      <div class="row">
+        <div>
+          <label style="font-size:0.85rem;">Prix avec 1 mini (CHF) *</label>
+          <input id="f-prix1Mini" type="number" step="0.01" placeholder="ex : 49.00">
+        </div>
+        <div>
+          <label style="font-size:0.85rem;">Prix avec 2 minis (CHF) *</label>
+          <input id="f-prix2Minis" type="number" step="0.01" placeholder="ex : 79.00">
+        </div>
+      </div>
+      <p style="margin:0.5rem 0 0;font-size:0.78rem;color:var(--gris);">Ces 2 prix remplacent le prix de vente quand le client choisit 1 mini ou 2 minis. Une variante distincte est créée pour chaque taille × choix.</p>
+    </div>
+
     <label>Mots-clés pour le texte <span class="opt">(2-4 mots qui décrivent l'esprit du produit)</span></label>
     <div style="display:flex;gap:0.5rem;align-items:stretch">
       <input id="f-motsCles" type="text" placeholder="ex : ciel, pureté, sérénité, miroir d'eau" style="flex:1">
@@ -1715,6 +1733,21 @@
     if ($('opt-auraoct').checked) tagsParticuliers.push('auraoct');
     if (tagsParticuliers.length > 0) infos.tagsParticuliers = tagsParticuliers;
 
+    // Option minis (1 mini / 2 minis comme choix supplémentaire client)
+    if ($('opt-minis').checked) {
+      const p1 = $('f-prix1Mini').value.trim();
+      const p2 = $('f-prix2Minis').value.trim();
+      if (!p1 || !p2) {
+        const erreur = $('erreur-form');
+        erreur.textContent = 'Option minis cochée — renseigne les 2 prix (1 mini + 2 minis).';
+        erreur.classList.remove('hidden');
+        return;
+      }
+      infos.optionMinis = true;
+      infos.prix1Mini = parseFloat(p1);
+      infos.prix2Minis = parseFloat(p2);
+    }
+
     const erreur = $('erreur-form');
     const succes = $('succes-form');
     const resultat = $('resultat');
@@ -1947,6 +1980,15 @@
           const el = document.getElementById(id);
           if (el && !el.value) el.value = lastColl;
         });
+    }
+
+    // Toggle zone "Option minis" (bague mood)
+    const cbMinis = document.getElementById('opt-minis');
+    const zoneMinis = document.getElementById('zone-minis');
+    if (cbMinis && zoneMinis) {
+      cbMinis.addEventListener('change', () => {
+        zoneMinis.classList.toggle('hidden', !cbMinis.checked);
+      });
     }
   });
 
