@@ -8,14 +8,18 @@ import type { UnknownEntry } from "@/lib/wineur/mappings";
 // SubFmlyCd → paiement OPAE généré depuis GIT/WinEUR → ignorer
 const OPAE_SUB = new Set(["DMCT", "XBCT", "ESCT", "BOOK"]);
 
-// Mots-clés dans AddtlNtryInf identifiant des CRDT déjà couverts par d'autres sources
-const CRDT_SKIP_KEYWORDS = [
-  "sumup payments",       // SumUp payouts
-  "stripe payments",      // Shopify payouts (via Stripe)
-  "twint acquiring",      // Twint payouts
-  "paypal",               // PayPal payouts
-  "powerpay",             // Powerpay payouts
-];
+// Shopify (Stripe) → ignorer car déjà enregistré dans la route Shopify (virement 100101/220006)
+const CRDT_SHOPIFY_KEYWORD = "stripe payments";
+
+// Autres providers de paiement → CRDT = virement provider → banque PostFinance
+// Enregistrer : débit pfCompte (banque PostFinance) / crédit compte passage provider
+const PROVIDER_PASSAGE: Record<string, string> = {
+  "sumup payments":  "220004",  // SumUp passage
+  "twint acquiring": "220003",  // Twint passage
+  "paypal":          "100401",  // PayPal CHF
+  "powerpay":        "220005",  // Powerpay passage
+  "mf group":        "220005",  // Powerpay (raison sociale MF Group AG)
+};
 
 const TAUX = 8.1 / 100;
 function r2(n: number) { return Math.round(n * 100) / 100; }
@@ -100,13 +104,28 @@ function buildEcritures(entries: CamtEntry[], config: Record<string, string>): {
       continue;
     }
 
-    // ── CRDT depuis SumUp / Shopify / Twint / PayPal → ignorer (déjà dans d'autres sources) ──
-    if (direction === "CRDT" && CRDT_SKIP_KEYWORDS.some(k => addtlLc.includes(k))) {
+    // ── CRDT Shopify/Stripe → ignorer (virement déjà enregistré dans la route Shopify) ──
+    if (direction === "CRDT" && addtlLc.includes(CRDT_SHOPIFY_KEYWORD)) {
       stats.crdt_skip++;
       continue;
     }
 
-    // ── CRDT : rentrée sur compte PostFinance ────────────────────────────────
+    // ── CRDT provider de paiement → virement passage provider vers banque PostFinance ──
+    // ex: SumUp → 220004 se vide / 100101 reçoit l'argent
+    if (direction === "CRDT") {
+      const providerEntry = Object.entries(PROVIDER_PASSAGE).find(([k]) => addtlLc.includes(k));
+      if (providerEntry) {
+        stats.crdt++;
+        const [, providerCompte] = providerEntry;
+        const ref = (communication || debtorName || addtlInfo.replace(/^CRÉDIT DONNEUR D'ORDRE:\s*/i, "").slice(0, 50) || "Virement").replace(/,/g, "-");
+        const lib = `Virement ${ref}`.slice(0, 80);
+        ecritures.push({ date, compte: pfCompte,       libelle: lib, montant:  amount }); // banque PostFinance reçoit
+        ecritures.push({ date, compte: providerCompte, libelle: lib, montant: -amount }); // compte passage provider se vide
+        continue;
+      }
+    }
+
+    // ── CRDT : rentrée client sur compte PostFinance ─────────────────────────
     if (direction === "CRDT") {
       stats.crdt++;
       const addtlShort = addtlInfo.replace(/^CRÉDIT DONNEUR D'ORDRE:\s*/i, "").slice(0, 60);

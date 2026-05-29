@@ -113,12 +113,12 @@ async function processStore(
       }
     }
 
-    // Virement payout → PostFinance
+    // Virement payout → compte bancaire PostFinance (100101 = IBAN ends 5, compte principal)
     for (const [payoutId, { date, amount }] of payoutMeta) {
       if (amount > 0) {
         const lib = `Virement ${storeName} payout-${payoutId}`;
-        ecritures.push({ date, compte: COMPTES.PASSAGE_POSTFINANCE, libelle: lib, montant: amount });
-        ecritures.push({ date, compte: COMPTES.PASSAGE_SHOPIFY,     libelle: lib, montant: -amount });
+        ecritures.push({ date, compte: "100101",                 libelle: lib, montant:  amount });
+        ecritures.push({ date, compte: COMPTES.PASSAGE_SHOPIFY,  libelle: lib, montant: -amount });
       }
     }
 
