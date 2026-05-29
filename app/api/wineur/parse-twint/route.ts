@@ -21,10 +21,14 @@ function cleanNum(v: string): number {
 }
 
 function formatDate(raw: string): string {
+  const s = raw.trim();
   // DD.MM.YYYY → YYYY-MM-DD
-  const m = raw.trim().match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
-  return raw.slice(0, 10);
+  const m1 = s.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
+  // YYYY.MM.DD → YYYY-MM-DD
+  const m2 = s.match(/^(\d{4})\.(\d{2})\.(\d{2})$/);
+  if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+  return s.slice(0, 10).replace(/\./g, "-");
 }
 
 export async function POST(req: NextRequest) {
