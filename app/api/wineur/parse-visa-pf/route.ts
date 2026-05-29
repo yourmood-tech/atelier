@@ -48,6 +48,11 @@ function lookupAccount(merchant: string): string | null {
   return null;
 }
 
+function isPaypalTopup(description: string): boolean {
+  const up = description.toUpperCase().replace(/\s+/g, "");
+  return up.startsWith("PAYPAL*") || up.includes("PAYPAL*");
+}
+
 function isExt(description: string): boolean {
   const up = description.toUpperCase();
   return FOREIGN_CODES.some(c => up.includes(c));
@@ -108,15 +113,23 @@ export async function POST(req: NextRequest) {
     const date = parseDate(dateC);
     const lib = `CC PF: ${normalizeMerchant(description).toUpperCase().slice(0, 35)}`;
 
+    // ── PAYPAL * : transfert inter-comptes, pas de TVA ────────────────────────
+    if (isPaypalTopup(description)) {
+      const libPP = `Recharge PayPal CC PF: ${description.slice(0, 30)}`;
+      ecritures.push({ date, compte: "100401", libelle: libPP, montant:  montantVal }); // PayPal alimenté
+      ecritures.push({ date, compte: "220001", libelle: libPP, montant: -montantVal }); // Visa débitée
+      imported++;
+      continue;
+    }
+
     const cpte = lookupAccount(description);
     if (!cpte) {
       unknownMerchants.push(description.slice(0, 60));
-      // Compte attente pour les fournisseurs inconnus
       const tvaAcq = r2(montantVal * TAUX);
-      ecritures.push({ date, compte: "109999", libelle: `ATTENTE CC PF: ${description.slice(0, 50)}`, montant: montantVal });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA auto-liq. ${lib}`, montant: tvaAcq });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA auto-liq. ${lib} (due)`, montant: -tvaAcq });
-      ecritures.push({ date, compte: "220001", libelle: `ATTENTE CC PF: ${description.slice(0, 50)}`, montant: -montantVal });
+      ecritures.push({ date, compte: "109999",          libelle: `ATTENTE CC PF: ${description.slice(0, 50)}`, montant:  montantVal });
+      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib}`,        montant:  tvaAcq  });
+      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib} (due)`,  montant: -tvaAcq  });
+      ecritures.push({ date, compte: "220001",          libelle: `ATTENTE CC PF: ${description.slice(0, 50)}`, montant: -montantVal });
       imported++;
       continue;
     }
