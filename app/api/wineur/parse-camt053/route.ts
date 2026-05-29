@@ -132,17 +132,22 @@ function buildEcritures(entries: CamtEntry[]): { ecritures: Ecriture[]; skipped:
     const cpteCharge = lookupPostfinance(haystack) ?? "109999";
     const tvaAcq = r2(amount * TAUX);
 
-    if (isCH) {
+    // Virement interne (ex : charge carte crédit = même compte 220001) → pas de TVA
+    if (cpteCharge === COMPTES.PASSAGE_POSTFINANCE) {
+      ecritures.push({ date, compte: cpteCharge,               libelle: lib, montant:  amount });
+      ecritures.push({ date, compte: COMPTES.PASSAGE_POSTFINANCE, libelle: lib, montant: -amount });
+    } else if (isCH) {
       const { ht, tva } = calculTva(amount);
-      ecritures.push({ date, compte: cpteCharge, libelle: `${lib} HT`, montant: ht });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA CH ${lib}`, montant: tva });
+      ecritures.push({ date, compte: cpteCharge,       libelle: `${lib} HT`,          montant: ht });
+      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA CH ${lib}`,      montant: tva });
+      ecritures.push({ date, compte: COMPTES.PASSAGE_POSTFINANCE, libelle: lib,        montant: -amount });
     } else {
       // Fournisseur étranger → TVA auto-liquidée
-      ecritures.push({ date, compte: cpteCharge, libelle: lib, montant: amount });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA auto-liq. ${lib}`, montant: tvaAcq });
-      ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA auto-liq. ${lib} (due)`, montant: -tvaAcq });
+      ecritures.push({ date, compte: cpteCharge,       libelle: lib,                            montant: amount });
+      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib}`,        montant: tvaAcq });
+      ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib} (due)`,  montant: -tvaAcq });
+      ecritures.push({ date, compte: COMPTES.PASSAGE_POSTFINANCE, libelle: lib,                 montant: -amount });
     }
-    ecritures.push({ date, compte: COMPTES.PASSAGE_POSTFINANCE, libelle: lib, montant: -amount });
   }
 
   return { ecritures, skipped, processed };
