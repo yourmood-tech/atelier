@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toCsv, aggregateDaily } from "@/lib/wineur/accounting";
+import { toCsv } from "@/lib/wineur/accounting";
 import type { Ecriture } from "@/lib/wineur/accounting";
 
-// Combines all sources and returns a CSV string
+// Génère le CSV WinEUR sans agrégation : chaque transaction garde son libellé d'origine.
 export async function POST(req: NextRequest) {
   const body = await req.json() as {
     start: string;
     end: string;
     sources: string[];
-    ecritures_extra?: Ecriture[]; // from file uploads (Twint, CAMT053)
+    ecritures_extra?: Ecriture[];
   };
 
   const { start, end, sources, ecritures_extra = [] } = body;
@@ -30,13 +30,16 @@ export async function POST(req: NextRequest) {
     })
   );
 
-  const aggregated = aggregateDaily(all, "Import");
-  const csv = toCsv(aggregated);
+  // Trier par date puis par compte — pas d'agrégation, libellés individuels préservés
+  all.sort((a, b) => a.date.localeCompare(b.date) || a.compte.localeCompare(b.compte));
+
+  const csv = toCsv(all);
 
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="wineur_${start}_${end}.csv"`,
+      ...(errors.length > 0 ? { "X-Warnings": errors.join("; ").slice(0, 500) } : {}),
     },
   });
 }
