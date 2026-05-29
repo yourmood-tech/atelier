@@ -12,7 +12,7 @@ const API_SOURCES = [
 const FILE_SOURCES = [
   { id: "twint",       label: "Twint (CSV export portal.twint.ch)", emoji: "📱", accept: ".csv",      route: "/api/wineur/parse-twint" },
   { id: "powerpay",    label: "Powerpay (PDF décompte)",             emoji: "💜", accept: ".pdf",      route: "/api/wineur/parse-powerpay" },
-  { id: "postfinance", label: "PostFinance (CAMT053 ZIP/XML)",       emoji: "🏦", accept: ".zip,.xml", route: null },
+  { id: "postfinance", label: "PostFinance (CAMT053 ZIP/XML)",       emoji: "🏦", accept: ".zip,.xml", route: "/api/wineur/parse-camt053" },
 ];
 
 function today() {
