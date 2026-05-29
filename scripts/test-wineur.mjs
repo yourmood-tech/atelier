@@ -170,43 +170,71 @@ async function testShopify() {
   const res = await fetch(`${base}/shopify_payments/payouts.json?date_min=${START}&date_max=${END}&limit=250`, { headers });
   const { payouts = [] } = await res.json();
 
-  const ecritures = [];
+  // Collecter toutes les transactions
+  const allTxs = [];
+  const payoutMeta = new Map();
   for (const payout of payouts) {
-    const payoutDate = String(payout.date).slice(0, 10);
-    const payoutAmount = Number(payout.amount);
+    payoutMeta.set(payout.id, { date: String(payout.date).slice(0,10), amount: Number(payout.amount) });
     const txRes = await fetch(`${base}/shopify_payments/payouts/${payout.id}/transactions.json?limit=250`, { headers });
     const { transactions = [] } = await txRes.json();
+    allTxs.push(...transactions);
+  }
 
-    for (const tx of transactions) {
-      const type = String(tx.type ?? "").toLowerCase();
-      if (!["charge", "refund", "adjustment"].includes(type)) continue;
-      const amount = Math.abs(Number(tx.amount ?? 0));
-      const fee    = Math.abs(Number(tx.fee ?? 0));
-      const date   = String(tx.processed_at ?? payoutDate).slice(0, 10);
-      const orderId = tx.source_order_id ? `#${tx.source_order_id}` : `payout-${payout.id}`;
-      const lib    = `Shopify ${orderId}`;
-      const { ht, tva } = calcTva(amount);
-      const tvaAcq = r2(amount * TAUX);
+  // Batch-fetch pays de facturation
+  const orderIds = [...new Set(allTxs.filter(t=>t.source_order_id).map(t=>t.source_order_id))];
+  const countryMap = new Map();
+  for (let i = 0; i < orderIds.length; i += 250) {
+    const chunk = orderIds.slice(i, i + 250);
+    const oRes = await fetch(`${base}/orders.json?ids=${chunk.join(",")}&fields=id,billing_address&status=any&limit=250`, { headers });
+    const { orders = [] } = await oRes.json();
+    for (const o of orders) countryMap.set(o.id, (o.billing_address?.country_code ?? "").toUpperCase());
+  }
+  console.log(`  → ${orderIds.length} commandes récupérées, pays CH: ${[...countryMap.values()].filter(c=>c==="CH").length}`);
 
-      if (type === "refund") {
-        ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, lib, -amount]);
-        ecritures.push([date, COMPTES.VENTE_GEN, `${lib} (Acquis.)`, amount]);
-        ecritures.push([date, COMPTES.TVA_ACQ, `TVA s/acquis. ${lib}`, -tvaAcq]);
-        ecritures.push([date, COMPTES.TVA_ACQ, `TVA s/acquis. ${lib} (due)`, tvaAcq]);
+  const ecritures = [];
+  for (const tx of allTxs) {
+    const type = String(tx.type ?? "").toLowerCase();
+    if (!["charge", "refund", "adjustment"].includes(type)) continue;
+    const amount   = Math.abs(Number(tx.amount ?? 0));
+    const fee      = Math.abs(Number(tx.fee ?? 0));
+    const payoutId = tx.payout_id;
+    const date     = String(tx.processed_at ?? payoutMeta.get(payoutId)?.date).slice(0, 10);
+    const orderId  = tx.source_order_id;
+    const lib      = orderId ? `Shopify #${orderId}` : `Shopify payout-${payoutId}`;
+    const country  = orderId ? (countryMap.get(orderId) ?? "") : "";
+    const isCH     = country === "CH";
+    const { ht, tva } = calcTva(amount);
+
+    if (type === "charge") {
+      ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, lib, amount]);
+      if (isCH) {
+        ecritures.push([date, COMPTES.VENTE_GEN, `${lib} HT`, -ht]);
+        ecritures.push([date, COMPTES.TVA_VENTE, `${lib} TVA`, -tva]);
       } else {
-        ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, lib, amount]);
-        ecritures.push([date, COMPTES.VENTE_GEN, `${lib} (Acquis.)`, -amount]);
-        ecritures.push([date, COMPTES.TVA_ACQ, `TVA s/acquis. ${lib}`, tvaAcq]);
-        ecritures.push([date, COMPTES.TVA_ACQ, `TVA s/acquis. ${lib} (due)`, -tvaAcq]);
-        if (fee) {
-          ecritures.push([date, COMPTES.FRAIS, `Frais ${lib}`, fee]);
-          ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, `Frais ${lib}`, -fee]);
-        }
+        ecritures.push([date, COMPTES.VENTE_GEN, lib, -amount]);
       }
+      if (fee) {
+        ecritures.push([date, COMPTES.FRAIS, `Frais ${lib}`, fee]);
+        ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, `Frais ${lib}`, -fee]);
+      }
+    } else if (type === "refund") {
+      ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, `Rembt ${lib}`, -amount]);
+      if (isCH) {
+        ecritures.push([date, COMPTES.VENTE_GEN, `Rembt ${lib} HT`, ht]);
+        ecritures.push([date, COMPTES.TVA_VENTE, `Rembt ${lib} TVA`, tva]);
+      } else {
+        ecritures.push([date, COMPTES.VENTE_GEN, `Rembt ${lib}`, amount]);
+      }
+    } else {
+      ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, lib, amount > 0 ? amount : -Math.abs(amount)]);
+      ecritures.push([date, COMPTES.VENTE_GEN, lib, amount > 0 ? -amount : Math.abs(amount)]);
     }
-    if (payoutAmount > 0) {
-      ecritures.push([payoutDate, COMPTES.PASSAGE_POSTFINANCE, `Virement Shopify payout-${payout.id}`, payoutAmount]);
-      ecritures.push([payoutDate, COMPTES.PASSAGE_SHOPIFY,     `Virement Shopify payout-${payout.id}`, -payoutAmount]);
+  }
+
+  for (const [pid, { date, amount }] of payoutMeta) {
+    if (amount > 0) {
+      ecritures.push([date, COMPTES.PASSAGE_POSTFINANCE, `Virement Shopify payout-${pid}`, amount]);
+      ecritures.push([date, COMPTES.PASSAGE_SHOPIFY, `Virement Shopify payout-${pid}`, -amount]);
     }
   }
   return ecritures;
