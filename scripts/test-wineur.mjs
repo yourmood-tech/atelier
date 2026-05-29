@@ -115,6 +115,8 @@ async function testPayPal() {
     const altName = nameObj?.alternate_full_name ?? `${nameObj?.given_name ?? ""} ${nameObj?.surname ?? ""}`.trim();
     const nom = altName || "PayPal";
     const email  = String(payer?.email_address ?? "");
+    const country = String(payer?.country_code ?? "").toUpperCase();
+    const isCH   = country === "CH";
     const lib    = `PayPal: ${nom}`.replace(/,/g, "-").slice(0, 80);
     const cpte   = PAYPAL_COMPTES[devise] ?? COMPTES.PASSAGE_PAYPAL_CHF;
 
@@ -122,14 +124,26 @@ async function testPayPal() {
     if (rawAmt > 0) {
       const brut = rawAmt;
       const { ht, tva } = calcTva(brut);
-      if (devise === "CHF") {
-        ecritures.push([date, cpte,              lib,          brut, "", ""]);
-        ecritures.push([date, COMPTES.VENTE_GEN, `${lib} HT`, -ht,  "", "CHF"]);
-        ecritures.push([date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva, "", "CHF"]);
+      if (isCH) {
+        // Client suisse → TVA 8.1% ventilée
+        if (devise === "CHF") {
+          ecritures.push([date, cpte,              lib,          brut, "", ""]);
+          ecritures.push([date, COMPTES.VENTE_GEN, `${lib} HT`, -ht,  "", "CHF"]);
+          ecritures.push([date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva, "", "CHF"]);
+        } else {
+          ecritures.push([date, cpte,              lib,          brut, brut, devise]);
+          ecritures.push([date, COMPTES.VENTE_GEN, `${lib} HT`, -ht,  "",   "CHF"]);
+          ecritures.push([date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva, "",   "CHF"]);
+        }
       } else {
-        ecritures.push([date, cpte,              lib,          brut, brut, devise]);
-        ecritures.push([date, COMPTES.VENTE_GEN, `${lib} HT`, -ht,  "",   "CHF"]);
-        ecritures.push([date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva, "",   "CHF"]);
+        // Client étranger → pas de TVA suisse
+        if (devise === "CHF") {
+          ecritures.push([date, cpte,              lib, brut,  "", ""]);
+          ecritures.push([date, COMPTES.VENTE_GEN, lib, -brut, "", "CHF"]);
+        } else {
+          ecritures.push([date, cpte,              lib, brut,  brut, devise]);
+          ecritures.push([date, COMPTES.VENTE_GEN, lib, -brut, "",   "CHF"]);
+        }
       }
       if (fee > 0) {
         ecritures.push([date, COMPTES.COMMISSION, `Commission ${lib}`, fee,  "", "CHF"]);
@@ -140,23 +154,20 @@ async function testPayPal() {
     // PAIEMENT FOURNISSEUR (montant négatif)
     if (rawAmt < 0) {
       const brut = Math.abs(rawAmt);
-      const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase());
-      if (cpteCharge) {
-        const isCh = email.endsWith(".ch");
-        if (isCh) {
-          const { ht, tva } = calcTva(brut);
-          ecritures.push([date, cpteCharge,       `${lib} HT`, ht,  "", "CHF"]);
-          ecritures.push([date, COMPTES.TVA_ACQ,  `TVA CH ${lib}`, tva, "", "CHF"]);
-        } else {
-          const tvaZero = r2(brut * TAUX / (1 + TAUX));
-          ecritures.push([date, cpteCharge,       lib, brut, "", "CHF"]);
-          ecritures.push([date, COMPTES.TVA_ACQ,  `TVA étr. ${lib}`,  tvaZero,  "", "CHF"]);
-          ecritures.push([date, COMPTES.TVA_ACQ,  `TVA étr. ${lib} cp`, -tvaZero, "", "CHF"]);
-        }
-        ecritures.push([date, cpte, lib, -brut, "", "CHF"]);
+      const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase()) ?? "109999";
+      if (isCH) {
+        // Fournisseur suisse : brut = TTC → HT + TVA récupérable
+        const { ht, tva } = calcTva(brut);
+        ecritures.push([date, cpteCharge,      `${lib} HT`,              ht,      "", "CHF"]);
+        ecritures.push([date, COMPTES.TVA_ACQ, `TVA CH ${lib}`,          tva,     "", "CHF"]);
+        ecritures.push([date, cpte,            lib,                      -brut,   "", "CHF"]);
       } else {
-        ecritures.push([date, "109999", `ATTENTE PayPal: ${nom} <${email}>`, brut,  "", "CHF"]);
-        ecritures.push([date, cpte,     `ATTENTE PayPal: ${nom}`,            -brut, "", "CHF"]);
+        // Fournisseur étranger : brut = HT → TVA auto-liquidée = brut × 8.1%
+        const tvaAcq = r2(brut * TAUX);
+        ecritures.push([date, cpteCharge,      lib,                            brut,     "", "CHF"]);
+        ecritures.push([date, COMPTES.TVA_ACQ, `TVA auto-liq. ${lib}`,        tvaAcq,   "", "CHF"]);
+        ecritures.push([date, COMPTES.TVA_ACQ, `TVA auto-liq. ${lib} (due)`, -tvaAcq,   "", "CHF"]);
+        ecritures.push([date, cpte,            lib,                           -brut,     "", "CHF"]);
       }
     }
   }
