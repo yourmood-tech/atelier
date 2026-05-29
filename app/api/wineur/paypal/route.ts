@@ -30,7 +30,7 @@ async function getToken(): Promise<string> {
 
 function r2(n: number) { return Math.round(n * 100) / 100; }
 
-function add(out: Ecriture[], date: string, compte: string, libelle: string, montant: number, montant_orig?: number, devise?: string) {
+function e(out: Ecriture[], date: string, compte: string, libelle: string, montant: number, montant_orig?: number, devise?: string) {
   out.push({
     date,
     compte,
@@ -50,6 +50,15 @@ function lookupFournisseur(nom: string, email: string): string | null {
   return null;
 }
 
+function parsePayerInfo(payer: Record<string, unknown>) {
+  const nameObj  = payer?.payer_name as Record<string, string> | null;
+  const altName  = nameObj?.alternate_full_name ?? `${nameObj?.given_name ?? ""} ${nameObj?.surname ?? ""}`.trim();
+  const nom      = altName || "PayPal";
+  const email    = String(payer?.email_address ?? "");
+  const country  = String(payer?.country_code ?? "").toUpperCase();
+  return { nom, email, country, isCH: country === "CH" };
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const start = searchParams.get("start");
@@ -67,86 +76,149 @@ export async function GET(req: NextRequest) {
   const txs  = data.transaction_details ?? [];
   const ecritures: Ecriture[] = [];
 
+  // Codes ignorés : paires internes PayPal qui se neutralisent
+  const IGNORE_CODES = new Set(["T1501", "T1105"]);
+
   for (const tx of txs) {
-    const info  = tx.transaction_info  as Record<string, unknown>;
-    const payer = tx.payer_info        as Record<string, unknown>;
+    const info  = tx.transaction_info as Record<string, unknown>;
+    const payer = tx.payer_info       as Record<string, unknown>;
     if (String(info.transaction_status ?? "") !== "S") continue;
+
+    const code    = String(info.transaction_event_code ?? "");
+    if (IGNORE_CODES.has(code)) continue;
 
     const amtObj  = info.transaction_amount as Record<string, unknown>;
     const feeObj  = info.fee_amount          as Record<string, unknown> | null;
     const rawAmt  = Number(amtObj?.value ?? 0);
-    const fee     = Math.abs(Number(feeObj?.value ?? 0));
+    const rawFee  = Number(feeObj?.value ?? 0);           // négatif dans l'API PayPal
+    const fee     = Math.abs(rawFee);
     const devise  = String(amtObj?.currency_code ?? "CHF").toUpperCase();
+    const feeDev  = String(feeObj?.currency_code ?? devise).toUpperCase();
     const date    = String(info.transaction_initiation_date ?? "").slice(0, 10);
+    const cpte    = PAYPAL_COMPTES[devise] ?? COMPTES.PASSAGE_PAYPAL_CHF;
+    const { nom, email, country, isCH } = parsePayerInfo(payer);
 
-    const nameObj   = payer?.payer_name    as Record<string, string> | null;
-    const altName   = nameObj?.alternate_full_name ?? `${nameObj?.given_name ?? ""} ${nameObj?.surname ?? ""}`.trim();
-    const nom       = altName || "PayPal";
-    const email     = String(payer?.email_address ?? "");
-    const country   = String(payer?.country_code ?? "").toUpperCase();
-    const isCH      = country === "CH";
-    const cpte      = PAYPAL_COMPTES[devise] ?? COMPTES.PASSAGE_PAYPAL_CHF;
-    const lib       = `PayPal: ${nom}`;
+    // ═══════════════════════════════════════════════════════════════
+    // T0200 — Conversion de devise (vente EUR/USD → CHF)
+    // Enregistre le débit du compte devise ; la contrepartie CHF
+    // vient du T0700 correspondant dans la même période.
+    // L'écart de change est absorbé par le compte 670004.
+    // ═══════════════════════════════════════════════════════════════
+    if (code === "T0200") {
+      const lib = `PayPal conversion ${devise}→CHF`;
+      if (rawAmt < 0) {
+        // Vente de devise : débit compte devise
+        e(ecritures, date, cpte,               lib, rawAmt, rawAmt, devise);
+        e(ecritures, date, COMPTES.DIFF_CHANGE, lib, -rawAmt, undefined, "CHF");
+      } else {
+        // Achat de devise (direction inverse, rare)
+        e(ecritures, date, cpte,               lib, rawAmt, rawAmt, devise);
+        e(ecritures, date, COMPTES.DIFF_CHANGE, lib, -rawAmt, undefined, "CHF");
+      }
+      continue;
+    }
 
-    // ── VENTE / ENCAISSEMENT (montant positif) ─────────────────────────────
-    if (rawAmt > 0) {
+    // ═══════════════════════════════════════════════════════════════
+    // T0700 — CHF reçu suite à conversion EUR→CHF
+    // Crédit du compte CHF PayPal, débit 670004 (écart de change).
+    // Ensemble avec T0200, 670004 reflète l'écart de change net.
+    // ═══════════════════════════════════════════════════════════════
+    if (code === "T0700") {
+      const lib = "PayPal conversion →CHF reçu";
+      e(ecritures, date, COMPTES.DIFF_CHANGE,    lib, -rawAmt);
+      e(ecritures, date, COMPTES.PASSAGE_PAYPAL_CHF, lib, rawAmt);
+      continue;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // T0201 — Remboursement partiel client étranger (EUR négatif)
+    // T1107 — Remboursement client CH (CHF négatif)
+    // ═══════════════════════════════════════════════════════════════
+    if (code === "T0201" || code === "T1107") {
+      const brut = Math.abs(rawAmt);
+      const lib  = `Rembt PayPal${nom !== "PayPal" ? ": " + nom : ""}`;
+      const isRefundCH = code === "T1107" || isCH;
+      if (isRefundCH) {
+        const { ht, tva } = calculTva(brut);
+        e(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`, ht);
+        e(ecritures, date, COMPTES.TVA_VENTE, `${lib} TVA`, tva);
+        e(ecritures, date, cpte,              lib,          -brut);
+      } else {
+        // Étranger : pas de TVA suisse → reverse simple
+        e(ecritures, date, COMPTES.VENTE_GEN, lib, brut,  undefined, "CHF");
+        e(ecritures, date, cpte,              lib, -brut, -brut,     devise);
+      }
+      continue;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // T0003 positif & T0003 négatif + T0006 négatif
+    // Ventes entrantes et paiements fournisseurs
+    // ═══════════════════════════════════════════════════════════════
+    const isSupplierCode = code === "T0006";
+    const lib = `PayPal: ${nom}`;
+
+    // ── VENTE / ENCAISSEMENT ────────────────────────────────────────
+    if (rawAmt > 0 && !isSupplierCode) {
       const brut = rawAmt;
       const { ht, tva } = calculTva(brut);
 
       if (isCH) {
-        // Client suisse → TVA 8.1% ventilée
-        if (devise === "CHF") {
-          add(ecritures, date, cpte,              lib,          brut);
-          add(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`, -ht);
-          add(ecritures, date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva);
-        } else {
-          add(ecritures, date, cpte,              lib,          brut, brut, devise);
-          add(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`, -ht,  undefined, "CHF");
-          add(ecritures, date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva, undefined, "CHF");
-        }
+        e(ecritures, date, cpte,              lib,          brut, devise !== "CHF" ? brut : undefined, devise !== "CHF" ? devise : undefined);
+        e(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`, -ht);
+        e(ecritures, date, COMPTES.TVA_VENTE, `${lib} TVA`,-tva);
       } else {
         // Client étranger → pas de TVA suisse
         if (devise === "CHF") {
-          add(ecritures, date, cpte,              lib, brut);
-          add(ecritures, date, COMPTES.VENTE_GEN, lib, -brut);
+          e(ecritures, date, cpte,              lib, brut);
+          e(ecritures, date, COMPTES.VENTE_GEN, lib, -brut);
         } else {
-          add(ecritures, date, cpte,              lib, brut, brut, devise);
-          add(ecritures, date, COMPTES.VENTE_GEN, lib, -brut, undefined, "CHF");
+          e(ecritures, date, cpte,              lib, brut, brut, devise);
+          e(ecritures, date, COMPTES.VENTE_GEN, lib, -brut);
         }
         void ht; void tva;
       }
 
+      // Frais de transaction PayPal (dans la devise de la vente)
       if (fee > 0) {
-        add(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, fee);
-        add(ecritures, date, cpte,               `Commission ${lib}`,-fee);
+        const cpteComm = PAYPAL_COMPTES[feeDev] ?? COMPTES.PASSAGE_PAYPAL_CHF;
+        if (feeDev === "CHF") {
+          e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, fee);
+          e(ecritures, date, cpteComm,           `Commission ${lib}`,-fee);
+        } else {
+          // Frais en devise étrangère (ex: EUR) → enregistrer en devise
+          e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, fee, fee, feeDev);
+          e(ecritures, date, cpteComm,           `Commission ${lib}`,-fee,-fee, feeDev);
+        }
       }
     }
 
-    // ── PAIEMENT FOURNISSEUR (montant négatif) ─────────────────────────────
-    if (rawAmt < 0) {
+    // ── PAIEMENT FOURNISSEUR ────────────────────────────────────────
+    if (rawAmt < 0 || isSupplierCode) {
       const brut       = Math.abs(rawAmt);
-      const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase());
-      const compte     = cpteCharge ?? "109999"; // compte attente si inconnu
+      const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase()) ?? "109999";
 
       if (isCH) {
-        // Fournisseur suisse : brut = TTC → extraire HT + TVA récupérable
+        // Fournisseur suisse : brut = TTC → HT + TVA récupérable
         const { ht, tva } = calculTva(brut);
-        add(ecritures, date, compte,           `${lib} HT`,         ht);
-        add(ecritures, date, COMPTES.TVA_ACQ,  `TVA CH ${lib}`,     tva);
-        add(ecritures, date, cpte,             lib,                 -brut);
+        e(ecritures, date, cpteCharge,       `${lib} HT`,              ht);
+        e(ecritures, date, COMPTES.TVA_ACQ,  `TVA CH ${lib}`,          tva);
+        e(ecritures, date, cpte,             lib,                      -brut, devise !== "CHF" ? -brut : undefined, devise !== "CHF" ? devise : undefined);
       } else {
         // Fournisseur étranger : brut = HT → TVA auto-liquidée = brut × 8.1%
-        // Décompte TVA à zéro : débit + crédit 117001 (acquisition intracommunautaire)
         const tvaAcq = r2(brut * TAUX);
-        add(ecritures, date, compte,           lib,                            brut);
-        add(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,        tvaAcq);
-        add(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`, -tvaAcq);
-        add(ecritures, date, cpte,             lib,                           -brut);
-      }
-
-      if (!cpteCharge) {
-        // Marquer comme à ventiler manuellement
-        ecritures[ecritures.length - 4].libelle = `ATTENTE PayPal: ${nom} <${email}>`;
+        if (devise === "CHF") {
+          e(ecritures, date, cpteCharge,       lib,                            brut);
+        } else {
+          e(ecritures, date, cpteCharge,       lib,                            brut, brut, devise);
+        }
+        e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,        tvaAcq);
+        e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`, -tvaAcq);
+        if (devise === "CHF") {
+          e(ecritures, date, cpte,             lib,                           -brut);
+        } else {
+          e(ecritures, date, cpte,             lib,                           -brut, -brut, devise);
+        }
       }
     }
   }

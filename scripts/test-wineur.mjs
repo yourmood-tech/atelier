@@ -17,11 +17,12 @@ const COMPTES = {
   PASSAGE_PAYPAL_EUR: "100402",
   PASSAGE_PAYPAL_USD: "100404",
   PASSAGE_POSTFINANCE: "220001",
-  TVA_ACQ:   "117001",
-  TVA_VENTE: "217001",
-  FRAIS:     "640004",
-  COMMISSION:"640002",
-  VENTE_GEN: "320001",
+  TVA_ACQ:    "117001",
+  TVA_VENTE:  "217001",
+  FRAIS:      "640004",
+  COMMISSION: "640002",
+  VENTE_GEN:  "320001",
+  DIFF_CHANGE:"670004",
 };
 const SUMUP_MAP = {
   "carouge@yourmood.net":  { lieu: "Carouge",  compte: "320004" },
@@ -36,7 +37,7 @@ const SUMUP_MAP = {
 function r2(n) { return Math.round(n * 100) / 100; }
 function calcTva(brut) { const ht = r2(brut / (1 + TAUX)); return { ht, tva: r2(brut - ht) }; }
 
-const START = "2026-05-28";
+const START = "2026-05-01";
 const END   = "2026-05-28";
 
 // ─── SUMUP ────────────────────────────────────────────────────────────────────
@@ -101,15 +102,21 @@ async function testPayPal() {
   const { transaction_details = [] } = await res.json();
   const ecritures = [];
   const PAYPAL_COMPTES = { CHF: COMPTES.PASSAGE_PAYPAL_CHF, EUR: COMPTES.PASSAGE_PAYPAL_EUR, USD: COMPTES.PASSAGE_PAYPAL_USD };
+  const IGNORE_CODES = new Set(["T1501", "T1105"]);
 
   for (const tx of transaction_details) {
     const info  = tx.transaction_info;
     const payer = tx.payer_info;
     if (info.transaction_status !== "S") continue;
 
+    const code   = String(info.transaction_event_code ?? "");
+    if (IGNORE_CODES.has(code)) continue;
+
     const rawAmt = Number(info.transaction_amount?.value ?? 0);
-    const fee    = Math.abs(Number(info.fee_amount?.value ?? 0));
+    const rawFee = Number(info.fee_amount?.value ?? 0);
+    const fee    = Math.abs(rawFee);
     const devise = String(info.transaction_amount?.currency_code ?? "CHF").toUpperCase();
+    const feeDev = String(info.fee_amount?.currency_code ?? devise).toUpperCase();
     const date   = String(info.transaction_initiation_date ?? "").slice(0, 10);
     const nameObj = payer?.payer_name;
     const altName = nameObj?.alternate_full_name ?? `${nameObj?.given_name ?? ""} ${nameObj?.surname ?? ""}`.trim();
@@ -120,8 +127,37 @@ async function testPayPal() {
     const lib    = `PayPal: ${nom}`.replace(/,/g, "-").slice(0, 80);
     const cpte   = PAYPAL_COMPTES[devise] ?? COMPTES.PASSAGE_PAYPAL_CHF;
 
-    // VENTE (montant positif)
-    if (rawAmt > 0) {
+    // T0200 — Conversion devise (débit compte devise, contrepartie sur 670004)
+    if (code === "T0200") {
+      ecritures.push([date, cpte,               `PayPal conversion ${devise}→CHF`, rawAmt, rawAmt, devise]);
+      ecritures.push([date, COMPTES.DIFF_CHANGE, `PayPal conversion ${devise}→CHF`, -rawAmt, "", "CHF"]);
+      continue;
+    }
+    // T0700 — CHF reçu de la conversion (crédit CHF, débit 670004)
+    if (code === "T0700") {
+      ecritures.push([date, COMPTES.DIFF_CHANGE,          "PayPal conversion →CHF reçu", -rawAmt, "", "CHF"]);
+      ecritures.push([date, COMPTES.PASSAGE_PAYPAL_CHF,   "PayPal conversion →CHF reçu", rawAmt,  "", "CHF"]);
+      continue;
+    }
+    // T0201 — Remboursement client étranger (EUR), T1107 — Remboursement client CH
+    if (code === "T0201" || code === "T1107") {
+      const brut = Math.abs(rawAmt);
+      const isRefundCH = code === "T1107" || isCH;
+      const rlib = `Rembt PayPal${nom !== "PayPal" ? ": " + nom : ""}`.replace(/,/g,"-");
+      if (isRefundCH) {
+        const { ht, tva } = calcTva(brut);
+        ecritures.push([date, COMPTES.VENTE_GEN, `${rlib} HT`, ht, "", "CHF"]);
+        ecritures.push([date, COMPTES.TVA_VENTE, `${rlib} TVA`, tva, "", "CHF"]);
+        ecritures.push([date, cpte, rlib, -brut, "", "CHF"]);
+      } else {
+        ecritures.push([date, COMPTES.VENTE_GEN, rlib, brut,  "", "CHF"]);
+        ecritures.push([date, cpte,              rlib, -brut, -brut, devise]);
+      }
+      continue;
+    }
+
+    // VENTE (montant positif — sauf T0006 qui est toujours fournisseur)
+    if (rawAmt > 0 && code !== "T0006") {
       const brut = rawAmt;
       const { ht, tva } = calcTva(brut);
       if (isCH) {
@@ -146,13 +182,19 @@ async function testPayPal() {
         }
       }
       if (fee > 0) {
-        ecritures.push([date, COMPTES.COMMISSION, `Commission ${lib}`, fee,  "", "CHF"]);
-        ecritures.push([date, cpte,               `Commission ${lib}`, -fee, "", "CHF"]);
+        const cpteComm = PAYPAL_COMPTES[feeDev] ?? COMPTES.PASSAGE_PAYPAL_CHF;
+        if (feeDev === "CHF") {
+          ecritures.push([date, COMPTES.COMMISSION, `Commission ${lib}`, fee,  "", "CHF"]);
+          ecritures.push([date, cpteComm,           `Commission ${lib}`, -fee, "", "CHF"]);
+        } else {
+          ecritures.push([date, COMPTES.COMMISSION, `Commission ${lib}`, fee,  fee,  feeDev]);
+          ecritures.push([date, cpteComm,           `Commission ${lib}`, -fee, -fee, feeDev]);
+        }
       }
     }
 
-    // PAIEMENT FOURNISSEUR (montant négatif)
-    if (rawAmt < 0) {
+    // PAIEMENT FOURNISSEUR (montant négatif, ou T0006 toujours négatif)
+    if (rawAmt < 0 || code === "T0006") {
       const brut = Math.abs(rawAmt);
       const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase()) ?? "109999";
       if (isCH) {
