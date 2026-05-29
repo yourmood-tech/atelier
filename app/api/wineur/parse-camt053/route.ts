@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { COMPTES, calculTva } from "@/lib/wineur/accounting";
 import type { Ecriture } from "@/lib/wineur/accounting";
-import comptesPostfinance from "@/lib/wineur/comptes_postfinance.json";
 import JSZip from "jszip";
+import { getMappings, lookupInMap } from "@/lib/wineur/mappings";
+import type { UnknownEntry } from "@/lib/wineur/mappings";
 
 // SubFmlyCd → paiement OPAE généré depuis GIT/WinEUR → ignorer
 const OPAE_SUB = new Set(["DMCT", "XBCT", "ESCT", "BOOK"]);
@@ -35,14 +36,7 @@ function ibanToCompte(iban: string): string {
   return "100101"; // fallback compte principal
 }
 
-function lookupPostfinance(haystack: string): string | null {
-  const h = haystack.toLowerCase();
-  const config = comptesPostfinance as Record<string, string>;
-  for (const [k, v] of Object.entries(config)) {
-    if (h.includes(k)) return v;
-  }
-  return null;
-}
+// lookupPostfinance est appelé avec le config chargé dynamiquement dans POST
 
 interface CamtEntry {
   date: string;
@@ -89,8 +83,9 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
   return entries;
 }
 
-function buildEcritures(entries: CamtEntry[]): { ecritures: Ecriture[]; stats: Record<string, number> } {
+function buildEcritures(entries: CamtEntry[], config: Record<string, string>): { ecritures: Ecriture[]; stats: Record<string, number>; unknowns: UnknownEntry[] } {
   const ecritures: Ecriture[] = [];
+  const unknowns: UnknownEntry[] = [];
   const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0 };
 
   for (const e of entries) {
@@ -146,22 +141,26 @@ function buildEcritures(entries: CamtEntry[]): { ecritures: Ecriture[]; stats: R
     const ref = (creditorName || addtlInfo.slice(0, 50) || "Débit PostFinance").replace(/,/g, "-");
     const lib = `PostFinance: ${ref}`.slice(0, 80);
     const haystack = `${creditorName} ${communication} ${addtlInfo}`.toLowerCase();
-    const cpteCharge = lookupPostfinance(haystack) ?? "109999";
+    const cpteCharge = lookupInMap(haystack, config);
+    if (!cpteCharge) {
+      unknowns.push({ key: haystack.slice(0, 80), label: ref.slice(0, 60), amount, date, source: "postfinance" });
+    }
+    const cpte = cpteCharge ?? "109999";
     const tvaAcq = r2(amount * TAUX);
 
     if (isCH) {
       const { ht, tva } = calculTva(amount);
-      ecritures.push({ date, compte: cpteCharge,       libelle: `${lib} HT`,          montant:  ht  });
+      ecritures.push({ date, compte: cpte,             libelle: `${lib} HT`,          montant:  ht  });
       ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA CH ${lib}`,       montant:  tva });
     } else {
-      ecritures.push({ date, compte: cpteCharge,       libelle: lib,                            montant:  amount   });
+      ecritures.push({ date, compte: cpte,             libelle: lib,                            montant:  amount   });
       ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib}`,        montant:  tvaAcq  });
       ecritures.push({ date, compte: COMPTES.TVA_ACQ,  libelle: `TVA auto-liq. ${lib} (due)`,  montant: -tvaAcq  });
     }
     ecritures.push({ date, compte: pfCompte, libelle: lib, montant: -amount });
   }
 
-  return { ecritures, stats };
+  return { ecritures, stats, unknowns };
 }
 
 export async function POST(req: NextRequest) {
@@ -186,7 +185,8 @@ export async function POST(req: NextRequest) {
     allEntries.push(...parseEntries(xml, iban));
   }
 
-  const { ecritures, stats } = buildEcritures(allEntries);
+  const config = await getMappings("postfinance");
+  const { ecritures, stats, unknowns } = buildEcritures(allEntries, config);
 
-  return NextResponse.json({ ecritures, stats, total: allEntries.length });
+  return NextResponse.json({ ecritures, stats, unknowns, total: allEntries.length });
 }
