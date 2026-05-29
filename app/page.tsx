@@ -90,6 +90,19 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
     ],
   },
   {
+    id: "finance",
+    title: "Finance & Comptabilité",
+    summary: "Export des écritures comptables pour WinEUR GIT depuis toutes les sources de paiement.",
+    tools: [
+      {
+        href: "/wineur",
+        emoji: "📊",
+        title: "WinEUR Hub",
+        description: "Génère un fichier d'écritures WinEUR depuis SumUp, PayPal, Shopify Payouts, PostFinance et Twint pour une période donnée.",
+      },
+    ],
+  },
+  {
     id: "stats",
     title: "Stats & Conditions",
     summary: "Analyse des stats hebdomadaires MasterTech, identification de condition et Battle Plan personnalisé.",
