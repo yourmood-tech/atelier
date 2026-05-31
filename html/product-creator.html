@@ -2281,8 +2281,8 @@
   // Prix de VENTE catalogue de la matière (utilisé directement si dispo, sinon achat × 3.8)
   // Source : tableau fourni par Amila Pousaz 2026-05-08
   const PRIX_VENTE_MATIERE_SERTI = {
-    'argent':       { 'medium': 169 },
-    'argent-glitter':{ 'medium': 169 },
+    'argent':       { 'medium': 179 },
+    'argent-glitter':{ 'medium': 179 },
     'or rose':      { 'medium': 1178 },
     'or jaune':     { 'medium': 1178 },
     'or gris':      { 'medium': 722 },
@@ -2331,74 +2331,112 @@
       content.innerHTML = '<div style="font-size:0.85rem;">Pour voir le tableau, il manque :</div><ul style="margin:0.4rem 0 0 0;padding-left:1.2rem;font-size:0.85rem;">' + manqueArr.map(s => `<li>${s}</li>`).join('') + '</ul>';
       return;
     }
-    // Multiplicateur selon le sertissage
-    // - medium-full       = 1 côté entier        → ×1
-    // - medium-partiel    = 1 côté moitié        → ×0.5
-    // - base-1-cote       = 1 côté entier        → ×1
-    // - base-2-cotes      = 2 côtés entiers      → ×2
-    const facteursMjp = { 'medium-full': 1, 'medium-partiel': 0.5, 'base-1-cote': 1, 'base-2-cotes': 2 };
-    const facteur = facteursMjp[sertissage] || 1;
+    const isMedium = sertissage.startsWith('medium-');
+    const isBase   = sertissage.startsWith('base-');
+    const matiere  = document.getElementById('j-matiere')?.value || '';
+    const PRIX_BASE_VENTE = 240; // Base nue (acier/titane), peu importe la matière sertie déclarée
 
-    let rows = `<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
-      <thead><tr style="border-bottom:1px solid var(--or);">
-        <th style="text-align:left;padding:0.3rem;">Taille</th>
-        <th style="text-align:right;padding:0.3rem;">Nb pierres</th>
-        <th style="text-align:right;padding:0.3rem;">Carats</th>
-        <th style="text-align:right;padding:0.3rem;">Prix CHF</th>
-      </tr></thead><tbody>`;
-
-    // Prix de la matière selon contexte (medium ou base)
-    // - Si on a un PRIX DE VENTE catalogue → on l'utilise directement
-    // - Sinon → on calcule depuis le prix d'achat × 3.8
-    const matiere = document.getElementById('j-matiere')?.value || '';
-    const contexte = sertissage.startsWith('base-') ? 'base' : 'medium';
-    const prixVenteCat = (PRIX_VENTE_MATIERE_SERTI[matiere] || {})[contexte];
-    const prixAchatMatiere = (PRIX_ACHAT_MATIERE_SERTI[matiere] || {})[contexte] || 0;
-    // Prix matière "intégré" au calcul
-    const prixMatiereIntegre = prixVenteCat !== undefined ? prixVenteCat : prixAchatMatiere * 3.8;
-
-    // Toutes les pierres partagent la MÊME taille (ex: medium serti 1.6mm avec
-    // diamants blancs + diamants noirs alignés). On prend la taille de la 1ère pierre.
-    // Le champ "quantité" devient un RATIO de répartition (par défaut 1 = équitable).
-    const tailleCommune = mjPierres[0].taille;
-    const sommeQuantites = mjPierres.reduce((s, p) => s + (p.quantite || 1), 0) || 1;
-
-    const taillesNumeriques = tailles.filter(t => /^\d+$/.test(t)).sort((a,b)=>+a-+b);
+    let rows = '';
     const prixCalcules = [];
-    for (const t of taillesNumeriques) {
-      const nbBase = (NB_PIERRES_PAR_COTE[tailleCommune] || {})[+t];
-      let manque = nbBase === undefined;
-      const totalNb = manque ? 0 : Math.round(nbBase * facteur);
-      const poids = POIDS_CARAT[tailleCommune] || 0;
-      const totalCarats = poids * totalNb;
 
-      // Répartir le total entre les types de pierres selon ratio quantités
+    if (isMedium) {
+      // ================== CAS MEDIUM SERTI ==================
+      // Quantités saisies = nombres ABSOLUS (pas un ratio). 1 seul prix calculé.
+      const prixVenteCat = (PRIX_VENTE_MATIERE_SERTI[matiere] || {})['medium'];
+      const prixAchatMatiere = (PRIX_ACHAT_MATIERE_SERTI[matiere] || {})['medium'] || 0;
+      const prixMatiereIntegre = prixVenteCat !== undefined ? prixVenteCat : prixAchatMatiere * 3.8;
+
+      let totalNb = 0;
       let totalAchatPierres = 0;
+      let totalCarats = 0;
+      const detailPierres = [];
       for (const p of mjPierres) {
-        const ratio = (p.quantite || 1) / sommeQuantites;
-        const nbPierre = Math.round(totalNb * ratio);
+        const nb = p.quantite || 0;
+        if (nb <= 0) continue;
         const achatUnit = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
-        totalAchatPierres += achatUnit * nbPierre;
+        const poids = POIDS_CARAT[p.taille] || 0;
+        totalNb += nb;
+        totalAchatPierres += achatUnit * nb;
+        totalCarats += poids * nb;
+        detailPierres.push(`${nb} × ${p.type} ${p.taille}mm (${achatUnit.toFixed(2)}.- achat)`);
       }
-      // Prix = prix matière catalogue (ou achat × 3.8) + (achat pierres × 3.8) + (4 × nb pierres serties)
-      const prix = Math.round(prixMatiereIntegre + totalAchatPierres * 3.8 + 4 * totalNb);
-      if (manque) {
-        rows += `<tr><td style="padding:0.3rem;">${t}</td><td colspan="3" style="text-align:right;padding:0.3rem;color:var(--rouge);">Taille de pierre non gérée pour cette table</td></tr>`;
-      } else {
-        prixCalcules.push(prix);
-        rows += `<tr><td style="padding:0.3rem;">${t}</td>
-          <td style="text-align:right;padding:0.3rem;">${totalNb}</td>
-          <td style="text-align:right;padding:0.3rem;">${totalCarats.toFixed(3)}</td>
-          <td style="text-align:right;padding:0.3rem;font-weight:600;">${prix.toLocaleString('fr-CH')}.-</td></tr>`;
-      }
-    }
-    rows += '</tbody></table>';
-    const sourceMatiere = prixVenteCat !== undefined
-      ? `Prix matière (${matiere} ${contexte}) : ${prixVenteCat} CHF (catalogue)`
-      : `Prix matière (${matiere} ${contexte}) : ${prixAchatMatiere}.- × 3.8 = ${(prixAchatMatiere * 3.8).toFixed(0)} CHF`;
-    rows += `<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--gris);">${sourceMatiere}<br>+ achat pierres × 3.8 + 4 CHF par pierre sertie</div>`;
+      const prixMatiereVente = prixMatiereIntegre;
+      const prixVentePierres = totalAchatPierres * 3.8;
+      const prixSertissage = 4 * totalNb;
+      const prix = Math.round(prixMatiereVente + prixVentePierres + prixSertissage);
+      prixCalcules.push(prix);
 
-    // Auto-remplir le champ Prix de vente avec la moyenne des prix calculés
+      const sourceMatiere = prixVenteCat !== undefined
+        ? `Prix matière (${matiere} medium) : ${prixVenteCat}.- CHF (catalogue)`
+        : `Prix matière (${matiere} medium) : ${prixAchatMatiere}.- × 3.8 = ${(prixAchatMatiere * 3.8).toFixed(0)}.- CHF`;
+
+      rows += `
+        <div style="font-size:0.85rem;line-height:1.7;">
+          <div>${sourceMatiere}</div>
+          <div>Pierres saisies (nombre exact, même prix pour toutes les tailles de bague) :</div>
+          <ul style="margin:0.2rem 0 0.4rem 1.2rem;padding:0;">${detailPierres.map(d => `<li>${d}</li>`).join('')}</ul>
+          <div>Total pierres : <strong>${totalNb}</strong> (${totalCarats.toFixed(3)} ct)</div>
+          <div>Achat pierres × 3.8 = ${prixVentePierres.toFixed(2)}.-</div>
+          <div>Sertissage (4.- × ${totalNb}) = ${prixSertissage}.-</div>
+          <div style="margin-top:0.6rem;padding-top:0.4rem;border-top:1px solid var(--or);font-size:1rem;">
+            <strong>Prix de vente : ${prix.toLocaleString('fr-CH')}.- CHF</strong>
+          </div>
+          <div style="margin-top:0.3rem;font-size:0.75rem;color:var(--gris);">
+            Formule : matière + (achat pierres × 3.8) + (4.- × nb pierres)
+          </div>
+        </div>
+      `;
+    } else if (isBase) {
+      // ================== CAS BASE SERTIE ==================
+      // Base = 240.- fixe (anneau acier/titane). Nb pierres calculé selon la taille de bague.
+      // Le facteur double pour base-2-cotes.
+      const facteur = sertissage === 'base-2-cotes' ? 2 : 1;
+      const tailleCommune = mjPierres[0].taille;
+      const sommeQuantites = mjPierres.reduce((s, p) => s + (p.quantite || 1), 0) || 1;
+
+      rows += `<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead><tr style="border-bottom:1px solid var(--or);">
+          <th style="text-align:left;padding:0.3rem;">Taille</th>
+          <th style="text-align:right;padding:0.3rem;">Nb pierres</th>
+          <th style="text-align:right;padding:0.3rem;">Carats</th>
+          <th style="text-align:right;padding:0.3rem;">Prix CHF</th>
+        </tr></thead><tbody>`;
+
+      const taillesNumeriques = tailles.filter(t => /^\d+$/.test(t)).sort((a,b)=>+a-+b);
+      for (const t of taillesNumeriques) {
+        const nbBase = (NB_PIERRES_PAR_COTE[tailleCommune] || {})[+t];
+        const manque = nbBase === undefined;
+        const totalNb = manque ? 0 : Math.round(nbBase * facteur);
+        const poids = POIDS_CARAT[tailleCommune] || 0;
+        const totalCarats = poids * totalNb;
+        let totalAchatPierres = 0;
+        for (const p of mjPierres) {
+          const ratio = (p.quantite || 1) / sommeQuantites;
+          const nbPierre = Math.round(totalNb * ratio);
+          const achatUnit = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
+          totalAchatPierres += achatUnit * nbPierre;
+        }
+        const prix = Math.round(PRIX_BASE_VENTE + totalAchatPierres * 3.8 + 4 * totalNb);
+        if (manque) {
+          rows += `<tr><td style="padding:0.3rem;">${t}</td><td colspan="3" style="text-align:right;padding:0.3rem;color:var(--rouge);">Taille de pierre non gérée pour cette table</td></tr>`;
+        } else {
+          prixCalcules.push(prix);
+          rows += `<tr><td style="padding:0.3rem;">${t}</td>
+            <td style="text-align:right;padding:0.3rem;">${totalNb}</td>
+            <td style="text-align:right;padding:0.3rem;">${totalCarats.toFixed(3)}</td>
+            <td style="text-align:right;padding:0.3rem;font-weight:600;">${prix.toLocaleString('fr-CH')}.-</td></tr>`;
+        }
+      }
+      rows += '</tbody></table>';
+      rows += `<div style="margin-top:0.5rem;font-size:0.75rem;color:var(--gris);">
+        Base nue : ${PRIX_BASE_VENTE}.- CHF + achat pierres × 3.8 + 4.- par pierre sertie<br>
+        Nb pierres calculé selon la taille de bague et la taille de la 1ère pierre (${tailleCommune}mm)
+      </div>`;
+    } else {
+      rows = `<div style="font-size:0.85rem;color:var(--gris);">Sertissage non géré pour le calcul auto.</div>`;
+    }
+
+    // Auto-remplir le champ Prix de vente avec la moyenne (medium = 1 valeur, base = moyenne par taille)
     if (prixCalcules.length > 0) {
       const prixMoyen = Math.round(prixCalcules.reduce((s, p) => s + p, 0) / prixCalcules.length);
       const prixInput = document.getElementById('j-prix');
@@ -2406,7 +2444,9 @@
         prixInput.value = prixMoyen;
         prixInput.dataset.autoFilled = 'true';
       }
-      rows += `<div style="margin-top:0.3rem;font-size:0.75rem;color:var(--gris);">💡 Prix moyen pré-rempli : <strong>${prixMoyen.toLocaleString('fr-CH')}.- CHF</strong> (modifiable)</div>`;
+      if (isBase) {
+        rows += `<div style="margin-top:0.3rem;font-size:0.75rem;color:var(--gris);">💡 Prix moyen pré-rempli : <strong>${prixMoyen.toLocaleString('fr-CH')}.- CHF</strong> (modifiable)</div>`;
+      }
     }
     content.innerHTML = rows;
   }
