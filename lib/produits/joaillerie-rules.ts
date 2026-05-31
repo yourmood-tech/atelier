@@ -18,6 +18,7 @@ export interface JoaillerieInfos {
   nom: string;
   format?: string;
   matiere: string;
+  matieres?: string[];  // multi-sélection : si renseigné, génère une variante Shopify par matière (option "Matière")
   carat?: string;
   finition?: string;
   couleur?: string;
@@ -381,13 +382,34 @@ export function construirePayloadJoaillerie(
   const tailles = infos.tailles && infos.tailles.length > 0 ? infos.tailles : TAILLES_STANDARD;
   const prix = infos.prix ? String(infos.prix) : "0";
 
-  const variants = tailles.map((taille) => ({
-    option1: taille,
-    sku: genererSkuJoaillerie(infos, taille),
-    price: prix,
-    inventory_management: "shopify",
-    inventory_policy: "deny",
-  }));
+  // Multi-matières : si plusieurs matières renseignées, on duplique chaque variante par matière
+  // (option Shopify "Matière" + suffix SKU = code matière). Sinon comportement mono d'origine.
+  const matieresList =
+    infos.matieres && infos.matieres.length > 1
+      ? infos.matieres
+      : [infos.matiere];
+  const multiMatieres = matieresList.length > 1;
+
+  type Variant = Record<string, unknown>;
+  const variants: Variant[] = [];
+  for (const taille of tailles) {
+    for (const mat of matieresList) {
+      // SKU généré sur la base de la matière variante (override temporaire)
+      const sku = genererSkuJoaillerie({ ...infos, matiere: mat }, taille);
+      const variante: Variant = {
+        option1: taille,
+        sku,
+        price: prix,
+        inventory_management: "shopify",
+        inventory_policy: "deny",
+      };
+      if (multiMatieres) variante.option2 = mat;
+      variants.push(variante);
+    }
+  }
+
+  const options: { name: string }[] = [{ name: "Taille" }];
+  if (multiMatieres) options.push({ name: "Matière" });
 
   const product: Record<string, unknown> = {
     title: genererTitreJoaillerie(infos),
@@ -396,7 +418,7 @@ export function construirePayloadJoaillerie(
     status: "draft",
     tags: genererTagsJoaillerie(infos),
     body_html: construireBodyHtml(infos),
-    options: [{ name: "Taille" }],
+    options,
     variants,
   };
 

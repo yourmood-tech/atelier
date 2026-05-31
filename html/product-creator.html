@@ -523,24 +523,11 @@
         </select>
       </div>
 
-      <!-- Matière -->
-      <label>Matière *</label>
-      <select id="j-matiere">
-        <option value="">— choisir —</option>
-        <option value="argent">Argent 925</option>
-        <option value="or rose">Or rose</option>
-        <option value="or jaune">Or jaune</option>
-        <option value="or gris">Or gris (blanc)</option>
-        <option value="tantale">Tantale</option>
-        <option value="carbone">Carbone</option>
-        <option value="damasse">Damassé</option>
-        <option value="mokume-gane">Mokume gane</option>
-        <option value="ceramique">Céramique</option>
-        <option value="acier">Acier 316L</option>
-        <option value="titane">Titane</option>
-        <option value="aluminium">Aluminium</option>
-        <option value="polymere">Polymère</option>
-      </select>
+      <!-- Matière(s) — multi-sélection -->
+      <label>Matière(s) * <span class="opt">(coche une ou plusieurs — si plusieurs, le client choisit sur la fiche)</span></label>
+      <div id="j-matieres-checkboxes" style="display:flex;flex-wrap:wrap;gap:0.4rem;background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.6rem;margin-bottom:1rem;"></div>
+      <!-- Champ caché compat (= 1ère matière cochée) -->
+      <input type="hidden" id="j-matiere" value="">
 
       <!-- Carat (conditionnel = or) -->
       <div id="j-field-carat" class="hidden">
@@ -1989,6 +1976,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     setStore(currentStore);
     jInitTaillesCheckboxes();
+    jInitMatieresCheckboxes();
 
     // Pré-remplit le champ Collection Shopify (les 4 formulaires) avec la dernière utilisée
     const lastColl = localStorage.getItem('mood_last_collection') || '';
@@ -2127,17 +2115,53 @@
     }
   }
 
-  // Carat conditionnel selon matière
-  document.getElementById('j-matiere')?.addEventListener('change', function() {
-    const isOr = this.value.startsWith('or ');
-    document.getElementById('j-field-carat')?.classList.toggle('hidden', !isOr);
-    document.getElementById('j-field-couleur')?.classList.toggle('hidden', !isOr);
-    if (isOr) {
-      const couleur = this.value.replace('or ', '');
-      document.getElementById('j-couleur').value = couleur;
+  // Note : carat/couleur/recalc gérés désormais par jOnMatieresChange() (multi-matières)
+
+  // ============ MATIÈRES CHECKBOXES (multi-sélection joaillerie) ============
+  const MATIERES_J = [
+    ['argent',      'Argent 925'],
+    ['or rose',     'Or rose'],
+    ['or jaune',    'Or jaune'],
+    ['or gris',     'Or gris (blanc)'],
+    ['tantale',     'Tantale'],
+    ['carbone',     'Carbone'],
+    ['damasse',     'Damassé'],
+    ['mokume-gane', 'Mokume gane'],
+    ['ceramique',   'Céramique'],
+    ['acier',       'Acier 316L'],
+    ['titane',      'Titane'],
+    ['aluminium',   'Aluminium'],
+    ['polymere',    'Polymère']
+  ];
+  function jInitMatieresCheckboxes() {
+    const c = document.getElementById('j-matieres-checkboxes');
+    if (!c) return;
+    c.innerHTML = MATIERES_J.map(([val, label]) =>
+      `<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.85rem;font-weight:400;margin:0;background:white;padding:0.35rem 0.65rem;border:1px solid #eee;border-radius:6px;">
+        <input type="checkbox" value="${val}" style="width:auto;margin:0;" onchange="jOnMatieresChange();"> ${label}
+      </label>`
+    ).join('');
+  }
+  function jGetMatieresSelectionnees() {
+    return [...document.querySelectorAll('#j-matieres-checkboxes input:checked')].map(cb => cb.value);
+  }
+  function jOnMatieresChange() {
+    const sel = jGetMatieresSelectionnees();
+    // Carat + couleur conditionnels : visibles si AU MOINS UNE matière est "or *"
+    const aUnOr = sel.some(m => m.startsWith('or '));
+    document.getElementById('j-field-carat')?.classList.toggle('hidden', !aUnOr);
+    document.getElementById('j-field-couleur')?.classList.toggle('hidden', !aUnOr);
+    // Si une seule matière or → pré-remplir le champ couleur
+    if (aUnOr && sel.length === 1 && sel[0].startsWith('or ')) {
+      const champCouleur = document.getElementById('j-couleur');
+      if (champCouleur) champCouleur.value = sel[0].replace('or ', '');
     }
+    // Maintenir la 1ère matière dans le champ caché j-matiere (compat avec le code existant)
+    const legacy = document.getElementById('j-matiere');
+    if (legacy) legacy.value = sel[0] || '';
+    if (typeof mjRendreRecapSertissage === 'function') mjRendreRecapSertissage();
     if (mjCategorie === 'piece-serie') mjMettreAJourPrixProjet();
-  });
+  }
 
   // ============ TAILLES CHECKBOXES ============
   const TAILLES_J = ["50","52","54","56","58","60","62","64","66","68","70","72","taille inconnue"];
@@ -2595,11 +2619,12 @@
     document.getElementById('j-resultat').classList.add('hidden');
 
     const nom = document.getElementById('j-nom').value.trim();
-    const matiere = document.getElementById('j-matiere').value;
+    const matieres = jGetMatieresSelectionnees();
+    const matiere = matieres[0] || ''; // 1ère matière comme principale (titre, tags…)
     const prix = document.getElementById('j-prix').value;
 
     if (!nom) { erreur.textContent = 'Champ obligatoire : nom du produit.'; erreur.classList.remove('hidden'); return; }
-    if (!matiere) { erreur.textContent = 'Champ obligatoire : matière.'; erreur.classList.remove('hidden'); return; }
+    if (matieres.length === 0) { erreur.textContent = 'Champ obligatoire : coche au moins une matière.'; erreur.classList.remove('hidden'); return; }
 
     const tailles = jGetTaillesSelectionnees();
     const finitionVal = document.getElementById('j-finition')?.value || '';
@@ -2612,6 +2637,7 @@
       nom,
       format: document.getElementById('j-format')?.value || document.getElementById('j-format-base')?.value || '',
       matiere,
+      matieres,
       carat: document.getElementById('j-carat')?.value || '',
       finition: finitionFinale,
       couleur: document.getElementById('j-couleur')?.value || '',
