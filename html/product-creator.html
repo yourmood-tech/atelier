@@ -2584,11 +2584,19 @@
     const matiere = document.getElementById('j-matiere')?.value || '';
     const format = document.getElementById('j-format')?.value || '';
     const nbSerie = parseInt(document.getElementById('j-nb-serie')?.value || '1', 10) || 1;
-    const nbPierres = mjPierres.reduce((s, p) => s + (p.quantite || 1), 0);
     const prixAchat = (PRIX_ACHAT_JOAILLERIE[matiere] || {})[format] || 0;
     if (!prixAchat) { document.getElementById('j-prix-calcule')?.classList.add('hidden'); return; }
-    // Formule par anneau, multipliée par nb d'anneaux dans la série
-    const prix = Math.round((prixAchat * 3.8 + 4 * nbPierres) * nbSerie);
+    // Total pierres saisies (nombre absolu) + total achat pierres
+    let totalNb = 0;
+    let totalAchatPierres = 0;
+    for (const p of mjPierres) {
+      const nb = p.quantite || 0;
+      totalNb += nb;
+      const achatUnit = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
+      totalAchatPierres += achatUnit * nb;
+    }
+    // Formule par anneau : (matière + pierres) × 3.8 + (4.- × nb pierres serties), puis × nb série
+    const prix = Math.round((prixAchat * 3.8 + totalAchatPierres * 3.8 + 4 * totalNb) * nbSerie);
     document.getElementById('j-prix').value = prix;
     document.getElementById('j-prix-valeur').textContent = prix.toString();
     document.getElementById('j-prix-calcule')?.classList.remove('hidden');
