@@ -5,115 +5,246 @@
 <title>La création du mois — Mood Joaillerie</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root { --or:#b88d3e; --noir:#1a1a1a; --gris:#888; --beige:#faf6ef; }
+  :root { --or:#b88d3e; --noir:#1a1a1a; --gris:#888; --beige:#faf6ef; --nacre:#f5e8d8; }
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; max-width: 920px; margin: 2rem auto; padding: 0 1.5rem; color: var(--noir); background: var(--beige); }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; color: var(--noir); background: var(--beige); }
   h1 { font-weight: 300; letter-spacing: 0.02em; margin: 0 0 0.5rem; }
   .subtitle { color: var(--gris); margin-bottom: 2rem; font-size: 0.95rem; }
-  label { display: block; font-weight: 600; margin: 1.2rem 0 0.4rem; font-size: 0.9rem; }
-  .opt { font-weight: 400; color: var(--gris); font-size: 0.8rem; }
-  input[type=text], textarea { width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.92rem; font-family: inherit; background: white; }
-  textarea { min-height: 320px; line-height: 1.45; }
-  button { width: auto; padding: 0.8rem 1.6rem; background: var(--or); color: white; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; margin-top: 1rem; }
+  .step { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #eadfc8; }
+  .step h2 { font-weight: 500; font-size: 1.1rem; margin: 0 0 1rem; color: var(--or); }
+  label { display: block; font-weight: 600; margin: 0.8rem 0 0.4rem; font-size: 0.88rem; }
+  .opt { font-weight: 400; color: var(--gris); font-size: 0.78rem; }
+  input[type=text], textarea { width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.92rem; font-family: inherit; background: white; }
+  textarea { min-height: 200px; line-height: 1.45; font-family: ui-monospace, monospace; font-size: 0.82rem; }
+  button { padding: 0.7rem 1.4rem; background: var(--or); color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; font-weight: 500; }
   button:hover { background: #a07b35; }
   button:disabled { opacity: 0.5; cursor: wait; }
-  .preview { background: white; border: 1px solid #e8dcc4; border-radius: 8px; padding: 1.5rem; margin-top: 1rem; }
-  .resultat { margin-top: 1.5rem; padding: 1rem 1.2rem; border-radius: 8px; }
+  button.secondary { background: white; color: var(--noir); border: 1px solid var(--noir); }
+  .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 180px; }
+  .produits-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; margin-top: 1rem; }
+  .pcard { background: var(--nacre); border-radius: 8px; padding: 0.6rem; font-size: 0.82rem; }
+  .pcard img { width: 100%; height: 130px; object-fit: cover; border-radius: 4px; margin-bottom: 0.4rem; }
+  .pcard .title { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.2rem; }
+  .pcard .meta { color: var(--gris); font-size: 0.75rem; }
+  .pcard .draft { display: inline-block; background: #ffc; color: #a36; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; }
+  .resultat { padding: 1rem 1.2rem; border-radius: 8px; margin-top: 1rem; }
   .resultat.ok { background: #eaf3e9; color: #2c5530; border: 1px solid #2c5530; }
   .resultat.ko { background: #fde8e8; color: #a32020; border: 1px solid #a32020; }
   .resultat a { color: inherit; text-decoration: underline; }
   .hidden { display: none; }
-  .row { display: flex; gap: 1rem; }
-  .row > div { flex: 1; }
+  iframe.preview { width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 8px; background: white; }
 </style>
 </head>
 <body>
 
 <h1>✨ La création du mois — Mood Joaillerie</h1>
-<p class="subtitle">Crée ou met à jour la collection mensuelle haute joaillerie sur moodjoaillerie.net. Handle stable <code>/collections/la-creation-du-mois</code> : tu remplaces juste le contenu chaque mois.</p>
+<p class="subtitle">Génère ou met à jour la page vitrine haute joaillerie sur moodjoaillerie.net. Cards produits stylées nacrées, lien direct vers les fiches produits Shopify natives.</p>
 
-<form id="f-form">
-
-<div class="row">
-  <div>
-    <label>Titre complet de la collection *</label>
-    <input id="f-titre" type="text" value="La création du mois - Les trésors de Nérée">
+<!-- ÉTAPE 1 : Recherche produits -->
+<div class="step">
+  <h2>1. Rechercher les produits dans Mood Joaillerie</h2>
+  <div class="row">
+    <div>
+      <label>Mot-clé (titre ou tag)</label>
+      <input id="f-search" type="text" value="Trésors de Nérée">
+    </div>
+    <div style="flex:0 0 auto;display:flex;align-items:flex-end;">
+      <button type="button" id="btn-search">🔍 Chercher</button>
+    </div>
   </div>
-  <div>
-    <label>Tag de la collection * <span class="opt">(sera ajouté aux 4 produits)</span></label>
-    <input id="f-tag" type="text" value="tresors-de-neree">
-  </div>
+  <div id="produits-result" class="produits-grid"></div>
 </div>
 
-<label>Image hero <span class="opt">(URL absolue, optionnel — peux être ajoutée plus tard dans Shopify Admin)</span></label>
-<input id="f-image" type="text" placeholder="https://...">
+<!-- ÉTAPE 2 : Configurer la page -->
+<div class="step">
+  <h2>2. Configurer la page vitrine</h2>
+  <div class="row">
+    <div>
+      <label>Titre de la page *</label>
+      <input id="f-titre" type="text" value="Les trésors de Nérée">
+    </div>
+    <div>
+      <label>Handle (URL) *</label>
+      <input id="f-handle" type="text" value="creation-du-mois">
+    </div>
+  </div>
+  <label>Image hero (URL absolue) <span class="opt">(optionnel — sinon utilise la 1ère image du 1er produit)</span></label>
+  <input id="f-hero" type="text" placeholder="https://...">
+  <label>Sous-titre / intro courte</label>
+  <input id="f-intro" type="text" value="La création du mois — Juin 2026">
+  <label>Texte d'introduction (1-2 phrases poétiques) *</label>
+  <textarea id="f-lead" style="min-height:80px;">Or gris, diamants en constellation, saphirs roses et pierres précieuses — chaque pièce dialogue avec la lumière de façon unique, comme la mer change selon l'heure du jour. Une collection de haute joaillerie en quatre créations uniques, inspirée de la mythologie grecque marine.</textarea>
+</div>
 
-<label>Description HTML <span class="opt">(stylée, à coller dans body_html de la collection)</span></label>
-<textarea id="f-description"><p style="font-size:0.9em;color:#888;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5em;">La création du mois — Juin 2026</p>
-
-<h2 style="font-size:2em;font-weight:300;letter-spacing:0.02em;margin:0 0 1em;">Les Trésors de Nérée</h2>
-
-<p style="font-size:1.1em;line-height:1.7;font-style:italic;color:#555;">Or gris, diamants en constellation, saphirs roses et pierres précieuses — chaque pièce dialogue avec la lumière de façon unique, comme la mer change selon l'heure du jour.</p>
-
-<p style="line-height:1.7;">Une collection de haute joaillerie en <strong>quatre créations uniques</strong>, inspirée de la mythologie grecque marine. Chacune réalisée sur commande, dans nos ateliers suisses.</p>
-
-<hr style="border:none;border-top:1px solid #e8dcc4;margin:2em 0;">
-
-<h3 style="font-weight:400;letter-spacing:0.05em;margin-bottom:0.4em;">Galatée</h3>
-<p style="line-height:1.7;color:#444;">Dans la mythologie grecque, Galatée est la plus douce des Néréides — celle dont Polyphème chantait la beauté sur les rivages de Sicile. Cette bague lui rend hommage avec des papillons ailés sertis de pavés de diamants blancs, chacun ponctué d'un saphir rose oval. La surface en or gris, d'un éclat chaud et velouté, offre à ces motifs ailés une profondeur inattendue — comme si la vie palpitait sous la matière.</p>
-
-<h3 style="font-weight:400;letter-spacing:0.05em;margin:2em 0 0.4em;">Néréide</h3>
-<p style="line-height:1.7;color:#444;">Éponyme des cinquante filles de Nérée, cette création célèbre la beauté dans sa forme la plus libre. Des diamants de toutes tailles — blancs, champagne, roses, bleus ciel — émergent comme des bulles remontant des fonds marins, semés en constellations irrégulières sur un anneau d'or gris. Chaque regard révèle une nouvelle lumière, un nouvel éclat, une nouvelle histoire.</p>
-
-<h3 style="font-weight:400;letter-spacing:0.05em;margin:2em 0 0.4em;">Nautile</h3>
-<p style="line-height:1.7;color:#444;">Architecture de la mer à l'état pur. Des coquilles finement reproduites se succèdent en cortège sur un anneau poli miroir, entrecoupées de diamants roses, bleus et blancs posés comme des gouttes d'écume. Le contraste entre la surface polie et les reliefs sculptés crée un dialogue permanent entre l'ombre et la lumière — une ode à la géométrie naturelle.</p>
-
-<h3 style="font-weight:400;letter-spacing:0.05em;margin:2em 0 0.4em;">Calypso</h3>
-<p style="line-height:1.7;color:#444;">La nymphe qui retint Ulysse sept années dans son île d'opulence. Calypso, la plus somptueuse des créations de cette collection, est un pavage intégral de diamants blancs, parmi lesquels se glissent — en touches impressionnistes — des saphirs roses et des pierres de couleur. L'anneau disparaît sous une rivière de lumière continue. Une présence absolue.</p>
-
-<hr style="border:none;border-top:1px solid #e8dcc4;margin:2em 0;">
-
-<p style="font-style:italic;text-align:center;line-height:1.7;color:#666;">Pour découvrir Les Trésors de Nérée, prendre rendez-vous dans l'une de nos boutiques, ou recevoir la présentation exclusive de la collection, écrivez-nous.</p></textarea>
-
-<button type="button" id="btn-go">✨ Créer / Mettre à jour la collection sur Mood Joaillerie</button>
-
-</form>
-
-<div id="resultat" class="resultat hidden"></div>
+<!-- ÉTAPE 3 : Générer + prévisualiser -->
+<div class="step">
+  <h2>3. Générer la page</h2>
+  <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+    <button type="button" id="btn-preview" class="secondary">👁️ Prévisualiser</button>
+    <button type="button" id="btn-push">📤 Pousser sur Shopify Mood Joaillerie (draft)</button>
+    <button type="button" id="btn-push-live" class="secondary">📢 Pousser PUBLIÉ</button>
+  </div>
+  <div id="resultat" class="resultat hidden"></div>
+  <iframe id="preview-frame" class="preview hidden" style="margin-top:1rem;"></iframe>
+</div>
 
 <script>
-const btn = document.getElementById('btn-go');
-const res = document.getElementById('resultat');
+let produitsTrouves = [];
 
-btn.addEventListener('click', async () => {
-  const titre = document.getElementById('f-titre').value.trim();
-  const tag = document.getElementById('f-tag').value.trim();
-  const image = document.getElementById('f-image').value.trim();
-  const descriptionHtml = document.getElementById('f-description').value;
-  if (!titre || !descriptionHtml) { alert('Titre et description requis'); return; }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Envoi vers Shopify…';
-  res.className = 'resultat hidden';
-
+async function chercherProduits() {
+  const q = document.getElementById('f-search').value.trim();
+  if (!q) return;
+  const container = document.getElementById('produits-result');
+  container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">⏳ Recherche...</p>';
   try {
-    const r = await fetch('/api/joaillerie/creation-du-mois', {
+    const r = await fetch(`/api/joaillerie/produits-par-recherche?q=${encodeURIComponent(q)}&store=mood-joaillerie`);
+    const data = await r.json();
+    if (!r.ok) { container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur : ' + (data.error || 'inconnue') + '</p>'; return; }
+    produitsTrouves = data.produits || [];
+    if (produitsTrouves.length === 0) { container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">Aucun produit trouvé.</p>'; return; }
+    container.innerHTML = produitsTrouves.map((p, i) => `
+      <div class="pcard">
+        ${p.images?.[0]?.url ? `<img src="${p.images[0].url}" alt="">` : ''}
+        <div class="title">${p.title}</div>
+        <div class="meta">
+          ${p.price ? p.price + ' CHF' : '—'} · ${p.status === 'ACTIVE' ? '✅ actif' : '<span class="draft">draft</span>'}<br>
+          <small style="font-family:monospace;">${p.handle}</small>
+        </div>
+        <label style="display:flex;align-items:center;gap:0.3rem;margin-top:0.4rem;font-weight:400;font-size:0.78rem;">
+          <input type="checkbox" data-prod-idx="${i}" checked style="width:auto;margin:0;"> Inclure
+        </label>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur réseau : ' + e.message + '</p>';
+  }
+}
+
+function getProduitsCoches() {
+  const idxes = [...document.querySelectorAll('#produits-result input[data-prod-idx]:checked')].map(cb => +cb.dataset.prodIdx);
+  return idxes.map(i => produitsTrouves[i]).filter(Boolean);
+}
+
+function genererHtmlPage() {
+  const titre = document.getElementById('f-titre').value.trim();
+  const intro = document.getElementById('f-intro').value.trim();
+  const lead = document.getElementById('f-lead').value.trim();
+  const heroOverride = document.getElementById('f-hero').value.trim();
+  const produits = getProduitsCoches();
+  const hero = heroOverride || produits[0]?.images?.[0]?.url || '';
+
+  const cardsHtml = produits.map(p => {
+    const img1 = p.images?.[0]?.url || '';
+    const img2 = p.images?.[1]?.url || img1;
+    const prix = p.price ? Math.round(parseFloat(p.price)).toLocaleString('fr-CH') + " CHF" : "";
+    const url = p.urlPublic;
+    const titre = p.title.replace(/Anneau \(.*?\)\s*"?/i, '').replace(/"\s*pour bague.*$/i, '');
+    return `
+    <a class="cdm-card" href="${url}">
+      <div class="cdm-card-img">
+        <img class="cdm-card-img-1" src="${img1}" alt="${titre}">
+        ${img2 !== img1 ? `<img class="cdm-card-img-2" src="${img2}" alt="${titre}">` : ''}
+      </div>
+      <div class="cdm-card-body">
+        <h3 class="cdm-card-title">${titre}</h3>
+        ${prix ? `<div class="cdm-card-price">${prix}</div>` : ''}
+        <span class="cdm-card-cta">Découvrir cette création →</span>
+      </div>
+    </a>`;
+  }).join('\n');
+
+  return `<style>
+.cdm-page { font-family: 'Cormorant Garamond', 'Times New Roman', serif; color: #2a2520; background: linear-gradient(180deg, #fdf8ef 0%, #f5e8d8 50%, #f8eedb 100%); padding: 0; margin: 0; }
+.cdm-page * { box-sizing: border-box; }
+.cdm-hero { position: relative; min-height: 70vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4rem 1.5rem; background-size: cover; background-position: center; ${hero ? `background-image: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(245,232,216,0.85) 100%), url('${hero}');` : 'background: linear-gradient(180deg, #fdf8ef, #f5e8d8);'} }
+.cdm-hero-inner { max-width: 700px; }
+.cdm-eyebrow { font-size: 0.78rem; letter-spacing: 0.3em; text-transform: uppercase; color: #b88d3e; font-family: 'Inter', system-ui, sans-serif; margin-bottom: 1.5rem; }
+.cdm-title { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.05; margin: 0 0 2rem; color: #1a1410; font-style: italic; }
+.cdm-lead { font-size: 1.15rem; line-height: 1.7; color: #5a4e42; max-width: 580px; margin: 0 auto; font-style: italic; }
+.cdm-section { padding: 5rem 1.5rem; max-width: 1200px; margin: 0 auto; }
+.cdm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5rem; }
+@media (max-width: 768px) { .cdm-grid { grid-template-columns: 1fr; gap: 2rem; } }
+.cdm-card { display: block; text-decoration: none; color: inherit; background: rgba(255,255,255,0.55); border: 1px solid #e8dcc4; border-radius: 4px; overflow: hidden; transition: all 0.4s ease; }
+.cdm-card:hover { transform: translateY(-4px); box-shadow: 0 18px 50px rgba(184, 141, 62, 0.18); border-color: #c9a45f; }
+.cdm-card-img { position: relative; overflow: hidden; aspect-ratio: 4/5; }
+.cdm-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.5s ease, transform 0.6s ease; }
+.cdm-card-img-2 { position: absolute; inset: 0; opacity: 0; }
+.cdm-card:hover .cdm-card-img-1 { opacity: 0; transform: scale(1.04); }
+.cdm-card:hover .cdm-card-img-2 { opacity: 1; transform: scale(1.04); }
+.cdm-card-body { padding: 1.8rem 1.5rem; text-align: center; }
+.cdm-card-title { font-size: 1.4rem; font-weight: 400; letter-spacing: 0.04em; margin: 0 0 0.6rem; color: #1a1410; font-style: italic; }
+.cdm-card-price { font-family: 'Inter', system-ui, sans-serif; font-size: 0.95rem; letter-spacing: 0.08em; color: #b88d3e; margin-bottom: 1.2rem; }
+.cdm-card-cta { font-family: 'Inter', system-ui, sans-serif; font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: #1a1410; border-bottom: 1px solid #1a1410; padding-bottom: 2px; }
+.cdm-outro { text-align: center; padding: 4rem 1.5rem 6rem; max-width: 600px; margin: 0 auto; }
+.cdm-outro p { font-size: 1.1rem; line-height: 1.7; color: #5a4e42; font-style: italic; }
+.cdm-divider { width: 60px; height: 1px; background: #b88d3e; margin: 2rem auto; }
+</style>
+
+<div class="cdm-page">
+  <section class="cdm-hero">
+    <div class="cdm-hero-inner">
+      <div class="cdm-eyebrow">${intro}</div>
+      <h1 class="cdm-title">${titre}</h1>
+      <div class="cdm-divider"></div>
+      <p class="cdm-lead">${lead}</p>
+    </div>
+  </section>
+
+  <section class="cdm-section">
+    <div class="cdm-grid">
+${cardsHtml}
+    </div>
+  </section>
+
+  <section class="cdm-outro">
+    <p>Pour découvrir ${titre.toLowerCase()}, prendre rendez-vous dans l'une de nos boutiques, ou recevoir la présentation exclusive de la collection, écrivez-nous.</p>
+  </section>
+</div>`;
+}
+
+document.getElementById('btn-search').addEventListener('click', chercherProduits);
+
+document.getElementById('btn-preview').addEventListener('click', () => {
+  const produits = getProduitsCoches();
+  if (produits.length === 0) { alert('Coche au moins 1 produit'); return; }
+  const html = genererHtmlPage();
+  const iframe = document.getElementById('preview-frame');
+  iframe.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet"></head><body style="margin:0;">${html}</body></html>`;
+  iframe.classList.remove('hidden');
+  iframe.scrollIntoView({ behavior: 'smooth' });
+});
+
+async function pousserVersShopify(published) {
+  const produits = getProduitsCoches();
+  if (produits.length === 0) { alert('Coche au moins 1 produit'); return; }
+  const titre = document.getElementById('f-titre').value.trim();
+  const handle = document.getElementById('f-handle').value.trim();
+  if (!titre || !handle) { alert('Titre et handle requis'); return; }
+  const bodyHtml = genererHtmlPage();
+  const btn = published ? document.getElementById('btn-push-live') : document.getElementById('btn-push');
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Push…';
+  const res = document.getElementById('resultat');
+  res.className = 'resultat hidden';
+  try {
+    const r = await fetch('/api/joaillerie/page-shopify', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ titre, tag, imageUrl: image || undefined, descriptionHtml, store: 'mood-joaillerie' })
+      body: JSON.stringify({ handle, title: titre, bodyHtml, published, store: 'mood-joaillerie' })
     });
     const data = await r.json();
     if (!r.ok) {
       res.className = 'resultat ko';
-      res.innerHTML = '<strong>Erreur :</strong> ' + (data.error || JSON.stringify(data)) + (data.detail ? '<br><pre>' + JSON.stringify(data.detail, null, 2) + '</pre>' : '');
+      res.innerHTML = '<strong>Erreur :</strong> ' + (data.error || JSON.stringify(data));
     } else {
-      const c = data.collection || {};
+      const p = data.page || {};
       res.className = 'resultat ok';
       res.innerHTML = `
-        <strong>✅ Collection ${data.action === 'created' ? 'créée' : 'mise à jour'} :</strong> <em>${c.title}</em><br>
-        <strong>Tag à apposer sur les 4 produits :</strong> <code>${c.tag}</code><br>
-        <strong>URL Shopify Admin :</strong> <a href="${c.urlAdmin}" target="_blank">${c.urlAdmin}</a><br>
-        <strong>URL publique :</strong> <a href="${c.urlPublic}" target="_blank">${c.urlPublic}</a><br>
-        <p style="margin-top:1rem;font-size:0.85rem;">Prochaine étape : ouvre l'admin et tague tes 4 produits Galatée / Néréide / Nautile / Calypso avec <code>${c.tag}</code> — ils apparaîtront automatiquement dans la collection.</p>
+        <strong>✅ Page ${data.action === 'created' ? 'créée' : 'mise à jour'} :</strong> <em>${p.title}</em><br>
+        <strong>Statut :</strong> ${p.isPublished ? '📢 PUBLIÉE (visible publiquement)' : '🔒 draft (invisible côté visiteur)'}<br>
+        <strong>URL admin :</strong> <a href="${p.urlAdmin}" target="_blank">${p.urlAdmin}</a><br>
+        <strong>URL publique :</strong> <a href="${p.urlPublic}" target="_blank">${p.urlPublic}</a>
       `;
     }
   } catch (e) {
@@ -121,11 +252,19 @@ btn.addEventListener('click', async () => {
     res.innerHTML = '<strong>Erreur réseau :</strong> ' + e.message;
   } finally {
     btn.disabled = false;
-    btn.textContent = '✨ Créer / Mettre à jour la collection sur Mood Joaillerie';
+    btn.textContent = old;
     res.classList.remove('hidden');
     res.scrollIntoView({ behavior: 'smooth' });
   }
+}
+
+document.getElementById('btn-push').addEventListener('click', () => pousserVersShopify(false));
+document.getElementById('btn-push-live').addEventListener('click', () => {
+  if (!confirm('Publier sur le site live ? Le visiteur pourra voir la page.')) return;
+  pousserVersShopify(true);
 });
+
+window.addEventListener('DOMContentLoaded', () => { setTimeout(chercherProduits, 300); });
 </script>
 
 </body>
