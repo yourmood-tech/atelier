@@ -788,12 +788,32 @@ function setCollectionFixe(annee, mois, key, field, val) {
   sauverDonneesDebounced();
 }
 
+// Mémorise les mois dont les semaines passées sont affichées — survit aux re-renders
+const _passeesAffichees = new Set();
+
 function togglePasseesDansMois(btn) {
   const moisDiv = btn.closest('.month');
   const show = btn.dataset.show === 'false';
   moisDiv.querySelectorAll('.week.passee').forEach(w => w.classList.toggle('show', show));
   btn.dataset.show = show ? 'true' : 'false';
   btn.textContent = show ? '▲ Masquer les semaines passées' : '▼ Afficher les semaines passées';
+  // Mémorise l'état pour qu'il survive au prochain re-render
+  const moisId = moisDiv.dataset.moisId;
+  if (moisId) {
+    if (show) _passeesAffichees.add(moisId);
+    else _passeesAffichees.delete(moisId);
+  }
+}
+
+// Re-applique l'état mémorisé après chaque rendreCalendrier
+function restaurerPasseesAffichees() {
+  document.querySelectorAll('.month').forEach(moisDiv => {
+    const moisId = moisDiv.dataset.moisId;
+    if (moisId && _passeesAffichees.has(moisId)) {
+      const btn = moisDiv.querySelector('.toggle-passees');
+      if (btn) togglePasseesDansMois(btn);
+    }
+  });
 }
 
 function setProduitField(produitId, field, val) {
@@ -1113,6 +1133,7 @@ function rendreCalendrier() {
     const semaines = calculerSemainesMois(annee, mois);
     const moisDiv = document.createElement('div');
     moisDiv.className = 'month';
+    moisDiv.dataset.moisId = `${annee}-${mois}`;
 
     // Applique le thème mensuel s'il existe
     const theme = THEMES_MOIS[`${annee}-${mois}`];
@@ -1309,6 +1330,8 @@ function rendreCalendrier() {
     moisDiv.innerHTML = html;
     cal.appendChild(moisDiv);
   }
+  // Re-applique l'état "semaines passées affichées" mémorisé avant le re-render
+  restaurerPasseesAffichees();
 }
 
 function toggleMois(headerEl) {
