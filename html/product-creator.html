@@ -2245,7 +2245,9 @@
     const matiere = $('f-matiere').value || '';
     const formatChoisi = $('f-format').value || '';
     // En multi-format, on prend le 1er format de la liste comme référence
-    const format = formatChoisi === 'multi format' ? (Array.from(formatsSelectionnes)[0] || '') : formatChoisi;
+    const formatRaw = formatChoisi === 'multi format' ? (Array.from(formatsSelectionnes)[0] || '') : formatChoisi;
+    // Normalise : "deux tiers" → "deux-tiers" pour matcher la clé de PRIX_ACHAT_JOAILLERIE
+    const format = (formatRaw || '').replace(/\s+/g, '-').toLowerCase();
     const prixAchatMat = (PRIX_ACHAT_JOAILLERIE[matiere] || {})[format];
     if (prixAchatMat === undefined) {
       recap.classList.remove('hidden');
