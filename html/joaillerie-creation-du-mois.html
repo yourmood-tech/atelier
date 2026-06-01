@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>La création du mois — Mood Joaillerie</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --or:#b88d3e; --noir:#1a1a1a; --gris:#888; --beige:#faf6ef; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; max-width: 920px; margin: 2rem auto; padding: 0 1.5rem; color: var(--noir); background: var(--beige); }
+  h1 { font-weight: 300; letter-spacing: 0.02em; margin: 0 0 0.5rem; }
+  .subtitle { color: var(--gris); margin-bottom: 2rem; font-size: 0.95rem; }
+  label { display: block; font-weight: 600; margin: 1.2rem 0 0.4rem; font-size: 0.9rem; }
+  .opt { font-weight: 400; color: var(--gris); font-size: 0.8rem; }
+  input[type=text], textarea { width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.92rem; font-family: inherit; background: white; }
+  textarea { min-height: 320px; line-height: 1.45; }
+  button { width: auto; padding: 0.8rem 1.6rem; background: var(--or); color: white; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; margin-top: 1rem; }
+  button:hover { background: #a07b35; }
+  button:disabled { opacity: 0.5; cursor: wait; }
+  .preview { background: white; border: 1px solid #e8dcc4; border-radius: 8px; padding: 1.5rem; margin-top: 1rem; }
+  .resultat { margin-top: 1.5rem; padding: 1rem 1.2rem; border-radius: 8px; }
+  .resultat.ok { background: #eaf3e9; color: #2c5530; border: 1px solid #2c5530; }
+  .resultat.ko { background: #fde8e8; color: #a32020; border: 1px solid #a32020; }
+  .resultat a { color: inherit; text-decoration: underline; }
+  .hidden { display: none; }
+  .row { display: flex; gap: 1rem; }
+  .row > div { flex: 1; }
+</style>
+</head>
+<body>
+
+<h1>✨ La création du mois — Mood Joaillerie</h1>
+<p class="subtitle">Crée ou met à jour la collection mensuelle haute joaillerie sur moodjoaillerie.net. Handle stable <code>/collections/la-creation-du-mois</code> : tu remplaces juste le contenu chaque mois.</p>
+
+<form id="f-form">
+
+<div class="row">
+  <div>
+    <label>Titre complet de la collection *</label>
+    <input id="f-titre" type="text" value="La création du mois - Les trésors de Nérée">
+  </div>
+  <div>
+    <label>Tag de la collection * <span class="opt">(sera ajouté aux 4 produits)</span></label>
+    <input id="f-tag" type="text" value="tresors-de-neree">
+  </div>
+</div>
+
+<label>Image hero <span class="opt">(URL absolue, optionnel — peux être ajoutée plus tard dans Shopify Admin)</span></label>
+<input id="f-image" type="text" placeholder="https://...">
+
+<label>Description HTML <span class="opt">(stylée, à coller dans body_html de la collection)</span></label>
+<textarea id="f-description"><p style="font-size:0.9em;color:#888;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.5em;">La création du mois — Juin 2026</p>
+
+<h2 style="font-size:2em;font-weight:300;letter-spacing:0.02em;margin:0 0 1em;">Les Trésors de Nérée</h2>
+
+<p style="font-size:1.1em;line-height:1.7;font-style:italic;color:#555;">Or gris, diamants en constellation, saphirs roses et pierres précieuses — chaque pièce dialogue avec la lumière de façon unique, comme la mer change selon l'heure du jour.</p>
+
+<p style="line-height:1.7;">Une collection de haute joaillerie en <strong>quatre créations uniques</strong>, inspirée de la mythologie grecque marine. Chacune réalisée sur commande, dans nos ateliers suisses.</p>
+
+<hr style="border:none;border-top:1px solid #e8dcc4;margin:2em 0;">
+
+<h3 style="font-weight:400;letter-spacing:0.05em;margin-bottom:0.4em;">Galatée</h3>
+<p style="line-height:1.7;color:#444;">Dans la mythologie grecque, Galatée est la plus douce des Néréides — celle dont Polyphème chantait la beauté sur les rivages de Sicile. Cette bague lui rend hommage avec des papillons ailés sertis de pavés de diamants blancs, chacun ponctué d'un saphir rose oval. La surface en or gris, d'un éclat chaud et velouté, offre à ces motifs ailés une profondeur inattendue — comme si la vie palpitait sous la matière.</p>
+
+<h3 style="font-weight:400;letter-spacing:0.05em;margin:2em 0 0.4em;">Néréide</h3>
+<p style="line-height:1.7;color:#444;">Éponyme des cinquante filles de Nérée, cette création célèbre la beauté dans sa forme la plus libre. Des diamants de toutes tailles — blancs, champagne, roses, bleus ciel — émergent comme des bulles remontant des fonds marins, semés en constellations irrégulières sur un anneau d'or gris. Chaque regard révèle une nouvelle lumière, un nouvel éclat, une nouvelle histoire.</p>
+
+<h3 style="font-weight:400;letter-spacing:0.05em;margin:2em 0 0.4em;">Nautile</h3>
+<p style="line-height:1.7;color:#444;">Architecture de la mer à l'état pur. Des coquilles finement reproduites se succèdent en cortège sur un anneau poli miroir, entrecoupées de diamants roses, bleus et blancs posés comme des gouttes d'écume. Le contraste entre la surface polie et les reliefs sculptés crée un dialogue permanent entre l'ombre et la lumière — une ode à la géométrie naturelle.</p>
+
+<h3 style="font-weight:400;letter-spacing:0.05em;margin:2em 0 0.4em;">Calypso</h3>
+<p style="line-height:1.7;color:#444;">La nymphe qui retint Ulysse sept années dans son île d'opulence. Calypso, la plus somptueuse des créations de cette collection, est un pavage intégral de diamants blancs, parmi lesquels se glissent — en touches impressionnistes — des saphirs roses et des pierres de couleur. L'anneau disparaît sous une rivière de lumière continue. Une présence absolue.</p>
+
+<hr style="border:none;border-top:1px solid #e8dcc4;margin:2em 0;">
+
+<p style="font-style:italic;text-align:center;line-height:1.7;color:#666;">Pour découvrir Les Trésors de Nérée, prendre rendez-vous dans l'une de nos boutiques, ou recevoir la présentation exclusive de la collection, écrivez-nous.</p></textarea>
+
+<button type="button" id="btn-go">✨ Créer / Mettre à jour la collection sur Mood Joaillerie</button>
+
+</form>
+
+<div id="resultat" class="resultat hidden"></div>
+
+<script>
+const btn = document.getElementById('btn-go');
+const res = document.getElementById('resultat');
+
+btn.addEventListener('click', async () => {
+  const titre = document.getElementById('f-titre').value.trim();
+  const tag = document.getElementById('f-tag').value.trim();
+  const image = document.getElementById('f-image').value.trim();
+  const descriptionHtml = document.getElementById('f-description').value;
+  if (!titre || !descriptionHtml) { alert('Titre et description requis'); return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Envoi vers Shopify…';
+  res.className = 'resultat hidden';
+
+  try {
+    const r = await fetch('/api/joaillerie/creation-du-mois', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titre, tag, imageUrl: image || undefined, descriptionHtml, store: 'mood-joaillerie' })
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      res.className = 'resultat ko';
+      res.innerHTML = '<strong>Erreur :</strong> ' + (data.error || JSON.stringify(data)) + (data.detail ? '<br><pre>' + JSON.stringify(data.detail, null, 2) + '</pre>' : '');
+    } else {
+      const c = data.collection || {};
+      res.className = 'resultat ok';
+      res.innerHTML = `
+        <strong>✅ Collection ${data.action === 'created' ? 'créée' : 'mise à jour'} :</strong> <em>${c.title}</em><br>
+        <strong>Tag à apposer sur les 4 produits :</strong> <code>${c.tag}</code><br>
+        <strong>URL Shopify Admin :</strong> <a href="${c.urlAdmin}" target="_blank">${c.urlAdmin}</a><br>
+        <strong>URL publique :</strong> <a href="${c.urlPublic}" target="_blank">${c.urlPublic}</a><br>
+        <p style="margin-top:1rem;font-size:0.85rem;">Prochaine étape : ouvre l'admin et tague tes 4 produits Galatée / Néréide / Nautile / Calypso avec <code>${c.tag}</code> — ils apparaîtront automatiquement dans la collection.</p>
+      `;
+    }
+  } catch (e) {
+    res.className = 'resultat ko';
+    res.innerHTML = '<strong>Erreur réseau :</strong> ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Créer / Mettre à jour la collection sur Mood Joaillerie';
+    res.classList.remove('hidden');
+    res.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+</script>
+
+</body>
+</html>
