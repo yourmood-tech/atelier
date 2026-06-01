@@ -126,79 +126,115 @@ function getProduitsCoches() {
   return idxes.map(i => produitsTrouves[i]).filter(Boolean);
 }
 
+// Textes mythologiques extraits de la page originale Trésors de Nérée (Stéphanie)
+const TEXTES_NEREE = {
+  'galat': `Dans la mythologie grecque, Galatée est la plus douce des Néréides — celle dont Polyphème chantait la beauté sur les rivages de Sicile. Cette bague lui rend hommage avec des papillons ailés sertis de pavés de diamants blancs, chacun ponctué d'un saphir rose oval. La surface en or gris, d'un éclat chaud et velouté, offre à ces motifs ailés une profondeur inattendue — comme si la vie palpitait sous la matière.`,
+  'néréi': `Éponyme des cinquante filles de Nérée, cette création célèbre la beauté dans sa forme la plus libre. Des diamants de toutes tailles — blancs, champagne, roses, bleus ciel — émergent comme des bulles remontant des fonds marins, semés en constellations irrégulières sur un anneau d'or gris. Chaque regard révèle une nouvelle lumière, un nouvel éclat, une nouvelle histoire.`,
+  'nerei': `Éponyme des cinquante filles de Nérée, cette création célèbre la beauté dans sa forme la plus libre. Des diamants de toutes tailles — blancs, champagne, roses, bleus ciel — émergent comme des bulles remontant des fonds marins, semés en constellations irrégulières sur un anneau d'or gris. Chaque regard révèle une nouvelle lumière, un nouvel éclat, une nouvelle histoire.`,
+  'nautil': `Architecture de la mer à l'état pur. Des coquilles finement reproduites se succèdent en cortège sur un anneau poli miroir, entrecoupées de diamants roses, bleus et blancs posés comme des gouttes d'écume. Le contraste entre la surface polie et les reliefs sculptés crée un dialogue permanent entre l'ombre et la lumière — une ode à la géométrie naturelle.`,
+  'calypso': `La nymphe qui retint Ulysse sept années dans son île d'opulence. Calypso, la plus somptueuse des créations de cette collection, est un pavage intégral de diamants blancs, parmi lesquels se glissent — en touches impressionnistes — des saphirs roses et des pierres de couleur. L'anneau disparaît sous une rivière de lumière continue. Une présence absolue.`,
+};
+
+function trouverTexte(titre) {
+  const t = (titre || '').toLowerCase();
+  for (const cle in TEXTES_NEREE) { if (t.includes(cle)) return TEXTES_NEREE[cle]; }
+  return '';
+}
+
+function nettoyerTitre(titre) {
+  return (titre || '')
+    .replace(/Anneau\s*\(.*?\)\s*[«"“]?/i, '')
+    .replace(/[»"”]\s*pour bague.*$/i, '')
+    .replace(/^["“]|["”]$/g, '')
+    .trim();
+}
+
 function genererHtmlPage() {
-  const titre = document.getElementById('f-titre').value.trim();
+  const titrePage = document.getElementById('f-titre').value.trim();
   const intro = document.getElementById('f-intro').value.trim();
   const lead = document.getElementById('f-lead').value.trim();
   const heroOverride = document.getElementById('f-hero').value.trim();
   const produits = getProduitsCoches();
   const hero = heroOverride || produits[0]?.images?.[0]?.url || '';
 
-  const cardsHtml = produits.map(p => {
+  // Sections éditoriales zigzag — alterne image gauche/droite
+  const sectionsHtml = produits.map((p, i) => {
     const img1 = p.images?.[0]?.url || '';
     const img2 = p.images?.[1]?.url || img1;
     const prix = p.price ? Math.round(parseFloat(p.price)).toLocaleString('fr-CH') + " CHF" : "";
     const url = p.urlPublic;
-    const titre = p.title.replace(/Anneau \(.*?\)\s*"?/i, '').replace(/"\s*pour bague.*$/i, '');
+    const titreCard = nettoyerTitre(p.title);
+    const texte = trouverTexte(titreCard);
+    const numero = String(i + 1).padStart(2, '0');
+    const inverse = i % 2 === 1 ? ' cdm-reverse' : '';
     return `
-    <a class="cdm-card" href="${url}">
-      <div class="cdm-card-img">
-        <img class="cdm-card-img-1" src="${img1}" alt="${titre}">
-        ${img2 !== img1 ? `<img class="cdm-card-img-2" src="${img2}" alt="${titre}">` : ''}
+    <section class="cdm-edito${inverse}">
+      <a class="cdm-edito-img" href="${url}">
+        <img class="cdm-img-1" src="${img1}" alt="${titreCard}">
+        ${img2 !== img1 ? `<img class="cdm-img-2" src="${img2}" alt="${titreCard}">` : ''}
+      </a>
+      <div class="cdm-edito-text">
+        <div class="cdm-num">${numero} / ${produits.length}</div>
+        <h2 class="cdm-edito-title">${titreCard}</h2>
+        <div class="cdm-divider"></div>
+        ${texte ? `<p class="cdm-edito-desc">${texte}</p>` : ''}
+        ${prix ? `<div class="cdm-edito-price">${prix}</div>` : ''}
+        <a class="cdm-edito-cta" href="${url}">Découvrir cette création →</a>
       </div>
-      <div class="cdm-card-body">
-        <h3 class="cdm-card-title">${titre}</h3>
-        ${prix ? `<div class="cdm-card-price">${prix}</div>` : ''}
-        <span class="cdm-card-cta">Découvrir cette création →</span>
-      </div>
-    </a>`;
+    </section>`;
   }).join('\n');
 
   return `<style>
 .cdm-page { font-family: 'Cormorant Garamond', 'Times New Roman', serif; color: #2a2520; background: linear-gradient(180deg, #fdf8ef 0%, #f5e8d8 50%, #f8eedb 100%); padding: 0; margin: 0; }
 .cdm-page * { box-sizing: border-box; }
-.cdm-hero { position: relative; min-height: 70vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4rem 1.5rem; background-size: cover; background-position: center; ${hero ? `background-image: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(245,232,216,0.85) 100%), url('${hero}');` : 'background: linear-gradient(180deg, #fdf8ef, #f5e8d8);'} }
-.cdm-hero-inner { max-width: 700px; }
-.cdm-eyebrow { font-size: 0.78rem; letter-spacing: 0.3em; text-transform: uppercase; color: #b88d3e; font-family: 'Inter', system-ui, sans-serif; margin-bottom: 1.5rem; }
-.cdm-title { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.05; margin: 0 0 2rem; color: #1a1410; font-style: italic; }
-.cdm-lead { font-size: 1.15rem; line-height: 1.7; color: #5a4e42; max-width: 580px; margin: 0 auto; font-style: italic; }
-.cdm-section { padding: 5rem 1.5rem; max-width: 1200px; margin: 0 auto; }
-.cdm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5rem; }
-@media (max-width: 768px) { .cdm-grid { grid-template-columns: 1fr; gap: 2rem; } }
-.cdm-card { display: block; text-decoration: none; color: inherit; background: rgba(255,255,255,0.55); border: 1px solid #e8dcc4; border-radius: 4px; overflow: hidden; transition: all 0.4s ease; }
-.cdm-card:hover { transform: translateY(-4px); box-shadow: 0 18px 50px rgba(184, 141, 62, 0.18); border-color: #c9a45f; }
-.cdm-card-img { position: relative; overflow: hidden; aspect-ratio: 4/5; }
-.cdm-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.5s ease, transform 0.6s ease; }
-.cdm-card-img-2 { position: absolute; inset: 0; opacity: 0; }
-.cdm-card:hover .cdm-card-img-1 { opacity: 0; transform: scale(1.04); }
-.cdm-card:hover .cdm-card-img-2 { opacity: 1; transform: scale(1.04); }
-.cdm-card-body { padding: 1.8rem 1.5rem; text-align: center; }
-.cdm-card-title { font-size: 1.4rem; font-weight: 400; letter-spacing: 0.04em; margin: 0 0 0.6rem; color: #1a1410; font-style: italic; }
-.cdm-card-price { font-family: 'Inter', system-ui, sans-serif; font-size: 0.95rem; letter-spacing: 0.08em; color: #b88d3e; margin-bottom: 1.2rem; }
-.cdm-card-cta { font-family: 'Inter', system-ui, sans-serif; font-size: 0.8rem; letter-spacing: 0.18em; text-transform: uppercase; color: #1a1410; border-bottom: 1px solid #1a1410; padding-bottom: 2px; }
-.cdm-outro { text-align: center; padding: 4rem 1.5rem 6rem; max-width: 600px; margin: 0 auto; }
-.cdm-outro p { font-size: 1.1rem; line-height: 1.7; color: #5a4e42; font-style: italic; }
-.cdm-divider { width: 60px; height: 1px; background: #b88d3e; margin: 2rem auto; }
+.cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${hero ? `background-image: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(245,232,216,0.88) 100%), url('${hero}');` : 'background: linear-gradient(180deg, #fdf8ef, #f5e8d8);'} }
+.cdm-hero-inner { max-width: 780px; }
+.cdm-eyebrow { font-size: 0.9rem; letter-spacing: 0.35em; text-transform: uppercase; color: #b88d3e; font-family: 'Inter', system-ui, sans-serif; margin-bottom: 2rem; }
+.cdm-title { font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.05; margin: 0 0 2.5rem; color: #1a1410; font-style: italic; text-align: center; }
+.cdm-lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.75; color: #4a3f33; max-width: 640px; margin: 0 auto; font-style: italic; }
+.cdm-divider { width: 80px; height: 1px; background: #b88d3e; margin: 2rem auto; }
+
+.cdm-edito { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4rem; max-width: 1300px; margin: 0 auto; padding: 6rem 2rem; }
+.cdm-edito.cdm-reverse { direction: rtl; }
+.cdm-edito.cdm-reverse > * { direction: ltr; }
+.cdm-edito-img { position: relative; display: block; overflow: hidden; aspect-ratio: 4/5; border-radius: 2px; box-shadow: 0 20px 60px rgba(120, 90, 50, 0.18); }
+.cdm-edito-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.6s ease, transform 0.8s ease; }
+.cdm-img-2 { position: absolute; inset: 0; opacity: 0; }
+.cdm-edito-img:hover .cdm-img-1 { opacity: 0; transform: scale(1.05); }
+.cdm-edito-img:hover .cdm-img-2 { opacity: 1; transform: scale(1.05); }
+.cdm-edito-text { padding: 0 1rem; text-align: center; }
+.cdm-num { font-family: 'Inter', system-ui, sans-serif; font-size: 0.85rem; letter-spacing: 0.35em; color: #b88d3e; margin-bottom: 1.2rem; }
+.cdm-edito-title { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 300; letter-spacing: 0.03em; margin: 0; color: #1a1410; font-style: italic; text-align: center; }
+.cdm-edito-desc { font-size: clamp(1.1rem, 1.4vw, 1.25rem); line-height: 1.85; color: #4a3f33; max-width: 460px; margin: 0 auto 1.5rem; font-style: italic; }
+.cdm-edito-price { font-family: 'Inter', system-ui, sans-serif; font-size: 1.05rem; letter-spacing: 0.12em; color: #b88d3e; margin-bottom: 2rem; }
+.cdm-edito-cta { display: inline-block; font-family: 'Inter', system-ui, sans-serif; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: #1a1410; text-decoration: none; border-bottom: 1px solid #1a1410; padding-bottom: 4px; transition: color 0.3s ease, border-color 0.3s ease; }
+.cdm-edito-cta:hover { color: #b88d3e; border-color: #b88d3e; }
+
+@media (max-width: 900px) {
+  .cdm-edito { grid-template-columns: 1fr; gap: 2.5rem; padding: 4rem 1.5rem; }
+  .cdm-edito.cdm-reverse { direction: ltr; }
+  .cdm-edito-img { max-width: 500px; margin: 0 auto; width: 100%; }
+}
+
+.cdm-outro { text-align: center; padding: 5rem 1.5rem 7rem; max-width: 700px; margin: 0 auto; }
+.cdm-outro p { font-size: clamp(1.2rem, 1.6vw, 1.35rem); line-height: 1.75; color: #4a3f33; font-style: italic; }
 </style>
 
 <div class="cdm-page">
   <section class="cdm-hero">
     <div class="cdm-hero-inner">
       <div class="cdm-eyebrow">${intro}</div>
-      <h1 class="cdm-title">${titre}</h1>
+      <h1 class="cdm-title">${titrePage}</h1>
       <div class="cdm-divider"></div>
       <p class="cdm-lead">${lead}</p>
     </div>
   </section>
 
-  <section class="cdm-section">
-    <div class="cdm-grid">
-${cardsHtml}
-    </div>
-  </section>
+${sectionsHtml}
 
   <section class="cdm-outro">
-    <p>Pour découvrir ${titre.toLowerCase()}, prendre rendez-vous dans l'une de nos boutiques, ou recevoir la présentation exclusive de la collection, écrivez-nous.</p>
+    <div class="cdm-divider"></div>
+    <p>Pour découvrir ${titrePage.toLowerCase()}, prendre rendez-vous dans l'une de nos boutiques, ou recevoir la présentation exclusive de la collection, écrivez-nous.</p>
   </section>
 </div>`;
 }
