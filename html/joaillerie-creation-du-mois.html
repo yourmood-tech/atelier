@@ -69,8 +69,14 @@
       <input id="f-handle" type="text" value="creation-du-mois">
     </div>
   </div>
-  <label>Image hero (URL absolue) <span class="opt">(optionnel — sinon utilise la 1ère image du 1er produit)</span></label>
-  <input id="f-hero" type="text" placeholder="https://...">
+  <label>Image hero <span class="opt">(optionnel — sinon utilise la 1ère image du 1er produit)</span></label>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+    <input id="f-hero" type="text" placeholder="https://... (ou choisis un fichier →)" style="flex:1;min-width:280px;">
+    <input type="file" id="f-hero-file" accept="image/*" style="display:none;">
+    <button type="button" id="btn-hero-upload" style="margin:0;padding:0.6rem 1rem;background:#fff;color:var(--noir);border:1px solid #ddd;font-size:0.85rem;">📁 Choisir une image</button>
+    <span id="f-hero-info" style="font-size:0.78rem;color:var(--gris);"></span>
+  </div>
+  <img id="f-hero-preview" style="max-width:240px;margin-top:0.6rem;border-radius:6px;border:1px solid #eadfc8;display:none;" alt="">
   <label>Sous-titre / intro courte</label>
   <input id="f-intro" type="text" value="La création du mois — Juin 2026">
   <label>Texte d'introduction (1-2 phrases poétiques) *</label>
@@ -399,6 +405,52 @@ document.getElementById('btn-search').addEventListener('click', chercherProduits
 document.getElementById('btn-theme-ia').addEventListener('click', genererThemeIA);
 // Affiche l'éditeur thème en permanence pour qu'Amila puisse ajuster
 document.getElementById('theme-edit').classList.remove('hidden');
+
+// === Upload image hero depuis fichier local (data URL inline, redimensionnement auto) ===
+document.getElementById('btn-hero-upload').addEventListener('click', () => {
+  document.getElementById('f-hero-file').click();
+});
+document.getElementById('f-hero-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const info = document.getElementById('f-hero-info');
+  info.textContent = '⏳ Chargement…';
+  try {
+    const dataUrl = await redimensionnerImage(file, 2000, 0.82);
+    document.getElementById('f-hero').value = dataUrl;
+    const prev = document.getElementById('f-hero-preview');
+    prev.src = dataUrl;
+    prev.style.display = 'block';
+    const tailleKb = Math.round(dataUrl.length * 0.75 / 1024);
+    info.textContent = `✓ ${file.name} chargée (${tailleKb} KB)`;
+  } catch (err) {
+    info.textContent = '✗ Erreur : ' + err.message;
+  }
+});
+
+// Lit un File, le rend en canvas redimensionné au max maxWidth, et retourne une data URL JPEG
+async function redimensionnerImage(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.width > maxWidth ? maxWidth / img.width : 1;
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('image illisible'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('lecture impossible'));
+    reader.readAsDataURL(file);
+  });
+}
 
 document.getElementById('btn-preview').addEventListener('click', () => {
   const produits = getProduitsCoches();
