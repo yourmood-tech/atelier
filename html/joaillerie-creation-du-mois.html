@@ -77,9 +77,58 @@
   <textarea id="f-lead" style="min-height:80px;">Or gris, diamants en constellation, saphirs roses et pierres précieuses — chaque pièce dialogue avec la lumière de façon unique, comme la mer change selon l'heure du jour. Une collection de haute joaillerie en quatre créations uniques, inspirée de la mythologie grecque marine.</textarea>
 </div>
 
-<!-- ÉTAPE 3 : Générer + prévisualiser -->
+<!-- ÉTAPE 3 : Thème visuel -->
 <div class="step">
-  <h2>3. Générer la page</h2>
+  <h2>3. Thème visuel <span class="opt" style="font-weight:400;">(généré par IA, modifiable à la main)</span></h2>
+  <label>Mood / ambiance de la collection <span class="opt">(2-5 mots-clés)</span></label>
+  <div class="row">
+    <div><input id="f-mood" type="text" value="mythologie marine, nacre, été, or gris, diamants" placeholder="ex : forêt enchantée, vert profond, automne"></div>
+    <div style="flex:0 0 auto;display:flex;align-items:flex-end;"><button type="button" id="btn-theme-ia">✨ Générer un thème IA</button></div>
+  </div>
+  <div id="theme-label" style="margin-top:0.7rem;font-style:italic;color:var(--gris);font-size:0.88rem;"></div>
+
+  <div id="theme-edit" class="hidden" style="background:#faf6ef;border:1px dashed #b88d3e;border-radius:8px;padding:1rem;margin-top:1rem;">
+    <div class="row">
+      <div><label>Fond principal</label><input id="th-fond-principal" type="color" value="#fdf8ef" style="width:60px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"></div>
+      <div><label>Fond secondaire</label><input id="th-fond-secondaire" type="color" value="#f5e8d8" style="width:60px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"></div>
+      <div><label>Accent (or/argent/cuivre)</label><input id="th-accent" type="color" value="#b88d3e" style="width:60px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"></div>
+      <div><label>Texte titre</label><input id="th-texte-titre" type="color" value="#1a1410" style="width:60px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"></div>
+      <div><label>Texte corps</label><input id="th-texte-corps" type="color" value="#4a3f33" style="width:60px;height:36px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"></div>
+    </div>
+    <div class="row" style="margin-top:0.5rem;">
+      <div>
+        <label>Police titres (serif italique)</label>
+        <select id="th-serif" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;">
+          <option>Cormorant Garamond</option>
+          <option>Playfair Display</option>
+          <option>Marcellus</option>
+          <option>EB Garamond</option>
+          <option>Cinzel</option>
+        </select>
+      </div>
+      <div>
+        <label>Police labels (sans-serif)</label>
+        <select id="th-sans" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;">
+          <option>Inter</option>
+          <option>Montserrat</option>
+        </select>
+      </div>
+      <div>
+        <label>Style hero</label>
+        <select id="th-hero" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;">
+          <option value="image_avec_overlay_clair">Image + overlay clair</option>
+          <option value="image_avec_overlay_sombre">Image + overlay sombre</option>
+          <option value="gradient_seul">Dégradé seul (sans image)</option>
+          <option value="minimal_uni">Fond uni minimal</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ÉTAPE 4 : Générer + prévisualiser -->
+<div class="step">
+  <h2>4. Générer la page</h2>
   <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
     <button type="button" id="btn-preview" class="secondary">👁️ Prévisualiser</button>
     <button type="button" id="btn-push">📤 Pousser sur Shopify Mood Joaillerie (draft)</button>
@@ -160,6 +209,70 @@ function nettoyerTitre(titre) {
     .trim();
 }
 
+function lireTheme() {
+  return {
+    fond_principal: document.getElementById('th-fond-principal').value,
+    fond_secondaire: document.getElementById('th-fond-secondaire').value,
+    accent: document.getElementById('th-accent').value,
+    texte_titre: document.getElementById('th-texte-titre').value,
+    texte_corps: document.getElementById('th-texte-corps').value,
+    serif: document.getElementById('th-serif').value,
+    sans: document.getElementById('th-sans').value,
+    hero_style: document.getElementById('th-hero').value,
+  };
+}
+
+function appliquerTheme(theme) {
+  if (!theme) return;
+  if (theme.palette) {
+    const p = theme.palette;
+    if (p.fond_principal) document.getElementById('th-fond-principal').value = p.fond_principal;
+    if (p.fond_secondaire) document.getElementById('th-fond-secondaire').value = p.fond_secondaire;
+    if (p.accent_metal) document.getElementById('th-accent').value = p.accent_metal;
+    if (p.texte_titre) document.getElementById('th-texte-titre').value = p.texte_titre;
+    if (p.texte_corps) document.getElementById('th-texte-corps').value = p.texte_corps;
+  }
+  if (theme.typo) {
+    if (theme.typo.serif_titre) {
+      const sel = document.getElementById('th-serif');
+      if (!Array.from(sel.options).some(o => o.value === theme.typo.serif_titre)) sel.add(new Option(theme.typo.serif_titre, theme.typo.serif_titre));
+      sel.value = theme.typo.serif_titre;
+    }
+    if (theme.typo.sans_label) {
+      const sel = document.getElementById('th-sans');
+      if (!Array.from(sel.options).some(o => o.value === theme.typo.sans_label)) sel.add(new Option(theme.typo.sans_label, theme.typo.sans_label));
+      sel.value = theme.typo.sans_label;
+    }
+  }
+  if (theme.style_hero) document.getElementById('th-hero').value = theme.style_hero;
+  if (theme.ambiance_label) document.getElementById('theme-label').textContent = '🎨 ' + theme.ambiance_label;
+  document.getElementById('theme-edit').classList.remove('hidden');
+}
+
+async function genererThemeIA() {
+  const nom = document.getElementById('f-titre').value.trim();
+  const mood = document.getElementById('f-mood').value.trim();
+  if (!nom && !mood) { alert('Donne au moins un nom ou un mood'); return; }
+  const btn = document.getElementById('btn-theme-ia');
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Génération…';
+  try {
+    const r = await fetch('/api/joaillerie/generer-theme', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nom, mood })
+    });
+    const data = await r.json();
+    if (!r.ok) { alert('Erreur IA : ' + (data.error || JSON.stringify(data))); return; }
+    appliquerTheme(data.theme);
+  } catch (e) {
+    alert('Erreur réseau : ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
+}
+
 function genererHtmlPage() {
   const titrePage = document.getElementById('f-titre').value.trim();
   const intro = document.getElementById('f-intro').value.trim();
@@ -167,6 +280,7 @@ function genererHtmlPage() {
   const heroOverride = document.getElementById('f-hero').value.trim();
   const produits = getProduitsCoches();
   const hero = heroOverride || produits[0]?.images?.[0]?.url || '';
+  const T = lireTheme();
 
   // Sections éditoriales zigzag — alterne image gauche/droite
   const sectionsHtml = produits.map((p, i) => {
@@ -195,48 +309,62 @@ function genererHtmlPage() {
     </section>`;
   }).join('\n');
 
+  // Helpers thème : variantes opaques pour overlays
+  const accentRgba = (a) => { const h = T.accent.replace('#',''); const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); return `rgba(${r}, ${g}, ${b}, ${a})`; };
+  const fondRgba = (a) => { const h = T.fond_secondaire.replace('#',''); const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); return `rgba(${r}, ${g}, ${b}, ${a})`; };
+  let heroBg = '';
+  if (hero && T.hero_style === 'image_avec_overlay_clair') heroBg = `background-image: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, ${fondRgba(0.88)} 100%), url('${hero}');`;
+  else if (hero && T.hero_style === 'image_avec_overlay_sombre') heroBg = `background-image: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.65) 100%), url('${hero}');`;
+  else if (T.hero_style === 'gradient_seul') heroBg = `background: linear-gradient(135deg, ${T.fond_principal} 0%, ${T.fond_secondaire} 100%);`;
+  else heroBg = `background: ${T.fond_principal};`;
+  const fontStack = `'${T.serif}', 'Times New Roman', serif`;
+  const sansStack = `'${T.sans}', system-ui, sans-serif`;
+  const titleColor = T.hero_style === 'image_avec_overlay_sombre' ? '#fff' : T.texte_titre;
+  const leadColor = T.hero_style === 'image_avec_overlay_sombre' ? 'rgba(255,255,255,0.92)' : T.texte_corps;
+
   return `<style>
+@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(T.serif)}:ital,wght@0,300;0,400;1,300;1,400&family=${encodeURIComponent(T.sans)}:wght@400;500&display=swap');
 .cdm-page {
-  font-family: 'Cormorant Garamond', 'Times New Roman', serif; color: #2a2520; padding: 0; margin: 0;
+  font-family: ${fontStack}; color: ${T.texte_corps}; padding: 0; margin: 0;
   background:
-    radial-gradient(ellipse at top left, rgba(255, 230, 200, 0.45) 0%, transparent 40%),
-    radial-gradient(ellipse at top right, rgba(255, 240, 220, 0.4) 0%, transparent 45%),
-    radial-gradient(ellipse at bottom left, rgba(255, 220, 190, 0.35) 0%, transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(250, 235, 215, 0.4) 0%, transparent 45%),
-    linear-gradient(180deg, #fdf8ef 0%, #f5e8d8 50%, #f8eedb 100%);
+    radial-gradient(ellipse at top left, ${accentRgba(0.06)} 0%, transparent 40%),
+    radial-gradient(ellipse at top right, ${accentRgba(0.05)} 0%, transparent 45%),
+    radial-gradient(ellipse at bottom left, ${accentRgba(0.05)} 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, ${accentRgba(0.06)} 0%, transparent 45%),
+    linear-gradient(180deg, ${T.fond_principal} 0%, ${T.fond_secondaire} 50%, ${T.fond_principal} 100%);
   position: relative;
 }
 .cdm-page::before, .cdm-page::after {
   content: ''; position: absolute; top: 0; bottom: 0; width: 14vw; max-width: 220px; pointer-events: none; z-index: 0;
   background:
-    radial-gradient(ellipse at center, rgba(184, 141, 62, 0.10) 0%, transparent 65%),
-    repeating-linear-gradient(135deg, transparent 0, transparent 30px, rgba(184, 141, 62, 0.04) 30px, rgba(184, 141, 62, 0.04) 31px);
+    radial-gradient(ellipse at center, ${accentRgba(0.10)} 0%, transparent 65%),
+    repeating-linear-gradient(135deg, transparent 0, transparent 30px, ${accentRgba(0.04)} 30px, ${accentRgba(0.04)} 31px);
 }
 .cdm-page::before { left: 0; }
 .cdm-page::after { right: 0; }
 .cdm-page * { box-sizing: border-box; position: relative; z-index: 1; }
-.cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${hero ? `background-image: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(245,232,216,0.88) 100%), url('${hero}');` : ''} }
+.cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${heroBg} }
 .cdm-hero-inner { max-width: 820px; }
-.cdm-eyebrow { font-size: 0.9rem; letter-spacing: 0.35em; text-transform: uppercase; color: #b88d3e; font-family: 'Inter', system-ui, sans-serif; margin-bottom: 2rem; }
-.cdm-title { font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.05; margin: 0 0 2.5rem; color: #1a1410; font-style: italic; text-align: center; }
-.cdm-lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.75; color: #4a3f33; max-width: 680px; margin: 0 auto; font-style: italic; }
-.cdm-divider { width: 80px; height: 1px; background: #b88d3e; margin: 2rem auto; }
+.cdm-eyebrow { font-size: 0.9rem; letter-spacing: 0.35em; text-transform: uppercase; color: ${T.accent}; font-family: ${sansStack}; margin-bottom: 2rem; }
+.cdm-title { font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.05; margin: 0 0 2.5rem; color: ${titleColor}; font-style: italic; text-align: center; }
+.cdm-lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.75; color: ${leadColor}; max-width: 680px; margin: 0 auto; font-style: italic; }
+.cdm-divider { width: 80px; height: 1px; background: ${T.accent}; margin: 2rem auto; }
 
 .cdm-edito { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 5rem; max-width: 1650px; margin: 0 auto; padding: 6rem 4rem; }
 .cdm-edito.cdm-reverse { direction: rtl; }
 .cdm-edito.cdm-reverse > * { direction: ltr; }
-.cdm-edito-img { position: relative; display: block; overflow: hidden; aspect-ratio: 4/5; border-radius: 2px; box-shadow: 0 20px 60px rgba(120, 90, 50, 0.18); }
+.cdm-edito-img { position: relative; display: block; overflow: hidden; aspect-ratio: 4/5; border-radius: 2px; box-shadow: 0 20px 60px ${accentRgba(0.18)}; }
 .cdm-edito-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.6s ease, transform 0.8s ease; }
 .cdm-img-2 { position: absolute; inset: 0; opacity: 0; }
 .cdm-edito-img:hover .cdm-img-1 { opacity: 0; transform: scale(1.05); }
 .cdm-edito-img:hover .cdm-img-2 { opacity: 1; transform: scale(1.05); }
 .cdm-edito-text { padding: 0 1rem; text-align: center; }
-.cdm-num { font-family: 'Inter', system-ui, sans-serif; font-size: 0.85rem; letter-spacing: 0.35em; color: #b88d3e; margin-bottom: 1.2rem; }
-.cdm-edito-title { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 300; letter-spacing: 0.03em; margin: 0; color: #1a1410; font-style: italic; text-align: center; }
-.cdm-edito-desc { font-size: clamp(1.1rem, 1.4vw, 1.25rem); line-height: 1.85; color: #4a3f33; max-width: 460px; margin: 0 auto 1.5rem; font-style: italic; }
-.cdm-edito-price { font-family: 'Inter', system-ui, sans-serif; font-size: 1.05rem; letter-spacing: 0.12em; color: #b88d3e; margin-bottom: 2rem; }
-.cdm-edito-cta { display: inline-block; font-family: 'Inter', system-ui, sans-serif; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: #1a1410; text-decoration: none; border-bottom: 1px solid #1a1410; padding-bottom: 4px; transition: color 0.3s ease, border-color 0.3s ease; }
-.cdm-edito-cta:hover { color: #b88d3e; border-color: #b88d3e; }
+.cdm-num { font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.35em; color: ${T.accent}; margin-bottom: 1.2rem; }
+.cdm-edito-title { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 300; letter-spacing: 0.03em; margin: 0; color: ${T.texte_titre}; font-style: italic; text-align: center; }
+.cdm-edito-desc { font-size: clamp(1.1rem, 1.4vw, 1.25rem); line-height: 1.85; color: ${T.texte_corps}; max-width: 460px; margin: 0 auto 1.5rem; font-style: italic; }
+.cdm-edito-price { font-family: ${sansStack}; font-size: 1.05rem; letter-spacing: 0.12em; color: ${T.accent}; margin-bottom: 2rem; }
+.cdm-edito-cta { display: inline-block; font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: ${T.texte_titre}; text-decoration: none; border-bottom: 1px solid ${T.texte_titre}; padding-bottom: 4px; transition: color 0.3s ease, border-color 0.3s ease; }
+.cdm-edito-cta:hover { color: ${T.accent}; border-color: ${T.accent}; }
 
 @media (max-width: 900px) {
   .cdm-edito { grid-template-columns: 1fr; gap: 2.5rem; padding: 4rem 1.5rem; }
@@ -245,7 +373,7 @@ function genererHtmlPage() {
 }
 
 .cdm-outro { text-align: center; padding: 5rem 1.5rem 7rem; max-width: 700px; margin: 0 auto; }
-.cdm-outro p { font-size: clamp(1.2rem, 1.6vw, 1.35rem); line-height: 1.75; color: #4a3f33; font-style: italic; }
+.cdm-outro p { font-size: clamp(1.2rem, 1.6vw, 1.35rem); line-height: 1.75; color: ${T.texte_corps}; font-style: italic; }
 </style>
 
 <div class="cdm-page">
@@ -268,6 +396,9 @@ ${sectionsHtml}
 }
 
 document.getElementById('btn-search').addEventListener('click', chercherProduits);
+document.getElementById('btn-theme-ia').addEventListener('click', genererThemeIA);
+// Affiche l'éditeur thème en permanence pour qu'Amila puisse ajuster
+document.getElementById('theme-edit').classList.remove('hidden');
 
 document.getElementById('btn-preview').addEventListener('click', () => {
   const produits = getProduitsCoches();
