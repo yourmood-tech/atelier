@@ -11,6 +11,7 @@ import {
   publierSurCanal,
   ajouterProduitAUneCollection,
 } from "@/lib/produits/shopify";
+import { genererDescriptionCollection } from "@/lib/produits/collection-seo-ia";
 
 export async function POST(request: Request) {
   const infos = await request.json();
@@ -122,15 +123,18 @@ export async function POST(request: Request) {
     if (infos.collectionCible && String(infos.collectionCible).trim()) {
       const res = await ajouterProduitAUneCollection(
         product.id,
-        String(infos.collectionCible).trim()
+        String(infos.collectionCible).trim(),
+        product.tags || "",
+        genererDescriptionCollection
       );
       if (res.ok) {
         (journal.etapes as Record<string, string>).collection = res.cree
-          ? `✓ collection "${res.collectionTitre}" créée + produit ajouté`
-          : `✓ produit ajouté à la collection "${res.collectionTitre}"`;
+          ? `✓ collection auto "${res.collectionTitre}" créée (tag '${res.tag}') + produit taggé`
+          : `✓ tag '${res.tag}' ajouté au produit (collection auto "${res.collectionTitre}" déjà existante)`;
         (journal as Record<string, unknown>).collection = {
           id: res.collectionId,
           titre: res.collectionTitre,
+          tag: res.tag,
           cree: res.cree,
         };
       } else {

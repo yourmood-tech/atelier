@@ -130,92 +130,124 @@ export function makeShopifyClient(domain: string, token: string) {
       return fetch_("POST", `/products/${productId}/images.json`, { image });
     },
 
-    ajouterProduitAUneCollection: async (productId: number, titre: string) => {
+    ajouterProduitAUneCollection: async (
+      productId: number,
+      titre: string,
+      tagsExistants: string,
+      genererDescription: (titre: string, tag: string) => Promise<string>
+    ) => {
       const titreNorm = titre.trim();
       if (!titreNorm)
-        return { ok: false, collectionTitre: titre, cree: false, erreur: "titre vide" };
+        return { ok: false, collectionTitre: titre, tag: "", cree: false, erreur: "titre vide" };
 
+      const tag = slugCollection(titreNorm);
+      if (!tag)
+        return { ok: false, collectionTitre: titreNorm, tag: "", cree: false, erreur: "tag vide" };
+
+      // 1. Tag → produit
+      const tagsArray = (tagsExistants || "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      if (!tagsArray.map((t) => t.toLowerCase()).includes(tag.toLowerCase())) {
+        tagsArray.push(tag);
+      }
+      const nouveauTagsCsv = tagsArray.join(", ");
+      const updateTags = await fetch_("PUT", `/products/${productId}.json`, {
+        product: { id: productId, tags: nouveauTagsCsv },
+      });
+      if (!updateTags.ok)
+        return {
+          ok: false,
+          collectionTitre: titreNorm,
+          tag,
+          cree: false,
+          erreur: `ajout du tag '${tag}' au produit échoué (HTTP ${updateTags.status})`,
+        };
+
+      // 2. Cherche si une smart/custom collection existe déjà avec ce titre
       let existanteId: number | null = null;
       let existanteType: "custom" | "smart" | null = null;
-
-      const resCustom = await fetch_(
+      const resSmart = await fetch_(
         "GET",
-        `/custom_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
+        `/smart_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
       );
-      if (resCustom.ok) {
+      if (resSmart.ok) {
         const list =
-          (resCustom.data as { custom_collections?: { id: number; title: string }[] })
-            .custom_collections || [];
+          (resSmart.data as { smart_collections?: { id: number; title: string }[] })
+            .smart_collections || [];
         const exact = list.find(
           (c) => c.title.trim().toLowerCase() === titreNorm.toLowerCase()
         );
-        if (exact) { existanteId = exact.id; existanteType = "custom"; }
+        if (exact) { existanteId = exact.id; existanteType = "smart"; }
       }
       if (!existanteId) {
-        const resSmart = await fetch_(
+        const resCustom = await fetch_(
           "GET",
-          `/smart_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
+          `/custom_collections.json?title=${encodeURIComponent(titreNorm)}&limit=50`
         );
-        if (resSmart.ok) {
+        if (resCustom.ok) {
           const list =
-            (resSmart.data as { smart_collections?: { id: number; title: string }[] })
-              .smart_collections || [];
+            (resCustom.data as { custom_collections?: { id: number; title: string }[] })
+              .custom_collections || [];
           const exact = list.find(
             (c) => c.title.trim().toLowerCase() === titreNorm.toLowerCase()
           );
-          if (exact) { existanteId = exact.id; existanteType = "smart"; }
+          if (exact) { existanteId = exact.id; existanteType = "custom"; }
         }
       }
 
-      let cree = false;
-      if (!existanteId) {
-        const creation = await fetch_("POST", "/custom_collections.json", {
-          custom_collection: { title: titreNorm, published: true },
-        });
-        if (!creation.ok)
-          return {
-            ok: false,
-            collectionTitre: titreNorm,
-            cree: false,
-            erreur: `création collection échouée (HTTP ${creation.status})`,
-          };
-        const cc = (creation.data as { custom_collection?: { id: number } })
-          .custom_collection;
-        if (!cc?.id)
-          return {
-            ok: false,
-            collectionTitre: titreNorm,
-            cree: false,
-            erreur: "création collection sans id",
-          };
-        existanteId = cc.id;
-        existanteType = "custom";
-        cree = true;
+      if (existanteId && existanteType === "smart") {
+        return { ok: true, collectionId: existanteId, collectionTitre: titreNorm, tag, cree: false };
+      }
+      if (existanteId && existanteType === "custom") {
+        return {
+          ok: true,
+          collectionId: existanteId,
+          collectionTitre: titreNorm,
+          tag,
+          cree: false,
+          erreur: `collection manuelle avec ce titre existe déjà — tag '${tag}' ajouté au produit mais collection auto non créée`,
+        };
       }
 
-      if (existanteType === "smart")
-        return {
-          ok: false,
-          collectionId: existanteId,
-          collectionTitre: titreNorm,
-          cree: false,
-          erreur:
-            "collection trouvée mais c'est une collection automatique — ajout manuel impossible",
-        };
+      // 3. Description SEO via callback
+      let descriptionHtml = "";
+      try {
+        descriptionHtml = await genererDescription(titreNorm, tag);
+      } catch {
+        descriptionHtml = `<p>${titreNorm}</p>`;
+      }
 
-      const ajout = await fetch_("POST", "/collects.json", {
-        collect: { product_id: productId, collection_id: existanteId },
+      // 4. Création smart collection avec règle tag
+      const creation = await fetch_("POST", "/smart_collections.json", {
+        smart_collection: {
+          title: titreNorm,
+          body_html: descriptionHtml,
+          published: true,
+          rules: [{ column: "tag", relation: "equals", condition: tag }],
+          disjunctive: false,
+        },
       });
-      if (!ajout.ok)
+      if (!creation.ok)
         return {
           ok: false,
-          collectionId: existanteId,
           collectionTitre: titreNorm,
-          cree,
-          erreur: `ajout produit à la collection échoué (HTTP ${ajout.status})`,
+          tag,
+          cree: false,
+          erreur: `création smart collection échouée (HTTP ${creation.status})`,
+        };
+      const sc = (creation.data as { smart_collection?: { id: number } }).smart_collection;
+      if (!sc?.id)
+        return {
+          ok: false,
+          collectionTitre: titreNorm,
+          tag,
+          cree: false,
+          erreur: "création smart collection sans id",
         };
 
-      return { ok: true, collectionId: existanteId, collectionTitre: titreNorm, cree };
+      return { ok: true, collectionId: sc.id, collectionTitre: titreNorm, tag, cree: true };
     },
   };
 }
@@ -285,6 +317,20 @@ export async function publierSurCanal(publicationId: number, productId: number) 
 }
 
 // ============ COLLECTIONS ============
+
+// Slug standard Mood pour un titre de collection thématique.
+// Ex: "Coffrets de juin 2026 - On fête la musique" → "coffrets-de-juin-2026-on-fete-la-musique"
+export function slugCollection(titre: string): string {
+  return titre
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 // Cherche une collection (custom OU smart) par titre exact. Retourne {id, type} ou null.
 export async function trouverCollectionParTitre(
   titre: string
@@ -341,69 +387,147 @@ export async function ajouterProduitACollection(
   });
 }
 
-// Workflow complet : trouve ou crée la collection puis ajoute le produit.
-// Retourne { ok, collectionId, collectionTitre, cree, erreur? }
+// Crée une smart collection (automatique) basée sur un tag.
+// La règle = "tous les produits portant le tag X rejoignent la collection".
+export async function creerSmartCollection(
+  titre: string,
+  tag: string,
+  descriptionHtml: string
+) {
+  return shopifyFetch("POST", "/smart_collections.json", {
+    smart_collection: {
+      title: titre.trim(),
+      body_html: descriptionHtml,
+      published: true,
+      rules: [
+        {
+          column: "tag",
+          relation: "equals",
+          condition: tag,
+        },
+      ],
+      disjunctive: false, // toutes les règles doivent matcher (ici on n'en a qu'une, donc indifférent)
+    },
+  });
+}
+
+// PUT les tags d'un produit (écrase l'existant). Retourne {ok, status, data}.
+export async function setProductTags(productId: number, tagsCsv: string) {
+  return shopifyFetch("PUT", `/products/${productId}.json`, {
+    product: { id: productId, tags: tagsCsv },
+  });
+}
+
+// Workflow complet (NOUVELLE VERSION) :
+// 1. Génère un tag-slug depuis le titre
+// 2. Ajoute ce tag au produit
+// 3. Si la smart collection avec ce titre n'existe pas → la crée avec règle tag + description SEO IA
+// 4. Sinon → ne touche pas à la collection (le tag fait le job, Shopify met à jour auto)
+//
+// genererDescription : callback async qui génère le HTML SEO (l'appelant fournit pour ne pas
+// recoupler le helper Shopify avec un appel Gemini direct).
 export async function ajouterProduitAUneCollection(
   productId: number,
-  titre: string
+  titre: string,
+  tagsExistants: string,
+  genererDescription: (titre: string, tag: string) => Promise<string>
 ): Promise<{
   ok: boolean;
   collectionId?: number;
   collectionTitre: string;
+  tag: string;
   cree: boolean;
   erreur?: string;
 }> {
   const titreNorm = titre.trim();
   if (!titreNorm)
-    return { ok: false, collectionTitre: titre, cree: false, erreur: "titre vide" };
+    return { ok: false, collectionTitre: titre, tag: "", cree: false, erreur: "titre vide" };
 
-  let existante = await trouverCollectionParTitre(titreNorm);
-  let cree = false;
+  const tag = slugCollection(titreNorm);
+  if (!tag)
+    return { ok: false, collectionTitre: titreNorm, tag: "", cree: false, erreur: "tag vide" };
 
-  if (!existante) {
-    const creation = await creerCollection(titreNorm);
-    if (!creation.ok) {
-      return {
-        ok: false,
-        collectionTitre: titreNorm,
-        cree: false,
-        erreur: `création collection échouée (HTTP ${creation.status})`,
-      };
-    }
-    const cc = (creation.data as { custom_collection?: { id: number } })
-      .custom_collection;
-    if (!cc?.id)
-      return {
-        ok: false,
-        collectionTitre: titreNorm,
-        cree: false,
-        erreur: "création collection sans id",
-      };
-    existante = { id: cc.id, type: "custom" };
-    cree = true;
+  // 1. Ajoute le tag au produit (concatène avec les tags existants)
+  const tagsArray = (tagsExistants || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (!tagsArray.map((t) => t.toLowerCase()).includes(tag.toLowerCase())) {
+    tagsArray.push(tag);
+  }
+  const nouveauTagsCsv = tagsArray.join(", ");
+  const updateTags = await setProductTags(productId, nouveauTagsCsv);
+  if (!updateTags.ok) {
+    return {
+      ok: false,
+      collectionTitre: titreNorm,
+      tag,
+      cree: false,
+      erreur: `ajout du tag '${tag}' au produit échoué (HTTP ${updateTags.status})`,
+    };
   }
 
-  if (existante.type === "smart")
+  // 2. Cherche si une smart collection avec ce titre existe déjà
+  const existante = await trouverCollectionParTitre(titreNorm);
+  if (existante && existante.type === "smart") {
+    // Collection auto déjà créée — le tag fera le job, rien d'autre à faire
     return {
-      ok: false,
+      ok: true,
       collectionId: existante.id,
       collectionTitre: titreNorm,
+      tag,
       cree: false,
-      erreur:
-        "collection trouvée mais c'est une collection automatique — l'ajout manuel est impossible (Shopify gère son contenu via des règles).",
     };
-
-  const ajout = await ajouterProduitACollection(productId, existante.id);
-  if (!ajout.ok)
+  }
+  if (existante && existante.type === "custom") {
+    // Une custom existe avec ce titre — on la laisse, mais on log que le tag est ajouté
     return {
-      ok: false,
+      ok: true,
       collectionId: existante.id,
       collectionTitre: titreNorm,
-      cree,
-      erreur: `ajout produit à la collection échoué (HTTP ${ajout.status})`,
+      tag,
+      cree: false,
+      erreur: `collection manuelle avec ce titre existe déjà — tag '${tag}' ajouté au produit mais collection auto non créée`,
     };
+  }
 
-  return { ok: true, collectionId: existante.id, collectionTitre: titreNorm, cree };
+  // 3. Génère la description SEO via le callback fourni
+  let descriptionHtml = "";
+  try {
+    descriptionHtml = await genererDescription(titreNorm, tag);
+  } catch (e) {
+    descriptionHtml = `<p>${titreNorm}</p>`;
+  }
+
+  // 4. Crée la smart collection
+  const creation = await creerSmartCollection(titreNorm, tag, descriptionHtml);
+  if (!creation.ok) {
+    return {
+      ok: false,
+      collectionTitre: titreNorm,
+      tag,
+      cree: false,
+      erreur: `création smart collection échouée (HTTP ${creation.status})`,
+    };
+  }
+  const sc = (creation.data as { smart_collection?: { id: number } }).smart_collection;
+  if (!sc?.id) {
+    return {
+      ok: false,
+      collectionTitre: titreNorm,
+      tag,
+      cree: false,
+      erreur: "création smart collection sans id",
+    };
+  }
+
+  return {
+    ok: true,
+    collectionId: sc.id,
+    collectionTitre: titreNorm,
+    tag,
+    cree: true,
+  };
 }
 
 export async function ajouterImage(
