@@ -142,10 +142,21 @@ function trouverTexte(titre) {
 }
 
 function nettoyerTitre(titre) {
-  return (titre || '')
-    .replace(/Anneau\s*\(.*?\)\s*[«"“]?/i, '')
-    .replace(/[»"”]\s*pour bague.*$/i, '')
-    .replace(/^["“]|["”]$/g, '')
+  if (!titre) return '';
+  // Cas 1 : titre contient un nom mythologique connu → on extrait juste ce nom
+  const noms = ['Galatée', 'Galatee', 'Néréide', 'Nereide', 'Néréi', 'Nautile', 'Calypso'];
+  for (const n of noms) {
+    if (titre.includes(n)) return n.replace('Nereide','Néréide').replace('Galatee','Galatée');
+  }
+  // Cas 2 : nom entre guillemets ("Nom" ou « Nom » ou “Nom”)
+  const m = titre.match(/[«""„]\s*([^»""„"]+?)\s*[»""„"]/);
+  if (m) return m[1].trim();
+  // Cas 3 : fallback — retire "Anneau (...)", "pour bague mood..." etc.
+  return titre
+    .replace(/Anneau\s*\(.*?\)\s*[«""„]?/i, '')
+    .replace(/[»""„"]\s*pour bague.*$/i, '')
+    .replace(/\s+en\s+(or|argent|acier|titane|aluminium|polymère|céramique|carbone|tantale).*$/i, '')
+    .replace(/^["""„«»]|["""„«»]$/g, '')
     .trim();
 }
 
@@ -185,16 +196,33 @@ function genererHtmlPage() {
   }).join('\n');
 
   return `<style>
-.cdm-page { font-family: 'Cormorant Garamond', 'Times New Roman', serif; color: #2a2520; background: linear-gradient(180deg, #fdf8ef 0%, #f5e8d8 50%, #f8eedb 100%); padding: 0; margin: 0; }
-.cdm-page * { box-sizing: border-box; }
-.cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${hero ? `background-image: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(245,232,216,0.88) 100%), url('${hero}');` : 'background: linear-gradient(180deg, #fdf8ef, #f5e8d8);'} }
-.cdm-hero-inner { max-width: 780px; }
+.cdm-page {
+  font-family: 'Cormorant Garamond', 'Times New Roman', serif; color: #2a2520; padding: 0; margin: 0;
+  background:
+    radial-gradient(ellipse at top left, rgba(255, 230, 200, 0.45) 0%, transparent 40%),
+    radial-gradient(ellipse at top right, rgba(255, 240, 220, 0.4) 0%, transparent 45%),
+    radial-gradient(ellipse at bottom left, rgba(255, 220, 190, 0.35) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(250, 235, 215, 0.4) 0%, transparent 45%),
+    linear-gradient(180deg, #fdf8ef 0%, #f5e8d8 50%, #f8eedb 100%);
+  position: relative;
+}
+.cdm-page::before, .cdm-page::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 14vw; max-width: 220px; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(184, 141, 62, 0.10) 0%, transparent 65%),
+    repeating-linear-gradient(135deg, transparent 0, transparent 30px, rgba(184, 141, 62, 0.04) 30px, rgba(184, 141, 62, 0.04) 31px);
+}
+.cdm-page::before { left: 0; }
+.cdm-page::after { right: 0; }
+.cdm-page * { box-sizing: border-box; position: relative; z-index: 1; }
+.cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${hero ? `background-image: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(245,232,216,0.88) 100%), url('${hero}');` : ''} }
+.cdm-hero-inner { max-width: 820px; }
 .cdm-eyebrow { font-size: 0.9rem; letter-spacing: 0.35em; text-transform: uppercase; color: #b88d3e; font-family: 'Inter', system-ui, sans-serif; margin-bottom: 2rem; }
 .cdm-title { font-size: clamp(3rem, 7vw, 5.5rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.05; margin: 0 0 2.5rem; color: #1a1410; font-style: italic; text-align: center; }
-.cdm-lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.75; color: #4a3f33; max-width: 640px; margin: 0 auto; font-style: italic; }
+.cdm-lead { font-size: clamp(1.25rem, 1.8vw, 1.5rem); line-height: 1.75; color: #4a3f33; max-width: 680px; margin: 0 auto; font-style: italic; }
 .cdm-divider { width: 80px; height: 1px; background: #b88d3e; margin: 2rem auto; }
 
-.cdm-edito { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4rem; max-width: 1300px; margin: 0 auto; padding: 6rem 2rem; }
+.cdm-edito { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 5rem; max-width: 1650px; margin: 0 auto; padding: 6rem 4rem; }
 .cdm-edito.cdm-reverse { direction: rtl; }
 .cdm-edito.cdm-reverse > * { direction: ltr; }
 .cdm-edito-img { position: relative; display: block; overflow: hidden; aspect-ratio: 4/5; border-radius: 2px; box-shadow: 0 20px 60px rgba(120, 90, 50, 0.18); }
