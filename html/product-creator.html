@@ -402,6 +402,14 @@
       <label style="display:flex;align-items:center;gap:0.3rem;font-size:0.9rem;font-weight:400;margin:0;cursor:pointer;"><input type="checkbox" id="opt-auraoct" style="width:auto;margin:0;"> medium aura seul (auraoct)</label>
     </div>
 
+    <!-- Pierres précieuses (optionnel) — bague mood -->
+    <label style="margin-top:1rem;">💎 Pierres précieuses serties <span class="opt">(optionnel — laisser vide si pas de pierres ; si tu en ajoutes, le prix de vente est recalculé auto)</span></label>
+    <div id="f-pierres-bloc" style="background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.8rem;margin-bottom:1rem;">
+      <div id="f-pierres-liste"></div>
+      <button type="button" id="btn-f-ajouter-pierre" style="margin:0;width:auto;padding:0.5rem 1rem;background:var(--or);font-size:0.85rem;">+ Ajouter une pierre</button>
+      <div id="f-prix-pierres-recap" class="hidden" style="margin-top:0.8rem;padding:0.6rem 0.8rem;background:#eaf3e9;border-radius:6px;font-size:0.85rem;color:#2c5530;"></div>
+    </div>
+
     <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;margin-bottom:0.5rem;">
       <input type="checkbox" id="f-opt-quantite" style="width:auto;margin:0;">
       ✨ Ajouter une option <strong>quantité au choix du client</strong> <span class="opt">(ex : 1 mini ou 2 minis, 1 deux-tiers ou 2 deux-tiers, etc.)</span>
@@ -1741,6 +1749,11 @@
     if ($('opt-auraoct').checked) tagsParticuliers.push('auraoct');
     if (tagsParticuliers.length > 0) infos.tagsParticuliers = tagsParticuliers;
 
+    // Pierres précieuses serties (si renseignées)
+    if (fPierres && fPierres.length > 0) {
+      infos.pierres = fPierres.filter(p => p && p.quantite > 0).map(p => ({ type: p.type, taille: p.taille, quantite: p.quantite }));
+    }
+
     // Option quantité au choix client (générique)
     {
       const r = lireOptionQuantite('f');
@@ -2182,7 +2195,107 @@
     return [...document.querySelectorAll('#j-tailles-checkboxes input:checked')].map(cb => cb.value);
   }
 
-  // ============ PIERRES ============
+  // ============ PIERRES BAGUE MOOD (formulaire f-) ============
+  let fPierres = [];
+  const TYPES_PIERRES_F = ['diamant','diamant-noir','diamant-brun','diamant-ice-gris','diamant-pur-rose','c-diams','saphir','emeraude','rubis','amethyste','grenat','topaze','tsavorite','cabochon'];
+  const TOUTES_TAILLES_F = ['0.8','0.9','1.3','1.6','1.75','1.9','2.1','2.5'];
+
+  document.getElementById('btn-f-ajouter-pierre')?.addEventListener('click', () => {
+    fPierres.push({ type: 'diamant', taille: '1.6', quantite: 1 });
+    fRendrePierres();
+    fCalculerPrixAuto();
+  });
+
+  function fRendrePierres() {
+    const liste = document.getElementById('f-pierres-liste');
+    if (!liste) return;
+    if (!fPierres.length) { liste.innerHTML = '<p style="margin:0;color:var(--gris);font-size:0.85rem;">Aucune pierre ajoutée — clique sur « + Ajouter une pierre » si tu veux le calcul auto du prix.</p>'; return; }
+    liste.innerHTML = fPierres.map((p, i) => {
+      const typesOpts = TYPES_PIERRES_F.map(t => `<option value="${t}" ${p.type===t?'selected':''}>${t}</option>`).join('');
+      const taillesOpts = TOUTES_TAILLES_F.map(t => `<option value="${t}" ${p.taille===t?'selected':''}>${t}mm</option>`).join('');
+      return `<div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.4rem;">
+        <select onchange="fUpdatePierre(${i},'type',this.value)" style="flex:2;margin:0;">${typesOpts}</select>
+        <select onchange="fUpdatePierre(${i},'taille',this.value)" style="flex:1;margin:0;">${taillesOpts}</select>
+        <input type="number" min="1" value="${p.quantite}" onchange="fUpdatePierre(${i},'quantite',+this.value)" style="width:80px;margin:0;" title="Nombre de pierres de ce type">
+        <button type="button" onclick="fSupprimerPierre(${i})" style="margin:0;width:auto;padding:0.3rem 0.6rem;font-size:0.8rem;background:var(--rouge);color:white;">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  function fUpdatePierre(idx, champ, val) {
+    fPierres[idx][champ] = champ === 'quantite' ? +val : val;
+    fRendrePierres();
+    fCalculerPrixAuto();
+  }
+
+  function fSupprimerPierre(idx) {
+    fPierres.splice(idx, 1);
+    fRendrePierres();
+    fCalculerPrixAuto();
+  }
+
+  // Calcul auto du prix bague mood quand pierres présentes
+  // Formule : prixAchat[matiere][format] × 3.8 + somme(achat_pierres) × 3.8 + 4.- × nb_total_pierres
+  function fCalculerPrixAuto() {
+    const recap = document.getElementById('f-prix-pierres-recap');
+    const inputPrix = document.getElementById('f-prixVente');
+    if (!recap || !inputPrix) return;
+    if (!fPierres.length) { recap.classList.add('hidden'); recap.innerHTML = ''; return; }
+
+    const matiere = $('f-matiere').value || '';
+    const formatChoisi = $('f-format').value || '';
+    // En multi-format, on prend le 1er format de la liste comme référence
+    const format = formatChoisi === 'multi format' ? (Array.from(formatsSelectionnes)[0] || '') : formatChoisi;
+    const prixAchatMat = (PRIX_ACHAT_JOAILLERIE[matiere] || {})[format];
+    if (prixAchatMat === undefined) {
+      recap.classList.remove('hidden');
+      recap.style.background = '#fde8e8';
+      recap.style.color = '#a32020';
+      recap.innerHTML = `⚠️ Pas de prix d'achat connu pour <strong>${matiere || '?'} / ${format || '?'}</strong> — choisis une matière + un format pour activer le calcul auto.`;
+      return;
+    }
+
+    let totalNb = 0;
+    let totalAchat = 0;
+    const detail = [];
+    for (const p of fPierres) {
+      const nb = p.quantite || 0;
+      if (nb <= 0) continue;
+      const u = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
+      totalNb += nb;
+      totalAchat += u * nb;
+      detail.push(`${nb} × ${p.type} ${p.taille}mm (${u}.-/u)`);
+    }
+    const matiereVente = prixAchatMat * 3.8;
+    const pierresVente = totalAchat * 3.8;
+    const sertissage = 4 * totalNb;
+    const prix = Math.round(matiereVente + pierresVente + sertissage);
+
+    // Auto-fill du prix
+    if (!inputPrix.value || inputPrix.dataset.autoFilled === 'true') {
+      inputPrix.value = prix;
+      inputPrix.dataset.autoFilled = 'true';
+    }
+
+    recap.classList.remove('hidden');
+    recap.style.background = '#eaf3e9';
+    recap.style.color = '#2c5530';
+    recap.innerHTML = `
+      💎 Calcul auto : <strong>${prix.toLocaleString('fr-CH')}.- CHF</strong><br>
+      <span style="font-size:0.78rem;color:var(--gris);">
+        Matière ${matiere} ${format} : ${prixAchatMat}.- × 3.8 = ${matiereVente.toFixed(0)}.- · Pierres : ${totalAchat}.- × 3.8 = ${pierresVente.toFixed(0)}.- · Sertissage : 4.- × ${totalNb} = ${sertissage}.-<br>
+        ${detail.join(' · ')}
+      </span>
+    `;
+  }
+
+  // Recalcule quand matière / format change
+  document.getElementById('f-matiere')?.addEventListener('change', () => fCalculerPrixAuto());
+  document.getElementById('f-format')?.addEventListener('change', () => fCalculerPrixAuto());
+
+  fRendrePierres();
+
+  // ============ PIERRES JOAILLERIE (formulaire j-) ============
   let mjPierres = [];
   const TYPES_PIERRES = ['diamant','diamant-noir','diamant-brun','diamant-ice-gris','diamant-pur-rose','c-diams','saphir','emeraude','rubis','amethyste','grenat','topaze','tsavorite','cabochon'];
   // Toutes les tailles disponibles pour chaque pierre (Amila peut sertir n'importe quelle pierre dans n'importe quelle taille)

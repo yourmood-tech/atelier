@@ -200,6 +200,7 @@ export function genererTags({
   formeBase,
   finitionBase,
   tagsParticuliers,
+  pierres,
 }: {
   format: string;
   formats?: string[];
@@ -215,6 +216,7 @@ export function genererTags({
   formeBase?: string;
   finitionBase?: string;
   tagsParticuliers?: string[];
+  pierres?: Array<{ type: string; taille: string; quantite: number }>;
 }) {
   const tags: string[] = [];
   if (collection) tags.push(collection.toLowerCase());
@@ -282,6 +284,15 @@ export function genererTags({
     tagsParticuliers.forEach((t) => t && tags.push(t));
   }
 
+  // Pierres précieuses serties → 1 tag par type unique + tag "serti-pierres-precieuses"
+  if (Array.isArray(pierres) && pierres.length > 0) {
+    const types = [...new Set(pierres.map((p) => (p.type || "").toLowerCase()).filter(Boolean))];
+    if (types.length) {
+      tags.push("serti-pierres-precieuses");
+      types.forEach((t) => tags.push(t));
+    }
+  }
+
   if (nom) tags.push(nom.toLowerCase());
   tags.push(MATIERE_TO_MOODCAT[matiere.toLowerCase()]);
   tags.push(categoriePrix(prix || 0));
@@ -329,6 +340,7 @@ export function genererDescription({
   formeBase,
   finitionBase,
   couleurs,
+  pierres,
 }: {
   format: string;
   formats?: string[];
@@ -340,6 +352,7 @@ export function genererDescription({
   formeBase?: string;
   finitionBase?: string;
   couleurs?: string[];
+  pierres?: Array<{ type: string; taille: string; quantite: number }>;
 }) {
   const isBase = estBase(format);
   let titreAffiche: string;
@@ -404,6 +417,18 @@ export function genererDescription({
   ${couleursList.length > 0 ? `<li>Couleur${couleursList.length > 1 ? "s disponibles" : ""} : ${couleursList.join(", ")}</li>` : ""}
   ${finitionTxt ? `<li>Finition : ${finitionTxt}</li>` : ""}`;
 
+  // Section pierres précieuses (si renseignées)
+  let pierresHtml = "";
+  if (Array.isArray(pierres) && pierres.length > 0) {
+    const items = pierres
+      .filter((p) => p && p.quantite > 0)
+      .map((p) => `<li>${p.quantite} × ${p.type} ${p.taille}mm</li>`)
+      .join("");
+    if (items) {
+      pierresHtml = `\n<h3>Pierres serties</h3>\n<ul>${items}</ul>`;
+    }
+  }
+
   return `${titreNomGros}
 ${inspiration}
 <h3>Compatibilité</h3>
@@ -411,7 +436,7 @@ ${inspiration}
 <h3>Caractéristiques</h3>
 <ul>
   ${caracteristiquesHtml}
-</ul>
+</ul>${pierresHtml}
 <h3>Précautions et informations</h3>
 <p>Nous vous rendons attentifs au fait que la couleur de l'addon et de ses dessins peuvent varier selon la lumière.</p>`;
 }
@@ -464,6 +489,7 @@ interface ProduitInfos {
     libelle: string;
     choix: Array<{ nom: string; prix: number | string }>;
   };
+  pierres?: Array<{ type: string; taille: string; quantite: number }>;
 }
 
 export function construirePayloadProduit(
@@ -659,12 +685,12 @@ export function construirePayloadProduit(
   return {
     product: {
       title: genererTitre({ format: formatPrincipal, formats: formatsList, nom, matiere, finition, nbCouleurs: couleursList.length, multiFormats, formeBase, finitionBase, couleurs: couleursList }),
-      body_html: genererDescription({ format: formatPrincipal, formats: formatsList, nom: nom || formatPrincipal, matiere, finition, texteInspiration, multiFormats, formeBase, finitionBase, couleurs: couleursList }),
+      body_html: genererDescription({ format: formatPrincipal, formats: formatsList, nom: nom || formatPrincipal, matiere, finition, texteInspiration, multiFormats, formeBase, finitionBase, couleurs: couleursList, pierres: infos.pierres }),
       vendor: "Mood Collection",
       product_type: productType,
       handle: handleSlug,
       status: "draft",
-      tags: genererTags({ format: formatPrincipal, formats: formatsList, matiere, finition, nom: nom || formatPrincipal, couleur, couleurs: couleursList, groupeCouleur, collection, prix: prixVente, anneeAmila: annee, formeBase, finitionBase, tagsParticuliers: infos.tagsParticuliers }),
+      tags: genererTags({ format: formatPrincipal, formats: formatsList, matiere, finition, nom: nom || formatPrincipal, couleur, couleurs: couleursList, groupeCouleur, collection, prix: prixVente, anneeAmila: annee, formeBase, finitionBase, tagsParticuliers: infos.tagsParticuliers, pierres: infos.pierres }),
       options,
       metafields_global_title_tag: seo.title,
       metafields_global_description_tag: seo.description,
