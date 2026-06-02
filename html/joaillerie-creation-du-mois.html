@@ -165,6 +165,19 @@ function getStoreCible() {
   return document.querySelector('input[name="site-cible"]:checked')?.value || 'mood-joaillerie';
 }
 
+// Insère un symbole Unicode dans le champ caractéristiques du produit i
+function ajouterSymbole(i, sym) {
+  const input = document.getElementById(`caracs-${i}`);
+  if (!input) return;
+  const v = input.value.trim();
+  // Si fin par virgule ou vide : ajoute le symbole + espace ; sinon ajoute virgule + symbole + espace
+  const sep = (v === '' || v.endsWith(',') || v.endsWith('·')) ? '' : ', ';
+  input.value = v + sep + sym + ' ';
+  input.focus();
+  // Sync avec produitsTrouves
+  if (produitsTrouves[i]) produitsTrouves[i].caracteristiques = input.value;
+}
+
 async function chercherProduits() {
   const q = document.getElementById('f-search').value.trim();
   if (!q) return;
@@ -187,7 +200,10 @@ async function chercherProduits() {
         <label style="display:flex;align-items:center;gap:0.3rem;margin-top:0.4rem;font-weight:400;font-size:0.78rem;">
           <input type="checkbox" data-prod-idx="${i}" checked style="width:auto;margin:0;"> Inclure
         </label>
-        <input type="text" class="caracs-input" data-prod-idx="${i}" placeholder="🌸 rose pastel, 💎 diamant, 🌺 hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
+        <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
+        <div class="symboles-palette" style="margin-top:0.3rem;display:flex;flex-wrap:wrap;gap:0.2rem;">
+          ${['❀','❁','✿','❃','✾','✦','✧','✩','◇','❖','❦','⚜','☽','☼'].map(s => `<button type="button" onclick="ajouterSymbole(${i}, '${s}')" style="margin:0;width:auto;padding:0.15rem 0.4rem;background:white;border:1px solid #eadfc8;border-radius:3px;font-size:0.9rem;cursor:pointer;line-height:1;" title="Cliquer pour insérer">${s}</button>`).join('')}
+        </div>
       </div>
     `).join('');
   } catch (e) {
