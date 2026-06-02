@@ -1044,13 +1044,38 @@ document.getElementById('f-video-file').addEventListener('change', async (e) => 
     if (data.url) {
       document.getElementById('f-video').value = data.url;
       info.textContent = `✓ Uploadée sur Shopify Files (${Math.round(file.size / 1024 / 1024)} MB) → URL CDN dans le champ`;
-    } else if (data.note) {
-      info.textContent = '⚠️ ' + data.note;
+    } else if (data.fileId) {
+      // Pas encore d'URL — Shopify encode la vidéo en arrière-plan, on poll toutes les 5s pendant max 5 min
+      info.textContent = '⏳ Shopify encode la vidéo (1-5 min). Vérification en cours...';
+      pollerFileStatus(data.fileId, 'f-video', info, file.size);
     }
   } catch (err) {
     info.textContent = '✗ Erreur réseau : ' + err.message;
   }
 });
+
+// Poll le statut d'un fichier Shopify toutes les 5s, max 5 min, met l'URL dans le champ quand prêt
+async function pollerFileStatus(fileId, targetInputId, infoEl, fileSize) {
+  const MAX_TENTATIVES = 60; // 60 × 5s = 5 min
+  for (let i = 0; i < MAX_TENTATIVES; i++) {
+    await new Promise(r => setTimeout(r, 5000));
+    try {
+      const r = await fetch(`/api/joaillerie/check-file-status?fileId=${encodeURIComponent(fileId)}&store=${getStoreCible()}`);
+      const data = await r.json();
+      if (data.ready && data.url) {
+        document.getElementById(targetInputId).value = data.url;
+        const mb = fileSize ? Math.round(fileSize / 1024 / 1024) + ' MB' : '';
+        infoEl.textContent = `✓ Encodage terminé ${mb} → URL CDN dans le champ`;
+        return;
+      }
+      infoEl.textContent = `⏳ Encodage Shopify en cours (${(i + 1) * 5}s écoulées, statut: ${data.fileStatus || '?'})…`;
+    } catch (e) {
+      infoEl.textContent = `⚠️ Erreur vérification : ${e.message} — re-tente plus tard`;
+      return;
+    }
+  }
+  infoEl.textContent = '⚠️ Encodage très long (>5 min). Va dans Shopify Admin > Content > Files pour récupérer l\'URL manuellement.';
+}
 
 // === Sauvegarde locale des pages ===
 const STORAGE_KEY = 'mood_creation_du_mois_pages';
