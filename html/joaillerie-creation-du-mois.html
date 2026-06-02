@@ -338,7 +338,33 @@ const MOTIFS_SVG = {
 };
 
 // Stockage de l'image motif uploadée (data URL)
-let motifImageUploadee = '';
+let motifImageUploadee = '';        // version avec opacité appliquée (utilisée au rendu)
+let motifImageUploadeeOriginale = ''; // version 100% — gardée pour re-générer avec une autre opacité
+
+// Applique une opacité globale à une image data URL via canvas, retourne nouvelle data URL PNG (préserve transparence)
+async function appliquerOpaciteImage(dataUrl, opacity) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.globalAlpha = Math.max(0.02, Math.min(1, opacity));
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => reject(new Error('image invalide'));
+    img.src = dataUrl;
+  });
+}
+
+// Re-applique l'opacité courante du slider sur l'image originale
+async function regenererMotifUploadeeAvecOpacite() {
+  if (!motifImageUploadeeOriginale) return;
+  const intensite = (parseInt(document.getElementById('th-motif-intensite').value, 10) || 12) / 100;
+  motifImageUploadee = await appliquerOpaciteImage(motifImageUploadeeOriginale, intensite);
+}
 
 function lireTheme() {
   const motifKey = document.getElementById('th-motif').value;
@@ -437,20 +463,27 @@ document.getElementById('th-motif-file').addEventListener('change', async (e) =>
   try {
     // Redimensionne pour ne pas exploser la taille du body_html stocké (max 1500px côté long)
     const dataUrl = await redimensionnerImage(file, 1500, 0.85);
-    motifImageUploadee = dataUrl;
+    motifImageUploadeeOriginale = dataUrl;
+    await regenererMotifUploadeeAvecOpacite();
     const prev = document.getElementById('th-motif-preview');
-    prev.src = dataUrl;
+    prev.src = motifImageUploadee;
     prev.style.display = 'block';
-    const tailleKb = Math.round(dataUrl.length * 0.75 / 1024);
+    const tailleKb = Math.round(motifImageUploadee.length * 0.75 / 1024);
     info.textContent = `✓ ${file.name} (${tailleKb} KB)`;
   } catch (err) {
     info.textContent = '✗ Erreur : ' + err.message;
   }
 });
 
-// Affiche live la valeur du slider intensité
-document.getElementById('th-motif-intensite').addEventListener('input', (e) => {
+// Affiche live la valeur du slider intensité + recalcule l'opacité de l'image uploadée
+document.getElementById('th-motif-intensite').addEventListener('input', async (e) => {
   document.getElementById('th-motif-intensite-val').textContent = e.target.value + ' %';
+  if (motifImageUploadeeOriginale) {
+    await regenererMotifUploadeeAvecOpacite();
+    // Met à jour l'aperçu pour refléter la nouvelle opacité
+    const prev = document.getElementById('th-motif-preview');
+    if (prev && prev.style.display !== 'none') prev.src = motifImageUploadee;
+  }
 });
 
 function appliquerTheme(theme) {
