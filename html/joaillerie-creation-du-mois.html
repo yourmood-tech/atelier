@@ -429,16 +429,19 @@ function genererHtmlPage() {
   const sansStack = `'${T.sans}', system-ui, sans-serif`;
   const titleColor = T.hero_style === 'image_avec_overlay_sombre' ? '#fff' : T.texte_titre;
   const leadColor = T.hero_style === 'image_avec_overlay_sombre' ? 'rgba(255,255,255,0.92)' : T.texte_corps;
-  // Motif de fond décoratif (filigrane SVG encodé en base64 → 100% fiable cross-browser)
-  const motifOpacity = (T.motif_intensite || 6) / 100;
-  let motifBgCss = '';
+  // Motif de fond décoratif (SVG injecté en arrière-plan direct de .cdm-page)
+  const motifOpacity = (T.motif_intensite || 12) / 100;
+  let motifBgImageUrl = '';
   if (T.motif_svg) {
-    // Décode le %23 (= #) avant encodage base64
-    const svgClean = T.motif_svg.replace(/%23/g, '#');
-    let motifSvgB64 = '';
-    try { motifSvgB64 = btoa(unescape(encodeURIComponent(svgClean))); } catch { motifSvgB64 = ''; }
-    if (motifSvgB64) {
-      motifBgCss = `background-image: url(data:image/svg+xml;base64,${motifSvgB64}); background-repeat: repeat; background-size: 130px 130px;`;
+    // Le stroke #000 du SVG est remplacé par un gris dont l'opacité reflète l'intensité choisie
+    // (équivaut à régler l'opacité sans avoir besoin d'un calque CSS séparé)
+    const alphaHex = Math.round(motifOpacity * 255).toString(16).padStart(2, '0');
+    const svgWithOpacity = T.motif_svg.replace(/stroke='%23000'/g, `stroke='%23000000${alphaHex}'`).replace(/fill='%23000'/g, `fill='%23000000${alphaHex}'`);
+    const svgClean = svgWithOpacity.replace(/%23/g, '#');
+    try {
+      motifBgImageUrl = `url("data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgClean)))}")`;
+    } catch {
+      motifBgImageUrl = '';
     }
   }
 
@@ -447,11 +450,13 @@ function genererHtmlPage() {
 .cdm-page {
   font-family: ${fontStack}; color: ${T.texte_corps}; padding: 0; margin: 0;
   background:
+    ${motifBgImageUrl ? `${motifBgImageUrl} repeat,` : ''}
     radial-gradient(ellipse at top left, ${accentRgba(0.06)} 0%, transparent 40%),
     radial-gradient(ellipse at top right, ${accentRgba(0.05)} 0%, transparent 45%),
     radial-gradient(ellipse at bottom left, ${accentRgba(0.05)} 0%, transparent 50%),
     radial-gradient(ellipse at bottom right, ${accentRgba(0.06)} 0%, transparent 45%),
     linear-gradient(180deg, ${T.fond_principal} 0%, ${T.fond_secondaire} 50%, ${T.fond_principal} 100%);
+  background-size: ${motifBgImageUrl ? '130px 130px,' : ''} auto, auto, auto, auto, auto;
   position: relative;
 }
 .cdm-page::before, .cdm-page::after {
@@ -462,12 +467,6 @@ function genererHtmlPage() {
 }
 .cdm-page::before { left: 0; }
 .cdm-page::after { right: 0; }
-${T.motif_svg ? `
-.cdm-page .cdm-motif-overlay {
-  position: absolute !important; inset: 0 !important; pointer-events: none !important; z-index: 0 !important;
-  ${motifBgCss}
-  opacity: ${motifOpacity} !important;
-}` : ''}
 .cdm-page * { box-sizing: border-box; position: relative; z-index: 1; }
 .cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${heroBg} }
 .cdm-hero-inner { max-width: 820px; }
@@ -509,7 +508,6 @@ ${T.motif_svg ? `
 </style>
 
 <div class="cdm-page">
-  ${T.motif_svg ? '<div class="cdm-motif-overlay"></div>' : ''}
   <section class="cdm-hero">
     <div class="cdm-hero-inner">
       <div class="cdm-eyebrow">${intro}</div>
