@@ -674,7 +674,7 @@ function genererHtmlPage() {
 .cdm-page {
   font-family: ${fontStack}; color: ${T.texte_corps}; padding: 0; margin: 0;
   background:
-    ${motifIsUploadedImage ? `${motifBgImageUrl} no-repeat top center / 100% auto,` : ''}
+    ${motifIsUploadedImage ? `${motifBgImageUrl} no-repeat top center / cover,` : ''}
     ${motifBgImageUrl && !motifIsUploadedImage ? `
       ${motifBgImageUrl} no-repeat 8% 4%,
       ${motifBgImageUrl} no-repeat 88% 7%,
@@ -848,8 +848,11 @@ document.getElementById('f-hero-file').addEventListener('change', async (e) => {
   }
 });
 
-// Lit un File, le rend en canvas redimensionné au max maxWidth, et retourne une data URL JPEG
+// Lit un File, le rend en canvas redimensionné au max maxWidth.
+// Si le type du fichier source est PNG/WebP/GIF → conserve PNG (préserve la transparence).
+// Sinon (JPEG, HEIC, etc.) → exporte en JPEG (plus léger, pas besoin de transparence).
 async function redimensionnerImage(file, maxWidth, quality) {
+  const preserveAlpha = /image\/(png|webp|gif)/i.test(file.type || '');
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -862,7 +865,7 @@ async function redimensionnerImage(file, maxWidth, quality) {
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', quality));
+        resolve(preserveAlpha ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', quality));
       };
       img.onerror = () => reject(new Error('image illisible'));
       img.src = reader.result;
