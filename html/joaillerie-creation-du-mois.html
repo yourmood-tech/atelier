@@ -99,6 +99,17 @@
   <input id="f-intro" type="text" value="La création du mois — Juin 2026">
   <label>Texte d'introduction (1-2 phrases poétiques) *</label>
   <textarea id="f-lead" style="min-height:80px;">Or gris, diamants en constellation, saphirs roses et pierres précieuses — chaque pièce dialogue avec la lumière de façon unique, comme la mer change selon l'heure du jour. Une collection de haute joaillerie en quatre créations uniques, inspirée de la mythologie grecque marine.</textarea>
+
+  <label>📹 Vidéo (optionnel) <span class="opt">(URL YouTube, Vimeo, ou MP4 direct — apparaîtra après le hero, pleine largeur)</span></label>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+    <input id="f-video" type="text" placeholder="https://www.youtube.com/watch?v=… ou https://….mp4" style="flex:1;min-width:280px;">
+    <input type="file" id="f-video-file" accept="video/*" style="display:none;">
+    <button type="button" id="btn-video-upload" style="margin:0;padding:0.6rem 1rem;background:#fff;color:var(--noir);border:1px solid #ddd;font-size:0.85rem;">📁 Uploader MP4</button>
+    <span id="f-video-info" style="font-size:0.78rem;color:var(--gris);"></span>
+  </div>
+
+  <label>Texte de fin <span class="opt">(optionnel — laisse vide si tu ne veux pas d'outro)</span></label>
+  <textarea id="f-outro" style="min-height:60px;" placeholder="Pour découvrir cette collection, écrivez-nous ou prenez rendez-vous dans l'une de nos boutiques."></textarea>
 </div>
 
 <!-- ÉTAPE 3 : Thème visuel -->
@@ -207,11 +218,19 @@
   <h2>4. Générer la page</h2>
   <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
     <button type="button" id="btn-preview" class="secondary">👁️ Prévisualiser</button>
-    <button type="button" id="btn-push">📤 Pousser sur Shopify Mood Joaillerie (draft)</button>
+    <button type="button" id="btn-push">📤 Pousser sur Shopify (draft)</button>
     <button type="button" id="btn-push-live" class="secondary">📢 Pousser PUBLIÉ</button>
+    <button type="button" id="btn-save-local" class="secondary" style="background:#fff8f0;color:var(--or);border-color:var(--or);">💾 Enregistrer cette page</button>
   </div>
   <div id="resultat" class="resultat hidden"></div>
   <iframe id="preview-frame" class="preview hidden" style="margin-top:1rem;"></iframe>
+</div>
+
+<!-- ÉTAPE 5 : Pages enregistrées -->
+<div class="step">
+  <h2>📋 Mes pages enregistrées <span class="opt" style="font-weight:400;">(stockées localement dans ce navigateur)</span></h2>
+  <div id="pages-sauvegardees" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.7rem;"></div>
+  <p id="pages-vide" style="color:var(--gris);font-size:0.85rem;margin:0;">Aucune page enregistrée pour l'instant.</p>
 </div>
 
 <script>
@@ -542,9 +561,26 @@ function genererHtmlPage() {
   const intro = document.getElementById('f-intro').value.trim();
   const lead = document.getElementById('f-lead').value.trim();
   const heroOverride = document.getElementById('f-hero').value.trim();
+  const videoUrl = document.getElementById('f-video').value.trim();
+  const outroTexte = document.getElementById('f-outro').value.trim();
   const produits = getProduitsCoches();
   const hero = heroOverride || produits[0]?.images?.[0]?.url || '';
   const T = lireTheme();
+
+  // Génère le HTML de la vidéo (YouTube embed, Vimeo embed, ou MP4 direct/data URL)
+  let videoHtml = '';
+  if (videoUrl) {
+    const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+    const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
+    if (ytMatch) {
+      videoHtml = `<section class="cdm-video"><div class="cdm-video-wrap"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div></section>`;
+    } else if (vimeoMatch) {
+      videoHtml = `<section class="cdm-video"><div class="cdm-video-wrap"><iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div></section>`;
+    } else {
+      // URL directe ou data URL → balise video native
+      videoHtml = `<section class="cdm-video"><video controls playsinline preload="metadata" style="width:100%;display:block;"><source src="${videoUrl}"></video></section>`;
+    }
+  }
 
   const escapeHtml = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const wrapEmojis = (s) => s.replace(/\p{Extended_Pictographic}/gu, '<span class="emoji-mono">$&</span>');
@@ -827,6 +863,9 @@ ${T.hover === 'fondu' ? `
   .cdm-edito-img { max-width: 500px; margin: 0 auto; width: 100%; }
 }
 
+.cdm-video { max-width: 1400px; margin: 0 auto; padding: 4rem 2rem 2rem; }
+.cdm-video-wrap { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 2px; box-shadow: 0 18px 50px ${accentRgba(0.18)}; }
+.cdm-video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
 .cdm-outro { text-align: center; padding: 5rem 1.5rem 7rem; max-width: 700px; margin: 0 auto; }
 .cdm-outro p { font-size: clamp(1.2rem, 1.6vw, 1.35rem); line-height: 1.75; color: ${T.texte_corps}; font-style: italic; }
 </style>
@@ -841,12 +880,13 @@ ${T.hover === 'fondu' ? `
     </div>
   </section>
 
+${videoHtml}
 ${sectionsHtml}
 
-  <section class="cdm-outro">
+  ${outroTexte ? `<section class="cdm-outro">
     <div class="cdm-divider"></div>
-    <p>Pour découvrir ${titrePage.toLowerCase()}, prendre rendez-vous dans l'une de nos boutiques, ou recevoir la présentation exclusive de la collection, écrivez-nous.</p>
-  </section>
+    <p>${escapeHtml(outroTexte).replace(/\n/g, '<br>')}</p>
+  </section>` : ''}
 </div>`;
 }
 
@@ -967,8 +1007,153 @@ document.getElementById('btn-push-live').addEventListener('click', () => {
   pousserVersShopify(true);
 });
 
+// Upload vidéo MP4 → data URL dans le champ f-video
+document.getElementById('btn-video-upload').addEventListener('click', () => {
+  document.getElementById('f-video-file').click();
+});
+document.getElementById('f-video-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const info = document.getElementById('f-video-info');
+  if (file.size > 15 * 1024 * 1024) {
+    info.textContent = '✗ Trop lourd (' + Math.round(file.size / 1024 / 1024) + ' MB) — max 15 MB. Utilise plutôt YouTube/Vimeo pour les vidéos lourdes.';
+    return;
+  }
+  info.textContent = '⏳ Chargement…';
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error('lecture impossible'));
+      r.readAsDataURL(file);
+    });
+    document.getElementById('f-video').value = dataUrl;
+    info.textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`;
+  } catch (err) {
+    info.textContent = '✗ Erreur : ' + err.message;
+  }
+});
+
+// === Sauvegarde locale des pages ===
+const STORAGE_KEY = 'mood_creation_du_mois_pages';
+
+function lirePagesSauvegardees() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+}
+
+function ecrirePagesSauvegardees(pages) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(pages));
+}
+
+function snapshotPage() {
+  return {
+    id: Date.now().toString(36),
+    date: new Date().toISOString(),
+    titre: document.getElementById('f-titre').value.trim() || 'Sans titre',
+    handle: document.getElementById('f-handle').value.trim(),
+    intro: document.getElementById('f-intro').value,
+    lead: document.getElementById('f-lead').value,
+    hero: document.getElementById('f-hero').value,
+    video: document.getElementById('f-video').value,
+    outro: document.getElementById('f-outro').value,
+    storeCible: getStoreCible(),
+    mood: document.getElementById('f-mood').value,
+    theme: lireTheme(),
+    motifOriginal: motifImageUploadeeOriginale,
+    produits: produitsTrouves,
+  };
+}
+
+function rendrePagesSauvegardees() {
+  const container = document.getElementById('pages-sauvegardees');
+  const vide = document.getElementById('pages-vide');
+  if (!container) return;
+  const pages = lirePagesSauvegardees();
+  if (pages.length === 0) { container.innerHTML = ''; vide.style.display = 'block'; return; }
+  vide.style.display = 'none';
+  container.innerHTML = pages.map(p => `
+    <div style="background:white;border:1px solid #eadfc8;border-radius:8px;padding:0.8rem;">
+      <div style="font-weight:600;font-size:0.92rem;margin-bottom:0.3rem;">${(p.titre || 'Sans titre').replace(/</g, '&lt;')}</div>
+      <div style="font-size:0.75rem;color:var(--gris);margin-bottom:0.6rem;">${new Date(p.date).toLocaleString('fr-CH')} · ${p.storeCible || 'mood-joaillerie'} · ${(p.produits || []).length} produits</div>
+      <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+        <button type="button" onclick="chargerPage('${p.id}')" style="margin:0;padding:0.35rem 0.7rem;background:var(--or);font-size:0.78rem;">📂 Charger</button>
+        <button type="button" onclick="dupliquerPage('${p.id}')" style="margin:0;padding:0.35rem 0.7rem;background:#eee;color:var(--noir);font-size:0.78rem;">🔁 Dupliquer</button>
+        <button type="button" onclick="supprimerPage('${p.id}')" style="margin:0;padding:0.35rem 0.7rem;background:#fde8e8;color:#a32020;border:1px solid #a32020;font-size:0.78rem;">🗑️ Supprimer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btn-save-local').addEventListener('click', () => {
+  const titre = document.getElementById('f-titre').value.trim();
+  if (!titre) { alert('Donne un titre à la page avant de sauvegarder.'); return; }
+  const pages = lirePagesSauvegardees();
+  pages.unshift(snapshotPage());
+  ecrirePagesSauvegardees(pages.slice(0, 50)); // garde max 50
+  rendrePagesSauvegardees();
+  const btn = document.getElementById('btn-save-local');
+  const old = btn.textContent;
+  btn.textContent = '✓ Enregistré !';
+  setTimeout(() => { btn.textContent = old; }, 1500);
+});
+
+function chargerPage(id) {
+  const pages = lirePagesSauvegardees();
+  const p = pages.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('f-titre').value = p.titre || '';
+  document.getElementById('f-handle').value = p.handle || 'creation-du-mois';
+  document.getElementById('f-intro').value = p.intro || '';
+  document.getElementById('f-lead').value = p.lead || '';
+  document.getElementById('f-hero').value = p.hero || '';
+  document.getElementById('f-video').value = p.video || '';
+  document.getElementById('f-outro').value = p.outro || '';
+  document.getElementById('f-mood').value = p.mood || '';
+  if (p.storeCible) {
+    const radio = document.querySelector(`input[name="site-cible"][value="${p.storeCible}"]`);
+    if (radio) radio.checked = true;
+  }
+  if (p.theme) appliquerTheme({ palette: { fond_principal: p.theme.fond_principal, fond_secondaire: p.theme.fond_secondaire, accent_metal: p.theme.accent, texte_titre: p.theme.texte_titre, texte_corps: p.theme.texte_corps }, typo: { serif_titre: p.theme.serif, sans_label: p.theme.sans }, style_hero: p.theme.hero_style });
+  if (p.theme?.layout) { document.getElementById('th-layout').value = p.theme.layout; initLayoutGrid(); }
+  if (p.theme?.hover) document.getElementById('th-hover').value = p.theme.hover;
+  if (p.theme?.motif_intensite) {
+    document.getElementById('th-motif-intensite').value = p.theme.motif_intensite;
+    document.getElementById('th-motif-intensite-val').textContent = p.theme.motif_intensite + ' %';
+  }
+  if (p.motifOriginal) {
+    motifImageUploadeeOriginale = p.motifOriginal;
+    regenererMotifUploadeeAvecOpacite().then(() => {
+      const prev = document.getElementById('th-motif-preview');
+      if (prev) { prev.src = motifImageUploadee; prev.style.display = 'block'; }
+    });
+  }
+  if (p.produits) {
+    produitsTrouves = p.produits;
+    rerendreProduitsCards();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function dupliquerPage(id) {
+  const pages = lirePagesSauvegardees();
+  const p = pages.find(x => x.id === id);
+  if (!p) return;
+  const copie = { ...p, id: Date.now().toString(36), date: new Date().toISOString(), titre: (p.titre || 'Sans titre') + ' (copie)' };
+  pages.unshift(copie);
+  ecrirePagesSauvegardees(pages.slice(0, 50));
+  rendrePagesSauvegardees();
+}
+
+function supprimerPage(id) {
+  if (!confirm('Supprimer définitivement cette page enregistrée ?')) return;
+  const pages = lirePagesSauvegardees().filter(x => x.id !== id);
+  ecrirePagesSauvegardees(pages);
+  rendrePagesSauvegardees();
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   initLayoutGrid();
+  rendrePagesSauvegardees();
   setTimeout(chercherProduits, 300);
 });
 </script>
