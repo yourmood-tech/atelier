@@ -1238,10 +1238,9 @@ function chargerPage(id) {
   }
   if (p.motifOriginal) {
     motifImageUploadeeOriginale = p.motifOriginal;
-    regenererMotifUploadeeAvecOpacite().then(() => {
-      const prev = document.getElementById('th-motif-preview');
-      if (prev) { prev.src = motifImageUploadee; prev.style.display = 'block'; }
-    });
+    motifImageUploadee = p.motifOriginal;
+    const prev = document.getElementById('th-motif-preview');
+    if (prev) { prev.src = motifImageUploadee; prev.style.display = 'block'; }
   }
   if (p.produits) {
     produitsTrouves = p.produits;
@@ -1292,11 +1291,21 @@ function initAutoSlugHandle() {
 }
 
 async function importerDepuisShopify() {
-  const id = prompt('ID de la page Shopify à récupérer\n(ex: 707129639289 — trouvable dans l\'URL Admin Shopify)');
-  if (!id || !/^\d+$/.test(id.trim())) return;
-  const storeChoice = prompt('Quel site ?\n1 = Mood Collection (yourmood.net)\n2 = Mood Joaillerie (moodjoaillerie.net)', '1');
-  if (!storeChoice) return;
-  const store = storeChoice.trim() === '2' ? 'mood-joaillerie' : 'mood-collection';
+  const saisie = prompt('ID ou URL Shopify Admin de la page à récupérer\n(ex: 707129639289 OU https://admin.shopify.com/store/yourmood/pages/707129639289)');
+  if (!saisie) return;
+  const idMatch = saisie.trim().match(/(\d{6,})/);
+  if (!idMatch) { alert('Pas d\'ID valide trouvé. Colle l\'URL admin Shopify ou juste les chiffres de l\'ID.'); return; }
+  const id = idMatch[1];
+  // Auto-détection du store depuis l'URL si possible
+  let storeAuto = '';
+  if (/yourmood\.myshopify|store\/yourmood/i.test(saisie)) storeAuto = 'mood-collection';
+  else if (/moodjoaillerie|mood-joaillerie/i.test(saisie)) storeAuto = 'mood-joaillerie';
+  let store = storeAuto;
+  if (!store) {
+    const storeChoice = prompt('Quel site ?\n1 = Mood Collection (yourmood.net)\n2 = Mood Joaillerie (moodjoaillerie.net)', '1');
+    if (!storeChoice) return;
+    store = storeChoice.trim() === '2' ? 'mood-joaillerie' : 'mood-collection';
+  }
   const btn = document.getElementById('btn-import-shopify');
   const old = btn.textContent;
   btn.disabled = true;
