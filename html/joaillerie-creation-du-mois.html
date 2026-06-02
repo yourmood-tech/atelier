@@ -180,6 +180,24 @@
         </select>
       </div>
     </div>
+    <div class="row" style="margin-top:0.5rem;">
+      <div>
+        <label>🎯 Disposition des produits</label>
+        <select id="th-layout" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;">
+          <option value="zigzag" selected>Zigzag éditorial (image gauche/droite alternée — grand format)</option>
+          <option value="grille-2">Grille 2 colonnes (cards uniformes)</option>
+          <option value="grille-3">Grille 3 colonnes (cards plus petites)</option>
+        </select>
+      </div>
+      <div>
+        <label>✨ Transition au survol</label>
+        <select id="th-hover" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;">
+          <option value="fondu" selected>Fondu vers l'image 2</option>
+          <option value="zoom">Zoom doux + fondu image 2</option>
+          <option value="texte">Apparition du texte par-dessus</option>
+        </select>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -226,25 +244,7 @@ async function chercherProduits() {
     if (!r.ok) { container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur : ' + (data.error || 'inconnue') + '</p>'; return; }
     produitsTrouves = data.produits || [];
     if (produitsTrouves.length === 0) { container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">Aucun produit trouvé.</p>'; return; }
-    container.innerHTML = produitsTrouves.map((p, i) => `
-      <div class="pcard">
-        ${p.images?.[0]?.url ? `<img src="${p.images[0].url}" alt="">` : ''}
-        <div class="title">${p.title}</div>
-        <div class="meta">
-          ${p.price ? p.price + ' CHF' : '—'} · ${p.status === 'ACTIVE' ? '✅ actif' : '<span class="draft">draft</span>'}<br>
-          <small style="font-family:monospace;">${p.handle}</small>
-        </div>
-        <label style="display:flex;align-items:center;gap:0.3rem;margin-top:0.4rem;font-weight:400;font-size:0.78rem;">
-          <input type="checkbox" data-prod-idx="${i}" checked style="width:auto;margin:0;"> Inclure
-        </label>
-        <input type="text" class="sstitre-input" data-prod-idx="${i}" placeholder="Sous-titre (optionnel) — ex : Édition limitée été 2026" value="${(p.sousTitre || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].sousTitre = this.value" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
-        <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="Caractéristiques — ex : ❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.3rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
-        <div class="symboles-palette" style="margin-top:0.3rem;display:flex;flex-wrap:wrap;gap:0.2rem;">
-          ${['❀','❁','✿','❃','✾','✦','✧','✩','◇','❖','❦','⚜','☽','☼','🎨','💎','🌺','🐚','🌴','🌊','☀️','🌙','🌸','🍃','🦋','⭐','🌿','❄️'].map(s => `<button type="button" onclick="ajouterSymbole(${i}, '${s}')" style="margin:0;width:auto;padding:0.15rem 0.4rem;background:white;border:1px solid #eadfc8;border-radius:3px;font-size:0.95rem;cursor:pointer;line-height:1;" title="Cliquer pour insérer">${s}</button>`).join('')}
-        </div>
-        <textarea class="description-input" data-prod-idx="${i}" placeholder="Description du produit (multi-ligne — retours à la ligne respectés)" oninput="produitsTrouves[${i}].descriptionLibre = this.value" style="width:100%;margin-top:0.3rem;padding:0.4rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.78rem;background:white;min-height:70px;font-family:inherit;line-height:1.5;">${(p.descriptionLibre || '').replace(/</g, '&lt;')}</textarea>
-      </div>
-    `).join('');
+    rerendreProduitsCards();
   } catch (e) {
     container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur réseau : ' + e.message + '</p>';
   }
@@ -320,7 +320,48 @@ function lireTheme() {
     motif_svg: motifKey ? MOTIFS_SVG[motifKey] : '',
     motif_intensite: parseInt(document.getElementById('th-motif-intensite').value, 10) || 12,
     overlay_intensite: document.getElementById('th-overlay').value,
+    layout: document.getElementById('th-layout').value,
+    hover: document.getElementById('th-hover').value,
   };
+}
+
+// Réordonne les produits dans la liste (↑ monter / ↓ descendre)
+function reordonnerProduit(idx, sens) {
+  const cible = idx + sens;
+  if (cible < 0 || cible >= produitsTrouves.length) return;
+  const tmp = produitsTrouves[idx];
+  produitsTrouves[idx] = produitsTrouves[cible];
+  produitsTrouves[cible] = tmp;
+  rerendreProduitsCards();
+}
+
+// Re-render la liste produits sans appeler l'API (préserve les saisies)
+function rerendreProduitsCards() {
+  const container = document.getElementById('produits-result');
+  if (!container) return;
+  container.innerHTML = produitsTrouves.map((p, i) => `
+    <div class="pcard">
+      ${p.images?.[0]?.url ? `<img src="${p.images[0].url}" alt="">` : ''}
+      <div class="title">${p.title}</div>
+      <div class="meta">
+        ${p.price ? p.price + ' CHF' : '—'} · ${p.status === 'ACTIVE' ? '✅ actif' : '<span class="draft">draft</span>'}<br>
+        <small style="font-family:monospace;">${p.handle}</small>
+      </div>
+      <div style="display:flex;gap:0.3rem;margin-top:0.4rem;align-items:center;">
+        <button type="button" onclick="reordonnerProduit(${i}, -1)" ${i === 0 ? 'disabled' : ''} style="margin:0;padding:0.1rem 0.4rem;width:auto;background:#eee;color:var(--noir);font-size:0.85rem;">↑</button>
+        <button type="button" onclick="reordonnerProduit(${i}, +1)" ${i === produitsTrouves.length - 1 ? 'disabled' : ''} style="margin:0;padding:0.1rem 0.4rem;width:auto;background:#eee;color:var(--noir);font-size:0.85rem;">↓</button>
+        <label style="display:flex;align-items:center;gap:0.3rem;font-weight:400;font-size:0.78rem;margin:0;">
+          <input type="checkbox" data-prod-idx="${i}" ${p._exclu ? '' : 'checked'} onchange="produitsTrouves[${i}]._exclu = !this.checked" style="width:auto;margin:0;"> Inclure
+        </label>
+      </div>
+      <input type="text" class="sstitre-input" data-prod-idx="${i}" placeholder="Sous-titre (optionnel) — ex : Édition limitée été 2026" value="${(p.sousTitre || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].sousTitre = this.value" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
+      <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="Caractéristiques — ex : ❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" style="width:100%;margin-top:0.3rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
+      <div class="symboles-palette" style="margin-top:0.3rem;display:flex;flex-wrap:wrap;gap:0.2rem;">
+        ${['❀','❁','✿','❃','✾','✦','✧','✩','◇','❖','❦','⚜','☽','☼','🎨','💎','🌺','🐚','🌴','🌊','☀️','🌙','🌸','🍃','🦋','⭐','🌿','❄️'].map(s => `<button type="button" onclick="ajouterSymbole(${i}, '${s}')" style="margin:0;width:auto;padding:0.15rem 0.4rem;background:white;border:1px solid #eadfc8;border-radius:3px;font-size:0.95rem;cursor:pointer;line-height:1;">${s}</button>`).join('')}
+      </div>
+      <textarea class="description-input" data-prod-idx="${i}" placeholder="Description du produit (multi-ligne)" oninput="produitsTrouves[${i}].descriptionLibre = this.value" style="width:100%;margin-top:0.3rem;padding:0.4rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.78rem;background:white;min-height:70px;font-family:inherit;line-height:1.5;">${(p.descriptionLibre || '').replace(/</g, '&lt;')}</textarea>
+    </div>
+  `).join('');
 }
 
 // Upload du motif personnalisé
@@ -411,44 +452,70 @@ function genererHtmlPage() {
   const hero = heroOverride || produits[0]?.images?.[0]?.url || '';
   const T = lireTheme();
 
-  // Sections éditoriales zigzag — alterne image gauche/droite
-  const sectionsHtml = produits.map((p, i) => {
+  const escapeHtml = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const wrapEmojis = (s) => s.replace(/\p{Extended_Pictographic}/gu, '<span class="emoji-mono">$&</span>');
+
+  // Prépare les données enrichies pour chaque produit (utilisé par tous les layouts)
+  const produitsEnrichis = produits.map((p, i) => {
     const img1 = p.images?.[0]?.url || '';
     const img2 = p.images?.[1]?.url || img1;
     const prix = p.price ? Math.round(parseFloat(p.price)).toLocaleString('fr-CH') + " CHF" : "";
     const url = p.urlPublic;
     const titreCard = nettoyerTitre(p.title);
-    // Description : libre saisie Amila prioritaire, sinon fallback mythologique Nérée (si match)
     const descBrute = (p.descriptionLibre && p.descriptionLibre.trim()) || trouverTexte(titreCard) || '';
-    const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const texte = descBrute ? escapeHtml(descBrute).replace(/\n/g, '<br>') : '';
     const sousTitre = (p.sousTitre || '').trim();
-    const numero = String(i + 1).padStart(2, '0');
-    const inverse = i % 2 === 1 ? ' cdm-reverse' : '';
-    // Caractéristiques saisies par Amila — split sur virgule ou point-médian
     const caracs = (p.caracteristiques || '').split(/[,·]/).map(c => c.trim()).filter(Boolean);
-    // Wrap chaque emoji (caractère hors plage ASCII/symboles basiques) dans un span monochrome
-    const wrapEmojis = (s) => s.replace(/\p{Extended_Pictographic}/gu, '<span class="emoji-mono">$&</span>');
     const caracsHtml = caracs.length
       ? `<div class="cdm-caracs">${caracs.map(c => `<span>${wrapEmojis(c)}</span>`).join('<span class="cdm-caracs-sep">·</span>')}</div>`
       : '';
-    return `
+    return { img1, img2, prix, url, titreCard, texte, sousTitre, caracsHtml, i };
+  });
+
+  // Génère le HTML d'une section selon le layout choisi
+  let sectionsHtml = '';
+  if (T.layout === 'zigzag') {
+    sectionsHtml = produitsEnrichis.map((d, i) => {
+      const inverse = i % 2 === 1 ? ' cdm-reverse' : '';
+      return `
     <section class="cdm-edito${inverse}">
-      <a class="cdm-edito-img" href="${url}">
-        <img class="cdm-img-1" src="${img1}" alt="${titreCard}">
-        ${img2 !== img1 ? `<img class="cdm-img-2" src="${img2}" alt="${titreCard}">` : ''}
+      <a class="cdm-edito-img cdm-card-img" href="${d.url}">
+        <img class="cdm-img-1" src="${d.img1}" alt="${d.titreCard}">
+        ${d.img2 !== d.img1 ? `<img class="cdm-img-2" src="${d.img2}" alt="${d.titreCard}">` : ''}
+        ${T.hover === 'texte' && d.texte ? `<div class="cdm-hover-text"><p>${d.texte}</p></div>` : ''}
       </a>
       <div class="cdm-edito-text">
-        <h2 class="cdm-edito-title">${titreCard}</h2>
-        ${sousTitre ? `<div class="cdm-edito-soustitre">${escapeHtml(sousTitre)}</div>` : ''}
-        ${caracsHtml}
+        <h2 class="cdm-edito-title">${d.titreCard}</h2>
+        ${d.sousTitre ? `<div class="cdm-edito-soustitre">${escapeHtml(d.sousTitre)}</div>` : ''}
+        ${d.caracsHtml}
         <div class="cdm-divider"></div>
-        ${texte ? `<p class="cdm-edito-desc">${texte}</p>` : ''}
-        ${prix ? `<div class="cdm-edito-price">${prix}</div>` : ''}
-        <a class="cdm-edito-cta" href="${url}">Découvrir cette création →</a>
+        ${d.texte && T.hover !== 'texte' ? `<p class="cdm-edito-desc">${d.texte}</p>` : ''}
+        ${d.prix ? `<div class="cdm-edito-price">${d.prix}</div>` : ''}
+        <a class="cdm-edito-cta" href="${d.url}">Découvrir cette création →</a>
       </div>
     </section>`;
-  }).join('\n');
+    }).join('\n');
+  } else {
+    // Grilles 2 ou 3 colonnes : cards uniformes
+    const colClass = T.layout === 'grille-3' ? 'cdm-grid-3' : 'cdm-grid-2';
+    const cards = produitsEnrichis.map(d => `
+      <a class="cdm-grid-card cdm-card-img" href="${d.url}">
+        <div class="cdm-grid-card-img">
+          <img class="cdm-img-1" src="${d.img1}" alt="${d.titreCard}">
+          ${d.img2 !== d.img1 ? `<img class="cdm-img-2" src="${d.img2}" alt="${d.titreCard}">` : ''}
+          ${T.hover === 'texte' && d.texte ? `<div class="cdm-hover-text"><p>${d.texte}</p></div>` : ''}
+        </div>
+        <div class="cdm-grid-card-body">
+          <h2 class="cdm-grid-card-title">${d.titreCard}</h2>
+          ${d.sousTitre ? `<div class="cdm-edito-soustitre">${escapeHtml(d.sousTitre)}</div>` : ''}
+          ${d.caracsHtml}
+          ${d.texte && T.hover !== 'texte' ? `<p class="cdm-grid-card-desc">${d.texte}</p>` : ''}
+          ${d.prix ? `<div class="cdm-edito-price">${d.prix}</div>` : ''}
+          <span class="cdm-edito-cta">Découvrir →</span>
+        </div>
+      </a>`).join('\n');
+    sectionsHtml = `<section class="cdm-section"><div class="${colClass}">${cards}</div></section>`;
+  }
 
   // Helpers thème : variantes opaques pour overlays
   const accentRgba = (a) => { const h = T.accent.replace('#',''); const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); return `rgba(${r}, ${g}, ${b}, ${a})`; };
@@ -544,6 +611,33 @@ function genererHtmlPage() {
 .cdm-edito-price { font-family: ${sansStack}; font-size: 1.05rem; letter-spacing: 0.12em; color: ${T.accent}; margin-bottom: 2rem; }
 .cdm-edito-cta { display: inline-block; font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: ${T.texte_titre}; text-decoration: none; border-bottom: 1px solid ${T.texte_titre}; padding-bottom: 4px; transition: color 0.3s ease, border-color 0.3s ease; }
 .cdm-edito-cta:hover { color: ${T.accent}; border-color: ${T.accent}; }
+
+/* === Grilles 2 / 3 colonnes === */
+.cdm-section { max-width: 1650px; margin: 0 auto; padding: 4rem 2rem 6rem; }
+.cdm-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3rem; }
+.cdm-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+@media (max-width: 900px) { .cdm-grid-2, .cdm-grid-3 { grid-template-columns: 1fr; } }
+.cdm-grid-card { display: block; text-decoration: none; color: inherit; }
+.cdm-grid-card-img { position: relative; overflow: hidden; aspect-ratio: 4/5; border-radius: 2px; box-shadow: 0 12px 32px ${accentRgba(0.12)}; }
+.cdm-grid-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity 0.6s ease, transform 0.8s ease; }
+.cdm-grid-card-body { padding: 1.3rem 0.8rem; text-align: center; }
+.cdm-grid-card-title { font-size: clamp(1.4rem, 2vw, 1.8rem); font-weight: 300; letter-spacing: 0.03em; margin: 0 0 0.4rem; color: ${T.texte_titre}; font-style: italic; }
+.cdm-grid-card-desc { font-size: 0.95rem; line-height: 1.6; color: ${T.texte_corps}; margin: 0.5rem 0 0.8rem; font-style: italic; }
+
+/* === Transitions hover (toutes les cards) === */
+.cdm-card-img .cdm-img-2 { position: absolute; inset: 0; opacity: 0; }
+${T.hover === 'fondu' ? `
+.cdm-card-img:hover .cdm-img-1 { opacity: 0; }
+.cdm-card-img:hover .cdm-img-2 { opacity: 1; }
+` : T.hover === 'zoom' ? `
+.cdm-card-img:hover .cdm-img-1 { opacity: 0; transform: scale(1.05); }
+.cdm-card-img:hover .cdm-img-2 { opacity: 1; transform: scale(1.05); }
+` : T.hover === 'texte' ? `
+.cdm-hover-text { position: absolute; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.5s ease; padding: 2rem; pointer-events: none; }
+.cdm-hover-text p { color: #fff; font-style: italic; font-size: clamp(0.95rem, 1.2vw, 1.1rem); line-height: 1.7; max-width: 90%; margin: 0; text-align: center; }
+.cdm-card-img:hover .cdm-hover-text { opacity: 1; }
+.cdm-card-img:hover .cdm-img-1 { opacity: 0.3; }
+` : ''}
 
 @media (max-width: 900px) {
   .cdm-edito { grid-template-columns: 1fr; gap: 2.5rem; padding: 4rem 1.5rem; }
