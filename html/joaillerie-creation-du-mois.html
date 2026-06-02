@@ -1304,7 +1304,12 @@ window.addEventListener('DOMContentLoaded', () => {
   initLayoutGrid();
   initAutoSlugHandle();
   rendrePagesSauvegardees();
-  setTimeout(chercherProduits, 300);
+  // Recherche auto retirée : elle écrasait les pages chargées via "📂 Charger".
+  // Si une page sauvegardée existe et qu'aucune autre n'a été chargée, on auto-charge la plus récente.
+  const pagesSaved = lirePagesSauvegardees();
+  if (pagesSaved.length > 0) {
+    setTimeout(() => chargerPage(pagesSaved[0].id), 200);
+  }
 });
 </script>
 
