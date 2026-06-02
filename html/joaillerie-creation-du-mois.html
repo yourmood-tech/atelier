@@ -202,7 +202,7 @@ async function chercherProduits() {
         </label>
         <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
         <div class="symboles-palette" style="margin-top:0.3rem;display:flex;flex-wrap:wrap;gap:0.2rem;">
-          ${['❀','❁','✿','❃','✾','✦','✧','✩','◇','❖','❦','⚜','☽','☼'].map(s => `<button type="button" onclick="ajouterSymbole(${i}, '${s}')" style="margin:0;width:auto;padding:0.15rem 0.4rem;background:white;border:1px solid #eadfc8;border-radius:3px;font-size:0.9rem;cursor:pointer;line-height:1;" title="Cliquer pour insérer">${s}</button>`).join('')}
+          ${['❀','❁','✿','❃','✾','✦','✧','✩','◇','❖','❦','⚜','☽','☼','🎨','💎','🌺','🐚','🌴','🌊','☀️','🌙','🌸','🍃','🦋','⭐','🌿','❄️'].map(s => `<button type="button" onclick="ajouterSymbole(${i}, '${s}')" style="margin:0;width:auto;padding:0.15rem 0.4rem;background:white;border:1px solid #eadfc8;border-radius:3px;font-size:0.95rem;cursor:pointer;line-height:1;" title="Cliquer pour insérer">${s}</button>`).join('')}
         </div>
       </div>
     `).join('');
@@ -335,8 +335,10 @@ function genererHtmlPage() {
     const inverse = i % 2 === 1 ? ' cdm-reverse' : '';
     // Caractéristiques saisies par Amila — split sur virgule ou point-médian
     const caracs = (p.caracteristiques || '').split(/[,·]/).map(c => c.trim()).filter(Boolean);
+    // Wrap chaque emoji (caractère hors plage ASCII/symboles basiques) dans un span monochrome
+    const wrapEmojis = (s) => s.replace(/\p{Extended_Pictographic}/gu, '<span class="emoji-mono">$&</span>');
     const caracsHtml = caracs.length
-      ? `<div class="cdm-caracs">${caracs.map(c => `<span>${c}</span>`).join('<span class="cdm-caracs-sep">·</span>')}</div>`
+      ? `<div class="cdm-caracs">${caracs.map(c => `<span>${wrapEmojis(c)}</span>`).join('<span class="cdm-caracs-sep">·</span>')}</div>`
       : '';
     return `
     <section class="cdm-edito${inverse}">
@@ -411,6 +413,8 @@ function genererHtmlPage() {
 .cdm-caracs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 1.2rem auto 0; font-family: ${sansStack}; font-size: 0.95rem; letter-spacing: 0.04em; color: ${T.texte_corps}; max-width: 460px; }
 .cdm-caracs > span { display: inline-block; }
 .cdm-caracs-sep { color: ${T.accent}; opacity: 0.7; }
+/* Désature les emojis colorés et les rapproche du noir sobre éditorial */
+.cdm-caracs .emoji-mono { filter: grayscale(1) brightness(0.35) contrast(1.4); display: inline-block; font-size: 1em; vertical-align: -0.05em; }
 .cdm-edito-desc { font-size: clamp(1.1rem, 1.4vw, 1.25rem); line-height: 1.85; color: ${T.texte_corps}; max-width: 460px; margin: 0 auto 1.5rem; font-style: italic; }
 .cdm-edito-price { font-family: ${sansStack}; font-size: 1.05rem; letter-spacing: 0.12em; color: ${T.accent}; margin-bottom: 2rem; }
 .cdm-edito-cta { display: inline-block; font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: ${T.texte_titre}; text-decoration: none; border-bottom: 1px solid ${T.texte_titre}; padding-bottom: 4px; transition: color 0.3s ease, border-color 0.3s ease; }
