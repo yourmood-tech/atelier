@@ -453,19 +453,24 @@ document.getElementById('th-motif-file').addEventListener('change', async (e) =>
   const file = e.target.files[0];
   if (!file) return;
   const info = document.getElementById('th-motif-info');
-  info.textContent = '⏳ Chargement…';
+  info.textContent = '⏳ Upload vers Shopify Files…';
   try {
-    // Redimensionne pour ne pas exploser la taille du body_html stocké (max 1500px côté long)
-    const dataUrl = await redimensionnerImage(file, 1500, 0.85);
-    motifImageUploadee = dataUrl;
-    motifImageUploadeeOriginale = dataUrl;
-    const prev = document.getElementById('th-motif-preview');
-    prev.src = motifImageUploadee;
-    prev.style.display = 'block';
-    const tailleKb = Math.round(motifImageUploadee.length * 0.75 / 1024);
-    info.textContent = `✓ ${file.name} (${tailleKb} KB)`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('store', getStoreCible());
+    const r = await fetch('/api/joaillerie/upload-shopify-file', { method: 'POST', body: formData });
+    const data = await r.json();
+    if (!r.ok) { info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue'); return; }
+    if (data.url) {
+      motifImageUploadee = data.url;
+      motifImageUploadeeOriginale = data.url;
+      const prev = document.getElementById('th-motif-preview');
+      prev.src = data.url;
+      prev.style.display = 'block';
+      info.textContent = `✓ ${file.name} (URL CDN Shopify)`;
+    }
   } catch (err) {
-    info.textContent = '✗ Erreur : ' + err.message;
+    info.textContent = '✗ Erreur réseau : ' + err.message;
   }
 });
 
@@ -890,17 +895,23 @@ document.getElementById('f-hero-file').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const info = document.getElementById('f-hero-info');
-  info.textContent = '⏳ Chargement…';
+  info.textContent = '⏳ Upload vers Shopify Files…';
   try {
-    const dataUrl = await redimensionnerImage(file, 2000, 0.82);
-    document.getElementById('f-hero').value = dataUrl;
-    const prev = document.getElementById('f-hero-preview');
-    prev.src = dataUrl;
-    prev.style.display = 'block';
-    const tailleKb = Math.round(dataUrl.length * 0.75 / 1024);
-    info.textContent = `✓ ${file.name} chargée (${tailleKb} KB)`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('store', getStoreCible());
+    const r = await fetch('/api/joaillerie/upload-shopify-file', { method: 'POST', body: formData });
+    const data = await r.json();
+    if (!r.ok) { info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue'); return; }
+    if (data.url) {
+      document.getElementById('f-hero').value = data.url;
+      const prev = document.getElementById('f-hero-preview');
+      prev.src = data.url;
+      prev.style.display = 'block';
+      info.textContent = `✓ ${file.name} (URL CDN Shopify)`;
+    }
   } catch (err) {
-    info.textContent = '✗ Erreur : ' + err.message;
+    info.textContent = '✗ Erreur réseau : ' + err.message;
   }
 });
 
@@ -1014,22 +1025,30 @@ document.getElementById('f-video-file').addEventListener('change', async (e) => 
   const file = e.target.files[0];
   if (!file) return;
   const info = document.getElementById('f-video-info');
-  if (file.size > 15 * 1024 * 1024) {
-    info.textContent = '✗ Trop lourd (' + Math.round(file.size / 1024 / 1024) + ' MB) — max 15 MB. Utilise plutôt YouTube/Vimeo pour les vidéos lourdes.';
+  if (file.size > 80 * 1024 * 1024) {
+    info.textContent = '✗ Trop lourd (' + Math.round(file.size / 1024 / 1024) + ' MB) — max 80 MB.';
     return;
   }
-  info.textContent = '⏳ Chargement…';
+  info.textContent = '⏳ Upload vers Shopify Files (peut prendre 10-60s)…';
   try {
-    const dataUrl = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result);
-      r.onerror = () => reject(new Error('lecture impossible'));
-      r.readAsDataURL(file);
-    });
-    document.getElementById('f-video').value = dataUrl;
-    info.textContent = `✓ ${file.name} (${Math.round(file.size / 1024)} KB)`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('store', getStoreCible());
+    const r = await fetch('/api/joaillerie/upload-shopify-file', { method: 'POST', body: formData });
+    const data = await r.json();
+    if (!r.ok) {
+      info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue');
+      console.error('Upload erreur', data);
+      return;
+    }
+    if (data.url) {
+      document.getElementById('f-video').value = data.url;
+      info.textContent = `✓ Uploadée sur Shopify Files (${Math.round(file.size / 1024 / 1024)} MB) → URL CDN dans le champ`;
+    } else if (data.note) {
+      info.textContent = '⚠️ ' + data.note;
+    }
   } catch (err) {
-    info.textContent = '✗ Erreur : ' + err.message;
+    info.textContent = '✗ Erreur réseau : ' + err.message;
   }
 });
 
@@ -1086,14 +1105,28 @@ function rendrePagesSauvegardees() {
 document.getElementById('btn-save-local').addEventListener('click', () => {
   const titre = document.getElementById('f-titre').value.trim();
   if (!titre) { alert('Donne un titre à la page avant de sauvegarder.'); return; }
-  const pages = lirePagesSauvegardees();
-  pages.unshift(snapshotPage());
-  ecrirePagesSauvegardees(pages.slice(0, 50)); // garde max 50
-  rendrePagesSauvegardees();
   const btn = document.getElementById('btn-save-local');
   const old = btn.textContent;
-  btn.textContent = '✓ Enregistré !';
-  setTimeout(() => { btn.textContent = old; }, 1500);
+  try {
+    const pages = lirePagesSauvegardees();
+    pages.unshift(snapshotPage());
+    const trimmed = pages.slice(0, 50);
+    const json = JSON.stringify(trimmed);
+    if (json.length > 4 * 1024 * 1024) {
+      throw new Error(`Sauvegarde trop lourde (${Math.round(json.length / 1024 / 1024)} MB). Probablement à cause d'images en data URL stockées. Re-uploade tes images (elles seront converties en URL CDN Shopify, beaucoup plus légères).`);
+    }
+    localStorage.setItem(STORAGE_KEY, json);
+    rendrePagesSauvegardees();
+    btn.textContent = '✓ Enregistré !';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  } catch (err) {
+    if (err.name === 'QuotaExceededError' || /quota/i.test(err.message)) {
+      alert("Pas assez d'espace en local pour sauvegarder.\n\nC'est probablement parce que d'anciennes pages contiennent des images en data URL (avant la migration vers Shopify Files).\n\nSolution : supprime quelques anciennes pages dans la liste 'Mes pages enregistrées'.");
+    } else {
+      alert('Erreur enregistrement : ' + err.message);
+    }
+    btn.textContent = old;
+  }
 });
 
 function chargerPage(id) {
