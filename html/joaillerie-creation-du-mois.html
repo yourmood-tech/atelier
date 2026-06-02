@@ -607,7 +607,9 @@ function genererHtmlPage() {
   const produitsEnrichis = produits.map((p, i) => {
     const img1 = p.images?.[0]?.url || '';
     const img2 = p.images?.[1]?.url || img1;
-    const prix = p.price ? Math.round(parseFloat(p.price)).toLocaleString('fr-CH') + " CHF" : "";
+    const prixBase = p.priceMin || p.price;
+    const prefixeMulti = p.hasMultiplePrix ? "dès " : "";
+    const prix = prixBase ? prefixeMulti + Math.round(parseFloat(prixBase)).toLocaleString('fr-CH') + " CHF" : "";
     const url = p.urlPublic;
     const titreCard = nettoyerTitre(p.title);
     const descBrute = (p.descriptionLibre && p.descriptionLibre.trim()) || trouverTexte(titreCard) || '';
