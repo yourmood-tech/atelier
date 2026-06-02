@@ -745,6 +745,9 @@ ${motifIsUploadedImage ? `
   position: absolute !important; inset: 0 !important; pointer-events: none !important; z-index: 0 !important;
   background: ${motifBgImageUrl} repeat-y top center / 100% auto !important;
   opacity: ${motifOpacity} !important;
+}
+.cdm-page .cdm-hero, .cdm-page .cdm-hero-inner, .cdm-page .cdm-hero-inner * {
+  position: relative !important; z-index: 3 !important;
 }` : ''}
 .cdm-page * { box-sizing: border-box; position: relative; z-index: 1; }
 .cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${heroBg} }
