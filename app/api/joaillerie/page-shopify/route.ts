@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       handle: p?.handle,
       title: p?.title,
       isPublished: !!p?.published_at,
-      urlPublic: `https://${cfg.shopifyDomain.replace(".myshopify.com", "")}/pages/${p?.handle}`,
+      urlPublic: `https://${cfg.publicDomain}/pages/${p?.handle}`,
       urlAdmin: `https://${cfg.shopifyDomain}/admin/pages/${p?.id}`,
     },
   });

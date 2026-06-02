@@ -89,7 +89,7 @@ export async function POST(request: Request) {
       handle: sc?.handle,
       title: sc?.title,
       tag,
-      urlPublic: `https://${cfg.shopifyDomain.replace(".myshopify.com", "")}/collections/${sc?.handle}`,
+      urlPublic: `https://${cfg.publicDomain}/collections/${sc?.handle}`,
       urlAdmin: `https://${cfg.shopifyDomain}/admin/collections/${sc?.id}`,
     },
   });

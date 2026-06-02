@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       compareAtPrice: prixNode?.compareAtPrice || null,
       images: (n.images?.edges || []).map((ed) => ({ url: ed.node.url, alt: ed.node.altText })),
       tags: n.tags,
-      urlPublic: `https://${cfg.shopifyDomain.replace(".myshopify.com", "")}/products/${n.handle}`,
+      urlPublic: `https://${cfg.publicDomain}/products/${n.handle}`,
       urlAdmin: `https://${cfg.shopifyDomain}/admin/products/${n.id.replace("gid://shopify/Product/", "")}`,
     };
   });
