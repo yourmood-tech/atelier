@@ -200,10 +200,12 @@ async function chercherProduits() {
         <label style="display:flex;align-items:center;gap:0.3rem;margin-top:0.4rem;font-weight:400;font-size:0.78rem;">
           <input type="checkbox" data-prod-idx="${i}" checked style="width:auto;margin:0;"> Inclure
         </label>
-        <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
+        <input type="text" class="sstitre-input" data-prod-idx="${i}" placeholder="Sous-titre (optionnel) — ex : Édition limitée été 2026" value="${(p.sousTitre || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].sousTitre = this.value" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
+        <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="Caractéristiques — ex : ❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.3rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
         <div class="symboles-palette" style="margin-top:0.3rem;display:flex;flex-wrap:wrap;gap:0.2rem;">
           ${['❀','❁','✿','❃','✾','✦','✧','✩','◇','❖','❦','⚜','☽','☼','🎨','💎','🌺','🐚','🌴','🌊','☀️','🌙','🌸','🍃','🦋','⭐','🌿','❄️'].map(s => `<button type="button" onclick="ajouterSymbole(${i}, '${s}')" style="margin:0;width:auto;padding:0.15rem 0.4rem;background:white;border:1px solid #eadfc8;border-radius:3px;font-size:0.95rem;cursor:pointer;line-height:1;" title="Cliquer pour insérer">${s}</button>`).join('')}
         </div>
+        <textarea class="description-input" data-prod-idx="${i}" placeholder="Description du produit (multi-ligne — retours à la ligne respectés)" oninput="produitsTrouves[${i}].descriptionLibre = this.value" style="width:100%;margin-top:0.3rem;padding:0.4rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.78rem;background:white;min-height:70px;font-family:inherit;line-height:1.5;">${(p.descriptionLibre || '').replace(/</g, '&lt;')}</textarea>
       </div>
     `).join('');
   } catch (e) {
@@ -330,7 +332,11 @@ function genererHtmlPage() {
     const prix = p.price ? Math.round(parseFloat(p.price)).toLocaleString('fr-CH') + " CHF" : "";
     const url = p.urlPublic;
     const titreCard = nettoyerTitre(p.title);
-    const texte = trouverTexte(titreCard);
+    // Description : libre saisie Amila prioritaire, sinon fallback mythologique Nérée (si match)
+    const descBrute = (p.descriptionLibre && p.descriptionLibre.trim()) || trouverTexte(titreCard) || '';
+    const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const texte = descBrute ? escapeHtml(descBrute).replace(/\n/g, '<br>') : '';
+    const sousTitre = (p.sousTitre || '').trim();
     const numero = String(i + 1).padStart(2, '0');
     const inverse = i % 2 === 1 ? ' cdm-reverse' : '';
     // Caractéristiques saisies par Amila — split sur virgule ou point-médian
@@ -349,6 +355,7 @@ function genererHtmlPage() {
       <div class="cdm-edito-text">
         <div class="cdm-num">${numero} / ${produits.length}</div>
         <h2 class="cdm-edito-title">${titreCard}</h2>
+        ${sousTitre ? `<div class="cdm-edito-soustitre">${escapeHtml(sousTitre)}</div>` : ''}
         ${caracsHtml}
         <div class="cdm-divider"></div>
         ${texte ? `<p class="cdm-edito-desc">${texte}</p>` : ''}
@@ -410,6 +417,7 @@ function genererHtmlPage() {
 .cdm-edito-text { padding: 0 1rem; text-align: center; }
 .cdm-num { font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.35em; color: ${T.accent}; margin-bottom: 1.2rem; }
 .cdm-edito-title { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 300; letter-spacing: 0.03em; margin: 0; color: ${T.texte_titre}; font-style: italic; text-align: center; }
+.cdm-edito-soustitre { font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.28em; text-transform: uppercase; color: ${T.accent}; margin: 0.6rem auto 0; text-align: center; }
 .cdm-caracs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 1.2rem auto 0; font-family: ${sansStack}; font-size: 0.95rem; letter-spacing: 0.04em; color: ${T.texte_corps}; max-width: 460px; }
 .cdm-caracs > span { display: inline-block; }
 .cdm-caracs-sep { color: ${T.accent}; opacity: 0.7; }
