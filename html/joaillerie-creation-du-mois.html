@@ -39,11 +39,25 @@
 <body>
 
 <h1>✨ La création du mois — Mood Joaillerie</h1>
-<p class="subtitle">Génère ou met à jour la page vitrine haute joaillerie sur moodjoaillerie.net. Cards produits stylées nacrées, lien direct vers les fiches produits Shopify natives.</p>
+<p class="subtitle">Génère ou met à jour la page vitrine sur Mood Joaillerie (moodjoaillerie.net) ou Mood Collection (yourmood.net). Cards produits stylées, lien direct vers les fiches produits Shopify natives.</p>
+
+<!-- Sélecteur site cible -->
+<div class="step" style="background:#fff8f0;border:1px solid var(--or);">
+  <h2 style="margin-bottom:0.4rem;">🎯 Site cible</h2>
+  <p style="margin:0 0 0.6rem;color:var(--gris);font-size:0.85rem;">Sur quel site la page sera créée. La même mécanique fonctionne sur les deux.</p>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+    <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;background:white;border:1px solid #ddd;border-radius:6px;padding:0.5rem 0.9rem;flex:1;min-width:200px;">
+      <input type="radio" name="site-cible" value="mood-joaillerie" checked style="width:auto;margin:0;"> 💎 <strong>Mood Joaillerie</strong> <span class="opt" style="margin-left:auto;">moodjoaillerie.net</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;background:white;border:1px solid #ddd;border-radius:6px;padding:0.5rem 0.9rem;flex:1;min-width:200px;">
+      <input type="radio" name="site-cible" value="mood-collection" style="width:auto;margin:0;"> 💍 <strong>Mood Collection</strong> <span class="opt" style="margin-left:auto;">yourmood.net</span>
+    </label>
+  </div>
+</div>
 
 <!-- ÉTAPE 1 : Recherche produits -->
 <div class="step">
-  <h2>1. Rechercher les produits dans Mood Joaillerie</h2>
+  <h2>1. Rechercher les produits</h2>
   <div class="row">
     <div>
       <label>Mot-clé (titre ou tag)</label>
@@ -147,13 +161,17 @@
 <script>
 let produitsTrouves = [];
 
+function getStoreCible() {
+  return document.querySelector('input[name="site-cible"]:checked')?.value || 'mood-joaillerie';
+}
+
 async function chercherProduits() {
   const q = document.getElementById('f-search').value.trim();
   if (!q) return;
   const container = document.getElementById('produits-result');
   container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">⏳ Recherche...</p>';
   try {
-    const r = await fetch(`/api/joaillerie/produits-par-recherche?q=${encodeURIComponent(q)}&store=mood-joaillerie`);
+    const r = await fetch(`/api/joaillerie/produits-par-recherche?q=${encodeURIComponent(q)}&store=${getStoreCible()}`);
     const data = await r.json();
     if (!r.ok) { container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur : ' + (data.error || 'inconnue') + '</p>'; return; }
     produitsTrouves = data.produits || [];
@@ -403,6 +421,10 @@ ${sectionsHtml}
 
 document.getElementById('btn-search').addEventListener('click', chercherProduits);
 document.getElementById('btn-theme-ia').addEventListener('click', genererThemeIA);
+// Relance la recherche quand on change de site cible
+document.querySelectorAll('input[name="site-cible"]').forEach(r => {
+  r.addEventListener('change', () => { chercherProduits(); });
+});
 // Affiche l'éditeur thème en permanence pour qu'Amila puisse ajuster
 document.getElementById('theme-edit').classList.remove('hidden');
 
@@ -478,7 +500,7 @@ async function pousserVersShopify(published) {
   try {
     const r = await fetch('/api/joaillerie/page-shopify', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ handle, title: titre, bodyHtml, published, store: 'mood-joaillerie' })
+      body: JSON.stringify({ handle, title: titre, bodyHtml, published, store: getStoreCible() })
     });
     const data = await r.json();
     if (!r.ok) {

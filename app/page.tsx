@@ -133,6 +133,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Donne ton croquis ou ton idée en mots : visualisation photo-réaliste de la bague mood (base + addon + finition). Pour explorer un design avant prototype.",
       },
       {
+        href: "/joaillerie/creation-du-mois",
+        emoji: "✨",
+        title: "La création du mois",
+        description: "Génère une page vitrine pour ta collection mensuelle (Mood Joaillerie ou Mood Collection). Thème visuel généré par IA, cards produits stylées avec hover + prix + lien vers la fiche Shopify native, preview + push draft ou publié.",
+      },
+      {
         href: "/offres",
         emoji: "🎁",
         title: "Offres par nouveauté",
