@@ -230,6 +230,9 @@
 <!-- ÉTAPE 5 : Pages enregistrées -->
 <div class="step">
   <h2>📋 Mes pages enregistrées <span class="opt" style="font-weight:400;">(stockées localement dans ce navigateur)</span></h2>
+  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.8rem;">
+    <button type="button" id="btn-import-shopify" onclick="importerDepuisShopify()" style="margin:0;padding:0.5rem 0.9rem;background:#fff8f0;color:var(--or);border:1px solid var(--or);font-size:0.85rem;">📥 Récupérer une page depuis Shopify</button>
+  </div>
   <div id="pages-sauvegardees" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.7rem;"></div>
   <p id="pages-vide" style="color:var(--gris);font-size:0.85rem;margin:0;">Aucune page enregistrée pour l'instant.</p>
 </div>
@@ -1286,6 +1289,156 @@ function initAutoSlugHandle() {
   tInp.addEventListener('input', () => {
     if (!handleEditeManuellement) hInp.value = slugifyTitre(tInp.value);
   });
+}
+
+async function importerDepuisShopify() {
+  const id = prompt('ID de la page Shopify à récupérer\n(ex: 707129639289 — trouvable dans l\'URL Admin Shopify)');
+  if (!id || !/^\d+$/.test(id.trim())) return;
+  const storeChoice = prompt('Quel site ?\n1 = Mood Collection (yourmood.net)\n2 = Mood Joaillerie (moodjoaillerie.net)', '1');
+  if (!storeChoice) return;
+  const store = storeChoice.trim() === '2' ? 'mood-joaillerie' : 'mood-collection';
+  const btn = document.getElementById('btn-import-shopify');
+  const old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Récupération...';
+  try {
+    const r = await fetch(`/api/joaillerie/get-page-by-id?id=${id.trim()}&store=${store}`);
+    const data = await r.json();
+    if (!r.ok) {
+      alert('Erreur : ' + (data.error || 'inconnue') + (data.status ? ' (' + data.status + ')' : ''));
+      return;
+    }
+    const page = data.page;
+    const html = page.body_html || '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const cssText = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+
+    // Texte hero
+    const titre = page.title || doc.querySelector('.cdm-title')?.textContent.trim() || '';
+    const intro = doc.querySelector('.cdm-eyebrow')?.textContent.trim() || '';
+    const lead = doc.querySelector('.cdm-lead')?.textContent.trim() || '';
+
+    // Hero (image ou vidéo)
+    let hero = '';
+    const heroVideoSrc = doc.querySelector('.cdm-hero-video source')?.getAttribute('src');
+    if (heroVideoSrc) hero = heroVideoSrc;
+    else {
+      const heroStyle = doc.querySelector('.cdm-hero')?.getAttribute('style') || '';
+      const m = heroStyle.match(/background-image[^;]*url\(["']?([^"')]+)["']?\)/);
+      if (m) hero = m[1];
+    }
+
+    // Motif (extrait du CSS)
+    let motifSrc = '';
+    const motifMatch = cssText.match(/\.cdm-motif-overlay-img\s*\{[^}]*background\s*:\s*url\(["']?([^"')]+)["']?\)/);
+    if (motifMatch) motifSrc = motifMatch[1];
+
+    // Vidéo bas de page (différente de la vidéo hero si présente)
+    let videoBas = '';
+    doc.querySelectorAll('section.cdm-video source, section.cdm-video iframe').forEach(el => {
+      const src = el.getAttribute('src');
+      if (src) videoBas = src;
+    });
+
+    // Outro
+    const outro = doc.querySelector('.cdm-outro p')?.textContent.trim() || '';
+
+    // Produits : on parse toutes les sections produit (zigzag, grilles, etc.)
+    const produits = [];
+    const sectionsProduit = doc.querySelectorAll('.cdm-edito, .cdm-grid-card, .cdm-empile-card, .cdm-vitrine-large, .cdm-mosaique-tile, .cdm-asym-large, .cdm-asym-petite');
+    const seenHandles = new Set();
+    sectionsProduit.forEach(section => {
+      const link = section.querySelector('a[href*="/products/"]') || (section.matches('a[href*="/products/"]') ? section : null);
+      const url = link ? (link.getAttribute('href') || '') : '';
+      const handleMatch = url.match(/\/products\/([^/?#]+)/);
+      if (!handleMatch) return;
+      const handle = handleMatch[1];
+      if (seenHandles.has(handle)) return;
+      seenHandles.add(handle);
+      const img1 = section.querySelector('.cdm-img-1, img')?.getAttribute('src') || '';
+      const imgs = section.querySelectorAll('img');
+      const img2 = imgs.length > 1 ? (imgs[1].getAttribute('src') || '') : '';
+      const titleEl = section.querySelector('.cdm-edito-title, .cdm-grid-card-title, .cdm-vitrine-large-text .cdm-edito-title');
+      const title = titleEl ? titleEl.textContent.trim() : handle;
+      const priceText = section.querySelector('.cdm-edito-price, .cdm-grid-card-price')?.textContent.trim() || '';
+      const priceMatch = priceText.match(/[\d,]+(\.[\d]+)?/);
+      const price = priceMatch ? priceMatch[0].replace(',', '.') : null;
+      const sousTitre = section.querySelector('.cdm-edito-soustitre, .cdm-grid-card-soustitre')?.textContent.trim() || '';
+      const descLibre = section.querySelector('.cdm-edito-desc, .cdm-grid-card-desc')?.textContent.trim() || '';
+      const caracs = Array.from(section.querySelectorAll('.cdm-caracs > span:not(.cdm-caracs-sep)'))
+        .map(sp => sp.textContent.trim()).filter(Boolean).join(', ');
+
+      produits.push({
+        id: '',
+        handle,
+        title,
+        status: 'active',
+        price,
+        compareAtPrice: null,
+        images: [{ url: img1, alt: title }, img2 ? { url: img2, alt: title } : null].filter(Boolean),
+        tags: [],
+        urlPublic: url,
+        urlAdmin: '',
+        sousTitre,
+        caracteristiques: caracs,
+        descriptionLibre: descLibre,
+      });
+    });
+
+    // Couleurs : extraction depuis le CSS
+    function extraireCouleur(prop, fallback) {
+      const re = new RegExp(prop + '\\s*:\\s*([^;]+);', 'i');
+      const m = cssText.match(re);
+      return m ? m[1].trim() : fallback;
+    }
+    const fondMatch = cssText.match(/\.cdm-page\s*\{[^}]*background\s*:[^;]*linear-gradient\(180deg,\s*([^\s]+)[^,]*,\s*([^\s]+)/);
+    const fondPrincipal = fondMatch ? fondMatch[1] : '#fdfaf3';
+    const fondSecondaire = fondMatch ? fondMatch[2] : '#f5ebd5';
+
+    // Snapshot reconstruit
+    const snapshot = {
+      id: Date.now().toString(36),
+      date: new Date().toISOString(),
+      titre,
+      handle: page.handle || 'creation-du-mois',
+      intro,
+      lead,
+      hero,
+      video: videoBas,
+      outro,
+      storeCible: store,
+      mood: '',
+      theme: {
+        fond_principal: fondPrincipal,
+        fond_secondaire: fondSecondaire,
+        accent: '#583400',
+        texte_titre: '#1a1410',
+        texte_corps: '#4a3f33',
+        serif: "'Cormorant Garamond', 'Times New Roman', serif",
+        sans: "'Inter', system-ui, sans-serif",
+        hero_style: hero ? 'image_avec_overlay_clair' : 'gradient_seul',
+        layout: 'zigzag',
+        hover: 'fondu',
+        motif_intensite: 30,
+      },
+      motifOriginal: motifSrc,
+      produits,
+    };
+
+    const pages = lirePagesSauvegardees();
+    pages.unshift(snapshot);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pages.slice(0, 50)));
+    rendrePagesSauvegardees();
+    chargerPage(snapshot.id);
+    handleEditeManuellement = true; // garde le handle exact pour ne pas casser le lien preview
+
+    alert(`✅ Page "${titre}" récupérée depuis Shopify !\n\n${produits.length} produits importés. Le code de page "${page.handle}" est conservé (les liens preview de tes collègues continueront de marcher).\n\nTu peux maintenant ajouter tes textes longs par produit et re-pousser.`);
+  } catch (e) {
+    alert('Erreur import : ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = old;
+  }
 }
 
 function autoSaveLocalApresPush() {
