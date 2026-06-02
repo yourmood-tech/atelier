@@ -453,26 +453,61 @@ document.getElementById('th-motif-file').addEventListener('change', async (e) =>
   const file = e.target.files[0];
   if (!file) return;
   const info = document.getElementById('th-motif-info');
-  info.textContent = '⏳ Upload vers Shopify Files…';
+  info.textContent = `⏳ Upload vers Shopify Files (${Math.round(file.size / 1024)} KB)…`;
   try {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('store', getStoreCible());
     const r = await fetch('/api/joaillerie/upload-shopify-file', { method: 'POST', body: formData });
     const data = await r.json();
-    if (!r.ok) { info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue'); return; }
+    if (!r.ok) {
+      info.textContent = '✗ Erreur upload : ' + (data.error || JSON.stringify(data).slice(0, 200));
+      console.error('Upload motif erreur', data);
+      return;
+    }
     if (data.url) {
       motifImageUploadee = data.url;
       motifImageUploadeeOriginale = data.url;
       const prev = document.getElementById('th-motif-preview');
       prev.src = data.url;
       prev.style.display = 'block';
-      info.textContent = `✓ ${file.name} (URL CDN Shopify)`;
+      info.textContent = `✓ ${file.name} sur Shopify CDN`;
+    } else if (data.fileId) {
+      // Cas rare : image en cours de traitement → poll
+      info.textContent = '⏳ Shopify traite l\'image, vérification...';
+      pollerFileStatusMotif(data.fileId, info, file.name);
+    } else {
+      info.textContent = '⚠️ Pas d\'URL retournée par Shopify — détail console';
+      console.warn('Upload sans url ni fileId', data);
     }
   } catch (err) {
     info.textContent = '✗ Erreur réseau : ' + err.message;
+    console.error('Upload motif exception', err);
   }
 });
+
+async function pollerFileStatusMotif(fileId, infoEl, fileName) {
+  for (let i = 0; i < 30; i++) { // max 2.5 min
+    await new Promise(r => setTimeout(r, 5000));
+    try {
+      const r = await fetch(`/api/joaillerie/check-file-status?fileId=${encodeURIComponent(fileId)}&store=${getStoreCible()}`);
+      const data = await r.json();
+      if (data.ready && data.url) {
+        motifImageUploadee = data.url;
+        motifImageUploadeeOriginale = data.url;
+        const prev = document.getElementById('th-motif-preview');
+        prev.src = data.url; prev.style.display = 'block';
+        infoEl.textContent = `✓ ${fileName} sur Shopify CDN`;
+        return;
+      }
+      infoEl.textContent = `⏳ Traitement Shopify (${(i + 1) * 5}s, statut: ${data.fileStatus || '?'})…`;
+    } catch (e) {
+      infoEl.textContent = '⚠️ Erreur vérif : ' + e.message;
+      return;
+    }
+  }
+  infoEl.textContent = '⚠️ Traitement très long — va dans Shopify Admin > Content > Files pour récupérer l\'URL manuellement.';
+}
 
 // Affiche live la valeur du slider intensité
 document.getElementById('th-motif-intensite').addEventListener('input', (e) => {
