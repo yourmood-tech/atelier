@@ -187,6 +187,7 @@ async function chercherProduits() {
         <label style="display:flex;align-items:center;gap:0.3rem;margin-top:0.4rem;font-weight:400;font-size:0.78rem;">
           <input type="checkbox" data-prod-idx="${i}" checked style="width:auto;margin:0;"> Inclure
         </label>
+        <input type="text" class="caracs-input" data-prod-idx="${i}" placeholder="🌸 rose pastel, 💎 diamant, 🌺 hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" title="Caractéristiques affichées sous le titre sur la page (séparées par virgules ou ·)" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
       </div>
     `).join('');
   } catch (e) {
@@ -316,6 +317,11 @@ function genererHtmlPage() {
     const texte = trouverTexte(titreCard);
     const numero = String(i + 1).padStart(2, '0');
     const inverse = i % 2 === 1 ? ' cdm-reverse' : '';
+    // Caractéristiques saisies par Amila — split sur virgule ou point-médian
+    const caracs = (p.caracteristiques || '').split(/[,·]/).map(c => c.trim()).filter(Boolean);
+    const caracsHtml = caracs.length
+      ? `<div class="cdm-caracs">${caracs.map(c => `<span>${c}</span>`).join('<span class="cdm-caracs-sep">·</span>')}</div>`
+      : '';
     return `
     <section class="cdm-edito${inverse}">
       <a class="cdm-edito-img" href="${url}">
@@ -325,6 +331,7 @@ function genererHtmlPage() {
       <div class="cdm-edito-text">
         <div class="cdm-num">${numero} / ${produits.length}</div>
         <h2 class="cdm-edito-title">${titreCard}</h2>
+        ${caracsHtml}
         <div class="cdm-divider"></div>
         ${texte ? `<p class="cdm-edito-desc">${texte}</p>` : ''}
         ${prix ? `<div class="cdm-edito-price">${prix}</div>` : ''}
@@ -385,6 +392,9 @@ function genererHtmlPage() {
 .cdm-edito-text { padding: 0 1rem; text-align: center; }
 .cdm-num { font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.35em; color: ${T.accent}; margin-bottom: 1.2rem; }
 .cdm-edito-title { font-size: clamp(2.5rem, 4vw, 3.5rem); font-weight: 300; letter-spacing: 0.03em; margin: 0; color: ${T.texte_titre}; font-style: italic; text-align: center; }
+.cdm-caracs { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 1.2rem auto 0; font-family: ${sansStack}; font-size: 0.95rem; letter-spacing: 0.04em; color: ${T.texte_corps}; max-width: 460px; }
+.cdm-caracs > span { display: inline-block; }
+.cdm-caracs-sep { color: ${T.accent}; opacity: 0.7; }
 .cdm-edito-desc { font-size: clamp(1.1rem, 1.4vw, 1.25rem); line-height: 1.85; color: ${T.texte_corps}; max-width: 460px; margin: 0 auto 1.5rem; font-style: italic; }
 .cdm-edito-price { font-family: ${sansStack}; font-size: 1.05rem; letter-spacing: 0.12em; color: ${T.accent}; margin-bottom: 2rem; }
 .cdm-edito-cta { display: inline-block; font-family: ${sansStack}; font-size: 0.85rem; letter-spacing: 0.22em; text-transform: uppercase; color: ${T.texte_titre}; text-decoration: none; border-bottom: 1px solid ${T.texte_titre}; padding-bottom: 4px; transition: color 0.3s ease, border-color 0.3s ease; }
