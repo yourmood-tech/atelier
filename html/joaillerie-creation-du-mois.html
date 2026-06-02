@@ -429,11 +429,18 @@ function genererHtmlPage() {
   const sansStack = `'${T.sans}', system-ui, sans-serif`;
   const titleColor = T.hero_style === 'image_avec_overlay_sombre' ? '#fff' : T.texte_titre;
   const leadColor = T.hero_style === 'image_avec_overlay_sombre' ? 'rgba(255,255,255,0.92)' : T.texte_corps;
-  // Motif de fond décoratif (filigrane SVG en background-image avec opacité)
+  // Motif de fond décoratif (filigrane SVG encodé en base64 → 100% fiable cross-browser)
   const motifOpacity = (T.motif_intensite || 6) / 100;
-  const motifBgCss = T.motif_svg
-    ? `background-image: url("data:image/svg+xml;utf8,${T.motif_svg.replace(/"/g, "'")}"); background-repeat: repeat; background-size: 130px 130px;`
-    : '';
+  let motifBgCss = '';
+  if (T.motif_svg) {
+    // Décode le %23 (= #) avant encodage base64
+    const svgClean = T.motif_svg.replace(/%23/g, '#');
+    let motifSvgB64 = '';
+    try { motifSvgB64 = btoa(unescape(encodeURIComponent(svgClean))); } catch { motifSvgB64 = ''; }
+    if (motifSvgB64) {
+      motifBgCss = `background-image: url(data:image/svg+xml;base64,${motifSvgB64}); background-repeat: repeat; background-size: 130px 130px;`;
+    }
+  }
 
   return `<style>
 @import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(T.serif)}:ital,wght@0,300;0,400;1,300;1,400&family=${encodeURIComponent(T.sans)}:wght@400;500&display=swap');
