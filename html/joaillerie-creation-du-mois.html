@@ -540,17 +540,19 @@ function genererHtmlPage() {
   const T = lireTheme();
 
   // Génère le HTML de la vidéo (YouTube embed, Vimeo embed, ou MP4 direct/data URL)
+  // Autoplay muet en boucle, sans contrôles — l'autoplay nécessite muted partout sinon bloqué par les navigateurs
   let videoHtml = '';
   if (videoUrl) {
     const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
     const vimeoMatch = videoUrl.match(/vimeo\.com\/(\d+)/);
     if (ytMatch) {
-      videoHtml = `<section class="cdm-video"><div class="cdm-video-wrap"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div></section>`;
+      const yid = ytMatch[1];
+      videoHtml = `<section class="cdm-video"><div class="cdm-video-wrap"><iframe src="https://www.youtube.com/embed/${yid}?autoplay=1&mute=1&loop=1&controls=0&playlist=${yid}&modestbranding=1&playsinline=1&rel=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div></section>`;
     } else if (vimeoMatch) {
-      videoHtml = `<section class="cdm-video"><div class="cdm-video-wrap"><iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div></section>`;
+      videoHtml = `<section class="cdm-video"><div class="cdm-video-wrap"><iframe src="https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1&muted=1&loop=1&controls=0&background=1" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div></section>`;
     } else {
-      // URL directe ou data URL → balise video native
-      videoHtml = `<section class="cdm-video"><video controls playsinline preload="metadata" style="width:100%;display:block;"><source src="${videoUrl}"></video></section>`;
+      // URL directe ou data URL → balise video native autoplay muted loop
+      videoHtml = `<section class="cdm-video"><video autoplay muted loop playsinline preload="metadata" style="width:100%;display:block;"><source src="${videoUrl}"></video></section>`;
     }
   }
 
@@ -858,8 +860,8 @@ ${T.hover === 'fondu' ? `
     </div>
   </section>
 
-${videoHtml}
 ${sectionsHtml}
+${videoHtml}
 
   ${outroTexte ? `<section class="cdm-outro">
     <div class="cdm-divider"></div>
