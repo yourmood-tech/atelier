@@ -1406,6 +1406,30 @@ async function importerDepuisShopify() {
     const fondPrincipal = fondMatch ? fondMatch[1] : '#fdfaf3';
     const fondSecondaire = fondMatch ? fondMatch[2] : '#f5ebd5';
 
+    // Enrichissement : pour chaque produit, récupère les variantes via l'API pour avoir priceMin / hasMultiplePrix
+    const produitsEnrichis = await Promise.all(produits.map(async (p) => {
+      if (!p.handle) return p;
+      try {
+        const r2 = await fetch(`/api/joaillerie/produits-par-recherche?q=${encodeURIComponent(p.handle)}&store=${store}`);
+        if (!r2.ok) return p;
+        const dataR = await r2.json();
+        const trouve = (dataR.produits || []).find(x => x.handle === p.handle);
+        if (trouve) {
+          return {
+            ...p,
+            id: trouve.id || p.id,
+            price: trouve.price || p.price,
+            priceMin: trouve.priceMin,
+            priceMax: trouve.priceMax,
+            hasMultiplePrix: trouve.hasMultiplePrix,
+            images: (trouve.images && trouve.images.length) ? trouve.images : p.images,
+            urlAdmin: trouve.urlAdmin || p.urlAdmin,
+          };
+        }
+      } catch (e) { /* ignore */ }
+      return p;
+    }));
+
     // Snapshot reconstruit
     const snapshot = {
       id: Date.now().toString(36),
@@ -1433,7 +1457,7 @@ async function importerDepuisShopify() {
         motif_intensite: 30,
       },
       motifOriginal: motifSrc,
-      produits,
+      produits: produitsEnrichis,
     };
 
     const pages = lirePagesSauvegardees();
