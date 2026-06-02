@@ -674,7 +674,7 @@ function genererHtmlPage() {
 .cdm-page {
   font-family: ${fontStack}; color: ${T.texte_corps}; padding: 0; margin: 0;
   background:
-    ${motifIsUploadedImage ? `${motifBgImageUrl} no-repeat top center / cover,` : ''}
+    ${motifIsUploadedImage ? `${motifBgImageUrl} repeat-y top center / 100% auto,` : ''}
     ${motifBgImageUrl && !motifIsUploadedImage ? `
       ${motifBgImageUrl} no-repeat 8% 4%,
       ${motifBgImageUrl} no-repeat 88% 7%,
