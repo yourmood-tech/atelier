@@ -950,6 +950,13 @@ async function pousserVersShopify(published) {
   const bodyHtml = genererHtmlPage();
   const btn = published ? document.getElementById('btn-push-live') : document.getElementById('btn-push');
   const old = btn.textContent;
+  // Check de taille — Shopify accepte ~256 KB pour body_html (varie selon les comptes)
+  const tailleKb = Math.round(bodyHtml.length / 1024);
+  if (tailleKb > 200) {
+    if (!confirm(`Attention : ta page fait ${tailleKb} KB (limite Shopify ~256 KB).\nC'est probablement à cause d'une grosse vidéo MP4 ou image hero/motif uploadée en data URL.\n\nContinuer quand même ? Si Shopify refuse, il faudra héberger la vidéo ailleurs (YouTube/Vimeo) ou uploader l'image sur Shopify Files.`)) {
+      return;
+    }
+  }
   btn.disabled = true;
   btn.textContent = '⏳ Push…';
   const res = document.getElementById('resultat');
@@ -962,7 +969,16 @@ async function pousserVersShopify(published) {
     const data = await r.json();
     if (!r.ok) {
       res.className = 'resultat ko';
-      res.innerHTML = '<strong>Erreur :</strong> ' + (data.error || JSON.stringify(data));
+      // Affiche un message d'erreur enrichi avec le détail Shopify si dispo
+      let msg = '<strong>Erreur :</strong> ' + (data.error || 'inconnue');
+      msg += `<br><small>Taille du HTML envoyé : ${tailleKb} KB</small>`;
+      if (data.detail) {
+        msg += '<details style="margin-top:0.5rem;"><summary style="cursor:pointer;">Détail technique Shopify</summary><pre style="font-size:0.7rem;background:#fff;padding:0.4rem;border-radius:4px;overflow:auto;max-height:200px;">' + JSON.stringify(data.detail, null, 2).replace(/</g, '&lt;') + '</pre></details>';
+      }
+      if (tailleKb > 200) {
+        msg += '<p style="margin-top:0.5rem;font-size:0.85rem;">💡 La page est lourde (' + tailleKb + ' KB). Pour réduire :<br>• Vidéo : utilise une URL YouTube/Vimeo plutôt qu\'un upload MP4<br>• Image hero : upload-la directement dans Shopify Admin puis colle l\'URL CDN ici</p>';
+      }
+      res.innerHTML = msg;
     } else {
       const p = data.page || {};
       res.className = 'resultat ok';
