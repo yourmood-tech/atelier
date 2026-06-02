@@ -145,17 +145,26 @@
     </div>
     <div class="row" style="margin-top:0.5rem;">
       <div>
-        <label>🌺 Motif de fond décoratif <span class="opt">(filigrane sobre sur toute la page)</span></label>
-        <select id="th-motif" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;">
-          <option value="">Aucun motif</option>
-          <option value="hibiscus">🌺 Hibiscus</option>
-          <option value="palmier">🌴 Palmier</option>
-          <option value="coquillage">🐚 Coquillage</option>
-          <option value="vague">🌊 Vague</option>
-          <option value="tiare">❀ Fleur de tiare</option>
-          <option value="etoile">⭐ Étoile de mer</option>
-          <option value="diamant">◇ Diamant</option>
-        </select>
+        <label>🌺 Motif de fond décoratif <span class="opt">(uploade ton propre PNG, ou choisis un motif préfait simple)</span></label>
+        <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+          <button type="button" id="btn-motif-upload" style="margin:0;padding:0.5rem 0.9rem;background:white;border:1px solid var(--noir);color:var(--noir);font-size:0.85rem;border-radius:6px;">📁 Uploader un motif</button>
+          <input type="file" id="th-motif-file" accept="image/*" style="display:none;">
+          <span id="th-motif-info" style="font-size:0.78rem;color:var(--gris);"></span>
+        </div>
+        <details style="margin-top:0.5rem;">
+          <summary style="cursor:pointer;font-size:0.8rem;color:var(--gris);">Ou choisir un motif préfait (simple)</summary>
+          <select id="th-motif" style="width:100%;padding:0.5rem;border:1px solid #ddd;border-radius:6px;font-family:inherit;margin-top:0.4rem;">
+            <option value="">Aucun motif préfait</option>
+            <option value="hibiscus">🌺 Hibiscus simple</option>
+            <option value="palmier">🌴 Palmier</option>
+            <option value="coquillage">🐚 Coquillage</option>
+            <option value="vague">🌊 Vague</option>
+            <option value="tiare">❀ Fleur de tiare</option>
+            <option value="etoile">⭐ Étoile de mer</option>
+            <option value="diamant">◇ Diamant</option>
+          </select>
+        </details>
+        <img id="th-motif-preview" style="max-width:120px;margin-top:0.5rem;border:1px solid #eadfc8;border-radius:4px;display:none;" alt="">
       </div>
       <div>
         <label>Intensité du motif <span class="opt">(2 = très subtil, 30 = très marqué)</span></label>
@@ -292,6 +301,9 @@ const MOTIFS_SVG = {
   diamant: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50' width='50' height='50'><g fill='none' stroke='%23000' stroke-width='1.3' stroke-linejoin='round'><path d='M10 18 L25 5 L40 18 L25 45 Z'/><line x1='10' y1='18' x2='40' y2='18'/><line x1='25' y1='5' x2='25' y2='18'/><line x1='17.5' y1='18' x2='25' y2='45'/><line x1='32.5' y1='18' x2='25' y2='45'/></g></svg>`,
 };
 
+// Stockage de l'image motif uploadée (data URL)
+let motifImageUploadee = '';
+
 function lireTheme() {
   const motifKey = document.getElementById('th-motif').value;
   return {
@@ -303,12 +315,36 @@ function lireTheme() {
     serif: document.getElementById('th-serif').value,
     sans: document.getElementById('th-sans').value,
     hero_style: document.getElementById('th-hero').value,
+    motif_image_url: motifImageUploadee,    // PRIORITAIRE si présent (image uploadée Amila)
     motif_key: motifKey,
     motif_svg: motifKey ? MOTIFS_SVG[motifKey] : '',
-    motif_intensite: parseInt(document.getElementById('th-motif-intensite').value, 10) || 6,
+    motif_intensite: parseInt(document.getElementById('th-motif-intensite').value, 10) || 12,
     overlay_intensite: document.getElementById('th-overlay').value,
   };
 }
+
+// Upload du motif personnalisé
+document.getElementById('btn-motif-upload').addEventListener('click', () => {
+  document.getElementById('th-motif-file').click();
+});
+document.getElementById('th-motif-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const info = document.getElementById('th-motif-info');
+  info.textContent = '⏳ Chargement…';
+  try {
+    // Redimensionne pour ne pas exploser la taille du body_html stocké (max 1500px côté long)
+    const dataUrl = await redimensionnerImage(file, 1500, 0.85);
+    motifImageUploadee = dataUrl;
+    const prev = document.getElementById('th-motif-preview');
+    prev.src = dataUrl;
+    prev.style.display = 'block';
+    const tailleKb = Math.round(dataUrl.length * 0.75 / 1024);
+    info.textContent = `✓ ${file.name} (${tailleKb} KB)`;
+  } catch (err) {
+    info.textContent = '✗ Erreur : ' + err.message;
+  }
+});
 
 // Affiche live la valeur du slider intensité
 document.getElementById('th-motif-intensite').addEventListener('input', (e) => {
@@ -430,12 +466,16 @@ function genererHtmlPage() {
   const sansStack = `'${T.sans}', system-ui, sans-serif`;
   const titleColor = T.hero_style === 'image_avec_overlay_sombre' ? '#fff' : T.texte_titre;
   const leadColor = T.hero_style === 'image_avec_overlay_sombre' ? 'rgba(255,255,255,0.92)' : T.texte_corps;
-  // Motif de fond décoratif (SVG injecté en arrière-plan direct de .cdm-page)
+  // Motif de fond décoratif — priorité à l'image uploadée par Amila, sinon SVG préfait
   const motifOpacity = (T.motif_intensite || 12) / 100;
   let motifBgImageUrl = '';
-  if (T.motif_svg) {
-    // Le stroke #000 du SVG est remplacé par un gris dont l'opacité reflète l'intensité choisie
-    // (équivaut à régler l'opacité sans avoir besoin d'un calque CSS séparé)
+  let motifIsUploadedImage = false;
+  if (T.motif_image_url) {
+    // Image personnalisée Amila → utilisée telle quelle, opacité réglée via CSS opacity sur background-blend
+    motifBgImageUrl = `url("${T.motif_image_url}")`;
+    motifIsUploadedImage = true;
+  } else if (T.motif_svg) {
+    // SVG préfait → injecte l'opacité dans le stroke en alpha hex
     const alphaHex = Math.round(motifOpacity * 255).toString(16).padStart(2, '0');
     const svgWithOpacity = T.motif_svg.replace(/stroke='%23000'/g, `stroke='%23000000${alphaHex}'`).replace(/fill='%23000'/g, `fill='%23000000${alphaHex}'`);
     const svgClean = svgWithOpacity.replace(/%23/g, '#');
@@ -451,7 +491,8 @@ function genererHtmlPage() {
 .cdm-page {
   font-family: ${fontStack}; color: ${T.texte_corps}; padding: 0; margin: 0;
   background:
-    ${motifBgImageUrl ? `
+    ${motifIsUploadedImage ? `${motifBgImageUrl} no-repeat top center / 100% auto,` : ''}
+    ${motifBgImageUrl && !motifIsUploadedImage ? `
       ${motifBgImageUrl} no-repeat 8% 4%,
       ${motifBgImageUrl} no-repeat 88% 7%,
       ${motifBgImageUrl} no-repeat 95% 35%,
@@ -464,8 +505,6 @@ function genererHtmlPage() {
     radial-gradient(ellipse at bottom left, ${accentRgba(0.05)} 0%, transparent 50%),
     radial-gradient(ellipse at bottom right, ${accentRgba(0.06)} 0%, transparent 45%),
     linear-gradient(180deg, ${T.fond_principal} 0%, ${T.fond_secondaire} 50%, ${T.fond_principal} 100%);
-  background-size: ${motifBgImageUrl ? '110px, 80px, 140px, 95px, 70px, 130px, 60px,' : ''} auto, auto, auto, auto, auto;
-  background-attachment: ${motifBgImageUrl ? 'scroll, scroll, scroll, scroll, scroll, scroll, scroll,' : ''} scroll, scroll, scroll, scroll, scroll;
   position: relative;
 }
 .cdm-page::before, .cdm-page::after {
