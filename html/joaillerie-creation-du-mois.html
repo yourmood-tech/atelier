@@ -158,9 +158,9 @@
         </select>
       </div>
       <div>
-        <label>Intensité du motif <span class="opt">(0 = invisible, 20 = très marqué)</span></label>
-        <input id="th-motif-intensite" type="range" min="2" max="20" value="6" style="width:100%;">
-        <span id="th-motif-intensite-val" style="font-size:0.78rem;color:var(--gris);">6 %</span>
+        <label>Intensité du motif <span class="opt">(2 = très subtil, 30 = très marqué)</span></label>
+        <input id="th-motif-intensite" type="range" min="2" max="30" value="12" style="width:100%;">
+        <span id="th-motif-intensite-val" style="font-size:0.78rem;color:var(--gris);">12 %</span>
       </div>
       <div>
         <label>Intensité de l'overlay hero <span class="opt">(plus foncé = titre plus lisible sur image claire)</span></label>
@@ -463,10 +463,10 @@ function genererHtmlPage() {
 .cdm-page::before { left: 0; }
 .cdm-page::after { right: 0; }
 ${T.motif_svg ? `
-.cdm-motif-overlay {
-  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+.cdm-page .cdm-motif-overlay {
+  position: absolute !important; inset: 0 !important; pointer-events: none !important; z-index: 0 !important;
   ${motifBgCss}
-  opacity: ${motifOpacity};
+  opacity: ${motifOpacity} !important;
 }` : ''}
 .cdm-page * { box-sizing: border-box; position: relative; z-index: 1; }
 .cdm-hero { position: relative; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 6rem 1.5rem; background-size: cover; background-position: center; ${heroBg} }
