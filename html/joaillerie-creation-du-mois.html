@@ -83,8 +83,9 @@
       <input id="f-titre" type="text" value="Les trésors de Nérée">
     </div>
     <div>
-      <label>Handle (URL) *</label>
+      <label>Code de page (URL) *</label>
       <input id="f-handle" type="text" value="creation-du-mois">
+      <small style="display:block;margin-top:0.3rem;color:#a55300;font-size:0.75rem;line-height:1.3;">⚠️ Code unique. Se génère depuis le titre, mais tu peux le changer. <strong>Si tu réutilises un code existant, la page précédente sur Shopify est remplacée.</strong></small>
     </div>
   </div>
   <label>Image hero <span class="opt">(optionnel — sinon utilise la 1ère image du 1er produit)</span></label>
@@ -1009,6 +1010,8 @@ async function pousserVersShopify(published) {
   const titre = document.getElementById('f-titre').value.trim();
   const handle = document.getElementById('f-handle').value.trim();
   if (!titre || !handle) { alert('Titre et handle requis'); return; }
+  const storeLabel = getStoreCible() === 'mood-collection' ? 'yourmood.net' : 'moodjoaillerie.net';
+  if (!confirm(`Tu vas pousser cette page sur ${storeLabel} avec le code "${handle}".\n\n⚠️ Si une page avec ce code existe déjà, elle sera REMPLACÉE (perte irréversible).\n\nContinuer ?`)) return;
   const bodyHtml = genererHtmlPage();
   const btn = published ? document.getElementById('btn-push-live') : document.getElementById('btn-push');
   const old = btn.textContent;
@@ -1045,11 +1048,13 @@ async function pousserVersShopify(published) {
       const p = data.page || {};
       res.className = 'resultat ok';
       res.innerHTML = `
-        <strong>✅ Page ${data.action === 'created' ? 'créée' : 'mise à jour'} :</strong> <em>${p.title}</em><br>
+        <strong>✅ Page ${data.action === 'created' ? 'créée' : 'mise à jour (page existante REMPLACÉE)'} :</strong> <em>${p.title}</em><br>
         <strong>Statut :</strong> ${p.isPublished ? '📢 PUBLIÉE (visible publiquement)' : '🔒 draft (invisible côté visiteur)'}<br>
         <strong>URL admin :</strong> <a href="${p.urlAdmin}" target="_blank">${p.urlAdmin}</a><br>
-        <strong>URL publique :</strong> <a href="${p.urlPublic}" target="_blank">${p.urlPublic}</a>
+        <strong>URL publique :</strong> <a href="${p.urlPublic}" target="_blank">${p.urlPublic}</a><br>
+        <small style="color:var(--gris);">💾 Page sauvegardée automatiquement dans "Mes pages enregistrées" (en bas)</small>
       `;
+      autoSaveLocalApresPush();
     }
   } catch (e) {
     res.className = 'resultat ko';
@@ -1259,8 +1264,45 @@ function supprimerPage(id) {
   rendrePagesSauvegardees();
 }
 
+function slugifyTitre(s) {
+  return (s || '').toString()
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 60) || 'creation-du-mois';
+}
+
+let handleEditeManuellement = false;
+function initAutoSlugHandle() {
+  const tInp = document.getElementById('f-titre');
+  const hInp = document.getElementById('f-handle');
+  if (!tInp || !hInp) return;
+  // Si handle = défaut générique, slugifier depuis le titre au boot
+  if (hInp.value === 'creation-du-mois' && tInp.value.trim()) {
+    hInp.value = slugifyTitre(tInp.value);
+  }
+  hInp.addEventListener('input', () => { handleEditeManuellement = true; });
+  tInp.addEventListener('input', () => {
+    if (!handleEditeManuellement) hInp.value = slugifyTitre(tInp.value);
+  });
+}
+
+function autoSaveLocalApresPush() {
+  try {
+    const pages = lirePagesSauvegardees();
+    pages.unshift(snapshotPage());
+    const trimmed = pages.slice(0, 50);
+    const json = JSON.stringify(trimmed);
+    if (json.length > 4 * 1024 * 1024) return;
+    localStorage.setItem(STORAGE_KEY, json);
+    rendrePagesSauvegardees();
+  } catch (e) { /* silencieux */ }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   initLayoutGrid();
+  initAutoSlugHandle();
   rendrePagesSauvegardees();
   setTimeout(chercherProduits, 300);
 });
