@@ -793,7 +793,7 @@ function genererHtmlPage() {
   let motifIsUploadedImage = false;
   if (T.motif_image_url) {
     // Image personnalisée Amila → utilisée telle quelle, opacité réglée via CSS opacity sur background-blend
-    motifBgImageUrl = `url('${T.motif_image_url}')`;
+    motifBgImageUrl = `url(${T.motif_image_url})`;
     motifIsUploadedImage = true;
   } else if (T.motif_svg) {
     // SVG préfait → injecte l'opacité dans le stroke en alpha hex
