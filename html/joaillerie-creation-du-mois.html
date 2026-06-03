@@ -793,7 +793,7 @@ function genererHtmlPage() {
   let motifIsUploadedImage = false;
   if (T.motif_image_url) {
     // Image personnalisée Amila → utilisée telle quelle, opacité réglée via CSS opacity sur background-blend
-    motifBgImageUrl = `url("${T.motif_image_url}")`;
+    motifBgImageUrl = `url('${T.motif_image_url}')`;
     motifIsUploadedImage = true;
   } else if (T.motif_svg) {
     // SVG préfait → injecte l'opacité dans le stroke en alpha hex
@@ -801,7 +801,7 @@ function genererHtmlPage() {
     const svgWithOpacity = T.motif_svg.replace(/stroke='%23000'/g, `stroke='%23000000${alphaHex}'`).replace(/fill='%23000'/g, `fill='%23000000${alphaHex}'`);
     const svgClean = svgWithOpacity.replace(/%23/g, '#');
     try {
-      motifBgImageUrl = `url("data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgClean)))}")`;
+      motifBgImageUrl = `url('data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgClean)))}')`;
     } catch {
       motifBgImageUrl = '';
     }
