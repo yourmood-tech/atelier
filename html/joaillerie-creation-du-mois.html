@@ -811,6 +811,7 @@ function genererHtmlPage() {
 @import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(T.serif)}:ital,wght@0,300;0,400;1,300;1,400&family=${encodeURIComponent(T.sans)}:wght@400;500&display=swap');
 .cdm-page {
   font-family: ${fontStack}; color: ${T.texte_corps}; padding: 0; margin: 0;
+  width: 100vw; max-width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;
   background:
     ${motifBgImageUrl && !motifIsUploadedImage ? `
       ${motifBgImageUrl} no-repeat 8% 4%,
@@ -953,7 +954,7 @@ ${T.hover === 'fondu' ? `
 </style>
 
 <div class="cdm-page">
-  ${motifIsUploadedImage ? '<div class="cdm-motif-overlay-img"></div>' : ''}
+  ${motifIsUploadedImage ? `<div class="cdm-motif-overlay-img" style="position:absolute;inset:0;pointer-events:none;z-index:0;background:${motifBgImageUrl} repeat-y top center / 100% auto;opacity:${motifOpacity};"></div>` : ''}
   <section class="cdm-hero">
     ${isHeroVideo ? `<video class="cdm-hero-video" autoplay muted loop playsinline preload="auto"><source src="${hero}"></video><div class="cdm-hero-overlay"></div>` : ''}
     <div class="cdm-hero-inner">
