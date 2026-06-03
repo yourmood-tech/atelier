@@ -1,5 +1,4 @@
-// Récupère une page Shopify par son ID, pour permettre l'import dans l'app création-du-mois.
-// Utile quand l'utilisateur a perdu son état local mais que la page existe encore sur Shopify.
+// Récupère une page Shopify par son ID via GraphQL (REST /pages.json déprécié depuis 2026).
 
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/stores";
@@ -11,27 +10,52 @@ export async function GET(request: Request) {
   if (!id) return NextResponse.json({ error: "param id requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const r = await fetch(`https://${cfg.shopifyDomain}/admin/api/2024-10/pages/${id}.json`, {
-    headers: { "X-Shopify-Access-Token": cfg.shopifyToken, Accept: "application/json" },
+  const apiUrl = `https://${cfg.shopifyDomain}/admin/api/2024-10/graphql.json`;
+  const gid = `gid://shopify/Page/${id}`;
+
+  const r = await fetch(apiUrl, {
+    method: "POST",
+    headers: { "X-Shopify-Access-Token": cfg.shopifyToken, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: `query($id: ID!) {
+        page(id: $id) {
+          id
+          handle
+          title
+          body
+          isPublished
+          publishedAt
+          updatedAt
+        }
+      }`,
+      variables: { id: gid },
+    }),
   });
-  if (!r.ok) {
-    const detail = await r.text();
-    return NextResponse.json(
-      { error: "Page introuvable sur Shopify", status: r.status, detail: detail.slice(0, 200) },
-      { status: r.status }
-    );
+
+  const txt = await r.text();
+  let json: { data?: { page: { id: string; handle: string; title: string; body: string; isPublished: boolean; publishedAt: string | null; updatedAt: string } | null }; errors?: unknown } = {};
+  try { json = JSON.parse(txt); } catch {
+    return NextResponse.json({ error: "Réponse Shopify non-JSON", detail: txt.slice(0, 300), status: r.status }, { status: 502 });
   }
-  const data = await r.json();
-  const p = data.page || {};
+
+  if (!r.ok || json.errors) {
+    return NextResponse.json({ error: "Erreur Shopify GraphQL", detail: json.errors || txt.slice(0, 300), status: r.status }, { status: r.status });
+  }
+
+  const p = json.data?.page;
+  if (!p) {
+    return NextResponse.json({ error: "Page introuvable sur Shopify", status: 404 }, { status: 404 });
+  }
+
   return NextResponse.json({
     ok: true,
     page: {
-      id: p.id,
+      id: p.id.replace("gid://shopify/Page/", ""),
       title: p.title,
       handle: p.handle,
-      body_html: p.body_html,
-      published_at: p.published_at,
-      updated_at: p.updated_at,
+      body_html: p.body,
+      published_at: p.publishedAt,
+      updated_at: p.updatedAt,
     },
   });
 }
