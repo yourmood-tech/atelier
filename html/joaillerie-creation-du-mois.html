@@ -263,7 +263,7 @@ const PALETTE_PASTILLES = [
 function insererPastille(idx, hex) {
   const ta = document.querySelector(`textarea.description-input[data-prod-idx="${idx}"]`);
   if (!ta) return;
-  const marker = `[●${hex}]`;
+  const marker = `[dot:${hex}]`;
   const start = ta.selectionStart, end = ta.selectionEnd;
   ta.value = ta.value.slice(0, start) + marker + ta.value.slice(end);
   ta.selectionStart = ta.selectionEnd = start + marker.length;
@@ -648,7 +648,9 @@ function genererHtmlPage() {
     const url = p.urlPublic;
     const titreCard = nettoyerTitre(p.title);
     const descBrute = (p.descriptionLibre && p.descriptionLibre.trim()) || trouverTexte(titreCard) || '';
-    const texte = descBrute ? escapeHtml(descBrute).replace(/\n/g, '<br>').replace(/\[●(#[a-fA-F0-9]{6})\]/g, '<span class="cdm-dot" style="background:$1"></span>') : '';
+    const texte = descBrute ? escapeHtml(descBrute).replace(/\n/g, '<br>')
+      .replace(/\[dot:(#[a-fA-F0-9]{6})\]/g, '<span class="cdm-dot" style="background:$1"></span>')
+      .replace(/\[●(#[a-fA-F0-9]{6})\]/g, '<span class="cdm-dot" style="background:$1"></span>') : '';
     const sousTitre = (p.sousTitre || '').trim();
     const caracs = (p.caracteristiques || '').split(/[,·]/).map(c => c.trim()).filter(Boolean);
     const caracsHtml = caracs.length
