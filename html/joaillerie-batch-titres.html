@@ -116,7 +116,13 @@ function rendreListe() {
   document.getElementById('modif-count').textContent = ETAT.filter(x => x.titreLive !== x.nouveau).length;
 }
 
-function onChange(idx, val) { ETAT[idx].titreLive = val; rendreListe(); }
+function onChange(idx, val) {
+  ETAT[idx].titreLive = val;
+  // Pas de re-render complet (qui casserait le focus) — on met juste à jour le compteur et la classe visuelle
+  const ligne = document.querySelector(`.ligne[data-idx="${idx}"]`);
+  if (ligne) ligne.classList.toggle('modif', val !== ETAT[idx].nouveau);
+  document.getElementById('modif-count').textContent = ETAT.filter(x => x.titreLive !== x.nouveau).length;
+}
 function reset(idx) { ETAT[idx].titreLive = ETAT[idx].ancien; rendreListe(); }
 function toggleExclu(idx) { ETAT[idx].exclu = !ETAT[idx].exclu; rendreListe(); }
 function excluTous() { ETAT.forEach(x => x.exclu = true); rendreListe(); }
