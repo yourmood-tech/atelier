@@ -52,8 +52,9 @@
       <span>Modifiés : <strong id="modif-count">0</strong></span>
     </div>
     <div style="flex:1;"></div>
-    <button onclick="lancer(true)" class="secondary" id="btn-dry">🧪 Dry-run</button>
-    <button onclick="lancer(false)" id="btn-apply">💾 Pousser tout sur Shopify</button>
+    <button onclick="lancer(true, false)" class="secondary" id="btn-dry">🧪 Dry-run</button>
+    <button onclick="lancer(false, true)" id="btn-apply-filtres" style="background:#fff8f0;color:var(--or);border:1px solid var(--or);">💾 Pousser seulement les filtrés</button>
+    <button onclick="lancer(false, false)" id="btn-apply">💾 Pousser tout</button>
   </div>
 
   <div class="filtres">
@@ -122,11 +123,24 @@ function excluTous() { ETAT.forEach(x => x.exclu = true); rendreListe(); }
 function inclureTous() { ETAT.forEach(x => x.exclu = false); rendreListe(); }
 function filtrer() { rendreListe(); }
 
-async function lancer(dryRun) {
-  const inclus = ETAT.filter(x => !x.exclu && x.titreLive.trim() && x.titreLive !== x.ancien);
-  if (inclus.length === 0) { alert('Aucun titre à modifier (tout est exclu ou identique à l\'ancien).'); return; }
-  if (!dryRun && !confirm(`⚠️ Tu vas modifier ${inclus.length} titres sur Mood Joaillerie. Continuer ?`)) return;
-  const btn = dryRun ? document.getElementById('btn-dry') : document.getElementById('btn-apply');
+async function lancer(dryRun, seulementFiltres) {
+  const search = document.getElementById('search').value.toLowerCase();
+  let pool = ETAT.filter(x => !x.exclu && x.titreLive.trim() && x.titreLive !== x.ancien);
+  if (seulementFiltres && search) {
+    pool = pool.filter(x =>
+      x.ancien.toLowerCase().includes(search) ||
+      x.titreLive.toLowerCase().includes(search) ||
+      x.handle.toLowerCase().includes(search)
+    );
+  }
+  const inclus = pool;
+  if (inclus.length === 0) {
+    alert(seulementFiltres ? 'Aucun titre filtré à modifier. Vérifie le filtre de recherche.' : 'Aucun titre à modifier (tout est exclu ou identique à l\'ancien).');
+    return;
+  }
+  const scope = seulementFiltres ? `${inclus.length} titres filtrés (recherche: "${search}")` : `${inclus.length} titres`;
+  if (!dryRun && !confirm(`⚠️ Tu vas modifier ${scope} sur Mood Joaillerie. Continuer ?`)) return;
+  const btn = dryRun ? document.getElementById('btn-dry') : (seulementFiltres ? document.getElementById('btn-apply-filtres') : document.getElementById('btn-apply'));
   const old = btn.textContent;
   btn.disabled = true;
   btn.textContent = dryRun ? '⏳ Simulation…' : '⏳ Push…';
