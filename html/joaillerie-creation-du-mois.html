@@ -64,8 +64,12 @@
   <h2>1. Rechercher les produits</h2>
   <div class="row">
     <div>
-      <label>Mot-clé (titre ou tag)</label>
+      <label>Mot-clé <span class="opt">(titre ou tag, optionnel si Collection)</span></label>
       <input id="f-search" type="text" value="Trésors de Nérée">
+    </div>
+    <div>
+      <label>Collection Shopify <span class="opt">(handle, ex : bases-entierement-serties)</span></label>
+      <input id="f-collection" type="text" placeholder="ex : bases-entierement-serties">
     </div>
     <div style="flex:0 0 auto;">
       <label>Type de produit</label>
@@ -367,11 +371,15 @@ function matchTypeProduit(p, type) {
 
 async function chercherProduits() {
   const q = document.getElementById('f-search').value.trim();
-  if (!q) return;
+  const col = (document.getElementById('f-collection')?.value || '').trim();
+  if (!q && !col) return;
   const container = document.getElementById('produits-result');
   container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">⏳ Recherche...</p>';
   try {
-    const r = await fetch(`/api/joaillerie/produits-par-recherche?q=${encodeURIComponent(q)}&store=${getStoreCible()}`);
+    const params = new URLSearchParams({ store: getStoreCible() });
+    if (q) params.set('q', q);
+    if (col) params.set('collection', col);
+    const r = await fetch(`/api/joaillerie/produits-par-recherche?${params}`);
     const data = await r.json();
     if (!r.ok) { container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur : ' + (data.error || 'inconnue') + '</p>'; return; }
     let prods = data.produits || [];
