@@ -26,7 +26,7 @@ export async function GET(request: Request) {
   if (!q && !collectionHandle) return NextResponse.json({ error: "param q ou collection requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2026-04`;
+  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
 
   let nodes: ProductNode[] = [];
 

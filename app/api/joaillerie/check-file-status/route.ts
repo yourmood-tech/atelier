@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   if (!fileId) return NextResponse.json({ error: "fileId requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2026-04`;
+  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
 
   const query = `query getFile($id: ID!) {
     node(id: $id) {
