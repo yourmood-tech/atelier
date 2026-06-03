@@ -1415,7 +1415,17 @@ async function importerDepuisShopify() {
       const priceMatch = priceText.match(/[\d,]+(\.[\d]+)?/);
       const price = priceMatch ? priceMatch[0].replace(',', '.') : null;
       const sousTitre = section.querySelector('.cdm-edito-soustitre, .cdm-grid-card-soustitre')?.textContent.trim() || '';
-      const descLibre = section.querySelector('.cdm-edito-desc, .cdm-grid-card-desc')?.textContent.trim() || '';
+      const descEl = section.querySelector('.cdm-edito-desc, .cdm-grid-card-desc');
+      let descLibre = '';
+      if (descEl) {
+        const clone = descEl.cloneNode(true);
+        clone.querySelectorAll('.cdm-dot').forEach(d => {
+          const m = (d.getAttribute('style')||'').match(/background:\s*(#[a-fA-F0-9]{6})/i);
+          d.replaceWith(document.createTextNode(m ? `[dot:${m[1]}]` : ''));
+        });
+        clone.querySelectorAll('br').forEach(b => b.replaceWith(document.createTextNode('\n')));
+        descLibre = clone.textContent.trim();
+      }
       const caracs = Array.from(section.querySelectorAll('.cdm-caracs > span:not(.cdm-caracs-sep)'))
         .map(sp => sp.textContent.trim()).filter(Boolean).join(', ');
 
