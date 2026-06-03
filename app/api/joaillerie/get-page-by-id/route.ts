@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   if (!id) return NextResponse.json({ error: "param id requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiUrl = `https://${cfg.shopifyDomain}/admin/api/2024-10/graphql.json`;
+  const apiUrl = `https://${cfg.shopifyDomain}/admin/api/2025-10/graphql.json`;
   const gid = `gid://shopify/Page/${id}`;
 
   const r = await fetch(apiUrl, {

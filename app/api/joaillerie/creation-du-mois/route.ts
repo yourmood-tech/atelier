@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   }
 
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
+  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2025-10`;
 
   async function call(method: string, path: string, payload?: unknown) {
     const r = await fetch(`${apiBase}${path}`, {

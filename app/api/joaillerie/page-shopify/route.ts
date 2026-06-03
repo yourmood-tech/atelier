@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   if (!handle || !title || !bodyHtml) return NextResponse.json({ error: "handle, title, bodyHtml requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiUrl = `https://${cfg.shopifyDomain}/admin/api/2024-10/graphql.json`;
+  const apiUrl = `https://${cfg.shopifyDomain}/admin/api/2025-10/graphql.json`;
   const headers = { "X-Shopify-Access-Token": cfg.shopifyToken, "Content-Type": "application/json", Accept: "application/json" };
 
   async function graphql<T>(query: string, variables: Record<string, unknown>): Promise<{ status: number; ok: boolean; data: T | null; errors?: unknown; raw?: string }> {

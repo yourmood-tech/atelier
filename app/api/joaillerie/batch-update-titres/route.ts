@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "updates (array) requis et non vide" }, { status: 400 });
   }
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
+  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2025-10`;
 
   const results: Array<{ id: string | number; ok: boolean; status?: number; title?: string; error?: string }> = [];
 
