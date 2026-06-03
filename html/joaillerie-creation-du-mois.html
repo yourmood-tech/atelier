@@ -674,6 +674,7 @@ function genererHtmlPage() {
         <h2 class="cdm-grid-card-title">${d.titreCard}</h2>
         ${d.sousTitre ? `<div class="cdm-edito-soustitre">${escapeHtml(d.sousTitre)}</div>` : ''}
         ${d.caracsHtml}
+        ${d.texte && T.hover !== 'texte' ? `<p class="cdm-grid-card-desc">${d.texte}</p>` : ''}
         ${d.prix ? `<div class="cdm-edito-price">${d.prix}</div>` : ''}
         <span class="cdm-edito-cta">Découvrir →</span>
       </div>
