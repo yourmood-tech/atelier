@@ -1,14 +1,14 @@
 // Crée ou met à jour une page Shopify (Online Store > Pages) avec un handle stable.
-// Utile pour des pages "vitrine" comme la création du mois.
+// IMPORTANT : utilise GraphQL Admin API (pageCreate / pageUpdate) car REST /pages.json est déprécié depuis 2026.
 
 import { NextResponse } from "next/server";
 import { getStore } from "@/lib/stores";
 
 interface Input {
-  handle: string;           // ex: "creation-du-mois"
+  handle: string;
   title: string;
   bodyHtml: string;
-  published?: boolean;       // default: false (draft)
+  published?: boolean;
   store?: "mood-joaillerie" | "mood-collection";
 }
 
@@ -19,49 +19,86 @@ export async function POST(request: Request) {
   if (!handle || !title || !bodyHtml) return NextResponse.json({ error: "handle, title, bodyHtml requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
+  const apiUrl = `https://${cfg.shopifyDomain}/admin/api/2024-10/graphql.json`;
+  const headers = { "X-Shopify-Access-Token": cfg.shopifyToken, "Content-Type": "application/json", Accept: "application/json" };
 
-  async function call(method: string, path: string, payload?: unknown) {
-    const r = await fetch(`${apiBase}${path}`, {
-      method,
-      headers: { "X-Shopify-Access-Token": cfg.shopifyToken, "Content-Type": "application/json", Accept: "application/json" },
-      body: payload ? JSON.stringify(payload) : undefined,
-    });
-    const text = await r.text();
-    let data: unknown = {};
-    try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
-    return { status: r.status, ok: r.ok, data };
+  async function graphql<T>(query: string, variables: Record<string, unknown>): Promise<{ status: number; ok: boolean; data: T | null; errors?: unknown; raw?: string }> {
+    const r = await fetch(apiUrl, { method: "POST", headers, body: JSON.stringify({ query, variables }) });
+    const txt = await r.text();
+    let json: { data?: T; errors?: unknown } = {};
+    try { json = JSON.parse(txt); } catch { return { status: r.status, ok: false, data: null, raw: txt.slice(0, 400) }; }
+    return { status: r.status, ok: r.ok && !json.errors, data: json.data || null, errors: json.errors };
   }
 
-  // Cherche page existante par handle
-  const findRes = await call("GET", `/pages.json?handle=${handle}&limit=1`);
-  const existingList = ((findRes.data as { pages?: { id: number; handle: string }[] }).pages) || [];
-  const existing = existingList.find((p) => p.handle === handle);
+  // 1. Cherche page existante par handle (via pages query GraphQL)
+  const findRes = await graphql<{ pages: { edges: { node: { id: string; handle: string; title: string } }[] } }>(`
+    query($q: String!) {
+      pages(first: 5, query: $q) {
+        edges { node { id handle title } }
+      }
+    }
+  `, { q: `handle:${handle}` });
 
-  const payload: Record<string, unknown> = { title, handle, body_html: bodyHtml, published };
+  if (!findRes.ok) {
+    return NextResponse.json({ error: "Recherche page Shopify échouée", detail: findRes.errors || findRes.raw, status: findRes.status }, { status: 502 });
+  }
+
+  const existing = findRes.data?.pages?.edges?.find((e) => e.node.handle === handle)?.node;
 
   let result;
   if (existing) {
-    result = await call("PUT", `/pages/${existing.id}.json`, { page: { id: existing.id, ...payload } });
+    // UPDATE via pageUpdate
+    result = await graphql<{ pageUpdate: { page: { id: string; handle: string; title: string; isPublished: boolean }; userErrors: { field: string[]; message: string }[] } }>(`
+      mutation($id: ID!, $page: PageUpdateInput!) {
+        pageUpdate(id: $id, page: $page) {
+          page { id handle title isPublished }
+          userErrors { field message }
+        }
+      }
+    `, { id: existing.id, page: { title, handle, body: bodyHtml, isPublished: published } });
+    const ue = result.data?.pageUpdate?.userErrors;
+    if (!result.ok || (ue && ue.length > 0)) {
+      return NextResponse.json({ error: "MAJ page échouée", detail: ue || result.errors || result.raw, status: result.status }, { status: 422 });
+    }
+    const p = result.data?.pageUpdate?.page;
+    return NextResponse.json({
+      ok: true,
+      action: "updated",
+      page: {
+        id: p?.id.replace("gid://shopify/Page/", ""),
+        handle: p?.handle,
+        title: p?.title,
+        isPublished: p?.isPublished || false,
+        urlPublic: `https://${cfg.publicDomain}/pages/${p?.handle}`,
+        urlAdmin: `https://${cfg.shopifyDomain}/admin/pages/${p?.id.replace("gid://shopify/Page/", "")}`,
+      },
+    });
   } else {
-    result = await call("POST", `/pages.json`, { page: payload });
+    // CREATE via pageCreate
+    result = await graphql<{ pageCreate: { page: { id: string; handle: string; title: string; isPublished: boolean }; userErrors: { field: string[]; message: string }[] } }>(`
+      mutation($page: PageCreateInput!) {
+        pageCreate(page: $page) {
+          page { id handle title isPublished }
+          userErrors { field message }
+        }
+      }
+    `, { page: { title, handle, body: bodyHtml, isPublished: published } });
+    const ue = result.data?.pageCreate?.userErrors;
+    if (!result.ok || (ue && ue.length > 0)) {
+      return NextResponse.json({ error: "Création page échouée", detail: ue || result.errors || result.raw, status: result.status }, { status: 422 });
+    }
+    const p = result.data?.pageCreate?.page;
+    return NextResponse.json({
+      ok: true,
+      action: "created",
+      page: {
+        id: p?.id.replace("gid://shopify/Page/", ""),
+        handle: p?.handle,
+        title: p?.title,
+        isPublished: p?.isPublished || false,
+        urlPublic: `https://${cfg.publicDomain}/pages/${p?.handle}`,
+        urlAdmin: `https://${cfg.shopifyDomain}/admin/pages/${p?.id.replace("gid://shopify/Page/", "")}`,
+      },
+    });
   }
-
-  if (!result.ok) {
-    return NextResponse.json({ error: existing ? "MAJ page échouée" : "Création page échouée", detail: result.data, status: result.status }, { status: result.status });
-  }
-
-  const p = (result.data as { page?: { id: number; handle: string; title: string; published_at: string | null } }).page;
-  return NextResponse.json({
-    ok: true,
-    action: existing ? "updated" : "created",
-    page: {
-      id: p?.id,
-      handle: p?.handle,
-      title: p?.title,
-      isPublished: !!p?.published_at,
-      urlPublic: `https://${cfg.publicDomain}/pages/${p?.handle}`,
-      urlAdmin: `https://${cfg.shopifyDomain}/admin/pages/${p?.id}`,
-    },
-  });
 }
