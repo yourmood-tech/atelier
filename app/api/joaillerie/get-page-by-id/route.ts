@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   if (!id) return NextResponse.json({ error: "param id requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const r = await fetch(`https://${cfg.shopifyDomain}/admin/api/2024-10/pages/${id}.json`, {
+  const r = await fetch(`https://${cfg.shopifyDomain}/admin/api/2026-04/pages/${id}.json`, {
     headers: { "X-Shopify-Access-Token": cfg.shopifyToken, Accept: "application/json" },
   });
   if (!r.ok) {

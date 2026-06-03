@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   if (!handle || !title || !bodyHtml) return NextResponse.json({ error: "handle, title, bodyHtml requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
+  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2026-04`;
 
   async function call(method: string, path: string, payload?: unknown) {
     const r = await fetch(`${apiBase}${path}`, {

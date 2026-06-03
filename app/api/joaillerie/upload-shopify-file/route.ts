@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   if (!file) return NextResponse.json({ error: "champ 'file' requis" }, { status: 400 });
 
   const cfg = getStore(store);
-  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2024-10`;
+  const apiBase = `https://${cfg.shopifyDomain}/admin/api/2026-04`;
   const headers = {
     "X-Shopify-Access-Token": cfg.shopifyToken,
     "Content-Type": "application/json",
