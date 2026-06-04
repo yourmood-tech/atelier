@@ -913,6 +913,7 @@
     $('f-matiere').value = cochees[0] || '';
     rendrePaletteCouleurs();
     if (typeof majPrix === 'function') majPrix();
+    if (typeof fCalculerPrixAuto === 'function') fCalculerPrixAuto();
   }
   rendreMatieresCheckboxes();
 
@@ -2264,61 +2265,74 @@
     fCalculerPrixAuto();
   }
 
-  // Calcul auto du prix bague mood quand pierres présentes
+  // Calcul auto du prix de vente par matière (avec ou sans pierres)
   // Formule : prixAchat[matiere][format] × 3.8 + somme(achat_pierres) × 3.8 + 4.- × nb_total_pierres
+  // Si multi-matières cochées : un prix par matière dans le recap
   function fCalculerPrixAuto() {
     const recap = document.getElementById('f-prix-pierres-recap');
     const inputPrix = document.getElementById('f-prixVente');
     if (!recap || !inputPrix) return;
-    if (!fPierres.length) { recap.classList.add('hidden'); recap.innerHTML = ''; return; }
 
-    const matiere = $('f-matiere').value || '';
-    const formatChoisi = $('f-format').value || '';
-    // En multi-format, on prend le 1er format de la liste comme référence
-    const formatRaw = formatChoisi === 'multi format' ? (Array.from(formatsSelectionnes)[0] || '') : formatChoisi;
-    // Normalise : "deux tiers" → "deux-tiers" pour matcher la clé de PRIX_ACHAT_JOAILLERIE
-    const format = (formatRaw || '').replace(/\s+/g, '-').toLowerCase();
-    const prixAchatMat = (PRIX_ACHAT_JOAILLERIE[matiere] || {})[format];
-    if (prixAchatMat === undefined) {
-      recap.classList.remove('hidden');
-      recap.style.background = '#fde8e8';
-      recap.style.color = '#a32020';
-      recap.innerHTML = `⚠️ Pas de prix d'achat connu pour <strong>${matiere || '?'} / ${format || '?'}</strong> — choisis une matière + un format pour activer le calcul auto.`;
-      return;
+    const matieresCochees = (typeof getMatieresCochees === 'function') ? getMatieresCochees() : [];
+    const matiereFallback = $('f-matiere').value || '';
+    const matieres = matieresCochees.length > 0 ? matieresCochees : (matiereFallback ? [matiereFallback] : []);
+
+    // Sans matière ET sans pierres → on cache le recap
+    if (matieres.length === 0 && !fPierres.length) {
+      recap.classList.add('hidden'); recap.innerHTML = ''; return;
     }
 
-    let totalNb = 0;
-    let totalAchat = 0;
-    const detail = [];
+    const formatChoisi = $('f-format').value || '';
+    const formatRaw = formatChoisi === 'multi format' ? (Array.from(formatsSelectionnes)[0] || '') : formatChoisi;
+    const format = (formatRaw || '').replace(/\s+/g, '-').toLowerCase();
+
+    // Total pierres (commun à toutes les matières)
+    let totalNb = 0, totalAchatPierres = 0;
+    const detailPierres = [];
     for (const p of fPierres) {
       const nb = p.quantite || 0;
       if (nb <= 0) continue;
       const u = (PRIX_ACHAT_PIERRES[p.type] || {})[p.taille] || 0;
       totalNb += nb;
-      totalAchat += u * nb;
-      detail.push(`${nb} × ${p.type} ${p.taille}mm (${u}.-/u)`);
+      totalAchatPierres += u * nb;
+      detailPierres.push(`${nb} × ${p.type} ${p.taille}mm`);
     }
-    const matiereVente = prixAchatMat * 3.8;
-    const pierresVente = totalAchat * 3.8;
+    const pierresVente = totalAchatPierres * 3.8;
     const sertissage = 4 * totalNb;
-    const prix = Math.round(matiereVente + pierresVente + sertissage);
 
-    // Auto-fill du prix
-    if (!inputPrix.value || inputPrix.dataset.autoFilled === 'true') {
-      inputPrix.value = prix;
+    // Calcul par matière
+    const lignes = matieres.map(m => {
+      const prixAchatMat = (PRIX_ACHAT_JOAILLERIE[m] || {})[format];
+      if (prixAchatMat === undefined) {
+        return { matiere: m, html: `<span style="color:#a32020;">${m} : pas de prix d'achat connu pour ${format || '?'}</span>` };
+      }
+      const matiereVente = prixAchatMat * 3.8;
+      const prix = Math.round(matiereVente + pierresVente + sertissage);
+      return {
+        matiere: m,
+        prix,
+        html: `<strong>${m}</strong> : <strong style="color:var(--vert);">${prix.toLocaleString('fr-CH')}.- CHF</strong> <span style="color:var(--gris);font-size:0.78rem;">(matière ${prixAchatMat}.- × 3.8 = ${matiereVente.toFixed(0)}${totalNb > 0 ? ` + pierres ${pierresVente.toFixed(0)} + sertissage ${sertissage}` : ''})</span>`,
+      };
+    });
+
+    // Auto-fill du champ prix avec le prix de la 1ère matière qui a un prix valide
+    const premierPrix = lignes.find(l => l.prix != null);
+    if (premierPrix && (!inputPrix.value || inputPrix.dataset.autoFilled === 'true')) {
+      inputPrix.value = premierPrix.prix;
       inputPrix.dataset.autoFilled = 'true';
     }
 
     recap.classList.remove('hidden');
     recap.style.background = '#eaf3e9';
     recap.style.color = '#2c5530';
-    recap.innerHTML = `
-      💎 Calcul auto : <strong>${prix.toLocaleString('fr-CH')}.- CHF</strong><br>
-      <span style="font-size:0.78rem;color:var(--gris);">
-        Matière ${matiere} ${format} : ${prixAchatMat}.- × 3.8 = ${matiereVente.toFixed(0)}.- · Pierres : ${totalAchat}.- × 3.8 = ${pierresVente.toFixed(0)}.- · Sertissage : 4.- × ${totalNb} = ${sertissage}.-<br>
-        ${detail.join(' · ')}
-      </span>
-    `;
+    let html = '<strong>💎 Prix de vente calculé</strong><br>' + lignes.map(l => l.html).join('<br>');
+    if (totalNb > 0) {
+      html += `<br><span style="font-size:0.75rem;color:var(--gris);">Pierres : ${detailPierres.join(' · ')}</span>`;
+    }
+    if (matieres.length > 1) {
+      html += `<br><span style="font-size:0.75rem;color:var(--gris);">⚠️ Multi-matières : le champ "Prix de vente" est rempli avec le 1er prix. Le prix par matière est appliqué automatiquement aux variantes Shopify à la création.</span>`;
+    }
+    recap.innerHTML = html;
   }
 
   // Recalcule quand matière / format change
