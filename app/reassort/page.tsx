@@ -564,10 +564,37 @@ export default function ReassortPage() {
       }
 
       const recs = computeRecommendations(params, merged);
-      const totalUnits = recs.reduce((s, r) => s + r.recommendedQty, 0);
+      addLog(`SKU recommandés avant filtre Shopify : ${recs.length}`);
 
-      addLog(`SKU recommandés : ${recs.length} | Unités totales : ${totalUnits}`);
-      setResults(recs);
+      // Vérification Shopify — exclure les produits inactifs (archivés, brouillons)
+      addLog("Vérification statut Shopify en cours...");
+      let activeRecs = recs;
+      try {
+        const checkRes = await fetch("/api/reassort-check-skus", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ skus: recs.map((r) => r.sku) }),
+        });
+        if (checkRes.ok) {
+          const { activeSkus } = (await checkRes.json()) as { activeSkus: string[] };
+          const activeSet = new Set(activeSkus);
+          const excluded = recs.filter((r) => !activeSet.has(r.sku));
+          activeRecs = recs.filter((r) => activeSet.has(r.sku));
+          if (excluded.length > 0) {
+            addLog(`${excluded.length} SKU exclus (inactifs sur Shopify) : ${excluded.map((r) => r.sku).join(", ").slice(0, 120)}${excluded.length > 10 ? "…" : ""}`);
+          } else {
+            addLog("Tous les SKU sont actifs sur Shopify.");
+          }
+        } else {
+          addLog("Vérification Shopify échouée — recommandations non filtrées.");
+        }
+      } catch {
+        addLog("Vérification Shopify indisponible — recommandations non filtrées.");
+      }
+
+      const totalUnits = activeRecs.reduce((s, r) => s + r.recommendedQty, 0);
+      addLog(`SKU recommandés final : ${activeRecs.length} | Unités totales : ${totalUnits}`);
+      setResults(activeRecs);
       setLog(lines);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
