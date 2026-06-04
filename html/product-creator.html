@@ -729,6 +729,9 @@
     'carbone':   { 'addon':{achat:62.40,vente:109}, 'medium':{achat:31.20,vente:null} },
     'argent':    { 'addon':{achat:40.00,vente:249}, 'deux tiers':{achat:33.00,vente:219}, 'medium':{achat:26.00,vente:169} },
     'or':        { 'addon':{achat:350.00,vente:null}, 'deux tiers':{achat:320.00,vente:null}, 'medium':{achat:310.00,vente:null} },
+    'or rose':   { 'addon':{achat:350.00,vente:null}, 'deux tiers':{achat:320.00,vente:null}, 'medium':{achat:310.00,vente:null} },
+    'or jaune':  { 'addon':{achat:350.00,vente:null}, 'deux tiers':{achat:320.00,vente:null}, 'medium':{achat:310.00,vente:null} },
+    'or gris':   { 'addon':{achat:739.00,vente:null}, 'deux tiers':{achat:490.00,vente:null}, 'medium':{achat:190.00,vente:null} },
     'tantale':   { 'addon':{achat:390.00,vente:null}, 'deux tiers':{achat:290.00,vente:null}, 'medium':{achat:190.00,vente:null} },
     'icelea':    { 'addon':{achat:40,vente:295}, 'deux tiers':{achat:40,vente:269}, 'medium':{achat:40,vente:169}, 'pack 2 minis':{achat:40,vente:225} },
     'aura':      { 'medium':{achat:25,vente:199}, 'mini aura (x2)':{achat:32,vente:225}, 'mini aura (x1)':{achat:16,vente:114.50} },
@@ -787,6 +790,7 @@
     }
     majPrix();
     majInfoVariantes();
+    if (typeof rendreMatieresCheckboxes === 'function') rendreMatieresCheckboxes();
   });
 
 
@@ -880,16 +884,23 @@
   }
 
   // ====== CHECKBOXES MATIÈRES (multi-sélection — Shopify variantes) ======
-  const MATIERES_DISPO = ['argent', 'or', 'aluminium', 'polymère', 'titane', 'acier', 'bronze', 'bois', 'céramique', 'carbone', 'tantale'];
+  const MATIERES_DISPO = ['argent', 'or rose', 'or jaune', 'or gris', 'aluminium', 'polymère', 'titane', 'acier', 'bronze', 'bois', 'céramique', 'carbone', 'tantale'];
   function rendreMatieresCheckboxes() {
     const z = document.getElementById('f-matieres-checkboxes');
     if (!z) return;
-    z.innerHTML = MATIERES_DISPO.map(m => `
-      <label style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.6rem;background:white;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:0.9rem;">
-        <input type="checkbox" value="${m}" data-matiere style="margin:0;width:auto;">
-        ${m}
-      </label>
-    `).join('');
+    // Préserve les checked actuels
+    const cocheesActuelles = new Set(getMatieresCochees());
+    const format = $('f-format').value;
+    z.innerHTML = MATIERES_DISPO.map(m => {
+      const entry = PRIX[m]?.[format];
+      const prix = entry?.vente;
+      const prixTxt = prix ? ` <span style="color:var(--gris);font-size:0.78em;">${prix} CHF</span>` : (entry?.achat ? ` <span style="color:#bbb;font-size:0.78em;">achat ${entry.achat}</span>` : '');
+      const isChecked = cocheesActuelles.has(m) ? 'checked' : '';
+      return `<label style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.6rem;background:white;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:0.9rem;">
+        <input type="checkbox" value="${m}" data-matiere ${isChecked} style="margin:0;width:auto;">
+        ${m}${prixTxt}
+      </label>`;
+    }).join('');
     z.querySelectorAll('input[data-matiere]').forEach(cb => {
       cb.addEventListener('change', onMatieresChange);
     });
