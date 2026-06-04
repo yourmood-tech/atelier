@@ -1120,6 +1120,14 @@ const ORDRE_JOURS_SEMAINE = [4, 5, 6, 0, 1, 2, 3];
 function rendreCalendrier() {
   const annee = parseInt(document.getElementById('annee').value, 10);
   const cal = document.getElementById('calendrier');
+
+  // PRÉSERVATION : capture position scroll + mois ouverts manuellement avant le re-render
+  const _scrollY = window.scrollY;
+  const _moisOuverts = new Set();
+  document.querySelectorAll('.month').forEach(m => {
+    if (m.dataset.collapsed === 'false') _moisOuverts.add(m.dataset.moisId);
+  });
+
   cal.innerHTML = '';
 
   const today = new Date().toISOString().slice(0, 10);
@@ -1332,6 +1340,21 @@ function rendreCalendrier() {
   }
   // Re-applique l'état "semaines passées affichées" mémorisé avant le re-render
   restaurerPasseesAffichees();
+
+  // RESTAURATION : ré-ouvre les mois manuellement déroulés + restaure le scroll
+  _moisOuverts.forEach(moisId => {
+    const m = document.querySelector(`.month[data-mois-id="${moisId}"]`);
+    if (!m || m.dataset.collapsed !== 'true') return;
+    const content = m.querySelector('.month-content');
+    const chevron = m.querySelector('.mois-chevron');
+    const themeChevron = m.querySelector('.theme-banner .theme-chevron');
+    if (content) content.style.display = '';
+    m.dataset.collapsed = 'false';
+    if (chevron) chevron.style.transform = 'rotate(90deg)';
+    if (themeChevron) themeChevron.style.transform = 'rotate(90deg)';
+  });
+  // setTimeout pour laisser le navigateur recalculer le layout après les changements display
+  setTimeout(() => window.scrollTo(0, _scrollY), 0);
 }
 
 function toggleMois(headerEl) {
