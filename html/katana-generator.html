@@ -224,29 +224,11 @@ function proposerMtrl(matiere, format, taille, couleur) {
   return null;
 }
 
-// Parse le CSV avec PapaParse (chargé via SheetJS XLSX qui inclut CSV)
+// Parse le CSV avec SheetJS (gère correctement les newlines dans les cellules quoted comme Body HTML)
 function parseCSV(text) {
-  const lines = text.split(/\r?\n/);
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.trim()) continue;
-    // Parse CSV avec quotes
-    const cells = [];
-    let cur = '', inQ = false;
-    for (let j = 0; j < line.length; j++) {
-      const ch = line[j];
-      if (ch === '"' && line[j+1] === '"') { cur += '"'; j++; }
-      else if (ch === '"') inQ = !inQ;
-      else if (ch === ',' && !inQ) { cells.push(cur); cur = ''; }
-      else cur += ch;
-    }
-    cells.push(cur);
-    const obj = {};
-    headers.forEach((h, idx) => { obj[h] = cells[idx] || ''; });
-    rows.push(obj);
-  }
+  const wb = XLSX.read(text, { type: 'string', raw: true, FS: ',' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
   return rows;
 }
 

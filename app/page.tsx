@@ -74,6 +74,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         title: "Éditeur de recettes",
         description: "Consultez et éditez les recettes de fabrication Katana sans passer par l'application.",
       },
+      {
+        href: "/katana-generator",
+        emoji: "🏭",
+        title: "Générateur fichiers Katana",
+        description: "Upload ton CSV Shopify → l'app croise avec ton catalogue de 2 208 MTRL et génère les 2 Excel Katana (Products + Recipes) prêts à importer.",
+      },
     ],
   },
   {
