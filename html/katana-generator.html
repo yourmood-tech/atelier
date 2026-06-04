@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Générateur Katana — Atelier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root { --or: #b88a4a; --noir: #1a1410; --gris: #6b6259; --fond: #fdfaf3; --vert: #2c5530; --rouge: #a32020; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; max-width: 1400px; margin: 0 auto; padding: 1.5rem; background: var(--fond); color: var(--noir); }
+    h1 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 2.5rem; margin: 0 0 0.3rem; font-style: italic; }
+    .sub { color: var(--gris); font-size: 0.9rem; margin: 0 0 1.5rem; font-style: italic; }
+    .step { background: white; padding: 1.2rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eadfc8; }
+    .step h2 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.5rem; margin: 0 0 0.8rem; font-style: italic; }
+    input[type="file"] { padding: 0.4rem; background: white; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 0.9rem; }
+    button { background: var(--or); color: white; border: 0; padding: 0.6rem 1.2rem; border-radius: 6px; font-size: 0.9rem; cursor: pointer; margin: 0.2rem; font-family: inherit; }
+    button.secondary { background: #fff; color: var(--noir); border: 1px solid #ddd; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .stats { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.9rem; }
+    .stats span { padding: 0.3rem 0.8rem; background: white; border-radius: 6px; border: 1px solid #eadfc8; }
+    .stats .ok { color: var(--vert); font-weight: 600; }
+    .stats .ko { color: var(--rouge); font-weight: 600; }
+    .resultat { padding: 0.7rem 1rem; border-radius: 8px; margin-top: 0.8rem; font-size: 0.9rem; }
+    .resultat.ok { background: #eaf3e9; color: #2c5530; border: 1px solid #c5e4c0; }
+    .resultat.ko { background: #fde8e8; color: #a32020; border: 1px solid #f5c6c6; }
+    .resultat.hidden { display: none; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.5rem; }
+    th, td { padding: 0.5rem 0.7rem; text-align: left; border-bottom: 1px solid #eee; vertical-align: top; }
+    th { background: #f8f4eb; font-weight: 600; position: sticky; top: 0; }
+    tr.ok { background: #f6fbf5; }
+    tr.ko { background: #fef4f4; }
+    tr.ko td.mtrl-cell { background: #fde8e8; }
+    .titre-cell { font-size: 0.78rem; color: var(--gris); max-width: 280px; line-height: 1.3; }
+    .sku-cell { font-family: monospace; font-size: 0.74rem; }
+    .mtrl-input { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.78rem; font-family: monospace; background: white; }
+    .mtrl-input.invalid { border-color: var(--rouge); background: #fff5f5; }
+    .mtrl-input.valid { border-color: var(--vert); background: #f6fbf5; }
+    .note-input { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.78rem; background: white; }
+    .badge { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+    .badge.ok { background: #d4edda; color: var(--vert); }
+    .badge.ko { background: #f8d7da; color: var(--rouge); }
+    .filters { display: flex; gap: 0.5rem; align-items: center; margin: 0.8rem 0; flex-wrap: wrap; }
+    .filters input { padding: 0.4rem 0.6rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; min-width: 200px; }
+  </style>
+</head>
+<body>
+  <h1>Générateur Katana</h1>
+  <p class="sub">Upload ton CSV Shopify → l'app croise avec ton catalogue de 2 208 MTRL et génère les 2 fichiers Excel Katana. Corrige les MTRL manquants en rouge avant de générer.</p>
+
+  <div class="step">
+    <h2>Étape 1 — Upload du CSV Shopify</h2>
+    <input type="file" id="f-csv" accept=".csv">
+    <span id="f-csv-info" style="font-size:0.85rem;color:var(--gris);margin-left:0.6rem;"></span>
+    <div style="margin-top:0.6rem;font-size:0.8rem;color:var(--gris);">
+      Format attendu : export Shopify standard (Handle, Title, Type, Tags, Option1/2/3, Variant SKU, etc.).
+      Catalogue MTRL Katana : <strong id="catalog-count">chargement…</strong> matériaux référencés.
+    </div>
+  </div>
+
+  <div class="step" id="step-2" style="display:none;">
+    <h2>Étape 2 — Vérification des mappings (édite les rouges)</h2>
+    <div class="stats">
+      <span>Variantes : <strong id="total">0</strong></span>
+      <span class="ok">MTRL trouvés : <strong id="nb-ok">0</strong></span>
+      <span class="ko">MTRL manquants : <strong id="nb-ko">0</strong></span>
+    </div>
+    <div class="filters">
+      <input type="search" id="search" placeholder="🔍 filtrer par titre, SKU ou MTRL…" oninput="rendreTable()">
+      <button type="button" class="secondary" onclick="filtreMode='ko'; rendreTable()">⚠️ Voir seulement les manquants</button>
+      <button type="button" class="secondary" onclick="filtreMode='all'; rendreTable()">Tout voir</button>
+    </div>
+    <div id="table-zone" style="max-height:600px;overflow:auto;border:1px solid #eee;border-radius:6px;"></div>
+  </div>
+
+  <div class="step" id="step-3" style="display:none;">
+    <h2>Étape 3 — Générer les 2 fichiers Excel</h2>
+    <p style="font-size:0.85rem;color:var(--gris);margin:0 0 0.6rem;">Le bouton ci-dessous télécharge <strong>katana-step-2-products.xlsx</strong> et <strong>katana-add-new-recipes.xlsx</strong> dans tes téléchargements.</p>
+    <button type="button" onclick="genererExcel()">📥 Télécharger les 2 fichiers Katana</button>
+    <button type="button" class="secondary" onclick="exporterCorrections()">💾 Exporter mes corrections (JSON)</button>
+  </div>
+
+  <div id="resultat" class="resultat hidden"></div>
+
+<script>
+let MTRL_CATALOG = new Set();
+let VARIANTES = []; // [{titre, sku, format, matiere, taille, couleur, mtrlPropose, mtrlCorrige, note}]
+let filtreMode = 'all';
+
+// Charge le catalogue MTRL au boot
+async function chargerCatalogue() {
+  try {
+    const r = await fetch('/api/katana/catalog');
+    const d = await r.json();
+    MTRL_CATALOG = new Set(d.mtrls || []);
+    document.getElementById('catalog-count').textContent = (d.count || 0).toLocaleString('fr-CH');
+  } catch (e) {
+    document.getElementById('catalog-count').textContent = 'erreur chargement';
+  }
+}
+chargerCatalogue();
+
+// === Patterns de détection MTRL (copiés du script Python) ===
+const COULEURS_ALU = {
+  'myrtille': 'MYRTILLE', 'anthracite': 'ANTH', 'rouge': 'ROUGE', 'noir': 'NOIR',
+  'ocre': 'OCRE', 'aubergine': 'AUBERGINE', 'jaune chaud': 'JAUNE', 'bleu marine': 'MARINE',
+  'taupe': 'TAUPE', 'corail': 'CORAIL', 'bleu violet': 'BLEUVIOLET', 'turquoise': 'TURQUOISE',
+  'emeraude': 'EMERAUDE', 'émeraude': 'EMERAUDE', 'brun': 'BRUN', 'violet': 'VIOLET',
+  'noisette': 'NOISETTE',
+  'vert pastel': 'VP', 'bleu pastel': 'BLEUPASTEL', 'jaune pastel': 'JAUNEPASTEL',
+  'pêche': 'PECHE', 'peche': 'PECHE', 'abricot': 'ABRICOT',
+  'lilas cashmere': 'LILAS', 'lilas': 'LILAS',
+  'belipastel': 'BELI', 'rose pastel': 'ROSEP'
+};
+
+const CODE_TO_COULEUR_FALLBACK = {
+  'NOISETTE': 'noisette', 'MYRTILLE': 'myrtille', 'ANTH': 'anthracite', 'ANTHRACITE': 'anthracite',
+  'ROUGE': 'rouge', 'NOIR': 'noir', 'OCRE': 'ocre', 'AUBERGINE': 'aubergine',
+  'JAUNE': 'jaune chaud', 'MARINE': 'bleu marine', 'TAUPE': 'taupe', 'CORAIL': 'corail',
+  'BLEUVIOLET': 'bleu violet', 'TURQUOISE': 'turquoise', 'EMERAUDE': 'emeraude',
+  'BRUN': 'brun', 'VIOLET': 'violet',
+  'VERTPASTEL': 'vert pastel', 'VP': 'vert pastel',
+  'BLEUPASTEL': 'bleu pastel', 'BP': 'bleu pastel',
+  'JAUNEPASTEL': 'jaune pastel',
+  'PECHE': 'pêche', 'ABRICOT': 'abricot',
+  'LILAS': 'lilas', 'LIL': 'lilas',
+  'BELI': 'belipastel', 'BELIP': 'belipastel', 'BELIPASTEL': 'belipastel',
+  'ROSEP': 'rose pastel', 'ROSEPASTEL': 'rose pastel',
+};
+
+function extraireCouleurDuSku(sku) {
+  const skuUp = sku.toUpperCase();
+  const codes = Object.keys(CODE_TO_COULEUR_FALLBACK).sort((a,b) => b.length - a.length);
+  for (const c of codes) {
+    if (new RegExp('-' + c.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '(-|$)').test(skuUp)) {
+      return CODE_TO_COULEUR_FALLBACK[c];
+    }
+  }
+  return null;
+}
+
+function detecterFormat(sku) {
+  const s = sku.toUpperCase();
+  if (s.startsWith('DT-') || s.includes('-23')) return 'deux tiers';
+  if (s.startsWith('ME-') || s.includes('-MED')) return 'medium';
+  if (s.startsWith('MI-') || s.includes('-MINI')) return 'mini';
+  if (s.startsWith('OM-') || s.includes('-OPEN')) return 'open mood';
+  if (s.startsWith('BS-') || s.startsWith('BL-') || s.startsWith('BXS-') || s.includes('-BASE')) return 'base';
+  return 'addon';
+}
+
+function detecterMatiereDuType(type) {
+  const t = (type || '').toLowerCase();
+  if (t.includes('argent glitter')) return 'argent';
+  if (t.includes('argent')) return 'argent';
+  if (t.includes('or rose')) return 'or rose';
+  if (t.includes('or jaune')) return 'or jaune';
+  if (t.includes('or gris') || t.includes('or blanc')) return 'or gris';
+  if (t.includes('aluminium')) return 'aluminium';
+  if (t.includes('polymère') || t.includes('polymere')) return 'polymère';
+  if (t.includes('titane')) return 'titane';
+  if (t.includes('acier')) return 'acier';
+  if (t.includes('bronze')) return 'bronze';
+  if (t.includes('bois')) return 'bois';
+  if (t.includes('céramique') || t.includes('ceramique')) return 'céramique';
+  if (t.includes('carbone')) return 'carbone';
+  if (t.includes('tantale')) return 'tantale';
+  if (t.includes('or')) return 'or';
+  return '';
+}
+
+// Génère le MTRL proposé selon les patterns
+function proposerMtrl(matiere, format, taille, couleur) {
+  if (!matiere || !taille) return null;
+  const f = format.toLowerCase();
+
+  if (matiere === 'argent') {
+    if (f === 'addon') return `MTRL-ARGENT-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23ARGENT-${taille}`;
+    if (f === 'medium') return `MTRL-MEDARGENT-${taille}`;
+  }
+  if (matiere === 'aluminium') {
+    const c = couleur ? COULEURS_ALU[couleur.toLowerCase()] : null;
+    if (!c) return null;
+    if (f === 'addon') return `MTRL-ALU-${taille}-${c}`;
+    if (f === 'deux tiers') {
+      const cdt = {'VP':'VERTPASTEL','BLEUPASTEL':'BP','LILAS':'LIL','BELI':'BELIP','ROSEP':'ROSEP'}[c] || c;
+      return `MTRL-23ALU-${taille}-${cdt}`;
+    }
+    if (f === 'medium') return `MTRL-MEDALU-${taille}-${c}`;
+    if (f === 'mini') return `MTRL-MINIALU-${taille}-${c}`;
+  }
+  if (matiere === 'polymère') {
+    if (f === 'addon') return `MTRL-POLY-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23POLY-${taille}`;
+    if (f === 'medium') return `MTRL-MEDPOLY-${taille}`;
+  }
+  if (matiere === 'titane') {
+    if (f === 'addon') return `MTRL-TITANE-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23TITANE-${taille}`;
+    if (f === 'medium') return `MTRL-MEDTITANE-${taille}`;
+  }
+  if (matiere === 'acier') {
+    if (f === 'addon') return `MTRL-ACIER-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23ACIER-${taille}`;
+    if (f === 'medium') return `MTRL-MEDACIER-${taille}`;
+  }
+  if (matiere === 'or' || matiere === 'or jaune') {
+    if (f === 'addon') return `MTRL-ORJAUNE-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23ORJAUNE-${taille}`;
+    if (f === 'medium') return `MTRL-MEDORJAUNE-${taille}`;
+  }
+  if (matiere === 'or rose') {
+    if (f === 'addon') return `MTRL-OROSE-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23OROSE-${taille}`;
+    if (f === 'medium') return `MTRL-MEDOROSE-${taille}`;
+  }
+  if (matiere === 'or gris') {
+    if (f === 'addon') return `MTRL-ORGRIS-${taille}`;
+    if (f === 'deux tiers') return `MTRL-23ORGRIS-${taille}`;
+    if (f === 'medium') return `MTRL-MEDORGRIS-${taille}`;
+  }
+  return null;
+}
+
+// Parse le CSV avec PapaParse (chargé via SheetJS XLSX qui inclut CSV)
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/);
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    // Parse CSV avec quotes
+    const cells = [];
+    let cur = '', inQ = false;
+    for (let j = 0; j < line.length; j++) {
+      const ch = line[j];
+      if (ch === '"' && line[j+1] === '"') { cur += '"'; j++; }
+      else if (ch === '"') inQ = !inQ;
+      else if (ch === ',' && !inQ) { cells.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    cells.push(cur);
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = cells[idx] || ''; });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+document.getElementById('f-csv').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('f-csv-info').textContent = file.name + ' (lecture…)';
+  const text = await file.text();
+  const rows = parseCSV(text);
+  document.getElementById('f-csv-info').textContent = file.name + ' (' + rows.length + ' lignes)';
+  traiterCSV(rows);
+});
+
+function traiterCSV(rows) {
+  VARIANTES = [];
+  // Group par handle pour récupérer Type/Title (qui sont sur la 1ère ligne uniquement)
+  const produitsMeta = {};
+  for (const r of rows) {
+    if (r['Handle'] && (r['Title'] || r['Type'])) {
+      if (!produitsMeta[r['Handle']]) {
+        produitsMeta[r['Handle']] = { title: r['Title'] || '', type: r['Type'] || '' };
+      }
+    }
+  }
+  for (const r of rows) {
+    const sku = (r['Variant SKU'] || '').trim();
+    if (!sku) continue;
+    const handle = r['Handle'];
+    const meta = produitsMeta[handle] || {};
+    const titre = meta.title || sku;
+    const type = meta.type || '';
+    const taille = (r['Option1 Value'] || '').trim();
+    if (!taille || taille.toLowerCase() === 'taille inconnue' || sku.endsWith('-00')) continue;
+    const matiere = detecterMatiereDuType(type);
+    const format = detecterFormat(sku);
+    let couleur = null;
+    if ((r['Option2 Name'] || '').toLowerCase().includes('couleur')) {
+      couleur = r['Option2 Value'];
+    }
+    if (!couleur) couleur = extraireCouleurDuSku(sku);
+    const mtrlPropose = proposerMtrl(matiere, format, taille, couleur);
+    VARIANTES.push({
+      titre, sku, type, taille, matiere, format, couleur,
+      mtrlPropose: mtrlPropose || '',
+      mtrlCorrige: mtrlPropose || '',
+      note: '',
+    });
+  }
+  // Affiche
+  document.getElementById('step-2').style.display = 'block';
+  document.getElementById('step-3').style.display = 'block';
+  document.getElementById('total').textContent = VARIANTES.length;
+  rendreTable();
+}
+
+function mtrlEstValide(mtrl) {
+  return mtrl && MTRL_CATALOG.has(mtrl.toUpperCase().trim());
+}
+
+function rendreTable() {
+  const zone = document.getElementById('table-zone');
+  const search = (document.getElementById('search')?.value || '').toLowerCase();
+  let filtres = VARIANTES.map((v, i) => ({ ...v, idx: i, ok: mtrlEstValide(v.mtrlCorrige) }));
+  if (filtreMode === 'ko') filtres = filtres.filter(v => !v.ok);
+  if (search) {
+    filtres = filtres.filter(v =>
+      (v.titre || '').toLowerCase().includes(search) ||
+      (v.sku || '').toLowerCase().includes(search) ||
+      (v.mtrlCorrige || '').toLowerCase().includes(search)
+    );
+  }
+  document.getElementById('nb-ok').textContent = VARIANTES.filter(v => mtrlEstValide(v.mtrlCorrige)).length;
+  document.getElementById('nb-ko').textContent = VARIANTES.filter(v => !mtrlEstValide(v.mtrlCorrige)).length;
+  let html = '<table><thead><tr><th>#</th><th>Titre · SKU</th><th>Détecté</th><th>MTRL</th><th>📝 Note</th><th>Statut</th></tr></thead><tbody>';
+  filtres.forEach(v => {
+    const rowCls = v.ok ? 'ok' : 'ko';
+    const inputCls = v.mtrlCorrige ? (v.ok ? 'valid' : 'invalid') : '';
+    html += `<tr class="${rowCls}">
+      <td>${v.idx + 1}</td>
+      <td>
+        <div class="titre-cell">${escapeHtml(v.titre)}</div>
+        <div class="sku-cell">${escapeHtml(v.sku)}</div>
+      </td>
+      <td style="font-size:0.75rem;color:var(--gris);">
+        ${escapeHtml(v.matiere || '?')}<br>
+        ${escapeHtml(v.format || '?')} · ${escapeHtml(v.taille || '?')}<br>
+        ${v.couleur ? escapeHtml(v.couleur) : ''}
+      </td>
+      <td class="mtrl-cell">
+        <input type="text" class="mtrl-input ${inputCls}" value="${escapeHtml(v.mtrlCorrige)}" oninput="onMtrlEdit(${v.idx}, this.value)">
+      </td>
+      <td><input type="text" class="note-input" value="${escapeHtml(v.note)}" oninput="VARIANTES[${v.idx}].note = this.value" placeholder="optionnel"></td>
+      <td><span class="badge ${v.ok ? 'ok' : 'ko'}">${v.ok ? '✓ trouvé' : '✗ manquant'}</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  zone.innerHTML = html;
+}
+
+function onMtrlEdit(idx, val) {
+  VARIANTES[idx].mtrlCorrige = val.trim();
+  // Met juste à jour la ligne (pas tout re-render pour préserver le focus)
+  const v = VARIANTES[idx];
+  const ok = mtrlEstValide(v.mtrlCorrige);
+  v.ok = ok;
+  document.getElementById('nb-ok').textContent = VARIANTES.filter(x => mtrlEstValide(x.mtrlCorrige)).length;
+  document.getElementById('nb-ko').textContent = VARIANTES.filter(x => !mtrlEstValide(x.mtrlCorrige)).length;
+  // Update visuel de la ligne courante
+  const tr = document.querySelectorAll('#table-zone tbody tr')[Array.from(document.querySelectorAll('#table-zone tbody tr')).findIndex((tr, i) => {
+    const inputs = tr.querySelectorAll('input.mtrl-input');
+    return inputs[0] === event.target;
+  })];
+  if (tr) {
+    tr.className = ok ? 'ok' : 'ko';
+    const badge = tr.querySelector('.badge');
+    if (badge) { badge.className = 'badge ' + (ok ? 'ok' : 'ko'); badge.textContent = ok ? '✓ trouvé' : '✗ manquant'; }
+    event.target.className = 'mtrl-input ' + (ok ? 'valid' : 'invalid');
+  }
+}
+
+function escapeHtml(s) {
+  return (s == null ? '' : String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function genererExcel() {
+  const res = document.getElementById('resultat');
+  const variantesOk = VARIANTES.filter(v => v.mtrlCorrige && v.mtrlCorrige.trim());
+  if (variantesOk.length === 0) { res.className = 'resultat ko'; res.textContent = 'Aucune variante avec MTRL renseigné.'; return; }
+  // ============ FICHIER 1 — Products ============
+  const wb1 = XLSX.utils.book_new();
+  const data1 = [['Product name (required)', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Variant option 1', 'Variant value 1', null]];
+  // Group par titre pour avoir 1 ligne par variante
+  for (const v of variantesOk) {
+    const valOpt1 = isNaN(parseInt(v.taille)) ? v.taille : parseInt(v.taille);
+    data1.push([v.titre, 'pcs', 'Yes', 'No', 'No', 'None', v.sku, 'Taille', valOpt1, '']);
+  }
+  const ws1 = XLSX.utils.aoa_to_sheet(data1);
+  XLSX.utils.book_append_sheet(wb1, ws1, 'Products');
+  XLSX.writeFile(wb1, 'katana-step-2-products.xlsx');
+  // ============ FICHIER 2 — Recipes ============
+  const wb2 = XLSX.utils.book_new();
+  const data2 = [['Product variant code / SKU (required)', 'Ingredient variant code / SKU (required)', 'Quantity (required)']];
+  for (const v of variantesOk) {
+    if (!v.mtrlCorrige) continue;
+    const qtyMatch = v.sku.match(/-(\d+)-minis?$/i);
+    const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
+    data2.push([v.sku, v.mtrlCorrige, qty]);
+  }
+  const ws2 = XLSX.utils.aoa_to_sheet(data2);
+  XLSX.utils.book_append_sheet(wb2, ws2, 'Product recipes (BOM)');
+  XLSX.writeFile(wb2, 'katana-add-new-recipes.xlsx');
+  res.className = 'resultat ok';
+  const nb_ok = variantesOk.filter(v => mtrlEstValide(v.mtrlCorrige)).length;
+  const nb_ko = variantesOk.length - nb_ok;
+  res.innerHTML = `✅ <strong>2 fichiers téléchargés</strong> : <em>katana-step-2-products.xlsx</em> et <em>katana-add-new-recipes.xlsx</em><br>${variantesOk.length} variantes incluses · ${nb_ok} MTRL trouvés dans Katana · ${nb_ko} à créer avant l'import recipes`;
+}
+
+function exporterCorrections() {
+  const blob = new Blob([JSON.stringify(VARIANTES, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `katana-corrections-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
