@@ -43,6 +43,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         title: "Commande Icelea",
         description: "Créez un ordre d'achat Icelea depuis Katana : scan produit, choix taille, confirmation ingrédients.",
       },
+      {
+        href: "/reassort",
+        emoji: "📦",
+        title: "Réassort fournisseurs",
+        description: "Calculez les quantités à commander par fournisseur à partir des exports Katana 7j / 30j / 90j. Mode volatil ou continu.",
+      },
     ],
   },
   {
