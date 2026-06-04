@@ -497,7 +497,8 @@
       });
       const data = await r.json();
       if (!r.ok) {
-        erreur.textContent = 'Erreur : ' + (data.error || JSON.stringify(data));
+        const detailTxt = data.detail ? ' — ' + data.detail.slice(0, 300) : '';
+        erreur.textContent = 'Erreur : ' + (data.error || JSON.stringify(data)) + detailTxt;
         erreur.classList.remove('hidden'); return;
       }
       afficherResultat(data);
