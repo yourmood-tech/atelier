@@ -297,21 +297,9 @@
 
     <div class="row">
       <div>
-        <label>Matière *</label>
-        <select id="f-matiere">
-          <option value="">— choisir —</option>
-          <option value="argent">argent</option>
-          <option value="or">or</option>
-          <option value="aluminium">aluminium</option>
-          <option value="polymère">polymère</option>
-          <option value="titane">titane</option>
-          <option value="acier">acier</option>
-          <option value="bronze">bronze</option>
-          <option value="bois">bois</option>
-          <option value="céramique">céramique</option>
-          <option value="carbone">carbone</option>
-          <option value="tantale">tantale</option>
-        </select>
+        <label>Matière(s) * <span class="opt">(coche 1 ou plusieurs — Shopify créera 1 variante par matière au choix client)</span></label>
+        <div id="f-matieres-checkboxes" style="display:flex;flex-wrap:wrap;gap:0.4rem;background:#fafafa;border:1px solid #ddd;border-radius:8px;padding:0.6rem;"></div>
+        <input type="hidden" id="f-matiere" value="">
       </div>
       <div>
         <label>Finition <span class="opt">(optionnel)</span></label>
@@ -891,7 +879,31 @@
     }
   }
 
-  $('f-matiere').addEventListener('change', rendrePaletteCouleurs);
+  // ====== CHECKBOXES MATIÈRES (multi-sélection — Shopify variantes) ======
+  const MATIERES_DISPO = ['argent', 'or', 'aluminium', 'polymère', 'titane', 'acier', 'bronze', 'bois', 'céramique', 'carbone', 'tantale'];
+  function rendreMatieresCheckboxes() {
+    const z = document.getElementById('f-matieres-checkboxes');
+    if (!z) return;
+    z.innerHTML = MATIERES_DISPO.map(m => `
+      <label style="display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.6rem;background:white;border:1px solid #ddd;border-radius:5px;cursor:pointer;font-size:0.9rem;">
+        <input type="checkbox" value="${m}" data-matiere style="margin:0;width:auto;">
+        ${m}
+      </label>
+    `).join('');
+    z.querySelectorAll('input[data-matiere]').forEach(cb => {
+      cb.addEventListener('change', onMatieresChange);
+    });
+  }
+  function getMatieresCochees() {
+    return Array.from(document.querySelectorAll('#f-matieres-checkboxes input[data-matiere]:checked')).map(cb => cb.value);
+  }
+  function onMatieresChange() {
+    const cochees = getMatieresCochees();
+    $('f-matiere').value = cochees[0] || '';
+    rendrePaletteCouleurs();
+    if (typeof majPrix === 'function') majPrix();
+  }
+  rendreMatieresCheckboxes();
 
   $('btn-ajouter-couleur').addEventListener('click', () => {
     const c = $('f-couleur-custom').value.trim().toLowerCase();
@@ -1738,6 +1750,13 @@
     if (couleursSelectionnees.size > 0) {
       infos.couleurs = Array.from(couleursSelectionnees);
     }
+
+    // Matières multiples cochées → Shopify créera 1 variante par matière
+    const matieresCochees = getMatieresCochees();
+    if (matieresCochees.length > 1) {
+      infos.matieres = matieresCochees;
+    }
+    // matiere reste = 1ère cochée (déjà sync via hidden field) pour compat avec le reste
 
     // Caractéristiques particulières (cases cochées → tags additionnels)
     const tagsParticuliers = [];

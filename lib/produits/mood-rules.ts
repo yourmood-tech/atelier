@@ -473,6 +473,7 @@ interface ProduitInfos {
   formats?: string[];
   nom?: string;
   matiere: string;
+  matieres?: string[];
   finition?: string;
   couleur?: string;
   couleurs?: string[];
@@ -639,6 +640,28 @@ export function construirePayloadProduit(
         }
       }
     }
+  }
+
+  // ===== Multi-matières (1 variante par matière au choix client) =====
+  // Si infos.matieres contient au moins 2 entrées, on duplique chaque variante par matière.
+  // Le prix est recalculé selon la matière (via getPrixForFormat) si dispo dans le catalogue.
+  if (Array.isArray(infos.matieres) && infos.matieres.length > 1) {
+    const matieresList = infos.matieres.filter(Boolean);
+    const variantsBase = [...variants];
+    variants.length = 0;
+    const nextOptKey = `option${options.length + 1}`;
+    for (const v of variantsBase) {
+      for (const m of matieresList) {
+        const dup: Record<string, unknown> = { ...v };
+        const prixMat = getPrixForFormat(m, formatPrincipal);
+        if (prixMat.vente != null) dup.price = String(prixMat.vente);
+        const slugMat = m.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 8) || "mat";
+        dup.sku = `${v.sku}-${slugMat}`;
+        dup[nextOptKey] = m;
+        variants.push(dup);
+      }
+    }
+    options.push({ name: "Matière" });
   }
 
   // ===== Option quantité au choix client (générique) =====
