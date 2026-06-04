@@ -149,51 +149,51 @@
     "or rose": {
       "addon": {
         "achat": 350.0,
-        "vente": null,
-        "_note": "or rose/jaune 9K"
+        "vente": 1330,
+        "_note": "or rose 9K"
       },
       "deux tiers": {
         "achat": 320.0,
-        "vente": null,
-        "_note": "or rose/jaune 9K"
+        "vente": 1216,
+        "_note": "or rose 9K"
       },
       "medium": {
         "achat": 310.0,
-        "vente": null,
-        "_note": "or rose/jaune 9K"
+        "vente": 1178,
+        "_note": "or rose 9K"
       }
     },
     "or jaune": {
       "addon": {
         "achat": 350.0,
-        "vente": null,
-        "_note": "or rose/jaune 9K"
+        "vente": 1330,
+        "_note": "or jaune 9K"
       },
       "deux tiers": {
         "achat": 320.0,
-        "vente": null,
-        "_note": "or rose/jaune 9K"
+        "vente": 1216,
+        "_note": "or jaune 9K"
       },
       "medium": {
         "achat": 310.0,
-        "vente": null,
-        "_note": "or rose/jaune 9K"
+        "vente": 1178,
+        "_note": "or jaune 9K"
       }
     },
     "or gris": {
       "addon": {
         "achat": 739.0,
-        "vente": null,
+        "vente": 2808.2,
         "_note": "or gris 18K"
       },
       "deux tiers": {
         "achat": 490.0,
-        "vente": null,
+        "vente": 1862,
         "_note": "or gris 18K"
       },
       "medium": {
         "achat": 190.0,
-        "vente": null,
+        "vente": 722,
         "_note": "or gris 18K"
       }
     }
