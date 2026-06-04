@@ -28,6 +28,9 @@ export const FORME_BASE_TO_SKU: Record<string, string> = {
 export const MATIERE_TO_SKU: Record<string, string> = {
   argent: "ARGENT",
   or: "OR",
+  "or rose": "ORROSE",
+  "or jaune": "ORJAUNE",
+  "or gris": "ORGRIS",
   aluminium: "ALU",
   polymère: "POLY",
   titane: "TIT",
@@ -50,6 +53,9 @@ export const FORMAT_TO_TAG: Record<string, string> = {
 
 export const MATIERE_TO_MOODCAT: Record<string, string> = {
   or: "mood02",
+  "or rose": "mood02",
+  "or jaune": "mood02",
+  "or gris": "mood02",
   bois: "mood02",
   carbone: "mood02",
   argent: "mood04",
@@ -68,6 +74,9 @@ export const MATIERE_TO_DELAI: Record<string, number> = {
   titane: 7,
   carbone: 7,
   or: 10,
+  "or rose": 10,
+  "or jaune": 10,
+  "or gris": 14,
   argent: 10,
 };
 
