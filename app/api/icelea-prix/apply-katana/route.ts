@@ -31,6 +31,13 @@ async function patchVariant(variantId: number, price: number) {
   throw new Error(`Rate-limit dépassé pour variant ${variantId}`);
 }
 
+// Traitement en batches parallèles pour rester dans les limites Vercel (~60s)
+// 20 PATCHes simultanés + 80ms entre batches → 2600 variants ≈ 10s
+const BATCH_SIZE = 20;
+const BATCH_DELAY_MS = 80;
+
+export const maxDuration = 60; // secondes — Vercel Pro/Hobby max
+
 export async function POST(req: NextRequest) {
   try {
     const { rows } = (await req.json()) as { rows: CompareRow[] };
@@ -40,14 +47,21 @@ export async function POST(req: NextRequest) {
     let updated = 0;
     const errorDetails: string[] = [];
 
-    for (const r of toUpdate) {
-      try {
-        await patchVariant(r.variant_id, r.invoice_price);
-        updated++;
-        await SLEEP(120);
-      } catch (e) {
-        errorDetails.push(`${r.variant_sku || r.variant_id}: ${e instanceof Error ? e.message : String(e)}`);
+    // Découper en batches et traiter en parallèle
+    for (let i = 0; i < toUpdate.length; i += BATCH_SIZE) {
+      const batch = toUpdate.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(
+        batch.map(r => patchVariant(r.variant_id, r.invoice_price).then(() => ({ ok: true, r })))
+      );
+      for (const res of results) {
+        if (res.status === "fulfilled") {
+          updated++;
+        } else {
+          const r = batch[results.indexOf(res)];
+          errorDetails.push(`${r?.variant_sku || r?.variant_id}: ${res.reason?.message ?? "erreur"}`);
+        }
       }
+      if (i + BATCH_SIZE < toUpdate.length) await SLEEP(BATCH_DELAY_MS);
     }
 
     return NextResponse.json({ updated, errors: errorDetails.length, errorDetails });

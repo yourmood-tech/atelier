@@ -140,8 +140,13 @@ export default function IceleaPrixPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rows: compareResult.rows }),
       });
+      if (!res.ok) {
+        const txt = await res.text();
+        setError(`Erreur HTTP ${res.status} : ${txt.slice(0, 300)}`);
+        return;
+      }
       const data = await res.json() as typeof applyResult & { error?: string };
-      if (!res.ok || data?.error) { setError(data?.error ?? "Erreur"); return; }
+      if (data?.error) { setError(data.error); return; }
       setApplyResult(data);
       addLog(`✓ ${data!.updated} variants mis à jour dans Katana.`);
       if (data!.errors) addLog(`⚠ ${data!.errors} erreurs.`);
