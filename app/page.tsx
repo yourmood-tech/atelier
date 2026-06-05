@@ -89,6 +89,19 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
     ],
   },
   {
+    id: "insights",
+    title: "Insights clientes",
+    summary: "Sondages et collecte d'idées clientes pour orienter les prochaines pépites, coffrets et pièces joaillerie.",
+    tools: [
+      {
+        href: "/sondage/admin",
+        emoji: "💌",
+        title: "Sondage pépites",
+        description: "Tableau de bord du sondage clientes : lien vers le Google Sheet en temps réel, rappel code Shopify MERCIAVOUS20. Sondage public sur /sondage.",
+      },
+    ],
+  },
+  {
     id: "boutiques",
     title: "Outils Boutiques",
     summary: "Inventaire en boutique et correction de fulfillments pour les équipes en point de vente.",

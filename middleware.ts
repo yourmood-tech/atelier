@@ -9,11 +9,16 @@ const WINEUR_ALLOWED = new Set([
 ]);
 
 export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  // /sondage (page publique pour clientes) — exclut /sondage/admin
+  if (pathname === "/sondage" || (pathname.startsWith("/sondage/") && !pathname.startsWith("/sondage/admin"))) {
+    return;
+  }
+
   if (!req.auth) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
-
-  const { pathname } = req.nextUrl;
 
   // /wineur (page) → restreint aux 4 utilisateurs autorisés
   // /api/wineur/* → exclu du middleware (appels internes depuis generate)
@@ -28,7 +33,7 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    // Protect all routes except auth, login, gorgias webhook, shopify callback, public client perso pages, and Next.js internals
-    "/((?!api/auth|api/wineur|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/creer-argent-cart-shopify|api/design|api/design-argent|api/admin|api/quiz-submit|api/mood-lovers|admin|creer|creer-argent|aluminium|argent|sertissages|login|_next/static|_next/image|favicon.ico).*)",
+    // Protect all routes except auth, login, gorgias webhook, shopify callback, public client perso pages, sondage public, and Next.js internals
+    "/((?!api/auth|api/wineur|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/creer-argent-cart-shopify|api/design|api/design-argent|api/admin|api/quiz-submit|api/mood-lovers|api/sondage|admin|creer|creer-argent|aluminium|argent|sertissages|login|_next/static|_next/image|favicon.ico).*)",
   ],
 };
