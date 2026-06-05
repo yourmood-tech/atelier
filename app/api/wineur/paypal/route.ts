@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { COMPTES, calculTva } from "@/lib/wineur/accounting";
 import type { Ecriture } from "@/lib/wineur/accounting";
+import { getESTVRate } from "@/lib/wineur/estv-rates";
 import comptesPaypal from "@/lib/wineur/comptes_paypal.json";
 
 const CLIENT_ID     = process.env.PAYPAL_CLIENT_ID!;
@@ -205,19 +206,24 @@ export async function GET(req: NextRequest) {
         e(ecritures, date, COMPTES.TVA_ACQ,  `TVA CH ${lib}`,          tva);
         e(ecritures, date, cpte,             lib,                      -brut, devise !== "CHF" ? -brut : undefined, devise !== "CHF" ? devise : undefined);
       } else {
-        // Fournisseur étranger : brut = HT → TVA auto-liquidée = brut × 8.1%
-        const tvaAcq = r2(brut * TAUX);
+        // Fournisseur étranger : brut = HT (en devise étrangère)
+        // Le compte de charge est en CHF → conversion via taux ESTV du mois
         if (devise === "CHF") {
-          e(ecritures, date, cpteCharge,       lib,                            brut);
+          const tvaAcq = r2(brut * TAUX);
+          e(ecritures, date, cpteCharge,       lib,                             brut);
+          e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,         tvaAcq);
+          e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`,  -tvaAcq);
+          e(ecritures, date, cpte,             lib,                            -brut);
         } else {
-          e(ecritures, date, cpteCharge,       lib,                            brut, brut, devise);
-        }
-        e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,        tvaAcq);
-        e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`, -tvaAcq);
-        if (devise === "CHF") {
-          e(ecritures, date, cpte,             lib,                           -brut);
-        } else {
-          e(ecritures, date, cpte,             lib,                           -brut, -brut, devise);
+          const rate    = await getESTVRate(date, devise);
+          const brutChf = r2(brut * rate);
+          const tvaAcq  = r2(brutChf * TAUX);
+          // Compte de charge : montant en CHF, avec montant_orig + devise pour traçabilité
+          e(ecritures, date, cpteCharge,       lib,                             brutChf, brut,  devise);
+          e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,         tvaAcq);
+          e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`,  -tvaAcq);
+          // Compte PayPal devise : montant en devise étrangère
+          e(ecritures, date, cpte,             lib,                            -brut,   -brut, devise);
         }
       }
     }
