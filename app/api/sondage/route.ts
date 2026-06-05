@@ -43,6 +43,14 @@ function buildRow(
     } else if (q.type === "slider" && typeof v === "number") {
       const unit = q.sliderUnit ? ` ${q.sliderUnit}` : "";
       row.push(`${v}${unit}`);
+    } else if (q.type === "gauge" && typeof v === "number") {
+      row.push(`${v}%`);
+    } else if (q.type === "rating" && typeof v === "number") {
+      row.push(`${v}/${q.ratingMax ?? 5} étoiles`);
+    } else if (q.type === "rank" && Array.isArray(v)) {
+      const topN = q.rankTopN ?? 3;
+      const podium = v.slice(0, topN).map((x, i) => `${i + 1}. ${labelFor(q.id, String(x))}`).join(" · ");
+      row.push(podium);
     } else {
       row.push("");
     }

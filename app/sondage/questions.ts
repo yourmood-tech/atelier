@@ -1,4 +1,13 @@
-export type QuestionType = "single" | "multi" | "text" | "longtext" | "slider" | "contact";
+export type QuestionType =
+  | "single"
+  | "multi"
+  | "text"
+  | "longtext"
+  | "slider"
+  | "rating"
+  | "gauge"
+  | "rank"
+  | "contact";
 
 export type Option = {
   value: string;
@@ -17,13 +26,13 @@ export type Question = {
   options?: Option[];
   placeholder?: string;
   optional?: boolean;
-  // Pour les sliders
   sliderMin?: number;
   sliderMax?: number;
   sliderStep?: number;
   sliderUnit?: string;
   sliderLabels?: { min?: string; max?: string };
-  // Pour les questions conditionnelles
+  ratingMax?: number;
+  rankTopN?: number;
   showIf?: { questionId: string; valueIncludes: string };
 };
 
@@ -35,14 +44,51 @@ export const BLOCS = [
   { num: 5, title: "La joaillerie", emoji: "💎" },
   { num: 6, title: "Tes habitudes d'achat", emoji: "🛍️" },
   { num: 7, title: "Comment tu nous as connu(e)", emoji: "💫" },
-  { num: 8, title: "Notre site & nos photos", emoji: "📸" },
-  { num: 9, title: "Ta pépite rêvée", emoji: "💌" },
+  { num: 8, title: "Notre site, nos photos, notre service", emoji: "📸" },
+  { num: 9, title: "L'âme de Mood", emoji: "🌙" },
+  { num: 10, title: "Ta pépite rêvée", emoji: "💌" },
 ];
 
 export const QUESTIONS: Question[] = [
   // ═══════════════════════════════════════════════════════════════
   // BLOC 1 — Toi & ton histoire mood
   // ═══════════════════════════════════════════════════════════════
+  {
+    id: "tranche_age",
+    bloc: 1,
+    blocTitle: "Toi & ton histoire mood",
+    type: "single",
+    question: "Ta tranche d'âge ?",
+    hint: "Pour mieux te connaître — ça reste entre nous 🌸",
+    options: [
+      { value: "moins25", label: "Moins de 25 ans", emoji: "🌱" },
+      { value: "25_35", label: "25 à 35 ans", emoji: "🌸" },
+      { value: "36_45", label: "36 à 45 ans", emoji: "✨" },
+      { value: "46_55", label: "46 à 55 ans", emoji: "💫" },
+      { value: "56_65", label: "56 à 65 ans", emoji: "💎" },
+      { value: "65plus", label: "Plus de 65 ans", emoji: "👑" },
+    ],
+  },
+  {
+    id: "region",
+    bloc: 1,
+    blocTitle: "Toi & ton histoire mood",
+    type: "single",
+    question: "Tu vis dans quelle région ?",
+    options: [
+      { value: "vd", label: "Vaud", emoji: "🏔️" },
+      { value: "ge", label: "Genève", emoji: "⛲" },
+      { value: "vs", label: "Valais", emoji: "🏔️" },
+      { value: "ne", label: "Neuchâtel", emoji: "🌊" },
+      { value: "fr", label: "Fribourg", emoji: "🏰" },
+      { value: "ju", label: "Jura", emoji: "🌲" },
+      { value: "be", label: "Berne", emoji: "🐻" },
+      { value: "zh_alemand", label: "Suisse alémanique", emoji: "🇨🇭" },
+      { value: "ti", label: "Tessin", emoji: "☀️" },
+      { value: "fr_etranger", label: "France ou frontière", emoji: "🇫🇷" },
+      { value: "etranger", label: "Autre pays", emoji: "🌍" },
+    ],
+  },
   {
     id: "anciennete",
     bloc: 1,
@@ -63,7 +109,7 @@ export const QUESTIONS: Question[] = [
     blocTitle: "Toi & ton histoire mood",
     type: "single",
     question: "Combien de bagues mood as-tu (à peu près) ?",
-    hint: "Pas besoin d'aller les compter — au feeling 😉",
+    hint: "Au feeling 😉",
     options: [
       { value: "1a10", label: "1 à 10", emoji: "🤍" },
       { value: "11a30", label: "11 à 30", emoji: "💕" },
@@ -82,6 +128,20 @@ export const QUESTIONS: Question[] = [
       { value: "quotidien", label: "Au quotidien, sans y penser", emoji: "☀️" },
       { value: "occasions", label: "Pour les occasions spéciales", emoji: "🥂" },
       { value: "mood_du_jour", label: "Les deux, selon mon mood du jour", emoji: "🦋" },
+    ],
+  },
+  {
+    id: "bagues_par_jour",
+    bloc: 1,
+    blocTitle: "Toi & ton histoire mood",
+    type: "single",
+    question: "Combien de bagues mood tu portes en moyenne par jour ?",
+    options: [
+      { value: "1", label: "Une seule", emoji: "🤍" },
+      { value: "2_3", label: "2 à 3", emoji: "💕" },
+      { value: "4_5", label: "4 à 5", emoji: "✨" },
+      { value: "6plus", label: "6 et plus, j'assume 😄", emoji: "💎" },
+      { value: "varie", label: "Ça varie tous les jours", emoji: "🦋" },
     ],
   },
   {
@@ -147,7 +207,7 @@ export const QUESTIONS: Question[] = [
     blocTitle: "Ta collection actuelle",
     type: "single",
     question: "Ton style d'addons préféré sur la base ?",
-    hint: "Choisis ce qui te ressemble le plus au quotidien",
+    hint: "Ce qui te ressemble le plus au quotidien",
     options: [
       { value: "simple_efficace", label: "Un addon simple et efficace", emoji: "🤍" },
       { value: "2tiers_simple", label: "Deux tiers tout simple", emoji: "💕" },
@@ -337,7 +397,7 @@ export const QUESTIONS: Question[] = [
     type: "longtext",
     question: "La pépite qu'on n'a pas encore créée et qui te ferait craquer ?",
     hint: "Décris-la nous, même en quelques mots, on lit tout 🌸",
-    placeholder: "Ex : un addon avec une pierre en forme de cœur, une base bicolore or rose et or gris, une collection inspirée des étoiles...",
+    placeholder: "Ex : un addon avec une pierre en forme de cœur, une base bicolore, une collection inspirée des étoiles...",
     optional: true,
   },
   {
@@ -434,6 +494,23 @@ export const QUESTIONS: Question[] = [
       { value: "personnalise", label: "Quelque chose de personnalisé au prénom", emoji: "💌" },
     ],
   },
+  {
+    id: "coffret_packaging",
+    bloc: 4,
+    blocTitle: "Les coffrets",
+    type: "multi",
+    question: "Le packaging idéal d'un coffret cadeau ?",
+    hint: "Plusieurs réponses possibles",
+    options: [
+      { value: "joli_boite", label: "Une boîte vraiment jolie", emoji: "🎁" },
+      { value: "emballage_cadeau", label: "Un emballage cadeau prêt à offrir", emoji: "🎀" },
+      { value: "mot_personnalise", label: "Un mot personnalisé glissé dedans", emoji: "💌" },
+      { value: "ruban", label: "Un beau ruban", emoji: "🌸" },
+      { value: "ecrin_velours", label: "Un écrin velours", emoji: "✨" },
+      { value: "carte_origine", label: "Une carte qui raconte l'histoire", emoji: "📖" },
+      { value: "minimaliste", label: "Quelque chose de très minimaliste", emoji: "🤍" },
+    ],
+  },
 
   // ═══════════════════════════════════════════════════════════════
   // BLOC 5 — La joaillerie
@@ -513,6 +590,21 @@ export const QUESTIONS: Question[] = [
   // BLOC 6 — Tes habitudes d'achat
   // ═══════════════════════════════════════════════════════════════
   {
+    id: "canal_achat",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "multi",
+    question: "Tu achètes Mood plutôt où ?",
+    hint: "Plusieurs réponses possibles",
+    options: [
+      { value: "site", label: "Sur le site yourmood.net", emoji: "💻" },
+      { value: "boutique", label: "En boutique physique", emoji: "🏪" },
+      { value: "telephone", label: "Par téléphone avec une vendeuse", emoji: "📞" },
+      { value: "insta_dm", label: "Par DM Instagram", emoji: "📷" },
+      { value: "evenement", label: "Sur un événement ou un stand", emoji: "🎪" },
+    ],
+  },
+  {
     id: "frequence_achat",
     bloc: 6,
     blocTitle: "Tes habitudes d'achat",
@@ -532,12 +624,25 @@ export const QUESTIONS: Question[] = [
     blocTitle: "Tes habitudes d'achat",
     type: "slider",
     question: "Ton panier moyen par commande mood ?",
-    hint: "Glisse le curseur sur ton estimation",
+    hint: "Glisse le curseur sur ton estimation 🌟",
     sliderMin: 50,
     sliderMax: 1000,
     sliderStep: 10,
     sliderUnit: "CHF",
     sliderLabels: { min: "50 CHF", max: "1000+ CHF" },
+  },
+  {
+    id: "prix_compo_juste",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "slider",
+    question: "Selon toi, le prix juste pour une compo mood complète (1 base + 3 addons) ?",
+    hint: "On veut vraiment ton sentiment honnête",
+    sliderMin: 100,
+    sliderMax: 800,
+    sliderStep: 10,
+    sliderUnit: "CHF",
+    sliderLabels: { min: "100 CHF", max: "800+ CHF" },
   },
   {
     id: "motivation_rachat",
@@ -578,6 +683,16 @@ export const QUESTIONS: Question[] = [
       { value: "rien", label: "Rien ne me freine ❤️", emoji: "✨" },
     ],
   },
+  {
+    id: "story_achat",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "longtext",
+    question: "Ton souvenir d'achat mood le plus marquant ?",
+    hint: "Un moment, une émotion, une rencontre en boutique, un cadeau reçu...",
+    placeholder: "Ex : ma première bague mood offerte par ma sœur, ou la fois où Stéphanie en personne m'a conseillée...",
+    optional: true,
+  },
 
   // ═══════════════════════════════════════════════════════════════
   // BLOC 7 — Comment tu nous as connu(e)
@@ -588,7 +703,7 @@ export const QUESTIONS: Question[] = [
     blocTitle: "Comment tu nous as connu(e)",
     type: "multi",
     question: "Comment tu as connu Mood pour la première fois ?",
-    hint: "Plusieurs réponses possibles si tu nous as découverts à plusieurs endroits",
+    hint: "Plusieurs réponses possibles",
     options: [
       { value: "instagram", label: "Instagram", emoji: "📷" },
       { value: "facebook", label: "Facebook", emoji: "💙" },
@@ -597,8 +712,8 @@ export const QUESTIONS: Question[] = [
       { value: "google", label: "Recherche Google", emoji: "🔍" },
       { value: "boutique", label: "En passant devant une boutique", emoji: "🏪" },
       { value: "amie", label: "Une amie / proche m'en a parlé", emoji: "🫶🏼" },
-      { value: "pub", label: "Une pub en ligne (Insta/Facebook)", emoji: "📣" },
-      { value: "presse", label: "Dans la presse / un magazine", emoji: "📰" },
+      { value: "pub", label: "Une pub en ligne", emoji: "📣" },
+      { value: "presse", label: "Dans la presse / magazine", emoji: "📰" },
       { value: "influenceuse", label: "Une influenceuse en parlait", emoji: "💫" },
       { value: "evenement", label: "Un événement / salon", emoji: "🎪" },
       { value: "autre", label: "Autre", emoji: "✨" },
@@ -618,6 +733,48 @@ export const QUESTIONS: Question[] = [
       { value: "youtube", label: "YouTube", emoji: "📺" },
       { value: "newsletter", label: "Newsletter email", emoji: "📧" },
       { value: "aucun", label: "Aucun pour l'instant", emoji: "🌱" },
+    ],
+  },
+  {
+    id: "stories_insta",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "single",
+    question: "Nos stories Instagram, tu les regardes ?",
+    options: [
+      { value: "tout", label: "Je suis tout, j'adore", emoji: "❤️" },
+      { value: "temps_en_temps", label: "De temps en temps", emoji: "✨" },
+      { value: "rarement", label: "Rarement", emoji: "🌸" },
+      { value: "jamais", label: "Jamais — pas trop Insta", emoji: "🤍" },
+    ],
+  },
+  {
+    id: "emails_klaviyo",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "single",
+    question: "Nos emails newsletter, qu'en penses-tu ?",
+    hint: "Sois franche, on veut vraiment savoir 💛",
+    options: [
+      { value: "adore", label: "J'adore et j'ouvre tout", emoji: "💌" },
+      { value: "ouvre_parfois", label: "J'ouvre parfois selon le sujet", emoji: "✨" },
+      { value: "trop_mails", label: "Trop de mails à mon goût", emoji: "📭" },
+      { value: "pas_recoit", label: "Je ne crois pas en recevoir", emoji: "🌱" },
+      { value: "desabonnee", label: "Je me suis désabonnée", emoji: "🤍" },
+    ],
+  },
+  {
+    id: "visite_boutique",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "single",
+    question: "Tu es déjà allée dans une boutique mood ?",
+    options: [
+      { value: "souvent", label: "Oui, j'y vais souvent", emoji: "🏪" },
+      { value: "quelquefois", label: "Oui, quelques fois", emoji: "✨" },
+      { value: "une_fois", label: "Oui, une fois", emoji: "🌸" },
+      { value: "jamais_envie", label: "Jamais mais ça me tenterait", emoji: "💕" },
+      { value: "jamais", label: "Jamais et c'est OK", emoji: "🤍" },
     ],
   },
   {
@@ -649,38 +806,49 @@ export const QUESTIONS: Question[] = [
   },
 
   // ═══════════════════════════════════════════════════════════════
-  // BLOC 8 — Notre site & nos photos
+  // BLOC 8 — Notre site, nos photos, notre service
   // ═══════════════════════════════════════════════════════════════
   {
     id: "note_site",
     bloc: 8,
-    blocTitle: "Notre site & nos photos",
-    type: "slider",
-    question: "Tu donnes combien à yourmood.net sur 10 ? 💻",
-    hint: "Glisse le curseur",
-    sliderMin: 0,
-    sliderMax: 10,
-    sliderStep: 1,
-    sliderUnit: "/ 10",
-    sliderLabels: { min: "À revoir", max: "Parfait ✨" },
+    blocTitle: "Notre site, nos photos, notre service",
+    type: "rating",
+    question: "Tu donnes combien d'étoiles à yourmood.net ? 💻",
+    hint: "Touche les étoiles pour noter",
+    ratingMax: 5,
   },
   {
     id: "note_photos",
     bloc: 8,
-    blocTitle: "Notre site & nos photos",
-    type: "slider",
-    question: "Nos photos produit, tu les notes comment sur 10 ? 📸",
-    hint: "Pareil — glisse le curseur",
-    sliderMin: 0,
-    sliderMax: 10,
-    sliderStep: 1,
-    sliderUnit: "/ 10",
-    sliderLabels: { min: "Bof", max: "Magnifiques ❤️" },
+    blocTitle: "Notre site, nos photos, notre service",
+    type: "rating",
+    question: "Et à nos photos produit ? 📸",
+    ratingMax: 5,
+  },
+  {
+    id: "note_packaging",
+    bloc: 8,
+    blocTitle: "Notre site, nos photos, notre service",
+    type: "rating",
+    question: "Notre packaging (si tu l'as reçu) ? 🎁",
+    hint: "Sinon passe à la suivante",
+    ratingMax: 5,
+    optional: true,
+  },
+  {
+    id: "note_service_client",
+    bloc: 8,
+    blocTitle: "Notre site, nos photos, notre service",
+    type: "rating",
+    question: "Notre service client (si tu l'as testé) ? 💝",
+    hint: "Sinon passe à la suivante",
+    ratingMax: 5,
+    optional: true,
   },
   {
     id: "site_aime",
     bloc: 8,
-    blocTitle: "Notre site & nos photos",
+    blocTitle: "Notre site, nos photos, notre service",
     type: "multi",
     question: "Ce que tu aimes le plus sur notre site ?",
     options: [
@@ -698,33 +866,121 @@ export const QUESTIONS: Question[] = [
   {
     id: "site_changerait",
     bloc: 8,
-    blocTitle: "Notre site & nos photos",
+    blocTitle: "Notre site, nos photos, notre service",
     type: "longtext",
     question: "Qu'est-ce que tu changerais sur notre site ?",
     hint: "Toute idée est précieuse — sois franche 💛",
     placeholder: "Ex : j'aimerais voir la bague portée, mieux comprendre les tailles, plus de vidéos, un truc plus rapide...",
     optional: true,
   },
+  {
+    id: "photos_envie",
+    bloc: 8,
+    blocTitle: "Notre site, nos photos, notre service",
+    type: "multi",
+    question: "Tu aimerais voir plus de quel type de photos ?",
+    hint: "Pour qu'on sache où concentrer nos efforts visuels",
+    options: [
+      { value: "portees", label: "Plus de photos portées (sur la main)", emoji: "✋" },
+      { value: "details", label: "Plus de gros plans détail", emoji: "🔍" },
+      { value: "compos", label: "Plus d'exemples de compos complètes", emoji: "🎨" },
+      { value: "lifestyle", label: "Plus de photos lifestyle / ambiance", emoji: "🌸" },
+      { value: "ateliers", label: "Plus d'images de l'atelier / fabrication", emoji: "🛠️" },
+      { value: "videos", label: "Plus de vidéos courtes", emoji: "🎥" },
+      { value: "client", label: "Plus de photos de vraies clientes", emoji: "💕" },
+    ],
+  },
 
   // ═══════════════════════════════════════════════════════════════
-  // BLOC 9 — Ta pépite rêvée + cadeau
+  // BLOC 9 — L'âme de Mood (ludique / émotionnel)
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: "thermometre_mood",
+    bloc: 9,
+    blocTitle: "L'âme de Mood",
+    type: "gauge",
+    question: "À quel point tu aimes Mood ? 💖",
+    hint: "Glisse le thermomètre... sois honnête !",
+    sliderLabels: { min: "Tiède", max: "Folle amoureuse" },
+  },
+  {
+    id: "podium_collections",
+    bloc: 9,
+    blocTitle: "L'âme de Mood",
+    type: "rank",
+    question: "Classe tes 3 collections préférées sur le podium 🏆",
+    hint: "Touche les flèches pour réorganiser. Les 3 premières comptent.",
+    rankTopN: 3,
+    optional: true,
+    options: [
+      { value: "aura", label: "Aura", emoji: "✨" },
+      { value: "star", label: "Star", emoji: "⭐" },
+      { value: "emotion", label: "Emotion", emoji: "💕" },
+      { value: "signature", label: "Signature", emoji: "💍" },
+      { value: "eclipse", label: "Eclipse", emoji: "🌙" },
+      { value: "heritage", label: "Heritage", emoji: "👑" },
+      { value: "blue_series", label: "Blue Series", emoji: "💙" },
+      { value: "entrelacs", label: "Entrelacs", emoji: "🌹" },
+      { value: "iconiques", label: "Iconiques", emoji: "💎" },
+      { value: "droits_femmes", label: "Droits des femmes", emoji: "🫶🏼" },
+    ],
+  },
+  {
+    id: "saison_mood",
+    bloc: 9,
+    blocTitle: "L'âme de Mood",
+    type: "single",
+    question: "Si Mood était une saison, ce serait...",
+    options: [
+      { value: "printemps", label: "Le printemps — renaissance et fraîcheur", emoji: "🌸" },
+      { value: "ete", label: "L'été — lumière et joie", emoji: "☀️" },
+      { value: "automne", label: "L'automne — poésie et chaleur", emoji: "🍂" },
+      { value: "hiver", label: "L'hiver — éclat et mystère", emoji: "❄️" },
+    ],
+  },
+  {
+    id: "element_mood",
+    bloc: 9,
+    blocTitle: "L'âme de Mood",
+    type: "single",
+    question: "Si Mood était un élément...",
+    options: [
+      { value: "feu", label: "Le feu — passion et éclat", emoji: "🔥" },
+      { value: "eau", label: "L'eau — fluidité et profondeur", emoji: "💧" },
+      { value: "terre", label: "La terre — ancrage et authenticité", emoji: "🌿" },
+      { value: "air", label: "L'air — légèreté et liberté", emoji: "🦋" },
+    ],
+  },
+  {
+    id: "mood_personnalite",
+    bloc: 9,
+    blocTitle: "L'âme de Mood",
+    type: "text",
+    question: "Si Mood était une personnalité, qui ?",
+    hint: "Une artiste, une icône, un personnage — ce qui te vient",
+    placeholder: "Ex : Audrey Hepburn, Frida Kahlo, ma grand-mère...",
+    optional: true,
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOC 10 — Ta pépite rêvée + cadeau
   // ═══════════════════════════════════════════════════════════════
   {
     id: "piece_revee",
-    bloc: 9,
+    bloc: 10,
     blocTitle: "Ta pépite rêvée",
     type: "longtext",
     question: "Décris-nous la pièce mood de tes rêves 💌",
-    hint: "Imagine qu'on peut la créer pour toi. Qu'est-ce que ce serait ? Pas besoin d'être précise, juste ce qui te vient.",
+    hint: "Imagine qu'on peut la créer pour toi. Qu'est-ce que ce serait ?",
     placeholder: "Ex : une bague qui change de couleur selon la lumière, une compo qui raconte mon histoire, un coffret avec ma pierre de naissance...",
     optional: true,
   },
   {
     id: "contact",
-    bloc: 9,
+    bloc: 10,
     blocTitle: "Ta pépite rêvée",
     type: "contact",
     question: "Ton prénom et ton email pour recevoir ton bon 20.- ✨",
-    hint: "On t'envoie ton code par email tout de suite — promis, zéro spam, juste les pépites créatives.",
+    hint: "Promis, zéro spam, juste les pépites créatives.",
   },
 ];

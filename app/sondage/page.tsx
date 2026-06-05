@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { QUESTIONS, BLOCS, type Question } from "./questions";
 
 type Answers = Record<string, string | string[] | number | { prenom: string; email: string }>;
@@ -13,8 +13,8 @@ export default function SondagePage() {
   const [answers, setAnswers] = useState<Answers>({});
   const [bonCode, setBonCode] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [sparkle, setSparkle] = useState<number>(0); // pour anim paillettes
 
-  // Questions filtrées selon les conditions showIf
   const visibleQuestions = useMemo(() => {
     return QUESTIONS.filter((q) => {
       if (!q.showIf) return true;
@@ -31,6 +31,7 @@ export default function SondagePage() {
 
   function setAnswer(qid: string, value: Answers[string]) {
     setAnswers((prev) => ({ ...prev, [qid]: value }));
+    setSparkle((s) => s + 1);
   }
 
   function canContinue(): boolean {
@@ -40,7 +41,9 @@ export default function SondagePage() {
     if (current.type === "single") return typeof v === "string" && v.length > 0;
     if (current.type === "multi") return Array.isArray(v) && v.length > 0;
     if (current.type === "text" || current.type === "longtext") return typeof v === "string" && v.trim().length > 0;
-    if (current.type === "slider") return typeof v === "number";
+    if (current.type === "slider" || current.type === "gauge") return typeof v === "number";
+    if (current.type === "rating") return typeof v === "number" && v > 0;
+    if (current.type === "rank") return Array.isArray(v) && v.length > 0;
     if (current.type === "contact") {
       const c = v as { prenom: string; email: string } | undefined;
       return !!c && c.prenom.trim().length > 0 && /\S+@\S+\.\S+/.test(c.email);
@@ -105,7 +108,7 @@ export default function SondagePage() {
           <p className="text-sm text-[#7A7A7A] mb-10">
             🎁 À la fin, tu repars avec un <strong>bon de 20.-</strong> rien que pour toi.
             <br />
-            <span className="text-xs">~10 minutes en mood détente 🌸</span>
+            <span className="text-xs">~12 minutes en mood détente 🌸</span>
           </p>
           <button
             onClick={() => setStatus("questions")}
@@ -184,7 +187,6 @@ export default function SondagePage() {
     );
   }
 
-  // ===== SUBMITTING =====
   if (status === "submitting") {
     return (
       <main className="min-h-screen bg-[#FDF8F3] text-[#1A1A1A] flex items-center justify-center px-5 py-12">
@@ -196,13 +198,13 @@ export default function SondagePage() {
     );
   }
 
-  if (!current) {
-    return null;
-  }
+  if (!current) return null;
 
   // ===== QUESTIONS =====
   return (
     <main className="min-h-screen bg-[#FDF8F3] text-[#1A1A1A]">
+      <SparkleLayer trigger={sparkle} />
+
       {/* Barre de progression */}
       <div className="sticky top-0 z-10 bg-[#FDF8F3] border-b border-[#E8DFD3]">
         <div className="max-w-2xl mx-auto px-5 py-4">
@@ -223,7 +225,6 @@ export default function SondagePage() {
         </div>
       </div>
 
-      {/* Question */}
       <div className="max-w-2xl mx-auto px-5 py-8 sm:py-12">
         <QuestionView
           key={current.id}
@@ -232,7 +233,6 @@ export default function SondagePage() {
           onChange={(v) => setAnswer(current.id, v)}
         />
 
-        {/* Navigation */}
         <div className="mt-10 flex items-center justify-between gap-4">
           <button
             onClick={back}
@@ -346,6 +346,32 @@ function QuestionView({
         />
       )}
 
+      {question.type === "gauge" && (
+        <GaugeMood
+          minLabel={question.sliderLabels?.min}
+          maxLabel={question.sliderLabels?.max}
+          value={typeof value === "number" ? value : undefined}
+          onChange={onChange}
+        />
+      )}
+
+      {question.type === "rating" && (
+        <StarRating
+          max={question.ratingMax ?? 5}
+          value={typeof value === "number" ? value : 0}
+          onChange={onChange}
+        />
+      )}
+
+      {question.type === "rank" && (
+        <RankList
+          options={question.options || []}
+          value={Array.isArray(value) ? value : (question.options || []).map((o) => o.value)}
+          topN={question.rankTopN ?? 3}
+          onChange={onChange}
+        />
+      )}
+
       {question.type === "contact" && (
         <ContactFields
           value={(value as { prenom: string; email: string }) || { prenom: "", email: "" }}
@@ -447,10 +473,10 @@ function SliderInput({
   const currentValue = value ?? Math.round((min + max) / 2);
   const percent = ((currentValue - min) / (max - min)) * 100;
 
-  // Initialise au milieu si pas de valeur (au premier render uniquement)
-  if (value === undefined) {
-    setTimeout(() => onChange(currentValue), 0);
-  }
+  useEffect(() => {
+    if (value === undefined) onChange(currentValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="bg-white rounded-2xl border-2 border-[#E8DFD3] p-6 sm:p-8">
@@ -461,42 +487,40 @@ function SliderInput({
         </div>
       </div>
 
-      <div className="relative">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={currentValue}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-2 bg-[#E8DFD3] rounded-full appearance-none cursor-pointer slider-mood"
-          style={{
-            background: `linear-gradient(to right, #C9A878 0%, #C9A878 ${percent}%, #E8DFD3 ${percent}%, #E8DFD3 100%)`,
-          }}
-        />
-        <style jsx>{`
-          .slider-mood::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 28px;
-            height: 28px;
-            background: #1A1A1A;
-            border: 3px solid #FDF8F3;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-          }
-          .slider-mood::-moz-range-thumb {
-            width: 28px;
-            height: 28px;
-            background: #1A1A1A;
-            border: 3px solid #FDF8F3;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-          }
-        `}</style>
-      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={currentValue}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-2 rounded-full appearance-none cursor-pointer slider-mood"
+        style={{
+          background: `linear-gradient(to right, #C9A878 0%, #C9A878 ${percent}%, #E8DFD3 ${percent}%, #E8DFD3 100%)`,
+        }}
+      />
+      <style jsx>{`
+        .slider-mood::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 28px;
+          height: 28px;
+          background: #1A1A1A;
+          border: 3px solid #FDF8F3;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .slider-mood::-moz-range-thumb {
+          width: 28px;
+          height: 28px;
+          background: #1A1A1A;
+          border: 3px solid #FDF8F3;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+      `}</style>
 
       {(minLabel || maxLabel) && (
         <div className="flex justify-between mt-3 text-xs text-[#7A7A7A]">
@@ -504,6 +528,207 @@ function SliderInput({
           <span>{maxLabel}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+function GaugeMood({
+  minLabel,
+  maxLabel,
+  value,
+  onChange,
+}: {
+  minLabel?: string;
+  maxLabel?: string;
+  value: number | undefined;
+  onChange: (v: number) => void;
+}) {
+  const currentValue = value ?? 50;
+
+  useEffect(() => {
+    if (value === undefined) onChange(50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  let emoji = "💕";
+  let intensite = "Bien";
+  if (currentValue < 20) { emoji = "🥶"; intensite = "Tiède"; }
+  else if (currentValue < 40) { emoji = "🌸"; intensite = "Sympa"; }
+  else if (currentValue < 60) { emoji = "💕"; intensite = "J'aime bien"; }
+  else if (currentValue < 80) { emoji = "🌹"; intensite = "J'adore"; }
+  else if (currentValue < 95) { emoji = "❤️‍🔥"; intensite = "Folle amoureuse"; }
+  else { emoji = "💎"; intensite = "Obsédée 😄"; }
+
+  return (
+    <div className="bg-white rounded-2xl border-2 border-[#E8DFD3] p-6 sm:p-8">
+      <div className="text-center mb-6">
+        <div className="text-7xl mb-2 transition-transform" style={{ transform: `scale(${0.8 + currentValue / 250})` }}>
+          {emoji}
+        </div>
+        <div className="font-serif text-4xl text-[#C9A878] mb-1">{currentValue}%</div>
+        <div className="text-sm text-[#7A7A7A] italic">{intensite}</div>
+      </div>
+
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={1}
+        value={currentValue}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-3 rounded-full appearance-none cursor-pointer gauge-mood"
+        style={{
+          background: `linear-gradient(to right, #88B4DF 0%, #E8C5B5 30%, #D63384 60%, #C73E3E 80%, #4B1A4D 100%)`,
+        }}
+      />
+      <style jsx>{`
+        .gauge-mood::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 32px;
+          height: 32px;
+          background: white;
+          border: 4px solid #C9A878;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        .gauge-mood::-moz-range-thumb {
+          width: 32px;
+          height: 32px;
+          background: white;
+          border: 4px solid #C9A878;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+      `}</style>
+
+      <div className="flex justify-between mt-3 text-xs text-[#7A7A7A]">
+        <span>{minLabel ?? "0"}</span>
+        <span>{maxLabel ?? "100"}</span>
+      </div>
+    </div>
+  );
+}
+
+function StarRating({
+  max,
+  value,
+  onChange,
+}: {
+  max: number;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [hover, setHover] = useState(0);
+  const labels = ["", "Bof 🥲", "Pas top", "Bien 🌸", "Top ✨", "Magique ❤️"];
+
+  return (
+    <div className="bg-white rounded-2xl border-2 border-[#E8DFD3] p-6 sm:p-8 text-center">
+      <div className="flex justify-center gap-2 sm:gap-3 mb-4">
+        {Array.from({ length: max }).map((_, i) => {
+          const n = i + 1;
+          const active = (hover || value) >= n;
+          return (
+            <button
+              key={i}
+              onClick={() => onChange(n)}
+              onMouseEnter={() => setHover(n)}
+              onMouseLeave={() => setHover(0)}
+              className="text-5xl sm:text-6xl transition-all hover:scale-110"
+              aria-label={`${n} étoiles`}
+            >
+              <span className={active ? "text-[#C9A878]" : "text-[#E8DFD3]"}>★</span>
+            </button>
+          );
+        })}
+      </div>
+      {(hover || value) > 0 && (
+        <p className="text-sm text-[#7A7A7A] italic">{labels[hover || value]}</p>
+      )}
+      {!hover && !value && (
+        <p className="text-sm text-[#7A7A7A] italic">Touche une étoile pour noter</p>
+      )}
+    </div>
+  );
+}
+
+function RankList({
+  options,
+  value,
+  topN,
+  onChange,
+}: {
+  options: { value: string; label: string; emoji?: string }[];
+  value: string[];
+  topN: number;
+  onChange: (v: string[]) => void;
+}) {
+  // Init avec ordre par défaut si vide
+  useEffect(() => {
+    if (value.length === 0) onChange(options.map((o) => o.value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function move(idx: number, dir: -1 | 1) {
+    const newOrder = [...value];
+    const target = idx + dir;
+    if (target < 0 || target >= newOrder.length) return;
+    [newOrder[idx], newOrder[target]] = [newOrder[target], newOrder[idx]];
+    onChange(newOrder);
+  }
+
+  const items = value
+    .map((v) => options.find((o) => o.value === v))
+    .filter((o): o is NonNullable<typeof o> => !!o);
+
+  const podiumEmoji = ["🥇", "🥈", "🥉"];
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-[#7A7A7A] mb-3">
+        Touche ↑ pour monter, ↓ pour descendre. Les <strong>3 premières</strong> sont ton podium 🏆
+      </p>
+      {items.map((opt, i) => {
+        const onPodium = i < topN;
+        return (
+          <div
+            key={opt.value}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all ${
+              onPodium
+                ? "border-[#C9A878] bg-white shadow-md"
+                : "border-[#E8DFD3] bg-white/60"
+            }`}
+          >
+            <span className="text-2xl w-10 text-center">
+              {onPodium ? podiumEmoji[i] : <span className="text-[#7A7A7A] text-base">{i + 1}</span>}
+            </span>
+            {opt.emoji && <span className="text-lg">{opt.emoji}</span>}
+            <span className={`flex-1 text-sm ${onPodium ? "font-medium" : "text-[#5A5A5A]"}`}>
+              {opt.label}
+            </span>
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => move(i, -1)}
+                disabled={i === 0}
+                className="w-7 h-7 rounded-full bg-[#FDF8F3] hover:bg-[#C9A878]/20 disabled:opacity-30 disabled:cursor-not-allowed text-sm flex items-center justify-center"
+                aria-label="Monter"
+              >
+                ↑
+              </button>
+              <button
+                onClick={() => move(i, 1)}
+                disabled={i === items.length - 1}
+                className="w-7 h-7 rounded-full bg-[#FDF8F3] hover:bg-[#C9A878]/20 disabled:opacity-30 disabled:cursor-not-allowed text-sm flex items-center justify-center"
+                aria-label="Descendre"
+              >
+                ↓
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -531,6 +756,51 @@ function ContactFields({
         placeholder="ton@email.com"
         className="w-full px-5 py-4 rounded-2xl border-2 border-[#E8DFD3] bg-white focus:border-[#C9A878] focus:outline-none text-base"
       />
+    </div>
+  );
+}
+
+function SparkleLayer({ trigger }: { trigger: number }) {
+  const [particles, setParticles] = useState<{ id: number; x: number; y: number; emoji: string }[]>([]);
+
+  useEffect(() => {
+    if (trigger === 0) return;
+    const emojis = ["✨", "🌸", "💫", "🩵", "💎"];
+    const newParticles = Array.from({ length: 6 }).map((_, i) => ({
+      id: trigger * 10 + i,
+      x: 40 + (i % 3) * 10,
+      y: 30 + Math.floor(i / 3) * 20,
+      emoji: emojis[i % emojis.length],
+    }));
+    setParticles((p) => [...p, ...newParticles]);
+    const ids = newParticles.map((np) => np.id);
+    const t = setTimeout(() => {
+      setParticles((p) => p.filter((x) => !ids.includes(x.id)));
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [trigger]);
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          className="absolute text-2xl sparkle-rise"
+          style={{ left: `${p.x}%`, top: `${p.y}%` }}
+        >
+          {p.emoji}
+        </span>
+      ))}
+      <style jsx>{`
+        @keyframes rise {
+          0% { transform: translateY(0) scale(0.8); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: translateY(-100px) scale(1.3); opacity: 0; }
+        }
+        .sparkle-rise {
+          animation: rise 1.2s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }
