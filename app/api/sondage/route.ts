@@ -40,6 +40,9 @@ function buildRow(
       row.push(v.map((x) => labelFor(q.id, String(x))).join(" · "));
     } else if ((q.type === "text" || q.type === "longtext") && typeof v === "string") {
       row.push(v);
+    } else if (q.type === "slider" && typeof v === "number") {
+      const unit = q.sliderUnit ? ` ${q.sliderUnit}` : "";
+      row.push(`${v}${unit}`);
     } else {
       row.push("");
     }

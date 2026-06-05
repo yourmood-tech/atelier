@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { QUESTIONS, BLOCS, type Question } from "./questions";
 
-type Answers = Record<string, string | string[] | { prenom: string; email: string }>;
+type Answers = Record<string, string | string[] | number | { prenom: string; email: string }>;
 
 type Status = "intro" | "questions" | "submitting" | "done" | "error";
 
@@ -14,8 +14,18 @@ export default function SondagePage() {
   const [bonCode, setBonCode] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const total = QUESTIONS.length;
-  const current = QUESTIONS[step];
+  // Questions filtrées selon les conditions showIf
+  const visibleQuestions = useMemo(() => {
+    return QUESTIONS.filter((q) => {
+      if (!q.showIf) return true;
+      const refValue = answers[q.showIf.questionId];
+      if (Array.isArray(refValue)) return refValue.includes(q.showIf.valueIncludes);
+      return refValue === q.showIf.valueIncludes;
+    });
+  }, [answers]);
+
+  const total = visibleQuestions.length;
+  const current = visibleQuestions[step];
   const progress = Math.round(((step + 1) / total) * 100);
   const currentBloc = useMemo(() => BLOCS.find((b) => b.num === current?.bloc), [current]);
 
@@ -30,6 +40,7 @@ export default function SondagePage() {
     if (current.type === "single") return typeof v === "string" && v.length > 0;
     if (current.type === "multi") return Array.isArray(v) && v.length > 0;
     if (current.type === "text" || current.type === "longtext") return typeof v === "string" && v.trim().length > 0;
+    if (current.type === "slider") return typeof v === "number";
     if (current.type === "contact") {
       const c = v as { prenom: string; email: string } | undefined;
       return !!c && c.prenom.trim().length > 0 && /\S+@\S+\.\S+/.test(c.email);
@@ -94,7 +105,7 @@ export default function SondagePage() {
           <p className="text-sm text-[#7A7A7A] mb-10">
             🎁 À la fin, tu repars avec un <strong>bon de 20.-</strong> rien que pour toi.
             <br />
-            <span className="text-xs">~7 minutes en mood détente 🌸</span>
+            <span className="text-xs">~10 minutes en mood détente 🌸</span>
           </p>
           <button
             onClick={() => setStatus("questions")}
@@ -123,7 +134,7 @@ export default function SondagePage() {
 
           <div className="bg-white border-2 border-[#C9A878] rounded-2xl p-6 sm:p-8 mb-6 shadow-lg">
             <p className="text-xs font-bold tracking-[0.25em] uppercase text-[#C9A878] mb-3">
-              Ton bon cadeau
+              Ton code de réduction
             </p>
             <p className="text-3xl sm:text-4xl font-serif tracking-wider mb-2">
               {bonCode}
@@ -135,7 +146,7 @@ export default function SondagePage() {
           </div>
 
           <p className="text-xs text-[#7A7A7A] mb-8">
-            Tu reçois aussi ce code par email — pense à vérifier les spams 🌸
+            Note ton code dès maintenant pour l&apos;avoir sous la main 🌸
           </p>
 
           <a
@@ -183,6 +194,10 @@ export default function SondagePage() {
         </div>
       </main>
     );
+  }
+
+  if (!current) {
+    return null;
   }
 
   // ===== QUESTIONS =====
@@ -318,6 +333,19 @@ function QuestionView({
         />
       )}
 
+      {question.type === "slider" && (
+        <SliderInput
+          min={question.sliderMin ?? 0}
+          max={question.sliderMax ?? 10}
+          step={question.sliderStep ?? 1}
+          unit={question.sliderUnit ?? ""}
+          minLabel={question.sliderLabels?.min}
+          maxLabel={question.sliderLabels?.max}
+          value={typeof value === "number" ? value : undefined}
+          onChange={onChange}
+        />
+      )}
+
       {question.type === "contact" && (
         <ContactFields
           value={(value as { prenom: string; email: string }) || { prenom: "", email: "" }}
@@ -393,6 +421,89 @@ function MultiOptions({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+function SliderInput({
+  min,
+  max,
+  step,
+  unit,
+  minLabel,
+  maxLabel,
+  value,
+  onChange,
+}: {
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  minLabel?: string;
+  maxLabel?: string;
+  value: number | undefined;
+  onChange: (v: number) => void;
+}) {
+  const currentValue = value ?? Math.round((min + max) / 2);
+  const percent = ((currentValue - min) / (max - min)) * 100;
+
+  // Initialise au milieu si pas de valeur (au premier render uniquement)
+  if (value === undefined) {
+    setTimeout(() => onChange(currentValue), 0);
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border-2 border-[#E8DFD3] p-6 sm:p-8">
+      <div className="text-center mb-6">
+        <div className="font-serif text-5xl sm:text-6xl text-[#C9A878] mb-1">
+          {currentValue}
+          {unit && <span className="text-2xl sm:text-3xl text-[#1A1A1A] ml-2">{unit}</span>}
+        </div>
+      </div>
+
+      <div className="relative">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={currentValue}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full h-2 bg-[#E8DFD3] rounded-full appearance-none cursor-pointer slider-mood"
+          style={{
+            background: `linear-gradient(to right, #C9A878 0%, #C9A878 ${percent}%, #E8DFD3 ${percent}%, #E8DFD3 100%)`,
+          }}
+        />
+        <style jsx>{`
+          .slider-mood::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            background: #1A1A1A;
+            border: 3px solid #FDF8F3;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          }
+          .slider-mood::-moz-range-thumb {
+            width: 28px;
+            height: 28px;
+            background: #1A1A1A;
+            border: 3px solid #FDF8F3;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+          }
+        `}</style>
+      </div>
+
+      {(minLabel || maxLabel) && (
+        <div className="flex justify-between mt-3 text-xs text-[#7A7A7A]">
+          <span>{minLabel}</span>
+          <span>{maxLabel}</span>
+        </div>
+      )}
     </div>
   );
 }

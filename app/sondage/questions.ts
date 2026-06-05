@@ -1,4 +1,4 @@
-export type QuestionType = "single" | "multi" | "text" | "longtext" | "contact";
+export type QuestionType = "single" | "multi" | "text" | "longtext" | "slider" | "contact";
 
 export type Option = {
   value: string;
@@ -17,19 +17,32 @@ export type Question = {
   options?: Option[];
   placeholder?: string;
   optional?: boolean;
+  // Pour les sliders
+  sliderMin?: number;
+  sliderMax?: number;
+  sliderStep?: number;
+  sliderUnit?: string;
+  sliderLabels?: { min?: string; max?: string };
+  // Pour les questions conditionnelles
+  showIf?: { questionId: string; valueIncludes: string };
 };
 
 export const BLOCS = [
   { num: 1, title: "Toi & ton histoire mood", emoji: "🌸" },
-  { num: 2, title: "Ta compo actuelle", emoji: "💍" },
+  { num: 2, title: "Ta collection actuelle", emoji: "💍" },
   { num: 3, title: "Tes envies nouveautés", emoji: "✨" },
   { num: 4, title: "Les coffrets", emoji: "🎁" },
   { num: 5, title: "La joaillerie", emoji: "💎" },
-  { num: 6, title: "Ta pépite rêvée", emoji: "💌" },
+  { num: 6, title: "Tes habitudes d'achat", emoji: "🛍️" },
+  { num: 7, title: "Comment tu nous as connu(e)", emoji: "💫" },
+  { num: 8, title: "Notre site & nos photos", emoji: "📸" },
+  { num: 9, title: "Ta pépite rêvée", emoji: "💌" },
 ];
 
 export const QUESTIONS: Question[] = [
+  // ═══════════════════════════════════════════════════════════════
   // BLOC 1 — Toi & ton histoire mood
+  // ═══════════════════════════════════════════════════════════════
   {
     id: "anciennete",
     bloc: 1,
@@ -52,10 +65,10 @@ export const QUESTIONS: Question[] = [
     question: "Combien de bagues mood as-tu (à peu près) ?",
     hint: "Pas besoin d'aller les compter — au feeling 😉",
     options: [
-      { value: "1a3", label: "1 à 3", emoji: "🤍" },
-      { value: "4a7", label: "4 à 7", emoji: "💕" },
-      { value: "8a15", label: "8 à 15", emoji: "🩵" },
-      { value: "15plus", label: "Plus de 15", emoji: "💎" },
+      { value: "1a10", label: "1 à 10", emoji: "🤍" },
+      { value: "11a30", label: "11 à 30", emoji: "💕" },
+      { value: "31a50", label: "31 à 50", emoji: "🩵" },
+      { value: "51plus", label: "51 et plus", emoji: "💎" },
       { value: "perdu_compte", label: "J'ai perdu le compte 😄", emoji: "🌹" },
     ],
   },
@@ -91,13 +104,15 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // BLOC 2 — Ta compo actuelle
+  // ═══════════════════════════════════════════════════════════════
+  // BLOC 2 — Ta collection actuelle
+  // ═══════════════════════════════════════════════════════════════
   {
     id: "matieres_possedees",
     bloc: 2,
-    blocTitle: "Ta compo actuelle",
+    blocTitle: "Ta collection actuelle",
     type: "multi",
-    question: "Quelles matières as-tu déjà dans ta compo ?",
+    question: "Quelles matières as-tu déjà dans ta collection ?",
     hint: "Coche tout ce que tu possèdes",
     options: [
       { value: "acier", label: "Acier", emoji: "⚙️" },
@@ -106,43 +121,48 @@ export const QUESTIONS: Question[] = [
       { value: "or_rose", label: "Or rose", emoji: "🌹" },
       { value: "or_jaune", label: "Or jaune", emoji: "☀️" },
       { value: "or_gris", label: "Or gris", emoji: "💎" },
-      { value: "ceramique", label: "Céramique noire", emoji: "🖤" },
+      { value: "email", label: "Émail", emoji: "🎨" },
+      { value: "polymere", label: "Polymère", emoji: "🌈" },
       { value: "tantale", label: "Tantale", emoji: "🩶" },
-      { value: "alu_couleur", label: "Aluminium coloré", emoji: "🌈" },
+      { value: "alu_couleur", label: "Aluminium coloré", emoji: "🌟" },
       { value: "carbone", label: "Carbone", emoji: "⚫" },
     ],
   },
   {
     id: "largeur",
     bloc: 2,
-    blocTitle: "Ta compo actuelle",
+    blocTitle: "Ta collection actuelle",
     type: "single",
     question: "Ta largeur préférée ?",
     options: [
       { value: "xs", label: "XS — 9mm, fine et délicate", emoji: "🤍" },
       { value: "s", label: "S — 11mm, l'équilibre parfait", emoji: "💕" },
-      { value: "l", label: "L — 13mm, statement", emoji: "💫" },
+      { value: "l", label: "L — 13mm", emoji: "💫" },
       { value: "melange", label: "Je mélange tout, c'est ça le clic mood", emoji: "🦋" },
     ],
   },
   {
-    id: "nb_addons",
+    id: "addons_style",
     bloc: 2,
-    blocTitle: "Ta compo actuelle",
+    blocTitle: "Ta collection actuelle",
     type: "single",
-    question: "Combien d'addons en moyenne sur ta base ?",
+    question: "Ton style d'addons préféré sur la base ?",
+    hint: "Choisis ce qui te ressemble le plus au quotidien",
     options: [
-      { value: "1", label: "1 — minimaliste", emoji: "🤍" },
-      { value: "2", label: "2 — équilibrée", emoji: "💕" },
-      { value: "3", label: "3 — gourmande", emoji: "✨" },
-      { value: "4plus", label: "4 et plus — j'assume 😄", emoji: "💎" },
-      { value: "varie", label: "Ça varie selon mon mood", emoji: "🌸" },
+      { value: "simple_efficace", label: "Un addon simple et efficace", emoji: "🤍" },
+      { value: "2tiers_simple", label: "Deux tiers tout simple", emoji: "💕" },
+      { value: "2tiers_medium", label: "Deux tiers avec un medium", emoji: "✨" },
+      { value: "2tiers_minis", label: "Deux tiers avec des minis", emoji: "🌸" },
+      { value: "que_minis", label: "Que des minis (jusqu'à 6 sur la base !)", emoji: "🦋" },
+      { value: "medium_minis", label: "Des mediums et des minis ensemble", emoji: "💎" },
+      { value: "que_mediums", label: "Que des mediums", emoji: "💫" },
+      { value: "varie", label: "Ça varie selon mon mood du jour", emoji: "🌹" },
     ],
   },
   {
     id: "style",
     bloc: 2,
-    blocTitle: "Ta compo actuelle",
+    blocTitle: "Ta collection actuelle",
     type: "single",
     question: "Ton style mood, c'est plutôt...",
     options: [
@@ -155,30 +175,52 @@ export const QUESTIONS: Question[] = [
     ],
   },
   {
+    id: "basique_preferee",
+    bloc: 2,
+    blocTitle: "Ta collection actuelle",
+    type: "text",
+    question: "Ta basique préférée — la bague mood que tu portes le plus souvent ?",
+    placeholder: "Ex : ma base titane S avec un addon argent serti...",
+    optional: true,
+  },
+  {
     id: "matiere_manquante",
     bloc: 2,
-    blocTitle: "Ta compo actuelle",
+    blocTitle: "Ta collection actuelle",
     type: "text",
-    question: "Une matière ou couleur qui te manque dans ta compo ?",
-    placeholder: "Ex : un bleu nuit profond, du tantale, une céramique colorée...",
+    question: "Une matière ou couleur qui te manque dans ta collection ?",
+    placeholder: "Ex : un bleu nuit profond, du tantale, un émail coloré...",
     optional: true,
   },
 
+  // ═══════════════════════════════════════════════════════════════
   // BLOC 3 — Tes envies nouveautés
+  // ═══════════════════════════════════════════════════════════════
   {
     id: "nouvelle_pepite",
     bloc: 3,
     blocTitle: "Tes envies nouveautés",
-    type: "single",
+    type: "multi",
     question: "Si on créait UNE nouvelle pépite, ça serait plutôt...",
+    hint: "Plusieurs choix possibles",
     options: [
-      { value: "or_massif", label: "Une pièce en or massif", emoji: "👑" },
-      { value: "ceram_couleur", label: "Une céramique colorée inédite", emoji: "🌈" },
+      { value: "email_couleur", label: "Un émail coloré inédit", emoji: "🎨" },
       { value: "pierres", label: "Une pièce avec pierres précieuses", emoji: "💎" },
       { value: "matiere_surprise", label: "Une matière qu'on n'a jamais vue", emoji: "✨" },
       { value: "addon_original", label: "Un addon vraiment original", emoji: "🦋" },
       { value: "collab", label: "Une collab avec une artiste", emoji: "🎨" },
+      { value: "polymere", label: "Du polymère dans des nouvelles couleurs", emoji: "🌈" },
+      { value: "bicolore", label: "Une pièce bicolore (or rose + or gris)", emoji: "🌗" },
     ],
+  },
+  {
+    id: "nouvelle_pepite_libre",
+    bloc: 3,
+    blocTitle: "Tes envies nouveautés",
+    type: "text",
+    question: "Une autre idée de nouveauté ? (champ libre)",
+    placeholder: "Décris-la nous en quelques mots...",
+    optional: true,
   },
   {
     id: "couleurs_vibrent",
@@ -186,22 +228,34 @@ export const QUESTIONS: Question[] = [
     blocTitle: "Tes envies nouveautés",
     type: "multi",
     question: "Les couleurs qui te font vibrer en ce moment 🩵",
-    hint: "Coche tes 3-5 préférées",
+    hint: "Coche autant que tu veux",
     options: [
       { value: "blanc_neige", label: "Blanc neige", color: "#FFFFFF" },
-      { value: "crème", label: "Crème nacré", color: "#F5E6D3" },
+      { value: "creme", label: "Crème nacré", color: "#F5E6D3" },
       { value: "rose_poudre", label: "Rose poudré", color: "#E8C5B5" },
-      { value: "rouge_passion", label: "Rouge passion", color: "#C73E3E" },
+      { value: "rose_pale", label: "Rose pâle", color: "#FBC2C2" },
       { value: "rose_fuchsia", label: "Fuchsia", color: "#D63384" },
+      { value: "rouge_passion", label: "Rouge passion", color: "#C73E3E" },
+      { value: "bordeaux", label: "Bordeaux", color: "#7B1E2B" },
       { value: "orange_corail", label: "Corail", color: "#FF7F50" },
+      { value: "orange_brulee", label: "Orange brûlée", color: "#CC5500" },
       { value: "jaune_soleil", label: "Jaune soleil", color: "#F4C430" },
+      { value: "jaune_moutarde", label: "Jaune moutarde", color: "#DAA520" },
       { value: "vert_emeraude", label: "Vert émeraude", color: "#2E8B57" },
+      { value: "vert_sapin", label: "Vert sapin", color: "#0E4D2D" },
       { value: "vert_menthe", label: "Vert menthe", color: "#98D8C1" },
+      { value: "vert_olive", label: "Vert olive", color: "#8B8B3A" },
       { value: "bleu_ciel", label: "Bleu ciel", color: "#87CEEB" },
+      { value: "bleu_canard", label: "Bleu canard", color: "#0F7F8A" },
       { value: "bleu_nuit", label: "Bleu nuit", color: "#1B2951" },
-      { value: "violet", label: "Violet améthyste", color: "#9966CC" },
+      { value: "violet_lavande", label: "Lavande", color: "#B6A4D8" },
+      { value: "violet_amethyste", label: "Améthyste", color: "#9966CC" },
+      { value: "violet_aubergine", label: "Aubergine", color: "#4B1A4D" },
+      { value: "marron_chocolat", label: "Chocolat", color: "#5B3A20" },
       { value: "noir", label: "Noir profond", color: "#0A0A0A" },
       { value: "gris_perle", label: "Gris perle", color: "#C0C0C0" },
+      { value: "argent_metal", label: "Argent métallique", color: "#A8A9AD" },
+      { value: "champagne", label: "Champagne doré", color: "#E2C792" },
     ],
   },
   {
@@ -212,18 +266,39 @@ export const QUESTIONS: Question[] = [
     question: "Les pierres qui te font rêver 💎",
     hint: "Plusieurs choix possibles",
     options: [
-      { value: "diamant", label: "Diamant", emoji: "💎" },
+      { value: "diamant", label: "Diamant blanc", emoji: "💎" },
+      { value: "diamant_brun", label: "Diamant brun", emoji: "🤎" },
+      { value: "diamant_jaune", label: "Diamant jaune pur", emoji: "💛" },
       { value: "saphir", label: "Saphir bleu", emoji: "🔵" },
       { value: "saphir_rose", label: "Saphir rose", emoji: "🌸" },
+      { value: "saphir_mauve", label: "Saphir mauve", emoji: "💜" },
       { value: "rubis", label: "Rubis", emoji: "❤️" },
       { value: "emeraude", label: "Émeraude", emoji: "💚" },
-      { value: "topaze", label: "Topaze London Blue", emoji: "🩵" },
-      { value: "peridot", label: "Péridot", emoji: "🍀" },
+      { value: "topaze", label: "Topaze", emoji: "🩵" },
       { value: "amethyste", label: "Améthyste", emoji: "💜" },
-      { value: "opale", label: "Opale", emoji: "🤍" },
-      { value: "perle", label: "Perle", emoji: "🌕" },
-      { value: "morganite", label: "Morganite", emoji: "🌹" },
-      { value: "tanzanite", label: "Tanzanite", emoji: "💙" },
+      { value: "zircons", label: "Zircons", emoji: "✨" },
+    ],
+  },
+  {
+    id: "zircons_couleur",
+    bloc: 3,
+    blocTitle: "Tes envies nouveautés",
+    type: "multi",
+    question: "Si zircons, quelles couleurs te plaisent ?",
+    hint: "Plusieurs choix possibles",
+    showIf: { questionId: "pierres_revees", valueIncludes: "zircons" },
+    optional: true,
+    options: [
+      { value: "blanc", label: "Blanc / transparent", emoji: "🤍" },
+      { value: "rose", label: "Rose", emoji: "🌸" },
+      { value: "rouge", label: "Rouge", emoji: "❤️" },
+      { value: "bleu", label: "Bleu", emoji: "💙" },
+      { value: "vert", label: "Vert", emoji: "💚" },
+      { value: "jaune", label: "Jaune", emoji: "💛" },
+      { value: "violet", label: "Violet", emoji: "💜" },
+      { value: "noir", label: "Noir", emoji: "🖤" },
+      { value: "champagne", label: "Champagne", emoji: "🥂" },
+      { value: "mix", label: "Un mix coloré", emoji: "🌈" },
     ],
   },
   {
@@ -265,8 +340,20 @@ export const QUESTIONS: Question[] = [
     placeholder: "Ex : un addon avec une pierre en forme de cœur, une base bicolore or rose et or gris, une collection inspirée des étoiles...",
     optional: true,
   },
+  {
+    id: "avis_nouveautes",
+    bloc: 3,
+    blocTitle: "Tes envies nouveautés",
+    type: "longtext",
+    question: "Qu'est-ce que tu penses de nos pépites créatives récentes ?",
+    hint: "Ce qui t'a marquée, ce que tu as adoré ou moins aimé — sois sincère 💛",
+    placeholder: "Ex : j'ai adoré la collection Aura, mais les Yarrow je trouve que...",
+    optional: true,
+  },
 
+  // ═══════════════════════════════════════════════════════════════
   // BLOC 4 — Les coffrets
+  // ═══════════════════════════════════════════════════════════════
   {
     id: "coffret_achete",
     bloc: 4,
@@ -327,7 +414,8 @@ export const QUESTIONS: Question[] = [
       { value: "60_100", label: "60 à 100 CHF", emoji: "💕" },
       { value: "100_150", label: "100 à 150 CHF", emoji: "🌸" },
       { value: "150_250", label: "150 à 250 CHF", emoji: "✨" },
-      { value: "250plus", label: "250 CHF et plus", emoji: "💎" },
+      { value: "250_500", label: "250 à 500 CHF", emoji: "💎" },
+      { value: "500plus", label: "500 CHF et plus", emoji: "👑" },
       { value: "depend", label: "Ça dépend de la personne", emoji: "🦋" },
     ],
   },
@@ -347,13 +435,15 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
+  // ═══════════════════════════════════════════════════════════════
   // BLOC 5 — La joaillerie
+  // ═══════════════════════════════════════════════════════════════
   {
     id: "joaillerie_position",
     bloc: 5,
     blocTitle: "La joaillerie",
     type: "single",
-    question: "La joaillerie haute (or massif, vraies pierres précieuses, 500.- et +) 💎",
+    question: "La joaillerie haute mood, 500.- et plus 💎",
     options: [
       { value: "deja_achete", label: "J'en ai déjà acheté", emoji: "👑" },
       { value: "reve", label: "J'en rêve depuis longtemps", emoji: "✨" },
@@ -381,17 +471,29 @@ export const QUESTIONS: Question[] = [
     id: "joaillerie_piece",
     bloc: 5,
     blocTitle: "La joaillerie",
-    type: "single",
-    question: "La pièce joaillerie qui te fait rêver ?",
+    type: "multi",
+    question: "Les pièces joaillerie mood qui te font rêver ?",
+    hint: "Plusieurs choix possibles",
     options: [
-      { value: "solitaire", label: "Un solitaire diamant", emoji: "💎" },
-      { value: "alliance", label: "Une alliance en or massif", emoji: "👑" },
-      { value: "pendentif", label: "Un pendentif unique", emoji: "✨" },
-      { value: "boucles", label: "Des boucles précieuses", emoji: "🌸" },
-      { value: "bague_joaillerie", label: "Une bague joaillerie mood", emoji: "💍" },
-      { value: "bracelet", label: "Un bracelet en or", emoji: "🩷" },
-      { value: "parure", label: "Une parure complète", emoji: "🦋" },
+      { value: "yarrow", label: "Les Yarrow", emoji: "🌾" },
+      { value: "medium_serti", label: "Les medium ou mini entièrement sertis", emoji: "💎" },
+      { value: "exception", label: "Les pièces d'exception", emoji: "👑" },
+      { value: "addon_or_gris", label: "Les addons en or gris", emoji: "🌟" },
+      { value: "tresors_neree", label: "La collection Les Trésors de Nérée", emoji: "🌊" },
+      { value: "coffret_lanieka", label: "Le coffret Lanieka", emoji: "🎁" },
+      { value: "base_sertie", label: "Les bases entièrement serties", emoji: "✨" },
+      { value: "mille_une_nuits", label: "Le 1001 Nuits", emoji: "🌙" },
+      { value: "rosas_ouros", label: "Le Rosas de Ouros", emoji: "🌹" },
     ],
+  },
+  {
+    id: "joaillerie_piece_autre",
+    bloc: 5,
+    blocTitle: "La joaillerie",
+    type: "text",
+    question: "Une autre pièce joaillerie qui te fait rêver ?",
+    placeholder: "Ex : un solitaire avec un saphir rose, une bague mood avec diamant brun...",
+    optional: true,
   },
   {
     id: "piece_unique",
@@ -407,10 +509,209 @@ export const QUESTIONS: Question[] = [
     ],
   },
 
-  // BLOC 6 — Ta pépite rêvée + cadeau
+  // ═══════════════════════════════════════════════════════════════
+  // BLOC 6 — Tes habitudes d'achat
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: "frequence_achat",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "single",
+    question: "À quelle fréquence tu t'offres une nouvelle pépite mood ?",
+    options: [
+      { value: "souvent", label: "Plusieurs fois par mois", emoji: "💎" },
+      { value: "mensuel", label: "Environ une fois par mois", emoji: "✨" },
+      { value: "trimestre", label: "Quelques fois par an", emoji: "🌸" },
+      { value: "annee", label: "Une à deux fois par an", emoji: "💕" },
+      { value: "rare", label: "Plus rarement, pour les grandes occasions", emoji: "🤍" },
+    ],
+  },
+  {
+    id: "panier_moyen",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "slider",
+    question: "Ton panier moyen par commande mood ?",
+    hint: "Glisse le curseur sur ton estimation",
+    sliderMin: 50,
+    sliderMax: 1000,
+    sliderStep: 10,
+    sliderUnit: "CHF",
+    sliderLabels: { min: "50 CHF", max: "1000+ CHF" },
+  },
+  {
+    id: "motivation_rachat",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "multi",
+    question: "Pourquoi tu reviens chez mood ? 💛",
+    hint: "Plusieurs réponses possibles",
+    options: [
+      { value: "qualite", label: "La qualité des bijoux", emoji: "💎" },
+      { value: "design", label: "Le design unique et reconnaissable", emoji: "✨" },
+      { value: "variete", label: "La variété (toujours envie d'une nouvelle compo)", emoji: "🌈" },
+      { value: "concept", label: "Le concept de bagues interchangeables", emoji: "🔄" },
+      { value: "communaute", label: "La communauté Mood Lovers", emoji: "🫶🏼" },
+      { value: "fabrication", label: "La fabrication suisse / artisanale", emoji: "🇨🇭" },
+      { value: "garantie", label: "La garantie à vie", emoji: "🛡️" },
+      { value: "service", label: "Le service client / les boutiques", emoji: "💝" },
+      { value: "histoire", label: "L'histoire de la marque", emoji: "📖" },
+      { value: "addictif", label: "C'est addictif, j'en veux toujours plus 😄", emoji: "🌹" },
+    ],
+  },
+  {
+    id: "frein_achat",
+    bloc: 6,
+    blocTitle: "Tes habitudes d'achat",
+    type: "multi",
+    question: "Et qu'est-ce qui te freine parfois ?",
+    hint: "On veut comprendre — c'est ce qui nous permet d'évoluer 🌸",
+    optional: true,
+    options: [
+      { value: "prix", label: "Le prix sur certaines pièces", emoji: "💰" },
+      { value: "deja_assez", label: "J'ai déjà tout ce qu'il me faut", emoji: "🤍" },
+      { value: "delai", label: "Les délais de fabrication", emoji: "⏰" },
+      { value: "stock", label: "Les ruptures de stock", emoji: "📦" },
+      { value: "trop_choix", label: "Trop de choix, je n'arrive pas à décider", emoji: "🌀" },
+      { value: "pas_nouveau", label: "Pas assez de nouveautés à mon goût", emoji: "🌸" },
+      { value: "site", label: "Quelque chose qui me gêne sur le site", emoji: "💻" },
+      { value: "rien", label: "Rien ne me freine ❤️", emoji: "✨" },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOC 7 — Comment tu nous as connu(e)
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: "decouverte_marque",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "multi",
+    question: "Comment tu as connu Mood pour la première fois ?",
+    hint: "Plusieurs réponses possibles si tu nous as découverts à plusieurs endroits",
+    options: [
+      { value: "instagram", label: "Instagram", emoji: "📷" },
+      { value: "facebook", label: "Facebook", emoji: "💙" },
+      { value: "tiktok", label: "TikTok", emoji: "🎵" },
+      { value: "pinterest", label: "Pinterest", emoji: "📌" },
+      { value: "google", label: "Recherche Google", emoji: "🔍" },
+      { value: "boutique", label: "En passant devant une boutique", emoji: "🏪" },
+      { value: "amie", label: "Une amie / proche m'en a parlé", emoji: "🫶🏼" },
+      { value: "pub", label: "Une pub en ligne (Insta/Facebook)", emoji: "📣" },
+      { value: "presse", label: "Dans la presse / un magazine", emoji: "📰" },
+      { value: "influenceuse", label: "Une influenceuse en parlait", emoji: "💫" },
+      { value: "evenement", label: "Un événement / salon", emoji: "🎪" },
+      { value: "autre", label: "Autre", emoji: "✨" },
+    ],
+  },
+  {
+    id: "reseaux_suivis",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "multi",
+    question: "Tu suis Mood sur quels réseaux ?",
+    options: [
+      { value: "instagram", label: "Instagram", emoji: "📷" },
+      { value: "facebook", label: "Facebook", emoji: "💙" },
+      { value: "tiktok", label: "TikTok", emoji: "🎵" },
+      { value: "pinterest", label: "Pinterest", emoji: "📌" },
+      { value: "youtube", label: "YouTube", emoji: "📺" },
+      { value: "newsletter", label: "Newsletter email", emoji: "📧" },
+      { value: "aucun", label: "Aucun pour l'instant", emoji: "🌱" },
+    ],
+  },
+  {
+    id: "entourage_mood",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "single",
+    question: "Combien de personnes autour de toi portent du mood ?",
+    options: [
+      { value: "0", label: "Personne, je suis la seule 😉", emoji: "🌸" },
+      { value: "1_2", label: "1 ou 2 personnes", emoji: "💕" },
+      { value: "3_5", label: "3 à 5 personnes", emoji: "✨" },
+      { value: "6_10", label: "6 à 10 personnes", emoji: "💎" },
+      { value: "10plus", label: "Plus de 10 — c'est viral autour de moi 🦋", emoji: "🌹" },
+    ],
+  },
+  {
+    id: "parrainage",
+    bloc: 7,
+    blocTitle: "Comment tu nous as connu(e)",
+    type: "single",
+    question: "Tu as déjà fait découvrir Mood à quelqu'un ?",
+    options: [
+      { value: "souvent", label: "Oui, souvent — je suis une serial moodarraine 😄", emoji: "🫶🏼" },
+      { value: "quelquefois", label: "Oui, quelques fois", emoji: "💕" },
+      { value: "rarement", label: "Rarement", emoji: "🌸" },
+      { value: "jamais", label: "Jamais encore", emoji: "🌱" },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOC 8 — Notre site & nos photos
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: "note_site",
+    bloc: 8,
+    blocTitle: "Notre site & nos photos",
+    type: "slider",
+    question: "Tu donnes combien à yourmood.net sur 10 ? 💻",
+    hint: "Glisse le curseur",
+    sliderMin: 0,
+    sliderMax: 10,
+    sliderStep: 1,
+    sliderUnit: "/ 10",
+    sliderLabels: { min: "À revoir", max: "Parfait ✨" },
+  },
+  {
+    id: "note_photos",
+    bloc: 8,
+    blocTitle: "Notre site & nos photos",
+    type: "slider",
+    question: "Nos photos produit, tu les notes comment sur 10 ? 📸",
+    hint: "Pareil — glisse le curseur",
+    sliderMin: 0,
+    sliderMax: 10,
+    sliderStep: 1,
+    sliderUnit: "/ 10",
+    sliderLabels: { min: "Bof", max: "Magnifiques ❤️" },
+  },
+  {
+    id: "site_aime",
+    bloc: 8,
+    blocTitle: "Notre site & nos photos",
+    type: "multi",
+    question: "Ce que tu aimes le plus sur notre site ?",
+    options: [
+      { value: "photos", label: "Les photos", emoji: "📷" },
+      { value: "compo", label: "Le configurateur de compo", emoji: "🔄" },
+      { value: "descriptions", label: "Les descriptions produits", emoji: "📖" },
+      { value: "blog", label: "Le blog / histoires de la marque", emoji: "💌" },
+      { value: "navigation", label: "La navigation simple", emoji: "🧭" },
+      { value: "filtres", label: "Les filtres par matière/couleur", emoji: "🎨" },
+      { value: "avis", label: "Les avis clients", emoji: "⭐" },
+      { value: "compte", label: "Mon espace personnel", emoji: "👤" },
+      { value: "mobile", label: "L'expérience sur mobile", emoji: "📱" },
+    ],
+  },
+  {
+    id: "site_changerait",
+    bloc: 8,
+    blocTitle: "Notre site & nos photos",
+    type: "longtext",
+    question: "Qu'est-ce que tu changerais sur notre site ?",
+    hint: "Toute idée est précieuse — sois franche 💛",
+    placeholder: "Ex : j'aimerais voir la bague portée, mieux comprendre les tailles, plus de vidéos, un truc plus rapide...",
+    optional: true,
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOC 9 — Ta pépite rêvée + cadeau
+  // ═══════════════════════════════════════════════════════════════
   {
     id: "piece_revee",
-    bloc: 6,
+    bloc: 9,
     blocTitle: "Ta pépite rêvée",
     type: "longtext",
     question: "Décris-nous la pièce mood de tes rêves 💌",
@@ -420,7 +721,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: "contact",
-    bloc: 6,
+    bloc: 9,
     blocTitle: "Ta pépite rêvée",
     type: "contact",
     question: "Ton prénom et ton email pour recevoir ton bon 20.- ✨",
