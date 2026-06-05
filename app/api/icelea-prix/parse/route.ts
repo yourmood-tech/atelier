@@ -103,8 +103,8 @@ export async function POST(req: NextRequest) {
 
     // pdf-parse v2 uses a class — import dynamically to stay compatible with Next.js bundler
     const { PDFParse } = await import("pdf-parse");
+    // getText() appelle load() en interne — pas besoin de l'appeler séparément
     const parser = new PDFParse({ data: new Uint8Array(buffer), verbosity: 0 });
-    await parser.load();
     const result = await parser.getText() as { text: string; pages: { text: string; num: number }[] };
     const rawText = result.text ?? result.pages?.map((p: { text: string }) => p.text).join("\n") ?? "";
 
