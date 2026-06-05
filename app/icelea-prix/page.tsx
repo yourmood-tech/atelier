@@ -175,29 +175,84 @@ export default function IceleaPrixPage() {
     }
   }
 
-  // STEP 4 — Download Shopify CSV
+  // STEP 4 — Download Shopify CSV (2 phases pour éviter le timeout Vercel)
   async function handleDownloadCSV() {
     if (!compareResult) return;
     setLoading(true); setError(null);
+
+    // Variants Icelea avec hausse >5%
+    const impactedVariantIds = compareResult.rows
+      .filter(r => r.delta !== null && r.delta > 0.05)
+      .map(r => r.variant_id);
+
+    if (!impactedVariantIds.length) {
+      addLog("Aucun article avec hausse >5% — pas de CSV à générer.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      addLog("Analyse BOM Katana + résolution SKU Shopify…");
+      // Phase 1 : scan des recettes Katana par tranches de 15 pages
+      addLog(`Phase 1 — Scan recettes Katana (${impactedVariantIds.length} variants impactés)…`);
+      const PAGE_CHUNK = 15;
+      const allImpacted = new Map<number, Set<string>>();
+      let pageStart = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await fetch("/api/icelea-prix/scan-recipes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ variantIds: impactedVariantIds, pageStart, pageCount: PAGE_CHUNK }),
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          setError(`Erreur scan recettes (pages ${pageStart}-${pageStart + PAGE_CHUNK - 1}) : ${txt.slice(0, 200)}`);
+          return;
+        }
+        const data = await res.json() as { impacted: { pvId: number; refs: string[] }[]; hasMore: boolean; error?: string };
+        if (data.error) { setError(data.error); return; }
+        for (const { pvId, refs } of data.impacted) {
+          if (!allImpacted.has(pvId)) allImpacted.set(pvId, new Set());
+          refs.forEach(r => allImpacted.get(pvId)!.add(r));
+        }
+        hasMore = data.hasMore;
+        pageStart += PAGE_CHUNK;
+        addLog(`  Pages ${pageStart - PAGE_CHUNK}-${pageStart - 1} scannées — ${allImpacted.size} produits impactés jusqu'ici`);
+      }
+
+      addLog(`Phase 2 — Résolution SKU + chargement Shopify (${allImpacted.size} produits)…`);
+
+      if (!allImpacted.size) {
+        addLog("Aucun produit Katana trouvé dans les recettes.");
+        return;
+      }
+
+      // Phase 2 : générer le CSV depuis les IDs consolidés
       const date = new Date().toISOString().slice(0, 10);
-      const res = await fetch("/api/icelea-prix/shopify-csv", {
+      const impactedArr = [...allImpacted.entries()].map(([pvId, refs]) => ({ pvId, refs: [...refs] }));
+      const res2 = await fetch("/api/icelea-prix/gen-csv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: compareResult.rows, filename: `icelea-shopify-impact-${date}.csv` }),
+        body: JSON.stringify({ impacted: impactedArr, filename: `icelea-shopify-impact-${date}.csv` }),
       });
-      if (res.headers.get("content-type")?.includes("text/csv")) {
-        const blob = await res.blob();
+
+      if (res2.headers.get("content-type")?.includes("text/csv")) {
+        const blob = await res2.blob();
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url; a.download = `icelea-shopify-impact-${date}.csv`; a.click();
         URL.revokeObjectURL(url);
-        addLog("CSV téléchargé.");
+        addLog("✓ CSV téléchargé.");
       } else {
-        const data = await res.json() as { message?: string; error?: string };
-        if (data.message) addLog(data.message);
-        if (data.error) setError(data.error);
+        if (!res2.ok) {
+          const txt = await res2.text();
+          setError(`Erreur génération CSV : ${txt.slice(0, 200)}`);
+          return;
+        }
+        const data2 = await res2.json() as { message?: string; error?: string };
+        if (data2.message) addLog(data2.message);
+        if (data2.error) setError(data2.error);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur réseau");
