@@ -218,8 +218,8 @@ export async function GET(req: NextRequest) {
           const rate    = await getESTVRate(date, devise);
           const brutChf = r2(brut * rate);
           const tvaAcq  = r2(brutChf * TAUX);
-          // Compte de charge : montant en CHF, avec montant_orig + devise pour traçabilité
-          e(ecritures, date, cpteCharge,       lib,                             brutChf, brut,  devise);
+          // Compte de charge : compte CHF, montant converti — pas de devise étrangère
+          e(ecritures, date, cpteCharge,       lib,                             brutChf);
           e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,         tvaAcq);
           e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`,  -tvaAcq);
           // Compte PayPal devise : montant en devise étrangère
