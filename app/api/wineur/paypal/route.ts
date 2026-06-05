@@ -187,9 +187,10 @@ export async function GET(req: NextRequest) {
           e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, fee);
           e(ecritures, date, cpteComm,           `Commission ${lib}`,-fee);
         } else {
-          // Frais en devise étrangère (ex: EUR) → enregistrer en devise
-          e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, fee, fee, feeDev);
-          e(ecritures, date, cpteComm,           `Commission ${lib}`,-fee,-fee, feeDev);
+          // Frais en devise étrangère : 640002 est en CHF, compte PayPal en devise
+          const feeChf = r2(fee * await getESTVRate(date, feeDev));
+          e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, feeChf);
+          e(ecritures, date, cpteComm,           `Commission ${lib}`,-fee,   -fee, feeDev);
         }
       }
     }
