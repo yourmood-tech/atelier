@@ -126,7 +126,8 @@ export default function WineurPage() {
     return { ecritures: allEcritures, unknowns: allUnknowns };
   }
 
-  async function generate(extraEcritures?: Ecriture[]) {
+  // sources=null → re-génère sans re-appeler les API (skip avec écritures en attente)
+  async function generate(extraEcritures?: Ecriture[], skipApiSources = false) {
     setLoading(true);
     setStatus(null);
     setError(null);
@@ -136,7 +137,7 @@ export default function WineurPage() {
         ? { ecritures: extraEcritures, unknowns: [] }
         : await parseFileSources();
 
-      // Si inconnus → stopper et demander les comptes
+      // Si inconnus fichiers → stopper et demander les comptes
       if (fileUnknowns.length > 0 && !extraEcritures) {
         setPendingEcritures(fileEcritures);
         setUnknowns(fileUnknowns);
@@ -149,12 +150,22 @@ export default function WineurPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           start, end,
-          sources: [...activeSources],
+          sources: skipApiSources ? [] : [...activeSources],
           ecritures_extra: fileEcritures,
         }),
       });
 
       if (!res.ok) throw new Error(`Erreur serveur : ${(await res.text()).slice(0, 200)}`);
+
+      const contentType = res.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        // Fournisseurs inconnus détectés côté API → afficher le résolveur
+        const j = await res.json() as { unknowns: UnknownEntry[]; ecritures: Ecriture[] };
+        setPendingEcritures(j.ecritures);
+        setUnknowns(j.unknowns);
+        setLoading(false);
+        return;
+      }
 
       const csv = await res.text();
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -174,7 +185,6 @@ export default function WineurPage() {
   }
 
   async function resolveUnknowns(resolved: Array<{ source: MappingSource; key: string; compte: string }>) {
-    // Sauvegarder les mappings
     if (resolved.length > 0) {
       await fetch("/api/wineur/mappings", {
         method: "POST",
@@ -182,9 +192,9 @@ export default function WineurPage() {
         body: JSON.stringify(resolved),
       });
     }
-    // Générer avec les écritures déjà parsées
     setUnknowns([]);
-    await generate(pendingEcritures);
+    // Re-générer from scratch : les nouveaux mappings KV seront utilisés par PayPal
+    await generate();
   }
 
   const hasAnything = activeSources.size > 0 || activeFiles.size > 0;
@@ -203,7 +213,7 @@ export default function WineurPage() {
           <UnknownResolver
             unknowns={unknowns}
             onResolve={resolveUnknowns}
-            onSkip={() => { setUnknowns([]); generate(pendingEcritures); }}
+            onSkip={() => { setUnknowns([]); generate(pendingEcritures, true); }}
           />
         )}
 

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { COMPTES, calculTva } from "@/lib/wineur/accounting";
 import type { Ecriture } from "@/lib/wineur/accounting";
 import { getESTVRate } from "@/lib/wineur/estv-rates";
-import comptesPaypal from "@/lib/wineur/comptes_paypal.json";
+import { getMappings, lookupInMap } from "@/lib/wineur/mappings";
+import type { UnknownEntry } from "@/lib/wineur/mappings";
 
 const CLIENT_ID     = process.env.PAYPAL_CLIENT_ID!;
 const CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET!;
@@ -45,14 +46,6 @@ function e(out: Ecriture[], date: string, compte: string, libelle: string, monta
   });
 }
 
-function lookupFournisseur(nom: string, email: string): string | null {
-  const haystack = `${nom} ${email}`.toLowerCase();
-  const config = comptesPaypal as Record<string, string>;
-  for (const [k, v] of Object.entries(config)) {
-    if (haystack.includes(k) || k.includes(haystack.split(" ")[0])) return v;
-  }
-  return null;
-}
 
 function parsePayerInfo(payer: Record<string, unknown>) {
   const nameObj  = payer?.payer_name as Record<string, string> | null;
@@ -79,6 +72,8 @@ export async function GET(req: NextRequest) {
   const data = await res.json() as { transaction_details?: Record<string, unknown>[] };
   const txs  = data.transaction_details ?? [];
   const ecritures: Ecriture[] = [];
+  const unknowns:  UnknownEntry[] = [];
+  const mappings   = await getMappings("paypal");
 
   // Codes ignorés : paires internes PayPal qui se neutralisent
   const IGNORE_CODES = new Set(["T1501", "T1105"]);
@@ -204,7 +199,12 @@ export async function GET(req: NextRequest) {
     // ── PAIEMENT FOURNISSEUR ────────────────────────────────────────
     if (rawAmt < 0 || isSupplierCode) {
       const brut       = Math.abs(rawAmt);
-      const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase()) ?? "109999";
+      const haystack   = `${nom} ${email}`.toLowerCase();
+      const cpteCharge = lookupInMap(haystack, mappings);
+      if (!cpteCharge) {
+        unknowns.push({ key: haystack.trim(), label: nom, amount: brut, date, source: "paypal" });
+        continue;
+      }
 
       if (isCH) {
         // Fournisseur suisse : brut = TTC → HT + TVA récupérable (en CHF)
@@ -237,5 +237,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ecritures, count: txs.length });
+  return NextResponse.json({ ecritures, unknowns, count: txs.length });
 }
