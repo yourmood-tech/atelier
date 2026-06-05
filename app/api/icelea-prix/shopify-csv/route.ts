@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const KATANA_KEY = process.env.KATANA_API_KEY!;
 const SHOPIFY_TOKEN = process.env.SHOPIFY_API_TOKEN!;
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE!;
@@ -13,11 +15,18 @@ interface CompareRow {
 }
 
 async function katanaGet(path: string) {
-  const res = await fetch(`${KATANA_BASE}${path}`, {
-    headers: { Authorization: KATANA_KEY, Accept: "application/json" }, cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Katana ${res.status} ${path}`);
-  return res.json();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const res = await fetch(`${KATANA_BASE}${path}`, {
+      headers: { Authorization: KATANA_KEY, Accept: "application/json" }, cache: "no-store",
+    });
+    if (res.status === 429) {
+      await SLEEP(2000 * Math.pow(1.6, attempt));
+      continue;
+    }
+    if (!res.ok) throw new Error(`Katana ${res.status} ${path}`);
+    return res.json();
+  }
+  throw new Error(`Katana rate-limit dépassé sur ${path}`);
 }
 
 function parseNextLink(h: string | null) {
@@ -36,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const impactedIds = new Set(impacted.map(r => r.variant_id));
 
-    // Scan Katana recipes
+    // Scan Katana recipes — 400ms entre pages pour éviter le 429 sur 60+ pages
     const allRecipes: Record<string, unknown>[] = [];
     let page = 1;
     while (true) {
@@ -45,7 +54,7 @@ export async function POST(req: NextRequest) {
       allRecipes.push(...batch);
       if (batch.length < 200) break;
       page++;
-      await SLEEP(200);
+      await SLEEP(400);
     }
 
     // Find product variant IDs that use impacted ingredients

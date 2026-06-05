@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 60;
+
 const KATANA_KEY = process.env.KATANA_API_KEY!;
 const KATANA_BASE = "https://api.katanamrp.com";
 const SLEEP = (ms: number) => new Promise(r => setTimeout(r, ms));
