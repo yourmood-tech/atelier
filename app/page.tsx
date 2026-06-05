@@ -44,6 +44,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Créez un ordre d'achat Icelea depuis Katana : scan produit, choix taille, confirmation ingrédients.",
       },
       {
+        href: "/icelea-prix",
+        emoji: "💲",
+        title: "Prix Icelea",
+        description: "Upload la facture PDF Icelea, compare avec Katana, applique les nouveaux prix d'achat et génère le CSV Shopify pour les articles avec hausse >5%.",
+      },
+      {
         href: "/reassort",
         emoji: "📦",
         title: "Réassort fournisseurs",
