@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// pdf-parse v2 exports differently — use dynamic require to stay compatible
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
-
 const SKIP_WORDS = new Set(["Stainless", "Development", "Freight", "Page", "INVOICE", "Item", "Total", "USD", "CARTON", "HIS", "Description", "Size", "Qty", "Amount"]);
 const REF_RE = /MD-[A-Z]{2}-\d+/;
 const SIZE_RANGE_RE = /\/(\d{2}-\d{2})/;
-const PRICE_RE = /\b(\d{1,3}(?:\.\d{2})?)\b/;
 
 interface ParsedItem {
   ref: string;
@@ -105,17 +100,24 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: "Aucun fichier PDF fourni" }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const parsed = await pdfParse(buffer);
-    const items = parseIceleaText(parsed.text);
+
+    // pdf-parse v2 uses a class — import dynamically to stay compatible with Next.js bundler
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse({ data: new Uint8Array(buffer), verbosity: 0 });
+    await parser.load();
+    const result = await parser.getText() as { text: string; pages: { text: string; num: number }[] };
+    const rawText = result.text ?? result.pages?.map((p: { text: string }) => p.text).join("\n") ?? "";
+
+    const items = parseIceleaText(rawText);
 
     if (items.length === 0) {
       return NextResponse.json({
         error: "Aucune référence Icelea trouvée dans ce PDF (attendu : MD-RI-XXX, MD-EA-XXX…)",
-        rawText: parsed.text.slice(0, 1000),
+        rawText: rawText.slice(0, 1500),
       }, { status: 422 });
     }
 
-    return NextResponse.json({ items, totalPages: parsed.numpages });
+    return NextResponse.json({ items, totalPages: result.pages?.length ?? 0 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur inconnue" }, { status: 500 });
   }
