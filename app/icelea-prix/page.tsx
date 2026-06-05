@@ -74,6 +74,7 @@ export default function IceleaPrixPage() {
   const [pdfName, setPdfName] = useState("");
   const [compareResult, setCompareResult] = useState<CompareResult | null>(null);
   const [applyResult, setApplyResult] = useState<{ updated: number; errors: number; errorDetails: string[] } | null>(null);
+  const [applyProgress, setApplyProgress] = useState<{ done: number; total: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
@@ -129,32 +130,48 @@ export default function IceleaPrixPage() {
     }
   }
 
-  // STEP 3 — Apply to Katana
+  // STEP 3 — Apply to Katana (envois par tranches de 150 pour éviter le timeout Vercel)
   async function handleApply() {
     if (!compareResult) return;
     setLoading(true); setError(null); setLog([]);
+    const CHUNK = 150;
+    const toUpdate = compareResult.rows.filter(r => r.needs_update);
+    const chunks: typeof toUpdate[] = [];
+    for (let i = 0; i < toUpdate.length; i += CHUNK) chunks.push(toUpdate.slice(i, i + CHUNK));
+
+    let totalUpdated = 0, totalErrors = 0;
+    const allErrorDetails: string[] = [];
+    setApplyProgress({ done: 0, total: toUpdate.length });
+
     try {
-      addLog(`Mise à jour de ${compareResult.toUpdate} variants Katana…`);
-      const res = await fetch("/api/icelea-prix/apply-katana", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: compareResult.rows }),
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        setError(`Erreur HTTP ${res.status} : ${txt.slice(0, 300)}`);
-        return;
+      addLog(`Mise à jour de ${toUpdate.length} variants Katana en ${chunks.length} tranche(s)…`);
+      for (let ci = 0; ci < chunks.length; ci++) {
+        const res = await fetch("/api/icelea-prix/apply-katana", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rows: chunks[ci] }),
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          setError(`Erreur HTTP ${res.status} (tranche ${ci + 1}) : ${txt.slice(0, 200)}`);
+          return;
+        }
+        const data = await res.json() as { updated: number; errors: number; errorDetails: string[]; error?: string };
+        if (data.error) { setError(data.error); return; }
+        totalUpdated += data.updated;
+        totalErrors += data.errors;
+        allErrorDetails.push(...data.errorDetails);
+        setApplyProgress({ done: Math.min((ci + 1) * CHUNK, toUpdate.length), total: toUpdate.length });
       }
-      const data = await res.json() as typeof applyResult & { error?: string };
-      if (data?.error) { setError(data.error); return; }
-      setApplyResult(data);
-      addLog(`✓ ${data!.updated} variants mis à jour dans Katana.`);
-      if (data!.errors) addLog(`⚠ ${data!.errors} erreurs.`);
+      setApplyResult({ updated: totalUpdated, errors: totalErrors, errorDetails: allErrorDetails });
+      addLog(`✓ ${totalUpdated} variants mis à jour dans Katana.`);
+      if (totalErrors) addLog(`⚠ ${totalErrors} erreurs.`);
       setStep("csv");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur réseau");
     } finally {
       setLoading(false);
+      setApplyProgress(null);
     }
   }
 
@@ -335,13 +352,27 @@ export default function IceleaPrixPage() {
             <div className="flex gap-3">
               <button onClick={handleApply} disabled={loading}
                 className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white font-semibold text-sm transition-colors">
-                {loading ? `Mise à jour en cours…` : `Confirmer — ${compareResult.toUpdate} variants`}
+                {loading ? (applyProgress ? `${applyProgress.done} / ${applyProgress.total} variants…` : "Démarrage…") : `Confirmer — ${compareResult.toUpdate} variants`}
               </button>
               <button onClick={() => setStep("compare")} disabled={loading}
                 className="px-4 py-2.5 rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm transition-colors">
                 ← Retour
               </button>
             </div>
+            {applyProgress && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-zinc-500">
+                  <span>Progression</span>
+                  <span>{applyProgress.done} / {applyProgress.total}</span>
+                </div>
+                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.round((applyProgress.done / applyProgress.total) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
