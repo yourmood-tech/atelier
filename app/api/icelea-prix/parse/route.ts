@@ -125,6 +125,8 @@ async function extractPDFText(buffer: Buffer): Promise<{ text: string; numPages:
     }
     await doc.destroy();
     return { text: fullText, numPages: doc.numPages };
+  } catch (e) {
+    throw e;
   }
 }
 
