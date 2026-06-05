@@ -93,6 +93,48 @@ function flush(ref: string, _price: number | null, items: Record<string, number[
   void ref; void items;
 }
 
+// Extrait le texte d'un PDF via pdfjs-dist + worker_threads (seule méthode
+// fiable en environnement serverless Node.js — pas de Web Worker disponible).
+async function extractPDFText(buffer: Buffer): Promise<{ text: string; numPages: number }> {
+  const { Worker } = await import("worker_threads");
+  const { createRequire } = await import("module");
+  const _require = createRequire(import.meta.url);
+
+  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const workerPath = _require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  const pdfjsWorker = new Worker(workerPath);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (pdfjs.GlobalWorkerOptions as any).workerPort = pdfjsWorker;
+
+  try {
+    const doc = await pdfjs.getDocument({
+      data: new Uint8Array(buffer),
+      useSystemFonts: true,
+    }).promise;
+
+    let fullText = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      // Reconstitue le texte avec retours à la ligne sur les items à y décroissant
+      const items = content.items as { str: string; transform: number[] }[];
+      let prevY: number | null = null;
+      for (const item of items) {
+        const y = item.transform[5];
+        if (prevY !== null && Math.abs(y - prevY) > 3) fullText += "\n";
+        fullText += item.str + " ";
+        prevY = y;
+      }
+      fullText += "\n";
+      page.cleanup();
+    }
+    await doc.destroy();
+    return { text: fullText, numPages: doc.numPages };
+  } finally {
+    await pdfjsWorker.terminate();
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -100,17 +142,7 @@ export async function POST(req: NextRequest) {
     if (!file) return NextResponse.json({ error: "Aucun fichier PDF fourni" }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-
-    // pdf-parse v2 uses a class — import dynamically to stay compatible with Next.js bundler
-    // Pointer pdfjs vers son worker bundlé (obligatoire sur Vercel serverless)
-    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-    pdfjs.GlobalWorkerOptions.workerSrc = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-
-    const { PDFParse } = await import("pdf-parse");
-    const parser = new PDFParse({ data: new Uint8Array(buffer), verbosity: 0 });
-    const result = await parser.getText() as { text: string; pages: { text: string; num: number }[] };
-    const rawText = result.text ?? result.pages?.map((p: { text: string }) => p.text).join("\n") ?? "";
-
+    const { text: rawText, numPages } = await extractPDFText(buffer);
     const items = parseIceleaText(rawText);
 
     if (items.length === 0) {
@@ -120,7 +152,7 @@ export async function POST(req: NextRequest) {
       }, { status: 422 });
     }
 
-    return NextResponse.json({ items, totalPages: result.pages?.length ?? 0 });
+    return NextResponse.json({ items, totalPages: numPages });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur inconnue" }, { status: 500 });
   }
