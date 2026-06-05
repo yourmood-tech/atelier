@@ -109,16 +109,13 @@ export async function GET(req: NextRequest) {
     // L'écart de change est absorbé par le compte 670004.
     // ═══════════════════════════════════════════════════════════════
     if (code === "T0200") {
-      const lib = `PayPal conversion ${devise}→CHF`;
-      if (rawAmt < 0) {
-        // Vente de devise : débit compte devise
-        e(ecritures, date, cpte,               lib, rawAmt, rawAmt, devise);
-        e(ecritures, date, COMPTES.DIFF_CHANGE, lib, -rawAmt);
-      } else {
-        // Achat de devise (direction inverse, rare)
-        e(ecritures, date, cpte,               lib, rawAmt, rawAmt, devise);
-        e(ecritures, date, COMPTES.DIFF_CHANGE, lib, -rawAmt);
-      }
+      // montant = contre-valeur CHF (ESTV), montant_orig = montant en devise
+      // DIFF_CHANGE absorbe l'écart entre taux ESTV et taux réel PayPal (T0700)
+      const lib        = `PayPal conversion ${devise}→CHF`;
+      const rate       = await getESTVRate(date, devise);
+      const rawAmtChf  = r2(rawAmt * rate);
+      e(ecritures, date, cpte,               lib,  rawAmtChf,  rawAmt, devise);
+      e(ecritures, date, COMPTES.DIFF_CHANGE, lib, -rawAmtChf);
       continue;
     }
 
@@ -150,8 +147,8 @@ export async function GET(req: NextRequest) {
       } else {
         // Étranger : pas de TVA suisse → montant CHF converti via ESTV
         const brutChf = r2(brut * await getESTVRate(date, devise));
-        e(ecritures, date, COMPTES.VENTE_GEN, lib, brutChf);
-        e(ecritures, date, cpte,              lib, -brut, -brut, devise);
+        e(ecritures, date, COMPTES.VENTE_GEN, lib,  brutChf);
+        e(ecritures, date, cpte,              lib, -brutChf, -brut, devise);
       }
       continue;
     }
@@ -173,7 +170,7 @@ export async function GET(req: NextRequest) {
         const rate    = devise !== "CHF" ? await getESTVRate(date, devise) : 1;
         const brutChf = r2(brut * rate);
         const { ht: htChf, tva: tvaChf } = calculTva(brutChf);
-        e(ecritures, date, cpte,              lib,          brut, devise !== "CHF" ? brut : undefined, devise !== "CHF" ? devise : undefined);
+        e(ecritures, date, cpte,              lib,           brutChf, devise !== "CHF" ? brut : undefined, devise !== "CHF" ? devise : undefined);
         e(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`, -htChf);
         e(ecritures, date, COMPTES.TVA_VENTE, `${lib} TVA`,-tvaChf);
         void ht; void tva;
@@ -184,7 +181,7 @@ export async function GET(req: NextRequest) {
           e(ecritures, date, COMPTES.VENTE_GEN, lib, -brut);
         } else {
           const brutChf = r2(brut * await getESTVRate(date, devise));
-          e(ecritures, date, cpte,              lib, brut, brut, devise);
+          e(ecritures, date, cpte,              lib,  brutChf, brut, devise);
           e(ecritures, date, COMPTES.VENTE_GEN, lib, -brutChf);
         }
       }
@@ -198,8 +195,8 @@ export async function GET(req: NextRequest) {
         } else {
           // Frais en devise étrangère : 640002 est en CHF, compte PayPal en devise
           const feeChf = r2(fee * await getESTVRate(date, feeDev));
-          e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`, feeChf);
-          e(ecritures, date, cpteComm,           `Commission ${lib}`,-fee,   -fee, feeDev);
+          e(ecritures, date, COMPTES.COMMISSION, `Commission ${lib}`,  feeChf);
+          e(ecritures, date, cpteComm,           `Commission ${lib}`, -feeChf, -fee, feeDev);
         }
       }
     }
@@ -210,11 +207,12 @@ export async function GET(req: NextRequest) {
       const cpteCharge = lookupFournisseur(nom.toLowerCase(), email.toLowerCase()) ?? "109999";
 
       if (isCH) {
-        // Fournisseur suisse : brut = TTC → HT + TVA récupérable
-        const { ht, tva } = calculTva(brut);
+        // Fournisseur suisse : brut = TTC → HT + TVA récupérable (en CHF)
+        const brutChf         = devise !== "CHF" ? r2(brut * await getESTVRate(date, devise)) : brut;
+        const { ht, tva }     = calculTva(brutChf);
         e(ecritures, date, cpteCharge,       `${lib} HT`,              ht);
         e(ecritures, date, COMPTES.TVA_ACQ,  `TVA CH ${lib}`,          tva);
-        e(ecritures, date, cpte,             lib,                      -brut, devise !== "CHF" ? -brut : undefined, devise !== "CHF" ? devise : undefined);
+        e(ecritures, date, cpte,             lib,                      -brutChf, devise !== "CHF" ? -brut : undefined, devise !== "CHF" ? devise : undefined);
       } else {
         // Fournisseur étranger : brut = HT (en devise étrangère)
         // Le compte de charge est en CHF → conversion via taux ESTV du mois
@@ -232,8 +230,8 @@ export async function GET(req: NextRequest) {
           e(ecritures, date, cpteCharge,       lib,                             brutChf);
           e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib}`,         tvaAcq);
           e(ecritures, date, COMPTES.TVA_ACQ,  `TVA auto-liq. ${lib} (due)`,  -tvaAcq);
-          // Compte PayPal devise : montant en devise étrangère
-          e(ecritures, date, cpte,             lib,                            -brut,   -brut, devise);
+          // Compte PayPal devise : montant CHF + montant_orig en devise pour réconciliation
+          e(ecritures, date, cpte,             lib,                            -brutChf, -brut, devise);
         }
       }
     }
