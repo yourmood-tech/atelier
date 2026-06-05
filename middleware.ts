@@ -5,6 +5,7 @@ const WINEUR_ALLOWED = new Set([
   "philippe@yourmood.net",
   "stephanie@yourmood.net",
   "eric@yourmood.net",
+  "eric.chenaux@yourmood.net",
   "fabienne@yourmood.net",
 ]);
 
