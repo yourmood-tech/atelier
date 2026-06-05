@@ -93,18 +93,13 @@ function flush(ref: string, _price: number | null, items: Record<string, number[
   void ref; void items;
 }
 
-// Extrait le texte d'un PDF via pdfjs-dist + worker_threads (seule méthode
-// fiable en environnement serverless Node.js — pas de Web Worker disponible).
+// Extrait le texte d'un PDF via pdfjs-dist en mode fake worker Node.js.
+// En Node.js, pdfjs désactive le vrai worker et utilise import(workerSrc)
+// dans le thread principal — workerSrc doit être un module specifier résolvable.
 async function extractPDFText(buffer: Buffer): Promise<{ text: string; numPages: number }> {
-  const { Worker } = await import("worker_threads");
-  const { createRequire } = await import("module");
-  const _require = createRequire(import.meta.url);
-
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const workerPath = _require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-  const pdfjsWorker = new Worker(workerPath);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (pdfjs.GlobalWorkerOptions as any).workerPort = pdfjsWorker;
+  // Module specifier : Node.js le résout via node_modules (inclus par outputFileTracingIncludes)
+  pdfjs.GlobalWorkerOptions.workerSrc = "pdfjs-dist/legacy/build/pdf.worker.mjs";
 
   try {
     const doc = await pdfjs.getDocument({
@@ -130,8 +125,6 @@ async function extractPDFText(buffer: Buffer): Promise<{ text: string; numPages:
     }
     await doc.destroy();
     return { text: fullText, numPages: doc.numPages };
-  } finally {
-    await pdfjsWorker.terminate();
   }
 }
 
