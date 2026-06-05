@@ -853,7 +853,6 @@ export const QUESTIONS: Question[] = [
     question: "Ce que tu aimes le plus sur notre site ?",
     options: [
       { value: "photos", label: "Les photos", emoji: "📷" },
-      { value: "compo", label: "Le configurateur de compo", emoji: "🔄" },
       { value: "descriptions", label: "Les descriptions produits", emoji: "📖" },
       { value: "blog", label: "Le blog / histoires de la marque", emoji: "💌" },
       { value: "navigation", label: "La navigation simple", emoji: "🧭" },
@@ -861,6 +860,7 @@ export const QUESTIONS: Question[] = [
       { value: "avis", label: "Les avis clients", emoji: "⭐" },
       { value: "compte", label: "Mon espace personnel", emoji: "👤" },
       { value: "mobile", label: "L'expérience sur mobile", emoji: "📱" },
+      { value: "histoire", label: "L'histoire de la marque", emoji: "🌹" },
     ],
   },
   {
