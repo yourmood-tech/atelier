@@ -67,6 +67,9 @@ export default function IceleaPOPage() {
   type IngSearchState = { localId: string; sku: string; result: IceleaIngredient | null; error: string | null; loading: boolean };
   const [ingSearch, setIngSearch] = useState<IngSearchState | null>(null);
 
+  // Manual order number entry
+  const [manualOrder, setManualOrder] = useState("");
+
   // Multi-order linking
   const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
   const [currentOrderName, setCurrentOrderName] = useState<string | null>(null);
@@ -311,8 +314,8 @@ export default function IceleaPOPage() {
     setCurrentOrder(null);
     setLastStatus("Scannez une commande client");
     setBuffer("");
+    setManualOrder("");
     setPhase("scanning");
-
   }
 
   function buildPoItems(scannedItems: ScannedItem[]): SubmitItem[] {
@@ -582,6 +585,37 @@ export default function IceleaPOPage() {
           </div>
         )}
 
+        {!inProductMode && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+            <input
+              type="text"
+              placeholder="Taper le n° de commande manuellement"
+              value={manualOrder}
+              onChange={(e) => setManualOrder(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && manualOrder.trim()) {
+                  e.preventDefault();
+                  const val = manualOrder.trim();
+                  setManualOrder("");
+                  void scanHandlerRef.current(val);
+                }
+              }}
+              style={{ flex: 1, padding: "8px 12px", border: "1px solid #ddd", borderRadius: 6, fontSize: 14, outline: "none" }}
+            />
+            <button
+              onClick={() => {
+                const val = manualOrder.trim();
+                if (!val) return;
+                setManualOrder("");
+                void scanHandlerRef.current(val);
+              }}
+              disabled={!manualOrder.trim()}
+              style={{ padding: "8px 16px", background: manualOrder.trim() ? "#111" : "#ccc", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, cursor: manualOrder.trim() ? "pointer" : "not-allowed" }}
+            >
+              →
+            </button>
+          </div>
+        )}
         <div style={s.statusBar}>{buffer ? `> ${buffer}` : lastStatus}</div>
         {closedError && <div style={s.errorBox}>{closedError}</div>}
         {items.length === 0 && <div style={s.empty}>Scannez une commande client puis les articles</div>}

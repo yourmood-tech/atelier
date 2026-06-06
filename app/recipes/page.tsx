@@ -330,6 +330,18 @@ export default function RecipesPage() {
     setPushState({ status: "idle", created: 0, skipped: 0, errors: [], warnings: [] });
   }
 
+  function resetAll() {
+    setProduct(null);
+    setProductQuery("");
+    setProductResults([]);
+    setIngredients([]);
+    setIngQuery("");
+    setIngResults([]);
+    setWarnings([]);
+    setVariantCheck(null);
+    setPushState({ status: "idle", created: 0, skipped: 0, errors: [], warnings: [] });
+  }
+
   function addIngredient(material: KatanaMaterial) {
     const filter: Record<string, string[]> = {};
     if (product) {
@@ -432,7 +444,17 @@ export default function RecipesPage() {
 
   return (
     <div style={s.container}>
-      <div style={s.title}>🧪 Générateur CSV Recettes Katana</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={s.title}>🧪 Générateur CSV Recettes Katana</div>
+        {(product || ingredients.length > 0) && (
+          <button
+            style={{ padding: "6px 14px", background: "none", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, color: "#555", cursor: "pointer" }}
+            onClick={resetAll}
+          >
+            + Nouvelle recette
+          </button>
+        )}
+      </div>
 
       {/* ── Step 1 — Produit fini ──────────────────────────────────────── */}
       <div style={s.section}>
@@ -720,9 +742,17 @@ export default function RecipesPage() {
                   {pushState.errors.length ? (
                     pushState.errors.map((e, i) => <div key={i} style={{ fontSize: 12, color: "#c0392b" }}>✗ {e}</div>)
                   ) : (
-                    <div style={{ fontSize: 13, color: "#27ae60", fontWeight: 500 }}>
-                      ✓ {pushState.created} ligne{pushState.created > 1 ? "s" : ""} créée{pushState.created > 1 ? "s" : ""} dans Katana
-                      {pushState.skipped > 0 && <span style={{ color: "#888", fontWeight: 400 }}> · {pushState.skipped} déjà présente{pushState.skipped > 1 ? "s" : ""}</span>}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ fontSize: 13, color: "#27ae60", fontWeight: 500 }}>
+                        ✓ {pushState.created} ligne{pushState.created > 1 ? "s" : ""} créée{pushState.created > 1 ? "s" : ""} dans Katana
+                        {pushState.skipped > 0 && <span style={{ color: "#888", fontWeight: 400 }}> · {pushState.skipped} déjà présente{pushState.skipped > 1 ? "s" : ""}</span>}
+                      </div>
+                      <button
+                        style={{ padding: "5px 12px", background: "#27ae60", color: "#fff", border: "none", borderRadius: 6, fontSize: 12, cursor: "pointer", flexShrink: 0 }}
+                        onClick={resetAll}
+                      >
+                        + Nouvelle recette
+                      </button>
                     </div>
                   )}
                   {pushState.warnings.map((w, i) => (
