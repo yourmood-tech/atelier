@@ -379,7 +379,8 @@ function genererExcel() {
   }
   const ws2 = XLSX.utils.aoa_to_sheet(data2);
   XLSX.utils.book_append_sheet(wb2, ws2, 'Product recipes (BOM)');
-  XLSX.writeFile(wb2, 'katana-add-new-recipes.xlsx');
+  // Le navigateur bloque deux téléchargements lancés en même temps : on espace le 2e.
+  setTimeout(function () { XLSX.writeFile(wb2, 'katana-add-new-recipes.xlsx'); }, 800);
   res.className = 'resultat ok';
   const nb_ok = variantesOk.filter(v => mtrlEstValide(v.mtrlCorrige)).length;
   const nb_ko = variantesOk.length - nb_ok;
