@@ -409,13 +409,17 @@ function genererExcel() {
   const res = document.getElementById('resultat');
   const variantesOk = VARIANTES.filter(v => v.mtrlCorrige && v.mtrlCorrige.trim());
   if (variantesOk.length === 0) { res.className = 'resultat ko'; res.textContent = 'Aucune variante avec MTRL renseigné.'; return; }
+  // Dédoublonnage : 1 seule ligne par SKU (le CSV Shopify répète parfois chaque variante)
+  const uniques = Array.from(new Map(variantesOk.map(v => [v.sku, v])).values());
   // ============ FICHIER 1 — Products ============
+  // La Couleur est déclarée comme 2e dimension de variante : sinon Katana voit toutes
+  // les couleurs d'une même taille comme la même variante et n'en garde qu'une.
   const wb1 = XLSX.utils.book_new();
-  const data1 = [['Product name (required)', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Variant option 1', 'Variant value 1', null]];
-  // Group par titre pour avoir 1 ligne par variante
-  for (const v of variantesOk) {
+  const data1 = [['Product name (required)', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Variant option 1', 'Variant value 1', 'Variant option 2', 'Variant value 2']];
+  for (const v of uniques) {
     const valOpt1 = isNaN(parseInt(v.taille)) ? v.taille : parseInt(v.taille);
-    data1.push([v.titre, 'pcs', 'Yes', 'No', 'No', 'None', v.sku, 'Taille', valOpt1, '']);
+    const coul = v.couleur ? (v.couleur.charAt(0).toUpperCase() + v.couleur.slice(1)) : '';
+    data1.push([v.titre, 'pcs', 'Yes', 'No', 'No', 'None', v.sku, 'Taille', valOpt1, coul ? 'Couleur' : '', coul]);
   }
   const ws1 = XLSX.utils.aoa_to_sheet(data1);
   XLSX.utils.book_append_sheet(wb1, ws1, 'Products');
@@ -423,7 +427,7 @@ function genererExcel() {
   // ============ FICHIER 2 — Recipes ============
   const wb2 = XLSX.utils.book_new();
   const data2 = [['Product variant code / SKU (required)', 'Ingredient variant code / SKU (required)', 'Quantity (required)']];
-  for (const v of variantesOk) {
+  for (const v of uniques) {
     if (!v.mtrlCorrige) continue;
     const qtyMatch = v.sku.match(/-(\d+)-minis?$/i);
     const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
@@ -434,9 +438,9 @@ function genererExcel() {
   // Le navigateur bloque deux téléchargements lancés en même temps : on espace le 2e.
   setTimeout(function () { XLSX.writeFile(wb2, 'katana-add-new-recipes.xlsx'); }, 800);
   res.className = 'resultat ok';
-  const nb_ok = variantesOk.filter(v => mtrlEstValide(v.mtrlCorrige)).length;
-  const nb_ko = variantesOk.length - nb_ok;
-  res.innerHTML = `✅ <strong>2 fichiers téléchargés</strong> : <em>katana-step-2-products.xlsx</em> et <em>katana-add-new-recipes.xlsx</em><br>${variantesOk.length} variantes incluses · ${nb_ok} MTRL trouvés dans Katana · ${nb_ko} à créer avant l'import recipes`;
+  const nb_ok = uniques.filter(v => mtrlEstValide(v.mtrlCorrige)).length;
+  const nb_ko = uniques.length - nb_ok;
+  res.innerHTML = `✅ <strong>2 fichiers téléchargés</strong> : <em>katana-step-2-products.xlsx</em> et <em>katana-add-new-recipes.xlsx</em><br>${uniques.length} variantes uniques · ${nb_ok} MTRL trouvés dans Katana · ${nb_ko} à créer avant l'import recipes`;
 }
 
 function exporterCorrections() {
