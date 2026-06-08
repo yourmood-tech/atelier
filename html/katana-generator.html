@@ -37,6 +37,9 @@
     .mtrl-input { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.78rem; font-family: monospace; background: white; }
     .mtrl-input.invalid { border-color: var(--rouge); background: #fff5f5; }
     .mtrl-input.valid { border-color: var(--vert); background: #f6fbf5; }
+    .poly-toggle { display: flex; gap: 0.3rem; margin-top: 0.3rem; }
+    .poly-toggle button { flex: 1; font-size: 0.7rem; padding: 0.2rem 0.3rem; border: 1px solid #cbb994; border-radius: 4px; background: #fdfaf3; cursor: pointer; }
+    .poly-toggle button:hover { background: #f0e6d2; }
     .note-input { width: 100%; padding: 0.3rem 0.4rem; border: 1px solid #ddd; border-radius: 4px; font-size: 0.78rem; background: white; }
     .badge { display: inline-block; padding: 0.15rem 0.45rem; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
     .badge.ok { background: #d4edda; color: var(--vert); }
@@ -225,6 +228,23 @@ const ALU_PREFIX = {
   'open': 'OPENALU',
 };
 
+// Code polymère selon la finition (opaque par défaut). Medium opaque = MEDPOLY (sans suffixe).
+function mtrlPoly(format, taille, finition) {
+  const f = (format || '').toLowerCase();
+  const trans = finition === 'translucide';
+  if (f === 'addon') return trans ? `MTRL-POLYTRANS-${taille}` : `MTRL-POLYOPAQ-${taille}`;
+  if (f === 'deux tiers') return trans ? `MTRL-23POLYTRANS-${taille}` : `MTRL-23POLYOPAQ-${taille}`;
+  if (f === 'medium') return trans ? `MTRL-MEDPOLYTRANS-${taille}` : `MTRL-MEDPOLY-${taille}`;
+  return null;
+}
+
+// Bascule opaque/translucide sur une ligne polymère (boutons du tableau)
+function setPoly(idx, finition) {
+  const v = VARIANTES[idx];
+  const code = mtrlPoly(v.format, v.taille, finition);
+  if (code) { v.mtrlCorrige = code; rendreTable(); }
+}
+
 // Génère le MTRL proposé selon les patterns
 function proposerMtrl(matiere, format, taille, couleur) {
   if (!matiere || !taille) return null;
@@ -253,9 +273,8 @@ function proposerMtrl(matiere, format, taille, couleur) {
     return candidats[0]; // sinon meilleure proposition, à corriger à la main
   }
   if (matiere === 'polymère') {
-    if (f === 'addon') return `MTRL-POLY-${taille}`;
-    if (f === 'deux tiers') return `MTRL-23POLY-${taille}`;
-    if (f === 'medium') return `MTRL-MEDPOLY-${taille}`;
+    // Finition opaque par défaut ; translucide via les boutons du tableau
+    return mtrlPoly(format, taille, 'opaque');
   }
   if (matiere === 'titane') {
     if (f === 'addon') return `MTRL-TITANE-${taille}`;
@@ -383,6 +402,10 @@ function rendreTable() {
       </td>
       <td class="mtrl-cell">
         <input type="text" class="mtrl-input ${inputCls}" value="${escapeHtml(v.mtrlCorrige)}" oninput="onMtrlEdit(${v.idx}, this.value)">
+        ${v.matiere === 'polymère' ? `<div class="poly-toggle">
+          <button type="button" onclick="setPoly(${v.idx},'opaque')">Opaque</button>
+          <button type="button" onclick="setPoly(${v.idx},'translucide')">Translucide</button>
+        </div>` : ''}
       </td>
       <td><input type="text" class="note-input" value="${escapeHtml(v.note)}" oninput="VARIANTES[${v.idx}].note = this.value" placeholder="optionnel"></td>
       <td><span class="badge ${v.ok ? 'ok' : 'ko'}">${v.ok ? '✓ trouvé' : '✗ manquant'}</span></td>
