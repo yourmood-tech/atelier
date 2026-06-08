@@ -427,11 +427,26 @@ function genererExcel() {
   // La Couleur est déclarée comme 2e dimension de variante : sinon Katana voit toutes
   // les couleurs d'une même taille comme la même variante et n'en garde qu'une.
   const wb1 = XLSX.utils.book_new();
-  const data1 = [['Product name (required)', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Default sales price', 'Variant option 1', 'Variant value 1', 'Variant option 2', 'Variant value 2']];
+  // En-tête VERBATIM du modèle officiel Katana — 20 colonnes, l'ordre et les titres
+  // doivent matcher exactement sinon Katana rejette tout le fichier.
+  const data1 = [['Product name (required)', 'Category', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Supplier item code', 'Registered barcode', 'Variant option 1', 'Variant value 1', 'Variant option 2', 'Variant value 2', 'Default sales price', 'Default supplier', 'Default purchase price', 'Purchase UoM', 'Conversion rate', 'Additional info']];
   for (const v of uniques) {
     const valOpt1 = isNaN(parseInt(v.taille)) ? v.taille : parseInt(v.taille);
     const code = v.codeCouleur || '';
-    data1.push([v.titre, 'pcs', 'Yes', 'No', 'No', 'None', v.sku, v.prix || '', 'Taille', valOpt1, code ? 'COULEUR' : '', code]);
+    const prix = v.prix && !isNaN(parseFloat(v.prix)) ? parseFloat(v.prix) : '';
+    const row = new Array(20).fill('');
+    row[0] = v.titre;                       // Product name (required)
+    row[2] = 'pcs';                         // Unit of measure
+    row[3] = 'Yes';                         // Make?
+    row[4] = 'No';                          // Buy?
+    row[5] = 'No';                          // Kit / Bundle?
+    row[6] = 'none';                        // Product tracking
+    row[7] = v.sku;                         // Variant code / SKU
+    row[10] = 'Taille';                     // Variant option 1
+    row[11] = valOpt1;                      // Variant value 1
+    if (code) { row[12] = 'COULEUR'; row[13] = code; } // Variant option 2 / value 2
+    row[14] = prix;                         // Default sales price
+    data1.push(row);
   }
   const ws1 = XLSX.utils.aoa_to_sheet(data1);
   XLSX.utils.book_append_sheet(wb1, ws1, 'Products');
