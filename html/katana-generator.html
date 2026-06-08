@@ -143,6 +143,15 @@ function extraireCouleurDuSku(sku) {
   return null;
 }
 
+// Extrait le code couleur tel qu'écrit dans le SKU = segment juste avant la taille.
+// Ex: AD-TSUJIHANA-ROSEPASTEL-50 -> ROSEPASTEL ; DT-OCANIS-BLEUMARINE-64 -> BLEUMARINE
+function codeCouleurDuSku(sku) {
+  const parts = (sku || '').toUpperCase().split('-');
+  const last = parts[parts.length - 1];
+  if (/^\d+$/.test(last) && parts.length >= 2) return parts[parts.length - 2];
+  return '';
+}
+
 function detecterFormat(sku) {
   const s = sku.toUpperCase();
   if (s.startsWith('DT-') || s.includes('-23')) return 'deux tiers';
@@ -322,8 +331,11 @@ function traiterCSV(rows) {
     }
     if (!couleur) couleur = extraireCouleurDuSku(sku);
     const mtrlPropose = proposerMtrl(matiere, format, taille, couleur);
+    const prix = (r['Variant Price'] || '').trim();
+    const codeCouleur = couleur ? codeCouleurDuSku(sku) : '';
     VARIANTES.push({
       titre, sku, type, taille, matiere, format, couleur,
+      prix, codeCouleur,
       mtrlPropose: mtrlPropose || '',
       mtrlCorrige: mtrlPropose || '',
       note: '',
@@ -415,11 +427,11 @@ function genererExcel() {
   // La Couleur est déclarée comme 2e dimension de variante : sinon Katana voit toutes
   // les couleurs d'une même taille comme la même variante et n'en garde qu'une.
   const wb1 = XLSX.utils.book_new();
-  const data1 = [['Product name (required)', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Variant option 1', 'Variant value 1', 'Variant option 2', 'Variant value 2']];
+  const data1 = [['Product name (required)', 'Unit of measure', 'Make?', 'Buy?', 'Kit / Bundle? ', 'Product tracking', 'Variant code / SKU', 'Default sales price', 'Variant option 1', 'Variant value 1', 'Variant option 2', 'Variant value 2']];
   for (const v of uniques) {
     const valOpt1 = isNaN(parseInt(v.taille)) ? v.taille : parseInt(v.taille);
-    const coul = v.couleur ? (v.couleur.charAt(0).toUpperCase() + v.couleur.slice(1)) : '';
-    data1.push([v.titre, 'pcs', 'Yes', 'No', 'No', 'None', v.sku, 'Taille', valOpt1, coul ? 'Couleur' : '', coul]);
+    const code = v.codeCouleur || '';
+    data1.push([v.titre, 'pcs', 'Yes', 'No', 'No', 'None', v.sku, v.prix || '', 'Taille', valOpt1, code ? 'COULEUR' : '', code]);
   }
   const ws1 = XLSX.utils.aoa_to_sheet(data1);
   XLSX.utils.book_append_sheet(wb1, ws1, 'Products');
