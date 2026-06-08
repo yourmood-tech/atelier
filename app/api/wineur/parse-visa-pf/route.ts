@@ -75,6 +75,9 @@ function isExt(description: string): boolean {
 function isShopify(description: string): boolean {
   return description.toLowerCase().includes("shopify");
 }
+function isVercel(description: string): boolean {
+  return description.toLowerCase().includes("vercel");
+}
 function parseDate(ddmmyy: string): string {
   const [d, m, y] = ddmmyy.split(".");
   return `20${y}-${m}-${d}`;
@@ -174,7 +177,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const mode      = (!isExt(description) || isShopify(description)) ? "CH" : "EXT";
+      const mode      = (!isExt(description) || isShopify(description) || isVercel(description)) ? "CH" : "EXT";
       const { ht, tva } = calculTva(montantVal);
       const tvaAcq    = r2(montantVal * TAUX);
 
