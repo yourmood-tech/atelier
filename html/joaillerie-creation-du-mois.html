@@ -89,6 +89,11 @@
       <button type="button" id="btn-search">🔍 Chercher</button>
     </div>
   </div>
+  <div id="selection-bar" style="display:flex;align-items:center;gap:0.8rem;margin-top:1rem;flex-wrap:wrap;font-size:0.85rem;">
+    <span id="selection-count" style="font-weight:600;">Aucun produit pour l'instant</span>
+    <button type="button" onclick="viderSelection()" class="secondary" style="margin:0;padding:0.3rem 0.7rem;font-size:0.78rem;">🗑️ Vider la sélection</button>
+    <span style="color:var(--gris);font-size:0.78rem;">La recherche <strong>ajoute</strong> à ta sélection — elle ne l'efface plus.</span>
+  </div>
   <div id="produits-result" class="produits-grid"></div>
 </div>
 
@@ -388,9 +393,18 @@ async function chercherProduits() {
     if (filtreType) {
       prods = prods.filter(p => matchTypeProduit(p, filtreType));
     }
-    produitsTrouves = prods;
-    if (produitsTrouves.length === 0) { container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">Aucun produit trouvé' + (filtreType ? ' pour le type "' + filtreType + '"' : '') + '.</p>'; return; }
+    if (prods.length === 0) {
+      const msg = 'Aucun produit trouvé' + (filtreType ? ' pour le type "' + filtreType + '"' : '') + '.';
+      if (produitsTrouves.length === 0) container.innerHTML = '<p style="color:var(--gris);grid-column:1/-1;">' + msg + '</p>';
+      else alert(msg + '\nTa sélection actuelle est conservée.');
+      return;
+    }
+    // MERGE : ajoute les nouveaux produits (par handle), garde les existants + leurs réglages
+    const dejaLa = new Set(produitsTrouves.map(p => p.handle));
+    let ajoutes = 0;
+    for (const p of prods) { if (!dejaLa.has(p.handle)) { produitsTrouves.push(p); dejaLa.add(p.handle); ajoutes++; } }
     rerendreProduitsCards();
+    if (ajoutes === 0) alert('Ces produits sont déjà dans ta sélection.');
   } catch (e) {
     container.innerHTML = '<p style="color:#a32020;grid-column:1/-1;">Erreur réseau : ' + e.message + '</p>';
   }
@@ -530,8 +544,9 @@ function rerendreProduitsCards() {
         <button type="button" onclick="reordonnerProduit(${i}, -1)" ${i === 0 ? 'disabled' : ''} style="margin:0;padding:0.1rem 0.4rem;width:auto;background:#eee;color:var(--noir);font-size:0.85rem;">↑</button>
         <button type="button" onclick="reordonnerProduit(${i}, +1)" ${i === produitsTrouves.length - 1 ? 'disabled' : ''} style="margin:0;padding:0.1rem 0.4rem;width:auto;background:#eee;color:var(--noir);font-size:0.85rem;">↓</button>
         <label style="display:flex;align-items:center;gap:0.3rem;font-weight:400;font-size:0.78rem;margin:0;">
-          <input type="checkbox" data-prod-idx="${i}" ${p._exclu ? '' : 'checked'} onchange="produitsTrouves[${i}]._exclu = !this.checked" style="width:auto;margin:0;"> Inclure
+          <input type="checkbox" data-prod-idx="${i}" ${p._exclu ? '' : 'checked'} onchange="produitsTrouves[${i}]._exclu = !this.checked; majSelectionBar();" style="width:auto;margin:0;"> Inclure
         </label>
+        <button type="button" onclick="retirerProduit(${i})" title="Retirer de la sélection" style="margin:0 0 0 auto;padding:0.1rem 0.45rem;width:auto;background:#fde8e8;color:#a32020;border:1px solid #a32020;font-size:0.75rem;">✕</button>
       </div>
       <input type="text" class="sstitre-input" data-prod-idx="${i}" placeholder="Sous-titre (optionnel) — ex : Édition limitée été 2026" value="${(p.sousTitre || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].sousTitre = this.value" style="width:100%;margin-top:0.4rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
       <input type="text" class="caracs-input" id="caracs-${i}" data-prod-idx="${i}" placeholder="Caractéristiques — ex : ❀ rose pastel, ◇ diamant, ✦ hibiscus" value="${(p.caracteristiques || '').replace(/"/g, '&quot;')}" oninput="produitsTrouves[${i}].caracteristiques = this.value" style="width:100%;margin-top:0.3rem;padding:0.35rem 0.5rem;border:1px solid #ddd;border-radius:4px;font-size:0.75rem;background:white;">
@@ -545,6 +560,29 @@ function rerendreProduitsCards() {
       </div>
     </div>
   `; }).join('');
+  majSelectionBar();
+}
+
+function majSelectionBar() {
+  const el = document.getElementById('selection-count');
+  if (!el) return;
+  const total = produitsTrouves.length;
+  const inclus = produitsTrouves.filter(p => !p._exclu).length;
+  el.textContent = total === 0 ? "Aucun produit pour l'instant"
+    : `${inclus} produit${inclus > 1 ? 's' : ''} dans la page · ${total} dans la liste`;
+}
+
+function retirerProduit(i) {
+  produitsTrouves.splice(i, 1);
+  rerendreProduitsCards();
+}
+
+function viderSelection() {
+  if (produitsTrouves.length && !confirm('Vider toute la sélection de produits ?')) return;
+  produitsTrouves = [];
+  const c = document.getElementById('produits-result');
+  if (c) c.innerHTML = '';
+  majSelectionBar();
 }
 
 // Upload du motif personnalisé
@@ -555,7 +593,12 @@ document.getElementById('th-motif-file').addEventListener('change', async (e) =>
   const file = e.target.files[0];
   if (!file) return;
   const info = document.getElementById('th-motif-info');
-  info.textContent = `⏳ Upload vers Shopify Files (${Math.round(file.size / 1024)} KB)…`;
+  const prev = document.getElementById('th-motif-preview');
+  // Aperçu LOCAL immédiat
+  prev.src = URL.createObjectURL(file);
+  prev.style.display = 'block';
+  info.textContent = `⏳ Aperçu OK — envoi sur Shopify (${Math.round(file.size / 1024)} KB)…`;
+  uploadDebut();
   try {
     const formData = new FormData();
     formData.append('file', file);
@@ -565,30 +608,32 @@ document.getElementById('th-motif-file').addEventListener('change', async (e) =>
     if (!r.ok) {
       info.textContent = '✗ Erreur upload : ' + (data.error || JSON.stringify(data).slice(0, 200));
       console.error('Upload motif erreur', data);
+      uploadFin();
       return;
     }
     if (data.url) {
       motifImageUploadee = data.url;
       motifImageUploadeeOriginale = data.url;
-      const prev = document.getElementById('th-motif-preview');
       prev.src = data.url;
-      prev.style.display = 'block';
-      info.textContent = `✓ ${file.name} sur Shopify CDN`;
+      info.textContent = `✓ ${file.name} — prête sur Shopify`;
+      uploadFin();
     } else if (data.fileId) {
       // Cas rare : image en cours de traitement → poll
       info.textContent = '⏳ Shopify traite l\'image, vérification...';
-      pollerFileStatusMotif(data.fileId, info, file.name);
+      pollerFileStatusMotif(data.fileId, info, file.name, uploadFin);
     } else {
       info.textContent = '⚠️ Pas d\'URL retournée par Shopify — détail console';
       console.warn('Upload sans url ni fileId', data);
+      uploadFin();
     }
   } catch (err) {
     info.textContent = '✗ Erreur réseau : ' + err.message;
     console.error('Upload motif exception', err);
+    uploadFin();
   }
 });
 
-async function pollerFileStatusMotif(fileId, infoEl, fileName) {
+async function pollerFileStatusMotif(fileId, infoEl, fileName, onDone) {
   for (let i = 0; i < 30; i++) { // max 2.5 min
     await new Promise(r => setTimeout(r, 5000));
     try {
@@ -599,16 +644,19 @@ async function pollerFileStatusMotif(fileId, infoEl, fileName) {
         motifImageUploadeeOriginale = data.url;
         const prev = document.getElementById('th-motif-preview');
         prev.src = data.url; prev.style.display = 'block';
-        infoEl.textContent = `✓ ${fileName} sur Shopify CDN`;
+        infoEl.textContent = `✓ ${fileName} — prête sur Shopify`;
+        if (onDone) onDone();
         return;
       }
       infoEl.textContent = `⏳ Traitement Shopify (${(i + 1) * 5}s, statut: ${data.fileStatus || '?'})…`;
     } catch (e) {
       infoEl.textContent = '⚠️ Erreur vérif : ' + e.message;
+      if (onDone) onDone();
       return;
     }
   }
   infoEl.textContent = '⚠️ Traitement très long — va dans Shopify Admin > Content > Files pour récupérer l\'URL manuellement.';
+  if (onDone) onDone();
 }
 
 // Affiche live la valeur du slider intensité
@@ -669,6 +717,15 @@ async function genererThemeIA() {
     btn.textContent = old;
   }
 }
+
+// Encodage UTF-8 sûr pour la fiche cachée (gère les accents français)
+function cdmB64Encode(str) { return btoa(unescape(encodeURIComponent(str))); }
+function cdmB64Decode(b64) { return decodeURIComponent(escape(atob(b64))); }
+
+// Compteur d'envois d'images/vidéos en cours — empêche de pousser une page qui pointe vers un fichier pas encore prêt
+let uploadsEnCours = 0;
+function uploadDebut() { uploadsEnCours++; }
+function uploadFin() { if (uploadsEnCours > 0) uploadsEnCours--; }
 
 function genererHtmlPage() {
   const titrePage = document.getElementById('f-titre').value.trim();
@@ -1036,7 +1093,8 @@ ${videoHtml}
     <p>${escapeHtml(outroTexte).replace(/\n/g, '<br>')}</p>
   </section>` : ''}
 </div>
-</div>`;
+</div>
+${'<!--CDM_CONFIG_B64:' + cdmB64Encode(JSON.stringify(snapshotPage())) + '-->'}`;
 }
 
 document.getElementById('btn-search').addEventListener('click', chercherProduits);
@@ -1056,23 +1114,35 @@ document.getElementById('f-hero-file').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const info = document.getElementById('f-hero-info');
-  info.textContent = '⏳ Upload vers Shopify Files…';
+  const prev = document.getElementById('f-hero-preview');
+  // Aperçu LOCAL immédiat — tu vois l'image tout de suite, sans attendre Shopify
+  prev.src = URL.createObjectURL(file);
+  prev.style.display = 'block';
+  info.textContent = '⏳ Aperçu OK — envoi sur Shopify en cours…';
+  uploadDebut();
   try {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('store', getStoreCible());
     const r = await fetch('/api/joaillerie/upload-shopify-file', { method: 'POST', body: formData });
     const data = await r.json();
-    if (!r.ok) { info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue'); return; }
+    if (!r.ok) { info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue'); uploadFin(); return; }
     if (data.url) {
       document.getElementById('f-hero').value = data.url;
-      const prev = document.getElementById('f-hero-preview');
       prev.src = data.url;
-      prev.style.display = 'block';
-      info.textContent = `✓ ${file.name} (URL CDN Shopify)`;
-    }
+      info.textContent = `✓ ${file.name} — prête sur Shopify`;
+      uploadFin();
+    } else if (data.fileId) {
+      info.textContent = '⏳ Shopify prépare l\'image…';
+      pollerFileStatus(data.fileId, 'f-hero', info, file.size, () => {
+        uploadFin();
+        const u = document.getElementById('f-hero').value;
+        if (u) prev.src = u;
+      });
+    } else { uploadFin(); }
   } catch (err) {
     info.textContent = '✗ Erreur réseau : ' + err.message;
+    uploadFin();
   }
 });
 
@@ -1114,6 +1184,10 @@ document.getElementById('btn-preview').addEventListener('click', () => {
 });
 
 async function pousserVersShopify(published) {
+  if (uploadsEnCours > 0) {
+    alert("⏳ Une image ou vidéo est encore en cours d'envoi sur Shopify.\n\nAttends qu'elle soit marquée « prête » avant de pousser — sinon le fond ne s'affichera pas sur la page (c'est ça qui te faisait refaire des allers-retours).");
+    return;
+  }
   const produits = getProduitsCoches();
   if (produits.length === 0) { alert('Coche au moins 1 produit'); return; }
   const titre = document.getElementById('f-titre').value.trim();
@@ -1195,6 +1269,7 @@ document.getElementById('f-video-file').addEventListener('change', async (e) => 
     return;
   }
   info.textContent = '⏳ Upload vers Shopify Files (peut prendre 10-60s)…';
+  uploadDebut();
   try {
     const formData = new FormData();
     formData.append('file', file);
@@ -1204,23 +1279,26 @@ document.getElementById('f-video-file').addEventListener('change', async (e) => 
     if (!r.ok) {
       info.textContent = '✗ Erreur upload : ' + (data.error || 'inconnue');
       console.error('Upload erreur', data);
+      uploadFin();
       return;
     }
     if (data.url) {
       document.getElementById('f-video').value = data.url;
-      info.textContent = `✓ Uploadée sur Shopify Files (${Math.round(file.size / 1024 / 1024)} MB) → URL CDN dans le champ`;
+      info.textContent = `✓ Uploadée sur Shopify Files (${Math.round(file.size / 1024 / 1024)} MB) → prête`;
+      uploadFin();
     } else if (data.fileId) {
       // Pas encore d'URL — Shopify encode la vidéo en arrière-plan, on poll toutes les 5s pendant max 5 min
       info.textContent = '⏳ Shopify encode la vidéo (1-5 min). Vérification en cours...';
-      pollerFileStatus(data.fileId, 'f-video', info, file.size);
-    }
+      pollerFileStatus(data.fileId, 'f-video', info, file.size, uploadFin);
+    } else { uploadFin(); }
   } catch (err) {
     info.textContent = '✗ Erreur réseau : ' + err.message;
+    uploadFin();
   }
 });
 
 // Poll le statut d'un fichier Shopify toutes les 5s, max 5 min, met l'URL dans le champ quand prêt
-async function pollerFileStatus(fileId, targetInputId, infoEl, fileSize) {
+async function pollerFileStatus(fileId, targetInputId, infoEl, fileSize, onDone) {
   const MAX_TENTATIVES = 60; // 60 × 5s = 5 min
   for (let i = 0; i < MAX_TENTATIVES; i++) {
     await new Promise(r => setTimeout(r, 5000));
@@ -1230,16 +1308,19 @@ async function pollerFileStatus(fileId, targetInputId, infoEl, fileSize) {
       if (data.ready && data.url) {
         document.getElementById(targetInputId).value = data.url;
         const mb = fileSize ? Math.round(fileSize / 1024 / 1024) + ' MB' : '';
-        infoEl.textContent = `✓ Encodage terminé ${mb} → URL CDN dans le champ`;
+        infoEl.textContent = `✓ Encodage terminé ${mb} → prête sur Shopify`;
+        if (onDone) onDone();
         return;
       }
       infoEl.textContent = `⏳ Encodage Shopify en cours (${(i + 1) * 5}s écoulées, statut: ${data.fileStatus || '?'})…`;
     } catch (e) {
       infoEl.textContent = `⚠️ Erreur vérification : ${e.message} — re-tente plus tard`;
+      if (onDone) onDone();
       return;
     }
   }
   infoEl.textContent = '⚠️ Encodage très long (>5 min). Va dans Shopify Admin > Content > Files pour récupérer l\'URL manuellement.';
+  if (onDone) onDone();
 }
 
 // === Sauvegarde locale des pages ===
@@ -1425,6 +1506,27 @@ async function importerDepuisShopify() {
     }
     const page = data.page;
     const html = page.body_html || '';
+
+    // Fiche cachée complète (pages créées par la nouvelle version) → restauration parfaite, zéro perte
+    const cfgMatch = html.match(/<!--CDM_CONFIG_B64:([A-Za-z0-9+/=]+)-->/);
+    if (cfgMatch) {
+      try {
+        const snap = JSON.parse(cdmB64Decode(cfgMatch[1]));
+        snap.id = Date.now().toString(36);
+        snap.date = new Date().toISOString();
+        snap.handle = page.handle || snap.handle || 'creation-du-mois';
+        snap.storeCible = store;
+        const pages = lirePagesSauvegardees();
+        pages.unshift(snap);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(pages.slice(0, 50)));
+        rendrePagesSauvegardees();
+        chargerPage(snap.id);
+        handleEditeManuellement = true;
+        alert(`✅ Page "${snap.titre}" récupérée depuis Shopify — tous tes réglages sont restaurés (couleurs, image de fond, disposition, textes, descriptions).\n\n${(snap.produits || []).length} produits. Tu peux modifier et re-pousser.`);
+        return;
+      } catch (e) { /* fiche illisible → on retombe sur l'ancienne lecture ci-dessous */ }
+    }
+
     const doc = new DOMParser().parseFromString(html, 'text/html');
     const cssText = Array.from(doc.querySelectorAll('style')).map(s => s.textContent).join('\n');
 
