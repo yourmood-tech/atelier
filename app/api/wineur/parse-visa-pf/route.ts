@@ -72,6 +72,9 @@ function isPaypalTopup(description: string): boolean {
 function isExt(description: string): boolean {
   return FOREIGN_CODES.some(c => description.toUpperCase().includes(c));
 }
+function isShopify(description: string): boolean {
+  return description.toLowerCase().includes("shopify");
+}
 function parseDate(ddmmyy: string): string {
   const [d, m, y] = ddmmyy.split(".");
   return `20${y}-${m}-${d}`;
@@ -171,7 +174,7 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      const mode      = isExt(description) ? "EXT" : "CH";
+      const mode      = (!isExt(description) || isShopify(description)) ? "CH" : "EXT";
       const { ht, tva } = calculTva(montantVal);
       const tvaAcq    = r2(montantVal * TAUX);
 
