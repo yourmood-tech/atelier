@@ -170,6 +170,49 @@ function detecterMatiereDuType(type) {
   return '';
 }
 
+// Toutes les écritures possibles d'un code couleur ALU, toutes familles confondues.
+// L'app teste chaque variante + les deux ordres (taille-couleur / couleur-taille)
+// et garde la 1re qui existe vraiment dans le catalogue Katana.
+const ALU_CODES_COULEUR = {
+  'myrtille': ['MYRTILLE','MYR'],
+  'anthracite': ['ANTH','ANTHRACITE'],
+  'rouge': ['ROUGE'],
+  'noir': ['NOIR'],
+  'ocre': ['OCRE'],
+  'aubergine': ['AUBERGINE'],
+  'jaune chaud': ['JAUNE','JAUNECHAUD'],
+  'bleu marine': ['MARINE'],
+  'taupe': ['TAUPE'],
+  'corail': ['CORAIL'],
+  'bleu violet': ['BLEUVIOLET'],
+  'bleu roi': ['BLEUROI'],
+  'turquoise': ['TURQUOISE'],
+  'emeraude': ['EMERAUDE'],
+  'émeraude': ['EMERAUDE'],
+  'brun': ['BRUN'],
+  'violet': ['VIOLET'],
+  'noisette': ['NOISETTE'],
+  'vert pastel': ['VP','VERTPASTEL','VERTP'],
+  'bleu pastel': ['BLEUPASTEL','BP','BLEUP'],
+  'jaune pastel': ['JAUNEPASTEL','JAUNEP','JAUNP'],
+  'pêche': ['PECHE'],
+  'peche': ['PECHE'],
+  'abricot': ['ABRICOT'],
+  'lilas cashmere': ['LILACASHMERE','LILASCASHMERE','LILAS','LIL'],
+  'lilas': ['LILAS','LIL','LILACASHMERE','LILASCASHMERE'],
+  'belipastel': ['BELI','BELIP','BELIPASTEL'],
+  'rose pastel': ['ROSEP','ROSEPASTEL'],
+};
+
+const ALU_PREFIX = {
+  'addon': 'ALU',
+  'deux tiers': '23ALU',
+  'medium': 'MEDALU',
+  'mini': 'MINIALU',
+  'open mood': 'OPENALU',
+  'open': 'OPENALU',
+};
+
 // Génère le MTRL proposé selon les patterns
 function proposerMtrl(matiere, format, taille, couleur) {
   if (!matiere || !taille) return null;
@@ -181,15 +224,21 @@ function proposerMtrl(matiere, format, taille, couleur) {
     if (f === 'medium') return `MTRL-MEDARGENT-${taille}`;
   }
   if (matiere === 'aluminium') {
-    const c = couleur ? COULEURS_ALU[couleur.toLowerCase()] : null;
-    if (!c) return null;
-    if (f === 'addon') return `MTRL-ALU-${taille}-${c}`;
-    if (f === 'deux tiers') {
-      const cdt = {'VP':'VERTPASTEL','BLEUPASTEL':'BP','LILAS':'LIL','BELI':'BELIP','ROSEP':'ROSEP'}[c] || c;
-      return `MTRL-23ALU-${taille}-${cdt}`;
+    const prefix = ALU_PREFIX[f];
+    if (!prefix) return null;
+    const codes = couleur ? ALU_CODES_COULEUR[couleur.toLowerCase()] : null;
+    if (!codes) return null;
+    // Toutes les écritures + les deux ordres possibles
+    const candidats = [];
+    for (const code of codes) {
+      candidats.push(`MTRL-${prefix}-${taille}-${code}`); // taille puis couleur
+      candidats.push(`MTRL-${prefix}-${code}-${taille}`); // couleur puis taille
     }
-    if (f === 'medium') return `MTRL-MEDALU-${taille}-${c}`;
-    if (f === 'mini') return `MTRL-MINIALU-${taille}-${c}`;
+    // Garde la 1re qui existe vraiment dans le catalogue Katana
+    for (const cand of candidats) {
+      if (MTRL_CATALOG.has(cand.toUpperCase())) return cand;
+    }
+    return candidats[0]; // sinon meilleure proposition, à corriger à la main
   }
   if (matiere === 'polymère') {
     if (f === 'addon') return `MTRL-POLY-${taille}`;
