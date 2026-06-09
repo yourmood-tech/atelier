@@ -15,7 +15,7 @@ export async function GET() {
     const emails = (await kv.smembers(INDEX)) as string[] | null;
     if (!emails || emails.length === 0) return NextResponse.json({ edits: {} });
     const keys = emails.map(keyOf);
-    const vals = await kv.mget<Record<string, unknown>>(...keys);
+    const vals = (await kv.mget(...keys)) as (Record<string, unknown> | null)[];
     const edits: Record<string, unknown> = {};
     emails.forEach((e, i) => { if (vals[i]) edits[e.toLowerCase()] = vals[i]; });
     return NextResponse.json({ edits });
