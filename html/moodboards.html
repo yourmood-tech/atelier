@@ -53,6 +53,11 @@ body{font-family:'Inter',system-ui,sans-serif;color:#2a221a;background:#f3ece0;m
 .savetag{font-size:.72rem;color:#2c7a3a;height:1rem;margin-top:.2rem}
 .backtop{display:inline-block;margin-top:.8rem;font-size:.76rem;color:#a8946e;text-decoration:none}
 .muted{color:#b3a589}
+.rchart{display:flex;align-items:flex-end;gap:.35rem;height:78px;padding-top:.3rem;border-bottom:1px solid #eadfc8}
+.rbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+.rbar .rb{width:70%;max-width:26px;background:linear-gradient(180deg,#c9a85a,#8a5a00);border-radius:3px 3px 0 0;min-height:2px}
+.rbar .rn{font-size:.6rem;color:#8a5a00;font-weight:600;position:absolute;top:-2px}
+.rbar .rl{font-size:.56rem;color:#a8946e;margin-top:.2rem;white-space:nowrap}
 .topbar{position:sticky;top:0;z-index:10;background:#8a5a00;color:#fff;padding:.5rem 1rem;font-size:.82rem;display:flex;justify-content:space-between;align-items:center}
 .topbar a{color:#fff;text-decoration:underline}
 </style></head><body>
@@ -160,6 +165,18 @@ function save(e){
   },900);
 }
 
+function recurrenceChart(c){
+  const m=c.monthly||[];
+  if(!m.length || !c.monthlyTotal){return '';}
+  const max=Math.max(...m.map(x=>x[1]),1);
+  const bars=m.map(([lab,n])=>{
+    const h=Math.round((n/max)*46)+(n>0?4:0);
+    return `<div class="rbar" title="${esc(lab)} : ${n} commande${n>1?'s':''}"><span class="rb" style="height:${h}px"></span><span class="rn">${n||''}</span><span class="rl">${esc(lab)}</span></div>`;
+  }).join('');
+  const moy=(c.monthlyTotal/12);
+  const freq = moy>=1 ? `≈ ${moy.toFixed(1)} commande${moy>=2?'s':''}/mois` : (moy>0?`≈ 1 commande tous les ${Math.round(1/moy)} mois`:'');
+  return `<div class="sec"><h3>Rythme d'achat <span style="font-size:.7rem;color:#a8946e;font-style:normal">(12 derniers mois · ${freq})</span></h3><div class="rchart">${bars}</div></div>`;
+}
 function fiche(c){
   const e=c.email;
   const badge=c.interested?`<div class="badge" style="color:${c.badge.color};background:${c.badge.bg}">${esc(c.badge.label)}</div>`:'';
@@ -173,10 +190,12 @@ function fiche(c){
   const blocks=c.blocks.map(b=>`<div class="sec"><h3>${esc(b.title)}</h3>`+
     b.rows.map(rw=>{const v=rw[2]?splitColors(rw[1]).map(swatchLabel).join(''):esc(rw[1]);
       return `<div class="champ"><span class="lbl">${esc(rw[0])}</span><span class="val">${v}</span></div>`;}).join('')+`</div>`).join('');
+  const big=c.lastbig?`<div class="info"><div class="k">Dernière grosse commande (500.-+)</div><div class="v">${esc(c.lastbig[0])} — ${c.lastbig[1].toLocaleString('fr-CH')} CHF</div></div>`:`<div class="info"><div class="k">Dernière grosse commande (500.-+)</div><div class="v muted">aucune dans les commandes récentes</div></div>`;
   const infosShop=(c.orders!=null)?`<div class="sec"><h3>Historique d'achat ${vip}</h3>
      <div class="infos"><div class="info"><div class="k">Commandes</div><div class="v">${c.orders}</div></div>
      <div class="info"><div class="k">Dépensé à vie</div><div class="v">${c.spent.toLocaleString('fr-CH')} CHF</div></div>
-     <div class="info"><div class="k">Dernière commande</div><div class="v">${esc(c.last||'—')}</div></div></div>${mats}${pierres}</div>`:'';
+     <div class="info"><div class="k">Dernière commande</div><div class="v">${esc(c.last||'—')}</div></div>
+     ${big}</div>${mats}${pierres}</div>`:'';
   const notRespNote=!c.responded?`<div class="sec"><div class="muted">Cette cliente n'a pas répondu au sondage — fiche basée sur ses achats.</div></div>`:'';
   return `<section class="fiche" id="${c.id}">
     <div class="fhead"><div><div class="kicker">Moodboard cliente${c.responded?' · 🟢 a répondu au sondage':''}</div>
@@ -185,7 +204,7 @@ function fiche(c){
     <div class="sec"><h3>Son univers <span style="font-size:.7rem;color:#a8946e;font-style:normal">(modifiable)</span></h3><div class="row" id="tags-${c.id}"></div></div>
     <div class="sec"><h3>Sa palette de couleurs <span style="font-size:.7rem;color:#a8946e;font-style:normal">(modifiable)</span></h3><div class="row" id="pal-${c.id}"></div></div>
     <div class="sec"><h3>Images d'inspiration <span style="font-size:.7rem;color:#a8946e;font-style:normal">(ajoute des photos)</span></h3><div class="grid" id="insp-${c.id}"></div></div>
-    ${pieces}${infosShop}${blocks}${notRespNote}
+    ${pieces}${infosShop}${recurrenceChart(c)}${blocks}${notRespNote}
     <div class="sec"><h3>Notes de l'équipe</h3>
       <textarea class="notes" id="notes-${c.id}" placeholder="Ce qu'elle a dit en boutique, ses envies, le suivi du projet, rendez-vous…" oninput="save('${e}')"></textarea>
       <div class="savetag" id="save-${c.id}"></div></div>
