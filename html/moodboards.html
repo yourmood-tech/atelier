@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moodboards clientes — Mood</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:#2a221a;background:#f3ece0;margin:0}
+.cover{padding:2.5rem 2rem 1.5rem;text-align:center}
+.cover h1{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:500;font-style:italic;margin:0 0 .3rem}
+.cover .sub{color:#7a6a52;font-size:.9rem;margin-bottom:1.5rem}
+.stats{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+.stat{background:#fff;border:1px solid #e2d4ba;border-radius:12px;padding:.8rem 1.2rem;min-width:110px}
+.stat .big{font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:#8a5a00}.stat .lab{font-size:.72rem;color:#7a6a52}
+#sommaire{max-width:860px;margin:1rem auto;background:#fff;border:1px solid #e2d4ba;border-radius:12px;padding:1.4rem 1.8rem}
+#sommaire h2{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;color:#8a5a00;margin:0 0 .2rem}
+.tochint{font-size:.78rem;color:#9a8a6e;margin-bottom:.8rem}
+.tocsearch{width:100%;padding:.5rem .7rem;border:1px solid #ddd;border-radius:8px;font-size:.9rem;margin-bottom:.8rem}
+.toc{columns:2;column-gap:1.8rem}
+.tocrow{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:#2a221a;padding:.3rem 0;font-size:.85rem;break-inside:avoid;border-bottom:1px solid #f3ece0}
+.tocrow:hover{color:#8a5a00}.tname{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tspend{color:#8a5a00;font-size:.78rem}
+.gdot{width:9px;height:9px;border-radius:50%;background:#2c9a3a;flex:0 0 auto;box-shadow:0 0 0 2px #d8efda}.gdot.off{background:#d8cdb8;box-shadow:none}
+.fiche{background:#fff;max-width:860px;margin:0 auto 1.2rem;padding:1.8rem 2rem;border-radius:10px;border:1px solid #ecdcbf}
+.fhead{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #e2d4ba;padding-bottom:.8rem;gap:1rem}
+.kicker{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:#a8946e}
+.fhead h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:500;margin:.1rem 0}
+.mail{color:#8a5a00;text-decoration:none;font-size:.85rem}
+.badge{font-size:.74rem;font-weight:600;padding:.35rem .7rem;border-radius:18px;white-space:nowrap}
+.vip{display:inline-block;background:#8a5a00;color:#fff;font-size:.68rem;padding:.2rem .6rem;border-radius:12px;margin-top:.3rem}
+.sec{margin-top:1.1rem}
+.sec h3{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:1.15rem;color:#8a5a00;margin:0 0 .4rem;border-bottom:1px solid #f0e6d2;padding-bottom:.15rem}
+.dream{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.2rem;line-height:1.4;color:#3a2f22;background:#f7efe0;border-left:3px solid #c9a85a;padding:.7rem 1rem;border-radius:0 8px 8px 0}
+.row{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
+.tag{background:#fff;border:1px solid #e2d4ba;border-radius:14px;padding:.25rem .7rem;font-size:.84rem;color:#5a4a32;display:inline-flex;align-items:center;gap:.4rem}
+.tag .x{cursor:pointer;color:#c08;font-weight:700;opacity:.5}.tag .x:hover{opacity:1}
+.addbtn{border:1px dashed #c9a85a;background:#fff;color:#8a5a00;border-radius:14px;padding:.25rem .7rem;font-size:.82rem;cursor:pointer}
+.sw{display:inline-flex;align-items:center;gap:.35rem;background:#f7f1e6;border:1px solid #eadfc8;border-radius:13px;padding:.18rem .6rem .18rem .28rem;font-size:.82rem}
+.sw i{width:15px;height:15px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.sw .x{cursor:pointer;color:#c08;font-weight:700;opacity:.5;margin-left:.1rem}.sw .x:hover{opacity:1}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
+.cell{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden;border:1px solid #e2d4ba;background:#fff}
+.cell img{width:100%;height:100%;object-fit:cover;display:block}
+.cell .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);color:#fff;font-size:.6rem;padding:.15rem .25rem;line-height:1.1}
+.cell .del{position:absolute;top:.25rem;right:.25rem;background:rgba(255,255,255,.9);border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;color:#c02;font-weight:700;line-height:1}
+.noimg{width:100%;height:100%;border-radius:9px;border:1px dashed #c9a85a;background:linear-gradient(135deg,#fbf3e2,#f3e3c2);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8a5a00;font-size:1.2rem}.noimg span{font-size:.58rem}
+.dz{aspect-ratio:1;border:2px dashed #c9a85a;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a8855a;font-size:.74rem;text-align:center;cursor:pointer;gap:.2rem;background:#fbf5e9;padding:.3rem}.dz:hover{background:#f7eed9}.dz.over{background:#f0e3c2}
+.infos{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .9rem}
+.info .k{color:#9a8a6e;font-size:.74rem}.info .v{font-weight:500;font-size:.9rem}
+.chip{display:inline-block;background:#f0e6d2;border-radius:12px;padding:.08rem .5rem;margin:.08rem .12rem;font-size:.8rem}
+.champ{display:flex;gap:.7rem;padding:.2rem 0;font-size:.88rem;line-height:1.45;align-items:flex-start}
+.lbl{flex:0 0 190px;color:#9a8a6e}.val{flex:1}
+.notes{min-height:90px;width:100%;border:1px solid #e2d4ba;border-radius:8px;padding:.7rem;font-family:inherit;font-size:.9rem;line-height:1.5;background:#fffdf8;resize:vertical}
+.savetag{font-size:.72rem;color:#2c7a3a;height:1rem;margin-top:.2rem}
+.backtop{display:inline-block;margin-top:.8rem;font-size:.76rem;color:#a8946e;text-decoration:none}
+.muted{color:#b3a589}
+.topbar{position:sticky;top:0;z-index:10;background:#8a5a00;color:#fff;padding:.5rem 1rem;font-size:.82rem;display:flex;justify-content:space-between;align-items:center}
+.topbar a{color:#fff;text-decoration:underline}
+</style></head><body>
+<div class="topbar"><span>💎 Moodboards clientes — partagé équipe Mood</span><span id="who"></span></div>
+<div class="cover">
+  <h1>Moodboards clientes</h1>
+  <div class="sub">Joaillerie & Top clientes · modifiable par toute l'équipe · sauvegarde partagée</div>
+  <div class="stats" id="stats"></div>
+</div>
+<div id="sommaire">
+  <h2>Sommaire</h2>
+  <div class="tochint">🟢 = a répondu au sondage · classé par dépenses · clique un nom pour aller à sa fiche</div>
+  <input class="tocsearch" id="search" placeholder="🔍 chercher une cliente…" oninput="filterToc()">
+  <div class="toc" id="toc"></div>
+</div>
+<div id="fiches"></div>
+
+<script>
+const CLIENTS = /*__CLIENTS__*/;
+let EDITS = {};         // email -> {themes,palette,images,notes}
+const ST = {};          // état de travail par email
+
+const PAL = {'noir':'#1a1a1a','blanc':'#f4f1ea','crème':'#f2e8d5','creme':'#f2e8d5','nacré':'#f2e8d5','beige':'#d9c5a2','taupe':'#8f7f6a','brun':'#6b4a2f','noisette':'#a06a3c','ocre':'#c8881f','doré':'#d4af37','jaune soleil':'#f2c200','jaune chaud':'#e8c020','jaune pastel':'#f3e7a0','jaune':'#ecc81e','abricot':'#f0a868','pêche':'#f6c7a6','peche':'#f6c7a6','corail':'#f06a52','rouge':'#c0202a','bordeaux':'#6e1a25','framboise':'#b51a52','rose gold':'#e0a890','rose pâle':'#f0cad6','rose pastel':'#f2c9d6','rose':'#e893ad','fuchsia':'#c02080','aubergine':'#45233c','prune':'#6a2548','violet':'#7a3a8a','améthyste':'#9b59b6','amethyste':'#9b59b6','mauve':'#b07ac0','lilas':'#c9a8db','bleu roi':'#234a9a','bleu marine':'#1e2a48','marine':'#1e2a48','bleu ciel':'#9ccaf0','bleu pastel':'#aaccee','bleu london':'#1a4a6a','bleu':'#2a6aaa','turquoise':'#2ab0b0','émeraude':'#1a7a5a','emeraude':'#1a7a5a','vert pastel':'#b2d8a2','vert':'#3a8a4a','argent':'#c2c2cc','métallique':'#c2c2cc','metallique':'#c2c2cc','gris':'#9a9aa0','anthracite':'#353539','or gris':'#b8b8b0','or jaune':'#d4af37','or rose':'#d8a890','myrtille':'#46497f'};
+const PKEYS=Object.keys(PAL).sort((a,b)=>b.length-a.length);
+function colorHex(s){s=(s||'').toLowerCase();for(const k of PKEYS){if(s.includes(k))return PAL[k];}return null;}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function splitColors(s){return (s||'').split(/[·,/;]| et /).map(x=>x.trim()).filter(Boolean);}
+function swatchLabel(label){const hx=colorHex(label);return hx?`<span class="sw"><i style="background:${hx}"></i>${esc(label)}</span>`:`<span class="chip">${esc(label)}</span>`;}
+
+function initState(){
+  CLIENTS.forEach(c=>{
+    const e=c.email;const ed=EDITS[e]||{};
+    ST[e]={
+      themes: ed.themes ? ed.themes.slice() : c.themes.slice(),
+      palette: ed.palette ? ed.palette.map(p=>p.slice()) : c.palette.map(p=>p.slice()),
+      images: ed.images ? ed.images.map(p=>p.slice()) : [],
+      notes: ed.notes!=null ? ed.notes : ''
+    };
+  });
+}
+
+function renderStats(){
+  const n=CLIENTS.length, rep=CLIENTS.filter(c=>c.responded).length, intr=CLIENTS.filter(c=>c.interested).length,
+    vip=CLIENTS.filter(c=>c.spent>=20000).length, ca=CLIENTS.reduce((s,c)=>s+c.spent,0);
+  document.getElementById('stats').innerHTML=
+    [[n,'clientes'],[intr,'intéressées joaillerie'],[rep,'ont répondu 🟢'],[vip,'TOP (20k+)'],[Math.round(ca/1000).toLocaleString('fr-CH')+'k','CHF cumulé']]
+    .map(([b,l])=>`<div class="stat"><div class="big">${typeof b==='number'?b.toLocaleString('fr-CH'):b}</div><div class="lab">${l}</div></div>`).join('');
+}
+function renderToc(){
+  document.getElementById('toc').innerHTML=CLIENTS.map(c=>{
+    const dot=c.responded?'<span class="gdot" title="a répondu"></span>':'<span class="gdot off"></span>';
+    const tag=c.interested?` · <span style="color:#8a5a00">${esc(c.badge.label)}</span>`:'';
+    return `<a class="tocrow" href="#${c.id}" data-name="${esc(c.name.toLowerCase())}">${dot}<span class="tname">${esc(c.name)}</span><span class="tspend">${c.spent.toLocaleString('fr-CH')} CHF</span>${tag}</a>`;
+  }).join('');
+}
+function filterToc(){
+  const q=document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('#toc .tocrow').forEach(a=>{a.style.display=a.dataset.name.includes(q)?'':'none';});
+}
+
+function renderTags(e){const c=byEmail(e);
+  document.getElementById('tags-'+c.id).innerHTML=
+    ST[e].themes.map((t,i)=>`<span class="tag">${esc(t)}<span class="x" onclick="delTheme('${e}',${i})">×</span></span>`).join('')
+    +`<span class="addbtn" onclick="addTheme('${e}')">+ élément</span>`;
+}
+function renderPal(e){const c=byEmail(e);
+  document.getElementById('pal-'+c.id).innerHTML=
+    ST[e].palette.map((p,i)=>`<span class="sw"><i style="background:${p[0]}"></i>${esc(p[1]||'')}<span class="x" onclick="delColor('${e}',${i})">×</span></span>`).join('')
+    +`<span class="addbtn" onclick="addColor('${e}')">+ couleur</span>`;
+}
+function renderInsp(e){const c=byEmail(e);
+  const imgs=ST[e].images.map((im,i)=>`<div class="cell"><img src="${esc(im[0])}" alt=""><button class="del" onclick="delImg('${e}',${i})">×</button>${im[1]?`<div class="cap">${esc(im[1])}</div>`:''}</div>`).join('');
+  document.getElementById('insp-'+c.id).innerHTML=imgs+`<div class="dz" id="dz-${c.id}" data-e="${esc(e)}"><div>＋ image</div><div style="font-size:.62rem">glisser, cliquer,</div><div style="font-size:.62rem">ou coller un lien 🔗</div></div>`;
+  const dz=document.getElementById('dz-'+c.id);
+  dz.onclick=()=>{const url=prompt("Colle le lien d'une image (https://…)\nou Annuler pour choisir un fichier.");
+    if(url===null){pickFile(e);return;} if(url.trim()){ST[e].images.push([url.trim(),'']);renderInsp(e);save(e);}};
+  dz.ondragover=ev=>{ev.preventDefault();dz.classList.add('over');};
+  dz.ondragleave=()=>dz.classList.remove('over');
+  dz.ondrop=ev=>{ev.preventDefault();dz.classList.remove('over');handleFiles(e,ev.dataTransfer.files);};
+}
+let _fileTarget=null, _fileInput=null;
+function pickFile(e){_fileTarget=e;_fileInput.click();}
+function handleFiles(e,files){[...files].forEach(f=>{if(!f.type.startsWith('image/'))return;downscale(f,900,.82).then(d=>{ST[e].images.push([d,f.name.replace(/\.[^.]+$/,'')]);renderInsp(e);save(e);});});}
+function downscale(file,max,q){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const ratio=img.width>max?max/img.width:1;const w=Math.round(img.width*ratio),h=Math.round(img.height*ratio);const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',q));};img.src=r.result;};r.readAsDataURL(file);});}
+
+function addTheme(e){const t=prompt('Nouvel élément d\'univers :');if(t&&t.trim()){ST[e].themes.push(t.trim());renderTags(e);save(e);}}
+function delTheme(e,i){ST[e].themes.splice(i,1);renderTags(e);save(e);}
+function addColor(e){const hex=prompt('Couleur (code ex #2a7a9a) :','#');if(!hex)return;const nom=prompt('Nom de la couleur :','')||'';ST[e].palette.push([hex.trim(),nom.trim()]);renderPal(e);save(e);}
+function delColor(e,i){ST[e].palette.splice(i,1);renderPal(e);save(e);}
+function delImg(e,i){ST[e].images.splice(i,1);renderInsp(e);save(e);}
+function byEmail(e){return CLIENTS.find(c=>c.email===e);}
+
+const _timers={};
+function save(e){
+  const c=byEmail(e);ST[e].notes=document.getElementById('notes-'+c.id).value;
+  clearTimeout(_timers[e]);
+  const tag=document.getElementById('save-'+c.id);if(tag)tag.textContent='enregistrement…';
+  _timers[e]=setTimeout(async()=>{
+    try{
+      const r=await fetch('/api/moodboards',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:e,edit:{themes:ST[e].themes,palette:ST[e].palette,images:ST[e].images,notes:ST[e].notes}})});
+      if(tag)tag.textContent=r.ok?'✓ enregistré (partagé)':'⚠️ erreur sauvegarde';
+    }catch(err){if(tag)tag.textContent='⚠️ hors ligne';}
+    setTimeout(()=>{if(tag)tag.textContent='';},2500);
+  },900);
+}
+
+function fiche(c){
+  const e=c.email;
+  const badge=c.interested?`<div class="badge" style="color:${c.badge.color};background:${c.badge.bg}">${esc(c.badge.label)}</div>`:'';
+  const vip=c.vip?`<div class="vip">${c.vip}</div>`:'';
+  const dream=(c.responded&&c.dream)?`<div class="sec"><h3>Sa pièce de rêve (ses mots)</h3><div class="dream">« ${esc(c.dream)} »</div></div>`:'';
+  const pieces=c.pieces.length?`<div class="sec"><h3>Ses pièces les plus chères achetées</h3><div class="grid">`+
+    c.pieces.map(p=>{const media=p[1]?`<img src="${esc(p[1])}" alt="">`:`<div class="noimg">✨<span>sur mesure</span></div>`;
+      return `<div class="cell">${media}<div class="cap"><b>${(p[2]||0).toLocaleString('fr-CH')} CHF</b><br>${esc((p[0]||'').slice(0,38))}</div></div>`;}).join('')+`</div></div>`:'';
+  const mats=c.mats.length?`<div class="champ"><span class="lbl">Matières achetées</span><span class="val">${c.mats.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</span></div>`:'';
+  const pierres=c.pierres.length?`<div class="champ"><span class="lbl">Pierres achetées</span><span class="val">${c.pierres.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</span></div>`:'';
+  const blocks=c.blocks.map(b=>`<div class="sec"><h3>${esc(b.title)}</h3>`+
+    b.rows.map(rw=>{const v=rw[2]?splitColors(rw[1]).map(swatchLabel).join(''):esc(rw[1]);
+      return `<div class="champ"><span class="lbl">${esc(rw[0])}</span><span class="val">${v}</span></div>`;}).join('')+`</div>`).join('');
+  const infosShop=(c.orders!=null)?`<div class="sec"><h3>Historique d'achat ${vip}</h3>
+     <div class="infos"><div class="info"><div class="k">Commandes</div><div class="v">${c.orders}</div></div>
+     <div class="info"><div class="k">Dépensé à vie</div><div class="v">${c.spent.toLocaleString('fr-CH')} CHF</div></div>
+     <div class="info"><div class="k">Dernière commande</div><div class="v">${esc(c.last||'—')}</div></div></div>${mats}${pierres}</div>`:'';
+  const notRespNote=!c.responded?`<div class="sec"><div class="muted">Cette cliente n'a pas répondu au sondage — fiche basée sur ses achats.</div></div>`:'';
+  return `<section class="fiche" id="${c.id}">
+    <div class="fhead"><div><div class="kicker">Moodboard cliente${c.responded?' · 🟢 a répondu au sondage':''}</div>
+      <h2>${esc(c.name)}</h2><a class="mail" href="mailto:${esc(e)}">${esc(e)}</a></div>${badge}</div>
+    ${dream}
+    <div class="sec"><h3>Son univers <span style="font-size:.7rem;color:#a8946e;font-style:normal">(modifiable)</span></h3><div class="row" id="tags-${c.id}"></div></div>
+    <div class="sec"><h3>Sa palette de couleurs <span style="font-size:.7rem;color:#a8946e;font-style:normal">(modifiable)</span></h3><div class="row" id="pal-${c.id}"></div></div>
+    <div class="sec"><h3>Images d'inspiration <span style="font-size:.7rem;color:#a8946e;font-style:normal">(ajoute des photos)</span></h3><div class="grid" id="insp-${c.id}"></div></div>
+    ${pieces}${infosShop}${blocks}${notRespNote}
+    <div class="sec"><h3>Notes de l'équipe</h3>
+      <textarea class="notes" id="notes-${c.id}" placeholder="Ce qu'elle a dit en boutique, ses envies, le suivi du projet, rendez-vous…" oninput="save('${e}')"></textarea>
+      <div class="savetag" id="save-${c.id}"></div></div>
+    <a class="backtop" href="#sommaire">↑ retour au sommaire</a>
+  </section>`;
+}
+
+async function boot(){
+  _fileInput=document.createElement('input');_fileInput.type='file';_fileInput.accept='image/*';_fileInput.multiple=true;
+  _fileInput.style.display='none';document.body.appendChild(_fileInput);
+  _fileInput.addEventListener('change',ev=>{if(_fileTarget)handleFiles(_fileTarget,ev.target.files);ev.target.value='';});
+  try{const r=await fetch('/api/moodboards');if(r.ok){const d=await r.json();EDITS=d.edits||{};}}catch(e){}
+  initState();
+  renderStats();renderToc();
+  document.getElementById('fiches').innerHTML=CLIENTS.map(fiche).join('');
+  CLIENTS.forEach(c=>{renderTags(c.email);renderPal(c.email);renderInsp(c.email);
+    const n=document.getElementById('notes-'+c.id);if(n)n.value=ST[c.email].notes;});
+}
+boot();
+</script>
+</body></html>

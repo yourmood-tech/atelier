@@ -99,6 +99,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         title: "Sondage pépites",
         description: "Tableau de bord du sondage clientes : lien vers le Google Sheet en temps réel, rappel code Shopify MERCIAVOUS20. Sondage public sur /sondage.",
       },
+      {
+        href: "/moodboards",
+        emoji: "💎",
+        title: "Moodboards clientes",
+        description: "Fiches clientes intéressées par la joaillerie + Top clientes Shopify. Univers, palette, photos et notes modifiables et partagés par toute l'équipe.",
+      },
     ],
   },
   {
