@@ -958,7 +958,7 @@ function genererHtmlPage() {
 ${motifIsUploadedImage ? `
 .cdm-page .cdm-motif-overlay-img {
   position: absolute !important; inset: 0 !important; pointer-events: none !important; z-index: 0 !important;
-  background: ${motifBgImageUrl} repeat-y top center / 100% auto !important;
+  background: ${motifBgImageUrl} no-repeat center top / cover !important;
   opacity: ${motifOpacity} !important;
 }
 .cdm-page .cdm-hero, .cdm-page .cdm-hero-inner, .cdm-page .cdm-hero-inner * {
