@@ -348,6 +348,19 @@ ACTION-SPECIFIC ADAPTATIONS :
 - For worn-ring shots : the ring + hand + portion of bronzed skin near the ring fill the frame ; the woman's body / pool / swimsuit are supporting, soft-focused — the RING REMAINS THE HERO.
 - Camera : zoom in tight, macro precision on the ring. The Mediterranean resort decor is silent luxury, never competing.`,
 
+  "bora-bora": `
+
+═══════════════════════════════════════════
+🎨 GLOBAL THEME OVERRIDE — "BORA BORA" (luxe estival lagon — sable rose orangé & ocre)
+═══════════════════════════════════════════
+
+Apply this ambiance to the scene composed above. The theme REPLACES the default neutral lighting / background / palette, but PRESERVES the action's core composition.
+
+AMBIANCE (prompt Mood, verbatim) :
+Univers estival méditerranéen luxueux — sable fin rose orangé sculpté par le vent, lumière dorée intense. Ambiance chic balnéaire haut de gamme. Soleil méditerranéen direct en plein après-midi créant des ombres graphiques marquées sur les surfaces. Reflets aqua mouvants de l'eau de la mer projetant des motifs lumineux orangé sur la pierre et la peau. Palette : ocre, rose clair, sable chaud, crème solaire, rose pâle, or chaud, peau caramel bronzée, beige minéral — palette solaire douce et sophistiquée. Atmosphère : luxe silencieux, calme, estivale, raffinée, sensuelle, vacances méditerranéennes exclusives. Inspiration : campagne Cartier Riviera, été Jacquemus, éditorial resort luxe contemporain, magazine mode haut de gamme. Touches déco subtiles (1-2 max par photo) : sable sculpté par le vent, ombre de palmier. Jamais surchargé. Composition ultra épurée.
+
+🔍 FRAMING — RING IS THE HERO : the ring dominates the composition (70-85% of frame width), tight macro / close-up like a luxury jewelry magazine hero shot. The bora-bora decor (pink-orange sand, palm shadow, warm late-afternoon light) is a SUPPORTING BACKDROP in the corners / negative space, never competing. The ring itself is NEVER modified — same shape, color, material, finish, gemstones.`,
+
   "tropical": `
 
 ═══════════════════════════════════════════
@@ -681,6 +694,16 @@ PRISE DE VUE EN PLONGÉE, composition épurée et sophistiquée, ambiance calme 
 Filtre éditorial premium légèrement chaud et désaturé, contraste doux, grain subtil type photographie argentique luxe, rendu lumineux et cinématographique inspiré de Jacquemus, campaigns resortwear et magazines mode haut de gamme.
 
 Atmosphère minimaliste, méditerranéenne et exclusive, ultra réaliste, élégante et moderne.
+
+🔍 FRAMING : the ring + hand + portion of bronzed skin near the ring fill the frame (ring ~70-85% of frame width). The woman's body, pool, swimsuit are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
+
+  "bora-bora": `🚨 PHOTO EDITORIALE BAGUE PORTÉE — THÈME BORA BORA (resort luxe, lagon sable rose orangé)
+
+The attached image is THIS EXACT Mood Collection ring — preserve it pixel-identically (same shape, color, material, finish, gemstones, decoration). The ring is the absolute hero of the photo.
+
+Compose a high-end editorial WORN-RING photograph with this exact Mood ambiance :
+
+Photographie éditoriale estivale haut de gamme inspirée des campagnes resort de luxe et beauté méditerranéenne. Femme élégante DANS UNE PISCINE en pierre claire, piscine fond ocre, peau bronzée satinée par le soleil, maillot minimaliste chic rose clair ou brun. Eau créant des reflets mouvants et lumineux sur la peau et les surfaces minérales. Prise de vue en plongée, composition épurée et sophistiquée, ambiance calme et sensuelle. Lumière chaude naturelle forte de fin de journée, ombres nettes et graphiques, esthétique luxe silencieux. Palette douce et solaire : beige pierre chaude, rose pâle, peau dorée et beige crème. Filtre éditorial premium légèrement chaud et désaturé, contraste doux, grain subtil type photographie argentique luxe, rendu lumineux et cinématographique inspiré de Jacquemus, campaigns resortwear et magazines mode haut de gamme. Atmosphère minimaliste, méditerranéenne et exclusive, ultra réaliste, élégante et moderne. Pose naturelle, peau bronzée légèrement mouillée, manucure rose clair. Zoom et focus sur la bague. Ombre de fleur de frangipanier.
 
 🔍 FRAMING : the ring + hand + portion of bronzed skin near the ring fill the frame (ring ~70-85% of frame width). The woman's body, pool, swimsuit are supporting, soft-focused — the RING REMAINS THE HERO, perfectly sharp.`,
 
