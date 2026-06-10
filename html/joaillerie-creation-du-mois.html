@@ -1477,6 +1477,23 @@ function initAutoSlugHandle() {
   });
 }
 
+// Re-télécharge la photo de chaque produit (depuis le catalogue live) quand elle manque.
+async function reenrichirImages(produits, store) {
+  if (!Array.isArray(produits)) return produits;
+  return Promise.all(produits.map(async (p) => {
+    const aDejaImage = p.images && p.images[0] && p.images[0].url;
+    if (!p.handle || aDejaImage) return p;
+    try {
+      const r = await fetch(`/api/joaillerie/produits-par-recherche?q=${encodeURIComponent(p.handle)}&store=${store}`);
+      if (!r.ok) return p;
+      const d = await r.json();
+      const t = (d.produits || []).find(x => x.handle === p.handle);
+      if (t && t.images && t.images.length) return { ...p, images: t.images };
+    } catch (e) { /* ignore */ }
+    return p;
+  }));
+}
+
 async function importerDepuisShopify() {
   const saisie = prompt('ID ou URL Shopify Admin de la page à récupérer\n(ex: 707129639289 OU https://admin.shopify.com/store/yourmood/pages/707129639289)');
   if (!saisie) return;
@@ -1516,6 +1533,8 @@ async function importerDepuisShopify() {
         snap.date = new Date().toISOString();
         snap.handle = page.handle || snap.handle || 'creation-du-mois';
         snap.storeCible = store;
+        // Re-télécharge les photos produits manquantes depuis le catalogue live
+        snap.produits = await reenrichirImages(snap.produits, store);
         const pages = lirePagesSauvegardees();
         pages.unshift(snap);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(pages.slice(0, 50)));
