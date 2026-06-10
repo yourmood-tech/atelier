@@ -245,6 +245,19 @@ function setPoly(idx, finition) {
   if (code) { v.mtrlCorrige = code; rendreTable(); }
 }
 
+// Produits spéciaux : MTRL imposé selon un mot-clé dans le SKU (pré-faits joaillerie, hors logique couleur)
+const MTRL_SPECIAUX = [
+  { motif: 'AURAVICHYOCEAN',  suffixe: 'INFINITY-BLUE-CZ-WHITE-CZ' },
+  { motif: 'AURAVICHYSUNSET', suffixe: 'INFINITY-PINK-CZ-WHITE-CZ' },
+];
+function mtrlSpecial(sku, taille) {
+  const s = (sku || '').toUpperCase();
+  for (const sp of MTRL_SPECIAUX) {
+    if (s.includes(sp.motif)) return `MTRL-MD-RI-113-${sp.suffixe}-${taille}`;
+  }
+  return null;
+}
+
 // Génère le MTRL proposé selon les patterns
 function proposerMtrl(matiere, format, taille, couleur) {
   if (!matiere || !taille) return null;
@@ -349,7 +362,7 @@ function traiterCSV(rows) {
       couleur = r['Option2 Value'];
     }
     if (!couleur) couleur = extraireCouleurDuSku(sku);
-    const mtrlPropose = proposerMtrl(matiere, format, taille, couleur);
+    const mtrlPropose = mtrlSpecial(sku, taille) || proposerMtrl(matiere, format, taille, couleur);
     const prix = (r['Variant Price'] || '').trim();
     const codeCouleur = couleur ? codeCouleurDuSku(sku) : '';
     VARIANTES.push({
