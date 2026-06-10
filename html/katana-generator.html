@@ -245,15 +245,18 @@ function setPoly(idx, finition) {
   if (code) { v.mtrlCorrige = code; rendreTable(); }
 }
 
-// Produits spéciaux : MTRL imposé selon un mot-clé dans le SKU (pré-faits joaillerie, hors logique couleur)
+// Produits spéciaux : MTRL imposé selon un mot-clé dans le SKU (pré-faits joaillerie, hors logique couleur).
+// Un produit peut avoir PLUSIEURS ingrédients (ex: un pack) → codes joints par " + ".
 const MTRL_SPECIAUX = [
-  { motif: 'AURAVICHYOCEAN',  suffixe: 'INFINITY-BLUE-CZ-WHITE-CZ' },
-  { motif: 'AURAVICHYSUNSET', suffixe: 'INFINITY-PINK-CZ-WHITE-CZ' },
+  // Pack : contient 2 pièces (1 Ocean + 1 Sunset) — vérifié AVANT les codes simples
+  { motif: 'PACKAURAVICHY', suffixes: ['INFINITY-BLUE-CZ-WHITE-CZ', 'INFINITY-PINK-CZ-WHITE-CZ'] },
+  { motif: 'AURAVICHYOCEAN',  suffixes: ['INFINITY-BLUE-CZ-WHITE-CZ'] },
+  { motif: 'AURAVICHYSUNSET', suffixes: ['INFINITY-PINK-CZ-WHITE-CZ'] },
 ];
 function mtrlSpecial(sku, taille) {
   const s = (sku || '').toUpperCase();
   for (const sp of MTRL_SPECIAUX) {
-    if (s.includes(sp.motif)) return `MTRL-MD-RI-113-${sp.suffixe}-${taille}`;
+    if (s.includes(sp.motif)) return sp.suffixes.map(suf => `MTRL-MD-RI-113-${suf}-${taille}`).join(' + ');
   }
   return null;
 }
@@ -381,7 +384,9 @@ function traiterCSV(rows) {
 }
 
 function mtrlEstValide(mtrl) {
-  return mtrl && MTRL_CATALOG.has(mtrl.toUpperCase().trim());
+  if (!mtrl) return false;
+  // Supporte plusieurs ingrédients séparés par " + " (packs) : valide si TOUS existent
+  return mtrl.split(' + ').every(c => MTRL_CATALOG.has(c.toUpperCase().trim()));
 }
 
 function rendreTable() {
@@ -493,7 +498,11 @@ function genererExcel() {
     if (!v.mtrlCorrige) continue;
     const qtyMatch = v.sku.match(/-(\d+)-minis?$/i);
     const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
-    data2.push([v.sku, v.mtrlCorrige, qty]);
+    // Plusieurs ingrédients (pack) → une ligne par ingrédient
+    for (const code of v.mtrlCorrige.split(' + ')) {
+      const c = code.trim();
+      if (c) data2.push([v.sku, c, qty]);
+    }
   }
   const ws2 = XLSX.utils.aoa_to_sheet(data2);
   XLSX.utils.book_append_sheet(wb2, ws2, 'Product recipes (BOM)');
