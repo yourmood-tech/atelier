@@ -81,7 +81,6 @@ const SCREENS = [
  { type:'single', key:'format', eyebrow:'Le format', q:'Quel format pour ta pièce ?', options:['Addon','Deux-tiers','Medium','Mini'] },
  { type:'single', key:'formatQte', eyebrow:'Le format', q:'Combien de mediums ?', options:['1','2','3'], showIf:s=>s.format==='Medium' },
  { type:'single', key:'formatQte', eyebrow:'Le format', q:'Combien de minis ?', options:['1','2','3','4','5','6'], wrap:true, showIf:s=>s.format==='Mini' },
- { type:'single', key:'largeur', eyebrow:'La largeur', q:'Quelle largeur ?', options:['XS · 9mm','S · 11mm','L · 13mm','Je ne sais pas'] },
  { type:'multi', key:'style', eyebrow:'Le style', q:'Ton style, c’est plutôt…', sub:'Plusieurs choix possibles', options:['Abstrait','Figuratif','Géométrique','Chargé','Épuré'], wrap:true },
  { type:'text', key:'theme', eyebrow:'L’inspiration', q:'Un thème qui te ressemble ?', placeholder:'mer, fleurs, mythologie, voyage…', optional:true },
  { type:'textarea', key:'histoire', eyebrow:'Le plus important', q:'Une histoire à transmettre ? 💌', sub:'Une émotion, un symbole, une date, un être cher… C’est ce qui rend ta pièce unique.', optional:true },
@@ -215,7 +214,7 @@ async function envoyer(){
     couleurMatiere:ST.couleurMatiere,
     finition: ST.finition==='Autre'?('Autre : '+ST.finitionAutre):ST.finition,
     grave:ST.grave, pierres:ST.pierres, tonalite:ST.tonalite, pierreCouleur:ST.pierreCouleur.trim(),
-    format: ST.format + (ST.formatQte ? (' ×' + ST.formatQte) : ''), largeur:ST.largeur,
+    format: ST.format + (ST.formatQte ? (' ×' + ST.formatQte) : ''),
     style:ST.style, theme:ST.theme.trim(), histoire:ST.histoire.trim(),
     occasion:ST.occasion, autre:ST.autre.trim(), images:ST.images,
   };
