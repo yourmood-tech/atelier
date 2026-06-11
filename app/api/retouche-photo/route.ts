@@ -457,7 +457,7 @@ ACTION-SPECIFIC ADAPTATIONS :
 - Camera : zoom in tight on the ring. If a wider context is shown, the ring still dominates ; never let the decor take over the frame.`,
 };
 
-async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null): Promise<{ image?: string; error?: string }> {
+async function appelGeminiMulti(imageDataUrls: string[], action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null, qualite?: string | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
   const modelNote = isPortee ? buildModelProfileNote(gender, age) : "";
   let basePrompt: string;
@@ -512,7 +512,7 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio, imageSize: "2K" },
+          imageConfig: { aspectRatio, imageSize: (qualite === "final" ? "2K" : "1K") },
         },
       }),
     });
@@ -818,7 +818,7 @@ function selectPorteePrompt(theme: string, gender?: string | null): string | nul
   return THEME_PORTEE_PROMPTS[theme] || null;
 }
 
-async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null): Promise<{ image?: string; error?: string }> {
+async function appelGemini(imageDataUrl: string, action: string, note?: string | null, formatOverride?: string | null, theme?: string | null, mode?: "objet" | "portee" | null, gender?: string | null, age?: string | null, qualite?: string | null): Promise<{ image?: string; error?: string }> {
   const isPortee = mode === "portee";
   const modelNote = isPortee ? buildModelProfileNote(gender, age) : "";
   let basePrompt: string;
@@ -864,7 +864,7 @@ async function appelGemini(imageDataUrl: string, action: string, note?: string |
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["IMAGE"],
-          imageConfig: { aspectRatio, imageSize: "2K" },
+          imageConfig: { aspectRatio, imageSize: (qualite === "final" ? "2K" : "1K") },
         },
       }),
     });
@@ -904,14 +904,14 @@ export async function POST(req: Request) {
   if (!GEMINI_KEY)
     return NextResponse.json({ error: "GEMINI_API_KEY manquante côté serveur" }, { status: 500 });
 
-  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null; mode?: "objet" | "portee" | null; gender?: string | null; age?: string | null };
+  let body: { image?: string; images?: string[]; action?: string; note?: string | null; format?: string | null; theme?: string | null; mode?: "objet" | "portee" | null; gender?: string | null; age?: string | null; qualite?: string | null };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
 
-  const { image, images, action, note, format, theme, mode, gender, age } = body;
+  const { image, images, action, note, format, theme, mode, gender, age, qualite } = body;
   if (!action) {
     return NextResponse.json({ error: "Champ requis : action" }, { status: 400 });
   }
@@ -925,7 +925,7 @@ export async function POST(req: Request) {
     if (action === "multi-formats") {
       return NextResponse.json({ error: "Multi-formats ne fonctionne pas en mode multi-bagues — passe d'abord en mode 1 bague" }, { status: 400 });
     }
-    const res = await appelGeminiMulti(images, action, note, format, theme, mode, gender, age);
+    const res = await appelGeminiMulti(images, action, note, format, theme, mode, gender, age, qualite);
     if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
     return NextResponse.json({ image: res.image });
   }
@@ -943,12 +943,12 @@ export async function POST(req: Request) {
       "multi-9-16": "Vertical 9:16 (Story/Reel)",
       "multi-16-9": "Paysage 16:9 (FB cover)",
     };
-    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme, mode, gender, age).then(res => ({ ...res, ratio: r, label: labels[r] }))));
+    const results = await Promise.all(ratios.map(r => appelGemini(image, r, note, null, theme, mode, gender, age, qualite).then(res => ({ ...res, ratio: r, label: labels[r] }))));
     return NextResponse.json({ resultats: results });
   }
 
   // Cas simple : 1 appel — le format choisi par l'utilisateur override le ratio par défaut de l'action
-  const res = await appelGemini(image, action, note, format, theme, mode, gender, age);
+  const res = await appelGemini(image, action, note, format, theme, mode, gender, age, qualite);
   if (res.error) return NextResponse.json({ error: res.error }, { status: 500 });
   return NextResponse.json({ image: res.image });
 }

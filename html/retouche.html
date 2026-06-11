@@ -135,6 +135,12 @@
   <h1>📷 Retouche photo IA</h1>
   <div class="sous-titre">Upload une photo · 4 retouches automatiques disponibles · IA Gemini Image</div>
   <button onclick="ouvrirPromptsModal()" style="position:absolute;top:1rem;right:1rem;background:#fff;border:1px solid #d4a017;color:#5c4400;padding:0.4rem 0.8rem;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">📋 Mes prompts originaux</button>
+  <div style="display:flex;justify-content:center;gap:0.5rem;margin-top:0.8rem;align-items:center;flex-wrap:wrap;">
+    <span style="font-size:0.8rem;color:#5c4400;">Qualité :</span>
+    <button type="button" id="btn-qualite-apercu" onclick="setQualite('apercu')" style="padding:0.35rem 0.9rem;border-radius:8px;border:2px solid #2c7a3a;background:#eaf3e9;color:#2c5530;font-size:0.82rem;font-weight:600;cursor:pointer;">🪶 Aperçu (économe)</button>
+    <button type="button" id="btn-qualite-final" onclick="setQualite('final')" style="padding:0.35rem 0.9rem;border-radius:8px;border:1px solid #ddd;background:#fff;color:#666;font-size:0.82rem;font-weight:600;cursor:pointer;">💎 Finale (2K)</button>
+    <span id="qualite-hint" style="font-size:0.72rem;color:#888;width:100%;text-align:center;margin-top:0.2rem;">Tes essais en Aperçu coûtent ~2× moins. Passe en Finale juste pour l'image que tu gardes.</span>
+  </div>
 </header>
 
 <!-- Modale Prompts -->
@@ -687,6 +693,30 @@ document.getElementById('prompts-modal').addEventListener('click', (e) => {
 <div class="resultats-zone" id="resultats"></div>
 
 <script>
+// Qualité de génération : 'apercu' (1K, économe) par défaut, 'final' (2K) pour l'image gardée.
+window.qualiteActive = 'apercu';
+function setQualite(q) {
+  window.qualiteActive = q;
+  const a = document.getElementById('btn-qualite-apercu'), f = document.getElementById('btn-qualite-final');
+  const on = 'padding:0.35rem 0.9rem;border-radius:8px;border:2px solid #2c7a3a;background:#eaf3e9;color:#2c5530;font-size:0.82rem;font-weight:600;cursor:pointer;';
+  const off = 'padding:0.35rem 0.9rem;border-radius:8px;border:1px solid #ddd;background:#fff;color:#666;font-size:0.82rem;font-weight:600;cursor:pointer;';
+  if (q === 'final') { f.style.cssText = on.replace('#2c7a3a','#d4a017').replace('#eaf3e9','#fff8e8').replace('#2c5530','#5c4400'); a.style.cssText = off; }
+  else { a.style.cssText = on; f.style.cssText = off; }
+}
+// Injecte automatiquement la qualité choisie dans tous les appels de génération retouche
+(function () {
+  const _f = window.fetch;
+  window.fetch = function (url, opts) {
+    try {
+      if (typeof url === 'string' && url.includes('/api/retouche-photo') && opts && typeof opts.body === 'string') {
+        const b = JSON.parse(opts.body);
+        if (b.qualite === undefined) { b.qualite = window.qualiteActive || 'apercu'; opts.body = JSON.stringify(b); }
+      }
+    } catch (e) { /* ignore */ }
+    return _f.apply(this, arguments);
+  };
+})();
+
 let imageActuelle = null;  // dataUrl base64 (mode single)
 let imagesMultiples = [];  // tableau de dataURL (mode produit-multiple — 2-6 bagues uploadées en même temps)
 let themeGlobalActif = '';  // '' = aucun thème ; sinon 'terre-dombre', etc.
