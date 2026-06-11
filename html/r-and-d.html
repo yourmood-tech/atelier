@@ -357,6 +357,8 @@
     margin-top: auto;
   }
   .add-product-btn:hover { border-color: var(--or); color: var(--or); }
+  .filtre-row { display:flex; justify-content:space-between; align-items:center; gap:0.6rem; font-size:0.82rem; padding:0.25rem 0; border-bottom:1px solid #f2efe6; }
+  .filtre-row select { width:auto; padding:0.25rem 0.5rem; font-size:0.8rem; }
   .product-card {
     padding: 0.3rem 0.4rem;
     font-size: 0.72rem;
@@ -668,6 +670,18 @@
 
     <label>Notes <span style="color:var(--gris);font-weight:400">— inspiration, contraintes, idées</span></label>
     <textarea id="produit-notes" placeholder="ex : test sertissage diamants 0.9mm sur medium argent, voir Aura authentique pour ref…"></textarea>
+
+    <label style="margin-top:1rem;">🔍 Filtre pré-lancement — « est-ce que ça fait wow ? »</label>
+    <div style="font-size:0.72rem;color:var(--gris);margin-bottom:0.5rem;">Réponds aux 6 questions : le verdict te dit si la nouveauté est <strong>prête à sortir</strong> ou si elle doit aller en <strong>réserve d'avance</strong> (préparée pour plus tard, pas dans le rush).</div>
+    <div id="filtre-grid" style="display:flex;flex-direction:column;gap:0.4rem;">
+      <div class="filtre-row"><span>1. Objectif décidé (moteur &gt;10k ou complément ?)</span><select class="filtre-q" onchange="calcFiltre()"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select></div>
+      <div class="filtre-row"><span>2. Preuve réelle (pas « en pensant que »)</span><select class="filtre-q" onchange="calcFiltre()"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select></div>
+      <div class="filtre-row"><span>3. Effet wow clair (l'histoire en 1 phrase)</span><select class="filtre-q" onchange="calcFiltre()"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select></div>
+      <div class="filtre-row"><span>4. Visuels / photos prêts</span><select class="filtre-q" onchange="calcFiltre()"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select></div>
+      <div class="filtre-row"><span>5. Déclinable, tient dans le temps</span><select class="filtre-q" onchange="calcFiltre()"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select></div>
+      <div class="filtre-row"><span>6. Prête 2-3 semaines à l'avance</span><select class="filtre-q" onchange="calcFiltre()"><option value="">—</option><option value="oui">Oui</option><option value="non">Non</option></select></div>
+    </div>
+    <div id="filtre-verdict" style="margin-top:0.6rem;padding:0.55rem 0.8rem;border-radius:8px;font-size:0.85rem;font-weight:600;display:none;"></div>
 
     <div class="modal-actions">
       <button class="outline" onclick="fermerModal()">Annuler</button>
@@ -1394,6 +1408,7 @@ function ouvrirModalAjout(date) {
   document.getElementById('produit-notes').value = '';
   document.getElementById('produit-image').value = '';
   setImagePreview('');
+  chargerFiltre(null);
   document.getElementById('btn-supprimer').style.display = 'none';
   document.getElementById('btn-dupliquer').style.display = 'none';
   const evalZone = document.getElementById('eval-resultat');
@@ -1418,6 +1433,7 @@ function ouvrirModalEdit(id) {
   document.getElementById('produit-notes').value = p.notes || '';
   document.getElementById('produit-image').value = p.image || '';
   setImagePreview(p.image || '');
+  chargerFiltre(p.filtre || null);
   document.getElementById('btn-supprimer').style.display = 'inline-block';
   document.getElementById('btn-dupliquer').style.display = 'inline-block';
   document.getElementById('modal').classList.add('show');
@@ -1507,6 +1523,34 @@ function fermerModal() {
   modalContexte = null;
 }
 
+function calcFiltre() {
+  const reps = [...document.querySelectorAll('.filtre-q')].map(s => s.value);
+  const oui = reps.filter(v => v === 'oui').length;
+  const repondu = reps.filter(v => v).length;
+  const v = document.getElementById('filtre-verdict');
+  if (!v) return;
+  v.style.display = 'block';
+  if (repondu < 6) {
+    v.style.background = '#f3f0e8'; v.style.color = '#8a7a5e';
+    v.textContent = `Filtre : ${oui}/6 — réponds aux ${6 - repondu} question(s) restante(s).`;
+  } else if (oui === 6) {
+    v.style.background = '#eaf3e9'; v.style.color = '#2c5530';
+    v.textContent = '✅ Prête à sortir — elle passe le filtre (6/6).';
+  } else if (oui >= 4) {
+    v.style.background = '#fff3dc'; v.style.color = '#9a5a00';
+    v.textContent = `⚠️ Presque (${oui}/6) — complète les points manquants, sinon → réserve d'avance.`;
+  } else {
+    v.style.background = '#fde8e8'; v.style.color = '#a32020';
+    v.textContent = `🔴 Pas prête (${oui}/6) — va en réserve d'avance, ne pas sortir cette semaine.`;
+  }
+}
+function chargerFiltre(arr) {
+  const sel = [...document.querySelectorAll('.filtre-q')];
+  sel.forEach((s, i) => { s.value = (arr && arr[i]) ? arr[i] : ''; });
+  const v = document.getElementById('filtre-verdict');
+  if (arr && arr.some(Boolean)) calcFiltre(); else if (v) v.style.display = 'none';
+}
+
 function sauverProduit() {
   const nom = document.getElementById('produit-nom').value.trim();
   if (!nom) { alert('Le nom est obligatoire'); return; }
@@ -1521,6 +1565,7 @@ function sauverProduit() {
     ventes: parseInt(document.getElementById('produit-ventes')?.value || '0', 10) || 0,
     notes: document.getElementById('produit-notes').value,
     image: document.getElementById('produit-image').value || null,
+    filtre: [...document.querySelectorAll('.filtre-q')].map(s => s.value),
     date: modalContexte.date,
     extraSemaine: !!modalContexte.extraSemaine,
     majAt: new Date().toISOString(),
