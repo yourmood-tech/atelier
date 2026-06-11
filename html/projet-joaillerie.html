@@ -1,0 +1,235 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ton projet joaillerie — Mood</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;color:#2a221a;background:#f3ece0;margin:0;padding:1.2rem;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;background:#fdfaf3;border:1px solid #ecdcbf;border-radius:14px;padding:1.8rem 1.6rem;box-shadow:0 6px 24px rgba(0,0,0,.06)}
+h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:2rem;margin:0 0 .2rem;text-align:center}
+.sub{text-align:center;color:#7a6a52;font-size:.9rem;margin-bottom:1.2rem}
+.intro{background:#fff8e8;border:1px solid #e8d9b0;border-radius:10px;padding:.9rem 1.1rem;font-size:.86rem;color:#5c4400;margin-bottom:1.4rem}
+.steps{display:flex;gap:.4rem;justify-content:center;margin-bottom:1.2rem}
+.dot{width:9px;height:9px;border-radius:50%;background:#e0d3b8}.dot.on{background:#8a5a00}
+label{display:block;font-weight:600;font-size:.9rem;margin:1rem 0 .35rem}
+.opt{font-weight:400;color:#9a8a6e;font-size:.8rem}
+input[type=text],input[type=email],select,textarea{width:100%;padding:.6rem .7rem;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:.95rem;background:#fff}
+textarea{min-height:70px;resize:vertical}
+.note{font-size:.76rem;color:#a8855a;margin-top:.3rem;font-style:italic}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.2rem}
+.chip{border:1px solid #d8c8a8;border-radius:18px;padding:.35rem .8rem;font-size:.85rem;cursor:pointer;background:#fff;user-select:none}
+.chip.sel{background:#8a5a00;color:#fff;border-color:#8a5a00}
+.budget-val{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#8a5a00;text-align:center;margin:.3rem 0}
+input[type=range]{width:100%;accent-color:#8a5a00}
+.dz{border:2px dashed #c9a85a;border-radius:10px;padding:1.2rem;text-align:center;color:#a8855a;font-size:.85rem;cursor:pointer;background:#fbf5e9}
+.dz:hover{background:#f7eed9}
+.gal{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.7rem}
+.gal .cell{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid #e2d4ba}
+.gal img{width:100%;height:100%;object-fit:cover}
+.gal .del{position:absolute;top:.2rem;right:.2rem;background:rgba(255,255,255,.9);border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;color:#c02;font-weight:700}
+.btn{display:block;width:100%;padding:.8rem;background:#8a5a00;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;margin-top:1.4rem;font-family:inherit}
+.btn.sec{background:#fff;color:#8a5a00;border:1px solid #c9a85a}
+.row2{display:flex;gap:.6rem}.row2>*{flex:1}
+.hidden{display:none}
+.fin{background:#faf6ef;border:1px solid #ecdcbf;border-radius:10px;padding:1rem 1.1rem;font-size:.84rem;color:#4a3f33;margin-top:1.2rem}
+.cond{margin-top:.4rem}
+.merci{text-align:center;padding:2rem 1rem}
+.merci h2{font-family:'Cormorant Garamond',serif;font-style:italic;color:#8a5a00;font-size:1.8rem}
+</style></head><body>
+<div class="wrap">
+  <h1>Ton projet joaillerie, rien que pour toi 💎</h1>
+  <div class="sub">Une pièce unique, pensée autour de toi.</div>
+
+  <div id="form">
+    <div class="intro">✨ <strong>C'est un projet un peu surprise.</strong> On ne se contente pas d'exécuter une commande — notre designer part de <strong>ton univers</strong>, de ce qui te ressemble vraiment, pour imaginer une pièce qui te touche (et te surprend, dans le bon sens 🫶🏼). Plus tu nous ouvres ton monde — surtout avec les images — plus la pièce sera toi.</div>
+
+    <div class="steps"><span class="dot on" id="d1"></span><span class="dot" id="d2"></span></div>
+
+    <!-- ÉTAPE 1 -->
+    <div id="etape1">
+      <div class="row2">
+        <div><label>Ton prénom *</label><input type="text" id="prenom"></div>
+        <div><label>Ton email *</label><input type="email" id="email"></div>
+      </div>
+      <div class="opt" id="err" style="color:#c02;display:none;margin-top:.3rem;"></div>
+
+      <label>Ton budget <span class="opt">(à partir de 500.-)</span></label>
+      <div class="budget-val" id="budget-val">1 500.-</div>
+      <input type="range" id="budget" min="500" max="10000" step="100" value="1500" oninput="majBudget()">
+      <div class="opt" style="display:flex;justify-content:space-between;"><span>500.-</span><span>10 000.- et +</span></div>
+
+      <label>La matière</label>
+      <select id="matiere" onchange="majMatiere()">
+        <option value="">— choisis —</option>
+        <option value="or">Or</option>
+        <option value="argent">Argent</option>
+        <option value="autre">Autre</option>
+      </select>
+      <div id="matiere-autre" class="hidden"><input type="text" id="matiere-autre-txt" placeholder="Quelle matière ?" style="margin-top:.5rem;"></div>
+      <div id="couleur-or" class="hidden"><label>La couleur de l'or</label>
+        <div class="chips" data-single="couleurMatiere">
+          <span class="chip">Jaune</span><span class="chip">Gris</span><span class="chip">Rose</span></div></div>
+      <div id="couleur-argent" class="hidden"><label>La finition de l'argent</label>
+        <div class="chips" data-single="couleurMatiere">
+          <span class="chip">Oxygéné</span><span class="chip">Neutre</span></div></div>
+
+      <label>La finition / texture</label>
+      <select id="finition">
+        <option value="">— choisis —</option>
+        <option>Poli</option><option>Mixte</option><option>Froissé</option><option>Paillette</option>
+        <option>Martelé</option><option>Incurvé</option><option>Clawgrunge</option><option>Cristal de givre</option>
+        <option>Matt</option><option value="autre">Autre</option>
+      </select>
+      <input type="text" id="finition-autre" class="hidden" placeholder="Précise ta finition" style="margin-top:.5rem;">
+
+      <label>Plutôt gravé ou texture abstraite ?</label>
+      <div class="chips" data-single="grave"><span class="chip">Gravé</span><span class="chip">Texture abstraite</span></div>
+      <div class="note">⚠️ Certaines textures ne peuvent pas être gravées — on te guidera si besoin.</div>
+
+      <label>Ta/tes pierre(s) favorite(s)</label>
+      <div class="chips" data-multi="pierres">
+        <span class="chip">Diamant blanc</span><span class="chip">Diamant de couleur</span><span class="chip">Saphir</span>
+        <span class="chip">Topaze</span><span class="chip">Émeraude</span><span class="chip">Rubis</span>
+        <span class="chip">Zircon</span><span class="chip">Perle</span><span class="chip">Sans pierre</span><span class="chip">À voir avec vous</span></div>
+      <input type="text" id="pierre-couleur" placeholder="Une couleur de pierre précise en tête ?" style="margin-top:.6rem;">
+
+      <label>Le format de ta pièce</label>
+      <select id="format" onchange="majFormat()">
+        <option value="">— choisis —</option>
+        <option>Medium</option><option>Mini</option><option>Addon</option>
+        <option>Deux-tiers</option><option>Bague en duo</option>
+      </select>
+      <input type="text" id="format-precision" class="hidden" placeholder="Précise (ex : Medium ×2, Mini ×4, duo = quels formats ?)" style="margin-top:.5rem;">
+
+      <label>Ta largeur</label>
+      <div class="chips" data-single="largeur"><span class="chip">XS (9mm)</span><span class="chip">S (11mm)</span><span class="chip">L (13mm)</span><span class="chip">Je ne sais pas</span></div>
+
+      <label>Ton style <span class="opt">(plusieurs choix possibles)</span></label>
+      <div class="chips" data-multi="style">
+        <span class="chip">Abstrait</span><span class="chip">Figuratif</span><span class="chip">Géométrique</span>
+        <span class="chip">Chargé</span><span class="chip">Épuré</span></div>
+
+      <label>Ton thème <span class="opt">(mer, fleurs, mythologie, voyage…)</span></label>
+      <input type="text" id="theme">
+
+      <label>L'histoire à transmettre 💌</label>
+      <textarea id="histoire" placeholder="Une émotion, un symbole, une date, un être cher, un souvenir… C'est ce qui rend ta pièce vraiment unique."></textarea>
+
+      <label>Pour quelle occasion ?</label>
+      <select id="occasion">
+        <option value="">— optionnel —</option>
+        <option>Un cadeau à moi-même</option><option>Anniversaire</option><option>Mariage / fiançailles</option>
+        <option>Naissance</option><option>Un souvenir à immortaliser</option><option>Juste l'envie</option><option>Autre</option>
+      </select>
+
+      <button class="btn" onclick="etape(2)">Suivant : ton univers en images →</button>
+    </div>
+
+    <!-- ÉTAPE 2 -->
+    <div id="etape2" class="hidden">
+      <label>📸 Ton univers en images</label>
+      <div class="opt" style="margin-bottom:.5rem;">Montre-nous ton univers, pas seulement des bijoux. Glisse tout ce qui te fait vibrer — c'est ça qui inspire ta pièce. Par ex : un bijou que tu adores, un paysage / pays, une ambiance, des couleurs, une fleur, un lieu, une photo perso…</div>
+      <div class="dz" id="dz" onclick="document.getElementById('imgfile').click()">＋ Ajoute tes images<br><span class="opt">(glisser-déposer ou cliquer · plusieurs possibles)</span></div>
+      <input type="file" id="imgfile" accept="image/*" multiple class="hidden">
+      <div class="gal" id="gal"></div>
+
+      <label>Autre chose à nous dire ?</label>
+      <textarea id="autre"></textarea>
+
+      <div class="fin">📩 <strong>Avant d'envoyer :</strong> ton projet te sera transmis par email. Laisse-nous un peu de temps — notre designer prend le temps d'<strong>analyser et de penser ta pièce</strong>, c'est ce qui fait toute sa valeur.
+      <div class="cond">Et si le premier projet ne te correspond pas tout à fait, pas de souci : on en discute et on apporte <strong>une ou deux retouches</strong> ensemble. Au-delà, on ne pourra pas continuer indéfiniment — mais on met tout notre cœur à viser juste dès le départ. 🫶🏼</div></div>
+
+      <button class="btn sec" onclick="etape(1)">← Retour</button>
+      <button class="btn" id="btn-envoyer" onclick="envoyer()">Envoyer mon projet 💎</button>
+    </div>
+  </div>
+
+  <div id="merci" class="merci hidden">
+    <h2>Merci 🫶🏼</h2>
+    <p>Ton projet est bien arrivé. Notre designer va prendre le temps de l'imaginer, et tu recevras une proposition par email.</p>
+  </div>
+</div>
+
+<script>
+const state = { couleurMatiere:'', grave:'', largeur:'', pierres:[], style:[], images:[] };
+
+function majBudget(){ const v=+document.getElementById('budget').value;
+  document.getElementById('budget-val').textContent = (v>=10000?'10 000.- et +':v.toLocaleString('fr-CH')+'.-'); }
+function majMatiere(){ const m=document.getElementById('matiere').value;
+  document.getElementById('couleur-or').classList.toggle('hidden', m!=='or');
+  document.getElementById('couleur-argent').classList.toggle('hidden', m!=='argent');
+  document.getElementById('matiere-autre').classList.toggle('hidden', m!=='autre'); }
+function majFormat(){ document.getElementById('format-precision').classList.toggle('hidden', !document.getElementById('format').value); }
+document.getElementById('finition').addEventListener('change', e=>{
+  document.getElementById('finition-autre').classList.toggle('hidden', e.target.value!=='autre'); });
+
+// chips (single / multi)
+document.querySelectorAll('.chips').forEach(grp=>{
+  const single=grp.dataset.single, multi=grp.dataset.multi;
+  grp.querySelectorAll('.chip').forEach(ch=>{
+    ch.onclick=()=>{
+      if(single){ grp.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel')); ch.classList.add('sel'); state[single]=ch.textContent; }
+      else if(multi){ ch.classList.toggle('sel'); state[multi]=[...grp.querySelectorAll('.chip.sel')].map(c=>c.textContent); }
+    };
+  });
+});
+
+function etape(n){
+  if(n===2){ const p=document.getElementById('prenom').value.trim(), e=document.getElementById('email').value.trim();
+    const err=document.getElementById('err');
+    if(!p||!e||!/.+@.+\..+/.test(e)){ err.style.display='block'; err.textContent='Indique au moins ton prénom et un email valide.'; return; }
+    err.style.display='none'; }
+  document.getElementById('etape1').classList.toggle('hidden', n!==1);
+  document.getElementById('etape2').classList.toggle('hidden', n!==2);
+  document.getElementById('d1').classList.toggle('on', n===1);
+  document.getElementById('d2').classList.toggle('on', n===2);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// images
+const imgfile=document.getElementById('imgfile'), dz=document.getElementById('dz');
+imgfile.addEventListener('change', e=>handle(e.target.files));
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.style.background='#f0e3c2';});
+dz.addEventListener('dragleave', ()=>dz.style.background='');
+dz.addEventListener('drop', e=>{e.preventDefault();dz.style.background='';handle(e.dataTransfer.files);});
+function handle(files){ [...files].forEach(f=>{ if(!f.type.startsWith('image/')||state.images.length>=8)return;
+  downscale(f,1000,.72).then(d=>{ state.images.push(d); renderGal(); }); }); }
+function downscale(file,max,q){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>{ const i=new Image();
+  i.onload=()=>{ const ra=i.width>max?max/i.width:1, w=Math.round(i.width*ra), h=Math.round(i.height*ra);
+    const c=document.createElement('canvas'); c.width=w;c.height=h; c.getContext('2d').drawImage(i,0,0,w,h);
+    res(c.toDataURL('image/jpeg',q)); }; i.src=r.result; }; r.readAsDataURL(file); }); }
+function renderGal(){ document.getElementById('gal').innerHTML = state.images.map((u,i)=>
+  `<div class="cell"><img src="${u}"><button class="del" onclick="delImg(${i})">×</button></div>`).join(''); }
+function delImg(i){ state.images.splice(i,1); renderGal(); }
+
+async function envoyer(){
+  const btn=document.getElementById('btn-envoyer'); btn.disabled=true; btn.textContent='Envoi…';
+  const m=document.getElementById('matiere').value;
+  const payload={
+    prenom:document.getElementById('prenom').value.trim(),
+    email:document.getElementById('email').value.trim(),
+    budget:document.getElementById('budget-val').textContent,
+    matiere: m==='autre'?('Autre : '+document.getElementById('matiere-autre-txt').value):m,
+    couleurMatiere:state.couleurMatiere,
+    finition: document.getElementById('finition').value==='autre'?('Autre : '+document.getElementById('finition-autre').value):document.getElementById('finition').value,
+    grave:state.grave,
+    pierres:state.pierres, pierreCouleur:document.getElementById('pierre-couleur').value.trim(),
+    format:document.getElementById('format').value, formatPrecision:document.getElementById('format-precision').value.trim(),
+    largeur:state.largeur, style:state.style,
+    theme:document.getElementById('theme').value.trim(),
+    histoire:document.getElementById('histoire').value.trim(),
+    occasion:document.getElementById('occasion').value,
+    autre:document.getElementById('autre').value.trim(),
+    images:state.images,
+  };
+  try{
+    const r=await fetch('/api/projet-joaillerie-submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok) throw new Error();
+    document.getElementById('form').classList.add('hidden');
+    document.getElementById('merci').classList.remove('hidden');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){ btn.disabled=false; btn.textContent='Envoyer mon projet 💎'; alert("Oups, l'envoi a échoué. Réessaie dans un instant."); }
+}
+majBudget();
+</script>
+</body></html>

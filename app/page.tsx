@@ -105,6 +105,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         title: "Moodboards clientes",
         description: "Fiches clientes intéressées par la joaillerie + Top clientes Shopify. Univers, palette, photos et notes modifiables et partagés par toute l'équipe.",
       },
+      {
+        href: "/projet-joaillerie/admin",
+        emoji: "🎁",
+        title: "Demandes projet joaillerie",
+        description: "Les demandes de projet sur-mesure remplies par les clientes (formulaire public sur /projet-joaillerie). Univers, matière, pierres, histoire + images d'inspiration.",
+      },
     ],
   },
   {
