@@ -64,13 +64,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 const ST = { prenom:'',email:'',budget:1500,matiere:'',matiereAutre:'',couleurMatiere:'',finition:'',finitionAutre:'',grave:'',pierres:[],tonalite:[],taillePierre:'',format:'',formatQte:'',style:[],theme:'',histoire:'',occasion:'',autre:'',images:[] };
 
 // L'or n'est disponible qu'à partir d'un budget minimum, selon le format
-const SEUILS_OR = { 'Medium':1100, 'Deux-tiers':1500, 'Addon':1800 };
+const SEUILS_OR = { 'Medium':1100, 'Deux-tiers':1500, 'Addon':1800, 'Je vous laisse le choix':1100 };
 function orDisponible(s){ const seuil=SEUILS_OR[s.format]; return seuil!=null && s.budget>=seuil; }
 function noteOr(s){
   if(orDisponible(s)) return '';
   const seuil=SEUILS_OR[s.format];
   if(seuil==null) return '💛 L’or n’est pas proposé pour ce format — choisis Medium, Deux-tiers ou Addon, ou opte pour l’argent.';
-  return '💛 L’or est disponible dès '+seuil.toLocaleString('fr-CH')+'.- pour un '+s.format.toLowerCase()+'. Augmente ton budget pour le débloquer.';
+  return '💛 L’or est disponible dès '+seuil.toLocaleString('fr-CH')+'.- pour ce format. Augmente ton budget pour le débloquer.';
 }
 
 const SCREENS = [
@@ -78,22 +78,22 @@ const SCREENS = [
  { type:'text', key:'prenom', eyebrow:'Faisons connaissance', q:'Comment t’appelles-tu ?', placeholder:'Ton prénom', required:true },
  { type:'email', key:'email', eyebrow:'Pour t’envoyer ton projet', q:'Et ton email ?', placeholder:'ton@email.com', required:true },
  { type:'budget', key:'budget', eyebrow:'Sans tabou', q:'Quel budget imagines-tu ?', sub:'À partir de 500.- — glisse à ton aise.' },
- { type:'single', key:'format', eyebrow:'Le format', q:'Quel format pour ta pièce ?', options:['Addon','Deux-tiers','Medium','Mini'] },
+ { type:'single', key:'format', eyebrow:'Le format', q:'Quel format pour ta pièce ?', options:['Addon','Deux-tiers','Medium','Mini','Je vous laisse le choix'] },
  { type:'single', key:'formatQte', eyebrow:'Le format', q:'Combien de mediums ?', options:['Un medium','Un duo de mediums','Trois mediums'], showIf:s=>s.format==='Medium' },
  { type:'single', key:'formatQte', eyebrow:'Le format', q:'Combien de minis ?', options:['Un mini','Un duo de minis','Trois minis','Quatre minis','Cinq minis','Six minis'], wrap:true, showIf:s=>s.format==='Mini' },
  { type:'single', key:'matiere', eyebrow:'La matière', q:'Dans quelle matière la rêves-tu ?',
-   optionsFn:s=>orDisponible(s) ? ['Or','Argent','Autre'] : ['Argent','Autre'],
+   optionsFn:s=>orDisponible(s) ? ['Or','Argent','Autre','Je vous laisse le choix'] : ['Argent','Autre','Je vous laisse le choix'],
    noteFn:s=>noteOr(s) },
  { type:'text', key:'matiereAutre', q:'Quelle matière ?', placeholder:'Dis-nous…', showIf:s=>s.matiere==='Autre' },
- { type:'single', key:'couleurMatiere', eyebrow:'La couleur de l’or', q:'Quel or te fait vibrer ?', options:['Jaune','Gris','Rose'], showIf:s=>s.matiere==='Or' },
- { type:'single', key:'couleurMatiere', eyebrow:'L’argent', q:'Plutôt…', options:['Oxygéné','Neutre oxydé'], showIf:s=>s.matiere==='Argent' },
- { type:'single', key:'finition', eyebrow:'La texture', q:'Quelle finition pour ta pièce ?', options:['Poli','Mixte','Froissé','Paillette','Martelé','Incurvé','Clawgrunge','Cristal de givre','Matt','Autre'], wrap:true },
+ { type:'single', key:'couleurMatiere', eyebrow:'La couleur de l’or', q:'Quel or te fait vibrer ?', options:['Jaune','Gris','Rose','Je vous laisse le choix'], showIf:s=>s.matiere==='Or' },
+ { type:'single', key:'couleurMatiere', eyebrow:'L’argent', q:'Plutôt…', options:['Oxydé','Neutre','Je vous laisse le choix'], showIf:s=>s.matiere==='Argent' },
+ { type:'single', key:'finition', eyebrow:'La texture', q:'Quelle finition pour ta pièce ?', options:['Poli','Mixte','Froissé','Paillette','Martelé','Incurvé','Clawgrunge','Cristal de givre','Matt','Autre','Je vous laisse le choix'], wrap:true },
  { type:'text', key:'finitionAutre', q:'Précise ta finition', placeholder:'Ta texture idéale…', showIf:s=>s.finition==='Autre' },
- { type:'single', key:'grave', eyebrow:'Le détail', q:'Gravé ou texture abstraite ?', options:['Gravé','Texture abstraite'], note:'✦ Certaines textures ne peuvent pas être gravées — on te guidera.' },
+ { type:'single', key:'grave', eyebrow:'Le détail', q:'Gravé ou texture abstraite ?', options:['Gravé','Texture abstraite','Je vous laisse le choix'], note:'✦ Certaines textures ne peuvent pas être gravées — on te guidera.' },
  { type:'multi', key:'pierres', eyebrow:'Les pierres', q:'Quelles pierres te font rêver ?', sub:'Plusieurs choix possibles · certaines pierres ne sont pas disponibles dans tous les formats — on te confirmera.', options:['Diamant','Diamant brun','Diamant jaune pur','Diamant gris','Diamant champagne','Diamant noir','Saphir bleu','Saphir jaune','Saphir orange','Saphir violet','Saphir rose','Saphir brun','Émeraude','Topaze','Améthyste','Rubis','Je vous laisse le choix'], wrap:true },
- { type:'multi', key:'tonalite', eyebrow:'L’ambiance de couleur', q:'Une tonalité qui te parle ?', sub:'Plusieurs choix possibles', options:['Ton pastel','Multicolore','Tons froids','Tons flash','Ton neutre (noir / blanc)','Ton chaud'], wrap:true, optional:true },
- { type:'single', key:'taillePierre', eyebrow:'Les pierres', q:'Plutôt grosses ou petites pierres ?', options:['Grosses pierres','Petites pierres','Mixte','Égal'], wrap:true, optional:true },
- { type:'multi', key:'style', eyebrow:'Le style', q:'Ton style, c’est plutôt…', sub:'Plusieurs choix possibles', options:['Abstrait','Figuratif','Géométrique','Chargé','Épuré'], wrap:true },
+ { type:'multi', key:'tonalite', eyebrow:'L’ambiance de couleur', q:'Une tonalité qui te parle ?', sub:'Plusieurs choix possibles', options:['Ton pastel','Multicolore','Tons froids','Tons flash','Ton neutre (noir / blanc)','Ton chaud','Je vous laisse le choix'], wrap:true, optional:true },
+ { type:'single', key:'taillePierre', eyebrow:'Les pierres', q:'Plutôt grosses ou petites pierres ?', options:['Grosses pierres','Petites pierres','Mixte','Égal','Je vous laisse le choix'], wrap:true, optional:true },
+ { type:'multi', key:'style', eyebrow:'Le style', q:'Ton style, c’est plutôt…', sub:'Plusieurs choix possibles', options:['Abstrait','Figuratif','Géométrique','Chargé','Épuré','Je vous laisse le choix'], wrap:true },
  { type:'text', key:'theme', eyebrow:'L’inspiration', q:'Un thème qui te ressemble ?', placeholder:'mer, fleurs, mythologie, voyage…', optional:true },
  { type:'textarea', key:'histoire', eyebrow:'Le plus important', q:'Une histoire à transmettre ? 💌', sub:'Une émotion, un symbole, une date, un être cher… C’est ce qui rend ta pièce unique.', optional:true },
  { type:'single', key:'occasion', eyebrow:'L’occasion', q:'Pour quelle occasion ?', options:['Un cadeau à moi-même','Anniversaire','Mariage / fiançailles','Naissance','Un souvenir','Juste l’envie','Autre'], wrap:true, optional:true },
