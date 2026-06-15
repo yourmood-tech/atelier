@@ -84,7 +84,7 @@ const SCREENS = [
  { type:'multi', key:'matiere', eyebrow:'La matière', q:'Dans quelle matière la rêves-tu ?', sub:'Plusieurs choix possibles (ex. or + argent)',
    optionsFn:s=>orDisponible(s) ? ['Or','Argent','Autre','Je vous laisse le choix'] : ['Argent','Autre','Je vous laisse le choix'],
    noteFn:s=>noteOr(s) },
- { type:'text', key:'matiereAutre', q:'Quelle matière ?', placeholder:'Dis-nous…', showIf:s=>s.matiere.includes('Autre') },
+ { type:'text', key:'matiereAutre', eyebrow:'La matière', q:'Tu as choisi « Autre » — précise laquelle', placeholder:'ex : titane, céramique, bois, bronze…', optional:true, showIf:s=>s.matiere.includes('Autre') },
  { type:'single', key:'couleurMatiere', eyebrow:'La couleur de l’or', q:'Quel or te fait vibrer ?', options:['Jaune','Gris','Rose','Je vous laisse le choix'], showIf:s=>s.matiere.includes('Or') },
  { type:'single', key:'couleurArgent', eyebrow:'L’argent', q:'Plutôt…', options:['Oxydé','Neutre','Je vous laisse le choix'], showIf:s=>s.matiere.includes('Argent') },
  { type:'multi', key:'finition', eyebrow:'La texture', q:'Quelle finition pour ta pièce ?', sub:'Plusieurs choix possibles', options:['Poli','Mixte','Froissé','Paillette','Martelé','Incurvé','Clawgrunge','Cristal de givre','Matt','Autre','Je vous laisse le choix'], wrap:true },
