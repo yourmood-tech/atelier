@@ -91,6 +91,8 @@
   </div>
   <div id="selection-bar" style="display:flex;align-items:center;gap:0.8rem;margin-top:1rem;flex-wrap:wrap;font-size:0.85rem;">
     <span id="selection-count" style="font-weight:600;">Aucun produit pour l'instant</span>
+    <button type="button" onclick="toutInclure(true)" class="secondary" style="margin:0;padding:0.3rem 0.7rem;font-size:0.78rem;">✓ Tout inclure</button>
+    <button type="button" onclick="toutInclure(false)" class="secondary" style="margin:0;padding:0.3rem 0.7rem;font-size:0.78rem;">☐ Tout décocher</button>
     <button type="button" onclick="viderSelection()" class="secondary" style="margin:0;padding:0.3rem 0.7rem;font-size:0.78rem;">🗑️ Vider la sélection</button>
     <span style="color:var(--gris);font-size:0.78rem;">La recherche <strong>ajoute</strong> à ta sélection — elle ne l'efface plus.</span>
   </div>
@@ -577,6 +579,10 @@ function retirerProduit(i) {
   rerendreProduitsCards();
 }
 
+function toutInclure(inclure) {
+  produitsTrouves.forEach(p => { p._exclu = !inclure; });
+  rerendreProduitsCards();
+}
 function viderSelection() {
   if (produitsTrouves.length && !confirm('Vider toute la sélection de produits ?')) return;
   produitsTrouves = [];
