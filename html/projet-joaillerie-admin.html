@@ -57,8 +57,9 @@ function card(d){
     <div class="ch"><div><h2>${esc(d.prenom)||'—'}</h2><a href="mailto:${esc(d.email)}">${esc(d.email)}</a><div class="date">${fmtDate(d.date)}</div></div>
       <div class="budget">Budget : ${esc(d.budget)||'—'}</div></div>
     <div class="grid">
-      ${f('Matière', esc(d.matiere))}
-      ${f('Couleur matière', esc(d.couleurMatiere))}
+      ${f('Matière', Array.isArray(d.matiere)?chips(d.matiere):esc(d.matiere))}
+      ${f('Couleur de l’or', esc(d.couleurMatiere))}
+      ${f('Argent', esc(d.couleurArgent))}
       ${f('Finition', esc(d.finition))}
       ${f('Gravé / texture', esc(d.grave))}
       ${f('Format', esc(d.format)+(d.formatPrecision?(' — '+esc(d.formatPrecision)):''))}
@@ -68,6 +69,7 @@ function card(d){
       ${f('Style', chips(d.style))}
       ${f('Thème', esc(d.theme))}
       ${f('Occasion', esc(d.occasion))}
+      ${f('À discuter avec', esc(d.vendeuse))}
       ${d.autre?('<div class="full">'+f('Autre', esc(d.autre))+'</div>'):''}
     </div>
     ${histoire}
