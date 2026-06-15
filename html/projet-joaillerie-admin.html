@@ -27,12 +27,24 @@ h1{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font
   <a class="retour" href="/">← Atelier</a>
   <h1>💎 Demandes de projet joaillerie</h1>
   <div class="count" id="count"></div>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.8rem;">
+    <a href="/projet-joaillerie" target="_blank" style="background:#8a5a00;color:#fff;text-decoration:none;padding:.55rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;">👁️ Voir le sondage</a>
+    <button onclick="copierLien()" style="background:#fff;border:1px solid #c9a85a;color:#8a5a00;padding:.55rem 1rem;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;">🔗 Copier le lien à partager</button>
+    <span id="lien-ok" style="font-size:.8rem;color:#2c7a3a;"></span>
+  </div>
 </div>
 <input class="search" id="search" placeholder="🔍 chercher (prénom, email, thème…)" oninput="render()">
 <div id="liste"></div>
 
 <script>
 const DEMANDES = /*__DEMANDES__*/;
+function copierLien(){
+  const url = location.origin + '/projet-joaillerie';
+  navigator.clipboard.writeText(url).then(()=>{
+    const el=document.getElementById('lien-ok'); el.textContent='✓ Lien copié : '+url;
+    setTimeout(()=>{el.textContent='';},4000);
+  }).catch(()=>{ prompt('Copie ce lien :', url); });
+}
 function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function fmtDate(iso){ try{return new Date(iso).toLocaleString('fr-CH');}catch(e){return '';} }
 function chips(arr){ return (arr&&arr.length)?'<span class="chiplist">'+arr.map(x=>`<span>${esc(x)}</span>`).join('')+'</span>':'—'; }
