@@ -72,7 +72,7 @@ export async function GET(request: Request) {
     // Branche B : full-text search Shopify Admin (comportement actuel)
     const gqlBody = {
       query: `query($q: String!) {
-        products(first: 30, query: $q) {
+        products(first: 100, query: $q) {
           edges { node {
             id handle title status productType
             variants(first: 50) { edges { node { price compareAtPrice } } }
