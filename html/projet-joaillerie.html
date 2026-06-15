@@ -61,7 +61,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 <div class="stage"><div class="card"><div id="screen" class="screen"></div></div></div>
 
 <script>
-const ST = { prenom:'',email:'',budget:1500,matiere:[],matiereAutre:'',couleurMatiere:'',couleurArgent:'',finition:'',finitionAutre:'',grave:'',pierres:[],tonalite:[],taillePierre:'',format:'',formatQte:'',style:[],theme:'',histoire:'',occasion:'',vendeuse:'',autre:'',images:[] };
+const ST = { prenom:'',email:'',budget:1500,matiere:[],matiereAutre:'',couleurMatiere:'',couleurArgent:'',finition:[],finitionAutre:'',grave:'',pierres:[],tonalite:[],taillePierre:'',format:'',formatQte:'',style:[],theme:'',histoire:'',occasion:'',vendeuse:'',autre:'',images:[] };
 
 // L'or n'est disponible qu'à partir d'un budget minimum, selon le format
 const SEUILS_OR = { 'Medium':1100, 'Deux-tiers':1500, 'Addon':1800, 'Je vous laisse le choix':1100 };
@@ -87,8 +87,8 @@ const SCREENS = [
  { type:'text', key:'matiereAutre', q:'Quelle matière ?', placeholder:'Dis-nous…', showIf:s=>s.matiere.includes('Autre') },
  { type:'single', key:'couleurMatiere', eyebrow:'La couleur de l’or', q:'Quel or te fait vibrer ?', options:['Jaune','Gris','Rose','Je vous laisse le choix'], showIf:s=>s.matiere.includes('Or') },
  { type:'single', key:'couleurArgent', eyebrow:'L’argent', q:'Plutôt…', options:['Oxydé','Neutre','Je vous laisse le choix'], showIf:s=>s.matiere.includes('Argent') },
- { type:'single', key:'finition', eyebrow:'La texture', q:'Quelle finition pour ta pièce ?', options:['Poli','Mixte','Froissé','Paillette','Martelé','Incurvé','Clawgrunge','Cristal de givre','Matt','Autre','Je vous laisse le choix'], wrap:true },
- { type:'text', key:'finitionAutre', q:'Précise ta finition', placeholder:'Ta texture idéale…', showIf:s=>s.finition==='Autre' },
+ { type:'multi', key:'finition', eyebrow:'La texture', q:'Quelle finition pour ta pièce ?', sub:'Plusieurs choix possibles', options:['Poli','Mixte','Froissé','Paillette','Martelé','Incurvé','Clawgrunge','Cristal de givre','Matt','Autre','Je vous laisse le choix'], wrap:true },
+ { type:'text', key:'finitionAutre', q:'Précise ta finition', placeholder:'Ta texture idéale…', showIf:s=>s.finition.includes('Autre') },
  { type:'single', key:'grave', eyebrow:'Le détail', q:'Gravé ou texture abstraite ?', options:['Gravé','Texture abstraite','Je vous laisse le choix'], note:'✦ Certaines textures ne peuvent pas être gravées — on te guidera.' },
  { type:'multi', key:'pierres', eyebrow:'Les pierres', q:'Quelles pierres te font rêver ?', sub:'Plusieurs choix possibles · certaines pierres ne sont pas disponibles dans tous les formats — on te confirmera.', options:['Diamant','Diamant brun','Diamant jaune pur','Diamant gris','Diamant noir','Saphir bleu','Saphir jaune','Saphir orange','Saphir violet','Saphir rose','Saphir brun','Émeraude','Topaze','Améthyste','Rubis','Je vous laisse le choix'], wrap:true },
  { type:'multi', key:'tonalite', eyebrow:'L’ambiance de couleur', q:'Une tonalité qui te parle ?', sub:'Plusieurs choix possibles', options:['Ton pastel','Multicolore','Tons froids','Tons flash','Ton neutre (noir / blanc)','Ton chaud','Je vous laisse le choix'], wrap:true, optional:true },
@@ -230,7 +230,7 @@ async function envoyer(){
     prenom:ST.prenom.trim(), email:ST.email.trim(), budget:fmtBudget(ST.budget),
     matiere: ST.matiere.map(m=>m==='Autre'?('Autre : '+ST.matiereAutre.trim()):m),
     couleurMatiere:ST.couleurMatiere, couleurArgent:ST.couleurArgent,
-    finition: ST.finition==='Autre'?('Autre : '+ST.finitionAutre):ST.finition,
+    finition: ST.finition.map(x=>x==='Autre'?('Autre : '+ST.finitionAutre.trim()):x),
     grave:ST.grave, pierres:ST.pierres, tonalite:ST.tonalite, taillePierre:ST.taillePierre,
     format: ST.formatQte || ST.format,
     style:ST.style, theme:ST.theme.trim(), histoire:ST.histoire.trim(),

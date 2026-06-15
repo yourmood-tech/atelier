@@ -60,7 +60,7 @@ function card(d){
       ${f('Matière', Array.isArray(d.matiere)?chips(d.matiere):esc(d.matiere))}
       ${f('Couleur de l’or', esc(d.couleurMatiere))}
       ${f('Argent', esc(d.couleurArgent))}
-      ${f('Finition', esc(d.finition))}
+      ${f('Finition', Array.isArray(d.finition)?chips(d.finition):esc(d.finition))}
       ${f('Gravé / texture', esc(d.grave))}
       ${f('Format', esc(d.format)+(d.formatPrecision?(' — '+esc(d.formatPrecision)):''))}
       ${f('Pierres', chips(d.pierres))}
