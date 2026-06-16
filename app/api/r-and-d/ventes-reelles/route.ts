@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
+// Fenêtre maximale de balayage (jours). Protège contre un produit ancien qui ferait
+// remonter le balayage sur des centaines de milliers de commandes (timeout → rien ne s'affiche).
+const FENETRE_MAX_JOURS = 120;
+
 // Calcule les VRAIES ventes Shopify par produit pour l'appli R&D.
 // Pour chaque produit on matche soit par NOM (titre Shopify exact), soit par TAG de collection
 // (additionne tous les produits qui portent ce tag). On renvoie la quantité réelle vendue
@@ -150,19 +157,22 @@ export async function POST(request: Request) {
     })
   );
 
-  // 2) Date « depuis la sortie » par produit : createdAt Shopify, sinon date calendrier, sinon 180 j.
-  const defautSince = new Date();
-  defautSince.setDate(defautSince.getDate() - 180);
+  // 2) Date « depuis la sortie » par produit : createdAt Shopify, sinon date calendrier, sinon 120 j.
+  //    Plancher dur à FENETRE_MAX_JOURS pour que le balayage reste rapide (< 60 s).
+  const plancher = new Date();
+  plancher.setDate(plancher.getDate() - FENETRE_MAX_JOURS);
   function sinceDe(createdAt: string | null, cardDate: string | null | undefined): Date {
+    let d: Date | null = null;
     if (createdAt) {
-      const d = new Date(createdAt);
-      if (!isNaN(d.getTime())) return d;
+      const c = new Date(createdAt);
+      if (!isNaN(c.getTime())) d = c;
     }
-    if (cardDate) {
-      const d = new Date(cardDate + "T00:00:00Z");
-      if (!isNaN(d.getTime())) return d;
+    if (!d && cardDate) {
+      const c = new Date(cardDate + "T00:00:00Z");
+      if (!isNaN(c.getTime())) d = c;
     }
-    return defautSince;
+    if (!d) d = plancher;
+    return d < plancher ? plancher : d; // jamais avant le plancher
   }
 
   let earliest = new Date();
@@ -185,8 +195,10 @@ export async function POST(request: Request) {
   const resultats: Record<string, { qty: number; total: number }> = {};
   for (const p of produits) resultats[p.id] = { qty: 0, total: 0 };
 
+  // status=any SANS filtre financial_status : on compte aussi les commandes en attente de paiement
+  // (virements), comme le rapport "ventes par produit" de Shopify. On exclut juste les annulées.
   let url: string | null =
-    `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any&financial_status=paid` +
+    `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any` +
     `&created_at_min=${encodeURIComponent(earliest.toISOString())}` +
     `&fields=id,created_at,cancelled_at,taxes_included,line_items`;
   let pages = 0;
