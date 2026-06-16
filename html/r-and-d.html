@@ -939,7 +939,12 @@ function renderPanneauVertical(annee, mois) {
 }
 
 function sauverDonneesLocal() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
+  } catch (e) {
+    // mémoire navigateur pleine (images) → on n'empêche pas la sauvegarde, le cloud prend le relais
+    console.warn('localStorage plein — sauvegarde cloud uniquement', e);
+  }
 }
 
 /** Synchro cloud : tente GET au démarrage, PUT à chaque modif (debounced 1s) */
