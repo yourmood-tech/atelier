@@ -22,6 +22,8 @@ interface ProduitDemande {
   shopifySearch?: string | null;
   tag?: string | null;
   since?: string | null; // date du créneau (YYYY-MM-DD) — détermine la semaine commerciale
+  periodeType?: string | null; // 'semaine' (défaut) ou 'mois'
+  mois?: string | null; // 'YYYY-MM' si periodeType === 'mois'
 }
 
 interface Propriete {
@@ -235,12 +237,25 @@ export async function POST(request: Request) {
     })
   );
 
-  // 2) Grouper par semaine commerciale (date du créneau)
+  // 2) Grouper par fenêtre de temps : soit la semaine commerciale du créneau, soit le mois entier.
   const semaines = new Map<string, { debut: Date; fin: Date; cibles: Cible[] }>();
   for (const { p, cible } of resolutions) {
-    const ref = p.since ? new Date(p.since + "T12:00:00Z") : new Date();
-    const { debut, fin } = getSemaineCommerciale(isNaN(ref.getTime()) ? new Date() : ref);
-    const key = debut.toISOString().slice(0, 10);
+    let debut: Date;
+    let fin: Date;
+    let key: string;
+    if (p.periodeType === "mois" && p.mois && /^\d{4}-\d{2}$/.test(p.mois)) {
+      // Mois entier (1er 00:00 → dernier jour 23:59 UTC)
+      const [an, mo] = p.mois.split("-").map(Number);
+      debut = new Date(Date.UTC(an, mo - 1, 1, 0, 0, 0, 0));
+      fin = new Date(Date.UTC(an, mo, 0, 23, 59, 59, 999));
+      key = `M:${p.mois}`;
+    } else {
+      const ref = p.since ? new Date(p.since + "T12:00:00Z") : new Date();
+      const sem = getSemaineCommerciale(isNaN(ref.getTime()) ? new Date() : ref);
+      debut = sem.debut;
+      fin = sem.fin;
+      key = `W:${debut.toISOString().slice(0, 10)}`;
+    }
     let w = semaines.get(key);
     if (!w) {
       w = { debut, fin, cibles: [] };

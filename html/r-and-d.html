@@ -851,23 +851,27 @@ function fmtCA(val) {
 
 function renderPanneauVertical(annee, mois) {
   const col = getCollectionsRecurrentes(annee, mois);
-  // CA Shopify mensuel pour calculer le "fait" auto sur les produits
-  const ventesShopify = ventesParMois[`${annee}-${String(mois + 1).padStart(2, '0')}`];
-  const ventesShopifyOK = ventesShopify && ventesShopify.ventes;
+  const ym = `${annee}-${String(mois + 1).padStart(2, '0')}`;
 
   // Ligne par collection fixe
   let rowsFixes = '';
   COLLECTIONS_FIXES.forEach(c => {
-    const data = col[c.key] || { nom: c.nom, obj: '', fait: '' };
+    const data = col[c.key] || { nom: c.nom, obj: '', fait: '', tag: '' };
     const isLibre = c.key === 'libre';
     const nomCell = isLibre
       ? `<input class="pv-nom-libre" placeholder="(libre…)" value="${(data.nom || '').replace(/"/g, '&quot;')}" onchange="setCollectionFixe(${annee},${mois},'${c.key}','nom',this.value)">`
       : c.nom;
+    // "Fait" = vraies ventes du mois si un tag est posé et calculé, sinon valeur manuelle
+    const reelMois = ventesReellesMois[`${ym}::fixe:${c.key}`];
+    const faitAuto = reelMois ? reelMois.total : null;
+    const fait = faitAuto !== null ? faitAuto : data.fait;
+    const qtyTxt = reelMois ? ` <span style="color:var(--gris);font-weight:400;">(${reelMois.qty})</span>` : '';
     rowsFixes += `<tr class="fixe">
       <td class="col-date">—</td>
-      <td class="col-nom">${nomCell}</td>
+      <td class="col-nom">${nomCell}
+        <input class="pv-nom-libre" style="margin-top:2px;font-size:0.65rem;" placeholder="🏷️ tag collection…" value="${(data.tag || '').replace(/"/g, '&quot;')}" onchange="setCollectionFixe(${annee},${mois},'${c.key}','tag',this.value)"></td>
       <td class="col-obj"><input class="pv-obj-input" type="number" placeholder="—" value="${data.obj || ''}" onchange="setCollectionFixe(${annee},${mois},'${c.key}','obj',this.value)"></td>
-      <td class="col-fait">${fmtCA(data.fait)}</td>
+      <td class="col-fait">${fmtCA(fait)}${qtyTxt}</td>
     </tr>`;
   });
 
@@ -894,12 +898,10 @@ function renderPanneauVertical(annee, mois) {
       </tr>`;
     } else {
       produitsDuJour.forEach((p, idx) => {
-        // CA "fait" : prioritaire Shopify si dispo, sinon valeur manuelle p.ventes
+        // CA "fait" : vraies ventes du mois (par nom/tag, bundle inclus) si dispo, sinon valeur manuelle
         let caFait = '';
-        if (ventesShopifyOK) {
-          const match = trouverVentesShopify(p.nom, ventesShopify.ventes);
-          if (match && match.ca > 0) caFait = match.ca;
-        }
+        const reelMois = ventesReellesMois[`${ym}::${p.id}`];
+        if (reelMois && reelMois.total > 0) caFait = reelMois.total;
         if (!caFait && p.ventes) caFait = p.ventes;
         const obj = +p.objectifCA || 0;
         totalObjJours += obj;
@@ -920,8 +922,10 @@ function renderPanneauVertical(annee, mois) {
   const totalObj = totalObjFixes + totalObjJours;
   const totalFait = totalFaitFixes + totalFaitJours;
 
+  const moisCalcule = Object.keys(ventesReellesMois).some(k => k.startsWith(ym + '::'));
   return `<div class="panneau-vertical">
     <h3>📋 Résumé ${NOMS_MOIS[mois]} ${annee}</h3>
+    <button class="outline" onclick="chargerVentesReellesMois(${annee},${mois})" style="font-size:0.7rem;padding:0.25rem 0.6rem;margin-bottom:0.5rem;">${moisCalcule ? '🔄 Recalculer le mois' : '☁️ Calculer ce que chaque collection a rapporté ce mois'}</button>
     <table class="pv-table">
       <thead>
         <tr><th class="col-date">Jour</th><th class="col-nom">Sortie / Collection</th><th class="col-obj">Objectif</th><th class="col-fait">Fait</th></tr>
@@ -964,6 +968,8 @@ async function chargerDonneesCloud() {
       majIndicateurSync();
       rendreCalendrier();
       chargerVentesReelles();
+      const m = new Date();
+      chargerVentesReellesMois(m.getFullYear(), m.getMonth());
     }
   } catch (e) {
     cloudOK = false;
@@ -1914,6 +1920,46 @@ function ajouterIdeeAuPlanning(idee) {
 const ventesParMois = {};  // { '2026-05': { ventes: {...}, total_ca, total_commandes } }
 let ventesSemaine = null;  // { ventes: {...}, total_ca, total_commandes, debut, fin } — semaine commerciale en cours (jeu→mer)
 let ventesReelles = {};    // { [produitId]: { qty, total } } — vraies ventes Shopify (total avec taxes) depuis la sortie, par nom ou par tag
+let ventesReellesMois = {}; // { "YYYY-MM::rowId": { qty, total } } — vraies ventes du MOIS (pour le résumé de fin de mois)
+const moisEnCalcul = {};    // { "YYYY-MM": true } anti double-appel
+
+// Calcule les vraies ventes Shopify du MOIS pour chaque ligne du résumé (sorties + collections récurrentes).
+async function chargerVentesReellesMois(annee, mois) {
+  const ym = `${annee}-${String(mois + 1).padStart(2, '0')}`;
+  if (moisEnCalcul[ym]) return;
+  const lignes = [];
+  // Sorties du mois (produits dont la date est dans ce mois) avec nom ou tag
+  (donnees.produits || []).forEach(p => {
+    if (!p.date || p.date.slice(0, 7) !== ym) return;
+    if ((p.shopifySearch && p.shopifySearch.trim()) || (p.tag && p.tag.trim())) {
+      lignes.push({ id: p.id, nom: p.nom || null, shopifySearch: p.shopifySearch || null, tag: p.tag || null, periodeType: 'mois', mois: ym });
+    }
+  });
+  // Collections récurrentes avec un tag
+  const col = getCollectionsRecurrentes(annee, mois);
+  COLLECTIONS_FIXES.forEach(c => {
+    const tag = (col[c.key] && col[c.key].tag || '').trim();
+    if (tag) lignes.push({ id: 'fixe:' + c.key, tag, periodeType: 'mois', mois: ym });
+  });
+  if (!lignes.length) return;
+  moisEnCalcul[ym] = true;
+  try {
+    const r = await fetch('/api/r-and-d/ventes-reelles', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ produits: lignes }),
+    });
+    if (!r.ok) { if (r.status !== 503) console.warn('ventes-reelles mois indispo :', r.status); return; }
+    const data = await r.json();
+    if (data && data.resultats) {
+      for (const id in data.resultats) ventesReellesMois[`${ym}::${id}`] = data.resultats[id];
+      rendreCalendrier();
+    }
+  } catch (e) {
+    console.warn('Erreur réseau ventes-reelles mois :', e.message);
+  } finally {
+    moisEnCalcul[ym] = false;
+  }
+}
 
 // Va chercher les VRAIES ventes Shopify (quantité + total avec taxes) pour chaque produit
 // qui a un nom Shopify OU un tag de collection. Calcul depuis la date de sortie du produit.
@@ -2155,8 +2201,9 @@ document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
 rendreCalendrier();
 // Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
 chargerDonneesCloud();
-// Vraies ventes Shopify par produit (nom ou tag, total avec taxes depuis la sortie)
+// Vraies ventes Shopify par produit (semaine du créneau) + résumé du mois en cours
 chargerVentesReelles();
+(function(){ const m = new Date(); chargerVentesReellesMois(m.getFullYear(), m.getMonth()); })();
 </script>
 </body>
 </html>
