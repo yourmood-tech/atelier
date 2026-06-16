@@ -5,8 +5,10 @@ export const dynamic = "force-dynamic";
 
 // Calcule les VRAIES ventes Shopify par produit pour l'appli R&D.
 // Match par NOM (titre Shopify exact) OU par TAG de collection (additionne tous les produits du tag).
-// Période = LA SEMAINE COMMERCIALE (jeudi 00:00 → mercredi 23:59) du créneau du produit dans le
-// calendrier. Renvoie la quantité réelle vendue + le TOTAL avec taxes sur cette semaine.
+// Période = LA SEMAINE COMMERCIALE (jeudi 00:00 → mercredi 23:59 UTC) du créneau du produit.
+// Compte AUSSI les ventes en BUNDLE (Simple Bundles) : un pack vendu via le configurateur est
+// éclaté en lignes-composants portant la propriété _sb_bundle_title/_sb_bundle_group ; on regroupe
+// par bundle (1 groupe = 1 pack) et on additionne le prix des composants.
 
 const SHOPIFY_TOKEN = process.env.MOOD_SHOPIFY_ACCESS_TOKEN;
 const SHOPIFY_DOMAIN = process.env.MOOD_SHOPIFY_DOMAIN;
@@ -22,26 +24,36 @@ interface ProduitDemande {
   since?: string | null; // date du créneau (YYYY-MM-DD) — détermine la semaine commerciale
 }
 
+interface Propriete {
+  name: string;
+  value: string;
+}
 interface LigneCommande {
   product_id: number | null;
   quantity: number;
   price: string;
   tax_lines?: Array<{ price: string }>;
   discount_allocations?: Array<{ amount: string }>;
+  properties?: Propriete[];
 }
-
 interface Commande {
+  id: number;
   cancelled_at: string | null;
   taxes_included: boolean;
   line_items: LigneCommande[];
 }
 
+interface Cible {
+  id: string;
+  pids: Set<number>;
+  skus: Set<string>;
+  vids: Set<number>;
+}
+
 async function redisGet(key: string): Promise<unknown> {
   if (!REDIS_URL || !REDIS_TOKEN) return null;
   try {
-    const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${REDIS_TOKEN}` },
-    });
+    const r = await fetch(`${REDIS_URL}/get/${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${REDIS_TOKEN}` } });
     if (!r.ok) return null;
     const j = await r.json();
     return typeof j?.result === "string" ? JSON.parse(j.result) : j?.result;
@@ -49,7 +61,6 @@ async function redisGet(key: string): Promise<unknown> {
     return null;
   }
 }
-
 async function redisSetEx(key: string, value: unknown, ttl: number) {
   if (!REDIS_URL || !REDIS_TOKEN) return;
   try {
@@ -69,7 +80,7 @@ function norm(s: string): string {
 
 // Semaine commerciale Mood : jeudi 00:00 → mercredi 23:59 (UTC).
 function getSemaineCommerciale(refDate: Date): { debut: Date; fin: Date } {
-  const daysSinceThu = (refDate.getUTCDay() - 4 + 7) % 7; // 4 = jeudi
+  const daysSinceThu = (refDate.getUTCDay() - 4 + 7) % 7;
   const debut = new Date(refDate);
   debut.setUTCDate(refDate.getUTCDate() - daysSinceThu);
   debut.setUTCHours(0, 0, 0, 0);
@@ -79,8 +90,12 @@ function getSemaineCommerciale(refDate: Date): { debut: Date; fin: Date } {
   return { debut, fin };
 }
 
-// Résout un produit demandé en un ensemble d'IDs produits Shopify (par tag ou par nom exact).
-async function resoudreIds(p: ProduitDemande): Promise<number[]> {
+function prop(li: LigneCommande, name: string): string | undefined {
+  return (li.properties || []).find((p) => p.name === name)?.value;
+}
+
+// Résout un produit demandé → IDs produits + SKUs + IDs de variantes (pour matcher les bundles).
+async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus: string[]; vids: number[] }> {
   const apiBase = `https://${SHOPIFY_DOMAIN}/admin/api/2024-10`;
   const headers = { "X-Shopify-Access-Token": SHOPIFY_TOKEN as string, "Content-Type": "application/json" };
 
@@ -91,33 +106,40 @@ async function resoudreIds(p: ProduitDemande): Promise<number[]> {
     parTag = true;
   } else {
     const titre = (p.shopifySearch || p.nom || "").trim();
-    if (!titre) return [];
+    if (!titre) return { ids: [], skus: [], vids: [] };
     query = titre.replace(/'/g, " ");
   }
 
   const gql = {
     query: `query($q: String!) {
-      products(first: 250, query: $q) {
-        edges { node { id title } }
+      products(first: 100, query: $q) {
+        edges { node { id title variants(first: 100) { edges { node { id sku } } } } }
       }
     }`,
     variables: { q: query },
   };
   const r = await fetch(`${apiBase}/graphql.json`, { method: "POST", headers, body: JSON.stringify(gql) });
-  if (!r.ok) return [];
+  if (!r.ok) return { ids: [], skus: [], vids: [] };
   const data = await r.json();
-  const edges: Array<{ node: { id: string; title: string } }> = data?.data?.products?.edges || [];
-  const nodes = edges.map((e) => ({ id: Number(e.node.id.replace("gid://shopify/Product/", "")), title: e.node.title }));
-
-  if (parTag) return nodes.map((n) => n.id);
-
-  // Par nom : titre EXACT en priorité, sinon ceux qui contiennent le nom.
-  const cible = norm(p.shopifySearch || p.nom || "");
-  const exacts = nodes.filter((n) => norm(n.title) === cible);
-  const retenus = exacts.length
-    ? exacts
-    : nodes.filter((n) => norm(n.title).includes(cible) || cible.includes(norm(n.title)));
-  return retenus.map((n) => n.id);
+  interface Node { id: string; title: string; variants?: { edges: Array<{ node: { id: string; sku: string | null } }> } }
+  const edges: Array<{ node: Node }> = data?.data?.products?.edges || [];
+  let retenus = edges.map((e) => e.node);
+  if (!parTag) {
+    const cible = norm(p.shopifySearch || p.nom || "");
+    const exacts = retenus.filter((n) => norm(n.title) === cible);
+    retenus = exacts.length ? exacts : retenus.filter((n) => norm(n.title).includes(cible) || cible.includes(norm(n.title)));
+  }
+  const ids: number[] = [];
+  const skus: string[] = [];
+  const vids: number[] = [];
+  for (const n of retenus) {
+    ids.push(Number(n.id.replace("gid://shopify/Product/", "")));
+    for (const v of n.variants?.edges || []) {
+      if (v.node.sku) skus.push(v.node.sku);
+      vids.push(Number(v.node.id.replace("gid://shopify/ProductVariant/", "")));
+    }
+  }
+  return { ids, skus, vids };
 }
 
 export async function POST(request: Request) {
@@ -138,19 +160,18 @@ export async function POST(request: Request) {
   );
   if (!produits.length) return NextResponse.json({ ok: true, resultats: {} });
 
-  // Cache (clé = signature de la demande + jour)
   const jour = new Date().toISOString().slice(0, 10);
   const sig = produits
     .map((p) => `${p.id}:${(p.tag || "").trim()}|${(p.shopifySearch || p.nom || "").trim()}|${p.since || ""}`)
     .sort()
     .join(";");
-  const cacheKey = `mood:ventes-reelles-sem:${jour}:${sig.length}:${sig.slice(0, 80)}`;
+  const cacheKey = `mood:ventes-reelles-b:${jour}:${sig.length}:${sig.slice(0, 80)}`;
   const cached = (await redisGet(cacheKey)) as { resultats: Record<string, { qty: number; total: number }> } | null;
   if (cached) return NextResponse.json({ ...cached, source: "cache" });
 
-  // Récupère les ventes d'UNE semaine pour un ensemble de product_id → { pid: {qty, total} }
-  async function ventesSemaineParPid(debut: Date, fin: Date, pidSet: Set<number>): Promise<Map<number, { qty: number; total: number }>> {
-    const agg = new Map<number, { qty: number; total: number }>();
+  // Récupère toutes les commandes d'une semaine commerciale (1 fois, mises en mémoire)
+  async function commandesSemaine(debut: Date, fin: Date): Promise<Commande[]> {
+    const out: Commande[] = [];
     let url: string | null =
       `https://${domain}/admin/api/2024-10/orders.json?limit=250&status=any` +
       `&created_at_min=${encodeURIComponent(debut.toISOString())}&created_at_max=${encodeURIComponent(fin.toISOString())}` +
@@ -161,77 +182,89 @@ export async function POST(request: Request) {
       const r: Response = await fetch(url, { headers: { "X-Shopify-Access-Token": token } });
       if (!r.ok) throw new Error(`Shopify ${r.status}: ${(await r.text()).slice(0, 200)}`);
       const data = await r.json();
-      const orders: Commande[] = data.orders || [];
-      for (const o of orders) {
-        if (o.cancelled_at) continue;
-        for (const li of o.line_items || []) {
-          if (li.product_id == null || !pidSet.has(li.product_id)) continue;
-          const qty = li.quantity || 0;
-          const base = parseFloat(li.price || "0") * qty;
-          const disc = (li.discount_allocations || []).reduce((s, d) => s + parseFloat(d.amount || "0"), 0);
-          const tax = (li.tax_lines || []).reduce((s, t) => s + parseFloat(t.price || "0"), 0);
-          const totalAvecTaxe = o.taxes_included ? base - disc : base - disc + tax;
-          const cur = agg.get(li.product_id) || { qty: 0, total: 0 };
-          cur.qty += qty;
-          cur.total += totalAvecTaxe;
-          agg.set(li.product_id, cur);
-        }
-      }
+      for (const o of (data.orders || []) as Commande[]) out.push(o);
       const link: string | null = r.headers.get("link");
       const next = link?.match(/<([^>]+)>;\s*rel="next"/);
       url = next ? next[1] : null;
     }
-    return agg;
+    return out;
   }
 
-  // 1) Résoudre les IDs Shopify de chaque produit (en parallèle)
-  const resolutions = await Promise.all(produits.map(async (p) => ({ p, ids: await resoudreIds(p) })));
-
-  // 2) Grouper par semaine commerciale (selon la date du créneau)
-  interface Semaine {
-    debut: Date;
-    fin: Date;
-    pids: Set<number>;
-    prods: Array<{ id: string; ids: number[] }>;
+  // Calcule (qty packs, total avec taxes) d'une cible sur un lot de commandes — direct + bundle.
+  function calculer(cible: Cible, commandes: Commande[]): { qty: number; total: number } {
+    let directQty = 0;
+    let directTot = 0;
+    const groupes = new Map<string, number>(); // 1 groupe de bundle = 1 pack
+    for (const o of commandes) {
+      if (o.cancelled_at) continue;
+      for (const li of o.line_items || []) {
+        const q = li.quantity || 0;
+        const base = parseFloat(li.price || "0") * q;
+        const disc = (li.discount_allocations || []).reduce((s, d) => s + parseFloat(d.amount || "0"), 0);
+        const tax = (li.tax_lines || []).reduce((s, t) => s + parseFloat(t.price || "0"), 0);
+        const net = base - disc;
+        const totalAvecTaxe = o.taxes_included ? net : net + tax;
+        const grp = prop(li, "_sb_bundle_group");
+        if (grp) {
+          // ligne-composant de bundle : matcher le pack parent par SKU ou variant id
+          const bt = prop(li, "_sb_bundle_title") || "";
+          const skuM = (bt.match(/SKU:\s*([^\s|]+)/) || [])[1];
+          const vidStr = (prop(li, "_sb_bundle_variant_id_qty") || "").split(":")[0].trim();
+          const vid = vidStr ? Number(vidStr) : 0;
+          if ((skuM && cible.skus.has(skuM)) || (vid && cible.vids.has(vid))) {
+            const gk = `${o.id}:${grp.split(" ")[0]}`;
+            groupes.set(gk, (groupes.get(gk) || 0) + totalAvecTaxe);
+          }
+        } else if (li.product_id != null && cible.pids.has(li.product_id)) {
+          directQty += q;
+          directTot += totalAvecTaxe;
+        }
+      }
+    }
+    let totalBundle = 0;
+    for (const v of groupes.values()) totalBundle += v;
+    return { qty: directQty + groupes.size, total: Math.round((directTot + totalBundle) * 100) / 100 };
   }
-  const semaines = new Map<string, Semaine>();
-  for (const { p, ids } of resolutions) {
+
+  // 1) Résoudre chaque produit (ids + skus + vids)
+  const resolutions = await Promise.all(
+    produits.map(async (p) => {
+      const r = await resoudreProduit(p);
+      const cible: Cible = { id: p.id, pids: new Set(r.ids), skus: new Set(r.skus), vids: new Set(r.vids) };
+      return { p, cible };
+    })
+  );
+
+  // 2) Grouper par semaine commerciale (date du créneau)
+  const semaines = new Map<string, { debut: Date; fin: Date; cibles: Cible[] }>();
+  for (const { p, cible } of resolutions) {
     const ref = p.since ? new Date(p.since + "T12:00:00Z") : new Date();
     const { debut, fin } = getSemaineCommerciale(isNaN(ref.getTime()) ? new Date() : ref);
     const key = debut.toISOString().slice(0, 10);
     let w = semaines.get(key);
     if (!w) {
-      w = { debut, fin, pids: new Set<number>(), prods: [] };
+      w = { debut, fin, cibles: [] };
       semaines.set(key, w);
     }
-    w.prods.push({ id: p.id, ids });
-    for (const pid of ids) w.pids.add(pid);
+    w.cibles.push(cible);
   }
 
-  // 3) Une requête par semaine distincte, puis attribution à chaque produit/tag
+  // 3) Une requête par semaine, puis calcul direct + bundle pour chaque cible
   const resultats: Record<string, { qty: number; total: number }> = {};
   for (const p of produits) resultats[p.id] = { qty: 0, total: 0 };
   try {
     for (const w of semaines.values()) {
-      if (!w.pids.size) continue;
-      const agg = await ventesSemaineParPid(w.debut, w.fin, w.pids);
-      for (const pr of w.prods) {
-        for (const pid of pr.ids) {
-          const a = agg.get(pid);
-          if (a) {
-            resultats[pr.id].qty += a.qty;
-            resultats[pr.id].total += a.total;
-          }
-        }
+      const commandes = await commandesSemaine(w.debut, w.fin);
+      for (const cible of w.cibles) {
+        if (!cible.pids.size && !cible.skus.size) continue;
+        resultats[cible.id] = calculer(cible, commandes);
       }
     }
   } catch (e) {
     return NextResponse.json({ error: "erreur fetch orders", detail: String((e as Error)?.message || e) }, { status: 500 });
   }
 
-  for (const id in resultats) resultats[id].total = Math.round(resultats[id].total * 100) / 100;
-
   const result = { ok: true, resultats, semaines: semaines.size };
-  await redisSetEx(cacheKey, result, 600); // 10 min
+  await redisSetEx(cacheKey, result, 600);
   return NextResponse.json({ ...result, source: "fresh" });
 }
