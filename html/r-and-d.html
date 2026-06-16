@@ -1302,7 +1302,7 @@ function rendreCalendrier() {
             const qty = Number(reel.qty) || 0;
             const total = Number(reel.total) || 0;
             const cls = qty > 0 ? 'ventes-semaine actif' : 'ventes-semaine vide';
-            ventesSemaineHtml = `<div class="${cls}" title="Vraies ventes Shopify depuis la sortie (total avec taxes)">📊 ${qty} vendu${qty > 1 ? 's' : ''}${total > 0 ? ' · ' + Math.round(total).toLocaleString('fr-CH') + '.-' : ''}</div>`;
+            ventesSemaineHtml = `<div class="${cls}" title="Vraies ventes Shopify sur la semaine du créneau (jeu→mer, total avec taxes)">📊 ${qty} vendu${qty > 1 ? 's' : ''} cette semaine${total > 0 ? ' · ' + Math.round(total).toLocaleString('fr-CH') + '.-' : ''}</div>`;
           }
           cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>

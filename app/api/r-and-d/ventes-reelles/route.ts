@@ -3,14 +3,10 @@ import { NextResponse } from "next/server";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-// Fenêtre maximale de balayage (jours). Protège contre un produit ancien qui ferait
-// remonter le balayage sur des centaines de milliers de commandes (timeout → rien ne s'affiche).
-const FENETRE_MAX_JOURS = 120;
-
 // Calcule les VRAIES ventes Shopify par produit pour l'appli R&D.
-// Pour chaque produit on matche soit par NOM (titre Shopify exact), soit par TAG de collection
-// (additionne tous les produits qui portent ce tag). On renvoie la quantité réelle vendue
-// et le TOTAL avec taxes, calculé depuis la date de sortie du produit.
+// Match par NOM (titre Shopify exact) OU par TAG de collection (additionne tous les produits du tag).
+// Période = LA SEMAINE COMMERCIALE (jeudi 00:00 → mercredi 23:59) du créneau du produit dans le
+// calendrier. Renvoie la quantité réelle vendue + le TOTAL avec taxes sur cette semaine.
 
 const SHOPIFY_TOKEN = process.env.MOOD_SHOPIFY_ACCESS_TOKEN;
 const SHOPIFY_DOMAIN = process.env.MOOD_SHOPIFY_DOMAIN;
@@ -23,7 +19,7 @@ interface ProduitDemande {
   nom?: string | null;
   shopifySearch?: string | null;
   tag?: string | null;
-  since?: string | null; // date de sortie ISO (YYYY-MM-DD) — sinon 180 jours
+  since?: string | null; // date du créneau (YYYY-MM-DD) — détermine la semaine commerciale
 }
 
 interface LigneCommande {
@@ -35,8 +31,6 @@ interface LigneCommande {
 }
 
 interface Commande {
-  id: number;
-  created_at: string;
   cancelled_at: string | null;
   taxes_included: boolean;
   line_items: LigneCommande[];
@@ -73,9 +67,20 @@ function norm(s: string): string {
   return (s || "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-// Résout un produit demandé en un ensemble d'IDs produits Shopify (par tag ou par nom)
-// + la date de création la plus ancienne (= la vraie sortie du produit sur Shopify).
-async function resoudreIds(p: ProduitDemande): Promise<{ ids: number[]; createdAt: string | null }> {
+// Semaine commerciale Mood : jeudi 00:00 → mercredi 23:59 (UTC).
+function getSemaineCommerciale(refDate: Date): { debut: Date; fin: Date } {
+  const daysSinceThu = (refDate.getUTCDay() - 4 + 7) % 7; // 4 = jeudi
+  const debut = new Date(refDate);
+  debut.setUTCDate(refDate.getUTCDate() - daysSinceThu);
+  debut.setUTCHours(0, 0, 0, 0);
+  const fin = new Date(debut);
+  fin.setUTCDate(debut.getUTCDate() + 6);
+  fin.setUTCHours(23, 59, 59, 999);
+  return { debut, fin };
+}
+
+// Résout un produit demandé en un ensemble d'IDs produits Shopify (par tag ou par nom exact).
+async function resoudreIds(p: ProduitDemande): Promise<number[]> {
   const apiBase = `https://${SHOPIFY_DOMAIN}/admin/api/2024-10`;
   const headers = { "X-Shopify-Access-Token": SHOPIFY_TOKEN as string, "Content-Type": "application/json" };
 
@@ -86,49 +91,41 @@ async function resoudreIds(p: ProduitDemande): Promise<{ ids: number[]; createdA
     parTag = true;
   } else {
     const titre = (p.shopifySearch || p.nom || "").trim();
-    if (!titre) return { ids: [], createdAt: null };
+    if (!titre) return [];
     query = titre.replace(/'/g, " ");
   }
 
   const gql = {
     query: `query($q: String!) {
       products(first: 250, query: $q) {
-        edges { node { id title createdAt } }
+        edges { node { id title } }
       }
     }`,
     variables: { q: query },
   };
   const r = await fetch(`${apiBase}/graphql.json`, { method: "POST", headers, body: JSON.stringify(gql) });
-  if (!r.ok) return { ids: [], createdAt: null };
+  if (!r.ok) return [];
   const data = await r.json();
-  const edges: Array<{ node: { id: string; title: string; createdAt: string } }> = data?.data?.products?.edges || [];
-  const nodes = edges.map((e) => ({
-    id: Number(e.node.id.replace("gid://shopify/Product/", "")),
-    title: e.node.title,
-    createdAt: e.node.createdAt,
-  }));
+  const edges: Array<{ node: { id: string; title: string } }> = data?.data?.products?.edges || [];
+  const nodes = edges.map((e) => ({ id: Number(e.node.id.replace("gid://shopify/Product/", "")), title: e.node.title }));
 
-  let retenus = nodes;
-  if (!parTag) {
-    // Par nom : on privilégie le titre EXACT, sinon ceux qui contiennent le nom.
-    const cible = norm(p.shopifySearch || p.nom || "");
-    const exacts = nodes.filter((n) => norm(n.title) === cible);
-    retenus = exacts.length
-      ? exacts
-      : nodes.filter((n) => norm(n.title).includes(cible) || cible.includes(norm(n.title)));
-  }
+  if (parTag) return nodes.map((n) => n.id);
 
-  let createdAt: string | null = null;
-  for (const n of retenus) {
-    if (n.createdAt && (!createdAt || n.createdAt < createdAt)) createdAt = n.createdAt;
-  }
-  return { ids: retenus.map((n) => n.id), createdAt };
+  // Par nom : titre EXACT en priorité, sinon ceux qui contiennent le nom.
+  const cible = norm(p.shopifySearch || p.nom || "");
+  const exacts = nodes.filter((n) => norm(n.title) === cible);
+  const retenus = exacts.length
+    ? exacts
+    : nodes.filter((n) => norm(n.title).includes(cible) || cible.includes(norm(n.title)));
+  return retenus.map((n) => n.id);
 }
 
 export async function POST(request: Request) {
   if (!SHOPIFY_TOKEN || !SHOPIFY_DOMAIN) {
     return NextResponse.json({ error: "Shopify non configuré" }, { status: 503 });
   }
+  const token: string = SHOPIFY_TOKEN;
+  const domain: string = SHOPIFY_DOMAIN;
 
   let body: { produits?: ProduitDemande[] };
   try {
@@ -136,7 +133,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
   }
-  const produits = (body.produits || []).filter((p) => p && p.id && ((p.tag && p.tag.trim()) || (p.shopifySearch && p.shopifySearch.trim()) || (p.nom && p.nom.trim())));
+  const produits = (body.produits || []).filter(
+    (p) => p && p.id && ((p.tag && p.tag.trim()) || (p.shopifySearch && p.shopifySearch.trim()) || (p.nom && p.nom.trim()))
+  );
   if (!produits.length) return NextResponse.json({ ok: true, resultats: {} });
 
   // Cache (clé = signature de la demande + jour)
@@ -145,95 +144,86 @@ export async function POST(request: Request) {
     .map((p) => `${p.id}:${(p.tag || "").trim()}|${(p.shopifySearch || p.nom || "").trim()}|${p.since || ""}`)
     .sort()
     .join(";");
-  const cacheKey = `mood:ventes-reelles:${jour}:${sig.length}:${sig.slice(0, 80)}`;
+  const cacheKey = `mood:ventes-reelles-sem:${jour}:${sig.length}:${sig.slice(0, 80)}`;
   const cached = (await redisGet(cacheKey)) as { resultats: Record<string, { qty: number; total: number }> } | null;
   if (cached) return NextResponse.json({ ...cached, source: "cache" });
 
-  // 1) Résoudre les IDs Shopify + date de sortie réelle de chaque produit (en parallèle)
-  const resolutions = await Promise.all(
-    produits.map(async (p) => {
-      const res = await resoudreIds(p);
-      return { p, ids: res.ids, createdAt: res.createdAt };
-    })
-  );
-
-  // 2) Date « depuis la sortie » par produit : createdAt Shopify, sinon date calendrier, sinon 120 j.
-  //    Plancher dur à FENETRE_MAX_JOURS pour que le balayage reste rapide (< 60 s).
-  const plancher = new Date();
-  plancher.setDate(plancher.getDate() - FENETRE_MAX_JOURS);
-  function sinceDe(createdAt: string | null, cardDate: string | null | undefined): Date {
-    let d: Date | null = null;
-    if (createdAt) {
-      const c = new Date(createdAt);
-      if (!isNaN(c.getTime())) d = c;
-    }
-    if (!d && cardDate) {
-      const c = new Date(cardDate + "T00:00:00Z");
-      if (!isNaN(c.getTime())) d = c;
-    }
-    if (!d) d = plancher;
-    return d < plancher ? plancher : d; // jamais avant le plancher
-  }
-
-  let earliest = new Date();
-  for (const { p, createdAt } of resolutions) {
-    const d = sinceDe(createdAt, p.since);
-    if (d < earliest) earliest = d;
-  }
-
-  // Index produit_id -> liste de (produit demandé + sa date since)
-  const pidToProduits = new Map<number, Array<{ id: string; since: Date }>>();
-  for (const { p, ids, createdAt } of resolutions) {
-    const since = sinceDe(createdAt, p.since);
-    for (const pid of ids) {
-      if (!pidToProduits.has(pid)) pidToProduits.set(pid, []);
-      pidToProduits.get(pid)!.push({ id: p.id, since });
-    }
-  }
-
-  // 3) Balayage des commandes payées depuis earliest
-  const resultats: Record<string, { qty: number; total: number }> = {};
-  for (const p of produits) resultats[p.id] = { qty: 0, total: 0 };
-
-  // status=any SANS filtre financial_status : on compte aussi les commandes en attente de paiement
-  // (virements), comme le rapport "ventes par produit" de Shopify. On exclut juste les annulées.
-  let url: string | null =
-    `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any` +
-    `&created_at_min=${encodeURIComponent(earliest.toISOString())}` +
-    `&fields=id,created_at,cancelled_at,taxes_included,line_items`;
-  let pages = 0;
-  try {
-    while (url && pages < 250) {
+  // Récupère les ventes d'UNE semaine pour un ensemble de product_id → { pid: {qty, total} }
+  async function ventesSemaineParPid(debut: Date, fin: Date, pidSet: Set<number>): Promise<Map<number, { qty: number; total: number }>> {
+    const agg = new Map<number, { qty: number; total: number }>();
+    let url: string | null =
+      `https://${domain}/admin/api/2024-10/orders.json?limit=250&status=any` +
+      `&created_at_min=${encodeURIComponent(debut.toISOString())}&created_at_max=${encodeURIComponent(fin.toISOString())}` +
+      `&fields=id,cancelled_at,taxes_included,line_items`;
+    let pages = 0;
+    while (url && pages < 40) {
       pages++;
-      const r: Response = await fetch(url, { headers: { "X-Shopify-Access-Token": SHOPIFY_TOKEN } });
-      if (!r.ok) {
-        return NextResponse.json({ error: `Shopify ${r.status}`, detail: (await r.text()).slice(0, 300) }, { status: r.status });
-      }
+      const r: Response = await fetch(url, { headers: { "X-Shopify-Access-Token": token } });
+      if (!r.ok) throw new Error(`Shopify ${r.status}: ${(await r.text()).slice(0, 200)}`);
       const data = await r.json();
       const orders: Commande[] = data.orders || [];
       for (const o of orders) {
         if (o.cancelled_at) continue;
-        const dateCmd = new Date(o.created_at);
         for (const li of o.line_items || []) {
-          if (li.product_id == null) continue;
-          const cibles = pidToProduits.get(li.product_id);
-          if (!cibles) continue;
+          if (li.product_id == null || !pidSet.has(li.product_id)) continue;
           const qty = li.quantity || 0;
           const base = parseFloat(li.price || "0") * qty;
           const disc = (li.discount_allocations || []).reduce((s, d) => s + parseFloat(d.amount || "0"), 0);
           const tax = (li.tax_lines || []).reduce((s, t) => s + parseFloat(t.price || "0"), 0);
           const totalAvecTaxe = o.taxes_included ? base - disc : base - disc + tax;
-          for (const c of cibles) {
-            if (dateCmd >= c.since) {
-              resultats[c.id].qty += qty;
-              resultats[c.id].total += totalAvecTaxe;
-            }
-          }
+          const cur = agg.get(li.product_id) || { qty: 0, total: 0 };
+          cur.qty += qty;
+          cur.total += totalAvecTaxe;
+          agg.set(li.product_id, cur);
         }
       }
       const link: string | null = r.headers.get("link");
       const next = link?.match(/<([^>]+)>;\s*rel="next"/);
       url = next ? next[1] : null;
+    }
+    return agg;
+  }
+
+  // 1) Résoudre les IDs Shopify de chaque produit (en parallèle)
+  const resolutions = await Promise.all(produits.map(async (p) => ({ p, ids: await resoudreIds(p) })));
+
+  // 2) Grouper par semaine commerciale (selon la date du créneau)
+  interface Semaine {
+    debut: Date;
+    fin: Date;
+    pids: Set<number>;
+    prods: Array<{ id: string; ids: number[] }>;
+  }
+  const semaines = new Map<string, Semaine>();
+  for (const { p, ids } of resolutions) {
+    const ref = p.since ? new Date(p.since + "T12:00:00Z") : new Date();
+    const { debut, fin } = getSemaineCommerciale(isNaN(ref.getTime()) ? new Date() : ref);
+    const key = debut.toISOString().slice(0, 10);
+    let w = semaines.get(key);
+    if (!w) {
+      w = { debut, fin, pids: new Set<number>(), prods: [] };
+      semaines.set(key, w);
+    }
+    w.prods.push({ id: p.id, ids });
+    for (const pid of ids) w.pids.add(pid);
+  }
+
+  // 3) Une requête par semaine distincte, puis attribution à chaque produit/tag
+  const resultats: Record<string, { qty: number; total: number }> = {};
+  for (const p of produits) resultats[p.id] = { qty: 0, total: 0 };
+  try {
+    for (const w of semaines.values()) {
+      if (!w.pids.size) continue;
+      const agg = await ventesSemaineParPid(w.debut, w.fin, w.pids);
+      for (const pr of w.prods) {
+        for (const pid of pr.ids) {
+          const a = agg.get(pid);
+          if (a) {
+            resultats[pr.id].qty += a.qty;
+            resultats[pr.id].total += a.total;
+          }
+        }
+      }
     }
   } catch (e) {
     return NextResponse.json({ error: "erreur fetch orders", detail: String((e as Error)?.message || e) }, { status: 500 });
@@ -241,7 +231,7 @@ export async function POST(request: Request) {
 
   for (const id in resultats) resultats[id].total = Math.round(resultats[id].total * 100) / 100;
 
-  const result = { ok: true, resultats, pages };
+  const result = { ok: true, resultats, semaines: semaines.size };
   await redisSetEx(cacheKey, result, 600); // 10 min
   return NextResponse.json({ ...result, source: "fresh" });
 }
