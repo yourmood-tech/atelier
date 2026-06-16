@@ -612,6 +612,9 @@
     <label>Nom Shopify <span style="color:var(--gris);font-weight:400">— optionnel, pour matcher les ventes si le nom diffère sur Shopify</span></label>
     <input id="produit-shopify-search" placeholder="ex : « Coffret Mood Édition », « starter pack 2026 »…">
 
+    <label>Tag collection <span style="color:var(--gris);font-weight:400">— à la place du nom, pour un pack / une garde mood qui regroupe plusieurs produits</span></label>
+    <input id="produit-tag" placeholder="ex : « starter-sunset », « garde-mood »… (additionne tous les produits qui ont ce tag)">
+
     <label>Type</label>
     <select id="produit-type">
       <option value="addon">Addon</option>
@@ -960,6 +963,7 @@ async function chargerDonneesCloud() {
       cloudOK = true;
       majIndicateurSync();
       rendreCalendrier();
+      chargerVentesReelles();
     }
   } catch (e) {
     cloudOK = false;
@@ -1280,27 +1284,26 @@ function rendreCalendrier() {
           const palette = ['#94a3b8','#60a5fa','#f59e0b','#fbbf24','#f97316','#84cc16','#22c55e','#16a34a','#15803d'];
           const etapeColor = palette[etape - 1] || palette[0];
           const etapeJaugeHtml = `<div class="etape-jauge"><div class="etape-jauge-fill" style="width:${etapePct}%;background:${etapeColor};"></div></div>`;
-          // Jauge ventes
+          // Vraies ventes Shopify (total avec taxes) depuis la sortie — par nom ou par tag
+          const reel = ventesReelles[p.id];
+          const ventesReel = reel ? Number(reel.total) || 0 : null;
+          // Jauge ventes : vraies ventes Shopify si dispo, sinon chiffre saisi à la main
           let ventesJaugeHtml = '';
           if (p.objectifCA && p.objectifCA > 0) {
-            const ventes = +p.ventes || 0;
+            const ventes = ventesReel !== null ? ventesReel : (+p.ventes || 0);
             const pct = Math.min(100, Math.round((ventes / p.objectifCA) * 100));
             const cls = pct >= 90 ? 'jauge-vert' : pct >= 50 ? 'jauge-orange' : 'jauge-rouge';
             ventesJaugeHtml = `<div class="ventes-jauge"><div class="ventes-jauge-fill ${cls}" style="width:${pct}%;"></div></div>
-              <div class="ventes-pct">${ventes.toLocaleString('fr-CH')}.- / ${p.objectifCA.toLocaleString('fr-CH')}.- (${pct}%)</div>`;
+              <div class="ventes-pct">${Math.round(ventes).toLocaleString('fr-CH')}.- / ${p.objectifCA.toLocaleString('fr-CH')}.- (${pct}%)</div>`;
           }
-          // Badge ventes Shopify de la semaine commerciale (jeu→mer) — TOUJOURS affiché
+          // Badge ventes Shopify réelles (quantité + total avec taxes, depuis la sortie)
           let ventesSemaineHtml = '';
-          try {
-            if (ventesSemaine && ventesSemaine.ventes) {
-              const cle = (p.shopifySearch && p.shopifySearch.trim()) || p.nom;
-              const matchSem = trouverVentesShopify(cle, ventesSemaine.ventes);
-              const ca = Number(matchSem?.ca) || 0;
-              const qty = Number(matchSem?.qty) || 0;
-              const cls = qty > 0 ? 'ventes-semaine actif' : 'ventes-semaine vide';
-              ventesSemaineHtml = `<div class="${cls}" title="Ventes Shopify cette semaine (jeu→mer)">📊 ${qty} vente${qty > 1 ? 's' : ''}${ca > 0 ? ' · ' + ca.toLocaleString('fr-CH') + '.-' : ''}</div>`;
-            }
-          } catch (e) { /* badge ventes semaine non bloquant */ }
+          if (reel) {
+            const qty = Number(reel.qty) || 0;
+            const total = Number(reel.total) || 0;
+            const cls = qty > 0 ? 'ventes-semaine actif' : 'ventes-semaine vide';
+            ventesSemaineHtml = `<div class="${cls}" title="Vraies ventes Shopify depuis la sortie (total avec taxes)">📊 ${qty} vendu${qty > 1 ? 's' : ''}${total > 0 ? ' · ' + Math.round(total).toLocaleString('fr-CH') + '.-' : ''}</div>`;
+          }
           cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
             <div class="product-name">${p.nom}${etapeJaugeHtml}${ventesJaugeHtml}${ventesSemaineHtml}</div>
@@ -1404,6 +1407,8 @@ function ouvrirModalAjout(date) {
   document.getElementById('produit-id').value = '';
   document.getElementById('produit-nom').value = '';
   document.getElementById('produit-shopify-search').value = '';
+  const tagFieldAjout = document.getElementById('produit-tag');
+  if (tagFieldAjout) tagFieldAjout.value = '';
   document.getElementById('produit-type').value = 'addon';
   document.getElementById('produit-etape').value = '1';
   document.getElementById('produit-fournisseur').value = '';
@@ -1429,6 +1434,8 @@ function ouvrirModalEdit(id) {
   document.getElementById('produit-id').value = p.id;
   document.getElementById('produit-nom').value = p.nom || '';
   document.getElementById('produit-shopify-search').value = p.shopifySearch || '';
+  const tagFieldEdit = document.getElementById('produit-tag');
+  if (tagFieldEdit) tagFieldEdit.value = p.tag || '';
   document.getElementById('produit-type').value = p.type || 'addon';
   document.getElementById('produit-etape').value = p.etape || '1';
   document.getElementById('produit-fournisseur').value = p.fournisseur || '';
@@ -1563,6 +1570,7 @@ function sauverProduit() {
   const data = {
     nom,
     shopifySearch: document.getElementById('produit-shopify-search').value.trim() || null,
+    tag: (document.getElementById('produit-tag')?.value || '').trim() || null,
     type: document.getElementById('produit-type').value,
     etape: parseInt(document.getElementById('produit-etape').value, 10),
     fournisseur: document.getElementById('produit-fournisseur').value,
@@ -1905,6 +1913,37 @@ function ajouterIdeeAuPlanning(idee) {
 // ============ VENTES SHOPIFY (PLAN DE BATAILLE) ============
 const ventesParMois = {};  // { '2026-05': { ventes: {...}, total_ca, total_commandes } }
 let ventesSemaine = null;  // { ventes: {...}, total_ca, total_commandes, debut, fin } — semaine commerciale en cours (jeu→mer)
+let ventesReelles = {};    // { [produitId]: { qty, total } } — vraies ventes Shopify (total avec taxes) depuis la sortie, par nom ou par tag
+
+// Va chercher les VRAIES ventes Shopify (quantité + total avec taxes) pour chaque produit
+// qui a un nom Shopify OU un tag de collection. Calcul depuis la date de sortie du produit.
+async function chargerVentesReelles() {
+  const aMatcher = (donnees.produits || []).filter(p => (p.shopifySearch && p.shopifySearch.trim()) || (p.tag && p.tag.trim()));
+  if (!aMatcher.length) return;
+  try {
+    const r = await fetch('/api/r-and-d/ventes-reelles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        produits: aMatcher.map(p => ({
+          id: p.id,
+          nom: p.nom || null,
+          shopifySearch: p.shopifySearch || null,
+          tag: p.tag || null,
+          since: p.date || null,
+        })),
+      }),
+    });
+    if (!r.ok) { if (r.status !== 503) console.warn('ventes-reelles indispo :', r.status); return; }
+    const data = await r.json();
+    if (data && data.resultats) {
+      ventesReelles = data.resultats;
+      rendreCalendrier();
+    }
+  } catch (e) {
+    console.warn('Erreur réseau ventes-reelles :', e.message);
+  }
+}
 
 function trouverVentesShopify(nomPepite, ventesMap) {
   if (!nomPepite || !ventesMap) return { ca: 0, qty: 0 };
@@ -2116,9 +2155,8 @@ document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
 rendreCalendrier();
 // Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
 chargerDonneesCloud();
-// Charger les ventes Shopify du mois courant
-chargerVentesMoisCourant();
-chargerVentesSemaine();
+// Vraies ventes Shopify par produit (nom ou tag, total avec taxes depuis la sortie)
+chargerVentesReelles();
 </script>
 </body>
 </html>
