@@ -203,11 +203,20 @@ export async function POST(request: Request) {
     return out;
   }
 
-  // Calcule (qty packs, total avec taxes) d'une cible sur un lot de commandes — direct + bundle.
-  function calculer(cible: Cible, commandes: Commande[]): { qty: number; total: number } {
-    let directQty = 0;
-    let directTot = 0;
-    const groupes = new Map<string, number>(); // 1 groupe de bundle = 1 pack
+  // Agrégat compact d'une fenêtre (semaine ou mois), indépendant des produits demandés, mis en CACHE.
+  // direct = {product_id: [qty, total]} ; bundles = [[sku, vid, total], ...] (1 entrée = 1 pack vendu)
+  interface AggFenetre {
+    direct: Record<string, [number, number]>;
+    bundles: Array<[string, number, number]>;
+  }
+  async function aggFenetre(debut: Date, fin: Date, key: string): Promise<AggFenetre> {
+    const ck = `mood:agg:${key}`;
+    const cached = (await redisGet(ck)) as AggFenetre | null;
+    if (cached && cached.direct) return cached;
+
+    const commandes = await commandesSemaine(debut, fin);
+    const direct: Record<string, [number, number]> = {};
+    const groupes = new Map<string, { sku: string; vid: number; total: number }>();
     for (const o of commandes) {
       if (o.cancelled_at) continue;
       for (const li of o.line_items || []) {
@@ -219,24 +228,52 @@ export async function POST(request: Request) {
         const totalAvecTaxe = o.taxes_included ? net : net + tax;
         const grp = prop(li, "_sb_bundle_group");
         if (grp) {
-          // ligne-composant de bundle : matcher le pack parent par SKU ou variant id
           const bt = prop(li, "_sb_bundle_title") || "";
-          const skuM = (bt.match(/SKU:\s*([^\s|]+)/) || [])[1];
+          const skuM = (bt.match(/SKU:\s*([^\s|]+)/) || [])[1] || "";
           const vidStr = (prop(li, "_sb_bundle_variant_id_qty") || "").split(":")[0].trim();
           const vid = vidStr ? Number(vidStr) : 0;
-          if ((skuM && cible.skus.has(skuM)) || (vid && cible.vids.has(vid))) {
-            const gk = `${o.id}:${grp.split(" ")[0]}`;
-            groupes.set(gk, (groupes.get(gk) || 0) + totalAvecTaxe);
-          }
-        } else if (li.product_id != null && cible.pids.has(li.product_id)) {
-          directQty += q;
-          directTot += totalAvecTaxe;
+          const gk = `${o.id}:${grp.split(" ")[0]}`;
+          const e = groupes.get(gk) || { sku: "", vid: 0, total: 0 };
+          if (skuM) e.sku = skuM;
+          if (vid) e.vid = vid;
+          e.total += totalAvecTaxe;
+          groupes.set(gk, e);
+        } else if (li.product_id != null) {
+          const pid = String(li.product_id);
+          const d = direct[pid] || [0, 0];
+          d[0] += q;
+          d[1] += totalAvecTaxe;
+          direct[pid] = d;
         }
       }
     }
-    let totalBundle = 0;
-    for (const v of groupes.values()) totalBundle += v;
-    return { qty: directQty + groupes.size, total: Math.round((directTot + totalBundle) * 100) / 100 };
+    const bundles: Array<[string, number, number]> = [];
+    for (const e of groupes.values()) bundles.push([e.sku, e.vid, Math.round(e.total * 100) / 100]);
+    const agg: AggFenetre = { direct, bundles };
+    // Fenêtre passée (terminée) → cache long ; fenêtre en cours → cache court (les ventes bougent).
+    const estCourant = fin.getTime() >= Date.now();
+    await redisSetEx(ck, agg, estCourant ? 1200 : 604800);
+    return agg;
+  }
+
+  // Calcule (qty packs, total avec taxes) d'une cible depuis un agrégat de fenêtre — direct + bundle.
+  function calcDepuisAgg(cible: Cible, agg: AggFenetre): { qty: number; total: number } {
+    let qty = 0;
+    let total = 0;
+    for (const pid of cible.pids) {
+      const d = agg.direct[String(pid)];
+      if (d) {
+        qty += d[0];
+        total += d[1];
+      }
+    }
+    for (const [sku, vid, tot] of agg.bundles) {
+      if ((sku && cible.skus.has(sku)) || (vid && cible.vids.has(vid))) {
+        qty += 1;
+        total += tot;
+      }
+    }
+    return { qty, total: Math.round(total * 100) / 100 };
   }
 
   // 1) Résoudre chaque produit (ids + skus + vids)
@@ -275,15 +312,15 @@ export async function POST(request: Request) {
     w.cibles.push(cible);
   }
 
-  // 3) Une requête par semaine, puis calcul direct + bundle pour chaque cible
+  // 3) Pour chaque fenêtre : agrégat (mis en cache, balayé 1 seule fois), puis calcul par cible
   const resultats: Record<string, { qty: number; total: number }> = {};
   for (const p of produits) resultats[p.id] = { qty: 0, total: 0 };
   try {
-    for (const w of semaines.values()) {
-      const commandes = await commandesSemaine(w.debut, w.fin);
+    for (const [key, w] of semaines.entries()) {
+      const agg = await aggFenetre(w.debut, w.fin, key.replace(/[^A-Za-z0-9:_-]/g, ""));
       for (const cible of w.cibles) {
         if (!cible.pids.size && !cible.skus.size) continue;
-        resultats[cible.id] = calculer(cible, commandes);
+        resultats[cible.id] = calcDepuisAgg(cible, agg);
       }
     }
   } catch (e) {
@@ -291,6 +328,6 @@ export async function POST(request: Request) {
   }
 
   const result = { ok: true, resultats, semaines: semaines.size };
-  await redisSetEx(cacheKey, result, 600);
+  await redisSetEx(cacheKey, result, 300);
   return NextResponse.json({ ...result, source: "fresh" });
 }
