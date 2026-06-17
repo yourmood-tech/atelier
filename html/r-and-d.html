@@ -1974,7 +1974,8 @@ async function chargerVentesReelles() {
           nom: p.nom || null,
           shopifySearch: p.shopifySearch || null,
           tag: p.tag || null,
-          since: p.date || null,
+          // Pas de "since" : le badge "cette semaine" doit toujours compter la
+          // semaine commerciale EN COURS, peu importe la date du créneau de la carte.
         })),
       }),
     });
