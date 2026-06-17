@@ -181,8 +181,19 @@ export async function POST(request: Request) {
     let pages = 0;
     while (url && pages < 40) {
       pages++;
-      const r: Response = await fetch(url, { headers: { "X-Shopify-Access-Token": token } });
-      if (!r.ok) throw new Error(`Shopify ${r.status}: ${(await r.text()).slice(0, 200)}`);
+      // Réessai automatique si Shopify répond "trop de requêtes" (429) ou erreur serveur (5xx).
+      let r: Response | null = null;
+      for (let essai = 0; essai < 6; essai++) {
+        r = await fetch(url, { headers: { "X-Shopify-Access-Token": token } });
+        if (r.ok) break;
+        if (r.status === 429 || r.status >= 500) {
+          const retryAfter = parseFloat(r.headers.get("retry-after") || "") || 2;
+          await new Promise((res) => setTimeout(res, Math.min(5000, retryAfter * 1000)));
+          continue;
+        }
+        throw new Error(`Shopify ${r.status}: ${(await r.text()).slice(0, 200)}`);
+      }
+      if (!r || !r.ok) throw new Error(`Shopify indisponible (trop de requêtes) après plusieurs essais`);
       const data = await r.json();
       for (const o of (data.orders || []) as Commande[]) out.push(o);
       const link: string | null = r.headers.get("link");

@@ -967,9 +967,7 @@ async function chargerDonneesCloud() {
       cloudOK = true;
       majIndicateurSync();
       rendreCalendrier();
-      chargerVentesReelles();
-      const m = new Date();
-      chargerVentesReellesMois(m.getFullYear(), m.getMonth());
+      chargerVentesReelles().then(() => { const m = new Date(); chargerVentesReellesMois(m.getFullYear(), m.getMonth()); });
     }
   } catch (e) {
     cloudOK = false;
@@ -2201,9 +2199,8 @@ document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
 rendreCalendrier();
 // Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
 chargerDonneesCloud();
-// Vraies ventes Shopify par produit (semaine du créneau) + résumé du mois en cours
-chargerVentesReelles();
-(function(){ const m = new Date(); chargerVentesReellesMois(m.getFullYear(), m.getMonth()); })();
+// Vraies ventes Shopify par produit (semaine du créneau) PUIS résumé du mois en cours (séquencé, anti-surcharge)
+chargerVentesReelles().then(() => { const m = new Date(); chargerVentesReellesMois(m.getFullYear(), m.getMonth()); });
 </script>
 </body>
 </html>
