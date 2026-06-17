@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 // éclaté en lignes-composants portant la propriété _sb_bundle_title/_sb_bundle_group ; on regroupe
 // par bundle (1 groupe = 1 pack) et on additionne le prix des composants.
 
-const SHOPIFY_TOKEN = process.env.MOOD_SHOPIFY_ACCESS_TOKEN;
-const SHOPIFY_DOMAIN = process.env.MOOD_SHOPIFY_DOMAIN;
+const SHOPIFY_TOKEN = process.env.SHOPIFY_API_TOKEN || process.env.MOOD_SHOPIFY_ACCESS_TOKEN;
+const SHOPIFY_DOMAIN = process.env.MOOD_SHOPIFY_DOMAIN || process.env.SHOPIFY_STORE;
 
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
