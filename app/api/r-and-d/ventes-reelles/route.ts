@@ -69,7 +69,7 @@ async function redisSetEx(key: string, value: unknown, ttl: number) {
     await fetch(`${REDIS_URL}/setex/${encodeURIComponent(key)}/${ttl}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${REDIS_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify([JSON.stringify(value)]),
+      body: JSON.stringify(value),
     });
   } catch {
     /* skip */
