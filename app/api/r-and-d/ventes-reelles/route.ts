@@ -97,6 +97,7 @@ function prop(li: LigneCommande, name: string): string | undefined {
 }
 
 // Résout un produit demandé → IDs produits + SKUs + IDs de variantes (pour matcher les bundles).
+// Mis en CACHE (les tags/SKUs d'un produit bougent rarement) → évite 12 requêtes GraphQL lourdes à chaque ouverture.
 async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus: string[]; vids: number[] }> {
   const apiBase = `https://${SHOPIFY_DOMAIN}/admin/api/2024-10`;
   const headers = { "X-Shopify-Access-Token": SHOPIFY_TOKEN as string, "Content-Type": "application/json" };
@@ -111,6 +112,10 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
     if (!titre) return { ids: [], skus: [], vids: [] };
     query = titre.replace(/'/g, " ");
   }
+
+  const rck = `mood:resolve:${(parTag ? "t:" : "n:") + query}`.slice(0, 120);
+  const rc = (await redisGet(rck)) as { ids: number[]; skus: string[]; vids: number[] } | null;
+  if (rc && Array.isArray(rc.ids)) return rc;
 
   const gql = {
     query: `query($q: String!) {
@@ -141,7 +146,9 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
       vids.push(Number(v.node.id.replace("gid://shopify/ProductVariant/", "")));
     }
   }
-  return { ids, skus, vids };
+  const out = { ids, skus, vids };
+  if (ids.length) await redisSetEx(rck, out, 21600); // 6 h
+  return out;
 }
 
 export async function POST(request: Request) {
@@ -276,14 +283,12 @@ export async function POST(request: Request) {
     return { qty, total: Math.round(total * 100) / 100 };
   }
 
-  // 1) Résoudre chaque produit (ids + skus + vids)
-  const resolutions = await Promise.all(
-    produits.map(async (p) => {
-      const r = await resoudreProduit(p);
-      const cible: Cible = { id: p.id, pids: new Set(r.ids), skus: new Set(r.skus), vids: new Set(r.vids) };
-      return { p, cible };
-    })
-  );
+  // 1) Résoudre chaque produit (ids + skus + vids) — SÉQUENTIEL (cache 6h) pour ne pas saturer Shopify
+  const resolutions: Array<{ p: ProduitDemande; cible: Cible }> = [];
+  for (const p of produits) {
+    const r = await resoudreProduit(p);
+    resolutions.push({ p, cible: { id: p.id, pids: new Set(r.ids), skus: new Set(r.skus), vids: new Set(r.vids) } });
+  }
 
   // 2) Grouper par fenêtre de temps : soit la semaine commerciale du créneau, soit le mois entier.
   const semaines = new Map<string, { debut: Date; fin: Date; cibles: Cible[] }>();
