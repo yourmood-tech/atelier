@@ -110,31 +110,53 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
   } else {
     const titre = (p.shopifySearch || p.nom || "").trim();
     if (!titre) return { ids: [], skus: [], vids: [] };
-    query = titre.replace(/'/g, " ");
+    // Nettoyer les caractères qui sont des OPÉRATEURS dans la recherche Shopify
+    // (le tiret = "exclure ce mot", les guillemets = phrase exacte) → sinon 0 résultat.
+    query = titre.replace(/['"()\-:]/g, " ").replace(/\s+/g, " ").trim();
   }
 
   const rck = `mood:resolve:${(parTag ? "t:" : "n:") + query}`.slice(0, 120);
   const rc = (await redisGet(rck)) as { ids: number[]; skus: string[]; vids: number[] } | null;
   if (rc && Array.isArray(rc.ids)) return rc;
 
-  const gql = {
-    query: `query($q: String!) {
-      products(first: 100, query: $q) {
-        edges { node { id title variants(first: 100) { edges { node { id sku } } } } }
-      }
-    }`,
-    variables: { q: query },
-  };
-  const r = await fetch(`${apiBase}/graphql.json`, { method: "POST", headers, body: JSON.stringify(gql) });
-  if (!r.ok) return { ids: [], skus: [], vids: [] };
-  const data = await r.json();
   interface Node { id: string; title: string; variants?: { edges: Array<{ node: { id: string; sku: string | null } }> } }
-  const edges: Array<{ node: Node }> = data?.data?.products?.edges || [];
+  async function chercher(q: string): Promise<Array<{ node: Node }>> {
+    const gql = {
+      query: `query($q: String!) {
+        products(first: 100, query: $q) {
+          edges { node { id title variants(first: 100) { edges { node { id sku } } } } }
+        }
+      }`,
+      variables: { q },
+    };
+    const r = await fetch(`${apiBase}/graphql.json`, { method: "POST", headers, body: JSON.stringify(gql) });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return data?.data?.products?.edges || [];
+  }
+  let edges: Array<{ node: Node }> = await chercher(query);
+  // Repli : nom complet trop long / suffixes (ex. « - remplie de 10 créations surprises »)
+  // → Shopify ne trouve rien. On réessaie avec les premiers mots significatifs du titre,
+  // puis le filtre "inclusion" ci-dessous garde le bon produit.
+  if (!parTag && edges.length === 0) {
+    const mots = query.split(" ").filter(Boolean);
+    if (mots.length > 4) edges = await chercher(mots.slice(0, 6).join(" "));
+  }
   let retenus = edges.map((e) => e.node);
   if (!parTag) {
     const cible = norm(p.shopifySearch || p.nom || "");
     const exacts = retenus.filter((n) => norm(n.title) === cible);
-    retenus = exacts.length ? exacts : retenus.filter((n) => norm(n.title).includes(cible) || cible.includes(norm(n.title)));
+    if (exacts.length) {
+      retenus = exacts;
+    } else {
+      // « racine » = titre tronqué avant le dernier « - » → regroupe les variantes d'une
+      // même famille (ex. « … - OO N°2 - remplie de 10 / cinq créations » = même boîte).
+      const racine = cible.includes(" - ") ? cible.slice(0, cible.lastIndexOf(" - ")).trim() : cible;
+      retenus = retenus.filter((n) => {
+        const t = norm(n.title);
+        return t.includes(cible) || cible.includes(t) || (racine.length > 12 && t.startsWith(racine));
+      });
+    }
   }
   const ids: number[] = [];
   const skus: string[] = [];
