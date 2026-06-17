@@ -102,20 +102,11 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
   const apiBase = `https://${SHOPIFY_DOMAIN}/admin/api/2024-10`;
   const headers = { "X-Shopify-Access-Token": SHOPIFY_TOKEN as string, "Content-Type": "application/json" };
 
-  let query: string;
-  let parTag = false;
-  if (p.tag && p.tag.trim()) {
-    query = `tag:'${p.tag.trim().replace(/'/g, "")}'`;
-    parTag = true;
-  } else {
-    const titre = (p.shopifySearch || p.nom || "").trim();
-    if (!titre) return { ids: [], skus: [], vids: [] };
-    // Nettoyer les caractères qui sont des OPÉRATEURS dans la recherche Shopify
-    // (le tiret = "exclure ce mot", les guillemets = phrase exacte) → sinon 0 résultat.
-    query = titre.replace(/['"()\-:]/g, " ").replace(/\s+/g, " ").trim();
-  }
+  const tagRaw = (p.tag || "").trim();
+  const nomRaw = (p.shopifySearch || p.nom || "").trim();
+  if (!tagRaw && !nomRaw) return { ids: [], skus: [], vids: [] };
 
-  const rck = `mood:resolve:${(parTag ? "t:" : "n:") + query}`.slice(0, 120);
+  const rck = `mood:resolve:v2:${tagRaw}|${nomRaw}`.slice(0, 120);
   const rc = (await redisGet(rck)) as { ids: number[]; skus: string[]; vids: number[] } | null;
   if (rc && Array.isArray(rc.ids)) return rc;
 
@@ -134,17 +125,30 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
     const data = await r.json();
     return data?.data?.products?.edges || [];
   }
-  let edges: Array<{ node: Node }> = await chercher(query);
-  // Repli : nom complet trop long / suffixes (ex. « - remplie de 10 créations surprises »)
-  // → Shopify ne trouve rien. On réessaie avec les premiers mots significatifs du titre,
-  // puis le filtre "inclusion" ci-dessous garde le bon produit.
-  if (!parTag && edges.length === 0) {
-    const mots = query.split(" ").filter(Boolean);
-    if (mots.length > 4) edges = await chercher(mots.slice(0, 6).join(" "));
+
+  // 1) Si un tag est renseigné → recherche par tag.
+  let parTag = false;
+  let edges: Array<{ node: Node }> = [];
+  if (tagRaw) {
+    edges = await chercher(`tag:'${tagRaw.replace(/'/g, "")}'`);
+    parTag = edges.length > 0;
   }
+  // 2) Pas de tag, OU champ tag mal rempli (= le nom au lieu d'un vrai tag → 0 résultat)
+  //    → repli sur la recherche par NOM. Nettoie les opérateurs Shopify (tiret = exclusion,
+  //    guillemets = phrase exacte) ; si le nom complet ne trouve rien, réessaie en mots courts.
+  if (!parTag) {
+    if (!nomRaw) return { ids: [], skus: [], vids: [] };
+    const q = nomRaw.replace(/['"()\-:]/g, " ").replace(/\s+/g, " ").trim();
+    edges = await chercher(q);
+    if (edges.length === 0) {
+      const mots = q.split(" ").filter(Boolean);
+      if (mots.length > 4) edges = await chercher(mots.slice(0, 6).join(" "));
+    }
+  }
+
   let retenus = edges.map((e) => e.node);
   if (!parTag) {
-    const cible = norm(p.shopifySearch || p.nom || "");
+    const cible = norm(nomRaw);
     const exacts = retenus.filter((n) => norm(n.title) === cible);
     if (exacts.length) {
       retenus = exacts;
