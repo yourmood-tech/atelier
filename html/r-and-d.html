@@ -598,6 +598,14 @@
   <div class="stage-legend-item"><div class="product-stage stage-9">9</div> Visuels</div>
 </div>
 
+<div id="semaine-selecteur" style="display:flex;align-items:center;justify-content:center;gap:0.6rem;margin:0.4rem 0 1.2rem;flex-wrap:wrap;">
+  <span style="font-size:0.8rem;color:var(--gris);">📊 Ventes Shopify de la semaine :</span>
+  <button class="outline" onclick="decalerSemaine(-1)" title="Semaine précédente">◀</button>
+  <span id="semaine-label" style="font-weight:600;font-size:0.9rem;min-width:240px;text-align:center;">Semaine en cours</span>
+  <button class="outline" onclick="decalerSemaine(1)" title="Semaine suivante">▶</button>
+  <button class="outline" onclick="semaineCourante()" style="font-size:0.78rem;">Cette semaine</button>
+</div>
+
 <div id="calendrier"></div>
 
 <!-- Modal édition produit -->
@@ -1306,7 +1314,7 @@ function rendreCalendrier() {
             const qty = Number(reel.qty) || 0;
             const total = Number(reel.total) || 0;
             const cls = qty > 0 ? 'ventes-semaine actif' : 'ventes-semaine vide';
-            ventesSemaineHtml = `<div class="${cls}" title="Vraies ventes Shopify sur la semaine du créneau (jeu→mer, total avec taxes)">📊 ${qty} vendu${qty > 1 ? 's' : ''} cette semaine${total > 0 ? ' · ' + Math.round(total).toLocaleString('fr-CH') + '.-' : ''}</div>`;
+            ventesSemaineHtml = `<div class="${cls}" title="Vraies ventes Shopify sur la semaine sélectionnée (jeu→mer, total avec taxes)">📊 ${qty} vendu${qty > 1 ? 's' : ''}${total > 0 ? ' · ' + Math.round(total).toLocaleString('fr-CH') + '.-' : ''}</div>`;
           }
           cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
             <div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div>
@@ -1918,6 +1926,7 @@ function ajouterIdeeAuPlanning(idee) {
 const ventesParMois = {};  // { '2026-05': { ventes: {...}, total_ca, total_commandes } }
 let ventesSemaine = null;  // { ventes: {...}, total_ca, total_commandes, debut, fin } — semaine commerciale en cours (jeu→mer)
 let ventesReelles = {};    // { [produitId]: { qty, total } } — vraies ventes Shopify (total avec taxes) depuis la sortie, par nom ou par tag
+let semaineRef = null;     // null = semaine commerciale EN COURS ; sinon "YYYY-MM-DD" d'une autre semaine à analyser (rituel jeudi)
 let ventesReellesMois = {}; // { "YYYY-MM::rowId": { qty, total } } — vraies ventes du MOIS (pour le résumé de fin de mois)
 const moisEnCalcul = {};    // { "YYYY-MM": true } anti double-appel
 
@@ -1974,8 +1983,9 @@ async function chargerVentesReelles() {
           nom: p.nom || null,
           shopifySearch: p.shopifySearch || null,
           tag: p.tag || null,
-          // Pas de "since" : le badge "cette semaine" doit toujours compter la
-          // semaine commerciale EN COURS, peu importe la date du créneau de la carte.
+          // since pilote la semaine analysée : null = semaine EN COURS, sinon la semaine
+          // commerciale (jeu→mer) qui contient cette date (sélecteur ◀ ▶ pour le rituel jeudi).
+          since: semaineRef || null,
         })),
       }),
     });
@@ -1988,6 +1998,38 @@ async function chargerVentesReelles() {
   } catch (e) {
     console.warn('Erreur réseau ventes-reelles :', e.message);
   }
+}
+
+// ===== Sélecteur de semaine analysée (rituel jeudi : voir la semaine écoulée) =====
+// Semaine commerciale Mood : jeudi 00:00 → mercredi 23:59 (UTC), comme le service back.
+function semaineCommercialeFront(ref) {
+  const d = new Date(ref);
+  const since = (d.getUTCDay() - 4 + 7) % 7;
+  const debut = new Date(d); debut.setUTCDate(d.getUTCDate() - since); debut.setUTCHours(0, 0, 0, 0);
+  const fin = new Date(debut); fin.setUTCDate(debut.getUTCDate() + 6); fin.setUTCHours(23, 59, 59, 999);
+  return { debut, fin };
+}
+function majLabelSemaine() {
+  const el = document.getElementById('semaine-label');
+  if (!el) return;
+  const ref = semaineRef ? new Date(semaineRef + 'T12:00:00Z') : new Date();
+  const { debut, fin } = semaineCommercialeFront(ref);
+  const enCours = semaineCommercialeFront(new Date()).debut.getTime() === debut.getTime();
+  const fmt = (dt) => dt.toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  el.textContent = `${fmt(debut)} → ${fmt(fin)}` + (enCours ? ' (en cours)' : '');
+  el.style.color = enCours ? 'var(--gris)' : 'var(--vert)';
+}
+function decalerSemaine(n) {
+  const ref = semaineRef ? new Date(semaineRef + 'T12:00:00Z') : new Date();
+  ref.setUTCDate(ref.getUTCDate() + n * 7);
+  semaineRef = ref.toISOString().slice(0, 10);
+  majLabelSemaine();
+  chargerVentesReelles();
+}
+function semaineCourante() {
+  semaineRef = null;
+  majLabelSemaine();
+  chargerVentesReelles();
 }
 
 function trouverVentesShopify(nomPepite, ventesMap) {
@@ -2200,7 +2242,8 @@ document.getElementById('modal-brainstorm').addEventListener('click', (e) => {
 rendreCalendrier();
 // Tentative de chargement depuis le cloud au démarrage (override les données locales si dispo)
 chargerDonneesCloud();
-// Vraies ventes Shopify par produit (semaine du créneau) PUIS résumé du mois en cours (séquencé, anti-surcharge)
+majLabelSemaine();
+// Vraies ventes Shopify par produit (semaine sélectionnée) PUIS résumé du mois en cours (séquencé, anti-surcharge)
 chargerVentesReelles().then(() => { const m = new Date(); chargerVentesReellesMois(m.getFullYear(), m.getMonth()); });
 </script>
 </body>
