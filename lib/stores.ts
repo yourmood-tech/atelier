@@ -12,7 +12,9 @@ export const STORES: Record<StoreKey, StoreConfig> = {
     label: 'Mood Collection',
     shopifyDomain: process.env.MOOD_SHOPIFY_DOMAIN!,
     publicDomain: 'yourmood.net',
-    shopifyToken: process.env.MOOD_SHOPIFY_ACCESS_TOKEN!,
+    // Clé vivante en priorité (SHOPIFY_API_TOKEN) ; MOOD_SHOPIFY_ACCESS_TOKEN est l'ancienne clé morte
+    // qui ne remonte plus les produits en brouillon. Même correctif que les services ventes (S175).
+    shopifyToken: (process.env.SHOPIFY_API_TOKEN || process.env.MOOD_SHOPIFY_ACCESS_TOKEN)!,
   },
   'mood-joaillerie': {
     label: 'Mood Joaillerie',
