@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ pos, unresolvedSkus, unmatchedSuppliers });
   } catch (err) {
+    console.error("[reassort-po] ERROR:", err instanceof Error ? err.stack ?? err.message : err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur" },
       { status: 500 }

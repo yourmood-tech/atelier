@@ -76,7 +76,7 @@ function setCachedValue<T>(
   });
 }
 
-async function katanaFetch(path: string, init?: RequestInit, retries = 3) {
+async function katanaFetch(path: string, init?: RequestInit, retries = 5) {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -89,8 +89,18 @@ async function katanaFetch(path: string, init?: RequestInit, retries = 3) {
   });
 
   if (res.status === 429 && retries > 0) {
-    const retryAfter = Number(res.headers.get("Retry-After") ?? 1);
-    await new Promise((r) => setTimeout(r, (retryAfter || 1) * 1000));
+    // Katana = 60 req/min. Préférer x-ratelimit-reset (epoch ms) au Retry-After,
+    // borné à 15s pour ne pas faire expirer la fonction.
+    const retryAfterHeader = Number(res.headers.get("Retry-After"));
+    const resetMs = Number(res.headers.get("x-ratelimit-reset"));
+    let waitMs = 1000;
+    if (!isNaN(retryAfterHeader) && retryAfterHeader > 0) {
+      waitMs = retryAfterHeader * 1000;
+    } else if (!isNaN(resetMs) && resetMs > Date.now()) {
+      waitMs = resetMs - Date.now();
+    }
+    waitMs = Math.min(Math.max(waitMs, 1000), 15000);
+    await new Promise((r) => setTimeout(r, waitMs));
     return katanaFetch(path, init, retries - 1);
   }
 
