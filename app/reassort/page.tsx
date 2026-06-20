@@ -520,6 +520,8 @@ export default function ReassortPage() {
   const [poResult, setPoResult] = useState<POResult | null>(null);
   const [poError, setPoError] = useState<string | null>(null);
   const [poLoading, setPoLoading] = useState(false);
+  // Seuil : ne mettre dans le bon de commande que les articles avec PLUS de N pièces recommandées
+  const [poMinQty, setPoMinQty] = useState(2);
 
   function set<K extends keyof Params>(key: K, value: Params[K]) {
     setParams((p) => ({ ...p, [key]: value }));
@@ -596,6 +598,12 @@ export default function ReassortPage() {
 
   async function createPO() {
     if (!results || results.length === 0) return;
+    // On ne garde que les articles avec PLUS de poMinQty pièces recommandées
+    const eligible = results.filter((r) => r.recommendedQty > poMinQty);
+    if (eligible.length === 0) {
+      setPoError(`Aucun article avec plus de ${poMinQty} pièces recommandées.`);
+      return;
+    }
     setPoLoading(true);
     setPoError(null);
     setPoResult(null);
@@ -608,7 +616,7 @@ export default function ReassortPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: results.map((r) => ({
+          items: eligible.map((r) => ({
             sku: r.sku,
             name: r.name,
             quantity: r.recommendedQty,
@@ -724,13 +732,30 @@ export default function ReassortPage() {
             </button>
           )}
           {results && results.length > 0 && (
-            <button
-              onClick={createPO}
-              disabled={poLoading}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
-            >
-              {poLoading ? "Création en cours..." : "Créer le bon de commande Katana"}
-            </button>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-zinc-400 whitespace-nowrap">
+                Garder seulement plus de
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={1000}
+                value={poMinQty}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!isNaN(v) && v >= 0) setPoMinQty(v);
+                }}
+                className="w-16 text-sm text-right bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-zinc-200 focus:outline-none focus:border-zinc-500"
+              />
+              <label className="text-xs text-zinc-400 whitespace-nowrap">pièces</label>
+              <button
+                onClick={createPO}
+                disabled={poLoading}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+              >
+                {poLoading ? "Création en cours..." : "Créer le bon de commande Katana"}
+              </button>
+            </div>
           )}
         </div>
 
@@ -746,7 +771,7 @@ export default function ReassortPage() {
           <div className="rounded-xl border border-emerald-800 bg-emerald-900/20 p-5 space-y-3">
             <h2 className="text-sm font-bold text-emerald-300">
               {poResult.pos.length > 0
-                ? `${poResult.pos.length} bon(s) de commande créé(s) dans Katana`
+                ? `${poResult.pos.length} bon(s) de commande créé(s) dans Katana — ${poResult.pos.reduce((s, p) => s + p.lineCount, 0)} lignes au total (plus de ${poMinQty} pièces)`
                 : "Aucun bon de commande créé"}
             </h2>
             {poResult.pos.map((po) => (
