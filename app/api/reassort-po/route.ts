@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
       if (rows.length === 0) continue;
 
       // 5. Create the purchase order(s) in Katana.
-      //    Katana plante (500/431) au-delà de ~150 lignes par commande → on
-      //    découpe en plusieurs bons de commande de 100 lignes max.
-      const MAX_ROWS = 100;
+      //    Katana plante (431 puis 500) à partir de ~296 lignes par commande
+      //    (testé : 295 OK, 299 KO) → on découpe à 250 lignes max (marge ~45).
+      const MAX_ROWS = 250;
       for (let i = 0; i < rows.length; i += MAX_ROWS) {
         const chunk = rows.slice(i, i + MAX_ROWS);
         const po = await createKatanaPOWithRows(
