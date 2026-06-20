@@ -1,31 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getAllKatanaSuppliers,
-  getKatanaVariantWithPriceBySku,
+  getKatanaVariantsBySkus,
   createKatanaPOWithRows,
 } from "@/lib/katana";
 
 export const maxDuration = 300;
 
 type POItem = { sku: string; name: string; quantity: number; supplierName: string };
-
-// Concurrency limiter
-async function pLimit<T>(tasks: (() => Promise<T>)[], limit: number): Promise<PromiseSettledResult<T>[]> {
-  const results: PromiseSettledResult<T>[] = new Array(tasks.length);
-  let cursor = 0;
-  async function worker() {
-    while (cursor < tasks.length) {
-      const i = cursor++;
-      try {
-        results[i] = { status: "fulfilled", value: await tasks[i]() };
-      } catch (e) {
-        results[i] = { status: "rejected", reason: e };
-      }
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
-  return results;
-}
 
 function norm(s: string): string {
   return (s ?? "").trim().toLowerCase();
@@ -48,7 +30,11 @@ export async function POST(req: NextRequest) {
     const suppliers = await getAllKatanaSuppliers();
     const supplierByName = new Map(suppliers.map((s) => [norm(s.name), s]));
 
-    // 2. Group items by supplier name
+    // 2. Resolve ALL SKUs → variant id + purchase price in one grouped call
+    //    (Katana = 60 req/min ; un appel par SKU dépasse le quota et provoque un timeout)
+    const variantBySku = await getKatanaVariantsBySkus(items.map((it) => it.sku));
+
+    // 3. Group items by supplier name
     const groups = new Map<string, POItem[]>();
     for (const it of items) {
       const key = it.supplierName || "(sans fournisseur)";
@@ -74,22 +60,14 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // 3. Resolve each SKU → variant id + purchase price
-      const resolved = await pLimit(
-        groupItems.map((it) => async () => {
-          const v = await getKatanaVariantWithPriceBySku(it.sku);
-          return { it, variant: v };
-        }),
-        6
-      );
-
+      // 4. Build PO rows from the pre-resolved variant map
       const rows: { variantId: number; quantity: number; pricePerUnit: number }[] = [];
-      for (const r of resolved) {
-        if (r.status !== "fulfilled" || !r.value.variant) {
-          if (r.status === "fulfilled") unresolvedSkus.push(r.value.it.sku);
+      for (const it of groupItems) {
+        const variant = variantBySku.get(it.sku);
+        if (!variant) {
+          unresolvedSkus.push(it.sku);
           continue;
         }
-        const { it, variant } = r.value;
         rows.push({
           variantId: variant.id,
           quantity: Math.round(it.quantity),
@@ -99,7 +77,7 @@ export async function POST(req: NextRequest) {
 
       if (rows.length === 0) continue;
 
-      // 4. Create the purchase order in Katana
+      // 5. Create the purchase order in Katana
       const po = await createKatanaPOWithRows(
         supplier.id,
         rows,

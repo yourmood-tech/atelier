@@ -489,6 +489,34 @@ export async function getKatanaVariantWithPriceBySku(
   return { id: v.id as number, purchasePrice };
 }
 
+// Résolution GROUPÉE — récupère plusieurs SKU en un seul appel via le filtre sku[]
+// (Katana limite à 60 requêtes/minute ; on évite ainsi 1 appel par SKU).
+export async function getKatanaVariantsBySkus(
+  skus: string[]
+): Promise<Map<string, { id: number; purchasePrice: number | null }>> {
+  const result = new Map<string, { id: number; purchasePrice: number | null }>();
+  const CHUNK = 40;
+
+  for (let i = 0; i < skus.length; i += CHUNK) {
+    const batch = skus.slice(i, i + CHUNK);
+    const qs = batch.map((s) => `sku[]=${encodeURIComponent(s)}`).join("&");
+    const data = (await katanaFetch(`/v1/variants?${qs}&limit=250`, {
+      method: "GET",
+    })) as { data?: Record<string, unknown>[] };
+
+    for (const v of data?.data ?? []) {
+      const sku = v.sku as string | undefined;
+      if (!sku) continue;
+      const rawPrice = v.purchase_price;
+      const purchasePrice =
+        rawPrice != null && !isNaN(Number(rawPrice)) ? Number(rawPrice) : null;
+      result.set(sku, { id: v.id as number, purchasePrice });
+    }
+  }
+
+  return result;
+}
+
 export async function getVariantStock(variantId: number): Promise<{
   inStock: number;
   committed: number;
