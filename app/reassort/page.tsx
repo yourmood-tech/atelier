@@ -20,6 +20,7 @@ interface Params {
 interface PeriodRow {
   sku: string;
   name: string;
+  supplier: string;
   inStock: number;
   expected: number;
   totalQty: number;
@@ -31,6 +32,7 @@ interface PeriodRow {
 interface MergedRow {
   sku: string;
   name: string;
+  supplier: string;
   inStock7: number; inStock30: number; inStock90: number;
   expected7: number; expected30: number; expected90: number;
   totalQty7: number; totalQty30: number; totalQty90: number;
@@ -51,6 +53,7 @@ interface MergedRow {
 interface ResultRow {
   sku: string;
   name: string;
+  supplier: string;
   currentStock: number;
   incomingStock: number;
   stockPosition: number;
@@ -160,6 +163,7 @@ function loadPeriodRows(rows: Record<string, string>[], label: string): Map<stri
     map.set(sku, {
       sku,
       name: (row["Name"] ?? "").trim(),
+      supplier: (row["Suppliers - Name"] ?? row["Supplier"] ?? row["Supplier Name"] ?? "").trim(),
       inStock: toNum(row["Quantity In Stock"]),
       expected: toNum(row["Quantity Expected"]),
       totalQty,
@@ -199,6 +203,7 @@ function mergeSources(
     const r90 = map90.get(sku);
 
     const name = r7?.name || r30?.name || r90?.name || "";
+    const supplier = r7?.supplier || r30?.supplier || r90?.supplier || "";
 
     const inStock7 = r7?.inStock ?? 0;
     const inStock30 = r30?.inStock ?? 0;
@@ -247,7 +252,7 @@ function mergeSources(
     }
 
     result.push({
-      sku, name,
+      sku, name, supplier,
       inStock7, inStock30, inStock90,
       expected7, expected30, expected90,
       totalQty7, totalQty30, totalQty90,
@@ -325,6 +330,7 @@ function computeRecommendations(params: Params, merged: MergedRow[]): ResultRow[
     results.push({
       sku: r.sku,
       name: r.name,
+      supplier: r.supplier,
       currentStock: r.currentStock,
       incomingStock: r.incomingStock,
       stockPosition: r.stockPosition,
@@ -360,7 +366,7 @@ function fi(n: number): string { return Math.round(n).toString(); }
 
 function exportCSV(rows: ResultRow[]): void {
   const headers = [
-    "sku", "name", "current_stock", "incoming_stock", "stock_position",
+    "sku", "name", "supplier", "current_stock", "incoming_stock", "stock_position",
     "total_qty_7", "total_qty_30", "total_qty_90",
     "daily_demand_7", "daily_demand_30", "daily_demand_90",
     "continuous_sales_flag", "continuity_note",
@@ -371,7 +377,7 @@ function exportCSV(rows: ResultRow[]): void {
   const lines = [headers.join(",")];
   for (const r of rows) {
     lines.push([
-      r.sku, `"${r.name}"`,
+      r.sku, `"${r.name}"`, `"${r.supplier}"`,
       fi(r.currentStock), fi(r.incomingStock), fi(r.stockPosition),
       fi(r.totalQty7), fi(r.totalQty30), fi(r.totalQty90),
       f2(r.dailyDemand7), f2(r.dailyDemand30), f2(r.dailyDemand90),
@@ -506,6 +512,15 @@ export default function ReassortPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  type POResult = {
+    pos: { supplierName: string; poNumber: string; poId: number; katanaUrl: string; lineCount: number; totalQty: number }[];
+    unresolvedSkus: string[];
+    unmatchedSuppliers: string[];
+  };
+  const [poResult, setPoResult] = useState<POResult | null>(null);
+  const [poError, setPoError] = useState<string | null>(null);
+  const [poLoading, setPoLoading] = useState(false);
+
   function set<K extends keyof Params>(key: K, value: Params[K]) {
     setParams((p) => ({ ...p, [key]: value }));
   }
@@ -527,6 +542,8 @@ export default function ReassortPage() {
     setLoading(true);
     setError(null);
     setResults(null);
+    setPoResult(null);
+    setPoError(null);
     const lines: string[] = [];
     const addLog = (msg: string) => lines.push(msg);
 
@@ -574,6 +591,39 @@ export default function ReassortPage() {
       setLog(lines);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function createPO() {
+    if (!results || results.length === 0) return;
+    setPoLoading(true);
+    setPoError(null);
+    setPoResult(null);
+    try {
+      const d = new Date();
+      d.setDate(d.getDate() + params.leadTimeDays);
+      const expectedArrival = d.toISOString().slice(0, 10);
+
+      const res = await fetch("/api/reassort-po", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: results.map((r) => ({
+            sku: r.sku,
+            name: r.name,
+            quantity: r.recommendedQty,
+            supplierName: r.supplier,
+          })),
+          expectedArrival,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur lors de la création du bon de commande");
+      setPoResult(data as POResult);
+    } catch (e) {
+      setPoError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPoLoading(false);
     }
   }
 
@@ -673,7 +723,62 @@ export default function ReassortPage() {
               ↓ Télécharger CSV
             </button>
           )}
+          {results && results.length > 0 && (
+            <button
+              onClick={createPO}
+              disabled={poLoading}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
+            >
+              {poLoading ? "Création en cours..." : "Créer le bon de commande Katana"}
+            </button>
+          )}
         </div>
+
+        {/* Erreur bon de commande */}
+        {poError && (
+          <div className="rounded-xl border border-red-800 bg-red-900/30 p-4 text-sm text-red-300 whitespace-pre-wrap">
+            {poError}
+          </div>
+        )}
+
+        {/* Résultat bon de commande */}
+        {poResult && (
+          <div className="rounded-xl border border-emerald-800 bg-emerald-900/20 p-5 space-y-3">
+            <h2 className="text-sm font-bold text-emerald-300">
+              {poResult.pos.length > 0
+                ? `${poResult.pos.length} bon(s) de commande créé(s) dans Katana`
+                : "Aucun bon de commande créé"}
+            </h2>
+            {poResult.pos.map((po) => (
+              <div key={po.poId} className="flex flex-wrap items-center gap-3 text-sm text-zinc-200">
+                <span className="font-mono font-semibold text-emerald-300">{po.poNumber}</span>
+                <span className="text-zinc-400">{po.supplierName}</span>
+                <span className="text-zinc-500">{po.lineCount} réf. · {po.totalQty} unités</span>
+                <a
+                  href={po.katanaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2"
+                >
+                  Ouvrir dans Katana →
+                </a>
+              </div>
+            ))}
+            {poResult.unmatchedSuppliers.length > 0 && (
+              <p className="text-xs text-orange-300">
+                Fournisseur(s) introuvable(s) dans Katana : {poResult.unmatchedSuppliers.join(", ")}
+              </p>
+            )}
+            {poResult.unresolvedSkus.length > 0 && (
+              <p className="text-xs text-orange-300">
+                {poResult.unresolvedSkus.length} SKU non trouvé(s) dans Katana (ignorés) : {poResult.unresolvedSkus.slice(0, 20).join(", ")}{poResult.unresolvedSkus.length > 20 ? "…" : ""}
+              </p>
+            )}
+            <p className="text-xs text-zinc-500">
+              Les bons de commande sont créés en état « non reçu » — ajuste les quantités directement dans Katana avant de les envoyer.
+            </p>
+          </div>
+        )}
 
         {/* Erreur */}
         {error && (

@@ -474,6 +474,21 @@ export async function getKatanaVariantIdBySku(sku: string): Promise<number | nul
   return v ? (v.id as number) : null;
 }
 
+export async function getKatanaVariantWithPriceBySku(
+  sku: string
+): Promise<{ id: number; purchasePrice: number | null } | null> {
+  const data = (await katanaFetch(
+    `/v1/variants?sku=${encodeURIComponent(sku)}&limit=1`,
+    { method: "GET" }
+  )) as { data?: Record<string, unknown>[] };
+  const v = data?.data?.[0];
+  if (!v) return null;
+  const rawPrice = v.purchase_price;
+  const purchasePrice =
+    rawPrice != null && !isNaN(Number(rawPrice)) ? Number(rawPrice) : null;
+  return { id: v.id as number, purchasePrice };
+}
+
 export async function getVariantStock(variantId: number): Promise<{
   inStock: number;
   committed: number;
@@ -518,7 +533,8 @@ export async function getKatanaVariantByBarcode(barcode: string): Promise<{
 export async function createKatanaPOWithRows(
   supplierId: number,
   rows: { variantId: number; quantity: number; pricePerUnit: number }[],
-  expectedArrival?: string | null
+  expectedArrival?: string | null,
+  orderPrefix = "ICE"
 ): Promise<{ id: number; number: string; deliveryDate: string | null }> {
   // Find 0% tax rate (imports) — fallback to default, then first available
   const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
@@ -535,7 +551,7 @@ export async function createKatanaPOWithRows(
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   const payload: Record<string, unknown> = {
     supplier_id: supplierId,
-    order_no: `ICE-${ts}-${rand}`,
+    order_no: `${orderPrefix}-${ts}-${rand}`,
     location_id: DEFAULT_LOCATION_ID,
     ...(expectedArrival ? { expected_arrival_date: expectedArrival } : {}),
     purchase_order_rows: rows.map((r) => ({
