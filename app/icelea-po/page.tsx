@@ -45,6 +45,8 @@ type SubmitItem = {
 
 type LinkedOrder = { id: number; name: string };
 
+type OpenPO = { id: number; orderNo: string; rowCount: number; createdDate: string | null };
+
 type Phase = "setup" | "scanning" | "closed";
 
 export default function IceleaPOPage() {
@@ -63,6 +65,11 @@ export default function IceleaPOPage() {
   const [resendDone, setResendDone] = useState<number | null>(null);
   const [expectedArrival, setExpectedArrival] = useState<string>("");
 
+  // Bon de commande de réassort existant à compléter (optionnel)
+  const [openPos, setOpenPos] = useState<OpenPO[]>([]);
+  const [openPosLoading, setOpenPosLoading] = useState(false);
+  const [targetPoId, setTargetPoId] = useState<number | "">("");
+
   // Manual ingredient lookup by SKU
   type IngSearchState = { localId: string; sku: string; result: IceleaIngredient | null; error: string | null; loading: boolean };
   const [ingSearch, setIngSearch] = useState<IngSearchState | null>(null);
@@ -75,6 +82,7 @@ export default function IceleaPOPage() {
   const [currentOrderName, setCurrentOrderName] = useState<string | null>(null);
   const [linkedOrders, setLinkedOrders] = useState<LinkedOrder[]>([]);
   const [closedLinkedOrders, setClosedLinkedOrders] = useState<LinkedOrder[]>([]);
+  const [closedMerged, setClosedMerged] = useState<{ increased: number; added: number } | null>(null);
 
   // Refs for event handlers (avoid stale closures)
   const currentOrderRef = useRef<LinkedOrder | null>(null);
@@ -94,6 +102,17 @@ export default function IceleaPOPage() {
       .catch(() => {})
       .finally(() => setSuppliersLoading(false));
   }, []);
+
+  // Charger les bons de commande ouverts du fournisseur (pour en compléter un)
+  useEffect(() => {
+    if (!selectedSupplierId) { setOpenPos([]); setTargetPoId(""); return; }
+    setOpenPosLoading(true);
+    fetch(`/api/icelea-po/open-pos?supplierId=${selectedSupplierId}`)
+      .then((r) => r.json())
+      .then((d: { pos?: OpenPO[] }) => setOpenPos(d.pos ?? []))
+      .catch(() => setOpenPos([]))
+      .finally(() => setOpenPosLoading(false));
+  }, [selectedSupplierId]);
 
   function setCurrentOrder(order: LinkedOrder | null) {
     currentOrderRef.current = order;
@@ -374,12 +393,14 @@ export default function IceleaPOPage() {
           shopifyOrderIds: linkedOrders.map((o) => o.id),
           scannedPairs,
           expectedArrival: expectedArrival || null,
+          targetPoId: targetPoId || null,
         }),
       });
-      const data = await res.json() as { ok?: boolean; poNumber?: string; deliveryDate?: string | null; error?: string };
+      const data = await res.json() as { ok?: boolean; poNumber?: string; deliveryDate?: string | null; error?: string; merged?: { increased: number; added: number } | null };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur création PO");
       setClosedPONumber(data.poNumber ?? "—");
       setClosedDeliveryDate(data.deliveryDate ?? null);
+      setClosedMerged(data.merged ?? null);
       setResendDone(null);
       setClosedLinkedOrders(linkedOrders);
       setPhase("closed");
@@ -398,6 +419,8 @@ export default function IceleaPOPage() {
     setLinkedOrders([]);
     setClosedLinkedOrders([]);
     setClosedError(null);
+    setClosedMerged(null);
+    setTargetPoId("");
   }
 
   function updateQuantity(localId: string, qty: number) {
@@ -475,13 +498,18 @@ export default function IceleaPOPage() {
       <div style={s.container}>
         <div style={{ textAlign: "center", padding: "40px 20px" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
-          <h2 style={{ margin: 0 }}>Bon de commande créé</h2>
+          <h2 style={{ margin: 0 }}>{closedMerged ? "Articles ajoutés au bon de commande" : "Bon de commande créé"}</h2>
           <p style={{ color: "#555", margin: "8px 0 0" }}>
             PO n° <strong>{closedPONumber}</strong> — {selectedSupplier?.name}
           </p>
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
             {poItems.length} référence(s) · {totalQty} pièce(s) · CHF {totalCost.toFixed(2)}
           </p>
+          {closedMerged && (
+            <p style={{ color: "#2e7d32", fontSize: 13, marginTop: 4 }}>
+              {closedMerged.added} nouvelle(s) ligne(s) · {closedMerged.increased} quantité(s) augmentée(s)
+            </p>
+          )}
           {closedLinkedOrders.length > 0 && (
             <div style={{ marginTop: 12 }}>
               <p style={{ color: "#2e7d32", fontSize: 13, margin: "0 0 6px" }}>
@@ -555,7 +583,7 @@ export default function IceleaPOPage() {
             disabled={!poItems.length || hasPending || submitting}
             onClick={closePO}
           >
-            {submitting ? "En cours…" : "Clore le PO"}
+            {submitting ? "En cours…" : targetPoId !== "" ? "Ajouter au PO de réassort" : "Clore le PO"}
           </button>
         </div>
 
@@ -841,6 +869,30 @@ export default function IceleaPOPage() {
           >
             Effacer
           </button>
+        )}
+      </div>
+      <div style={{ marginTop: 24 }}>
+        <label style={s.label}>Compléter un bon de commande existant (optionnel)</label>
+        {openPosLoading ? (
+          <div style={{ color: "#888", fontSize: 14 }}>Chargement…</div>
+        ) : (
+          <select
+            style={s.select}
+            value={targetPoId}
+            onChange={(e) => setTargetPoId(e.target.value ? Number(e.target.value) : "")}
+          >
+            <option value="">— Nouveau bon de commande —</option>
+            {openPos.map((po) => (
+              <option key={po.id} value={po.id}>
+                {po.orderNo} · {po.rowCount} lignes
+              </option>
+            ))}
+          </select>
+        )}
+        {targetPoId !== "" && (
+          <div style={{ color: "#2e7d32", fontSize: 12, marginTop: 6 }}>
+            Les articles scannés seront ajoutés à ce bon de commande (quantité additionnée si déjà présent).
+          </div>
         )}
       </div>
       <div style={{ color: "#888", fontSize: 12, marginTop: 16, lineHeight: 1.5 }}>

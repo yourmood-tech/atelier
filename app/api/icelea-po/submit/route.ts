@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { createKatanaPOWithRows } from "@/lib/katana";
+import { createKatanaPOWithRows, mergeRowsIntoPO } from "@/lib/katana";
 import { setIceleaTags, getOrderById } from "@/lib/shopify";
 import { getKlaviyoProfileLocale, generateBackorderEmailMulti, generateFollowUpEmailMulti, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -50,19 +50,35 @@ export async function POST(req: NextRequest) {
       shopifyOrderIds?: number[];
       scannedPairs?: ScannedPair[];
       expectedArrival?: string | null;
+      targetPoId?: number | null;
     };
 
-    const { supplierId, supplierName, items, shopifyOrderIds, scannedPairs, expectedArrival } = body;
+    const { supplierId, supplierName, items, shopifyOrderIds, scannedPairs, expectedArrival, targetPoId } = body;
 
     if (!supplierId || !items?.length) {
       return NextResponse.json({ error: "supplierId et items requis" }, { status: 400 });
     }
 
-    const po = await createKatanaPOWithRows(
-      supplierId,
-      items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit })),
-      expectedArrival
-    );
+    // Deux modes :
+    //   - targetPoId fourni → fusionner les articles scannés dans un bon de commande
+    //     existant (réassort) : quantité additionnée si déjà présent, sinon nouvelle ligne.
+    //   - sinon → créer un nouveau bon de commande.
+    let po: { id: number; number: string; deliveryDate: string | null };
+    let mergeSummary: { increased: number; added: number } | null = null;
+    if (targetPoId) {
+      const m = await mergeRowsIntoPO(
+        targetPoId,
+        items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit }))
+      );
+      po = { id: m.id, number: m.poNumber, deliveryDate: m.deliveryDate };
+      mergeSummary = { increased: m.increased, added: m.added };
+    } else {
+      po = await createKatanaPOWithRows(
+        supplierId,
+        items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit })),
+        expectedArrival
+      );
+    }
 
     const apiKey = process.env.RESEND_API_KEY;
     if (apiKey) {
@@ -280,6 +296,7 @@ export async function POST(req: NextRequest) {
       poNumber: po.number,
       deliveryDate: po.deliveryDate,
       emailsQueued: pairsSnapshot.length,
+      merged: mergeSummary,
     });
   } catch (err) {
     return NextResponse.json(

@@ -631,6 +631,88 @@ export async function createKatanaPOWithRows(
   };
 }
 
+// Liste les bons de commande ouverts d'un fournisseur (non reçus + partiellement reçus),
+// les plus récents d'abord. Pour choisir le PO de réassort à compléter au scan.
+export async function listOpenPOsForSupplier(
+  supplierId: number
+): Promise<{ id: number; orderNo: string; rowCount: number; createdDate: string | null }[]> {
+  const [notReceived, partiallyReceived] = await Promise.all([
+    katanaFetch(`/v1/purchase_orders?supplier_id=${supplierId}&status=NOT_RECEIVED&limit=100`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+    katanaFetch(`/v1/purchase_orders?supplier_id=${supplierId}&status=PARTIALLY_RECEIVED&limit=100`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+  ]);
+  const all = [...(notReceived?.data ?? []), ...(partiallyReceived?.data ?? [])];
+  return all
+    .map((po) => ({
+      id: po.id as number,
+      orderNo: (po.order_no ?? String(po.id)) as string,
+      rowCount: ((po.purchase_order_rows as unknown[]) ?? []).length,
+      createdDate: (po.order_created_date ?? po.created_at ?? null) as string | null,
+    }))
+    .sort((a, b) => (b.createdDate ?? "").localeCompare(a.createdDate ?? ""));
+}
+
+// Fusionne des lignes dans un bon de commande existant :
+//   - si la matière (variant) y est déjà → on ADDITIONNE la quantité
+//   - sinon → on ajoute une nouvelle ligne
+export async function mergeRowsIntoPO(
+  poId: number,
+  rows: { variantId: number; quantity: number; pricePerUnit: number }[]
+): Promise<{ id: number; poNumber: string; deliveryDate: string | null; increased: number; added: number }> {
+  // 1. Charger le PO + ses lignes existantes
+  const po = (await katanaFetch(`/v1/purchase_orders/${poId}`, { method: "GET" })) as Record<string, unknown>;
+  const existingRows = (po.purchase_order_rows as Record<string, unknown>[]) ?? [];
+  const rowByVariant = new Map<number, { id: number; quantity: number }>();
+  for (const r of existingRows) {
+    rowByVariant.set(r.variant_id as number, { id: r.id as number, quantity: Number(r.quantity ?? 0) });
+  }
+
+  // 2. Taux de taxe 0% (comme à la création) pour les nouvelles lignes
+  const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
+    data?: { id: number; name: string; rate?: number | null; is_default_purchases?: boolean }[];
+  };
+  const taxRates = taxData?.data ?? [];
+  const taxRate =
+    taxRates.find((t) => t.rate === null || (t.name as string)?.toLowerCase().includes("no tax")) ??
+    taxRates.find((t) => t.is_default_purchases) ??
+    taxRates[0];
+  if (!taxRate) throw new Error("Aucun taux de taxe configuré dans Katana");
+
+  let increased = 0;
+  let added = 0;
+
+  // 3. Pour chaque article scanné : additionner si présent, sinon ajouter
+  for (const row of rows) {
+    const existing = rowByVariant.get(row.variantId);
+    if (existing) {
+      await katanaFetch(`/v1/purchase_order_rows/${existing.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ quantity: existing.quantity + row.quantity }),
+      });
+      increased++;
+    } else {
+      await katanaFetch(`/v1/purchase_order_rows`, {
+        method: "POST",
+        body: JSON.stringify({
+          purchase_order_id: poId,
+          variant_id: row.variantId,
+          quantity: row.quantity,
+          price_per_unit: row.pricePerUnit,
+          tax_rate_id: taxRate.id,
+        }),
+      });
+      added++;
+    }
+  }
+
+  return {
+    id: poId,
+    poNumber: (po.order_no ?? String(poId)) as string,
+    deliveryDate: (po.expected_arrival_date ?? null) as string | null,
+    increased,
+    added,
+  };
+}
+
 export async function checkKatanaVariants(
   skus: string[]
 ): Promise<{ sku: string; exists: boolean; katanaId?: number; katanaProductId?: number; configMissing?: boolean }[]> {
