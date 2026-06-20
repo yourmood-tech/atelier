@@ -104,6 +104,14 @@ async function katanaFetch(path: string, init?: RequestInit, retries = 5) {
     return katanaFetch(path, init, retries - 1);
   }
 
+  // Erreur interne transitoire côté Katana (500/502/503/504) → réessai borné.
+  // Sûr car un 5xx signifie que l'opération a échoué (rien créé).
+  if (res.status >= 500 && retries > 0) {
+    const attempt = 6 - retries; // 1, 2, 3...
+    await new Promise((r) => setTimeout(r, Math.min(1000 * attempt, 5000)));
+    return katanaFetch(path, init, retries - 1);
+  }
+
   const rawText = await res.text();
 
   let data: unknown = null;

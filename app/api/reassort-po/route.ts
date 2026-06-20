@@ -77,22 +77,27 @@ export async function POST(req: NextRequest) {
 
       if (rows.length === 0) continue;
 
-      // 5. Create the purchase order in Katana
-      const po = await createKatanaPOWithRows(
-        supplier.id,
-        rows,
-        expectedArrival ?? null,
-        "RA"
-      );
-
-      pos.push({
-        supplierName,
-        poNumber: po.number,
-        poId: po.id,
-        katanaUrl: `https://app.katanamrp.com/purchase-orders/${po.id}`,
-        lineCount: rows.length,
-        totalQty: rows.reduce((s, r) => s + r.quantity, 0),
-      });
+      // 5. Create the purchase order(s) in Katana.
+      //    Katana plante (500/431) au-delà de ~150 lignes par commande → on
+      //    découpe en plusieurs bons de commande de 100 lignes max.
+      const MAX_ROWS = 100;
+      for (let i = 0; i < rows.length; i += MAX_ROWS) {
+        const chunk = rows.slice(i, i + MAX_ROWS);
+        const po = await createKatanaPOWithRows(
+          supplier.id,
+          chunk,
+          expectedArrival ?? null,
+          "RA"
+        );
+        pos.push({
+          supplierName,
+          poNumber: po.number,
+          poId: po.id,
+          katanaUrl: `https://app.katanamrp.com/purchase-orders/${po.id}`,
+          lineCount: chunk.length,
+          totalQty: chunk.reduce((s, r) => s + r.quantity, 0),
+        });
+      }
     }
 
     return NextResponse.json({ pos, unresolvedSkus, unmatchedSuppliers });
