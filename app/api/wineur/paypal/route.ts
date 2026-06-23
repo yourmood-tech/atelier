@@ -135,10 +135,15 @@ export async function GET(req: NextRequest) {
       const lib  = `Rembt PayPal${nom !== "PayPal" ? ": " + nom : ""}`;
       const isRefundCH = code === "T1107" || isCH;
       if (isRefundCH) {
-        const { ht, tva } = calculTva(brut);
-        e(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`, ht);
+        // Si remboursement en devise : convertir en CHF pour le montant de
+        // référence (HT/TVA + ligne du compte), et garder le montant d'origine
+        // + la devise sur la ligne du compte de passage (ex. 100402 EUR).
+        const rate        = devise !== "CHF" ? await getESTVRate(date, devise) : 1;
+        const brutChf     = r2(brut * rate);
+        const { ht, tva } = calculTva(brutChf);
+        e(ecritures, date, COMPTES.VENTE_GEN, `${lib} HT`,  ht);
         e(ecritures, date, COMPTES.TVA_VENTE, `${lib} TVA`, tva);
-        e(ecritures, date, cpte,              lib,          -brut);
+        e(ecritures, date, cpte,              lib,          -brutChf, devise !== "CHF" ? -brut : undefined, devise !== "CHF" ? devise : undefined);
       } else {
         // Étranger : pas de TVA suisse → montant CHF converti via ESTV
         const brutChf = r2(brut * await getESTVRate(date, devise));
