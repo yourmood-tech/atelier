@@ -187,13 +187,16 @@ export async function POST(req: NextRequest) {
       const { ht, tva } = calculTva(montantVal);
       const tvaAcq    = r2(montantVal * TAUX);
 
+      // 220001 = compte type bancaire : un PAIEMENT par carte le VIDE (−),
+      // la charge correspondante AUGMENTE (+). (Une recharge de carte, côté
+      // relevé bancaire, le REMPLIT en +.)
       if (mode === "CH") {
-        ecritures.push({ date, compte: "220001",        libelle: lib,                           montant:  montantVal });
-        ecritures.push({ date, compte: cpte,            libelle: `${lib} HT`,                  montant: -ht         });
-        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `${lib} TVA`,                 montant: -tva        });
+        ecritures.push({ date, compte: "220001",        libelle: lib,                           montant: -montantVal });
+        ecritures.push({ date, compte: cpte,            libelle: `${lib} HT`,                  montant:  ht         });
+        ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `${lib} TVA`,                 montant:  tva        });
       } else {
-        ecritures.push({ date, compte: "220001",        libelle: lib,                           montant:  montantVal });
-        ecritures.push({ date, compte: cpte,            libelle: `${lib} (Acquis.)`,            montant: -montantVal });
+        ecritures.push({ date, compte: "220001",        libelle: lib,                           montant: -montantVal });
+        ecritures.push({ date, compte: cpte,            libelle: `${lib} (Acquis.)`,            montant:  montantVal });
         ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA s/acquis. ${lib}`,       montant:  tvaAcq    });
         ecritures.push({ date, compte: COMPTES.TVA_ACQ, libelle: `TVA s/acquis. ${lib} (due)`, montant: -tvaAcq    });
       }
