@@ -149,14 +149,16 @@ export async function GET(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // T0003 positif & T0003 négatif + T0006 négatif
-    // Ventes entrantes et paiements fournisseurs
+    // Le SIGNE du montant fait foi :
+    //   montant positif = argent qui RENTRE  → vente / encaissement → 320001
+    //   montant négatif = argent qui SORT    → paiement fournisseur → mapping compte
+    // (T0006 = encaissement par caisse Express Checkout = une VENTE, jamais
+    //  un paiement sortant — c'est pourquoi le code ne sert pas à classer ici.)
     // ═══════════════════════════════════════════════════════════════
-    const isSupplierCode = code === "T0006";
     const lib = `PayPal: ${nom}`;
 
     // ── VENTE / ENCAISSEMENT ────────────────────────────────────────
-    if (rawAmt > 0 && !isSupplierCode) {
+    if (rawAmt > 0) {
       const brut = rawAmt;
       const { ht, tva } = calculTva(brut);
 
@@ -197,7 +199,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── PAIEMENT FOURNISSEUR ────────────────────────────────────────
-    if (rawAmt < 0 || isSupplierCode) {
+    if (rawAmt < 0) {
       const brut       = Math.abs(rawAmt);
       const haystack   = `${nom} ${email}`.toLowerCase();
       const cpteCharge = lookupInMap(haystack, mappings);
