@@ -115,16 +115,16 @@ export async function GET(req: NextRequest) {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // T0700 — CHF reçu suite à conversion EUR→CHF
-    // Crédit du compte CHF PayPal, débit 670004 (écart de change).
-    // Ensemble avec T0200, 670004 reflète l'écart de change net.
+    // T0700 — Recharge du solde PayPal par la carte Visa PostFinance
+    // (et NON une conversion de monnaie : la jambe CHF d'une conversion
+    //  est elle aussi un T0200, pas un T0700 — vérifié sur janvier 2026,
+    //  montants T0700 = exactement les lignes « PAYPAL *… » du relevé Visa).
+    // Cette recharge est déjà comptabilisée par l'import du relevé Visa
+    // PostFinance (banque 220001 → compte PayPal 100401). La rejouer ici
+    // doublerait le crédit sur 100401 (avoir PayPal qui gonfle) et polluerait
+    // le compte d'écart de change 670004. → On l'ignore côté PayPal.
     // ═══════════════════════════════════════════════════════════════
-    if (code === "T0700") {
-      const lib = "PayPal conversion →CHF reçu";
-      e(ecritures, date, COMPTES.DIFF_CHANGE,    lib, -rawAmt);
-      e(ecritures, date, COMPTES.PASSAGE_PAYPAL_CHF, lib, rawAmt);
-      continue;
-    }
+    if (code === "T0700") continue;
 
     // ═══════════════════════════════════════════════════════════════
     // T0201 — Remboursement partiel client étranger (EUR négatif)
