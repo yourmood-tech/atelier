@@ -43,6 +43,28 @@ export async function POST(req: NextRequest) {
   // Trier par date puis par compte — pas d'agrégation, libellés individuels préservés
   all.sort((a, b) => a.date.localeCompare(b.date) || a.compte.localeCompare(b.compte));
 
+  // RÈGLE DURE — un fichier d'export = une seule année fiscale (= année civile,
+  // clôture au 31.12). Si les écritures couvrent 2 années (ex. relevé Visa qui
+  // court du 29.12 au 27.01), on sort UN fichier PAR année pour ne jamais
+  // mélanger deux exercices dans un même import WinEUR.
+  const byYear = new Map<string, Ecriture[]>();
+  for (const e of all) {
+    const yr = e.date.slice(0, 4);
+    if (!byYear.has(yr)) byYear.set(yr, []);
+    byYear.get(yr)!.push(e);
+  }
+  const years = [...byYear.keys()].sort();
+
+  // Plusieurs années fiscales → JSON avec un CSV par année (la page télécharge chacun)
+  if (years.length > 1) {
+    const files = years.map((yr) => {
+      const ec = byYear.get(yr)!;
+      return { year: yr, filename: `wineur_${yr}.csv`, lines: ec.length, csv: toCsv(ec) };
+    });
+    return NextResponse.json({ multi_year: true, files, ...(errors.length > 0 ? { warnings: errors } : {}) });
+  }
+
+  // Une seule année → un seul CSV (comportement habituel)
   const csv = toCsv(all);
 
   return new NextResponse(csv, {

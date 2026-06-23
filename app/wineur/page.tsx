@@ -159,10 +159,32 @@ export default function WineurPage() {
 
       const contentType = res.headers.get("content-type") ?? "";
       if (contentType.includes("application/json")) {
-        // Fournisseurs inconnus détectés côté API → afficher le résolveur
-        const j = await res.json() as { unknowns: UnknownEntry[]; ecritures: Ecriture[] };
-        setPendingEcritures(j.ecritures);
-        setUnknowns(j.unknowns);
+        const j = await res.json() as {
+          unknowns?: UnknownEntry[];
+          ecritures?: Ecriture[];
+          multi_year?: boolean;
+          files?: Array<{ year: string; filename: string; lines: number; csv: string }>;
+        };
+
+        // Plusieurs années fiscales → un fichier par année, téléchargés à la suite
+        if (j.multi_year && j.files) {
+          for (const f of j.files) {
+            const blob = new Blob([f.csv], { type: "text/csv;charset=utf-8;" });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement("a");
+            a.href = url; a.download = f.filename; a.click();
+            URL.revokeObjectURL(url);
+            await new Promise(r => setTimeout(r, 400)); // éviter que le navigateur bloque les téléchargements multiples
+          }
+          const detail = j.files.map(f => `${f.filename} (${f.lines})`).join(" + ");
+          setStatus(`✅ ${j.files.length} années fiscales détectées — ${j.files.length} fichiers téléchargés : ${detail}`);
+          setUnknowns([]); setPendingEcritures([]);
+          return;
+        }
+
+        // Sinon : fournisseurs inconnus détectés côté API → afficher le résolveur
+        setPendingEcritures(j.ecritures ?? []);
+        setUnknowns(j.unknowns ?? []);
         setLoading(false);
         return;
       }
