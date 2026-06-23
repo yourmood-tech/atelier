@@ -116,15 +116,22 @@ export async function GET(req: NextRequest) {
 
     // ═══════════════════════════════════════════════════════════════
     // T0700 — Recharge du solde PayPal par la carte Visa PostFinance
-    // (et NON une conversion de monnaie : la jambe CHF d'une conversion
-    //  est elle aussi un T0200, pas un T0700 — vérifié sur janvier 2026,
+    // (ce N'EST PAS une conversion de monnaie : la jambe CHF d'une vraie
+    //  conversion est elle aussi un T0200 — vérifié janvier 2026, les
     //  montants T0700 = exactement les lignes « PAYPAL *… » du relevé Visa).
-    // Cette recharge est déjà comptabilisée par l'import du relevé Visa
-    // PostFinance (banque 220001 → compte PayPal 100401). La rejouer ici
-    // doublerait le crédit sur 100401 (avoir PayPal qui gonfle) et polluerait
-    // le compte d'écart de change 670004. → On l'ignore côté PayPal.
+    //
+    // C'est ici (côté PayPal) qu'on enregistre la recharge sur 100401, car
+    // c'est calé sur le bon mois (le relevé Visa, lui, court du 29.12 au
+    // 27.01 → 3 jours de décembre fausseraient le mois). Contrepartie =
+    // compte de transit 670004 ; le relevé Visa décharge la carte (220001)
+    // contre ce MÊME 670004, qui ne garde que le petit écart de calendrier.
     // ═══════════════════════════════════════════════════════════════
-    if (code === "T0700") continue;
+    if (code === "T0700") {
+      const lib = "Recharge PayPal par carte Visa PF";
+      e(ecritures, date, COMPTES.PASSAGE_PAYPAL_CHF, lib,  rawAmt);
+      e(ecritures, date, COMPTES.DIFF_CHANGE,        lib, -rawAmt);
+      continue;
+    }
 
     // ═══════════════════════════════════════════════════════════════
     // T0201 — Remboursement partiel client étranger (EUR négatif)

@@ -155,10 +155,16 @@ export async function POST(req: NextRequest) {
       const date = parseDate(dateC);
       const lib  = `CC PF: ${normalizeMerchant(description).toUpperCase().slice(0, 35)}`;
 
-      // PAYPAL * → transfert inter-comptes
+      // PAYPAL * → recharge du solde PayPal payée par la carte.
+      // On décharge la carte (220001) mais on NE touche PAS 100401 : le
+      // compte PayPal est déjà crédité par l'import PayPal (flux T0700),
+      // calé sur le bon mois. Le relevé Visa court du 29.12 au 27.01, donc
+      // ses recharges straddlent décembre/janvier ; les poser sur 100401
+      // décalerait le mois. Contrepartie = compte de transit 670004, où ne
+      // reste que le petit écart de calendrier entre les deux relevés.
       if (isPaypalTopup(description)) {
         const libPP = `Recharge PayPal CC PF: ${description.slice(0, 30)}`;
-        ecritures.push({ date, compte: "100401", libelle: libPP, montant:  montantVal });
+        ecritures.push({ date, compte: "670004", libelle: libPP, montant:  montantVal });
         ecritures.push({ date, compte: "220001", libelle: libPP, montant: -montantVal });
         imported++;
         continue;
