@@ -75,6 +75,7 @@ export async function GET(request: Request) {
   const ventesParJour: Record<string, { ca: number; count: number }> = {};
   let totalCA = 0;
   let totalCommandes = 0;
+  const starterPack = { quantity: 0, ca: 0 }; // carte unique : nommés + bundles Simple Bundles
   let url: string | null =
     `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any&financial_status=paid` +
     `&created_at_min=${encodeURIComponent(debut.toISOString())}&created_at_max=${encodeURIComponent(fin.toISOString())}` +
@@ -93,7 +94,7 @@ export async function GET(request: Request) {
         created_at: string;
         cancelled_at: string | null;
         financial_status: string;
-        line_items: Array<{ title: string; quantity: number; price: string }>;
+        line_items: Array<{ title: string; quantity: number; price: string; properties?: Array<{ name: string; value: string }> }>;
       }> = data.orders || [];
       for (const o of orders) {
         if (o.cancelled_at) continue;
@@ -107,12 +108,24 @@ export async function GET(request: Request) {
           ventesParJour[jour].ca += ca;
           ventesParJour[jour].count++;
         }
+        const bundleTitlesSP = new Set<string>();
         for (const li of o.line_items || []) {
           const title = li.title || "Sans titre";
           if (!ventes[title]) ventes[title] = { title, quantity: 0, ca: 0 };
           ventes[title].quantity += li.quantity || 0;
           ventes[title].ca += parseFloat(li.price || "0") * (li.quantity || 0);
+          // Starter pack : produit nommé OU bundle Simple Bundles (propriété _sb_bundle_title)
+          const bt = (li.properties || []).find((p) => p.name === "_sb_bundle_title")?.value || "";
+          const lineCA = parseFloat(li.price || "0") * (li.quantity || 0);
+          if (bt.toLowerCase().includes("starter pack")) {
+            bundleTitlesSP.add(bt); // 1 bundle = 1 starter pack (dédup par titre de bundle)
+            starterPack.ca += lineCA;
+          } else if (title.toLowerCase().includes("starter pack")) {
+            starterPack.quantity += li.quantity || 0;
+            starterPack.ca += lineCA;
+          }
         }
+        starterPack.quantity += bundleTitlesSP.size;
       }
       const link: string | null = r.headers.get("link");
       const next = link?.match(/<([^>]+)>;\s*rel="next"/);
@@ -123,6 +136,14 @@ export async function GET(request: Request) {
       { error: "erreur fetch orders", detail: String((e as Error)?.message || e) },
       { status: 500 }
     );
+  }
+
+  // Carte unique "Starter pack" : on retire les lignes nommées du détail et on injecte le total (nommés + bundles)
+  for (const k of Object.keys(ventes)) {
+    if (k.toLowerCase().includes("starter pack")) delete ventes[k];
+  }
+  if (starterPack.quantity > 0) {
+    ventes["Starter pack"] = { title: "Starter pack", quantity: starterPack.quantity, ca: Math.round(starterPack.ca) };
   }
 
   // Arrondir les ventes par jour

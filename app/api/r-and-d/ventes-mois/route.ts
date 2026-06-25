@@ -59,6 +59,7 @@ export async function GET(request: Request) {
   const ventes: Record<string, VenteAgregee> = {};
   let totalCA = 0;
   let totalCommandes = 0;
+  const starterPack = { quantity: 0, ca: 0 }; // carte unique : nommés + bundles Simple Bundles
   let url: string | null =
     `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any&financial_status=paid` +
     `&created_at_min=${encodeURIComponent(debut)}&created_at_max=${encodeURIComponent(fin)}` +
@@ -76,18 +77,29 @@ export async function GET(request: Request) {
         total_price: string;
         cancelled_at: string | null;
         financial_status: string;
-        line_items: Array<{ title: string; quantity: number; price: string }>;
+        line_items: Array<{ title: string; quantity: number; price: string; properties?: Array<{ name: string; value: string }> }>;
       }> = data.orders || [];
       for (const o of orders) {
         if (o.cancelled_at) continue;
         totalCommandes++;
         totalCA += parseFloat(o.total_price || "0");
+        const bundleTitlesSP = new Set<string>();
         for (const li of o.line_items || []) {
           const title = li.title || "Sans titre";
           if (!ventes[title]) ventes[title] = { title, quantity: 0, ca: 0 };
           ventes[title].quantity += li.quantity || 0;
           ventes[title].ca += parseFloat(li.price || "0") * (li.quantity || 0);
+          const bt = (li.properties || []).find((p) => p.name === "_sb_bundle_title")?.value || "";
+          const lineCA = parseFloat(li.price || "0") * (li.quantity || 0);
+          if (bt.toLowerCase().includes("starter pack")) {
+            bundleTitlesSP.add(bt);
+            starterPack.ca += lineCA;
+          } else if (title.toLowerCase().includes("starter pack")) {
+            starterPack.quantity += li.quantity || 0;
+            starterPack.ca += lineCA;
+          }
         }
+        starterPack.quantity += bundleTitlesSP.size;
       }
       // Pagination via Link header
       const link: string | null = r.headers.get("link");
@@ -99,6 +111,13 @@ export async function GET(request: Request) {
       { error: "erreur fetch orders", detail: String((e as Error)?.message || e) },
       { status: 500 }
     );
+  }
+
+  for (const k of Object.keys(ventes)) {
+    if (k.toLowerCase().includes("starter pack")) delete ventes[k];
+  }
+  if (starterPack.quantity > 0) {
+    ventes["Starter pack"] = { title: "Starter pack", quantity: starterPack.quantity, ca: Math.round(starterPack.ca) };
   }
 
   const result = { ventes, total_ca: Math.round(totalCA), total_commandes: totalCommandes };
