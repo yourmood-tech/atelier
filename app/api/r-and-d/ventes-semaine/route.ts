@@ -76,7 +76,7 @@ export async function GET(request: Request) {
   let totalCA = 0;
   let totalCommandes = 0;
   let url: string | null =
-    `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any&financial_status=paid` +
+    `https://${SHOPIFY_DOMAIN}/admin/api/2024-10/orders.json?limit=250&status=any` +
     `&created_at_min=${encodeURIComponent(debut.toISOString())}&created_at_max=${encodeURIComponent(fin.toISOString())}` +
     `&fields=id,total_price,created_at,line_items,financial_status,cancelled_at`;
 
