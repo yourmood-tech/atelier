@@ -62,14 +62,14 @@ export function Room({
         background: mur,
         border: "1px solid #e6dccd",
         paddingTop: 70, // espace mur pour les posters au-dessus de la commode
-        minHeight: 460,
+        minHeight: 540,
       }}
     >
       {/* sol */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 90, background: sol, zIndex: 0 }} />
 
-      {/* LA VRAIE ARMOIRE, recolorée — large et basse */}
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 640, margin: "0 auto", padding: "0 12px 28px" }}>
+      {/* LA VRAIE ARMOIRE, recolorée — plus petite pour laisser de la place au décor */}
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 460, margin: "0 auto", padding: "0 12px 28px" }}>
         <Cabinet
           tiroirs={tiroirs}
           open={open}
@@ -91,6 +91,7 @@ export function Room({
           pos={layout[a.id] ?? { left: a.pos!.left, top: a.pos!.top, w: a.pos!.w }}
           z={a.id === frontId ? 60 : a.pos?.z ?? 3}
           editable={editable}
+          selected={a.id === frontId}
           boxRef={boxRef}
           onLayout={onLayout}
           onSelect={() => setFrontId(a.id)}
@@ -115,6 +116,7 @@ function AccessoryItem({
   pos,
   z,
   editable,
+  selected,
   boxRef,
   onLayout,
   onSelect,
@@ -125,6 +127,7 @@ function AccessoryItem({
   pos: { left: number; top: number; w: number };
   z: number;
   editable: boolean;
+  selected: boolean;
   boxRef: React.RefObject<HTMLDivElement | null>;
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
   onSelect?: () => void;
@@ -185,7 +188,7 @@ function AccessoryItem({
         zIndex: z,
         touchAction: "none",
         cursor: editable ? "move" : "default",
-        outline: editable ? "1.5px dashed rgba(107,79,51,0.5)" : "none",
+        outline: editable && selected ? "1.5px dashed rgba(107,79,51,0.55)" : "none",
         outlineOffset: 2,
       }}
       onPointerDown={onPointerDown}
@@ -194,7 +197,7 @@ function AccessoryItem({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} draggable={false} style={{ width: "100%", height: "auto", display: "block", pointerEvents: "none", userSelect: "none" }} />
-      {editable && (
+      {editable && selected && (
         <>
           <span style={{ position: "absolute", top: -11, left: -11, ...badge() }} title="glisse pour déplacer">✥</span>
           {/* poignée d'angle : glisse pour agrandir / réduire */}

@@ -66,7 +66,6 @@ export const DECO: DecoDef[] = [
   { id: "sol-tapisbeige", nom: "Moquette beige", emoji: "🟧", type: "sol", valeur: "linear-gradient(180deg,#e9ddc9,#e3d4bd)" },
   // Accessoires PHOTORÉALISTES (images transparentes fournies par Amila, dans /public/chambre).
   // pos = placement de départ (la cliente peut déplacer/agrandir ensuite).
-  { id: "acc-tapis", nom: "Tapis moelleux", emoji: "⚪", type: "accessoire", valeur: "tapis", img: "/chambre/acc-tapis.png", pos: { left: 50, top: 90, w: 58, z: 0 } },
   { id: "acc-plante", nom: "Palmier en pot", emoji: "🌴", type: "accessoire", valeur: "plante", img: "/chambre/acc-plante.png", pos: { left: 9, top: 54, w: 21, z: 4 } },
   { id: "acc-table", nom: "Table d'appoint", emoji: "🪵", type: "accessoire", valeur: "table", img: "/chambre/acc-table.png", pos: { left: 13, top: 80, w: 17, z: 4 } },
   { id: "acc-lampe", nom: "Lampe champignon", emoji: "💡", type: "accessoire", valeur: "lampe", img: "/chambre/acc-lampe.png", pos: { left: 10, top: 66, w: 10, z: 5 } },

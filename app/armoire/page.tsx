@@ -162,7 +162,7 @@ export default function ArmoirePage() {
         padding: "0 18px 64px",
       }}
     >
-      <div style={{ maxWidth: 1080, margin: "0 auto" }}>
+      <div style={{ maxWidth: 1240, margin: "0 auto" }}>
         <header style={{ textAlign: "center", padding: "40px 0 8px" }}>
           <div style={{ fontSize: 13, letterSpacing: 4, textTransform: "uppercase", opacity: 0.55 }}>mood</div>
           <h1 style={{ fontSize: 30, fontWeight: 300, margin: "6px 0 0", letterSpacing: 1 }}>
