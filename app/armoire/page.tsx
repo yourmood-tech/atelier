@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Memoire } from "./games/Memoire";
 import { Room } from "./Room";
-import { GAMES, DECO, isStaffEmail } from "@/lib/armoire-catalog";
+import { GAMES, DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
    Connexion : email + numéro de commande (preuve de propriété → on ne peut pas
@@ -229,18 +229,21 @@ export default function ArmoirePage() {
                 {data.tiroirs.length === 0 ? (
                   <p style={{ opacity: 0.7, textAlign: "center" }}>Ta collection arrive — elle se remplira à ta prochaine pépite.</p>
                 ) : (
-                  <Room
-                    tiroirs={data.tiroirs}
-                    open={open}
-                    setOpen={setOpen}
-                    unlocked={data.unlocks.deco}
-                    active={active}
-                    editable
-                    onMove={(key, tiroir) => persist(key, { tiroir })}
-                    onPhoto={(key, image) => persist(key, { image })}
-                    layout={layout}
-                    onLayout={onLayout}
-                  />
+                  <>
+                    <ColorBar active={active} unlocked={data.unlocks.deco} onApply={applyDeco} />
+                    <Room
+                      tiroirs={data.tiroirs}
+                      open={open}
+                      setOpen={setOpen}
+                      unlocked={data.unlocks.deco}
+                      active={active}
+                      editable
+                      onMove={(key, tiroir) => persist(key, { tiroir })}
+                      onPhoto={(key, image) => persist(key, { image })}
+                      layout={layout}
+                      onLayout={onLayout}
+                    />
+                  </>
                 )}
               </div>
             )}
@@ -359,6 +362,65 @@ function card(): React.CSSProperties {
 function narrowCard(): React.CSSProperties {
   return { ...card(), maxWidth: 460, marginLeft: "auto", marginRight: "auto" };
 }
+function ColorBar({
+  active,
+  unlocked,
+  onApply,
+}: {
+  active: { mur?: string; sol?: string; armoire?: string };
+  unlocked: string[];
+  onApply: (type: "mur" | "sol" | "armoire", id: string) => void;
+}) {
+  const set = new Set(unlocked);
+  const rows: { type: "mur" | "sol" | "armoire"; label: string }[] = [
+    { type: "armoire", label: "Armoire" },
+    { type: "mur", label: "Mur" },
+    { type: "sol", label: "Sol" },
+  ];
+  const hasAny = rows.some((r) => DECO.some((d) => d.type === r.type && set.has(d.id)));
+  if (!hasAny) {
+    return (
+      <p style={{ textAlign: "center", fontSize: 12, opacity: 0.55, margin: "2px 0 10px" }}>
+        Débloque des couleurs (mur, sol, armoire) dans l&apos;onglet Déco pour les retrouver ici 🤍
+      </p>
+    );
+  }
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", margin: "2px 0 12px" }}>
+      {rows.map((row) => {
+        const opts = DECO.filter((d) => d.type === row.type && set.has(d.id));
+        if (!opts.length) return null;
+        return (
+          <div key={row.type} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 12, opacity: 0.6 }}>{row.label}</span>
+            {opts.map((o) => {
+              const bg = row.type === "armoire" ? ARMOIRE_PALETTES[o.valeur]?.bodyBottom ?? "#ccc" : o.valeur;
+              const isActive = active[row.type] === o.id;
+              return (
+                <button
+                  key={o.id}
+                  onClick={() => onApply(row.type, o.id)}
+                  title={o.nom}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    border: isActive ? "2px solid #3a3330" : "1px solid #d9cdbf",
+                    background: bg,
+                    backgroundSize: "cover",
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                />
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function tabBtn(active: boolean): React.CSSProperties {
   return { padding: "10px 16px", borderRadius: 999, border: active ? "none" : "1px solid #e0d6ca", background: active ? ENCRE : "#fff", color: active ? "#fff" : ENCRE, fontSize: 14, cursor: "pointer", fontWeight: active ? 600 : 400 };
 }

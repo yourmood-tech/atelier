@@ -133,11 +133,14 @@ function AccessoryItem({
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
 }) {
   const dragging = useRef(false);
+  const resizing = useRef(false);
 
+  // DÉPLACER (corps de l'objet)
   function onPointerDown(e: React.PointerEvent) {
     if (!editable) return;
+    e.preventDefault();
     dragging.current = true;
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
   }
   function onPointerMove(e: React.PointerEvent) {
     if (!editable || !dragging.current || !boxRef.current) return;
@@ -146,11 +149,30 @@ function AccessoryItem({
     const top = Math.min(98, Math.max(2, ((e.clientY - r.top) / r.height) * 100));
     onLayout?.(id, { ...pos, left, top });
   }
-  function onPointerUp() {
+  function onPointerUp(e: React.PointerEvent) {
     dragging.current = false;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
   }
-  function resize(delta: number) {
-    onLayout?.(id, { ...pos, w: Math.min(70, Math.max(6, pos.w + delta)) });
+
+  // AGRANDIR (poignée d'angle qu'on étire)
+  function onResizeDown(e: React.PointerEvent) {
+    if (!editable) return;
+    e.stopPropagation();
+    e.preventDefault();
+    resizing.current = true;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function onResizeMove(e: React.PointerEvent) {
+    if (!resizing.current || !boxRef.current) return;
+    const r = boxRef.current.getBoundingClientRect();
+    const centerX = r.left + (pos.left / 100) * r.width;
+    const half = Math.max(8, e.clientX - centerX); // distance centre → coin = demi-largeur
+    const wPct = Math.min(90, Math.max(6, ((half * 2) / r.width) * 100));
+    onLayout?.(id, { ...pos, w: wPct });
+  }
+  function onResizeUp(e: React.PointerEvent) {
+    resizing.current = false;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
   }
 
   return (
@@ -164,6 +186,8 @@ function AccessoryItem({
         zIndex: 3,
         touchAction: "none",
         cursor: editable ? "move" : "default",
+        outline: editable ? "1.5px dashed rgba(107,79,51,0.5)" : "none",
+        outlineOffset: 2,
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -172,15 +196,39 @@ function AccessoryItem({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} draggable={false} style={{ width: "100%", height: "auto", display: "block", pointerEvents: "none", userSelect: "none" }} />
       {editable && (
-        <div style={{ position: "absolute", top: -10, right: -10, display: "flex", gap: 4 }}>
-          <button onClick={() => resize(+3)} style={rzBtn()} aria-label="agrandir">＋</button>
-          <button onClick={() => resize(-3)} style={rzBtn()} aria-label="réduire">－</button>
-        </div>
+        <>
+          <span style={{ position: "absolute", top: -11, left: -11, ...badge() }} title="glisse pour déplacer">✥</span>
+          {/* poignée d'angle : glisse pour agrandir / réduire */}
+          <span
+            onPointerDown={onResizeDown}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeUp}
+            title="étire pour agrandir"
+            style={{
+              position: "absolute",
+              right: -11,
+              bottom: -11,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "#3a3330",
+              color: "#fff",
+              fontSize: 12,
+              lineHeight: "22px",
+              textAlign: "center",
+              cursor: "nwse-resize",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+              touchAction: "none",
+            }}
+          >
+            ⤡
+          </span>
+        </>
       )}
     </div>
   );
 }
 
-function rzBtn(): React.CSSProperties {
-  return { width: 24, height: 24, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.95)", color: "#6b4f33", fontSize: 14, lineHeight: "22px", cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.25)", padding: 0 };
+function badge(): React.CSSProperties {
+  return { width: 22, height: 22, borderRadius: "50%", background: "rgba(255,255,255,0.95)", color: "#6b4f33", fontSize: 12, lineHeight: "22px", textAlign: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.25)" };
 }
