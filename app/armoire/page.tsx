@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Room } from "./Room";
-import { AvatarStudio } from "./AvatarStudio";
-import { AVATAR_DEFAULT, type AvatarConfig } from "./Avatar";
+import { AvatarStudio, type AvatarPick } from "./AvatarStudio";
 import { DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
@@ -40,12 +39,18 @@ export default function ArmoirePage() {
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
   const [placed, setPlaced] = useState<string[]>([]);
-  const [avatarCfg, setAvatarCfg] = useState<AvatarConfig>(AVATAR_DEFAULT);
+  const [avatarPick, setAvatarPick] = useState<AvatarPick | null>(null);
+  const [avatarImage, setAvatarImage] = useState<string | null>(null);
   const [avatarOn, setAvatarOn] = useState(false);
 
-  function saveAvatar(cfg: AvatarConfig) {
-    setAvatarCfg(cfg);
-    try { localStorage.setItem(`armoire:avatarcfg:${email.trim().toLowerCase()}`, JSON.stringify(cfg)); } catch { /* ignore */ }
+  function onAvatarPick(p: AvatarPick, image: string | null) {
+    setAvatarPick(p);
+    setAvatarImage(image);
+    const k = email.trim().toLowerCase();
+    try {
+      localStorage.setItem(`armoire:avatarpick:${k}`, JSON.stringify(p));
+      if (image) localStorage.setItem(`armoire:avatarimg:${k}`, image);
+    } catch { /* ignore */ }
   }
   function setAvatarVisible(on: boolean) {
     setAvatarOn(on);
@@ -107,7 +112,8 @@ export default function ArmoirePage() {
         setActive(JSON.parse(localStorage.getItem(`armoire:deco:${k}`) || "{}"));
         setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${k}`) || "{}"));
         setPlaced(JSON.parse(localStorage.getItem(`armoire:placed:${k}`) || "[]"));
-        setAvatarCfg(JSON.parse(localStorage.getItem(`armoire:avatarcfg:${k}`) || JSON.stringify(AVATAR_DEFAULT)));
+        try { setAvatarPick(JSON.parse(localStorage.getItem(`armoire:avatarpick:${k}`) || "null")); } catch { setAvatarPick(null); }
+        setAvatarImage(localStorage.getItem(`armoire:avatarimg:${k}`) || null);
         setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
       } catch {
         /* ignore */
@@ -248,7 +254,7 @@ export default function ArmoirePage() {
             </div>
 
             {tab === "avatar" && (
-              <AvatarStudio config={avatarCfg} onChange={saveAvatar} avatarOn={avatarOn} onToggleRoom={setAvatarVisible} />
+              <AvatarStudio pick={avatarPick} onPick={onAvatarPick} avatarOn={avatarOn} onToggleRoom={setAvatarVisible} />
             )}
             {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
             {tab === "guide" && <Guide />}
@@ -290,7 +296,7 @@ export default function ArmoirePage() {
                         layout={layout}
                         onLayout={onLayout}
                         avatarOn={avatarOn}
-                        avatarConfig={avatarCfg}
+                        avatarImage={avatarImage}
                       />
                     </div>
                     <ObjectsTray

@@ -3,7 +3,6 @@
 import React, { useRef, useState } from "react";
 import { DECO, ARMOIRE_PALETTES } from "@/lib/armoire-catalog";
 import { Cabinet, type Tiroir } from "./Cabinet";
-import { Avatar, type AvatarConfig } from "./Avatar";
 
 /* La pièce : la VRAIE armoire centrale (à tiroirs), recolorée, dans un décor
    photoréaliste. Chaque accessoire est DÉPLAÇABLE et AGRANDISSABLE (sauvegardé). */
@@ -30,7 +29,7 @@ export function Room({
   layout = {},
   onLayout,
   avatarOn = false,
-  avatarConfig,
+  avatarImage,
 }: {
   tiroirs: Tiroir[];
   open: Record<string, boolean>;
@@ -44,7 +43,7 @@ export function Room({
   layout?: Layout;
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
   avatarOn?: boolean;
-  avatarConfig?: AvatarConfig;
+  avatarImage?: string | null;
 }) {
   const mur = val(active.mur, "linear-gradient(180deg,#f7f0e6,#efe6d6)");
   const sol = val(active.sol, "repeating-linear-gradient(90deg,#e6cfa6,#e6cfa6 20px,#dcc298 20px,#dcc298 21px)");
@@ -104,20 +103,19 @@ export function Room({
       ))}
 
       {/* AVATAR « mini-moi » — déplaçable + agrandissable comme un objet */}
-      {avatarOn && avatarConfig && (
+      {avatarOn && avatarImage && (
         <AccessoryItem
           id="__avatar"
+          src={avatarImage}
           alt="Mon avatar"
-          pos={layout["__avatar"] ?? { left: 72, top: 60, w: 26 }}
+          pos={layout["__avatar"] ?? { left: 72, top: 58, w: 28 }}
           z={"__avatar" === frontId ? 60 : 6}
           editable={editable}
           selected={"__avatar" === frontId}
           boxRef={boxRef}
           onLayout={onLayout}
           onSelect={() => setFrontId("__avatar")}
-        >
-          <Avatar config={avatarConfig} />
-        </AccessoryItem>
+        />
       )}
 
       {accessoires.length === 0 && (
