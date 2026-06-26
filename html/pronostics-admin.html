@@ -32,6 +32,17 @@
   .empty{color:var(--muted);font-size:.85rem;padding:14px;text-align:center}
   .msg{font-size:.8rem;margin-left:auto;color:var(--vert)}
   .note{background:#fff8ec;border:1px solid #f0e2c4;border-radius:10px;padding:11px 14px;font-size:.8rem;color:#7a6326;margin-bottom:18px}
+  .bons{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .ready{font-size:.82rem;color:var(--muted);margin-bottom:12px}
+  .ready b.ok{color:var(--vert)}.ready b.ko{color:var(--coral)}
+  .bons-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn-test{border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:9px;padding:10px 16px;cursor:pointer;font-size:.86rem}
+  .btn-real{border:none;background:var(--coral);color:#fff;border-radius:9px;padding:10px 16px;cursor:pointer;font-size:.86rem}
+  .btn-test:hover,.btn-real:hover{filter:brightness(1.06)}
+  .bons-out{margin-top:14px;font-size:.84rem;white-space:pre-wrap;line-height:1.6}
+  .bons-out .tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:600}
+  .bons-out .tag.blanc{background:#eef4ff;color:#2456b0}
+  .bons-out .tag.reel{background:#e9f7ee;color:#1f7a43}
 </style>
 </head>
 <body>
@@ -55,6 +66,16 @@
     <thead><tr><th>Email</th><th>Équipe</th><th>Match</th><th>Score</th></tr></thead>
     <tbody id="winners"><tr><td colspan="4" class="empty">Chargement…</td></tr></tbody>
   </table>
+
+  <h2>Envoi des bons</h2>
+  <div class="bons">
+    <div class="ready" id="ready">…</div>
+    <div class="bons-actions">
+      <button class="btn-test" id="btn-test">🧪 Tester à blanc</button>
+      <button class="btn-real" id="btn-real">📨 Envoyer pour de vrai</button>
+    </div>
+    <div id="bons-out" class="bons-out"></div>
+  </div>
 </div>
 
 <script>
@@ -93,6 +114,36 @@
       : '<tr><td colspan="4" class="empty">Aucune gagnante pour l\'instant (saisis des résultats).</td></tr>';
   }
 
+  async function loadBons(){
+    const r=await fetch("/api/pronostics/send-bons");
+    if(!r.ok){$("ready").textContent="Aperçu envoi indisponible.";return;}
+    const j=await r.json();
+    const tag=(ok)=>`<b class="${ok?'ok':'ko'}">${ok?'✓ prêt':'✗ à brancher'}</b>`;
+    $("ready").innerHTML=`Shopify (codes) ${tag(j.pret.shopify)} · Klaviyo (mails) ${tag(j.pret.klaviyo)}<br>`+
+      `Gagnantes : <b>${j.gagnantes}</b> · Déjà envoyés : <b>${j.deja_envoyes}</b> · À envoyer : <b>${j.a_envoyer}</b>`;
+  }
+
+  $("btn-test").onclick=async ()=>{
+    $("bons-out").innerHTML="…";
+    const r=await fetch("/api/pronostics/send-bons",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({confirm:false})});
+    const j=await r.json();
+    if(!r.ok){$("bons-out").textContent="Erreur : "+(j.error||r.status);return;}
+    const lines=(j.apercu||[]).map(x=>`• ${x.email} — ${x.match} (${x.score}) → bon 10.-`).join("\n")||"Personne à envoyer pour l'instant.";
+    $("bons-out").innerHTML=`<span class="tag blanc">TEST À BLANC</span>  ${j.a_envoyer} bon(s) partiraient :\n${lines}\n\n${j.note||""}`;
+  };
+
+  $("btn-real").onclick=async ()=>{
+    if(!confirm("Envoi RÉEL : créer les vrais codes Shopify et envoyer les vrais mails aux clientes. Confirmer ?"))return;
+    $("bons-out").innerHTML="Envoi en cours…";
+    const r=await fetch("/api/pronostics/send-bons",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({confirm:true})});
+    const j=await r.json();
+    if(!r.ok){$("bons-out").textContent="Erreur : "+(j.error||r.status)+(j.detail?(" — "+j.detail):"");return;}
+    const ok=(j.detail_envoyes||[]).map(x=>`• ${x.email} — ${x.match} → ${x.code}`).join("\n");
+    const ko=(j.detail_erreurs||[]).map(x=>`• ${x.email} — ${x.match} : ${x.erreur}`).join("\n");
+    $("bons-out").innerHTML=`<span class="tag reel">ENVOI RÉEL</span>  ${j.envoyes} envoyé(s), ${j.erreurs} erreur(s)\n${ok}${ko?("\n\nErreurs :\n"+ko):""}`;
+    loadBons();load();
+  };
+
   window.save=async (id)=>{
     const a=$("a-"+id).value, b=$("b-"+id).value;
     if(a===""||b===""){$("msg-"+id).textContent="Score manquant";$("msg-"+id).style.color="#e05a44";return;}
@@ -103,6 +154,7 @@
   };
 
   load();
+  loadBons();
 </script>
 </body>
 </html>
