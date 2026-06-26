@@ -34,6 +34,7 @@ export default function ArmoirePage() {
   const [commande, setCommande] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [tab, setTab] = useState<"armoire" | "regles" | "guide">("armoire");
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
   const [placed, setPlaced] = useState<string[]>([]);
@@ -141,7 +142,7 @@ export default function ArmoirePage() {
       });
       const json = await res.json();
       if (res.ok && json.unlocks) setData({ ...data, unlocks: json.unlocks });
-      else if (res.status === 409) alert("Tu as débloqué tout ton budget 🤍 Passe une commande pour gagner plus d'objets à débloquer.");
+      else if (res.status === 409) alert("Fais une commande pour débloquer un objet 🤍");
     } catch {
       /* ignore */
     }
@@ -222,8 +223,19 @@ export default function ArmoirePage() {
               </div>
             </div>
 
-            {/* Une seule vue : la chambre. Tous les objets sont visibles, cadenassés,
+            {/* ONGLETS */}
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "18px 0 4px", flexWrap: "wrap" }}>
+              <button style={tabBtn(tab === "armoire")} onClick={() => setTab("armoire")}>🪟 Mon armoire</button>
+              <button style={tabBtn(tab === "regles")} onClick={() => setTab("regles")}>🎁 Gagner des objets</button>
+              <button style={tabBtn(tab === "guide")} onClick={() => setTab("guide")}>✨ Mode d&apos;emploi</button>
+            </div>
+
+            {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
+            {tab === "guide" && <Guide />}
+
+            {/* ONGLET ARMOIRE : la chambre. Tous les objets sont visibles, cadenassés,
                 et le client choisit lesquels débloquer (budget gagné à chaque commande). */}
+            {tab === "armoire" && (
             <div style={{ marginTop: 14 }}>
               <p style={{ opacity: 0.6, marginTop: 0, fontSize: 13, textAlign: "center" }}>
                 Touche un tiroir pour l&apos;ouvrir · glisse un bijou pour le ranger · clique un objet 🔒 pour le débloquer ✨
@@ -270,6 +282,7 @@ export default function ArmoirePage() {
                 </>
               )}
             </div>
+            )}
 
             <div style={{ textAlign: "center", marginTop: 18 }}>
               <button style={btnLight()} onClick={deconnexion}>Me déconnecter</button>
@@ -283,6 +296,74 @@ export default function ArmoirePage() {
       </div>
     </main>
   );
+}
+
+function Regles({ budget, debloques }: { budget: number; debloques: number }) {
+  return (
+    <div style={card()}>
+      <h2 style={{ fontSize: 18, fontWeight: 500, margin: "0 0 12px" }}>🎁 Comment gagner des objets</h2>
+      <p style={{ lineHeight: 1.7, marginTop: 0 }}>
+        Ta chambre se décore avec des objets que tu <b>débloques grâce à tes commandes</b>. Tout le monde commence
+        avec une chambre vide — et chaque commande t&apos;offre de nouveaux objets à poser. 🤍
+      </p>
+      <div style={{ background: "#f6f1ea", borderRadius: 14, padding: 16, margin: "14px 0" }}>
+        <div style={{ fontWeight: 600, marginBottom: 8 }}>La règle est simple :</div>
+        <div style={{ lineHeight: 1.9 }}>
+          🛍️ <b>1 objet débloqué par tranche de 100.-</b> sur une commande.
+        </div>
+        <ul style={{ lineHeight: 1.8, margin: "8px 0 0", paddingLeft: 22 }}>
+          <li>une commande de <b>0 à 100.-</b> → <b>1 objet</b></li>
+          <li>une commande de <b>300.-</b> → <b>3 objets</b></li>
+          <li>une commande de <b>1000.-</b> → <b>10 objets</b></li>
+        </ul>
+      </div>
+      <p style={{ lineHeight: 1.7 }}>
+        <b>C&apos;est toi qui choisis</b> quels objets (ou quelles couleurs de mur, sol, armoire) tu débloques avec
+        ton budget. Les objets pas encore débloqués restent visibles avec un cadenas 🔒.
+      </p>
+      <p style={{ lineHeight: 1.7, fontSize: 14, opacity: 0.85 }}>
+        En ce moment tu as débloqué <b>{debloques}</b> objet(s) sur <b>{budget}</b> disponibles.
+        {budget === 0 && " Passe une première commande pour commencer à décorer 🤍"}
+      </p>
+    </div>
+  );
+}
+
+function Guide() {
+  const etapes = [
+    { e: "🔓", t: "Débloquer", d: "Dans la barre de droite, clique sur un objet avec un cadenas 🔒 pour le débloquer (si tu as du budget)." },
+    { e: "➕", t: "Poser dans la chambre", d: "Reclique sur l'objet débloqué : il apparaît dans ta chambre. Reclique encore pour le retirer." },
+    { e: "✥", t: "Déplacer", d: "Pose ton doigt (ou la souris) sur l'objet et glisse-le où tu veux dans la pièce." },
+    { e: "⤡", t: "Agrandir / réduire", d: "Quand un objet est sélectionné, attrape le petit rond en bas à droite et étire pour changer sa taille." },
+    { e: "🎨", t: "Changer les couleurs", d: "Au-dessus de la chambre, les pastilles changent la couleur de l'armoire, du mur et du sol." },
+    { e: "📷", t: "Photo perso", d: "Sur un tiroir ouvert, le bouton appareil photo te laisse ajouter ta propre photo." },
+  ];
+  return (
+    <div style={card()}>
+      <h2 style={{ fontSize: 18, fontWeight: 500, margin: "0 0 6px" }}>✨ Mode d&apos;emploi</h2>
+      <p style={{ lineHeight: 1.7, marginTop: 0, opacity: 0.85 }}>
+        Décorer ta chambre, c&apos;est tout doux. Voilà comment faire :
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 10 }}>
+        {etapes.map((s) => (
+          <div key={s.t} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: "#f6f1ea", borderRadius: 12, padding: "12px 14px" }}>
+            <div style={{ fontSize: 22, lineHeight: "26px", flexShrink: 0 }}>{s.e}</div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{s.t}</div>
+              <div style={{ fontSize: 13.5, opacity: 0.8, lineHeight: 1.5 }}>{s.d}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p style={{ lineHeight: 1.6, fontSize: 13, opacity: 0.7, marginTop: 14 }}>
+        Tout est sauvegardé automatiquement — tu retrouveras ta chambre comme tu l&apos;as laissée 🤍
+      </p>
+    </div>
+  );
+}
+
+function tabBtn(active: boolean): React.CSSProperties {
+  return { padding: "10px 16px", borderRadius: 999, border: active ? "none" : "1px solid #e0d6ca", background: active ? ENCRE : "#fff", color: active ? "#fff" : ENCRE, fontSize: 14, cursor: "pointer", fontWeight: active ? 600 : 400 };
 }
 
 function Stat({ n, label }: { n: number; label: string }) {
