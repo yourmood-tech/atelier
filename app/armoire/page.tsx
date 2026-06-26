@@ -141,7 +141,7 @@ export default function ArmoirePage() {
       });
       const json = await res.json();
       if (res.ok && json.unlocks) setData({ ...data, unlocks: json.unlocks });
-      else if (res.status === 409) alert("Budget épuisé 🤍 Passe une commande pour débloquer plus de jeux ou de déco.");
+      else if (res.status === 409) alert("Tu as débloqué tout ton budget 🤍 Passe une commande pour gagner plus d'objets à débloquer.");
     } catch {
       /* ignore */
     }
