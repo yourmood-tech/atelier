@@ -63,24 +63,24 @@ export function Cabinet({
     <div style={{ maxWidth: 760, margin: "10px auto 0" }}>
       <div
         style={{
-          height: 26,
+          height: 34,
           background: `linear-gradient(180deg, ${p.cornice}, ${p.frame})`,
-          borderRadius: "16px 16px 4px 4px",
-          boxShadow: "inset 0 2px 0 rgba(255,255,255,0.18)",
-          margin: "0 -6px",
+          borderRadius: "22px 22px 6px 6px",
+          boxShadow: "inset 0 3px 0 rgba(255,255,255,0.22), 0 4px 10px rgba(90,60,30,0.2)",
+          margin: "0 -12px",
         }}
       />
       <div
         style={{
           background: `linear-gradient(180deg, ${p.bodyTop}, ${p.bodyBottom})`,
-          border: `6px solid ${p.frame}`,
+          border: `9px solid ${p.frame}`,
           borderTop: "none",
-          borderRadius: "4px 4px 10px 10px",
-          padding: 14,
+          borderRadius: "6px 6px 14px 14px",
+          padding: "18px 16px",
           display: "flex",
           flexDirection: "column",
-          gap: 12,
-          boxShadow: "0 18px 40px rgba(90,60,30,0.28)",
+          gap: 14,
+          boxShadow: "0 22px 48px rgba(90,60,30,0.3)",
         }}
       >
         {tiroirs.map((t) => (
@@ -145,8 +145,8 @@ function Drawer({
           width: "100%",
           cursor: "pointer",
           border: `2px solid ${p.faceBorder}`,
-          borderRadius: 10,
-          padding: "16px 18px",
+          borderRadius: 14,
+          padding: "20px 20px",
           background: `linear-gradient(180deg, ${p.faceTop}, ${p.faceBottom})`,
           boxShadow: isOpen
             ? "inset 0 3px 10px rgba(90,60,30,0.35)"
@@ -273,7 +273,7 @@ function pieceBox(): React.CSSProperties {
   return { aspectRatio: "1 / 1", borderRadius: 12, background: "#fff", border: "1px solid #efe7dd", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" };
 }
 function knob(): React.CSSProperties {
-  return { width: 16, height: 16, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #f3dca0, #a9802f)", boxShadow: "0 1px 2px rgba(0,0,0,0.3)", flexShrink: 0 };
+  return { width: 18, height: 18, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #f3dca0, #a9802f)", boxShadow: "0 1px 2px rgba(0,0,0,0.3)", flexShrink: 0 };
 }
 function foot(color: string): React.CSSProperties {
   return { width: 26, height: 14, background: color, filter: "brightness(0.85)", borderRadius: "0 0 8px 8px" };

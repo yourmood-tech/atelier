@@ -87,8 +87,8 @@ export function Room({
           <img key={a.id} src={a.img} alt={a.nom} style={slotStyle(a.slot)} />
         ))}
 
-      {/* LA VRAIE ARMOIRE, recolorée */}
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 360, margin: "0 auto", paddingBottom: 28 }}>
+      {/* LA VRAIE ARMOIRE, recolorée — large et massive */}
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 520, margin: "0 auto", paddingBottom: 28 }}>
         <Cabinet
           tiroirs={tiroirs}
           open={open}
