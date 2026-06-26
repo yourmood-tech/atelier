@@ -107,6 +107,7 @@
   .ticket .recap b{color:var(--coral)}
   .ticket .sub{color:var(--muted);font-size:.86rem;line-height:1.6;margin:0 0 22px}
   .ticket .sub .g{color:var(--gold)}
+  .ticket .closing{color:var(--gold);font-family:var(--serif);font-style:italic;font-size:.92rem;margin:0}
   .ticket button{border:1px solid var(--silver);background:transparent;color:var(--ink);border-radius:11px;padding:12px 22px;cursor:pointer;font-size:.9rem;font-family:var(--sans)}
   .ticket button:hover{background:rgba(199,204,209,.1)}
 </style>
@@ -169,7 +170,7 @@
     <h2>C'est noté.</h2>
     <p class="recap">On a reçu tes <b id="rNb">—</b> pronostics. Allez <b id="rTeam">—</b> !</p>
     <p class="sub">Pour chaque score exact, ton <span class="g">bon de 10.-</span> arrive direct par mail. À toi de jouer. 🤍</p>
-    <button id="again">Modifier mes pronostics</button>
+    <p class="closing">Tes pronostics sont scellés. Rendez-vous après les matchs. ✨</p>
   </div>
 </div>
 
@@ -271,9 +272,9 @@
       $("hint").textContent="";
     }catch(err){
       $("hint").textContent="Oups, ça n'a pas voulu s'enregistrer — réessaie dans un instant.";
-    }finally{cta.disabled=false;}
+      cta.disabled=false;
+    }
   };
-  $("again").onclick=()=>$("done").classList.remove("show");
 </script>
 </body>
 </html>
