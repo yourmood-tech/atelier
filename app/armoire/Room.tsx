@@ -18,11 +18,12 @@ function val(id: string | undefined, fallback: string): string {
 function slotStyle(slot: string | undefined): React.CSSProperties {
   switch (slot) {
     case "sol-gauche":
-      return { position: "absolute", left: "1%", bottom: 0, width: "26%", zIndex: 3 };
+      // grande plante, presque aussi haute que l'armoire (proportions de la référence)
+      return { position: "absolute", left: "-2%", bottom: 0, height: "92%", width: "auto", zIndex: 3 };
     case "sol-droite":
-      return { position: "absolute", right: "1%", bottom: 0, width: "26%", zIndex: 3 };
+      return { position: "absolute", right: "-2%", bottom: 0, height: "92%", width: "auto", zIndex: 3 };
     case "table-gauche":
-      return { position: "absolute", left: "3%", bottom: "4%", width: "20%", zIndex: 3 };
+      return { position: "absolute", left: "2%", bottom: "2%", height: "34%", width: "auto", zIndex: 3 };
     case "mur-haut":
       return { position: "absolute", left: "50%", top: "2%", transform: "translateX(-50%)", width: "46%", zIndex: 2 };
     case "mur-droite":
