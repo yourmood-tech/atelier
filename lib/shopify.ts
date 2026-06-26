@@ -519,6 +519,7 @@ export type ArmoireResult = {
   prenom: string;
   stats: { commandes: number; pieces: number; totalDepense: number; devise: string };
   tiroirs: ArmoireTiroir[];
+  orderNames: string[]; // numéros de commande (#392523…) — pour vérifier la propriété
 };
 
 const TIROIR_DEFS: { key: string; label: string; emoji: string; match: (s: string) => boolean }[] = [
@@ -547,6 +548,7 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
       prenom: "",
       stats: { commandes: 0, pieces: 0, totalDepense: 0, devise: "CHF" },
       tiroirs: [],
+      orderNames: [],
     };
   }
 
@@ -558,8 +560,10 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
   // Collecte des line items + total dépensé
   let totalDepense = 0;
   let devise = "CHF";
+  const orderNames: string[] = [];
   const items: { title: string; productId: number; date: string; quantity: number }[] = [];
   for (const o of orders) {
+    if (o.name) orderNames.push(String(o.name));
     totalDepense += parseFloat((o.total_price as string) ?? "0") || 0;
     devise = (o.currency as string) ?? devise;
     const date = (o.created_at as string) ?? new Date().toISOString();
@@ -632,6 +636,7 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
       devise,
     },
     tiroirs,
+    orderNames,
   };
 }
 
