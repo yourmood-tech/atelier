@@ -395,6 +395,15 @@ function ObjectsTray({
   const placedSet = new Set(placed);
   const objets = DECO.filter((d) => d.img && set.has(d.id));
   if (!objets.length) return null;
+
+  // Regroupe par ambiance pour garder la barre lisible.
+  const ambiance = (id: string) =>
+    id.startsWith("acc-bleu-") ? "Bleu" : id.startsWith("acc-noir-") ? "Noir" : id.startsWith("acc-riviera-") ? "Riviera" : "Chaud";
+  const ordre = ["Chaud", "Bleu", "Noir", "Riviera"];
+  const groupes = ordre
+    .map((nom) => ({ nom, items: objets.filter((d) => ambiance(d.id) === nom) }))
+    .filter((g) => g.items.length);
+
   return (
     <div
       style={{
@@ -404,7 +413,7 @@ function ObjectsTray({
         overflowY: "auto",
         display: "flex",
         flexDirection: "column",
-        gap: 8,
+        gap: 6,
         padding: 8,
         background: "#fffdfb",
         border: "1px solid #efe7dd",
@@ -412,32 +421,39 @@ function ObjectsTray({
       }}
     >
       <div style={{ fontSize: 11, opacity: 0.6, textAlign: "center" }}>Mes objets</div>
-      {objets.map((d) => {
-        const on = placedSet.has(d.id);
-        return (
-          <button
-            key={d.id}
-            onClick={() => onToggle(d.id)}
-            title={(on ? "Retirer : " : "Poser : ") + d.nom}
-            style={{
-              border: on ? "2px solid #3a3330" : "1px solid #e3d9cd",
-              borderRadius: 10,
-              background: on ? "#f3ece2" : "#fff",
-              cursor: "pointer",
-              padding: 4,
-              position: "relative",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={d.img} alt={d.nom} style={{ width: "100%", height: 56, objectFit: "contain", display: "block" }} />
-            {on && (
-              <span style={{ position: "absolute", top: 2, right: 2, fontSize: 11, background: "#3a3330", color: "#fff", borderRadius: 999, width: 16, height: 16, lineHeight: "16px" }}>
-                ✓
-              </span>
-            )}
-          </button>
-        );
-      })}
+      {groupes.map((g) => (
+        <div key={g.nom} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, opacity: 0.5, textAlign: "center", marginTop: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            {g.nom}
+          </div>
+          {g.items.map((d) => {
+            const on = placedSet.has(d.id);
+            return (
+              <button
+                key={d.id}
+                onClick={() => onToggle(d.id)}
+                title={(on ? "Retirer : " : "Poser : ") + d.nom}
+                style={{
+                  border: on ? "2px solid #3a3330" : "1px solid #e3d9cd",
+                  borderRadius: 10,
+                  background: on ? "#f3ece2" : "#fff",
+                  cursor: "pointer",
+                  padding: 4,
+                  position: "relative",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={d.img} alt={d.nom} style={{ width: "100%", height: 56, objectFit: "contain", display: "block" }} />
+                {on && (
+                  <span style={{ position: "absolute", top: 2, right: 2, fontSize: 11, background: "#3a3330", color: "#fff", borderRadius: 999, width: 16, height: 16, lineHeight: "16px" }}>
+                    ✓
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }
