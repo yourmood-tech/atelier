@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Memoire } from "./games/Memoire";
 import { Room } from "./Room";
-import { GAMES, DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
+import { DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
    Connexion : email + numéro de commande (preuve de propriété → on ne peut pas
@@ -35,8 +34,6 @@ export default function ArmoirePage() {
   const [commande, setCommande] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [tab, setTab] = useState<"armoire" | "jeux" | "deco">("armoire");
-  const [playing, setPlaying] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
   const [placed, setPlaced] = useState<string[]>([]);
@@ -150,8 +147,6 @@ export default function ArmoirePage() {
     }
   }
 
-  const allImages = data ? data.tiroirs.flatMap((t) => t.pieces).map((p) => p.image).filter((x): x is string => !!x) : [];
-
   return (
     <main
       style={{
@@ -223,138 +218,64 @@ export default function ArmoirePage() {
               <div style={{ display: "flex", justifyContent: "center", gap: 26, marginTop: 18 }}>
                 <Stat n={data.stats.commandes} label="commandes" />
                 <Stat n={data.stats.pieces} label="pièces" />
-                <Stat n={data.entitlements.gamesBudget + data.entitlements.decoBudget} label="à débloquer" />
+                <Stat n={data.entitlements.decoBudget} label="à débloquer" />
               </div>
             </div>
 
-            {/* ONGLETS */}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "18px 0 4px", flexWrap: "wrap" }}>
-              <button style={tabBtn(tab === "armoire")} onClick={() => setTab("armoire")}>🪟 Mon armoire</button>
-              <button style={tabBtn(tab === "jeux")} onClick={() => setTab("jeux")}>🎮 Mes jeux mood</button>
-              <button style={tabBtn(tab === "deco")} onClick={() => setTab("deco")}>🪴 Décoration</button>
-            </div>
-
-            {/* ONGLET ARMOIRE — l'armoire vit dans sa pièce décorée */}
-            {tab === "armoire" && (
-              <div style={{ marginTop: 14 }}>
-                <p style={{ opacity: 0.6, marginTop: 0, fontSize: 13, textAlign: "center" }}>
-                  Touche un tiroir pour l&apos;ouvrir · glisse un bijou pour le ranger ✨
-                </p>
-                {data.tiroirs.length === 0 ? (
-                  <p style={{ opacity: 0.7, textAlign: "center" }}>Ta collection arrive — elle se remplira à ta prochaine pépite.</p>
-                ) : (
-                  <>
-                    <ColorBar active={active} unlocked={data.unlocks.deco} onApply={applyDeco} />
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <Room
-                          tiroirs={data.tiroirs}
-                          open={open}
-                          setOpen={setOpen}
-                          unlocked={data.unlocks.deco}
-                          placed={placed}
-                          active={active}
-                          editable
-                          onMove={(key, tiroir) => persist(key, { tiroir })}
-                          onPhoto={(key, image) => persist(key, { image })}
-                          layout={layout}
-                          onLayout={onLayout}
-                        />
-                      </div>
-                      <ObjectsTray unlocked={data.unlocks.deco} placed={placed} onToggle={togglePlaced} />
+            {/* Une seule vue : la chambre. Tous les objets sont visibles, cadenassés,
+                et le client choisit lesquels débloquer (budget gagné à chaque commande). */}
+            <div style={{ marginTop: 14 }}>
+              <p style={{ opacity: 0.6, marginTop: 0, fontSize: 13, textAlign: "center" }}>
+                Touche un tiroir pour l&apos;ouvrir · glisse un bijou pour le ranger · clique un objet 🔒 pour le débloquer ✨
+              </p>
+              {data.tiroirs.length === 0 ? (
+                <p style={{ opacity: 0.7, textAlign: "center" }}>Ta collection arrive — elle se remplira à ta prochaine pépite.</p>
+              ) : (
+                <>
+                  <p style={{ textAlign: "center", fontSize: 13, opacity: 0.75, margin: "0 0 8px" }}>
+                    Objets &amp; couleurs débloqués : <b>{data.unlocks.deco.length}/{data.entitlements.decoBudget}</b>
+                    {data.entitlements.decoBudget === 0 && " — passe une commande pour en débloquer 🤍"}
+                  </p>
+                  <ColorBar
+                    active={active}
+                    unlocked={data.unlocks.deco}
+                    budgetLeft={data.unlocks.deco.length < data.entitlements.decoBudget}
+                    onApply={applyDeco}
+                    onUnlock={(id) => unlock("deco", id)}
+                  />
+                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Room
+                        tiroirs={data.tiroirs}
+                        open={open}
+                        setOpen={setOpen}
+                        unlocked={data.unlocks.deco}
+                        placed={placed}
+                        active={active}
+                        editable
+                        onMove={(key, tiroir) => persist(key, { tiroir })}
+                        onPhoto={(key, image) => persist(key, { image })}
+                        layout={layout}
+                        onLayout={onLayout}
+                      />
                     </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* ONGLET JEUX */}
-            {tab === "jeux" && (
-              <div style={card()}>
-                <h2 style={h2()}>Mes jeux mood 🎮</h2>
-                <p style={{ opacity: 0.7, marginTop: 0, fontSize: 14 }}>
-                  Tu peux débloquer <b>{data.unlocks.games.length}/{data.entitlements.gamesBudget}</b> jeux.
-                  {data.entitlements.gamesBudget === 0 && " Passe une commande pour en débloquer 🤍"}
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
-                  {GAMES.map((g) => {
-                    const owned = data.unlocks.games.includes(g.id);
-                    const budgetLeft = data.unlocks.games.length < data.entitlements.gamesBudget;
-                    return (
-                      <div key={g.id} style={tile(owned)}>
-                        <div style={{ fontSize: 34 }}>{owned ? g.emoji : "🔒"}</div>
-                        <div style={{ fontSize: 14, fontWeight: 500, margin: "6px 0" }}>{g.nom}</div>
-                        {owned ? (
-                          g.jouable ? (
-                            <button style={miniBtn(true)} onClick={() => setPlaying(g.id)}>Jouer</button>
-                          ) : (
-                            <span style={{ fontSize: 11, opacity: 0.55 }}>bientôt jouable</span>
-                          )
-                        ) : (
-                          <button style={miniBtn(budgetLeft)} disabled={!budgetLeft} onClick={() => unlock("game", g.id)}>
-                            {budgetLeft ? "Débloquer" : "Budget épuisé"}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* ONGLET DÉCO */}
-            {tab === "deco" && (
-              <div style={card()}>
-                <h2 style={h2()}>Ma pièce 🪴</h2>
-                <p style={{ opacity: 0.7, marginTop: 0, fontSize: 14 }}>
-                  Plus tu commandes, plus tu débloques d&apos;objets pour décorer la pièce de ta commode. Tu peux débloquer{" "}
-                  <b>{data.unlocks.deco.length}/{data.entitlements.decoBudget}</b> objets.
-                  {data.entitlements.decoBudget === 0 && " Passe une commande pour en débloquer 🤍"}
-                </p>
-
-                {/* CATALOGUE seul — la pièce se voit dans l'onglet « Mon armoire » */}
-                <p style={{ fontSize: 13, opacity: 0.6, margin: "0 0 8px" }}>
-                  Débloque, puis « Appliquer ». Ta pièce se met à jour dans l&apos;onglet <b>Mon armoire</b> 🤍
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
-                  {DECO.map((d) => {
-                    const owned = data.unlocks.deco.includes(d.id);
-                    const budgetLeft = data.unlocks.deco.length < data.entitlements.decoBudget;
-                    const choisissable = d.type === "mur" || d.type === "sol" || d.type === "armoire";
-                    const estActif = choisissable && active[d.type as "mur" | "sol" | "armoire"] === d.id;
-                    return (
-                      <div key={d.id} style={tile(owned)}>
-                        <div style={{ fontSize: 28 }}>{owned ? d.emoji : "🔒"}</div>
-                        <div style={{ fontSize: 12, margin: "5px 0" }}>{d.nom}</div>
-                        {!owned ? (
-                          <button style={miniBtn(budgetLeft)} disabled={!budgetLeft} onClick={() => unlock("deco", d.id)}>
-                            {budgetLeft ? "Débloquer" : "Épuisé"}
-                          </button>
-                        ) : choisissable ? (
-                          <button
-                            style={miniBtn(!estActif)}
-                            disabled={estActif}
-                            onClick={() => applyDeco(d.type as "mur" | "sol" | "armoire", d.id)}
-                          >
-                            {estActif ? "Appliqué ✓" : "Appliquer"}
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: 11, color: "#3a8a4a" }}>posé ✓</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                    <ObjectsTray
+                      unlocked={data.unlocks.deco}
+                      placed={placed}
+                      budgetLeft={data.unlocks.deco.length < data.entitlements.decoBudget}
+                      onToggle={togglePlaced}
+                      onUnlock={(id) => unlock("deco", id)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
 
             <div style={{ textAlign: "center", marginTop: 18 }}>
               <button style={btnLight()} onClick={deconnexion}>Me déconnecter</button>
             </div>
           </>
         )}
-
-        {playing === "memoire" && <Memoire images={allImages} onClose={() => setPlaying(null)} />}
 
         <footer style={{ textAlign: "center", fontSize: 11, opacity: 0.4, marginTop: 30 }}>
           Mon Armoire Mood · prototype V1
@@ -373,9 +294,6 @@ function Stat({ n, label }: { n: number; label: string }) {
   );
 }
 
-function h2(): React.CSSProperties {
-  return { fontSize: 17, fontWeight: 500, margin: "0 0 10px", letterSpacing: 0.3 };
-}
 function card(): React.CSSProperties {
   return { background: "#fffdfb", border: "1px solid #efe7dd", borderRadius: 20, padding: 22, marginTop: 16, boxShadow: "0 6px 24px rgba(120,100,80,0.05)" };
 }
@@ -385,15 +303,20 @@ function narrowCard(): React.CSSProperties {
 function ObjectsTray({
   unlocked,
   placed,
+  budgetLeft,
   onToggle,
+  onUnlock,
 }: {
   unlocked: string[];
   placed: string[];
+  budgetLeft: boolean;
   onToggle: (id: string) => void;
+  onUnlock: (id: string) => void;
 }) {
   const set = new Set(unlocked);
   const placedSet = new Set(placed);
-  const objets = DECO.filter((d) => d.img && set.has(d.id));
+  // TOUS les objets sont visibles ; ceux qui ne sont pas débloqués apparaissent cadenassés.
+  const objets = DECO.filter((d) => d.img);
   if (!objets.length) return null;
 
   // Regroupe par ambiance pour garder la barre lisible.
@@ -427,12 +350,13 @@ function ObjectsTray({
             {g.nom}
           </div>
           {g.items.map((d) => {
+            const locked = !set.has(d.id);
             const on = placedSet.has(d.id);
             return (
               <button
                 key={d.id}
-                onClick={() => onToggle(d.id)}
-                title={(on ? "Retirer : " : "Poser : ") + d.nom}
+                onClick={() => (locked ? onUnlock(d.id) : onToggle(d.id))}
+                title={locked ? (budgetLeft ? "Débloquer : " : "Passe une commande pour débloquer : ") + d.nom : (on ? "Retirer : " : "Poser : ") + d.nom}
                 style={{
                   border: on ? "2px solid #3a3330" : "1px solid #e3d9cd",
                   borderRadius: 10,
@@ -443,8 +367,11 @@ function ObjectsTray({
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={d.img} alt={d.nom} style={{ width: "100%", height: 56, objectFit: "contain", display: "block" }} />
-                {on && (
+                <img src={d.img} alt={d.nom} style={{ width: "100%", height: 56, objectFit: "contain", display: "block", opacity: locked ? 0.4 : 1, filter: locked ? "grayscale(0.5)" : "none" }} />
+                {locked && (
+                  <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🔒</span>
+                )}
+                {!locked && on && (
                   <span style={{ position: "absolute", top: 2, right: 2, fontSize: 11, background: "#3a3330", color: "#fff", borderRadius: 999, width: 16, height: 16, lineHeight: "16px" }}>
                     ✓
                   </span>
@@ -461,11 +388,15 @@ function ObjectsTray({
 function ColorBar({
   active,
   unlocked,
+  budgetLeft,
   onApply,
+  onUnlock,
 }: {
   active: { mur?: string; sol?: string; armoire?: string };
   unlocked: string[];
+  budgetLeft: boolean;
   onApply: (type: "mur" | "sol" | "armoire", id: string) => void;
+  onUnlock: (id: string) => void;
 }) {
   const set = new Set(unlocked);
   const rows: { type: "mur" | "sol" | "armoire"; label: string }[] = [
@@ -473,30 +404,23 @@ function ColorBar({
     { type: "mur", label: "Mur" },
     { type: "sol", label: "Sol" },
   ];
-  const hasAny = rows.some((r) => DECO.some((d) => d.type === r.type && set.has(d.id)));
-  if (!hasAny) {
-    return (
-      <p style={{ textAlign: "center", fontSize: 12, opacity: 0.55, margin: "2px 0 10px" }}>
-        Débloque des couleurs (mur, sol, armoire) dans l&apos;onglet Déco pour les retrouver ici 🤍
-      </p>
-    );
-  }
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", margin: "2px 0 12px" }}>
       {rows.map((row) => {
-        const opts = DECO.filter((d) => d.type === row.type && set.has(d.id));
+        const opts = DECO.filter((d) => d.type === row.type);
         if (!opts.length) return null;
         return (
           <div key={row.type} style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: 12, opacity: 0.6 }}>{row.label}</span>
             {opts.map((o) => {
               const bg = row.type === "armoire" ? ARMOIRE_PALETTES[o.valeur]?.bodyBottom ?? "#ccc" : o.valeur;
+              const locked = !set.has(o.id);
               const isActive = active[row.type] === o.id;
               return (
                 <button
                   key={o.id}
-                  onClick={() => onApply(row.type, o.id)}
-                  title={o.nom}
+                  onClick={() => (locked ? onUnlock(o.id) : onApply(row.type, o.id))}
+                  title={locked ? (budgetLeft ? "Débloquer : " : "Passe une commande pour débloquer : ") + o.nom : o.nom}
                   style={{
                     width: 26,
                     height: 26,
@@ -506,8 +430,14 @@ function ColorBar({
                     backgroundSize: "cover",
                     cursor: "pointer",
                     padding: 0,
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  {locked && <span style={{ fontSize: 12, filter: "drop-shadow(0 0 1px rgba(255,255,255,0.9))" }}>🔒</span>}
+                </button>
               );
             })}
           </div>
@@ -517,15 +447,6 @@ function ColorBar({
   );
 }
 
-function tabBtn(active: boolean): React.CSSProperties {
-  return { padding: "10px 16px", borderRadius: 999, border: active ? "none" : "1px solid #e0d6ca", background: active ? ENCRE : "#fff", color: active ? "#fff" : ENCRE, fontSize: 14, cursor: "pointer", fontWeight: active ? 600 : 400 };
-}
-function tile(owned: boolean): React.CSSProperties {
-  return { borderRadius: 14, border: "1px solid #efe7dd", background: owned ? "#fff" : "#f6f1ea", padding: 12, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", gap: 4, minHeight: 120, opacity: owned ? 1 : 0.92 };
-}
-function miniBtn(active: boolean): React.CSSProperties {
-  return { border: "none", borderRadius: 999, padding: "7px 14px", fontSize: 13, cursor: active ? "pointer" : "default", background: active ? ENCRE : "#d8cdbf", color: "#fff" };
-}
 function input(): React.CSSProperties {
   return { width: "100%", boxSizing: "border-box", padding: "14px 16px", borderRadius: 12, border: "1px solid #e3d9cd", fontSize: 15, marginBottom: 12, background: "#fff", color: ENCRE };
 }
