@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { DECO, ARMOIRE_PALETTES } from "@/lib/armoire-catalog";
 import { Cabinet, type Tiroir } from "./Cabinet";
 
@@ -21,6 +21,7 @@ export function Room({
   open,
   setOpen,
   unlocked,
+  placed,
   active,
   editable = false,
   onMove,
@@ -32,6 +33,7 @@ export function Room({
   open: Record<string, boolean>;
   setOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   unlocked: string[];
+  placed: string[];
   active: Active;
   editable?: boolean;
   onMove?: (key: string, tiroirKey: string) => void;
@@ -44,9 +46,11 @@ export function Room({
   const paletteKey = active.armoire ? val(active.armoire, "noyer") : "noyer";
   const palette = ARMOIRE_PALETTES[paletteKey] ?? ARMOIRE_PALETTES.noyer;
   const boxRef = useRef<HTMLDivElement>(null);
+  const [frontId, setFrontId] = useState<string | null>(null); // l'objet touché passe devant
 
   const set = new Set(unlocked);
-  const accessoires = DECO.filter((d) => d.img && set.has(d.id));
+  const placedSet = new Set(placed);
+  const accessoires = DECO.filter((d) => d.img && set.has(d.id) && placedSet.has(d.id));
 
   return (
     <div
@@ -85,17 +89,18 @@ export function Room({
           src={a.img!}
           alt={a.nom}
           pos={layout[a.id] ?? { left: a.pos!.left, top: a.pos!.top, w: a.pos!.w }}
-          z={a.pos?.z ?? 3}
+          z={a.id === frontId ? 60 : a.pos?.z ?? 3}
           editable={editable}
           boxRef={boxRef}
           onLayout={onLayout}
+          onSelect={() => setFrontId(a.id)}
         />
       ))}
 
       {accessoires.length === 0 && (
         <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 5 }}>
           <span style={{ fontSize: 13, opacity: 0.7, background: "rgba(255,255,255,0.7)", padding: "4px 12px", borderRadius: 999 }}>
-            Débloque des accessoires pour décorer la pièce de ton armoire 🤍
+            Choisis des objets dans la barre pour décorer ta chambre 🤍
           </span>
         </div>
       )}
@@ -112,6 +117,7 @@ function AccessoryItem({
   editable,
   boxRef,
   onLayout,
+  onSelect,
 }: {
   id: string;
   src: string;
@@ -121,6 +127,7 @@ function AccessoryItem({
   editable: boolean;
   boxRef: React.RefObject<HTMLDivElement | null>;
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
+  onSelect?: () => void;
 }) {
   const dragging = useRef(false);
   const resizing = useRef(false);
@@ -129,6 +136,7 @@ function AccessoryItem({
   function onPointerDown(e: React.PointerEvent) {
     if (!editable) return;
     e.preventDefault();
+    onSelect?.();
     dragging.current = true;
     e.currentTarget.setPointerCapture?.(e.pointerId);
   }
@@ -149,6 +157,7 @@ function AccessoryItem({
     if (!editable) return;
     e.stopPropagation();
     e.preventDefault();
+    onSelect?.();
     resizing.current = true;
     e.currentTarget.setPointerCapture?.(e.pointerId);
   }
@@ -173,7 +182,7 @@ function AccessoryItem({
         top: `${pos.top}%`,
         width: `${pos.w}%`,
         transform: "translate(-50%, -50%)",
-        zIndex: editable ? Math.max(z, 6) : z,
+        zIndex: z,
         touchAction: "none",
         cursor: editable ? "move" : "default",
         outline: editable ? "1.5px dashed rgba(107,79,51,0.5)" : "none",

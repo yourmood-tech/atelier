@@ -39,6 +39,19 @@ export default function ArmoirePage() {
   const [playing, setPlaying] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
+  const [placed, setPlaced] = useState<string[]>([]);
+
+  function togglePlaced(id: string) {
+    setPlaced((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(`armoire:placed:${email.trim().toLowerCase()}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   function applyDeco(type: "mur" | "sol" | "armoire", id: string) {
     const next = { ...active, [type]: id };
@@ -81,6 +94,7 @@ export default function ArmoirePage() {
       try {
         setActive(JSON.parse(localStorage.getItem(`armoire:deco:${email.trim().toLowerCase()}`) || "{}"));
         setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${email.trim().toLowerCase()}`) || "{}"));
+        setPlaced(JSON.parse(localStorage.getItem(`armoire:placed:${email.trim().toLowerCase()}`) || "[]"));
       } catch {
         /* ignore */
       }
@@ -231,18 +245,24 @@ export default function ArmoirePage() {
                 ) : (
                   <>
                     <ColorBar active={active} unlocked={data.unlocks.deco} onApply={applyDeco} />
-                    <Room
-                      tiroirs={data.tiroirs}
-                      open={open}
-                      setOpen={setOpen}
-                      unlocked={data.unlocks.deco}
-                      active={active}
-                      editable
-                      onMove={(key, tiroir) => persist(key, { tiroir })}
-                      onPhoto={(key, image) => persist(key, { image })}
-                      layout={layout}
-                      onLayout={onLayout}
-                    />
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Room
+                          tiroirs={data.tiroirs}
+                          open={open}
+                          setOpen={setOpen}
+                          unlocked={data.unlocks.deco}
+                          placed={placed}
+                          active={active}
+                          editable
+                          onMove={(key, tiroir) => persist(key, { tiroir })}
+                          onPhoto={(key, image) => persist(key, { image })}
+                          layout={layout}
+                          onLayout={onLayout}
+                        />
+                      </div>
+                      <ObjectsTray unlocked={data.unlocks.deco} placed={placed} onToggle={togglePlaced} />
+                    </div>
                   </>
                 )}
               </div>
@@ -362,6 +382,66 @@ function card(): React.CSSProperties {
 function narrowCard(): React.CSSProperties {
   return { ...card(), maxWidth: 460, marginLeft: "auto", marginRight: "auto" };
 }
+function ObjectsTray({
+  unlocked,
+  placed,
+  onToggle,
+}: {
+  unlocked: string[];
+  placed: string[];
+  onToggle: (id: string) => void;
+}) {
+  const set = new Set(unlocked);
+  const placedSet = new Set(placed);
+  const objets = DECO.filter((d) => d.img && set.has(d.id));
+  if (!objets.length) return null;
+  return (
+    <div
+      style={{
+        width: 96,
+        flexShrink: 0,
+        maxHeight: 460,
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        padding: 8,
+        background: "#fffdfb",
+        border: "1px solid #efe7dd",
+        borderRadius: 14,
+      }}
+    >
+      <div style={{ fontSize: 11, opacity: 0.6, textAlign: "center" }}>Mes objets</div>
+      {objets.map((d) => {
+        const on = placedSet.has(d.id);
+        return (
+          <button
+            key={d.id}
+            onClick={() => onToggle(d.id)}
+            title={(on ? "Retirer : " : "Poser : ") + d.nom}
+            style={{
+              border: on ? "2px solid #3a3330" : "1px solid #e3d9cd",
+              borderRadius: 10,
+              background: on ? "#f3ece2" : "#fff",
+              cursor: "pointer",
+              padding: 4,
+              position: "relative",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={d.img} alt={d.nom} style={{ width: "100%", height: 56, objectFit: "contain", display: "block" }} />
+            {on && (
+              <span style={{ position: "absolute", top: 2, right: 2, fontSize: 11, background: "#3a3330", color: "#fff", borderRadius: 999, width: 16, height: 16, lineHeight: "16px" }}>
+                ✓
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function ColorBar({
   active,
   unlocked,
