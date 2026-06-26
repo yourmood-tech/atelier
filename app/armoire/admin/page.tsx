@@ -15,7 +15,8 @@ type Data = {
   stats: { commandes: number; pieces: number; totalDepense: number; devise: string };
   tiroirs: Tiroir[];
   orderNames: string[];
-  jeu: { vignettesAchat: number; palier: { recompensesDebloquees: string[] } };
+  entitlements: { gamesBudget: number; decoBudget: number; commandesQualifiantes: number };
+  unlocks: { games: string[]; deco: string[] };
 };
 
 const ENCRE = "#3a3330";
@@ -81,11 +82,11 @@ export default function ArmoireAdminPage() {
                 <span>{data.stats.commandes} commandes</span>
                 <span>{data.stats.pieces} pièces</span>
                 <span>{data.stats.totalDepense} {data.stats.devise}</span>
-                <span>{data.jeu.vignettesAchat} vignettes (achat)</span>
+                <span>budget : {data.entitlements.gamesBudget} jeux / {data.entitlements.decoBudget} déco</span>
               </div>
-              {data.jeu.palier.recompensesDebloquees.length > 0 && (
+              {(data.unlocks.games.length > 0 || data.unlocks.deco.length > 0) && (
                 <div style={{ fontSize: 13, opacity: 0.75, marginTop: 8 }}>
-                  Récompenses débloquées : {data.jeu.palier.recompensesDebloquees.join(" · ")}
+                  Débloqués : {[...data.unlocks.games, ...data.unlocks.deco].join(" · ") || "—"}
                 </div>
               )}
               <div style={{ fontSize: 12, opacity: 0.5, marginTop: 8 }}>

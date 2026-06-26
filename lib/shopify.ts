@@ -521,7 +521,22 @@ export type ArmoireResult = {
   stats: { commandes: number; pieces: number; totalDepense: number; devise: string };
   tiroirs: ArmoireTiroir[];
   orderNames: string[]; // numéros de commande (#392523…) — pour vérifier la propriété
+  // Budget de déblocage (jeux + déco) gagné PAR COMMANDE depuis le lancement (tout le monde part de 0)
+  entitlements: { gamesBudget: number; decoBudget: number; commandesQualifiantes: number };
 };
+
+// Lancement de la gamification : seules les commandes à partir de cette date comptent.
+export const ARMOIRE_GAME_START = "2026-06-26";
+
+// Palier selon le TOTAL d'UNE commande → combien de jeux / objets déco elle débloque.
+export function grantForOrderTotal(total: number): { games: number; deco: number } {
+  if (total >= 901) return { games: 6, deco: 10 };
+  if (total >= 501) return { games: 3, deco: 4 };
+  if (total >= 301) return { games: 1, deco: 2 };
+  if (total >= 101) return { games: 1, deco: 1 };
+  if (total >= 20) return { games: 1, deco: 0 };
+  return { games: 0, deco: 0 };
+}
 
 // Classement basé sur le TYPE DE PRODUIT Shopify (fiable : "addon argent", "base large",
 // "mini acier", "Deux tiers argent", "coffret", "medium…", "clip & drop…") — PAS sur les tags
@@ -561,6 +576,7 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
       stats: { commandes: 0, pieces: 0, totalDepense: 0, devise: "CHF" },
       tiroirs: [],
       orderNames: [],
+      entitlements: { gamesBudget: 0, decoBudget: 0, commandesQualifiantes: 0 },
     };
   }
 
@@ -569,16 +585,27 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
   );
   const orders: Record<string, unknown>[] = ordersData.orders ?? [];
 
-  // Collecte des line items + total dépensé
+  // Collecte des line items + total dépensé + budget de déblocage (par commande, depuis le lancement)
   let totalDepense = 0;
   let devise = "CHF";
+  let gamesBudget = 0;
+  let decoBudget = 0;
+  let commandesQualifiantes = 0;
   const orderNames: string[] = [];
   const items: { title: string; productId: number; date: string; quantity: number }[] = [];
   for (const o of orders) {
     if (o.name) orderNames.push(String(o.name));
-    totalDepense += parseFloat((o.total_price as string) ?? "0") || 0;
+    const orderTotal = parseFloat((o.total_price as string) ?? "0") || 0;
+    totalDepense += orderTotal;
     devise = (o.currency as string) ?? devise;
     const date = (o.created_at as string) ?? new Date().toISOString();
+    // Déblocage : tout le monde part de 0 → seules les commandes depuis le lancement comptent.
+    if (date >= ARMOIRE_GAME_START) {
+      const g = grantForOrderTotal(orderTotal);
+      if (g.games || g.deco) commandesQualifiantes++;
+      gamesBudget += g.games;
+      decoBudget += g.deco;
+    }
     for (const li of (o.line_items as Record<string, unknown>[]) ?? []) {
       items.push({
         title: (li.title as string) ?? "Pièce mood",
@@ -658,6 +685,7 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
     },
     tiroirs,
     orderNames,
+    entitlements: { gamesBudget, decoBudget, commandesQualifiantes },
   };
 }
 

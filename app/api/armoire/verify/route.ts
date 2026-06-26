@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { getCustomerArmoire, applyArmoireOverrides, tiroirChoices, type ArmoireOverrides } from "@/lib/shopify";
-import { buildJeu } from "@/lib/armoire-jeu";
 
 // Espace client public — Mon Armoire Mood.
 // Sécurité : on n'ouvre l'armoire que si email + numéro de commande correspondent
@@ -40,6 +39,12 @@ export async function POST(req: NextRequest) {
     const overrides = (await kv.get(`armoire:ov:${email.toLowerCase()}`)) as ArmoireOverrides | null;
     const perso = applyArmoireOverrides(armoire, overrides);
 
+    // Déblocages choisis (jeux + déco)
+    const unlocks = ((await kv.get(`armoire:unlocks:${email.toLowerCase()}`)) as {
+      games: string[];
+      deco: string[];
+    } | null) ?? { games: [], deco: [] };
+
     return NextResponse.json({
       found: true,
       verified: true,
@@ -47,7 +52,8 @@ export async function POST(req: NextRequest) {
       stats: perso.stats,
       tiroirs: perso.tiroirs,
       choices: tiroirChoices(),
-      jeu: buildJeu(perso),
+      entitlements: perso.entitlements,
+      unlocks,
     });
   } catch (e) {
     console.error("[armoire/verify] error", e);

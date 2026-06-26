@@ -1,0 +1,149 @@
+"use client";
+
+import React, { useMemo, useState } from "react";
+
+/* Jeu de mémoire (paires) avec les vraies photos de bijoux mood de la cliente.
+   On peut jouer à 2 (même écran, chacun son tour) — score par joueur. */
+
+type Card = { id: number; img: string; pairId: number; flipped: boolean; done: boolean };
+
+function shuffle<T>(arr: T[], seed: number): T[] {
+  // mélange déterministe simple (pas de Math.random pour rester stable au rendu)
+  const a = [...arr];
+  let s = seed;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function Memoire({ images, onClose, seed = 7 }: { images: string[]; onClose: () => void; seed?: number }) {
+  const [deux, setDeux] = useState(false); // mode 2 joueurs
+  const pairs = Math.min(6, images.length);
+
+  const initial = useMemo<Card[]>(() => {
+    const chosen = images.slice(0, pairs);
+    const doubled = chosen.flatMap((img, i) => [
+      { id: i * 2, img, pairId: i, flipped: false, done: false },
+      { id: i * 2 + 1, img, pairId: i, flipped: false, done: false },
+    ]);
+    return shuffle(doubled, seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.join("|"), pairs, seed]);
+
+  const [cards, setCards] = useState<Card[]>(initial);
+  const [open, setOpen] = useState<number[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [coups, setCoups] = useState(0);
+  const [joueur, setJoueur] = useState(0); // 0 ou 1
+  const [scores, setScores] = useState([0, 0]);
+
+  const gagne = cards.length > 0 && cards.every((c) => c.done);
+
+  function reset() {
+    setCards(shuffle(initial, seed + coups + 1));
+    setOpen([]);
+    setBusy(false);
+    setCoups(0);
+    setJoueur(0);
+    setScores([0, 0]);
+  }
+
+  function clic(idx: number) {
+    if (busy) return;
+    const c = cards[idx];
+    if (c.flipped || c.done) return;
+    const next = cards.map((x, i) => (i === idx ? { ...x, flipped: true } : x));
+    const nowOpen = [...open, idx];
+    setCards(next);
+    setOpen(nowOpen);
+
+    if (nowOpen.length === 2) {
+      setBusy(true);
+      setCoups((n) => n + 1);
+      const [a, b] = nowOpen;
+      if (next[a].pairId === next[b].pairId) {
+        setTimeout(() => {
+          setCards((cur) => cur.map((x, i) => (i === a || i === b ? { ...x, done: true } : x)));
+          setOpen([]);
+          setBusy(false);
+          if (deux) setScores((s) => (joueur === 0 ? [s[0] + 1, s[1]] : [s[0], s[1] + 1]));
+        }, 500);
+      } else {
+        setTimeout(() => {
+          setCards((cur) => cur.map((x, i) => (i === a || i === b ? { ...x, flipped: false } : x)));
+          setOpen([]);
+          setBusy(false);
+          if (deux) setJoueur((j) => (j === 0 ? 1 : 0));
+        }, 800);
+      }
+    }
+  }
+
+  return (
+    <div style={overlay()}>
+      <div style={modal()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <strong style={{ fontSize: 18 }}>🧠 Mémoire mood</strong>
+          <button onClick={onClose} style={closeBtn()}>✕</button>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12, fontSize: 13 }}>
+          <button onClick={() => { setDeux((d) => !d); reset(); }} style={pill(deux)}>
+            {deux ? "👯 À deux" : "🙂 Solo"}
+          </button>
+          {deux ? (
+            <>
+              <span style={{ fontWeight: joueur === 0 ? 700 : 400 }}>Joueur 1 : {scores[0]}</span>
+              <span style={{ fontWeight: joueur === 1 ? 700 : 400 }}>Joueur 2 : {scores[1]}</span>
+              <span style={{ opacity: 0.6 }}>· au tour de J{joueur + 1}</span>
+            </>
+          ) : (
+            <span style={{ opacity: 0.7 }}>Coups : {coups}</span>
+          )}
+          <button onClick={reset} style={pill(false)}>↺ Rejouer</button>
+        </div>
+
+        {gagne && (
+          <div style={{ background: "#fff4f6", borderRadius: 10, padding: 10, marginBottom: 10, fontSize: 14 }}>
+            🎉 Bravo ! {deux ? (scores[0] === scores[1] ? "Égalité !" : `Joueur ${scores[0] > scores[1] ? 1 : 2} gagne !`) : `Terminé en ${coups} coups.`}
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+          {cards.map((c, idx) => {
+            const show = c.flipped || c.done;
+            return (
+              <button key={c.id} onClick={() => clic(idx)} style={cardBtn(show, c.done)}>
+                {show ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                ) : (
+                  <span style={{ fontSize: 22 }}>🤍</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function overlay(): React.CSSProperties {
+  return { position: "fixed", inset: 0, background: "rgba(40,30,20,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 };
+}
+function modal(): React.CSSProperties {
+  return { background: "#fffdfb", borderRadius: 18, padding: 18, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" };
+}
+function cardBtn(show: boolean, done: boolean): React.CSSProperties {
+  return { aspectRatio: "1/1", borderRadius: 10, border: "1px solid #e6dccd", cursor: "pointer", background: show ? "#fff" : "linear-gradient(135deg, #d8b083, #c2945f)", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: done ? 0.55 : 1, overflow: "hidden" };
+}
+function closeBtn(): React.CSSProperties {
+  return { border: "none", background: "transparent", fontSize: 18, cursor: "pointer", color: "#6b4f33" };
+}
+function pill(active: boolean): React.CSSProperties {
+  return { border: "1px solid #d9cdbf", borderRadius: 999, padding: "5px 12px", background: active ? "#3a3330" : "#fff", color: active ? "#fff" : "#3a3330", cursor: "pointer", fontSize: 13 };
+}

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { auth } from "@/auth";
 import { getCustomerArmoire, applyArmoireOverrides, type ArmoireOverrides } from "@/lib/shopify";
-import { buildJeu } from "@/lib/armoire-jeu";
 
 // Vue admin (staff Mood) — accès à l'armoire de N'IMPORTE QUEL client.
 // Protégée par la connexion Google @yourmood.net (middleware) + double contrôle ici.
@@ -28,6 +27,10 @@ export async function POST(req: NextRequest) {
 
     const overrides = (await kv.get(`armoire:ov:${clientEmail.toLowerCase()}`)) as ArmoireOverrides | null;
     const perso = applyArmoireOverrides(armoire, overrides);
+    const unlocks = ((await kv.get(`armoire:unlocks:${clientEmail.toLowerCase()}`)) as {
+      games: string[];
+      deco: string[];
+    } | null) ?? { games: [], deco: [] };
 
     return NextResponse.json({
       found: true,
@@ -35,7 +38,8 @@ export async function POST(req: NextRequest) {
       stats: perso.stats,
       tiroirs: perso.tiroirs,
       orderNames: perso.orderNames,
-      jeu: buildJeu(perso),
+      entitlements: perso.entitlements,
+      unlocks,
     });
   } catch (e) {
     console.error("[armoire/admin] error", e);
