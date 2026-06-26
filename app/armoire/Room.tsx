@@ -21,12 +21,18 @@ export function Room({
   setOpen,
   unlocked,
   active,
+  editable = false,
+  onMove,
+  onPhoto,
 }: {
   tiroirs: Tiroir[];
   open: Record<string, boolean>;
   setOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   unlocked: string[];
   active: Active;
+  editable?: boolean;
+  onMove?: (key: string, tiroirKey: string) => void;
+  onPhoto?: (key: string, dataUrl: string) => void;
 }) {
   const mur = val(active.mur, "linear-gradient(180deg,#f7f0e6,#efe6d6)");
   const sol = val(active.sol, "repeating-linear-gradient(90deg,#e6cfa6,#e6cfa6 20px,#dcc298 20px,#dcc298 21px)");
@@ -96,7 +102,15 @@ export function Room({
 
       {/* LA VRAIE ARMOIRE, recolorée */}
       <div style={{ position: "relative", zIndex: 1, maxWidth: 360, margin: "0 auto", paddingBottom: 24 }}>
-        <Cabinet tiroirs={tiroirs} open={open} setOpen={setOpen} palette={palette} />
+        <Cabinet
+          tiroirs={tiroirs}
+          open={open}
+          setOpen={setOpen}
+          palette={palette}
+          editable={editable}
+          onMove={onMove}
+          onPhoto={onPhoto}
+        />
         {/* bougie posée dessus */}
         {has("bougie") && (
           <div style={{ position: "absolute", top: -6, right: 70, zIndex: 4 }}>

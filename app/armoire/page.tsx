@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Cabinet } from "./Cabinet";
 import { Memoire } from "./games/Memoire";
 import { Room } from "./Room";
 import { GAMES, DECO, isStaffEmail } from "@/lib/armoire-catalog";
@@ -207,7 +206,7 @@ export default function ArmoirePage() {
               <button style={tabBtn(tab === "deco")} onClick={() => setTab("deco")}>🪴 Décoration</button>
             </div>
 
-            {/* ONGLET ARMOIRE */}
+            {/* ONGLET ARMOIRE — l'armoire vit dans sa pièce décorée */}
             {tab === "armoire" && (
               <div style={{ marginTop: 14 }}>
                 <p style={{ opacity: 0.6, marginTop: 0, fontSize: 13, textAlign: "center" }}>
@@ -216,10 +215,12 @@ export default function ArmoirePage() {
                 {data.tiroirs.length === 0 ? (
                   <p style={{ opacity: 0.7, textAlign: "center" }}>Ta collection arrive — elle se remplira à ta prochaine pépite.</p>
                 ) : (
-                  <Cabinet
+                  <Room
                     tiroirs={data.tiroirs}
                     open={open}
                     setOpen={setOpen}
+                    unlocked={data.unlocks.deco}
+                    active={active}
                     editable
                     onMove={(key, tiroir) => persist(key, { tiroir })}
                     onPhoto={(key, image) => persist(key, { image })}
@@ -272,12 +273,9 @@ export default function ArmoirePage() {
                   {data.entitlements.decoBudget === 0 && " Passe une commande pour en débloquer 🤍"}
                 </p>
 
-                {/* LA PIÈCE — la vraie armoire centrale, recolorée, dans son décor */}
-                <Room tiroirs={data.tiroirs} open={open} setOpen={setOpen} unlocked={data.unlocks.deco} active={active} />
-
-                {/* CATALOGUE */}
-                <p style={{ fontSize: 13, opacity: 0.6, margin: "16px 0 8px" }}>
-                  Débloque, puis « Appliquer » pour le mur, le sol et la couleur de commode.
+                {/* CATALOGUE seul — la pièce se voit dans l'onglet « Mon armoire » */}
+                <p style={{ fontSize: 13, opacity: 0.6, margin: "0 0 8px" }}>
+                  Débloque, puis « Appliquer ». Ta pièce se met à jour dans l&apos;onglet <b>Mon armoire</b> 🤍
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
                   {DECO.map((d) => {
