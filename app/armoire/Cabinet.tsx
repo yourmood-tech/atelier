@@ -76,10 +76,10 @@ export function Cabinet({
           border: `9px solid ${p.frame}`,
           borderTop: "none",
           borderRadius: "6px 6px 14px 14px",
-          padding: "18px 16px",
+          padding: "12px 16px",
           display: "flex",
           flexDirection: "column",
-          gap: 14,
+          gap: 8,
           boxShadow: "0 22px 48px rgba(90,60,30,0.3)",
         }}
       >
@@ -145,8 +145,8 @@ function Drawer({
           width: "100%",
           cursor: "pointer",
           border: `2px solid ${p.faceBorder}`,
-          borderRadius: 14,
-          padding: "20px 20px",
+          borderRadius: 12,
+          padding: "10px 18px",
           background: `linear-gradient(180deg, ${p.faceTop}, ${p.faceBottom})`,
           boxShadow: isOpen
             ? "inset 0 3px 10px rgba(90,60,30,0.35)"

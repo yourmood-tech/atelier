@@ -38,6 +38,7 @@ export default function ArmoirePage() {
   const [tab, setTab] = useState<"armoire" | "jeux" | "deco">("armoire");
   const [playing, setPlaying] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
+  const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
 
   function applyDeco(type: "mur" | "sol" | "armoire", id: string) {
     const next = { ...active, [type]: id };
@@ -47,6 +48,18 @@ export default function ArmoirePage() {
     } catch {
       /* ignore */
     }
+  }
+
+  function onLayout(id: string, pos: { left: number; top: number; w: number }) {
+    setLayout((prev) => {
+      const next = { ...prev, [id]: pos };
+      try {
+        localStorage.setItem(`armoire:layout:${email.trim().toLowerCase()}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }
 
   async function ouvrir(e: React.FormEvent) {
@@ -67,6 +80,7 @@ export default function ArmoirePage() {
       setData(json);
       try {
         setActive(JSON.parse(localStorage.getItem(`armoire:deco:${email.trim().toLowerCase()}`) || "{}"));
+        setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${email.trim().toLowerCase()}`) || "{}"));
       } catch {
         /* ignore */
       }
@@ -224,6 +238,8 @@ export default function ArmoirePage() {
                     editable
                     onMove={(key, tiroir) => persist(key, { tiroir })}
                     onPhoto={(key, image) => persist(key, { image })}
+                    layout={layout}
+                    onLayout={onLayout}
                   />
                 )}
               </div>
