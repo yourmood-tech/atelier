@@ -524,7 +524,8 @@ export type ArmoireResult = {
 
 const TIROIR_DEFS: { key: string; label: string; emoji: string; match: (s: string) => boolean }[] = [
   { key: "bases", label: "Mes bases", emoji: "💍", match: (s) => /\bbase\b|base mood/.test(s) },
-  { key: "minis", label: "Les minis", emoji: "🤍", match: (s) => /\bmini\b|minis/.test(s) },
+  { key: "deuxtiers", label: "Mes deux tiers", emoji: "⅔", match: (s) => /deux[ -]?tiers|2\/3|2 tiers|two[- ]?third/.test(s) },
+  { key: "minis", label: "Mes minis", emoji: "🤍", match: (s) => /\bmini\b|minis/.test(s) },
   { key: "compos", label: "Mes compos & coffrets", emoji: "✨", match: (s) => /coffret|bundle|compo|set|pack|duo|trio/.test(s) },
   { key: "addons", label: "Mes addons", emoji: "🌸", match: (s) => /addon|add-on|anneau|bague|argent|\bor\b|cerami|titane|acier/.test(s) },
 ];
@@ -577,22 +578,33 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
     }
   }
 
-  // Images + catégorisation : on récupère chaque produit unique une fois (cap 60)
-  const uniqueIds = [...new Set(items.map((i) => i.productId).filter(Boolean))].slice(0, 60);
+  // Images + catégorisation : récupération EN LOT (jusqu'à 250 produits par appel,
+  // au lieu d'un appel par produit) → couvre toutes les pièces, pas seulement les 60 premières.
+  const uniqueIds = [...new Set(items.map((i) => i.productId).filter(Boolean))];
   const productInfo = new Map<number, { image: string | null; haystack: string }>();
-  await Promise.all(
-    uniqueIds.map(async (pid) => {
-      try {
-        const { product } = await shopifyFetch(
-          `/products/${pid}.json?fields=id,title,product_type,tags,image`
-        );
-        const haystack = `${product?.title ?? ""} ${product?.product_type ?? ""} ${product?.tags ?? ""}`.toLowerCase();
-        productInfo.set(pid, { image: product?.image?.src ?? null, haystack });
-      } catch {
-        productInfo.set(pid, { image: null, haystack: "" });
+  for (let i = 0; i < uniqueIds.length; i += 250) {
+    const chunk = uniqueIds.slice(i, i + 250);
+    try {
+      const data = await shopifyFetch(
+        `/products.json?ids=${chunk.join(",")}&limit=250&fields=id,title,product_type,tags,image,images`
+      );
+      for (const raw of (data.products as Record<string, unknown>[]) ?? []) {
+        const product = raw as {
+          id: number;
+          title?: string;
+          product_type?: string;
+          tags?: string;
+          image?: { src?: string } | null;
+          images?: { src?: string }[];
+        };
+        const haystack = `${product.title ?? ""} ${product.product_type ?? ""} ${product.tags ?? ""}`.toLowerCase();
+        const img = product.image?.src ?? product.images?.[0]?.src ?? null;
+        productInfo.set(product.id, { image: img, haystack });
       }
-    })
-  );
+    } catch {
+      // lot en échec → ces pièces resteront sans image (non bloquant)
+    }
+  }
 
   const tiroirMap = new Map<string, ArmoireTiroir>();
   function ensureTiroir(key: string): ArmoireTiroir {
