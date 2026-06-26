@@ -25,6 +25,44 @@ async function shopifyFetch(path: string) {
   return JSON.parse(text);
 }
 
+// Variante qui expose l'en-tête Link (pagination par curseur Shopify).
+async function shopifyFetchRaw(path: string): Promise<{ data: Record<string, unknown>; link: string | null }> {
+  const res = await fetch(`https://${STORE}/admin/api/${API_VERSION}${path}`, {
+    headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Shopify ${res.status} on ${path}: ${text.slice(0, 200)}`);
+  return { data: JSON.parse(text), link: res.headers.get("link") };
+}
+
+// Récupère TOUTES les pages d'une collection (ex. orders) en suivant rel="next".
+function nextPageInfo(link: string | null): string | null {
+  if (!link) return null;
+  const seg = link.split(",").find((s) => s.includes('rel="next"'));
+  const url = seg?.match(/<([^>]+)>/)?.[1];
+  if (!url) return null;
+  try {
+    return new URL(url).searchParams.get("page_info");
+  } catch {
+    return null;
+  }
+}
+
+async function shopifyFetchPaginated(firstPath: string, key: string): Promise<Record<string, unknown>[]> {
+  const all: Record<string, unknown>[] = [];
+  let path: string | null = firstPath;
+  let guard = 0;
+  while (path && guard < 50) {
+    guard++;
+    const { data, link } = await shopifyFetchRaw(path);
+    all.push(...((data[key] as Record<string, unknown>[]) ?? []));
+    const pi = nextPageInfo(link);
+    path = pi ? `${firstPath.split("?")[0]}?limit=250&page_info=${pi}` : null;
+  }
+  return all;
+}
+
 async function shopifyPut(path: string, body: unknown) {
   const res = await fetch(
     `https://${STORE}/admin/api/${API_VERSION}${path}`,
@@ -580,10 +618,11 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
     };
   }
 
-  const ordersData = await shopifyFetch(
-    `/orders.json?customer_id=${customer.id}&status=any&limit=250`
+  // TOUTES les commandes du client (pagination par curseur — au-delà de 250).
+  const orders: Record<string, unknown>[] = await shopifyFetchPaginated(
+    `/orders.json?customer_id=${customer.id}&status=any&limit=250`,
+    "orders"
   );
-  const orders: Record<string, unknown>[] = ordersData.orders ?? [];
 
   // Collecte des line items + total dépensé + budget de déblocage (par commande, depuis le lancement)
   let totalDepense = 0;
