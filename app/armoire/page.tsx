@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Room } from "./Room";
+import { AvatarStudio } from "./AvatarStudio";
+import { AVATAR_DEFAULT, type AvatarConfig } from "./Avatar";
 import { DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
@@ -34,10 +36,21 @@ export default function ArmoirePage() {
   const [commande, setCommande] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [tab, setTab] = useState<"armoire" | "regles" | "guide">("armoire");
+  const [tab, setTab] = useState<"armoire" | "avatar" | "regles" | "guide">("armoire");
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
   const [placed, setPlaced] = useState<string[]>([]);
+  const [avatarCfg, setAvatarCfg] = useState<AvatarConfig>(AVATAR_DEFAULT);
+  const [avatarOn, setAvatarOn] = useState(false);
+
+  function saveAvatar(cfg: AvatarConfig) {
+    setAvatarCfg(cfg);
+    try { localStorage.setItem(`armoire:avatarcfg:${email.trim().toLowerCase()}`, JSON.stringify(cfg)); } catch { /* ignore */ }
+  }
+  function setAvatarVisible(on: boolean) {
+    setAvatarOn(on);
+    try { localStorage.setItem(`armoire:avataron:${email.trim().toLowerCase()}`, on ? "1" : "0"); } catch { /* ignore */ }
+  }
 
   function togglePlaced(id: string) {
     setPlaced((prev) => {
@@ -90,9 +103,12 @@ export default function ArmoirePage() {
       if (!json.verified) return setStatus("refus");
       setData(json);
       try {
-        setActive(JSON.parse(localStorage.getItem(`armoire:deco:${email.trim().toLowerCase()}`) || "{}"));
-        setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${email.trim().toLowerCase()}`) || "{}"));
-        setPlaced(JSON.parse(localStorage.getItem(`armoire:placed:${email.trim().toLowerCase()}`) || "[]"));
+        const k = email.trim().toLowerCase();
+        setActive(JSON.parse(localStorage.getItem(`armoire:deco:${k}`) || "{}"));
+        setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${k}`) || "{}"));
+        setPlaced(JSON.parse(localStorage.getItem(`armoire:placed:${k}`) || "[]"));
+        setAvatarCfg(JSON.parse(localStorage.getItem(`armoire:avatarcfg:${k}`) || JSON.stringify(AVATAR_DEFAULT)));
+        setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
       } catch {
         /* ignore */
       }
@@ -226,10 +242,14 @@ export default function ArmoirePage() {
             {/* ONGLETS */}
             <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "18px 0 4px", flexWrap: "wrap" }}>
               <button style={tabBtn(tab === "armoire")} onClick={() => setTab("armoire")}>🪟 Mon armoire</button>
+              <button style={tabBtn(tab === "avatar")} onClick={() => setTab("avatar")}>🧍 Mon avatar</button>
               <button style={tabBtn(tab === "regles")} onClick={() => setTab("regles")}>🎁 Gagner des objets</button>
               <button style={tabBtn(tab === "guide")} onClick={() => setTab("guide")}>✨ Mode d&apos;emploi</button>
             </div>
 
+            {tab === "avatar" && (
+              <AvatarStudio config={avatarCfg} onChange={saveAvatar} avatarOn={avatarOn} onToggleRoom={setAvatarVisible} />
+            )}
             {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
             {tab === "guide" && <Guide />}
 
@@ -269,6 +289,8 @@ export default function ArmoirePage() {
                         onPhoto={(key, image) => persist(key, { image })}
                         layout={layout}
                         onLayout={onLayout}
+                        avatarOn={avatarOn}
+                        avatarConfig={avatarCfg}
                       />
                     </div>
                     <ObjectsTray

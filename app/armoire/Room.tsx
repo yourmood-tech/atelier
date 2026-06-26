@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { DECO, ARMOIRE_PALETTES } from "@/lib/armoire-catalog";
 import { Cabinet, type Tiroir } from "./Cabinet";
+import { Avatar, type AvatarConfig } from "./Avatar";
 
 /* La pièce : la VRAIE armoire centrale (à tiroirs), recolorée, dans un décor
    photoréaliste. Chaque accessoire est DÉPLAÇABLE et AGRANDISSABLE (sauvegardé). */
@@ -28,6 +29,8 @@ export function Room({
   onPhoto,
   layout = {},
   onLayout,
+  avatarOn = false,
+  avatarConfig,
 }: {
   tiroirs: Tiroir[];
   open: Record<string, boolean>;
@@ -40,6 +43,8 @@ export function Room({
   onPhoto?: (key: string, dataUrl: string) => void;
   layout?: Layout;
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
+  avatarOn?: boolean;
+  avatarConfig?: AvatarConfig;
 }) {
   const mur = val(active.mur, "linear-gradient(180deg,#f7f0e6,#efe6d6)");
   const sol = val(active.sol, "repeating-linear-gradient(90deg,#e6cfa6,#e6cfa6 20px,#dcc298 20px,#dcc298 21px)");
@@ -98,6 +103,23 @@ export function Room({
         />
       ))}
 
+      {/* AVATAR « mini-moi » — déplaçable + agrandissable comme un objet */}
+      {avatarOn && avatarConfig && (
+        <AccessoryItem
+          id="__avatar"
+          alt="Mon avatar"
+          pos={layout["__avatar"] ?? { left: 72, top: 60, w: 26 }}
+          z={"__avatar" === frontId ? 60 : 6}
+          editable={editable}
+          selected={"__avatar" === frontId}
+          boxRef={boxRef}
+          onLayout={onLayout}
+          onSelect={() => setFrontId("__avatar")}
+        >
+          <Avatar config={avatarConfig} />
+        </AccessoryItem>
+      )}
+
       {accessoires.length === 0 && (
         <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 5 }}>
           <span style={{ fontSize: 13, opacity: 0.7, background: "rgba(255,255,255,0.7)", padding: "4px 12px", borderRadius: 999 }}>
@@ -120,9 +142,10 @@ function AccessoryItem({
   boxRef,
   onLayout,
   onSelect,
+  children,
 }: {
   id: string;
-  src: string;
+  src?: string;
   alt: string;
   pos: { left: number; top: number; w: number };
   z: number;
@@ -131,6 +154,7 @@ function AccessoryItem({
   boxRef: React.RefObject<HTMLDivElement | null>;
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
   onSelect?: () => void;
+  children?: React.ReactNode;
 }) {
   const dragging = useRef(false);
   const resizing = useRef(false);
@@ -195,8 +219,12 @@ function AccessoryItem({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} draggable={false} style={{ width: "100%", height: "auto", display: "block", pointerEvents: "none", userSelect: "none" }} />
+      {children ? (
+        <div style={{ width: "100%", pointerEvents: "none", userSelect: "none" }}>{children}</div>
+      ) : (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={src} alt={alt} draggable={false} style={{ width: "100%", height: "auto", display: "block", pointerEvents: "none", userSelect: "none" }} />
+      )}
       {editable && selected && (
         <>
           <span style={{ position: "absolute", top: -11, left: -11, ...badge() }} title="glisse pour déplacer">✥</span>
