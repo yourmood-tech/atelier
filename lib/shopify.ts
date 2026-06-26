@@ -501,6 +501,7 @@ export async function getAtelierTunnelUrl(): Promise<string | null> {
 // ---------------------------------------------------------------------------
 
 export type ArmoirePiece = {
+  pid: number; // product_id Shopify (0 si produit supprimé) — clé pour "déplacer"/"photo perso"
   title: string;
   image: string | null;
   date: string; // ISO
@@ -522,18 +523,28 @@ export type ArmoireResult = {
   orderNames: string[]; // numéros de commande (#392523…) — pour vérifier la propriété
 };
 
+// Classement basé sur le TYPE DE PRODUIT Shopify (fiable : "addon argent", "base large",
+// "mini acier", "Deux tiers argent", "coffret", "medium…", "clip & drop…") — PAS sur les tags
+// (fourre-tout non fiable). Ordre = du plus spécifique au plus général.
 const TIROIR_DEFS: { key: string; label: string; emoji: string; match: (s: string) => boolean }[] = [
-  { key: "bases", label: "Mes bases", emoji: "💍", match: (s) => /\bbase\b|base mood/.test(s) },
-  { key: "deuxtiers", label: "Mes deux tiers", emoji: "⅔", match: (s) => /deux[ -]?tiers|2\/3|2 tiers|two[- ]?third/.test(s) },
-  { key: "minis", label: "Mes minis", emoji: "🤍", match: (s) => /\bmini\b|minis/.test(s) },
-  { key: "compos", label: "Mes compos & coffrets", emoji: "✨", match: (s) => /coffret|bundle|compo|set|pack|duo|trio/.test(s) },
-  { key: "addons", label: "Mes addons", emoji: "🌸", match: (s) => /addon|add-on|anneau|bague|argent|\bor\b|cerami|titane|acier/.test(s) },
+  { key: "bases", label: "Mes bases", emoji: "💍", match: (s) => /\bbase\b/.test(s) },
+  { key: "deuxtiers", label: "Mes deux tiers", emoji: "⅔", match: (s) => /deux ?tiers|2\/3/.test(s) },
+  { key: "minis", label: "Mes minis", emoji: "🤍", match: (s) => /\bmini/.test(s) },
+  { key: "medium", label: "Mes medium", emoji: "🌙", match: (s) => /\bmedium/.test(s) },
+  { key: "clips", label: "Mes clips & drops", emoji: "👂", match: (s) => /clip|drop|insert|boucle/.test(s) },
+  { key: "coffrets", label: "Mes coffrets & packs", emoji: "✨", match: (s) => /coffret|\bpack\b|coffin/.test(s) },
+  { key: "rangement", label: "Mon rangement", emoji: "📦", match: (s) => /rangement|bo[iî]te|plateau/.test(s) },
+  { key: "addons", label: "Mes addons", emoji: "🌸", match: (s) => /addon/.test(s) },
 ];
 
-function classifyPiece(haystack: string): string {
-  for (const def of TIROIR_DEFS) {
-    if (def.match(haystack)) return def.key;
+// type de produit prioritaire ; le titre ne sert que de secours si le type est vide.
+function classifyPiece(productType: string, title: string): string {
+  const t = (productType || "").toLowerCase();
+  if (t) {
+    for (const def of TIROIR_DEFS) if (def.match(t)) return def.key;
   }
+  const ti = (title || "").toLowerCase();
+  for (const def of TIROIR_DEFS) if (def.match(ti)) return def.key;
   return "autres";
 }
 
@@ -581,25 +592,23 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
   // Images + catégorisation : récupération EN LOT (jusqu'à 250 produits par appel,
   // au lieu d'un appel par produit) → couvre toutes les pièces, pas seulement les 60 premières.
   const uniqueIds = [...new Set(items.map((i) => i.productId).filter(Boolean))];
-  const productInfo = new Map<number, { image: string | null; haystack: string }>();
+  const productInfo = new Map<number, { image: string | null; productType: string }>();
   for (let i = 0; i < uniqueIds.length; i += 250) {
     const chunk = uniqueIds.slice(i, i + 250);
     try {
       const data = await shopifyFetch(
-        `/products.json?ids=${chunk.join(",")}&limit=250&fields=id,title,product_type,tags,image,images`
+        `/products.json?ids=${chunk.join(",")}&limit=250&fields=id,title,product_type,image,images`
       );
       for (const raw of (data.products as Record<string, unknown>[]) ?? []) {
         const product = raw as {
           id: number;
           title?: string;
           product_type?: string;
-          tags?: string;
           image?: { src?: string } | null;
           images?: { src?: string }[];
         };
-        const haystack = `${product.title ?? ""} ${product.product_type ?? ""} ${product.tags ?? ""}`.toLowerCase();
         const img = product.image?.src ?? product.images?.[0]?.src ?? null;
-        productInfo.set(product.id, { image: img, haystack });
+        productInfo.set(product.id, { image: img, productType: product.product_type ?? "" });
       }
     } catch {
       // lot en échec → ces pièces resteront sans image (non bloquant)
@@ -622,9 +631,9 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
 
   for (const it of items) {
     const info = productInfo.get(it.productId);
-    const haystack = `${it.title} ${info?.haystack ?? ""}`.toLowerCase();
-    const key = classifyPiece(haystack);
+    const key = classifyPiece(info?.productType ?? "", it.title);
     ensureTiroir(key).pieces.push({
+      pid: it.productId,
       title: it.title,
       image: info?.image ?? null,
       date: it.date,
