@@ -1,5 +1,15 @@
 // Catalogue des jeux mood et des objets déco débloquables.
 
+// Comptes staff avec accès illimité (preview complet sans n° de commande).
+export const STAFF_EMAILS = new Set<string>([
+  "amila@yourmood.net",
+  "philippe@yourmood.net",
+  "stephanie@yourmood.net",
+]);
+export function isStaffEmail(email: string): boolean {
+  return STAFF_EMAILS.has((email || "").trim().toLowerCase());
+}
+
 export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean };
 export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string };
 export type DecoType = "mur" | "sol" | "armoire" | "plante" | "cadre" | "objet";

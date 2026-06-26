@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { getCustomerArmoire, applyArmoireOverrides, tiroirChoices, type ArmoireOverrides } from "@/lib/shopify";
+import { GAMES, DECO, isStaffEmail } from "@/lib/armoire-catalog";
 
 // Espace client public — Mon Armoire Mood.
 // Sécurité : on n'ouvre l'armoire que si email + numéro de commande correspondent
@@ -19,40 +20,52 @@ export async function POST(req: NextRequest) {
     if (!/\S+@\S+\.\S+/.test(email)) {
       return NextResponse.json({ error: "Email invalide" }, { status: 400 });
     }
-    if (!digits(orderNumber)) {
+
+    const staff = isStaffEmail(email);
+
+    // Les clientes doivent fournir un n° de commande ; le staff (preview illimité) non.
+    if (!staff && !digits(orderNumber)) {
       return NextResponse.json({ error: "Numéro de commande manquant" }, { status: 400 });
     }
 
     const armoire = await getCustomerArmoire(email);
-    if (!armoire.found) {
+    if (!armoire.found && !staff) {
       return NextResponse.json({ found: false });
     }
 
-    // Vérification de propriété : le n° fourni doit matcher une commande de CETTE cliente
-    const wanted = digits(orderNumber);
-    const owns = armoire.orderNames.some((n) => digits(n) === wanted);
-    if (!owns) {
-      return NextResponse.json({ found: true, verified: false });
+    if (!staff) {
+      // Vérification de propriété : le n° fourni doit matcher une commande de CETTE cliente
+      const wanted = digits(orderNumber);
+      const owns = armoire.orderNames.some((n) => digits(n) === wanted);
+      if (!owns) {
+        return NextResponse.json({ found: true, verified: false });
+      }
     }
 
     // Personnalisations de la cliente (déplacer / photo perso)
     const overrides = (await kv.get(`armoire:ov:${email.toLowerCase()}`)) as ArmoireOverrides | null;
     const perso = applyArmoireOverrides(armoire, overrides);
 
-    // Déblocages choisis (jeux + déco)
-    const unlocks = ((await kv.get(`armoire:unlocks:${email.toLowerCase()}`)) as {
-      games: string[];
-      deco: string[];
-    } | null) ?? { games: [], deco: [] };
+    // Déblocages : staff = TOUT débloqué + budget illimité ; cliente = ce qu'elle a choisi.
+    const unlocks = staff
+      ? { games: GAMES.map((g) => g.id), deco: DECO.map((d) => d.id) }
+      : ((await kv.get(`armoire:unlocks:${email.toLowerCase()}`)) as { games: string[]; deco: string[] } | null) ?? {
+          games: [],
+          deco: [],
+        };
+    const entitlements = staff
+      ? { gamesBudget: GAMES.length, decoBudget: DECO.length, commandesQualifiantes: 0 }
+      : perso.entitlements;
 
     return NextResponse.json({
       found: true,
       verified: true,
-      prenom: perso.prenom,
+      staff,
+      prenom: perso.prenom || (staff ? "Amila" : ""),
       stats: perso.stats,
       tiroirs: perso.tiroirs,
       choices: tiroirChoices(),
-      entitlements: perso.entitlements,
+      entitlements,
       unlocks,
     });
   } catch (e) {

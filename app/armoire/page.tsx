@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Cabinet } from "./Cabinet";
 import { Memoire } from "./games/Memoire";
-import { GAMES, DECO } from "@/lib/armoire-catalog";
+import { Room } from "./Room";
+import { GAMES, DECO, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
    Connexion : email + numéro de commande (preuve de propriété → on ne peut pas
@@ -37,10 +38,22 @@ export default function ArmoirePage() {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [tab, setTab] = useState<"armoire" | "jeux" | "deco">("armoire");
   const [playing, setPlaying] = useState<string | null>(null);
+  const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
+
+  function applyDeco(type: "mur" | "sol" | "armoire", id: string) {
+    const next = { ...active, [type]: id };
+    setActive(next);
+    try {
+      localStorage.setItem(`armoire:deco:${email.trim().toLowerCase()}`, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  }
 
   async function ouvrir(e: React.FormEvent) {
     e.preventDefault();
-    if (!/\S+@\S+\.\S+/.test(email) || !commande.replace(/\D/g, "")) return;
+    const staff = isStaffEmail(email);
+    if (!/\S+@\S+\.\S+/.test(email) || (!staff && !commande.replace(/\D/g, ""))) return;
     setStatus("chargement");
     try {
       const res = await fetch("/api/armoire/verify", {
@@ -53,6 +66,11 @@ export default function ArmoirePage() {
       if (!json.found) return setStatus("introuvable");
       if (!json.verified) return setStatus("refus");
       setData(json);
+      try {
+        setActive(JSON.parse(localStorage.getItem(`armoire:deco:${email.trim().toLowerCase()}`) || "{}"));
+      } catch {
+        /* ignore */
+      }
       setStatus("espace");
     } catch {
       setStatus("erreur");
@@ -134,6 +152,11 @@ export default function ArmoirePage() {
             <input style={input()} placeholder="Ton prénom" value={prenom} onChange={(e) => setPrenom(e.target.value)} />
             <input style={input()} placeholder="Ton email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <input style={input()} placeholder="Un numéro de commande (ex. 392523)" value={commande} onChange={(e) => setCommande(e.target.value)} />
+            {isStaffEmail(email) && (
+              <p style={{ fontSize: 12, color: "#3a8a4a", marginTop: -4, marginBottom: 12 }}>
+                Accès staff illimité — tu peux laisser le numéro de commande vide 🤍
+              </p>
+            )}
             <button type="submit" style={btn()}>Ouvrir mon armoire</button>
           </form>
         )}
@@ -242,34 +265,49 @@ export default function ArmoirePage() {
             {/* ONGLET DÉCO */}
             {tab === "deco" && (
               <div style={card()}>
-                <h2 style={h2()}>Décoration 🪴</h2>
+                <h2 style={h2()}>Ma pièce 🪴</h2>
                 <p style={{ opacity: 0.7, marginTop: 0, fontSize: 14 }}>
-                  Décore la pièce de ton armoire. Tu peux débloquer{" "}
+                  Plus tu commandes, plus tu débloques d&apos;objets pour décorer la pièce de ta commode. Tu peux débloquer{" "}
                   <b>{data.unlocks.deco.length}/{data.entitlements.decoBudget}</b> objets.
                   {data.entitlements.decoBudget === 0 && " Passe une commande pour en débloquer 🤍"}
+                </p>
+
+                {/* LA PIÈCE */}
+                <Room unlocked={data.unlocks.deco} active={active} />
+
+                {/* CATALOGUE */}
+                <p style={{ fontSize: 13, opacity: 0.6, margin: "16px 0 8px" }}>
+                  Débloque, puis « Appliquer » pour le mur, le sol et la couleur de commode.
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 10 }}>
                   {DECO.map((d) => {
                     const owned = data.unlocks.deco.includes(d.id);
                     const budgetLeft = data.unlocks.deco.length < data.entitlements.decoBudget;
+                    const choisissable = d.type === "mur" || d.type === "sol" || d.type === "armoire";
+                    const estActif = choisissable && active[d.type as "mur" | "sol" | "armoire"] === d.id;
                     return (
                       <div key={d.id} style={tile(owned)}>
                         <div style={{ fontSize: 28 }}>{owned ? d.emoji : "🔒"}</div>
                         <div style={{ fontSize: 12, margin: "5px 0" }}>{d.nom}</div>
-                        {owned ? (
-                          <span style={{ fontSize: 11, color: "#3a8a4a" }}>débloqué ✓</span>
-                        ) : (
+                        {!owned ? (
                           <button style={miniBtn(budgetLeft)} disabled={!budgetLeft} onClick={() => unlock("deco", d.id)}>
                             {budgetLeft ? "Débloquer" : "Épuisé"}
                           </button>
+                        ) : choisissable ? (
+                          <button
+                            style={miniBtn(!estActif)}
+                            disabled={estActif}
+                            onClick={() => applyDeco(d.type as "mur" | "sol" | "armoire", d.id)}
+                          >
+                            {estActif ? "Appliqué ✓" : "Appliquer"}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: 11, color: "#3a8a4a" }}>posé ✓</span>
                         )}
                       </div>
                     );
                   })}
                 </div>
-                <p style={{ fontSize: 12, opacity: 0.5, marginTop: 14 }}>
-                  La pièce à décorer (poser les objets autour de l&apos;armoire) arrive juste après 🤍
-                </p>
               </div>
             )}
 

@@ -5,7 +5,10 @@ import React, { useMemo, useState } from "react";
 /* Jeu de mémoire (paires) avec les vraies photos de bijoux mood de la cliente.
    On peut jouer à 2 (même écran, chacun son tour) — score par joueur. */
 
-type Card = { id: number; img: string; pairId: number; flipped: boolean; done: boolean };
+type Card = { id: number; face: string; pairId: number; flipped: boolean; done: boolean };
+
+const EMOJI_POOL = ["🌸", "💍", "🤍", "💎", "✨", "🌺", "🩷", "🫧"];
+const isUrl = (s: string) => /^https?:|^data:/.test(s);
 
 function shuffle<T>(arr: T[], seed: number): T[] {
   // mélange déterministe simple (pas de Math.random pour rester stable au rendu)
@@ -21,13 +24,15 @@ function shuffle<T>(arr: T[], seed: number): T[] {
 
 export function Memoire({ images, onClose, seed = 7 }: { images: string[]; onClose: () => void; seed?: number }) {
   const [deux, setDeux] = useState(false); // mode 2 joueurs
-  const pairs = Math.min(6, images.length);
+  const pairs = 6;
 
   const initial = useMemo<Card[]>(() => {
-    const chosen = images.slice(0, pairs);
-    const doubled = chosen.flatMap((img, i) => [
-      { id: i * 2, img, pairId: i, flipped: false, done: false },
-      { id: i * 2 + 1, img, pairId: i, flipped: false, done: false },
+    // On prend les vraies bagues ; s'il en manque, on complète avec des emojis mood.
+    const faces = [...images.slice(0, pairs)];
+    for (let i = 0; faces.length < pairs; i++) faces.push(EMOJI_POOL[i % EMOJI_POOL.length]);
+    const doubled = faces.flatMap((face, i) => [
+      { id: i * 2, face, pairId: i, flipped: false, done: false },
+      { id: i * 2 + 1, face, pairId: i, flipped: false, done: false },
     ]);
     return shuffle(doubled, seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,8 +123,12 @@ export function Memoire({ images, onClose, seed = 7 }: { images: string[]; onClo
             return (
               <button key={c.id} onClick={() => clic(idx)} style={cardBtn(show, c.done)}>
                 {show ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                  isUrl(c.face) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.face} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                  ) : (
+                    <span style={{ fontSize: 30 }}>{c.face}</span>
+                  )
                 ) : (
                   <span style={{ fontSize: 22 }}>🤍</span>
                 )}
