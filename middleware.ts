@@ -27,8 +27,8 @@ export default auth((req) => {
     return;
   }
 
-  // /pronostics (jeu-concours public clientes — Mondial 2026)
-  if (pathname === "/pronostics" || pathname.startsWith("/pronostics/")) {
+  // /pronostics (jeu-concours public clientes — Mondial 2026) — exclut /pronostics/admin (staff)
+  if (pathname === "/pronostics" || (pathname.startsWith("/pronostics/") && !pathname.startsWith("/pronostics/admin"))) {
     return;
   }
 
@@ -50,6 +50,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     // Protect all routes except auth, login, gorgias webhook, shopify callback, public client perso pages, sondage public, and Next.js internals
-    "/((?!api/auth|api/wineur|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/creer-argent-cart-shopify|api/design|api/design-argent|api/admin|api/quiz-submit|api/mood-lovers|api/sondage|api/pronostics|api/projet-joaillerie-submit|api/armoire/verify|admin|creer|creer-argent|aluminium|argent|sertissages|login|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/wineur|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/creer-argent-cart-shopify|api/design|api/design-argent|api/admin|api/quiz-submit|api/mood-lovers|api/sondage|api/pronostics/save|api/projet-joaillerie-submit|api/armoire/verify|admin|creer|creer-argent|aluminium|argent|sertissages|login|_next/static|_next/image|favicon.ico).*)",
   ],
 };
