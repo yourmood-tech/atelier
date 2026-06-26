@@ -272,8 +272,8 @@ export default function ArmoirePage() {
                   {data.entitlements.decoBudget === 0 && " Passe une commande pour en débloquer 🤍"}
                 </p>
 
-                {/* LA PIÈCE */}
-                <Room unlocked={data.unlocks.deco} active={active} />
+                {/* LA PIÈCE — la vraie armoire centrale, recolorée, dans son décor */}
+                <Room tiroirs={data.tiroirs} open={open} setOpen={setOpen} unlocked={data.unlocks.deco} active={active} />
 
                 {/* CATALOGUE */}
                 <p style={{ fontSize: 13, opacity: 0.6, margin: "16px 0 8px" }}>

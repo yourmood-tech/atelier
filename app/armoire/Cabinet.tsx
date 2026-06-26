@@ -1,13 +1,17 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { ARMOIRE_PALETTES, type ArmoirePalette } from "@/lib/armoire-catalog";
 
 /* Meuble "armoire" dessiné, partagé entre la page cliente et la page admin.
-   editable=true (page cliente) → chaque bijou a un menu "déplacer" + "photo perso". */
+   editable=true (page cliente) → chaque bijou a un menu "déplacer" + "photo perso".
+   palette → recolore la VRAIE armoire (déco). */
 
 export type Piece = { pid: number; title: string; image: string | null; date: string; quantity: number };
 export type Tiroir = { key: string; label: string; emoji: string; pieces: Piece[] };
 export type Choice = { key: string; label: string };
+
+const DEFAULT_PALETTE = ARMOIRE_PALETTES.noyer;
 
 function keyOf(p: Piece): string {
   return p.pid ? String(p.pid) : "t:" + p.title;
@@ -44,6 +48,7 @@ export function Cabinet({
   editable = false,
   onMove,
   onPhoto,
+  palette = DEFAULT_PALETTE,
 }: {
   tiroirs: Tiroir[];
   open: Record<string, boolean>;
@@ -51,13 +56,15 @@ export function Cabinet({
   editable?: boolean;
   onMove?: (key: string, tiroirKey: string) => void;
   onPhoto?: (key: string, dataUrl: string) => void;
+  palette?: ArmoirePalette;
 }) {
+  const p = palette;
   return (
     <div style={{ maxWidth: 760, margin: "10px auto 0" }}>
       <div
         style={{
           height: 26,
-          background: "linear-gradient(180deg, #8a6038, #76502f)",
+          background: `linear-gradient(180deg, ${p.cornice}, ${p.frame})`,
           borderRadius: "16px 16px 4px 4px",
           boxShadow: "inset 0 2px 0 rgba(255,255,255,0.18)",
           margin: "0 -6px",
@@ -65,8 +72,8 @@ export function Cabinet({
       />
       <div
         style={{
-          background: "linear-gradient(180deg, #a3744a, #8f6440)",
-          border: "6px solid #6f4d2c",
+          background: `linear-gradient(180deg, ${p.bodyTop}, ${p.bodyBottom})`,
+          border: `6px solid ${p.frame}`,
           borderTop: "none",
           borderRadius: "4px 4px 10px 10px",
           padding: 14,
@@ -85,12 +92,13 @@ export function Cabinet({
             editable={editable}
             onMove={onMove}
             onPhoto={onPhoto}
+            palette={p}
           />
         ))}
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", padding: "0 24px" }}>
-        <span style={foot()} />
-        <span style={foot()} />
+        <span style={foot(p.frame)} />
+        <span style={foot(p.frame)} />
       </div>
     </div>
   );
@@ -103,6 +111,7 @@ function Drawer({
   editable,
   onMove,
   onPhoto,
+  palette,
 }: {
   tiroir: Tiroir;
   isOpen: boolean;
@@ -110,8 +119,10 @@ function Drawer({
   editable: boolean;
   onMove?: (key: string, tiroirKey: string) => void;
   onPhoto?: (key: string, dataUrl: string) => void;
+  palette: ArmoirePalette;
 }) {
   const [dropHover, setDropHover] = useState(false);
+  const p = palette;
   return (
     <div
       onDragOver={editable ? (e) => { e.preventDefault(); setDropHover(true); } : undefined}
@@ -133,10 +144,10 @@ function Drawer({
         style={{
           width: "100%",
           cursor: "pointer",
-          border: "2px solid #875f38",
+          border: `2px solid ${p.faceBorder}`,
           borderRadius: 10,
           padding: "16px 18px",
-          background: "linear-gradient(180deg, #d8b083, #c2945f)",
+          background: `linear-gradient(180deg, ${p.faceTop}, ${p.faceBottom})`,
           boxShadow: isOpen
             ? "inset 0 3px 10px rgba(90,60,30,0.35)"
             : "inset 0 2px 0 rgba(255,255,255,0.35), 0 4px 8px rgba(90,60,30,0.18)",
@@ -154,7 +165,7 @@ function Drawer({
             border: "1px solid #e4d4b6",
             borderRadius: 5,
             padding: "6px 12px",
-            color: "#6b4f33",
+            color: p.label === "#f2ece2" ? "#6b4f33" : p.label,
             fontSize: 15,
             fontWeight: 600,
             letterSpacing: 0.3,
@@ -264,8 +275,8 @@ function pieceBox(): React.CSSProperties {
 function knob(): React.CSSProperties {
   return { width: 16, height: 16, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #f3dca0, #a9802f)", boxShadow: "0 1px 2px rgba(0,0,0,0.3)", flexShrink: 0 };
 }
-function foot(): React.CSSProperties {
-  return { width: 26, height: 14, background: "linear-gradient(180deg, #6f4d2c, #573a1f)", borderRadius: "0 0 8px 8px" };
+function foot(color: string): React.CSSProperties {
+  return { width: 26, height: 14, background: color, filter: "brightness(0.85)", borderRadius: "0 0 8px 8px" };
 }
 function camBtn(): React.CSSProperties {
   return { position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", fontSize: 12, lineHeight: "20px", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" };
