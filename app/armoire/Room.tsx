@@ -3,16 +3,37 @@
 import React from "react";
 import { DECO, ARMOIRE_PALETTES } from "@/lib/armoire-catalog";
 import { Cabinet, type Tiroir } from "./Cabinet";
-import { DecoArt } from "./DecoArt";
 
 /* La pièce : la VRAIE armoire centrale (à tiroirs), recolorée, dans un décor
-   qui se garnit au fil des commandes (mur, sol, plantes, cadres, objets). */
+   photoréaliste qui se garnit au fil des commandes (accessoires en images). */
 
 export type Active = { mur?: string; sol?: string; armoire?: string };
 
 function val(id: string | undefined, fallback: string): string {
   if (!id) return fallback;
   return DECO.find((x) => x.id === id)?.valeur ?? fallback;
+}
+
+// Emplacements des accessoires dans la pièce.
+function slotStyle(slot: string | undefined): React.CSSProperties {
+  switch (slot) {
+    case "sol-gauche":
+      return { position: "absolute", left: "1%", bottom: 0, width: "26%", zIndex: 3 };
+    case "sol-droite":
+      return { position: "absolute", right: "1%", bottom: 0, width: "26%", zIndex: 3 };
+    case "table-gauche":
+      return { position: "absolute", left: "3%", bottom: "4%", width: "20%", zIndex: 3 };
+    case "mur-haut":
+      return { position: "absolute", left: "50%", top: "2%", transform: "translateX(-50%)", width: "46%", zIndex: 2 };
+    case "mur-droite":
+      return { position: "absolute", right: "2%", top: "16%", width: "22%", zIndex: 2 };
+    case "etagere":
+      return { position: "absolute", right: "2%", top: "2%", width: "22%", zIndex: 2 };
+    case "sol-centre-droite":
+      return { position: "absolute", right: "20%", bottom: 0, width: "16%", zIndex: 4 };
+    default:
+      return { position: "absolute", left: "2%", bottom: 0, width: "22%", zIndex: 3 };
+  }
 }
 
 export function Room({
@@ -40,10 +61,8 @@ export function Room({
   const palette = ARMOIRE_PALETTES[paletteKey] ?? ARMOIRE_PALETTES.noyer;
 
   const set = new Set(unlocked);
-  const placed = DECO.filter((d) => set.has(d.id));
-  const plantes = placed.filter((d) => d.type === "plante");
-  const cadres = placed.filter((d) => d.type === "cadre");
-  const has = (id: string) => set.has(id);
+  // accessoires photoréalistes débloqués (image + emplacement)
+  const accessoires = DECO.filter((d) => d.img && set.has(d.id));
 
   return (
     <div
@@ -54,54 +73,22 @@ export function Room({
         background: mur,
         border: "1px solid #e6dccd",
         padding: "26px 16px 0",
+        minHeight: 420,
       }}
     >
-      {/* décor mural */}
-      <div style={{ position: "absolute", top: 14, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 20, zIndex: 2 }}>
-        {cadres.map((c, i) => (
-          <DecoArt key={i} kind="cadre" size={84} />
-        ))}
-        {has("miroir") && <DecoArt kind="miroir" size={84} />}
-      </div>
-      {has("lampe") && (
-        <div style={{ position: "absolute", top: 6, left: 14, zIndex: 2 }}>
-          <DecoArt kind="lampe" size={86} />
-        </div>
-      )}
-
       {/* sol */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 70, background: sol, zIndex: 0 }} />
-      {/* tapis */}
-      {has("tapis") && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 14,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: 280,
-            height: 40,
-            borderRadius: "50%",
-            background: "rgba(150,110,70,0.28)",
-            zIndex: 0,
-          }}
-        />
-      )}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 90, background: sol, zIndex: 0 }} />
 
-      {/* plantes au sol */}
-      {plantes[0] && (
-        <div style={{ position: "absolute", bottom: 8, left: 6, zIndex: 3 }}>
-          <DecoArt kind={plantes[0].valeur} size={120} />
-        </div>
-      )}
-      {plantes[1] && (
-        <div style={{ position: "absolute", bottom: 8, right: 6, zIndex: 3 }}>
-          <DecoArt kind={plantes[1].valeur} size={120} />
-        </div>
-      )}
+      {/* accessoires posés derrière l'armoire (mur, étagère) */}
+      {accessoires
+        .filter((a) => a.slot === "mur-haut" || a.slot === "mur-droite" || a.slot === "etagere")
+        .map((a) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={a.id} src={a.img} alt={a.nom} style={slotStyle(a.slot)} />
+        ))}
 
       {/* LA VRAIE ARMOIRE, recolorée */}
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 360, margin: "0 auto", paddingBottom: 24 }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 360, margin: "0 auto", paddingBottom: 28 }}>
         <Cabinet
           tiroirs={tiroirs}
           open={open}
@@ -111,25 +98,20 @@ export function Room({
           onMove={onMove}
           onPhoto={onPhoto}
         />
-        {/* bougie posée dessus */}
-        {has("bougie") && (
-          <div style={{ position: "absolute", top: -6, right: 70, zIndex: 4 }}>
-            <DecoArt kind="bougie" size={46} />
-          </div>
-        )}
       </div>
 
-      {/* 3e plante devant si débloquée */}
-      {plantes[2] && (
-        <div style={{ position: "absolute", bottom: 6, left: "50%", transform: "translateX(90px)", zIndex: 4 }}>
-          <DecoArt kind={plantes[2].valeur} size={84} />
-        </div>
-      )}
+      {/* accessoires posés au sol (devant) */}
+      {accessoires
+        .filter((a) => !(a.slot === "mur-haut" || a.slot === "mur-droite" || a.slot === "etagere"))
+        .map((a) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={a.id} src={a.img} alt={a.nom} style={slotStyle(a.slot)} />
+        ))}
 
-      {unlocked.length === 0 && (
+      {accessoires.length === 0 && (
         <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", zIndex: 5 }}>
           <span style={{ fontSize: 13, opacity: 0.7, background: "rgba(255,255,255,0.7)", padding: "4px 12px", borderRadius: 999 }}>
-            Débloque des objets pour décorer la pièce de ton armoire 🤍
+            Débloque des accessoires pour décorer la pièce de ton armoire 🤍
           </span>
         </div>
       )}

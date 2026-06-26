@@ -11,8 +11,9 @@ export function isStaffEmail(email: string): boolean {
 }
 
 export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean };
-export type DecoType = "mur" | "sol" | "armoire" | "plante" | "cadre" | "objet";
-export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string };
+export type DecoType = "mur" | "sol" | "armoire" | "plante" | "cadre" | "objet" | "accessoire";
+// img = image photoréaliste (PNG transparent) servie depuis /public/chambre ; slot = emplacement dans la pièce.
+export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string; img?: string; slot?: string };
 
 export const GAMES: GameDef[] = [
   { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true },
@@ -62,18 +63,9 @@ export const DECO: DecoDef[] = [
   { id: "sol-marbre", nom: "Marbre", emoji: "⬜", type: "sol", valeur: "linear-gradient(135deg,#f1ede7,#e0dacd)" },
   { id: "sol-terrazzo", nom: "Terrazzo", emoji: "🔘", type: "sol", valeur: "radial-gradient(circle at 20% 30%, #d8cfc0 2px, transparent 3px), radial-gradient(circle at 60% 70%, #cfc3b0 2px, transparent 3px), radial-gradient(circle at 80% 20%, #d8cfc0 2px, transparent 3px), #ece7df" },
   { id: "sol-tapisbeige", nom: "Moquette beige", emoji: "🟧", type: "sol", valeur: "linear-gradient(180deg,#e9ddc9,#e3d4bd)" },
-  // Plantes (5 styles) — illustrations vectorielles
-  { id: "plante-monstera", nom: "Monstera", emoji: "🌿", type: "plante", valeur: "monstera" },
-  { id: "plante-olivier", nom: "Olivier", emoji: "🫒", type: "plante", valeur: "olivier" },
-  { id: "plante-pampa", nom: "Herbe de la pampa", emoji: "🌾", type: "plante", valeur: "pampa" },
-  { id: "plante-hibiscus", nom: "Hibiscus", emoji: "🌺", type: "plante", valeur: "hibiscus" },
-  { id: "plante-succulente", nom: "Succulente", emoji: "🪴", type: "plante", valeur: "succulente" },
-  // Cadres & objets
-  { id: "cadre-photo", nom: "Cadre photo", emoji: "🖼️", type: "cadre", valeur: "cadre" },
-  { id: "miroir", nom: "Miroir doré", emoji: "🪞", type: "objet", valeur: "miroir" },
-  { id: "lampe", nom: "Lampe d'ambiance", emoji: "💡", type: "objet", valeur: "lampe" },
-  { id: "tapis", nom: "Tapis", emoji: "🟫", type: "objet", valeur: "tapis" },
-  { id: "bougie", nom: "Bougie", emoji: "🕯️", type: "objet", valeur: "bougie" },
+  // Accessoires PHOTORÉALISTES (images transparentes fournies par Amila, dans /public/chambre).
+  // slot = emplacement dans la pièce. On en ajoute au fur et à mesure des images livrées.
+  { id: "acc-palmier", nom: "Palmier en pot", emoji: "🌴", type: "accessoire", valeur: "palmier", img: "/chambre/acc-palmier.png", slot: "sol-gauche" },
 ];
 
 export function gameById(id: string): GameDef | undefined {
