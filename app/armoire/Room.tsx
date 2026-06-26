@@ -15,19 +15,6 @@ function val(id: string | undefined, fallback: string): string {
   return DECO.find((x) => x.id === id)?.valeur ?? fallback;
 }
 
-// Emplacement par défaut d'un accessoire selon son slot (centre en %, largeur en %).
-function defaultPos(slot: string | undefined): { left: number; top: number; w: number } {
-  switch (slot) {
-    case "sol-gauche": return { left: 11, top: 60, w: 22 };
-    case "sol-droite": return { left: 89, top: 60, w: 22 };
-    case "table-gauche": return { left: 12, top: 76, w: 18 };
-    case "mur-haut": return { left: 50, top: 12, w: 44 };
-    case "mur-droite": return { left: 87, top: 36, w: 20 };
-    case "etagere": return { left: 87, top: 12, w: 20 };
-    case "sol-centre-droite": return { left: 70, top: 80, w: 14 };
-    default: return { left: 14, top: 72, w: 16 };
-  }
-}
 
 export function Room({
   tiroirs,
@@ -97,7 +84,8 @@ export function Room({
           id={a.id}
           src={a.img!}
           alt={a.nom}
-          pos={layout[a.id] ?? defaultPos(a.slot)}
+          pos={layout[a.id] ?? { left: a.pos!.left, top: a.pos!.top, w: a.pos!.w }}
+          z={a.pos?.z ?? 3}
           editable={editable}
           boxRef={boxRef}
           onLayout={onLayout}
@@ -120,6 +108,7 @@ function AccessoryItem({
   src,
   alt,
   pos,
+  z,
   editable,
   boxRef,
   onLayout,
@@ -128,6 +117,7 @@ function AccessoryItem({
   src: string;
   alt: string;
   pos: { left: number; top: number; w: number };
+  z: number;
   editable: boolean;
   boxRef: React.RefObject<HTMLDivElement | null>;
   onLayout?: (id: string, pos: { left: number; top: number; w: number }) => void;
@@ -183,7 +173,7 @@ function AccessoryItem({
         top: `${pos.top}%`,
         width: `${pos.w}%`,
         transform: "translate(-50%, -50%)",
-        zIndex: 3,
+        zIndex: editable ? Math.max(z, 6) : z,
         touchAction: "none",
         cursor: editable ? "move" : "default",
         outline: editable ? "1.5px dashed rgba(107,79,51,0.5)" : "none",

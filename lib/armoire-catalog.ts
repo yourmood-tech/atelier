@@ -12,8 +12,9 @@ export function isStaffEmail(email: string): boolean {
 
 export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean };
 export type DecoType = "mur" | "sol" | "armoire" | "plante" | "cadre" | "objet" | "accessoire";
-// img = image photoréaliste (PNG transparent) servie depuis /public/chambre ; slot = emplacement dans la pièce.
-export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string; img?: string; slot?: string };
+// img = image photoréaliste (PNG transparent) servie depuis /public/chambre.
+// pos = emplacement de départ dans la pièce (centre en %, largeur en %, z = profondeur).
+export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string; img?: string; pos?: { left: number; top: number; w: number; z: number } };
 
 export const GAMES: GameDef[] = [
   { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true },
@@ -64,8 +65,23 @@ export const DECO: DecoDef[] = [
   { id: "sol-terrazzo", nom: "Terrazzo", emoji: "🔘", type: "sol", valeur: "radial-gradient(circle at 20% 30%, #d8cfc0 2px, transparent 3px), radial-gradient(circle at 60% 70%, #cfc3b0 2px, transparent 3px), radial-gradient(circle at 80% 20%, #d8cfc0 2px, transparent 3px), #ece7df" },
   { id: "sol-tapisbeige", nom: "Moquette beige", emoji: "🟧", type: "sol", valeur: "linear-gradient(180deg,#e9ddc9,#e3d4bd)" },
   // Accessoires PHOTORÉALISTES (images transparentes fournies par Amila, dans /public/chambre).
-  // slot = emplacement dans la pièce. On en ajoute au fur et à mesure des images livrées.
-  { id: "acc-palmier", nom: "Palmier en pot", emoji: "🌴", type: "accessoire", valeur: "palmier", img: "/chambre/acc-palmier.png", slot: "sol-gauche" },
+  // pos = placement de départ (la cliente peut déplacer/agrandir ensuite).
+  { id: "acc-tapis", nom: "Tapis moelleux", emoji: "⚪", type: "accessoire", valeur: "tapis", img: "/chambre/acc-tapis.png", pos: { left: 50, top: 90, w: 58, z: 0 } },
+  { id: "acc-plante", nom: "Palmier en pot", emoji: "🌴", type: "accessoire", valeur: "plante", img: "/chambre/acc-plante.png", pos: { left: 9, top: 54, w: 21, z: 4 } },
+  { id: "acc-table", nom: "Table d'appoint", emoji: "🪵", type: "accessoire", valeur: "table", img: "/chambre/acc-table.png", pos: { left: 13, top: 80, w: 17, z: 4 } },
+  { id: "acc-lampe", nom: "Lampe champignon", emoji: "💡", type: "accessoire", valeur: "lampe", img: "/chambre/acc-lampe.png", pos: { left: 10, top: 66, w: 10, z: 5 } },
+  { id: "acc-bougie", nom: "Bougie", emoji: "🕯️", type: "accessoire", valeur: "bougie", img: "/chambre/acc-bougie.png", pos: { left: 17, top: 74, w: 6, z: 5 } },
+  { id: "acc-coquillage", nom: "Coquillage", emoji: "🐚", type: "accessoire", valeur: "coquillage", img: "/chambre/acc-coquillage.png", pos: { left: 6, top: 80, w: 7, z: 5 } },
+  { id: "acc-cadre-mood", nom: "Cadre « mood »", emoji: "🖼️", type: "accessoire", valeur: "cadre-mood", img: "/chambre/acc-cadre-mood.png", pos: { left: 30, top: 13, w: 13, z: 2 } },
+  { id: "acc-cadre-bijoux", nom: "Cadre bijoux", emoji: "🖼️", type: "accessoire", valeur: "cadre-bijoux", img: "/chambre/acc-cadre-bijoux.png", pos: { left: 46, top: 12, w: 16, z: 2 } },
+  { id: "acc-cadre-palmier", nom: "Cadre palmier", emoji: "🖼️", type: "accessoire", valeur: "cadre-palmier", img: "/chambre/acc-cadre-palmier.png", pos: { left: 62, top: 13, w: 13, z: 2 } },
+  { id: "acc-etagere", nom: "Étagère", emoji: "📚", type: "accessoire", valeur: "etagere", img: "/chambre/acc-etagere.png", pos: { left: 87, top: 17, w: 23, z: 2 } },
+  { id: "acc-neon", nom: "Néon « mood »", emoji: "💗", type: "accessoire", valeur: "neon", img: "/chambre/acc-neon.png", pos: { left: 89, top: 5, w: 16, z: 2 } },
+  { id: "acc-miroir", nom: "Miroir à ampoules", emoji: "🪞", type: "accessoire", valeur: "miroir", img: "/chambre/acc-miroir.png", pos: { left: 86, top: 45, w: 17, z: 2 } },
+  { id: "acc-coiffeuse", nom: "Coiffeuse", emoji: "💄", type: "accessoire", valeur: "coiffeuse", img: "/chambre/acc-coiffeuse.png", pos: { left: 88, top: 72, w: 23, z: 4 } },
+  { id: "acc-portebijoux", nom: "Porte-bijoux", emoji: "📿", type: "accessoire", valeur: "portebijoux", img: "/chambre/acc-portebijoux.png", pos: { left: 78, top: 70, w: 9, z: 5 } },
+  { id: "acc-diffuseur", nom: "Diffuseur", emoji: "🌸", type: "accessoire", valeur: "diffuseur", img: "/chambre/acc-diffuseur.png", pos: { left: 95, top: 74, w: 8, z: 5 } },
+  { id: "acc-tabouret", nom: "Tabouret velours", emoji: "🪑", type: "accessoire", valeur: "tabouret", img: "/chambre/acc-tabouret.png", pos: { left: 84, top: 89, w: 12, z: 4 } },
 ];
 
 export function gameById(id: string): GameDef | undefined {
