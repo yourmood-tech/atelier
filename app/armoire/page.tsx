@@ -213,7 +213,6 @@ export default function ArmoirePage() {
                   open={open}
                   setOpen={setOpen}
                   editable
-                  choices={data.choices}
                   onMove={(key, tiroir) => persist(key, { tiroir })}
                   onPhoto={(key, image) => persist(key, { image })}
                 />

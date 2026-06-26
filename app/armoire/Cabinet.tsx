@@ -42,7 +42,6 @@ export function Cabinet({
   open,
   setOpen,
   editable = false,
-  choices = [],
   onMove,
   onPhoto,
 }: {
@@ -50,7 +49,6 @@ export function Cabinet({
   open: Record<string, boolean>;
   setOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   editable?: boolean;
-  choices?: Choice[];
   onMove?: (key: string, tiroirKey: string) => void;
   onPhoto?: (key: string, dataUrl: string) => void;
 }) {
@@ -85,7 +83,6 @@ export function Cabinet({
             isOpen={!!open[t.key]}
             onToggle={() => setOpen((o) => ({ ...o, [t.key]: !o[t.key] }))}
             editable={editable}
-            choices={choices}
             onMove={onMove}
             onPhoto={onPhoto}
           />
@@ -104,7 +101,6 @@ function Drawer({
   isOpen,
   onToggle,
   editable,
-  choices,
   onMove,
   onPhoto,
 }: {
@@ -112,12 +108,26 @@ function Drawer({
   isOpen: boolean;
   onToggle: () => void;
   editable: boolean;
-  choices: Choice[];
   onMove?: (key: string, tiroirKey: string) => void;
   onPhoto?: (key: string, dataUrl: string) => void;
 }) {
+  const [dropHover, setDropHover] = useState(false);
   return (
-    <div>
+    <div
+      onDragOver={editable ? (e) => { e.preventDefault(); setDropHover(true); } : undefined}
+      onDragLeave={editable ? () => setDropHover(false) : undefined}
+      onDrop={
+        editable
+          ? (e) => {
+              e.preventDefault();
+              const k = e.dataTransfer.getData("text/plain");
+              if (k) onMove?.(k, tiroir.key);
+              setDropHover(false);
+            }
+          : undefined
+      }
+      style={{ borderRadius: 12, outline: dropHover ? "3px dashed #6b4f33" : "none", outlineOffset: 3, transition: "outline 0.1s" }}
+    >
       <button
         onClick={onToggle}
         style={{
@@ -179,15 +189,7 @@ function Drawer({
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 10 }}>
             {tiroir.pieces.map((p, i) => (
-              <PieceCell
-                key={i}
-                piece={p}
-                currentKey={tiroir.key}
-                editable={editable}
-                choices={choices}
-                onMove={onMove}
-                onPhoto={onPhoto}
-              />
+              <PieceCell key={i} piece={p} editable={editable} onPhoto={onPhoto} />
             ))}
           </div>
         </div>
@@ -198,20 +200,13 @@ function Drawer({
 
 function PieceCell({
   piece,
-  currentKey,
   editable,
-  choices,
-  onMove,
   onPhoto,
 }: {
   piece: Piece;
-  currentKey: string;
   editable: boolean;
-  choices: Choice[];
-  onMove?: (key: string, tiroirKey: string) => void;
   onPhoto?: (key: string, dataUrl: string) => void;
 }) {
-  const [menu, setMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const k = keyOf(piece);
 
@@ -224,22 +219,26 @@ function PieceCell({
     } catch {
       /* ignore */
     }
-    setMenu(false);
   }
 
   return (
     <div style={{ position: "relative", textAlign: "center" }}>
-      <div style={{ ...pieceBox(), position: "relative" }}>
+      <div
+        draggable={editable}
+        onDragStart={editable ? (e) => e.dataTransfer.setData("text/plain", k) : undefined}
+        style={{ ...pieceBox(), position: "relative", cursor: editable ? "grab" : "default" }}
+        title={editable ? "Glisse-moi sur un tiroir pour me ranger" : undefined}
+      >
         {piece.image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={piece.image} alt={piece.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={piece.image} alt={piece.title} style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }} />
         ) : (
           <span style={{ fontSize: 24 }}>💍</span>
         )}
 
         {editable && (
-          <button onClick={() => setMenu((m) => !m)} style={dotsBtn()} aria-label="options">
-            ⋯
+          <button onClick={() => fileRef.current?.click()} style={camBtn()} aria-label="changer la photo">
+            📷
           </button>
         )}
         {editable && !piece.image && (
@@ -251,33 +250,7 @@ function PieceCell({
 
       <div style={{ fontSize: 10, opacity: 0.75, marginTop: 4, lineHeight: 1.25 }}>{shorten(piece.title)}</div>
 
-      {editable && (
-        <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
-      )}
-
-      {editable && menu && (
-        <div style={menuBox()}>
-          <div style={{ fontSize: 11, opacity: 0.55, padding: "2px 8px 6px" }}>Déplacer vers</div>
-          {choices
-            .filter((c) => c.key !== currentKey)
-            .map((c) => (
-              <button
-                key={c.key}
-                style={menuItem()}
-                onClick={() => {
-                  onMove?.(k, c.key);
-                  setMenu(false);
-                }}
-              >
-                {c.label}
-              </button>
-            ))}
-          <div style={{ height: 1, background: "#eee2d2", margin: "6px 0" }} />
-          <button style={menuItem()} onClick={() => fileRef.current?.click()}>
-            📷 Changer la photo
-          </button>
-        </div>
-      )}
+      {editable && <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />}
     </div>
   );
 }
@@ -294,15 +267,9 @@ function knob(): React.CSSProperties {
 function foot(): React.CSSProperties {
   return { width: 26, height: 14, background: "linear-gradient(180deg, #6f4d2c, #573a1f)", borderRadius: "0 0 8px 8px" };
 }
-function dotsBtn(): React.CSSProperties {
-  return { position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", color: "#6b4f33", fontSize: 14, lineHeight: "20px", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" };
+function camBtn(): React.CSSProperties {
+  return { position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", fontSize: 12, lineHeight: "20px", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" };
 }
 function plusOverlay(): React.CSSProperties {
   return { position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)", border: "none", background: "rgba(107,79,51,0.85)", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 999, cursor: "pointer", whiteSpace: "nowrap" };
-}
-function menuBox(): React.CSSProperties {
-  return { position: "absolute", zIndex: 20, top: "70%", left: "50%", transform: "translateX(-50%)", background: "#fff", border: "1px solid #e4d4b6", borderRadius: 10, boxShadow: "0 8px 24px rgba(90,60,30,0.25)", padding: 6, minWidth: 150, textAlign: "left" };
-}
-function menuItem(): React.CSSProperties {
-  return { display: "block", width: "100%", textAlign: "left", border: "none", background: "transparent", padding: "7px 8px", fontSize: 13, color: "#4a3a2a", cursor: "pointer", borderRadius: 6 };
 }
