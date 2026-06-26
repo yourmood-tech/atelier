@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Cabinet } from "../Cabinet";
 
 /* Mon Armoire Mood — vue ADMIN (équipe Mood).
    Protégée par la connexion Google @yourmood.net (middleware + contrôle serveur).
@@ -23,6 +24,7 @@ export default function ArmoireAdminPage() {
   const [email, setEmail] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "empty" | "error">("idle");
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   async function chercher(e: React.FormEvent) {
     e.preventDefault();
@@ -91,30 +93,7 @@ export default function ArmoireAdminPage() {
               </div>
             </div>
 
-            {data.tiroirs.map((t) => (
-              <div key={t.key} style={box()}>
-                <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 10 }}>
-                  {t.emoji} {t.label} <span style={{ opacity: 0.45 }}>· {t.pieces.length}</span>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 10 }}>
-                  {t.pieces.map((p, i) => (
-                    <div key={i} style={{ textAlign: "center" }}>
-                      <div style={{ aspectRatio: "1/1", borderRadius: 10, overflow: "hidden", border: "1px solid #efe7dd", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {p.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <span style={{ fontSize: 22 }}>💍</span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 10, opacity: 0.7, marginTop: 4, lineHeight: 1.2 }}>
-                        {p.title.length > 40 ? p.title.slice(0, 38) + "…" : p.title}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+            <Cabinet tiroirs={data.tiroirs} open={open} setOpen={setOpen} />
           </>
         )}
       </div>
