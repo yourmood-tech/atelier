@@ -566,14 +566,12 @@ export type ArmoireResult = {
 // Lancement de la gamification : seules les commandes à partir de cette date comptent.
 export const ARMOIRE_GAME_START = "2026-06-26";
 
-// Palier selon le TOTAL d'UNE commande → combien de jeux / objets déco elle débloque.
+// Combien d'objets UNE commande débloque, selon son total :
+// 1 objet par tranche de 100.- (la 1re tranche 0–100 = 1 objet).
+// Ex. : 80.- → 1 · 100.- → 1 · 150.- → 2 · 300.- → 3 · 1000.- → 10.
 export function grantForOrderTotal(total: number): { games: number; deco: number } {
-  if (total >= 901) return { games: 6, deco: 10 };
-  if (total >= 501) return { games: 3, deco: 4 };
-  if (total >= 301) return { games: 1, deco: 2 };
-  if (total >= 101) return { games: 1, deco: 1 };
-  if (total >= 20) return { games: 1, deco: 0 };
-  return { games: 0, deco: 0 };
+  const deco = total > 0 ? Math.ceil(total / 100) : 0;
+  return { games: 0, deco };
 }
 
 // Classement basé sur le TYPE DE PRODUIT Shopify (fiable : "addon argent", "base large",
