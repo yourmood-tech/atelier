@@ -398,8 +398,8 @@ function ObjectsTray({
 
   // Regroupe par ambiance pour garder la barre lisible.
   const ambiance = (id: string) =>
-    id.startsWith("acc-bleu-") ? "Bleu" : id.startsWith("acc-noir-") ? "Noir" : id.startsWith("acc-riviera-") ? "Riviera" : "Chaud";
-  const ordre = ["Chaud", "Bleu", "Noir", "Riviera"];
+    id.startsWith("acc-bleu-") ? "Bleu" : id.startsWith("acc-noir-") ? "Noir" : id.startsWith("acc-riviera-") ? "Riviera" : id.startsWith("acc-surf-") ? "Surf" : "Chaud";
+  const ordre = ["Chaud", "Bleu", "Noir", "Riviera", "Surf"];
   const groupes = ordre
     .map((nom) => ({ nom, items: objets.filter((d) => ambiance(d.id) === nom) }))
     .filter((g) => g.items.length);

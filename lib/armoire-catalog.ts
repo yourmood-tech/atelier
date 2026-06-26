@@ -130,6 +130,23 @@ export const DECO: DecoDef[] = [
   { id: "acc-riviera-affiche-palm", nom: "Affiche Palm Beach (riviera)", emoji: "🖼️", type: "accessoire", valeur: "affiche-palm-riviera", img: "/chambre/acc-riviera-affiche-palm.png", pos: { left: 46, top: 13, w: 12, z: 2 } },
   { id: "acc-riviera-affiche-amalfi", nom: "Affiche Amalfi (riviera)", emoji: "🖼️", type: "accessoire", valeur: "affiche-amalfi-riviera", img: "/chambre/acc-riviera-affiche-amalfi.png", pos: { left: 62, top: 13, w: 11, z: 2 } },
   { id: "acc-riviera-tapis", nom: "Tapis rond (riviera)", emoji: "🟠", type: "accessoire", valeur: "tapis-riviera", img: "/chambre/acc-riviera-tapis.png", pos: { left: 50, top: 90, w: 40, z: 0 } },
+  // Collection SURF (côtière, sable & sakura)
+  { id: "acc-surf-palmier", nom: "Palmier (surf)", emoji: "🌴", type: "accessoire", valeur: "palmier-surf", img: "/chambre/acc-surf-palmier.png", pos: { left: 9, top: 50, w: 18, z: 4 } },
+  { id: "acc-surf-fauteuil", nom: "Pouf bouclette (surf)", emoji: "🛋️", type: "accessoire", valeur: "fauteuil-surf", img: "/chambre/acc-surf-fauteuil.png", pos: { left: 16, top: 78, w: 22, z: 4 } },
+  { id: "acc-surf-banc", nom: "Banc ovale (surf)", emoji: "🪑", type: "accessoire", valeur: "banc-surf", img: "/chambre/acc-surf-banc.png", pos: { left: 50, top: 86, w: 26, z: 3 } },
+  { id: "acc-surf-table-basse", nom: "Table basse ronde (surf)", emoji: "🟤", type: "accessoire", valeur: "table-basse-surf", img: "/chambre/acc-surf-table-basse.png", pos: { left: 50, top: 80, w: 20, z: 3 } },
+  { id: "acc-surf-planche-surf", nom: "Planche de surf", emoji: "🏄", type: "accessoire", valeur: "planche-surf", img: "/chambre/acc-surf-planche-surf.png", pos: { left: 6, top: 54, w: 7, z: 3 } },
+  { id: "acc-surf-lampe", nom: "Lampe champignon (surf)", emoji: "💡", type: "accessoire", valeur: "lampe-surf", img: "/chambre/acc-surf-lampe.png", pos: { left: 12, top: 64, w: 11, z: 5 } },
+  { id: "acc-surf-vase-sakura", nom: "Branches sakura (surf)", emoji: "🌸", type: "accessoire", valeur: "vase-sakura-surf", img: "/chambre/acc-surf-vase-sakura.png", pos: { left: 22, top: 62, w: 12, z: 5 } },
+  { id: "acc-surf-coussin", nom: "Coussin « Salty Soul »", emoji: "🩷", type: "accessoire", valeur: "coussin-surf", img: "/chambre/acc-surf-coussin.png", pos: { left: 30, top: 82, w: 12, z: 5 } },
+  { id: "acc-surf-bougie-sakura", nom: "Bougie Sakura (surf)", emoji: "🕯️", type: "accessoire", valeur: "bougie-sakura-surf", img: "/chambre/acc-surf-bougie-sakura.png", pos: { left: 26, top: 76, w: 6, z: 6 } },
+  { id: "acc-surf-bougie-banc", nom: "Bougie (surf)", emoji: "🕯️", type: "accessoire", valeur: "bougie-banc-surf", img: "/chambre/acc-surf-bougie-banc.png", pos: { left: 20, top: 76, w: 6, z: 6 } },
+  { id: "acc-surf-coupelle", nom: "Coupelle bagues (surf)", emoji: "💍", type: "accessoire", valeur: "coupelle-surf", img: "/chambre/acc-surf-coupelle.png", pos: { left: 7, top: 82, w: 8, z: 6 } },
+  { id: "acc-surf-livres", nom: "Livres « Surf Shack »", emoji: "📚", type: "accessoire", valeur: "livres-surf", img: "/chambre/acc-surf-livres.png", pos: { left: 80, top: 72, w: 15, z: 5 } },
+  { id: "acc-surf-letterboard", nom: "Letterboard « Good Vibes »", emoji: "🗒️", type: "accessoire", valeur: "letterboard-surf", img: "/chambre/acc-surf-letterboard.png", pos: { left: 87, top: 22, w: 12, z: 2 } },
+  { id: "acc-surf-neon-mood", nom: "Néon « mood » (surf)", emoji: "🤍", type: "accessoire", valeur: "neon-surf", img: "/chambre/acc-surf-neon-mood.png", pos: { left: 88, top: 6, w: 16, z: 2 } },
+  { id: "acc-surf-affiche-surfer", nom: "Affiche surfeur (surf)", emoji: "🖼️", type: "accessoire", valeur: "affiche-surfer-surf", img: "/chambre/acc-surf-affiche-surfer.png", pos: { left: 52, top: 13, w: 12, z: 2 } },
+  { id: "acc-surf-tapis", nom: "Tapis palmiers (surf)", emoji: "🟫", type: "accessoire", valeur: "tapis-surf", img: "/chambre/acc-surf-tapis.png", pos: { left: 50, top: 90, w: 40, z: 0 } },
 ];
 
 export function gameById(id: string): GameDef | undefined {
