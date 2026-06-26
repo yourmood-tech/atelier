@@ -2200,24 +2200,36 @@ function onDrop(e, jourISO) {
 // ============ RÉCAP HEBDOMADAIRE ============
 function construireRecap(produits, label) {
   if (!produits || produits.length === 0) return '';
+  // « Fait » = vraies ventes Shopify (total avec taxes) de la semaine sélectionnée si dispo,
+  // sinon le chiffre saisi à la main. Même source que les badges sur les cartes.
+  const faitDe = (p) => {
+    const reel = ventesReelles[p.id];
+    const reelTotal = reel ? Number(reel.total) || 0 : 0;
+    if (reelTotal > 0) return { v: Math.round(reelTotal), qty: Number(reel.qty) || 0, shopify: true };
+    return { v: +p.ventes || 0, qty: 0, shopify: false };
+  };
   const totalObj = produits.reduce((s, p) => s + (+p.objectifCA || 0), 0);
-  const totalVentes = produits.reduce((s, p) => s + (+p.ventes || 0), 0);
+  const totalVentes = produits.reduce((s, p) => s + faitDe(p).v, 0);
   if (totalObj === 0 && totalVentes === 0) return '';
   const reste = totalObj - totalVentes;
-  let html = `<div class="recap-hebdo"><div class="recap-hebdo-title">📋 Récap ${escapeHtml(label)}</div>
+  let html = `<div class="recap-hebdo"><div class="recap-hebdo-title">📋 Récap ${escapeHtml(label)} <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--vert);">· 📊 = ventes Shopify réelles</span></div>
     <table class="recap-table">
       <thead><tr><th>Produit</th><th>Objectif</th><th>Fait</th><th>Reste</th></tr></thead>
       <tbody>`;
   for (const p of produits) {
     const obj = +p.objectifCA || 0;
-    const fait = +p.ventes || 0;
+    const f = faitDe(p);
+    const fait = f.v;
     const r = obj - fait;
     if (obj === 0 && fait === 0) continue;
     const cls = r > 0 ? 'reste-rouge' : r < 0 ? 'reste-vert' : '';
+    const faitCell = fait > 0
+      ? fait.toLocaleString('fr-CH') + '.-' + (f.shopify ? ` <span title="Vraies ventes Shopify (total avec taxes)${f.qty ? ' · ' + f.qty + ' vendu' + (f.qty > 1 ? 's' : '') : ''}">📊</span>` : '')
+      : '—';
     html += `<tr>
       <td>${escapeHtml(p.nom)}</td>
       <td>${obj > 0 ? obj.toLocaleString('fr-CH') + '.-' : '—'}</td>
-      <td>${fait > 0 ? fait.toLocaleString('fr-CH') + '.-' : '—'}</td>
+      <td>${faitCell}</td>
       <td class="${cls}">${r !== 0 ? (r > 0 ? r : -r).toLocaleString('fr-CH') + '.-' : '0'}</td>
     </tr>`;
   }
