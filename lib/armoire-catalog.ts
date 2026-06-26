@@ -81,6 +81,17 @@ export const DECO: DecoDef[] = [
   { id: "acc-portebijoux", nom: "Porte-bijoux", emoji: "📿", type: "accessoire", valeur: "portebijoux", img: "/chambre/acc-portebijoux.png", pos: { left: 78, top: 70, w: 9, z: 5 } },
   { id: "acc-diffuseur", nom: "Diffuseur", emoji: "🌸", type: "accessoire", valeur: "diffuseur", img: "/chambre/acc-diffuseur.png", pos: { left: 95, top: 74, w: 8, z: 5 } },
   { id: "acc-tabouret", nom: "Tabouret velours", emoji: "🪑", type: "accessoire", valeur: "tabouret", img: "/chambre/acc-tabouret.png", pos: { left: 84, top: 89, w: 12, z: 4 } },
+  // Collection BLEUE
+  { id: "acc-bleu-olivier", nom: "Olivier (bleu)", emoji: "🫒", type: "accessoire", valeur: "olivier", img: "/chambre/acc-bleu-olivier.png", pos: { left: 10, top: 52, w: 20, z: 4 } },
+  { id: "acc-bleu-table", nom: "Table colonne (bleu)", emoji: "🏛️", type: "accessoire", valeur: "table-bleu", img: "/chambre/acc-bleu-table.png", pos: { left: 14, top: 80, w: 16, z: 4 } },
+  { id: "acc-bleu-vase", nom: "Vase (bleu)", emoji: "🏺", type: "accessoire", valeur: "vase", img: "/chambre/acc-bleu-vase.png", pos: { left: 17, top: 72, w: 7, z: 5 } },
+  { id: "acc-bleu-corail", nom: "Corail (bleu)", emoji: "🪸", type: "accessoire", valeur: "corail", img: "/chambre/acc-bleu-corail.png", pos: { left: 22, top: 74, w: 10, z: 5 } },
+  { id: "acc-bleu-coquillage", nom: "Coquillage (bleu)", emoji: "🐚", type: "accessoire", valeur: "coquillage-bleu", img: "/chambre/acc-bleu-coquillage.png", pos: { left: 6, top: 80, w: 7, z: 5 } },
+  { id: "acc-bleu-etagere", nom: "Étagère (bleu)", emoji: "📚", type: "accessoire", valeur: "etagere-bleu", img: "/chambre/acc-bleu-etagere.png", pos: { left: 87, top: 18, w: 23, z: 2 } },
+  { id: "acc-bleu-livres", nom: "Livres « Ocean »", emoji: "📘", type: "accessoire", valeur: "livres", img: "/chambre/acc-bleu-livres.png", pos: { left: 80, top: 70, w: 12, z: 5 } },
+  { id: "acc-bleu-cadre", nom: "Cadre vague (bleu)", emoji: "🖼️", type: "accessoire", valeur: "cadre-bleu", img: "/chambre/acc-bleu-cadre.png", pos: { left: 46, top: 12, w: 16, z: 2 } },
+  { id: "acc-bleu-texte", nom: "Texte « mood » (bleu)", emoji: "💙", type: "accessoire", valeur: "texte-bleu", img: "/chambre/acc-bleu-texte.png", pos: { left: 30, top: 12, w: 16, z: 2 } },
+  { id: "acc-bleu-tapis", nom: "Tapis rond (bleu)", emoji: "🔵", type: "accessoire", valeur: "tapis-bleu", img: "/chambre/acc-bleu-tapis.png", pos: { left: 50, top: 90, w: 55, z: 0 } },
 ];
 
 export function gameById(id: string): GameDef | undefined {
