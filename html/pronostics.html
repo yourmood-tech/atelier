@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>mood · Pronostics Mondial 2026</title>
+<style>
+  :root{
+    --pitch:#0d1410;--pitch-2:#111b15;--card:#0f1712;
+    --ink:#ECE7DD;--muted:#93a094;
+    --gold:#C9A75E;--silver:#C7CCD1;--coral:#F0654E;--coral-soft:rgba(240,101,78,.14);
+    --line:rgba(236,231,221,.13);
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  .stage{
+    min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(201,167,94,.10), transparent 55%),
+      radial-gradient(90% 60% at 50% 120%, rgba(240,101,78,.10), transparent 60%),
+      var(--pitch);
+    color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;
+    display:flex;justify-content:center;padding:22px 16px 44px;
+  }
+  .app{width:100%;max-width:440px;animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.app{animation:none}*{transition:none!important}}
+
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+  .wordmark{font-family:var(--serif);font-style:italic;font-size:1.6rem;color:var(--coral);letter-spacing:-.02em;display:flex;align-items:center;gap:5px}
+  .swiss{width:15px;height:15px;border-radius:3px;background:#E2342B;position:relative;top:-7px}
+  .swiss::before,.swiss::after{content:"";position:absolute;background:#fff}
+  .swiss::before{width:7px;height:2px;top:6.5px;left:4px}
+  .swiss::after{width:2px;height:7px;top:4px;left:6.5px}
+  .kicker{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right;line-height:1.5}
+
+  .hero{text-align:center;margin-bottom:24px}
+  .eyebrow{font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:13px}
+  .hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(2.05rem,8.5vw,2.7rem);line-height:1.05;margin:0 0 13px;text-wrap:balance}
+  .hero h1 em{font-style:italic;color:var(--coral)}
+  .hero p{margin:0 auto;max-width:31ch;color:var(--muted);font-size:.94rem;line-height:1.55}
+
+  .step{margin-top:26px}
+  .step-label{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+  .step-num{font-family:var(--serif);font-style:italic;color:var(--gold);font-size:1.05rem;width:1.3em}
+  .step-label span.t{font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink)}
+  .step-label small{margin-left:auto;color:var(--muted);font-size:.7rem;letter-spacing:.04em}
+
+  .day{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:16px 2px 9px;display:flex;align-items:center;gap:8px}
+  .day::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .m{border:1px solid var(--line);border-radius:15px;background:linear-gradient(180deg,var(--pitch-2),var(--card));padding:13px 12px;margin-bottom:9px}
+  .m-time{text-align:center;color:var(--muted);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
+  .m-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px}
+  .tm{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+  .tm .flag{font-size:1.7rem;line-height:1}
+  .tm .nm{font-size:.72rem;color:var(--ink);text-align:center;line-height:1.2}
+  .sc{display:flex;align-items:center;gap:7px}
+  .stk{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .stk .n{font-family:var(--sans);font-weight:800;font-size:1.7rem;line-height:1;font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;min-width:1ch;text-align:center}
+  .stk .btns{display:flex;gap:4px}
+  .stk button{width:24px;height:24px;border-radius:50%;border:1px solid var(--silver);background:transparent;color:var(--ink);
+    font-size:.95rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:background .15s,transform .1s}
+  .stk button:hover{background:rgba(199,204,209,.14)}
+  .stk button:active{transform:scale(.9)}
+  .stk button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .colon{color:var(--muted);font-family:var(--serif);font-size:1.2rem}
+
+  .rewards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+  .rewards .one{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .rw{border:1px solid var(--line);border-radius:14px;padding:13px;background:rgba(255,255,255,.02)}
+  .rw .ic{font-size:1.1rem}
+  .rw h4{margin:7px 0 4px;font-size:.94rem;font-family:var(--serif);font-weight:400}
+  .rw.coral h4{color:var(--coral)}
+  .rw p{margin:0;color:var(--muted);font-size:.76rem;line-height:1.45}
+
+  .capture{margin-top:24px;display:flex;flex-direction:column;gap:11px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+  .field input,.field select{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;
+    padding:13px 14px;color:var(--ink);font-size:1rem;font-family:var(--sans);width:100%}
+  .field input::placeholder{color:#5f6a60}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--gold)}
+  .cta{margin-top:4px;border:none;cursor:pointer;border-radius:12px;padding:16px;background:var(--coral);color:#fff;
+    font-size:1rem;font-weight:600;font-family:var(--sans);transition:filter .15s,transform .1s}
+  .cta:hover{filter:brightness(1.06)}.cta:active{transform:scale(.99)}
+  .cta:disabled{opacity:.6;cursor:default}
+  .cta:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  .hint{text-align:center;color:var(--coral);font-size:.78rem;min-height:1.1em;margin-top:2px}
+  .note{margin-top:14px;color:var(--muted);font-size:.72rem;line-height:1.5;text-align:center;padding:0 6px}
+  .fine{margin-top:18px;text-align:center;color:#5f6a60;font-size:.65rem;line-height:1.7}
+  .fine a{color:var(--muted)}
+  .test-badge{display:inline-block;margin:0 auto 14px;padding:4px 12px;border:1px solid var(--gold);border-radius:99px;color:var(--gold);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase}
+
+  .done{position:fixed;inset:0;background:rgba(8,12,9,.92);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px;z-index:5}
+  .done.show{display:flex;animation:fade .35s both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .ticket{width:100%;max-width:380px;background:linear-gradient(180deg,var(--pitch-2),var(--card));border:1px solid var(--line);border-radius:20px;padding:34px 26px;text-align:center;animation:pop .4s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.done.show,.ticket{animation:none}}
+  .ticket .seal{font-size:2rem}
+  .ticket h2{font-family:var(--serif);font-weight:400;font-size:1.7rem;margin:12px 0 10px}
+  .ticket .recap{color:var(--ink);font-size:1rem;line-height:1.5;margin:0 0 8px}
+  .ticket .recap b{color:var(--coral)}
+  .ticket .sub{color:var(--muted);font-size:.86rem;line-height:1.6;margin:0 0 22px}
+  .ticket .sub .g{color:var(--gold)}
+  .ticket button{border:1px solid var(--silver);background:transparent;color:var(--ink);border-radius:11px;padding:12px 22px;cursor:pointer;font-size:.9rem;font-family:var(--sans)}
+  .ticket button:hover{background:rgba(199,204,209,.1)}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="app">
+    <div class="top">
+      <div class="wordmark">mood<span class="swiss"></span></div>
+      <div class="kicker">Coupe du monde<br>été 2026</div>
+    </div>
+
+    <div class="hero">
+      <div class="test-badge">Aperçu test</div>
+      <div class="eyebrow">Le jeu mood</div>
+      <h1>On parie que<br>tu as <em>l'œil</em>.</h1>
+      <p>Devine le score des matchs. Chaque score juste te rapporte un bon de 10.- — direct dans ta boîte mail.</p>
+    </div>
+
+    <div class="step">
+      <div class="step-label"><span class="step-num">I</span><span class="t">Devine les scores</span><small>matchs à venir</small></div>
+      <div id="matches"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-label"><span class="step-num">II</span><span class="t">Ce que tu gagnes</span></div>
+      <div class="rewards">
+        <div class="rw coral one">
+          <div class="ic">🎟️</div>
+          <h4>Un score juste = un bon de 10.-</h4>
+          <p>Valable dès 50.- d'achat. À chaque match que tu devines, un bon t'arrive par mail. ✨</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="capture">
+      <div class="field">
+        <label for="team">L'équipe que tu supportes</label>
+        <select id="team"></select>
+      </div>
+      <div class="field">
+        <label for="email">Pour t'envoyer ton bon</label>
+        <input id="email" type="email" inputmode="email" placeholder="ton@email.com" autocomplete="email">
+      </div>
+      <button class="cta" id="cta">Valider mes pronostics</button>
+      <div class="hint" id="hint"></div>
+    </div>
+
+    <div class="note">⚽ Les vrais matchs s'affichent ici tout seuls. Une fois la poule finie, le jeu enchaîne sur les 16èmes, puis les 8èmes…</div>
+    <div class="fine">
+      Jeu-concours sans obligation d'achat · Un score exact = un bon de 10.- valable dès 50.- d'achat ·<br>
+      Pack attribué par tirage au sort en cas d'égalité · <a href="#">Règlement complet</a>
+    </div>
+  </div>
+</div>
+
+<div class="done" id="done">
+  <div class="ticket">
+    <div class="seal">🤍</div>
+    <h2>C'est noté.</h2>
+    <p class="recap">On a reçu tes <b id="rNb">—</b> pronostics. Allez <b id="rTeam">—</b> !</p>
+    <p class="sub">Pour chaque score exact, ton <span class="g">bon de 10.-</span> arrive direct par mail. À toi de jouer. 🤍</p>
+    <button id="again">Modifier mes pronostics</button>
+  </div>
+</div>
+
+<script>
+  // Vrais derniers matchs de poule (26–27 juin 2026). id stable pour le calcul des gagnantes.
+  const DAYS=[
+    {label:"Vendredi 26 juin", matches:[
+      {id:"g-jpn-swe",t:"20:00",a:["🇯🇵","Japon"],b:["🇸🇪","Suède"]},
+      {id:"g-tun-ned",t:"20:00",a:["🇹🇳","Tunisie"],b:["🇳🇱","Pays-Bas"]},
+      {id:"g-nor-fra",t:"21:00",a:["🇳🇴","Norvège"],b:["🇫🇷","France"]},
+      {id:"g-sen-irq",t:"21:00",a:["🇸🇳","Sénégal"],b:["🇮🇶","Irak"]},
+      {id:"g-tur-usa",t:"22:00",a:["🇹🇷","Turquie"],b:["🇺🇸","États-Unis"]},
+      {id:"g-par-aus",t:"22:00",a:["🇵🇾","Paraguay"],b:["🇦🇺","Australie"]}
+    ]},
+    {label:"Samedi 27 juin", matches:[
+      {id:"g-uru-esp",t:"18:00",a:["🇺🇾","Uruguay"],b:["🇪🇸","Espagne"]},
+      {id:"g-cpv-ksa",t:"18:00",a:["🇨🇻","Cap-Vert"],b:["🇸🇦","Arabie saoudite"]},
+      {id:"g-egy-irn",t:"20:00",a:["🇪🇬","Égypte"],b:["🇮🇷","Iran"]},
+      {id:"g-nzl-bel",t:"20:00",a:["🇳🇿","Nouvelle-Zélande"],b:["🇧🇪","Belgique"]},
+      {id:"g-pan-eng",t:"23:00",a:["🇵🇦","Panama"],b:["🏴󠁧󠁢󠁥󠁮󠁧󠁿","Angleterre"]},
+      {id:"g-cro-gha",t:"23:00",a:["🇭🇷","Croatie"],b:["🇬🇭","Ghana"]}
+    ]}
+  ];
+
+  const ALL_TEAMS=[
+    ["🇿🇦","Afrique du Sud"],["🇩🇿","Algérie"],["🇩🇪","Allemagne"],["🏴󠁧󠁢󠁥󠁮󠁧󠁿","Angleterre"],
+    ["🇸🇦","Arabie saoudite"],["🇦🇷","Argentine"],["🇦🇺","Australie"],["🇦🇹","Autriche"],
+    ["🇧🇪","Belgique"],["🇧🇦","Bosnie-Herzégovine"],["🇧🇷","Brésil"],["🇨🇦","Canada"],
+    ["🇨🇻","Cap-Vert"],["🇨🇴","Colombie"],["🇰🇷","Corée du Sud"],["🇨🇮","Côte d'Ivoire"],
+    ["🇭🇷","Croatie"],["🇨🇼","Curaçao"],["🇪🇬","Égypte"],["🏴󠁧󠁢󠁳󠁣󠁴󠁿","Écosse"],
+    ["🇪🇨","Équateur"],["🇪🇸","Espagne"],["🇺🇸","États-Unis"],["🇫🇷","France"],
+    ["🇬🇭","Ghana"],["🇭🇹","Haïti"],["🇮🇶","Irak"],["🇮🇷","Iran"],
+    ["🇯🇵","Japon"],["🇯🇴","Jordanie"],["🇲🇦","Maroc"],["🇲🇽","Mexique"],
+    ["🇳🇴","Norvège"],["🇳🇿","Nouvelle-Zélande"],["🇺🇿","Ouzbékistan"],["🇵🇦","Panama"],
+    ["🇵🇾","Paraguay"],["🇳🇱","Pays-Bas"],["🇵🇹","Portugal"],["🇶🇦","Qatar"],
+    ["🇨🇩","RD Congo"],["🇸🇳","Sénégal"],["🇸🇪","Suède"],["🇨🇭","Suisse"],
+    ["🇨🇿","Tchéquie"],["🇹🇳","Tunisie"],["🇹🇷","Turquie"],["🇺🇾","Uruguay"]
+  ].sort((a,b)=>a[1].localeCompare(b[1],"fr"));
+
+  const $=id=>document.getElementById(id);
+  const wrap=$("matches");
+  const MATCHES=[];
+  DAYS.forEach(d=>{
+    const h=document.createElement("div");h.className="day";h.textContent=d.label;wrap.appendChild(h);
+    d.matches.forEach(m=>{
+      MATCHES.push({id:m.id,jour:d.label,teamA:m.a[1],teamB:m.b[1]});
+      const el=document.createElement("div");el.className="m";
+      el.innerHTML=`
+        <div class="m-time">${m.t}</div>
+        <div class="m-grid">
+          <div class="tm"><span class="flag">${m.a[0]}</span><span class="nm">${m.a[1]}</span></div>
+          <div class="sc">
+            <div class="stk">
+              <span class="n" id="${m.id}-a">0</span>
+              <span class="btns"><button type="button" data-s="${m.id}-a" data-d="1" aria-label="plus">+</button><button type="button" data-s="${m.id}-a" data-d="-1" aria-label="moins">−</button></span>
+            </div>
+            <span class="colon">:</span>
+            <div class="stk">
+              <span class="n" id="${m.id}-b">0</span>
+              <span class="btns"><button type="button" data-s="${m.id}-b" data-d="1" aria-label="plus">+</button><button type="button" data-s="${m.id}-b" data-d="-1" aria-label="moins">−</button></span>
+            </div>
+          </div>
+          <div class="tm"><span class="flag">${m.b[0]}</span><span class="nm">${m.b[1]}</span></div>
+        </div>`;
+      wrap.appendChild(el);
+    });
+  });
+
+  wrap.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-s]");if(!b)return;
+    const cell=$(b.dataset.s);
+    let v=parseInt(cell.textContent,10)+parseInt(b.dataset.d,10);
+    v=Math.max(0,Math.min(9,v));cell.textContent=v;
+  });
+
+  const sel=$("team");
+  sel.innerHTML='<option value="">— choisis —</option>'+ALL_TEAMS.map(t=>`<option>${t[0]} ${t[1]}</option>`).join('');
+
+  const cta=$("cta");
+  cta.onclick=async ()=>{
+    const mail=$("email").value.trim();
+    if(!sel.value){$("hint").textContent="Dis-nous quelle équipe tu supportes 💛";sel.focus();return;}
+    if(!/^\S+@\S+\.\S+$/.test(mail)){$("hint").textContent="Ajoute ton email pour recevoir ton bon 💌";$("email").focus();return;}
+    const pronostics=MATCHES.map(m=>({
+      id:m.id,jour:m.jour,teamA:m.teamA,teamB:m.teamB,
+      a:parseInt($(m.id+"-a").textContent,10),
+      b:parseInt($(m.id+"-b").textContent,10)
+    }));
+    cta.disabled=true;$("hint").textContent="On enregistre…";
+    try{
+      const r=await fetch("/api/pronostics/save",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email:mail,team:sel.value,pronostics})
+      });
+      if(!r.ok)throw new Error("save");
+      $("rNb").textContent=pronostics.length;
+      $("rTeam").textContent=sel.value;
+      $("done").classList.add("show");
+      $("hint").textContent="";
+    }catch(err){
+      $("hint").textContent="Oups, ça n'a pas voulu s'enregistrer — réessaie dans un instant.";
+    }finally{cta.disabled=false;}
+  };
+  $("again").onclick=()=>$("done").classList.remove("show");
+</script>
+</body>
+</html>
