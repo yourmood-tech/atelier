@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
 import { auth } from "@/auth";
-import { getCustomerArmoire } from "@/lib/shopify";
+import { getCustomerArmoire, applyArmoireOverrides, type ArmoireOverrides } from "@/lib/shopify";
 import { buildJeu } from "@/lib/armoire-jeu";
 
 // Vue admin (staff Mood) — accès à l'armoire de N'IMPORTE QUEL client.
@@ -25,13 +26,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ found: false });
     }
 
+    const overrides = (await kv.get(`armoire:ov:${clientEmail.toLowerCase()}`)) as ArmoireOverrides | null;
+    const perso = applyArmoireOverrides(armoire, overrides);
+
     return NextResponse.json({
       found: true,
-      prenom: armoire.prenom,
-      stats: armoire.stats,
-      tiroirs: armoire.tiroirs,
-      orderNames: armoire.orderNames,
-      jeu: buildJeu(armoire),
+      prenom: perso.prenom,
+      stats: perso.stats,
+      tiroirs: perso.tiroirs,
+      orderNames: perso.orderNames,
+      jeu: buildJeu(perso),
     });
   } catch (e) {
     console.error("[armoire/admin] error", e);

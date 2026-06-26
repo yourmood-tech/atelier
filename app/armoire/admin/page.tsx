@@ -7,7 +7,7 @@ import { Cabinet } from "../Cabinet";
    Protégée par la connexion Google @yourmood.net (middleware + contrôle serveur).
    Recherche n'importe quel client par email → voit toute son armoire. */
 
-type Piece = { title: string; image: string | null; date: string; quantity: number };
+type Piece = { pid: number; title: string; image: string | null; date: string; quantity: number };
 type Tiroir = { key: string; label: string; emoji: string; pieces: Piece[] };
 type Data = {
   found: boolean;

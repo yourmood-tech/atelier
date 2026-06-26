@@ -661,3 +661,51 @@ export async function getCustomerArmoire(email: string): Promise<ArmoireResult> 
   };
 }
 
+// --- Personnalisation cliente : "déplacer" un bijou + "photo perso" ---------
+// Stockées par cliente (clé email) ; appliquées par-dessus l'armoire calculée.
+
+export type ArmoireOverride = { tiroir?: string; image?: string };
+export type ArmoireOverrides = Record<string, ArmoireOverride>;
+
+// Clé stable d'une pièce : son product_id, ou un repli sur le titre si produit supprimé.
+export function pieceKey(p: { pid: number; title: string }): string {
+  return p.pid ? String(p.pid) : "t:" + p.title;
+}
+
+export function applyArmoireOverrides(armoire: ArmoireResult, overrides: ArmoireOverrides | null): ArmoireResult {
+  if (!overrides || Object.keys(overrides).length === 0) return armoire;
+
+  const byKey = new Map<string, ArmoireTiroir>(armoire.tiroirs.map((t) => [t.key, t]));
+  function ensure(key: string): ArmoireTiroir {
+    if (!byKey.has(key)) {
+      const def = TIROIR_DEFS.find((d) => d.key === key);
+      byKey.set(key, { key, label: def?.label ?? "Mes autres pièces", emoji: def?.emoji ?? "💎", pieces: [] });
+    }
+    return byKey.get(key)!;
+  }
+
+  for (const t of [...byKey.values()]) {
+    for (let i = t.pieces.length - 1; i >= 0; i--) {
+      const p = t.pieces[i];
+      const ov = overrides[pieceKey(p)];
+      if (!ov) continue;
+      if (ov.image) p.image = ov.image;
+      if (ov.tiroir && ov.tiroir !== t.key) {
+        t.pieces.splice(i, 1);
+        ensure(ov.tiroir).pieces.unshift(p);
+      }
+    }
+  }
+
+  const order = [...TIROIR_DEFS.map((d) => d.key), "autres"];
+  const tiroirs = order
+    .map((k) => byKey.get(k))
+    .filter((t): t is ArmoireTiroir => !!t && t.pieces.length > 0);
+  return { ...armoire, tiroirs };
+}
+
+// Liste des tiroirs proposés au déplacement (clé + label) — pour l'UI.
+export function tiroirChoices(): { key: string; label: string }[] {
+  return [...TIROIR_DEFS.map((d) => ({ key: d.key, label: d.label })), { key: "autres", label: "Mes autres pièces" }];
+}
+

@@ -1,20 +1,58 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useState } from "react";
 
-/* Meuble "armoire" dessiné, partagé entre la page cliente et la page admin. */
+/* Meuble "armoire" dessiné, partagé entre la page cliente et la page admin.
+   editable=true (page cliente) → chaque bijou a un menu "déplacer" + "photo perso". */
 
-export type Piece = { title: string; image: string | null; date: string; quantity: number };
+export type Piece = { pid: number; title: string; image: string | null; date: string; quantity: number };
 export type Tiroir = { key: string; label: string; emoji: string; pieces: Piece[] };
+export type Choice = { key: string; label: string };
+
+function keyOf(p: Piece): string {
+  return p.pid ? String(p.pid) : "t:" + p.title;
+}
+
+function fileToSmallDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 480;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("no ctx"));
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = reject;
+      img.src = fr.result as string;
+    };
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
 
 export function Cabinet({
   tiroirs,
   open,
   setOpen,
+  editable = false,
+  choices = [],
+  onMove,
+  onPhoto,
 }: {
   tiroirs: Tiroir[];
   open: Record<string, boolean>;
   setOpen: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  editable?: boolean;
+  choices?: Choice[];
+  onMove?: (key: string, tiroirKey: string) => void;
+  onPhoto?: (key: string, dataUrl: string) => void;
 }) {
   return (
     <div style={{ maxWidth: 760, margin: "10px auto 0" }}>
@@ -46,6 +84,10 @@ export function Cabinet({
             tiroir={t}
             isOpen={!!open[t.key]}
             onToggle={() => setOpen((o) => ({ ...o, [t.key]: !o[t.key] }))}
+            editable={editable}
+            choices={choices}
+            onMove={onMove}
+            onPhoto={onPhoto}
           />
         ))}
       </div>
@@ -57,7 +99,23 @@ export function Cabinet({
   );
 }
 
-function Drawer({ tiroir, isOpen, onToggle }: { tiroir: Tiroir; isOpen: boolean; onToggle: () => void }) {
+function Drawer({
+  tiroir,
+  isOpen,
+  onToggle,
+  editable,
+  choices,
+  onMove,
+  onPhoto,
+}: {
+  tiroir: Tiroir;
+  isOpen: boolean;
+  onToggle: () => void;
+  editable: boolean;
+  choices: Choice[];
+  onMove?: (key: string, tiroirKey: string) => void;
+  onPhoto?: (key: string, dataUrl: string) => void;
+}) {
   return (
     <div>
       <button
@@ -121,19 +179,103 @@ function Drawer({ tiroir, isOpen, onToggle }: { tiroir: Tiroir; isOpen: boolean;
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 10 }}>
             {tiroir.pieces.map((p, i) => (
-              <div key={i} style={{ textAlign: "center" }}>
-                <div style={pieceBox()}>
-                  {p.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <span style={{ fontSize: 24 }}>💍</span>
-                  )}
-                </div>
-                <div style={{ fontSize: 10, opacity: 0.75, marginTop: 4, lineHeight: 1.25 }}>{shorten(p.title)}</div>
-              </div>
+              <PieceCell
+                key={i}
+                piece={p}
+                currentKey={tiroir.key}
+                editable={editable}
+                choices={choices}
+                onMove={onMove}
+                onPhoto={onPhoto}
+              />
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PieceCell({
+  piece,
+  currentKey,
+  editable,
+  choices,
+  onMove,
+  onPhoto,
+}: {
+  piece: Piece;
+  currentKey: string;
+  editable: boolean;
+  choices: Choice[];
+  onMove?: (key: string, tiroirKey: string) => void;
+  onPhoto?: (key: string, dataUrl: string) => void;
+}) {
+  const [menu, setMenu] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const k = keyOf(piece);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const url = await fileToSmallDataUrl(f);
+      onPhoto?.(k, url);
+    } catch {
+      /* ignore */
+    }
+    setMenu(false);
+  }
+
+  return (
+    <div style={{ position: "relative", textAlign: "center" }}>
+      <div style={{ ...pieceBox(), position: "relative" }}>
+        {piece.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={piece.image} alt={piece.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ fontSize: 24 }}>💍</span>
+        )}
+
+        {editable && (
+          <button onClick={() => setMenu((m) => !m)} style={dotsBtn()} aria-label="options">
+            ⋯
+          </button>
+        )}
+        {editable && !piece.image && (
+          <button onClick={() => fileRef.current?.click()} style={plusOverlay()}>
+            ＋ photo
+          </button>
+        )}
+      </div>
+
+      <div style={{ fontSize: 10, opacity: 0.75, marginTop: 4, lineHeight: 1.25 }}>{shorten(piece.title)}</div>
+
+      {editable && (
+        <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
+      )}
+
+      {editable && menu && (
+        <div style={menuBox()}>
+          <div style={{ fontSize: 11, opacity: 0.55, padding: "2px 8px 6px" }}>Déplacer vers</div>
+          {choices
+            .filter((c) => c.key !== currentKey)
+            .map((c) => (
+              <button
+                key={c.key}
+                style={menuItem()}
+                onClick={() => {
+                  onMove?.(k, c.key);
+                  setMenu(false);
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          <div style={{ height: 1, background: "#eee2d2", margin: "6px 0" }} />
+          <button style={menuItem()} onClick={() => fileRef.current?.click()}>
+            📷 Changer la photo
+          </button>
         </div>
       )}
     </div>
@@ -151,4 +293,16 @@ function knob(): React.CSSProperties {
 }
 function foot(): React.CSSProperties {
   return { width: 26, height: 14, background: "linear-gradient(180deg, #6f4d2c, #573a1f)", borderRadius: "0 0 8px 8px" };
+}
+function dotsBtn(): React.CSSProperties {
+  return { position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.9)", color: "#6b4f33", fontSize: 14, lineHeight: "20px", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" };
+}
+function plusOverlay(): React.CSSProperties {
+  return { position: "absolute", bottom: 4, left: "50%", transform: "translateX(-50%)", border: "none", background: "rgba(107,79,51,0.85)", color: "#fff", fontSize: 11, padding: "3px 8px", borderRadius: 999, cursor: "pointer", whiteSpace: "nowrap" };
+}
+function menuBox(): React.CSSProperties {
+  return { position: "absolute", zIndex: 20, top: "70%", left: "50%", transform: "translateX(-50%)", background: "#fff", border: "1px solid #e4d4b6", borderRadius: 10, boxShadow: "0 8px 24px rgba(90,60,30,0.25)", padding: 6, minWidth: 150, textAlign: "left" };
+}
+function menuItem(): React.CSSProperties {
+  return { display: "block", width: "100%", textAlign: "left", border: "none", background: "transparent", padding: "7px 8px", fontSize: 13, color: "#4a3a2a", cursor: "pointer", borderRadius: 6 };
 }

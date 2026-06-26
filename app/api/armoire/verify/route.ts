@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCustomerArmoire } from "@/lib/shopify";
+import { kv } from "@vercel/kv";
+import { getCustomerArmoire, applyArmoireOverrides, tiroirChoices, type ArmoireOverrides } from "@/lib/shopify";
 import { buildJeu } from "@/lib/armoire-jeu";
 
 // Espace client public — Mon Armoire Mood.
@@ -35,13 +36,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ found: true, verified: false });
     }
 
+    // Personnalisations de la cliente (déplacer / photo perso)
+    const overrides = (await kv.get(`armoire:ov:${email.toLowerCase()}`)) as ArmoireOverrides | null;
+    const perso = applyArmoireOverrides(armoire, overrides);
+
     return NextResponse.json({
       found: true,
       verified: true,
-      prenom: armoire.prenom,
-      stats: armoire.stats,
-      tiroirs: armoire.tiroirs,
-      jeu: buildJeu(armoire),
+      prenom: perso.prenom,
+      stats: perso.stats,
+      tiroirs: perso.tiroirs,
+      choices: tiroirChoices(),
+      jeu: buildJeu(perso),
     });
   } catch (e) {
     console.error("[armoire/verify] error", e);

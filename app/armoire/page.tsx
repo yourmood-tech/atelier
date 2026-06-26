@@ -8,14 +8,16 @@ import { Cabinet } from "./Cabinet";
    ouvrir l'armoire d'une autre). Armoire = des PORTES par catégorie qu'on ouvre,
    bagues en grille à l'intérieur. Le "mood du jour" est gardé en local (V1). */
 
-type Piece = { title: string; image: string | null; date: string; quantity: number };
+type Piece = { pid: number; title: string; image: string | null; date: string; quantity: number };
 type Tiroir = { key: string; label: string; emoji: string; pieces: Piece[] };
+type Choice = { key: string; label: string };
 type Vignette = { id: string; nom: string; emoji: string };
 type Palier = { seuil: number; recompense: string };
 type Data = {
   prenom: string;
   stats: { commandes: number; pieces: number; totalDepense: number; devise: string };
   tiroirs: Tiroir[];
+  choices: Choice[];
   jeu: {
     album: { nom: string; emoji: string; vignettes: Vignette[] };
     vignettesAchat: number;
@@ -103,6 +105,26 @@ export default function ArmoirePage() {
     setOpen({});
   }
 
+  // Personnalisation : déplacer / photo perso → on sauvegarde puis on rafraîchit l'armoire.
+  async function persist(key: string, patch: { tiroir?: string; image?: string }) {
+    try {
+      await fetch("/api/armoire/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, orderNumber: commande, key, ...patch }),
+      });
+      const res = await fetch("/api/armoire/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, orderNumber: commande }),
+      });
+      const json = await res.json();
+      if (res.ok && json.verified) setData(json);
+    } catch {
+      /* ignore */
+    }
+  }
+
   const totalVignettes = (data?.jeu.vignettesAchat ?? 0) + moodDuJour;
 
   return (
@@ -186,7 +208,15 @@ export default function ArmoirePage() {
                   Ta collection arrive — elle se remplira à ta prochaine pépite.
                 </p>
               ) : (
-                <Cabinet tiroirs={data.tiroirs} open={open} setOpen={setOpen} />
+                <Cabinet
+                  tiroirs={data.tiroirs}
+                  open={open}
+                  setOpen={setOpen}
+                  editable
+                  choices={data.choices}
+                  onMove={(key, tiroir) => persist(key, { tiroir })}
+                  onPhoto={(key, image) => persist(key, { image })}
+                />
               )}
             </div>
 
