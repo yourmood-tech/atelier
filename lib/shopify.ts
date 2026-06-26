@@ -494,3 +494,144 @@ export async function getAtelierTunnelUrl(): Promise<string | null> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Mon Armoire Mood — espace client (V1)
+// Construit "l'armoire virtuelle" d'une cliente à partir de ses vraies
+// commandes Shopify (recherche par email). Aucune donnée inventée.
+// ---------------------------------------------------------------------------
+
+export type ArmoirePiece = {
+  title: string;
+  image: string | null;
+  date: string; // ISO
+  quantity: number;
+};
+
+export type ArmoireTiroir = {
+  key: string;
+  label: string;
+  emoji: string;
+  pieces: ArmoirePiece[];
+};
+
+export type ArmoireResult = {
+  found: boolean;
+  prenom: string;
+  stats: { commandes: number; pieces: number; totalDepense: number; devise: string };
+  tiroirs: ArmoireTiroir[];
+};
+
+const TIROIR_DEFS: { key: string; label: string; emoji: string; match: (s: string) => boolean }[] = [
+  { key: "bases", label: "Mes bases", emoji: "💍", match: (s) => /\bbase\b|base mood/.test(s) },
+  { key: "minis", label: "Les minis", emoji: "🤍", match: (s) => /\bmini\b|minis/.test(s) },
+  { key: "compos", label: "Mes compos & coffrets", emoji: "✨", match: (s) => /coffret|bundle|compo|set|pack|duo|trio/.test(s) },
+  { key: "addons", label: "Mes addons", emoji: "🌸", match: (s) => /addon|add-on|anneau|bague|argent|\bor\b|cerami|titane|acier/.test(s) },
+];
+
+function classifyPiece(haystack: string): string {
+  for (const def of TIROIR_DEFS) {
+    if (def.match(haystack)) return def.key;
+  }
+  return "autres";
+}
+
+export async function getCustomerArmoire(email: string): Promise<ArmoireResult> {
+  const clean = email.trim().toLowerCase();
+  const search = await shopifyFetch(
+    `/customers/search.json?query=${encodeURIComponent(`email:${clean}`)}&limit=1`
+  );
+  const customer = search.customers?.[0];
+  if (!customer) {
+    return {
+      found: false,
+      prenom: "",
+      stats: { commandes: 0, pieces: 0, totalDepense: 0, devise: "CHF" },
+      tiroirs: [],
+    };
+  }
+
+  const ordersData = await shopifyFetch(
+    `/orders.json?customer_id=${customer.id}&status=any&limit=250`
+  );
+  const orders: Record<string, unknown>[] = ordersData.orders ?? [];
+
+  // Collecte des line items + total dépensé
+  let totalDepense = 0;
+  let devise = "CHF";
+  const items: { title: string; productId: number; date: string; quantity: number }[] = [];
+  for (const o of orders) {
+    totalDepense += parseFloat((o.total_price as string) ?? "0") || 0;
+    devise = (o.currency as string) ?? devise;
+    const date = (o.created_at as string) ?? new Date().toISOString();
+    for (const li of (o.line_items as Record<string, unknown>[]) ?? []) {
+      items.push({
+        title: (li.title as string) ?? "Pièce mood",
+        productId: (li.product_id as number) ?? 0,
+        date,
+        quantity: (li.quantity as number) ?? 1,
+      });
+    }
+  }
+
+  // Images + catégorisation : on récupère chaque produit unique une fois (cap 60)
+  const uniqueIds = [...new Set(items.map((i) => i.productId).filter(Boolean))].slice(0, 60);
+  const productInfo = new Map<number, { image: string | null; haystack: string }>();
+  await Promise.all(
+    uniqueIds.map(async (pid) => {
+      try {
+        const { product } = await shopifyFetch(
+          `/products/${pid}.json?fields=id,title,product_type,tags,image`
+        );
+        const haystack = `${product?.title ?? ""} ${product?.product_type ?? ""} ${product?.tags ?? ""}`.toLowerCase();
+        productInfo.set(pid, { image: product?.image?.src ?? null, haystack });
+      } catch {
+        productInfo.set(pid, { image: null, haystack: "" });
+      }
+    })
+  );
+
+  const tiroirMap = new Map<string, ArmoireTiroir>();
+  function ensureTiroir(key: string): ArmoireTiroir {
+    if (!tiroirMap.has(key)) {
+      const def = TIROIR_DEFS.find((d) => d.key === key);
+      tiroirMap.set(key, {
+        key,
+        label: def?.label ?? "Mes autres pièces",
+        emoji: def?.emoji ?? "💎",
+        pieces: [],
+      });
+    }
+    return tiroirMap.get(key)!;
+  }
+
+  for (const it of items) {
+    const info = productInfo.get(it.productId);
+    const haystack = `${it.title} ${info?.haystack ?? ""}`.toLowerCase();
+    const key = classifyPiece(haystack);
+    ensureTiroir(key).pieces.push({
+      title: it.title,
+      image: info?.image ?? null,
+      date: it.date,
+      quantity: it.quantity,
+    });
+  }
+
+  // Ordre des tiroirs = ordre défini, puis "autres"
+  const order = [...TIROIR_DEFS.map((d) => d.key), "autres"];
+  const tiroirs = order
+    .map((k) => tiroirMap.get(k))
+    .filter((t): t is ArmoireTiroir => !!t && t.pieces.length > 0);
+
+  return {
+    found: true,
+    prenom: (customer.first_name as string) ?? "",
+    stats: {
+      commandes: orders.length,
+      pieces: items.reduce((n, i) => n + i.quantity, 0),
+      totalDepense: Math.round(totalDepense),
+      devise,
+    },
+    tiroirs,
+  };
+}
+
