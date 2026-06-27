@@ -5,9 +5,9 @@ import React, { useEffect, useState } from "react";
 const ENCRE = "#3a3330";
 
 type Opt = { id: string; label: string };
-type Entry = { teint: string; coiffure: string; couleur: string; file: string };
-type Manifest = { teints: Opt[]; coiffures: Opt[]; couleurs: Opt[]; avatars: Entry[] };
-export type AvatarPick = { teint: string; coiffure: string; couleur: string };
+type Entry = { age?: string; teint: string; coiffure: string; couleur: string; file: string };
+type Manifest = { ages?: Opt[]; teints: Opt[]; coiffures: Opt[]; couleurs: Opt[]; avatars: Entry[] };
+export type AvatarPick = { age: string; teint: string; coiffure: string; couleur: string };
 
 export function AvatarStudio({
   pick,
@@ -43,8 +43,11 @@ export function AvatarStudio({
     );
   }
 
-  const cur: AvatarPick = pick ?? { teint: man.teints[0].id, coiffure: man.coiffures[0].id, couleur: man.couleurs[0].id };
-  const fileFor = (p: AvatarPick) => man.avatars.find((a) => a.teint === p.teint && a.coiffure === p.coiffure && a.couleur === p.couleur)?.file ?? null;
+  const ages: Opt[] = man.ages?.length ? man.ages : [{ id: "jeune", label: "Jeune" }];
+  const cur: AvatarPick = pick
+    ? { age: pick.age ?? ages[0].id, teint: pick.teint, coiffure: pick.coiffure, couleur: pick.couleur }
+    : { age: ages[0].id, teint: man.teints[0].id, coiffure: man.coiffures[0].id, couleur: man.couleurs[0].id };
+  const fileFor = (p: AvatarPick) => man.avatars.find((a) => (a.age ?? "jeune") === p.age && a.teint === p.teint && a.coiffure === p.coiffure && a.couleur === p.couleur)?.file ?? null;
   const has = (p: AvatarPick) => !!fileFor(p);
   const choose = (patch: Partial<AvatarPick>) => {
     const next = { ...cur, ...patch };
@@ -91,6 +94,9 @@ export function AvatarStudio({
 
         {/* CHOIX */}
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 16 }}>
+          {ages.length > 1 && (
+            <Picker label="Âge" options={ages} value={cur.age} onPick={(id) => choose({ age: id })} avail={(id) => has({ ...cur, age: id })} />
+          )}
           <Picker label="Teint" options={man.teints} value={cur.teint} onPick={(id) => choose({ teint: id })} avail={(id) => has({ ...cur, teint: id })} />
           <Picker label="Coiffure" options={man.coiffures} value={cur.coiffure} onPick={(id) => choose({ coiffure: id })} avail={(id) => has({ ...cur, coiffure: id })} />
           <Picker label="Couleur de cheveux" options={man.couleurs} value={cur.couleur} onPick={(id) => choose({ couleur: id })} avail={(id) => has({ ...cur, couleur: id })} />
