@@ -58,20 +58,17 @@ function fileName(genre, age, t, co, cl, barbe) {
   return `av-h-${age}-${t}-${co}-${cl}-${barbe}.png`;
 }
 
-// Construit la liste des cibles.
+// Construit la liste des cibles. Mûr = parité avec jeune (toutes les options).
 const TARGETS = [];
-// FEMME (inchangé) — jeune complète + mûre ciblée
-for (const t of TEINTS) for (const coId of COIF_FEMME) for (const cl of COULEURS)
-  TARGETS.push({ genre: "femme", age: "jeune", t: t.id, co: coId, cl: cl.id, barbe: "sans" });
-const FMURE_COIF = new Set(["chignon", "carre", "court"]), FMURE_COUL = new Set(["gris", "brun"]);
-for (const t of TEINTS) for (const coId of COIF_FEMME) for (const cl of COULEURS)
-  if (FMURE_COIF.has(coId) && FMURE_COUL.has(cl.id)) TARGETS.push({ genre: "femme", age: "mure", t: t.id, co: coId, cl: cl.id, barbe: "sans" });
-// HOMME — jeune (brun/blond/noir) + mûr ciblé (court/rasé, gris/brun), chacun sans/avec barbe
-const HJEUNE_COUL = ["brun", "blond", "noir"];
-for (const t of TEINTS) for (const coId of COIF_HOMME) for (const clId of HJEUNE_COUL) for (const ba of BARBES)
+const HOMME_COUL_JEUNE = ["brun", "blond", "noir"];
+const HOMME_COUL_MURE = ["brun", "blond", "noir", "gris"];
+// FEMME — jeune ET mûre : toutes coiffures × toutes couleurs
+for (const age of ["jeune", "mure"]) for (const t of TEINTS) for (const coId of COIF_FEMME) for (const cl of COULEURS)
+  TARGETS.push({ genre: "femme", age, t: t.id, co: coId, cl: cl.id, barbe: "sans" });
+// HOMME — jeune (brun/blond/noir) + mûr (brun/blond/noir/gris), chacun sans/avec barbe
+for (const t of TEINTS) for (const coId of COIF_HOMME) for (const clId of HOMME_COUL_JEUNE) for (const ba of BARBES)
   TARGETS.push({ genre: "homme", age: "jeune", t: t.id, co: coId, cl: clId, barbe: ba.id });
-const HMURE_COIF = ["court", "rase"], HMURE_COUL = ["gris", "brun"];
-for (const t of TEINTS) for (const coId of HMURE_COIF) for (const clId of HMURE_COUL) for (const ba of BARBES)
+for (const t of TEINTS) for (const coId of COIF_HOMME) for (const clId of HOMME_COUL_MURE) for (const ba of BARBES)
   TARGETS.push({ genre: "homme", age: "mure", t: t.id, co: coId, cl: clId, barbe: ba.id });
 
 function prompt({ genre, age, t, co, cl, barbe }) {

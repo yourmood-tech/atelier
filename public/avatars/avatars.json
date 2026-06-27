@@ -1474,9 +1474,81 @@
       "age": "mure",
       "teint": "porcelaine",
       "coiffure": "chignon",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-chignon-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-chignon-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-chignon-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "chignon",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-porcelaine-chignon-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-longs-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-longs-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-longs-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-longs-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-longs-gris.png"
     },
     {
       "genre": "femme",
@@ -1492,9 +1564,126 @@
       "age": "mure",
       "teint": "porcelaine",
       "coiffure": "carre",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-carre-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-carre-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-carre-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "carre",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-porcelaine-carre-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-queue-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-queue-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-queue-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-queue-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-queue-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-boucles-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-boucles-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-boucles-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-boucles-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-boucles-gris.png"
     },
     {
       "genre": "femme",
@@ -1504,6 +1693,33 @@
       "couleur": "brun",
       "barbe": "sans",
       "file": "/avatars/av-mure-porcelaine-court-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-court-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-court-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-porcelaine-court-auburn.png"
     },
     {
       "genre": "femme",
@@ -1528,9 +1744,81 @@
       "age": "mure",
       "teint": "clair",
       "coiffure": "chignon",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-chignon-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-chignon-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-chignon-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "chignon",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-clair-chignon-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-longs-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-longs-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-longs-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-longs-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-longs-gris.png"
     },
     {
       "genre": "femme",
@@ -1546,9 +1834,126 @@
       "age": "mure",
       "teint": "clair",
       "coiffure": "carre",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-carre-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-carre-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-carre-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "carre",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-clair-carre-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-queue-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-queue-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-queue-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-queue-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-queue-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-boucles-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-boucles-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-boucles-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-boucles-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-boucles-gris.png"
     },
     {
       "genre": "femme",
@@ -1558,6 +1963,33 @@
       "couleur": "brun",
       "barbe": "sans",
       "file": "/avatars/av-mure-clair-court-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-court-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-court-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-clair-court-auburn.png"
     },
     {
       "genre": "femme",
@@ -1582,9 +2014,81 @@
       "age": "mure",
       "teint": "dore",
       "coiffure": "chignon",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-chignon-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-chignon-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-chignon-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "chignon",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-dore-chignon-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-longs-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-longs-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-longs-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-longs-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-longs-gris.png"
     },
     {
       "genre": "femme",
@@ -1600,9 +2104,126 @@
       "age": "mure",
       "teint": "dore",
       "coiffure": "carre",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-carre-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-carre-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-carre-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "carre",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-dore-carre-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-queue-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-queue-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-queue-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-queue-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-queue-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-boucles-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-boucles-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-boucles-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-boucles-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-boucles-gris.png"
     },
     {
       "genre": "femme",
@@ -1612,6 +2233,33 @@
       "couleur": "brun",
       "barbe": "sans",
       "file": "/avatars/av-mure-dore-court-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-court-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-court-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-dore-court-auburn.png"
     },
     {
       "genre": "femme",
@@ -1636,9 +2284,81 @@
       "age": "mure",
       "teint": "caramel",
       "coiffure": "chignon",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-chignon-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-chignon-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-chignon-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "chignon",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-caramel-chignon-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-longs-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-longs-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-longs-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-longs-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-longs-gris.png"
     },
     {
       "genre": "femme",
@@ -1654,9 +2374,126 @@
       "age": "mure",
       "teint": "caramel",
       "coiffure": "carre",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-carre-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-carre-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-carre-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "carre",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-caramel-carre-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-queue-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-queue-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-queue-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-queue-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-queue-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-boucles-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-boucles-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-boucles-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-boucles-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-boucles-gris.png"
     },
     {
       "genre": "femme",
@@ -1666,6 +2503,33 @@
       "couleur": "brun",
       "barbe": "sans",
       "file": "/avatars/av-mure-caramel-court-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-court-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-court-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-caramel-court-auburn.png"
     },
     {
       "genre": "femme",
@@ -1690,9 +2554,81 @@
       "age": "mure",
       "teint": "ebene",
       "coiffure": "chignon",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-chignon-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-chignon-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-chignon-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "chignon",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-ebene-chignon-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-longs-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-longs-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-longs-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-longs-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-longs-gris.png"
     },
     {
       "genre": "femme",
@@ -1708,9 +2644,126 @@
       "age": "mure",
       "teint": "ebene",
       "coiffure": "carre",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-carre-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-carre-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-carre-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "carre",
       "couleur": "gris",
       "barbe": "sans",
       "file": "/avatars/av-mure-ebene-carre-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-queue-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-queue-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-queue-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-queue-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-queue-gris.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-boucles-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-boucles-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-boucles-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-boucles-auburn.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-boucles-gris.png"
     },
     {
       "genre": "femme",
@@ -1720,6 +2773,33 @@
       "couleur": "brun",
       "barbe": "sans",
       "file": "/avatars/av-mure-ebene-court-brun.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-court-blond.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-court-noir.png"
+    },
+    {
+      "genre": "femme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
+      "couleur": "auburn",
+      "barbe": "sans",
+      "file": "/avatars/av-mure-ebene-court-auburn.png"
     },
     {
       "genre": "femme",
@@ -2815,24 +3895,6 @@
       "age": "mure",
       "teint": "porcelaine",
       "coiffure": "court",
-      "couleur": "gris",
-      "barbe": "sans",
-      "file": "/avatars/av-h-mure-porcelaine-court-gris-sans.png"
-    },
-    {
-      "genre": "homme",
-      "age": "mure",
-      "teint": "porcelaine",
-      "coiffure": "court",
-      "couleur": "gris",
-      "barbe": "avec",
-      "file": "/avatars/av-h-mure-porcelaine-court-gris-avec.png"
-    },
-    {
-      "genre": "homme",
-      "age": "mure",
-      "teint": "porcelaine",
-      "coiffure": "court",
       "couleur": "brun",
       "barbe": "sans",
       "file": "/avatars/av-h-mure-porcelaine-court-brun-sans.png"
@@ -2850,19 +3912,199 @@
       "genre": "homme",
       "age": "mure",
       "teint": "porcelaine",
-      "coiffure": "rase",
-      "couleur": "gris",
+      "coiffure": "court",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-porcelaine-rase-gris-sans.png"
+      "file": "/avatars/av-h-mure-porcelaine-court-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
       "teint": "porcelaine",
-      "coiffure": "rase",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-court-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-court-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-court-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-court-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "court",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-porcelaine-rase-gris-avec.png"
+      "file": "/avatars/av-h-mure-porcelaine-court-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-milong-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-milong-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-milong-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-milong-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-milong-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-milong-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-milong-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-milong-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-boucles-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -2885,20 +4127,56 @@
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "clair",
-      "coiffure": "court",
-      "couleur": "gris",
+      "teint": "porcelaine",
+      "coiffure": "rase",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-clair-court-gris-sans.png"
+      "file": "/avatars/av-h-mure-porcelaine-rase-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "clair",
-      "coiffure": "court",
+      "teint": "porcelaine",
+      "coiffure": "rase",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-rase-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-rase-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-porcelaine-rase-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "rase",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-porcelaine-rase-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "porcelaine",
+      "coiffure": "rase",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-clair-court-gris-avec.png"
+      "file": "/avatars/av-h-mure-porcelaine-rase-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -2922,19 +4200,199 @@
       "genre": "homme",
       "age": "mure",
       "teint": "clair",
-      "coiffure": "rase",
-      "couleur": "gris",
+      "coiffure": "court",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-clair-rase-gris-sans.png"
+      "file": "/avatars/av-h-mure-clair-court-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
       "teint": "clair",
-      "coiffure": "rase",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-court-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-court-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-court-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-court-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "court",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-clair-rase-gris-avec.png"
+      "file": "/avatars/av-h-mure-clair-court-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-milong-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-milong-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-milong-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-milong-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-milong-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-milong-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-milong-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-milong-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-boucles-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-boucles-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-boucles-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-boucles-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-boucles-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-boucles-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-boucles-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-boucles-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -2957,20 +4415,56 @@
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "dore",
-      "coiffure": "court",
-      "couleur": "gris",
+      "teint": "clair",
+      "coiffure": "rase",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-dore-court-gris-sans.png"
+      "file": "/avatars/av-h-mure-clair-rase-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "dore",
-      "coiffure": "court",
+      "teint": "clair",
+      "coiffure": "rase",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-rase-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-rase-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-clair-rase-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "rase",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-clair-rase-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "clair",
+      "coiffure": "rase",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-dore-court-gris-avec.png"
+      "file": "/avatars/av-h-mure-clair-rase-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -2994,19 +4488,199 @@
       "genre": "homme",
       "age": "mure",
       "teint": "dore",
-      "coiffure": "rase",
-      "couleur": "gris",
+      "coiffure": "court",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-dore-rase-gris-sans.png"
+      "file": "/avatars/av-h-mure-dore-court-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
       "teint": "dore",
-      "coiffure": "rase",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-court-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-court-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-court-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-court-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "court",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-dore-rase-gris-avec.png"
+      "file": "/avatars/av-h-mure-dore-court-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-milong-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-milong-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-milong-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-milong-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-milong-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-milong-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-milong-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-milong-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-boucles-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-boucles-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-boucles-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-boucles-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-boucles-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-boucles-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-boucles-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-boucles-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -3029,20 +4703,56 @@
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "caramel",
-      "coiffure": "court",
-      "couleur": "gris",
+      "teint": "dore",
+      "coiffure": "rase",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-caramel-court-gris-sans.png"
+      "file": "/avatars/av-h-mure-dore-rase-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "caramel",
-      "coiffure": "court",
+      "teint": "dore",
+      "coiffure": "rase",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-rase-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-rase-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-dore-rase-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "rase",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-dore-rase-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "dore",
+      "coiffure": "rase",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-caramel-court-gris-avec.png"
+      "file": "/avatars/av-h-mure-dore-rase-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -3066,19 +4776,199 @@
       "genre": "homme",
       "age": "mure",
       "teint": "caramel",
-      "coiffure": "rase",
-      "couleur": "gris",
+      "coiffure": "court",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-caramel-rase-gris-sans.png"
+      "file": "/avatars/av-h-mure-caramel-court-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
       "teint": "caramel",
-      "coiffure": "rase",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-court-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-court-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-court-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-court-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "court",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-caramel-rase-gris-avec.png"
+      "file": "/avatars/av-h-mure-caramel-court-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-milong-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-milong-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-milong-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-milong-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-milong-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-milong-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-milong-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-milong-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-boucles-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-boucles-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-boucles-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-boucles-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-boucles-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-boucles-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-boucles-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-boucles-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -3101,20 +4991,56 @@
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "ebene",
-      "coiffure": "court",
-      "couleur": "gris",
+      "teint": "caramel",
+      "coiffure": "rase",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-ebene-court-gris-sans.png"
+      "file": "/avatars/av-h-mure-caramel-rase-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
-      "teint": "ebene",
-      "coiffure": "court",
+      "teint": "caramel",
+      "coiffure": "rase",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-rase-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-rase-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-caramel-rase-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "rase",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-caramel-rase-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "caramel",
+      "coiffure": "rase",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-ebene-court-gris-avec.png"
+      "file": "/avatars/av-h-mure-caramel-rase-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -3138,19 +5064,199 @@
       "genre": "homme",
       "age": "mure",
       "teint": "ebene",
-      "coiffure": "rase",
-      "couleur": "gris",
+      "coiffure": "court",
+      "couleur": "blond",
       "barbe": "sans",
-      "file": "/avatars/av-h-mure-ebene-rase-gris-sans.png"
+      "file": "/avatars/av-h-mure-ebene-court-blond-sans.png"
     },
     {
       "genre": "homme",
       "age": "mure",
       "teint": "ebene",
-      "coiffure": "rase",
+      "coiffure": "court",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-court-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-court-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-court-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-court-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "court",
       "couleur": "gris",
       "barbe": "avec",
-      "file": "/avatars/av-h-mure-ebene-rase-gris-avec.png"
+      "file": "/avatars/av-h-mure-ebene-court-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-milong-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-milong-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-milong-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-milong-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-milong-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-milong-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-milong-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "milong",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-milong-gris-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-boucles-brun-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-boucles-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-boucles-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-boucles-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-boucles-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-boucles-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-boucles-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-boucles-gris-avec.png"
     },
     {
       "genre": "homme",
@@ -3169,6 +5275,60 @@
       "couleur": "brun",
       "barbe": "avec",
       "file": "/avatars/av-h-mure-ebene-rase-brun-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "rase",
+      "couleur": "blond",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-rase-blond-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "rase",
+      "couleur": "blond",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-rase-blond-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-rase-noir-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "rase",
+      "couleur": "noir",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-rase-noir-avec.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "rase",
+      "couleur": "gris",
+      "barbe": "sans",
+      "file": "/avatars/av-h-mure-ebene-rase-gris-sans.png"
+    },
+    {
+      "genre": "homme",
+      "age": "mure",
+      "teint": "ebene",
+      "coiffure": "rase",
+      "couleur": "gris",
+      "barbe": "avec",
+      "file": "/avatars/av-h-mure-ebene-rase-gris-avec.png"
     }
   ]
 }
