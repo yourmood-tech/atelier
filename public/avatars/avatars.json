@@ -1,0 +1,612 @@
+{
+  "teints": [
+    {
+      "id": "porcelaine",
+      "label": "Porcelaine"
+    },
+    {
+      "id": "clair",
+      "label": "Clair"
+    },
+    {
+      "id": "dore",
+      "label": "Doré"
+    },
+    {
+      "id": "caramel",
+      "label": "Caramel"
+    },
+    {
+      "id": "ebene",
+      "label": "Ébène"
+    }
+  ],
+  "coiffures": [
+    {
+      "id": "chignon",
+      "label": "Chignon décoiffé"
+    },
+    {
+      "id": "longs",
+      "label": "Longs ondulés"
+    },
+    {
+      "id": "carre",
+      "label": "Carré"
+    },
+    {
+      "id": "queue",
+      "label": "Queue de cheval"
+    },
+    {
+      "id": "boucles",
+      "label": "Bouclés"
+    }
+  ],
+  "couleurs": [
+    {
+      "id": "brun",
+      "label": "Brun"
+    },
+    {
+      "id": "blond",
+      "label": "Blond"
+    },
+    {
+      "id": "noir",
+      "label": "Noir"
+    },
+    {
+      "id": "auburn",
+      "label": "Auburn"
+    }
+  ],
+  "avatars": [
+    {
+      "teint": "porcelaine",
+      "coiffure": "chignon",
+      "couleur": "brun",
+      "file": "/avatars/av-porcelaine-chignon-brun.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "chignon",
+      "couleur": "blond",
+      "file": "/avatars/av-porcelaine-chignon-blond.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "file": "/avatars/av-porcelaine-chignon-noir.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "file": "/avatars/av-porcelaine-chignon-auburn.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "file": "/avatars/av-porcelaine-longs-brun.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "file": "/avatars/av-porcelaine-longs-blond.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "file": "/avatars/av-porcelaine-longs-noir.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "file": "/avatars/av-porcelaine-longs-auburn.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "carre",
+      "couleur": "brun",
+      "file": "/avatars/av-porcelaine-carre-brun.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "carre",
+      "couleur": "blond",
+      "file": "/avatars/av-porcelaine-carre-blond.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "file": "/avatars/av-porcelaine-carre-noir.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "file": "/avatars/av-porcelaine-carre-auburn.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "file": "/avatars/av-porcelaine-queue-brun.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "file": "/avatars/av-porcelaine-queue-blond.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "file": "/avatars/av-porcelaine-queue-noir.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "file": "/avatars/av-porcelaine-queue-auburn.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "file": "/avatars/av-porcelaine-boucles-brun.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "file": "/avatars/av-porcelaine-boucles-blond.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "file": "/avatars/av-porcelaine-boucles-noir.png"
+    },
+    {
+      "teint": "porcelaine",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "file": "/avatars/av-porcelaine-boucles-auburn.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "chignon",
+      "couleur": "brun",
+      "file": "/avatars/av-clair-chignon-brun.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "chignon",
+      "couleur": "blond",
+      "file": "/avatars/av-clair-chignon-blond.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "file": "/avatars/av-clair-chignon-noir.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "file": "/avatars/av-clair-chignon-auburn.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "file": "/avatars/av-clair-longs-brun.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "file": "/avatars/av-clair-longs-blond.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "file": "/avatars/av-clair-longs-noir.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "file": "/avatars/av-clair-longs-auburn.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "carre",
+      "couleur": "brun",
+      "file": "/avatars/av-clair-carre-brun.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "carre",
+      "couleur": "blond",
+      "file": "/avatars/av-clair-carre-blond.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "file": "/avatars/av-clair-carre-noir.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "file": "/avatars/av-clair-carre-auburn.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "file": "/avatars/av-clair-queue-brun.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "file": "/avatars/av-clair-queue-blond.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "file": "/avatars/av-clair-queue-noir.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "file": "/avatars/av-clair-queue-auburn.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "file": "/avatars/av-clair-boucles-brun.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "file": "/avatars/av-clair-boucles-blond.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "file": "/avatars/av-clair-boucles-noir.png"
+    },
+    {
+      "teint": "clair",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "file": "/avatars/av-clair-boucles-auburn.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "chignon",
+      "couleur": "brun",
+      "file": "/avatars/av-dore-chignon-brun.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "chignon",
+      "couleur": "blond",
+      "file": "/avatars/av-dore-chignon-blond.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "file": "/avatars/av-dore-chignon-noir.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "file": "/avatars/av-dore-chignon-auburn.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "file": "/avatars/av-dore-longs-brun.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "file": "/avatars/av-dore-longs-blond.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "file": "/avatars/av-dore-longs-noir.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "file": "/avatars/av-dore-longs-auburn.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "carre",
+      "couleur": "brun",
+      "file": "/avatars/av-dore-carre-brun.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "carre",
+      "couleur": "blond",
+      "file": "/avatars/av-dore-carre-blond.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "file": "/avatars/av-dore-carre-noir.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "file": "/avatars/av-dore-carre-auburn.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "file": "/avatars/av-dore-queue-brun.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "file": "/avatars/av-dore-queue-blond.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "file": "/avatars/av-dore-queue-noir.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "file": "/avatars/av-dore-queue-auburn.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "file": "/avatars/av-dore-boucles-brun.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "file": "/avatars/av-dore-boucles-blond.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "file": "/avatars/av-dore-boucles-noir.png"
+    },
+    {
+      "teint": "dore",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "file": "/avatars/av-dore-boucles-auburn.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "chignon",
+      "couleur": "brun",
+      "file": "/avatars/av-caramel-chignon-brun.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "chignon",
+      "couleur": "blond",
+      "file": "/avatars/av-caramel-chignon-blond.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "file": "/avatars/av-caramel-chignon-noir.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "file": "/avatars/av-caramel-chignon-auburn.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "file": "/avatars/av-caramel-longs-brun.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "file": "/avatars/av-caramel-longs-blond.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "file": "/avatars/av-caramel-longs-noir.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "file": "/avatars/av-caramel-longs-auburn.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "carre",
+      "couleur": "brun",
+      "file": "/avatars/av-caramel-carre-brun.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "carre",
+      "couleur": "blond",
+      "file": "/avatars/av-caramel-carre-blond.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "file": "/avatars/av-caramel-carre-noir.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "file": "/avatars/av-caramel-carre-auburn.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "file": "/avatars/av-caramel-queue-brun.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "file": "/avatars/av-caramel-queue-blond.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "file": "/avatars/av-caramel-queue-noir.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "file": "/avatars/av-caramel-queue-auburn.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "file": "/avatars/av-caramel-boucles-brun.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "file": "/avatars/av-caramel-boucles-blond.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "file": "/avatars/av-caramel-boucles-noir.png"
+    },
+    {
+      "teint": "caramel",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "file": "/avatars/av-caramel-boucles-auburn.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "chignon",
+      "couleur": "brun",
+      "file": "/avatars/av-ebene-chignon-brun.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "chignon",
+      "couleur": "noir",
+      "file": "/avatars/av-ebene-chignon-noir.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "chignon",
+      "couleur": "auburn",
+      "file": "/avatars/av-ebene-chignon-auburn.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "brun",
+      "file": "/avatars/av-ebene-longs-brun.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "blond",
+      "file": "/avatars/av-ebene-longs-blond.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "noir",
+      "file": "/avatars/av-ebene-longs-noir.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "longs",
+      "couleur": "auburn",
+      "file": "/avatars/av-ebene-longs-auburn.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "carre",
+      "couleur": "brun",
+      "file": "/avatars/av-ebene-carre-brun.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "carre",
+      "couleur": "blond",
+      "file": "/avatars/av-ebene-carre-blond.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "blond",
+      "file": "/avatars/av-ebene-boucles-blond.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "noir",
+      "file": "/avatars/av-ebene-boucles-noir.png"
+    }
+  ]
+}
