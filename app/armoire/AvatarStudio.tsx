@@ -5,9 +5,9 @@ import React, { useEffect, useState } from "react";
 const ENCRE = "#3a3330";
 
 type Opt = { id: string; label: string };
-type Entry = { age?: string; teint: string; coiffure: string; couleur: string; file: string };
-type Manifest = { ages?: Opt[]; teints: Opt[]; coiffures: Opt[]; couleurs: Opt[]; avatars: Entry[] };
-export type AvatarPick = { age: string; teint: string; coiffure: string; couleur: string };
+type Entry = { genre?: string; age?: string; teint: string; coiffure: string; couleur: string; barbe?: string; file: string };
+type Manifest = { genres?: Opt[]; ages?: Opt[]; barbes?: Opt[]; teints: Opt[]; coiffures: Opt[]; couleurs: Opt[]; avatars: Entry[] };
+export type AvatarPick = { genre: string; age: string; teint: string; coiffure: string; couleur: string; barbe: string };
 
 export function AvatarStudio({
   pick,
@@ -43,11 +43,16 @@ export function AvatarStudio({
     );
   }
 
+  const genres: Opt[] = man.genres?.length ? man.genres : [{ id: "femme", label: "Femme" }];
   const ages: Opt[] = man.ages?.length ? man.ages : [{ id: "jeune", label: "Jeune" }];
+  const barbes: Opt[] = man.barbes?.length ? man.barbes : [{ id: "sans", label: "Sans barbe" }];
   const cur: AvatarPick = pick
-    ? { age: pick.age ?? ages[0].id, teint: pick.teint, coiffure: pick.coiffure, couleur: pick.couleur }
-    : { age: ages[0].id, teint: man.teints[0].id, coiffure: man.coiffures[0].id, couleur: man.couleurs[0].id };
-  const fileFor = (p: AvatarPick) => man.avatars.find((a) => (a.age ?? "jeune") === p.age && a.teint === p.teint && a.coiffure === p.coiffure && a.couleur === p.couleur)?.file ?? null;
+    ? { genre: pick.genre ?? genres[0].id, age: pick.age ?? ages[0].id, teint: pick.teint, coiffure: pick.coiffure, couleur: pick.couleur, barbe: pick.barbe ?? barbes[0].id }
+    : { genre: genres[0].id, age: ages[0].id, teint: man.teints[0].id, coiffure: man.coiffures[0].id, couleur: man.couleurs[0].id, barbe: barbes[0].id };
+  const fileFor = (p: AvatarPick) =>
+    man.avatars.find(
+      (a) => (a.genre ?? "femme") === p.genre && (a.age ?? "jeune") === p.age && a.teint === p.teint && a.coiffure === p.coiffure && a.couleur === p.couleur && (p.genre === "homme" ? (a.barbe ?? "sans") === p.barbe : true)
+    )?.file ?? null;
   const has = (p: AvatarPick) => !!fileFor(p);
   const choose = (patch: Partial<AvatarPick>) => {
     const next = { ...cur, ...patch };
@@ -94,6 +99,12 @@ export function AvatarStudio({
 
         {/* CHOIX */}
         <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 16 }}>
+          {genres.length > 1 && (
+            <Picker label="Genre" options={genres} value={cur.genre} onPick={(id) => choose({ genre: id })} avail={(id) => has({ ...cur, genre: id })} />
+          )}
+          {cur.genre === "homme" && barbes.length > 1 && (
+            <Picker label="Barbe" options={barbes} value={cur.barbe} onPick={(id) => choose({ barbe: id })} avail={(id) => has({ ...cur, barbe: id })} />
+          )}
           {ages.length > 1 && (
             <Picker label="Âge" options={ages} value={cur.age} onPick={(id) => choose({ age: id })} avail={(id) => has({ ...cur, age: id })} />
           )}
