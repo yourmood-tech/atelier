@@ -551,6 +551,12 @@
     {
       "teint": "ebene",
       "coiffure": "chignon",
+      "couleur": "blond",
+      "file": "/avatars/av-ebene-chignon-blond.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "chignon",
       "couleur": "noir",
       "file": "/avatars/av-ebene-chignon-noir.png"
     },
@@ -598,6 +604,48 @@
     },
     {
       "teint": "ebene",
+      "coiffure": "carre",
+      "couleur": "noir",
+      "file": "/avatars/av-ebene-carre-noir.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "carre",
+      "couleur": "auburn",
+      "file": "/avatars/av-ebene-carre-auburn.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "brun",
+      "file": "/avatars/av-ebene-queue-brun.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "blond",
+      "file": "/avatars/av-ebene-queue-blond.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "noir",
+      "file": "/avatars/av-ebene-queue-noir.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "queue",
+      "couleur": "auburn",
+      "file": "/avatars/av-ebene-queue-auburn.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "brun",
+      "file": "/avatars/av-ebene-boucles-brun.png"
+    },
+    {
+      "teint": "ebene",
       "coiffure": "boucles",
       "couleur": "blond",
       "file": "/avatars/av-ebene-boucles-blond.png"
@@ -607,6 +655,12 @@
       "coiffure": "boucles",
       "couleur": "noir",
       "file": "/avatars/av-ebene-boucles-noir.png"
+    },
+    {
+      "teint": "ebene",
+      "coiffure": "boucles",
+      "couleur": "auburn",
+      "file": "/avatars/av-ebene-boucles-auburn.png"
     }
   ]
 }
