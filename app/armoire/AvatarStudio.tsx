@@ -55,7 +55,24 @@ export function AvatarStudio({
     )?.file ?? null;
   const has = (p: AvatarPick) => !!fileFor(p);
   const choose = (patch: Partial<AvatarPick>) => {
-    const next = { ...cur, ...patch };
+    let next = { ...cur, ...patch };
+    // Si la combinaison n'existe pas, on bascule sur la plus proche disponible
+    // (en gardant en priorité le critère que la cliente vient de changer).
+    if (!fileFor(next)) {
+      const keys = Object.keys(patch);
+      const pool = man.avatars.filter((a) => (a.genre ?? "femme") === next.genre);
+      let best: AvatarPick | null = null;
+      let bestScore = -1;
+      for (const a of pool) {
+        const av: AvatarPick = { genre: a.genre ?? "femme", age: a.age ?? "jeune", teint: a.teint, coiffure: a.coiffure, couleur: a.couleur, barbe: a.barbe ?? "sans" };
+        let s = 0;
+        for (const k of ["teint", "coiffure", "couleur", "age", "barbe"] as const) {
+          if (av[k] === next[k]) s += keys.includes(k) ? 3 : 1;
+        }
+        if (s > bestScore) { bestScore = s; best = av; }
+      }
+      if (best) next = best;
+    }
     onPick(next, fileFor(next));
   };
   const img = fileFor(cur);
