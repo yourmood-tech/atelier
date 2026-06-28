@@ -29,14 +29,17 @@ export async function POST(req: NextRequest) {
     const m = body?.moodaille as Moodaille;
     if (!m?.nom || !m?.img) return NextResponse.json({ error: "Nom et image requis" }, { status: 400 });
     const id = m.id && String(m.id).trim() ? String(m.id) : `m_${Date.now().toString(36)}`;
+    const jeux = Array.isArray(m.jeux) ? m.jeux.map(String) : (m.jeu ? [String(m.jeu)] : []);
     const entry: Moodaille = {
       id,
       nom: String(m.nom).trim(),
       img: String(m.img),
+      icone: m.icone ? String(m.icone) : "",
       avantage: m.avantage ? String(m.avantage).trim() : "",
       code: m.code ? String(m.code).trim() : "",
       rarete: m.rarete ? String(m.rarete) : "commune",
-      jeu: m.jeu ? String(m.jeu) : "",
+      jeux,
+      jeu: jeux[0] ?? "",
       actif: m.actif !== false,
     };
     const idx = all.findIndex((x) => x.id === id);

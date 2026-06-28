@@ -5,11 +5,13 @@ import { kv } from "@vercel/kv";
 export type Moodaille = {
   id: string;
   nom: string;
-  img: string;       // data URL ou URL
+  img: string;       // la CARTE (façon Pokémon) — affichée dans les jeux / le tableau
+  icone?: string;    // l'ICÔNE — affichée dans le tiroir de la commood
   avantage?: string; // ex. "-20% sur l'addon hibiscus"
   code?: string;     // code promo affiché sur la carte
-  rarete?: string;   // commune | rare | epique
-  jeu?: string;      // id du jeu qui la débloque
+  rarete?: string;   // commune | rare | epique | ultrarare
+  jeu?: string;      // (ancien) id d'UN jeu — gardé pour compat
+  jeux?: string[];   // ids des jeux qui la débloquent (vide = tous)
   actif?: boolean;
 };
 

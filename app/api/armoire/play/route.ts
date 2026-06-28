@@ -43,7 +43,11 @@ export async function POST(req: NextRequest) {
     const catalog = ((await kv.get("moodailles:catalog")) as Moodaille[] | null) ?? [];
     const won = ((await kv.get(`moodwon:${email}`)) as { id: string }[] | null) ?? [];
     const ownedIds = new Set(won.map((w) => w.id));
-    const dispo = catalog.filter((m) => m.actif !== false && (!m.jeu || m.jeu === jeu) && !ownedIds.has(m.id));
+    const dispo = catalog.filter((m) => {
+      if (m.actif === false || ownedIds.has(m.id)) return false;
+      const jeux = m.jeux && m.jeux.length ? m.jeux : (m.jeu ? [m.jeu] : []);
+      return jeux.length === 0 || jeux.includes(jeu); // aucun jeu coché = valable pour tous
+    });
 
     // On marque la partie comme jouée AVANT le tirage (même si rien à gagner, la partie est consommée).
     if (!staff) await kv.set(playKey, Date.now(), { ex: 60 * 60 * 24 * 120 });

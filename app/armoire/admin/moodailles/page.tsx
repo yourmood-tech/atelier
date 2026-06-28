@@ -7,15 +7,17 @@ type Moodaille = {
   id?: string;
   nom: string;
   img: string;
+  icone?: string;
   avantage?: string;
   code?: string;
   rarete?: string;
   jeu?: string;
+  jeux?: string[];
   actif?: boolean;
 };
 
 const ENCRE = "#3a3330";
-const VIDE: Moodaille = { nom: "", img: "", avantage: "", code: "", rarete: "commune", jeu: "", actif: true };
+const VIDE: Moodaille = { nom: "", img: "", icone: "", avantage: "", code: "", rarete: "commune", jeux: [], actif: true };
 
 export default function AdminMoodaillesPage() {
   const [list, setList] = useState<Moodaille[]>([]);
@@ -27,6 +29,7 @@ export default function AdminMoodaillesPage() {
   const [revCard, setRevCard] = useState("");
   const [revMsg, setRevMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const iconeRef = useRef<HTMLInputElement>(null);
 
   async function call(action: string, extra: Record<string, unknown> = {}) {
     const r = await fetch("/api/armoire/moodailles-admin", {
@@ -58,8 +61,20 @@ export default function AdminMoodaillesPage() {
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-    const url = await toDataUrl(f);
+    const url = await toDataUrl(f, 640);
     setForm((s) => ({ ...s, img: url }));
+  }
+  async function onIcone(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = await toDataUrl(f, 256);
+    setForm((s) => ({ ...s, icone: url }));
+  }
+  function toggleJeu(id: string) {
+    setForm((s) => {
+      const cur = s.jeux ?? (s.jeu ? [s.jeu] : []);
+      return { ...s, jeux: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] };
+    });
   }
 
   async function save() {
@@ -129,15 +144,27 @@ export default function AdminMoodaillesPage() {
           <h2 style={h2()}>{form.id ? "Modifier" : "Nouvelle moodaille"}</h2>
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
             <div style={{ width: 180 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, marginBottom: 4 }}>La carte (jeux / tableau)</div>
               <div onClick={() => fileRef.current?.click()} style={{ width: 180, height: 240, borderRadius: 14, border: "2px dashed #d9cdbf", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", textAlign: "center" }}>
                 {form.img ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={form.img} alt="carte" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 ) : (
-                  <span style={{ fontSize: 13, opacity: 0.6, padding: 12 }}>Cliquer pour choisir l&apos;image de la carte 🖼️</span>
+                  <span style={{ fontSize: 13, opacity: 0.6, padding: 12 }}>Image de la carte 🖼️</span>
                 )}
               </div>
               <input ref={fileRef} type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
+
+              <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, margin: "12px 0 4px" }}>L&apos;icône (dans la commood)</div>
+              <div onClick={() => iconeRef.current?.click()} style={{ width: 96, height: 96, borderRadius: 12, border: "2px dashed #d9cdbf", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", overflow: "hidden", textAlign: "center" }}>
+                {form.icone ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={form.icone} alt="icône" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                ) : (
+                  <span style={{ fontSize: 11, opacity: 0.6, padding: 8 }}>Icône 🏅</span>
+                )}
+              </div>
+              <input ref={iconeRef} type="file" accept="image/*" onChange={onIcone} style={{ display: "none" }} />
             </div>
 
             <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -153,12 +180,20 @@ export default function AdminMoodaillesPage() {
                     <option value="ultrarare">Ultra-rare</option>
                   </select>
                 </Field>
-                <Field label="Débloquée par le jeu">
-                  <select style={inp()} value={form.jeu} onChange={(e) => setForm({ ...form, jeu: e.target.value })}>
-                    <option value="">— au choix —</option>
-                    {GAMES.map((g) => <option key={g.id} value={g.id}>{g.nom}</option>)}
-                  </select>
-                </Field>
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.65, marginBottom: 6 }}>Débloquée par quel(s) jeu(x) ?</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {GAMES.filter((g) => g.jouable).map((g) => {
+                    const on = (form.jeux ?? (form.jeu ? [form.jeu] : [])).includes(g.id);
+                    return (
+                      <button key={g.id} type="button" onClick={() => toggleJeu(g.id)} style={{ padding: "6px 11px", borderRadius: 999, border: on ? "none" : "1px solid #e0d6ca", background: on ? ENCRE : "#fff", color: on ? "#fff" : ENCRE, fontSize: 12, cursor: "pointer" }}>
+                        {g.emoji} {g.nom}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 11, opacity: 0.55, marginTop: 4 }}>Aucun coché = la carte peut tomber dans n&apos;importe quel jeu.</div>
               </div>
               <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
                 <input type="checkbox" checked={form.actif !== false} onChange={(e) => setForm({ ...form, actif: e.target.checked })} />
@@ -178,12 +213,18 @@ export default function AdminMoodaillesPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 14 }}>
           {list.map((m) => (
             <div key={m.id} style={{ ...card(), padding: 12, opacity: m.actif !== false ? 1 : 0.5 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={m.img} alt={m.nom} style={{ width: "100%", borderRadius: 10, display: "block" }} />
+              <div style={{ position: "relative" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={m.img} alt={m.nom} style={{ width: "100%", borderRadius: 10, display: "block" }} />
+                {m.icone && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={m.icone} alt="icône" title="icône commood" style={{ position: "absolute", bottom: 6, right: 6, width: 34, height: 34, borderRadius: 8, border: "2px solid #fff", background: "#fff", objectFit: "contain" }} />
+                )}
+              </div>
               <div style={{ fontWeight: 600, fontSize: 14, marginTop: 6 }}>{m.nom}</div>
               {m.avantage && <div style={{ fontSize: 12, opacity: 0.75 }}>{m.avantage}</div>}
               <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
-                {m.rarete} · {m.jeu ? GAMES.find((g) => g.id === m.jeu)?.nom ?? m.jeu : "jeu au choix"}{m.code ? ` · ${m.code}` : ""}
+                {m.rarete} · {(() => { const js = m.jeux && m.jeux.length ? m.jeux : (m.jeu ? [m.jeu] : []); return js.length ? js.map((id) => GAMES.find((g) => g.id === id)?.nom ?? id).join(", ") : "tous les jeux"; })()}{m.code ? ` · ${m.code}` : ""}
               </div>
               <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
                 <button onClick={() => setForm(m)} style={miniBtn()}>Modifier</button>
@@ -217,13 +258,12 @@ export default function AdminMoodaillesPage() {
   );
 }
 
-function toDataUrl(file: File): Promise<string> {
+function toDataUrl(file: File, max = 640): Promise<string> {
   return new Promise((resolve, reject) => {
     const fr = new FileReader();
     fr.onload = () => {
       const img = new Image();
       img.onload = () => {
-        const max = 640;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         const cv = document.createElement("canvas");
         cv.width = Math.round(img.width * scale);

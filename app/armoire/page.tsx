@@ -40,7 +40,7 @@ export default function ArmoirePage() {
   const [tab, setTab] = useState<"armoire" | "moodie" | "jeux" | "regles" | "guide">("armoire");
   const [playing, setPlaying] = useState<string | null>(null);
   // Moodailles = addons virtuels à collectionner, gagnés en jouant.
-  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; avantage?: string; code?: string; rarete?: string; jeu?: string; actif?: boolean }[]>([]);
+  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; icone?: string; avantage?: string; code?: string; rarete?: string; jeu?: string; jeux?: string[]; actif?: boolean }[]>([]);
   const [moodaillesOwned, setMoodaillesOwned] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
@@ -350,7 +350,7 @@ export default function ArmoirePage() {
                             emoji: "🏅",
                             pieces: moodaillesOwned.flatMap((id) => {
                               const m = moodaillesCat.find((x) => x.id === id);
-                              return m ? [{ pid: 0, title: m.nom, image: m.img, date: "", quantity: 1 }] : [];
+                              return m ? [{ pid: 0, title: m.nom, image: m.icone || m.img, date: "", quantity: 1 }] : [];
                             }),
                           },
                         ]}
@@ -411,7 +411,7 @@ export default function ArmoirePage() {
   );
 }
 
-function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: string[]; moodaillesCat: { id: string; nom: string; img: string; avantage?: string; code?: string; rarete?: string; jeu?: string; actif?: boolean }[]; onPlay: (id: string) => void }) {
+function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: string[]; moodaillesCat: { id: string; nom: string; img: string; icone?: string; avantage?: string; code?: string; rarete?: string; jeu?: string; jeux?: string[]; actif?: boolean }[]; onPlay: (id: string) => void }) {
   return (
     <div style={card()}>
       <h2 style={{ fontSize: 18, fontWeight: 500, margin: "0 0 4px" }}>🎮 Jeux mood</h2>
