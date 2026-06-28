@@ -22,6 +22,10 @@ export default function AdminMoodaillesPage() {
   const [form, setForm] = useState<Moodaille>(VIDE);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [saison, setSaison] = useState("");
+  const [revEmail, setRevEmail] = useState("");
+  const [revCard, setRevCard] = useState("");
+  const [revMsg, setRevMsg] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function call(action: string, extra: Record<string, unknown> = {}) {
@@ -36,8 +40,20 @@ export default function AdminMoodaillesPage() {
   async function reload() {
     const j = await call("list");
     if (j?.moodailles) setList(j.moodailles);
+    const s = await call("getSaison");
+    if (s?.saison) setSaison(s.saison);
   }
   useEffect(() => { reload(); }, []);
+
+  async function saveSaison() {
+    const j = await call("setSaison", { saison });
+    if (j?.saison) { setSaison(j.saison); setMsg("Saison enregistrée ✓ (les parties de tout le monde sont réinitialisées)"); }
+  }
+  async function revoke() {
+    if (!revEmail || !revCard) { setRevMsg("Email cliente + carte requis"); return; }
+    const j = await call("revoke", { email: revEmail, cardId: revCard });
+    setRevMsg(j?.ok ? "Carte annulée pour cette cliente ✓" : (j?.error || "Erreur"));
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -75,6 +91,19 @@ export default function AdminMoodaillesPage() {
           à gagner via le jeu choisi. Réservé à l&apos;équipe Mood.
         </p>
 
+        {/* SAISON / DROP COURANT */}
+        <div style={card()}>
+          <h2 style={h2()}>📅 Saison (drop courant)</h2>
+          <p style={{ fontSize: 13, opacity: 0.7, marginTop: 0 }}>
+            Change la saison pour lancer un nouveau drop : ça <b>réinitialise les parties</b> (chaque cliente peut rejouer 1 fois par jeu).
+            Active/masque les cartes à gagner ce mois-ci dans la liste plus bas.
+          </p>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <input style={{ ...inp(), maxWidth: 240 }} value={saison} onChange={(e) => setSaison(e.target.value)} placeholder="ex. juin-quinzaine-2" />
+            <button onClick={saveSaison} style={btn()}>Lancer cette saison</button>
+          </div>
+        </div>
+
         {/* FORMULAIRE */}
         <div style={card()}>
           <h2 style={h2()}>{form.id ? "Modifier" : "Nouvelle moodaille"}</h2>
@@ -101,6 +130,7 @@ export default function AdminMoodaillesPage() {
                     <option value="commune">Commune</option>
                     <option value="rare">Rare</option>
                     <option value="epique">Épique</option>
+                    <option value="ultrarare">Ultra-rare</option>
                   </select>
                 </Field>
                 <Field label="Débloquée par le jeu">
@@ -143,6 +173,24 @@ export default function AdminMoodaillesPage() {
             </div>
           ))}
           {!list.length && <p style={{ opacity: 0.6 }}>Aucune moodaille pour l&apos;instant — ajoute la première ci-dessus 🤍</p>}
+        </div>
+
+        {/* RÉVOCATION (partage interdit → annuler la carte d'une cliente) */}
+        <div style={card()}>
+          <h2 style={h2()}>🚫 Annuler une carte (partage interdit)</h2>
+          <p style={{ fontSize: 13, opacity: 0.7, marginTop: 0 }}>
+            Si une cliente partage son code, annule sa carte ici (elle disparaît de sa collection).
+            Pense aussi à désactiver le vrai code promo de ton côté (Shopify).
+          </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <input style={{ ...inp(), maxWidth: 240 }} value={revEmail} onChange={(e) => setRevEmail(e.target.value)} placeholder="email de la cliente" />
+            <select style={{ ...inp(), maxWidth: 220 }} value={revCard} onChange={(e) => setRevCard(e.target.value)}>
+              <option value="">— quelle carte —</option>
+              {list.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
+            </select>
+            <button onClick={revoke} style={{ ...btn(), background: "#b54a3a" }}>Annuler la carte</button>
+            {revMsg && <span style={{ fontSize: 13, opacity: 0.75 }}>{revMsg}</span>}
+          </div>
         </div>
       </div>
     </main>

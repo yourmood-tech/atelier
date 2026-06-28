@@ -22,6 +22,7 @@ type Data = {
   choices: Choice[];
   entitlements: { gamesBudget: number; decoBudget: number; commandesQualifiantes: number };
   unlocks: Unlocks;
+  moodailles?: string[];
 };
 
 const IVOIRE = "#fbf7f2";
@@ -39,7 +40,7 @@ export default function ArmoirePage() {
   const [tab, setTab] = useState<"armoire" | "moodie" | "jeux" | "regles" | "guide">("armoire");
   const [playing, setPlaying] = useState<string | null>(null);
   // Moodailles = addons virtuels à collectionner, gagnés en jouant.
-  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; avantage?: string; code?: string; rarete?: string; jeu?: string }[]>([]);
+  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; avantage?: string; code?: string; rarete?: string; jeu?: string; actif?: boolean }[]>([]);
   const [moodaillesOwned, setMoodaillesOwned] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
@@ -82,19 +83,27 @@ export default function ArmoirePage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Gain : on tire une moodaille de CE jeu (jeu=="" = valable pour tous), pas encore possédée.
-  function gagnerMoodaille(jeuId?: string) {
-    const duJeu = moodaillesCat.filter((m) => !m.jeu || m.jeu === jeuId);
-    if (!duJeu.length) { setToast("Tu as gagné ! 🎉 (tes moodailles arrivent très bientôt)"); return; }
-    const manquantes = duJeu.filter((m) => !moodaillesOwned.includes(m.id));
-    const pool = manquantes.length ? manquantes : duJeu;
-    const win = pool[Math.floor((Date.now() / 1000) % pool.length)];
-    setMoodaillesOwned((prev) => {
-      const next = prev.includes(win.id) ? prev : [...prev, win.id];
-      try { localStorage.setItem(`armoire:moodailles:${email.trim().toLowerCase()}`, JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-    setToast(manquantes.length ? `🏅 Nouvelle moodaille : ${win.nom} !` : `🎉 Bravo ! (tu as déjà toutes les moodailles)`);
+  // Gain : décidé par le SERVEUR (vérif email+commande, 1 partie/saison, tirage pondéré).
+  async function gagnerMoodaille(jeuId: string) {
+    try {
+      const res = await fetch("/api/armoire/play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, orderNumber: commande, jeu: jeuId }),
+      });
+      const j = await res.json();
+      if (j.already) { setToast("Tu as déjà joué cette saison 🤍 Reviens au prochain drop de cartes !"); return; }
+      if (j.won) {
+        setMoodaillesOwned((prev) => (prev.includes(j.won.id) ? prev : [...prev, j.won.id]));
+        setToast(`🏅 Nouvelle moodaille : ${j.won.nom} !`);
+      } else if (j.played) {
+        setToast(j.message || "Bravo ! 🎉");
+      } else {
+        setToast(j.error || "Oups, réessaie 🤍");
+      }
+    } catch {
+      setToast("Petit souci de connexion, réessaie 🤍");
+    }
   }
 
   function togglePlaced(id: string) {
@@ -155,7 +164,7 @@ export default function ArmoirePage() {
         try { setAvatarPick(JSON.parse(localStorage.getItem(`armoire:avatarpick:${k}`) || "null")); } catch { setAvatarPick(null); }
         setAvatarImage(localStorage.getItem(`armoire:avatarimg:${k}`) || null);
         setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
-        try { setMoodaillesOwned(JSON.parse(localStorage.getItem(`armoire:moodailles:${k}`) || "[]")); } catch { setMoodaillesOwned([]); }
+        setMoodaillesOwned(json.moodailles ?? []);
       } catch {
         /* ignore */
       }
@@ -398,32 +407,45 @@ export default function ArmoirePage() {
   );
 }
 
-function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: string[]; moodaillesCat: { id: string; nom: string; img: string; rarete?: string }[]; onPlay: (id: string) => void }) {
+function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: string[]; moodaillesCat: { id: string; nom: string; img: string; avantage?: string; code?: string; rarete?: string; jeu?: string; actif?: boolean }[]; onPlay: (id: string) => void }) {
   return (
     <div style={card()}>
       <h2 style={{ fontSize: 18, fontWeight: 500, margin: "0 0 4px" }}>🎮 Jeux mood</h2>
       <p style={{ opacity: 0.75, marginTop: 0, fontSize: 14, lineHeight: 1.6 }}>
-        Joue et gagne des <b>moodailles</b> 🏅 — des bijoux virtuels à collectionner, rangés dans ta commood.
+        Joue et gagne des <b>moodailles</b> 🏅 — des cartes à collectionner, avec un avantage dessus, rangées dans ta commood.
       </p>
 
-      {/* Compteur de collection */}
-      <div style={{ background: "#f6f1ea", borderRadius: 14, padding: 14, margin: "10px 0 16px" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-          Ma collection : {moodaillesOwned.length}/{moodaillesCat.length || "…"} moodailles
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {moodaillesCat.map((m) => {
-            const owned = moodaillesOwned.includes(m.id);
-            return (
-              <div key={m.id} title={owned ? m.nom : "à gagner"} style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "1px solid #e3d9cd", background: "#fff", filter: owned ? "none" : "grayscale(1)", opacity: owned ? 1 : 0.35 }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={m.img} alt={m.nom} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              </div>
-            );
-          })}
-          {!moodaillesCat.length && <span style={{ fontSize: 12, opacity: 0.6 }}>Les moodailles arrivent très bientôt 🤍</span>}
-        </div>
-      </div>
+      {/* TABLEAU : à gagner en ce moment */}
+      {(() => {
+        const actives = moodaillesCat.filter((m) => m.actif !== false);
+        return (
+          <div style={{ background: "#f6f1ea", borderRadius: 14, padding: 16, margin: "10px 0 16px" }}>
+            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>🤍 À gagner en ce moment chez Mood</div>
+            <div style={{ fontSize: 12, opacity: 0.65, marginBottom: 10 }}>
+              Ma collection : {moodaillesOwned.length}/{actives.length || "…"} cartes du moment
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(82px, 1fr))", gap: 10 }}>
+              {actives.map((m) => {
+                const owned = moodaillesOwned.includes(m.id);
+                return (
+                  <div key={m.id} title={owned ? m.nom : "à gagner en jouant"} style={{ textAlign: "center" }}>
+                    <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #e3d9cd", background: "#fff", aspectRatio: "3/4", display: "flex", alignItems: "center", justifyContent: "center", filter: owned ? "none" : "grayscale(1) brightness(0.92)", opacity: owned ? 1 : 0.5 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={m.img} alt={owned ? m.nom : "carte mystère"} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    </div>
+                    <div style={{ fontSize: 10, marginTop: 3, opacity: 0.7 }}>{owned ? m.nom : "🔒 à gagner"}</div>
+                  </div>
+                );
+              })}
+              {!actives.length && <span style={{ fontSize: 12, opacity: 0.6 }}>Les cartes du moment arrivent très bientôt 🤍</span>}
+            </div>
+            <p style={{ fontSize: 11, opacity: 0.6, lineHeight: 1.5, margin: "12px 0 0" }}>
+              ⚠️ Tes moodailles sont <b>personnelles</b>. Il est interdit de partager ton code — sinon il sera annulé.
+              On ne peut jouer qu&apos;<b>une seule fois par jeu</b> à chaque drop.
+            </p>
+          </div>
+        );
+      })()}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
         {GAMES.map((g) => (

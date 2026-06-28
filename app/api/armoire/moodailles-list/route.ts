@@ -15,6 +15,8 @@ export type Moodaille = {
 
 export async function GET() {
   const all = ((await kv.get("moodailles:catalog")) as Moodaille[] | null) ?? [];
-  const actives = all.filter((m) => m.actif !== false);
-  return NextResponse.json({ moodailles: actives }, { headers: { "Cache-Control": "no-store" } });
+  const saison = ((await kv.get("moodailles:saison")) as string | null) ?? "drop-1";
+  // On renvoie tout (avec le flag actif) : le board montre les actives, mais une carte
+  // déjà gagnée doit rester affichable même quand son drop est terminé.
+  return NextResponse.json({ moodailles: all, saison }, { headers: { "Cache-Control": "no-store" } });
 }

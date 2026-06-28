@@ -53,5 +53,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, moodailles: next });
   }
 
+  // Saison courante (le "drop") : change-la pour réinitialiser les parties de tout le monde.
+  if (action === "getSaison") {
+    const saison = ((await kv.get("moodailles:saison")) as string | null) ?? "drop-1";
+    return NextResponse.json({ saison });
+  }
+  if (action === "setSaison") {
+    const saison = String(body?.saison ?? "").trim() || "drop-1";
+    await kv.set("moodailles:saison", saison);
+    return NextResponse.json({ ok: true, saison });
+  }
+
+  // Révoquer la carte d'une cliente (partage interdit → code annulé).
+  if (action === "revoke") {
+    const clientEmail = String(body?.email ?? "").trim().toLowerCase();
+    const cardId = String(body?.cardId ?? "");
+    if (!clientEmail || !cardId) return NextResponse.json({ error: "Email cliente + carte requis" }, { status: 400 });
+    const won = ((await kv.get(`moodwon:${clientEmail}`)) as { id: string }[] | null) ?? [];
+    const next = won.filter((w) => w.id !== cardId);
+    await kv.set(`moodwon:${clientEmail}`, next);
+    return NextResponse.json({ ok: true, restantes: next.length });
+  }
+
+  // Voir ce qu'une cliente a gagné.
+  if (action === "wonOf") {
+    const clientEmail = String(body?.email ?? "").trim().toLowerCase();
+    const won = ((await kv.get(`moodwon:${clientEmail}`)) as { id: string; code?: string; saison?: string; ts?: number }[] | null) ?? [];
+    return NextResponse.json({ won });
+  }
+
   return NextResponse.json({ error: "Action inconnue" }, { status: 400 });
 }

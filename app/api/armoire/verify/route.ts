@@ -57,6 +57,9 @@ export async function POST(req: NextRequest) {
       ? { gamesBudget: GAMES.length, decoBudget: DECO.length, commandesQualifiantes: 0 }
       : perso.entitlements;
 
+    // Moodailles gagnées (côté serveur, par cliente) — source de vérité, non falsifiable.
+    const won = ((await kv.get(`moodwon:${email.toLowerCase()}`)) as { id: string }[] | null) ?? [];
+
     return NextResponse.json({
       found: true,
       verified: true,
@@ -67,6 +70,7 @@ export async function POST(req: NextRequest) {
       choices: tiroirChoices(),
       entitlements,
       unlocks,
+      moodailles: won.map((w) => w.id),
     });
   } catch (e) {
     console.error("[armoire/verify] error", e);
