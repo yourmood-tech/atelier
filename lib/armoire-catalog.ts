@@ -24,9 +24,9 @@ export const GAMES: GameDef[] = [
   { id: "sept", nom: "7 différences", emoji: "🔍", jouable: true, partageable: true, jour: 1, jourNom: "Lundi", type: "skill" },
   { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true, partageable: true, jour: 2, jourNom: "Mardi", type: "skill" },
   { id: "quiz", nom: "Quiz mood", emoji: "❓", jouable: true, partageable: true, jour: 3, jourNom: "Mercredi", type: "skill" },
-  { id: "pioche", nom: "Pioche mystère", emoji: "🃏", jouable: true, partageable: true, jour: 4, jourNom: "Jeudi", type: "chance" },
-  { id: "slot", nom: "Machine à moods", emoji: "🎰", jouable: true, partageable: true, jour: 5, jourNom: "Vendredi", type: "chance" },
-  { id: "etoile", nom: "Étoile chance", emoji: "✨", jouable: true, partageable: true, jour: 6, jourNom: "Samedi", type: "chance" },
+  { id: "sudoku", nom: "Sudoku mood", emoji: "🔢", jouable: true, partageable: true, jour: 4, jourNom: "Jeudi", type: "skill" },
+  { id: "mots", nom: "Mots cachés", emoji: "🔤", jouable: true, partageable: true, jour: 5, jourNom: "Vendredi", type: "skill" },
+  { id: "taquin", nom: "Taquin mood", emoji: "🧩", jouable: true, partageable: true, jour: 6, jourNom: "Samedi", type: "skill" },
   { id: "cadeau", nom: "Cadeau du dimanche", emoji: "🎀", jouable: true, partageable: true, jour: 0, jourNom: "Dimanche", type: "chance" },
 ];
 
@@ -193,6 +193,9 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
   { id: "coco-nombre", q: "Combien d'addons compte la collection Coco ?", choix: ["25", "35", "45"], bonne: 1 },
   { id: "mood-jour", q: "Dans quel mood es-tu aujourd'hui ?", libre: true },
 ];
+
+// Mots à cacher dans le jeu de Mots cachés (jeu de Vendredi). Sans accent (placés tels quels).
+export const MOTS_CACHES: string[] = ["HIBISCUS", "NACRE", "ALBA", "PEARL", "BOX", "SUMMER", "VOYAGE", "VALISE"];
 
 export function gameById(id: string): GameDef | undefined {
   return GAMES.find((g) => g.id === id);
