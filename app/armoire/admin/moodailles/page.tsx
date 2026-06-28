@@ -104,6 +104,26 @@ export default function AdminMoodaillesPage() {
           </div>
         </div>
 
+        {/* LIENS DES JEUX À PARTAGER */}
+        <div style={card()}>
+          <h2 style={h2()}>🔗 Liens des jeux (newsletter / site)</h2>
+          <p style={{ fontSize: 13, opacity: 0.7, marginTop: 0 }}>
+            Copie un lien et mets-le dans la newsletter ou sur le site. La cliente clique → entre email + n° de commande → joue → gagne une carte du moment.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {GAMES.filter((g) => g.partageable).map((g) => {
+              const url = `${typeof window !== "undefined" ? window.location.origin : ""}/jeu/${g.id}`;
+              return (
+                <div key={g.id} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 14, minWidth: 150 }}>{g.emoji} {g.nom}</span>
+                  <input readOnly value={url} style={{ ...inp(), maxWidth: 360, flex: 1 }} onFocus={(e) => e.target.select()} />
+                  <button onClick={() => navigator.clipboard?.writeText(url)} style={miniBtn()}>Copier</button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* FORMULAIRE */}
         <div style={card()}>
           <h2 style={h2()}>{form.id ? "Modifier" : "Nouvelle moodaille"}</h2>

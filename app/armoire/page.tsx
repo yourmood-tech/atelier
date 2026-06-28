@@ -308,7 +308,11 @@ export default function ArmoirePage() {
               <AvatarStudio pick={avatarPick} onPick={onAvatarPick} avatarOn={avatarOn} onToggleRoom={setAvatarVisible} />
             )}
             {tab === "jeux" && (
-              <Jeux moodaillesOwned={moodaillesOwned} moodaillesCat={moodaillesCat} onPlay={(id) => setPlaying(id)} />
+              <Jeux
+                moodaillesOwned={moodaillesOwned}
+                moodaillesCat={moodaillesCat}
+                onPlay={(id) => { if (id === "memoire") setPlaying("memoire"); else gagnerMoodaille(id); }}
+              />
             )}
             {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
             {tab === "guide" && <Guide />}

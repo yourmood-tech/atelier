@@ -10,18 +10,21 @@ export function isStaffEmail(email: string): boolean {
   return STAFF_EMAILS.has((email || "").trim().toLowerCase());
 }
 
-export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean };
+export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean; partageable?: boolean };
 export type DecoType = "mur" | "sol" | "armoire" | "plante" | "cadre" | "objet" | "accessoire";
 // img = image photoréaliste (PNG transparent) servie depuis /public/chambre.
 // pos = emplacement de départ dans la pièce (centre en %, largeur en %, z = profondeur).
 export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string; img?: string; pos?: { left: number; top: number; w: number; z: number } };
 
+// jouable = jeu prêt. partageable = a une page lien (/jeu/<id>) pour la newsletter/site.
 export const GAMES: GameDef[] = [
-  { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true },
-  { id: "differences", nom: "Jeu des différences", emoji: "🔍", jouable: false },
-  { id: "sudoku", nom: "Sudoku mood", emoji: "🔢", jouable: false },
+  { id: "gratter", nom: "Carte à gratter", emoji: "🎟️", jouable: true, partageable: true },
+  { id: "roue", nom: "Roue de la chance", emoji: "🎡", jouable: true, partageable: true },
+  { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true, partageable: true },
   { id: "quizz", nom: "Quizz mood", emoji: "❓", jouable: false },
+  { id: "differences", nom: "Jeu des différences", emoji: "🔍", jouable: false },
   { id: "puzzle", nom: "Puzzle mood", emoji: "🧩", jouable: false },
+  { id: "sudoku", nom: "Sudoku mood", emoji: "🔢", jouable: false },
   { id: "motsmeles", nom: "Mots mêlés mood", emoji: "🔤", jouable: false },
 ];
 
