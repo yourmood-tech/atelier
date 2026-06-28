@@ -5,6 +5,7 @@ import { Room } from "./Room";
 import { AvatarStudio, type AvatarPick } from "./AvatarStudio";
 import { Memoire } from "./games/Memoire";
 import { SeptDifferences } from "./games/SeptDifferences";
+import { Quiz } from "./games/Quiz";
 import { GAMES, DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
@@ -409,6 +410,18 @@ export default function ArmoirePage() {
               <button onClick={() => setPlaying(null)} style={{ border: "none", background: "transparent", fontSize: 18, cursor: "pointer", color: "#6b4f33" }}>✕</button>
             </div>
             <SeptDifferences onWin={() => { gagnerMoodaille("sept"); setTimeout(() => setPlaying(null), 1800); }} />
+          </div>
+        </div>
+      )}
+
+      {/* Jeu Quiz mood */}
+      {playing === "quiz" && data && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(40,30,20,0.45)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 50, padding: 16, overflowY: "auto" }}>
+          <div style={{ background: "#fffdfb", borderRadius: 18, padding: 18, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", margin: "16px 0" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+              <button onClick={() => setPlaying(null)} style={{ border: "none", background: "transparent", fontSize: 18, cursor: "pointer", color: "#6b4f33" }}>✕</button>
+            </div>
+            <Quiz onWin={() => { gagnerMoodaille("quiz"); setTimeout(() => setPlaying(null), 1800); }} />
           </div>
         </div>
       )}

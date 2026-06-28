@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { GAMES } from "@/lib/armoire-catalog";
 import { SeptDifferences } from "@/app/armoire/games/SeptDifferences";
 import { Memoire } from "@/app/armoire/games/Memoire";
+import { Quiz } from "@/app/armoire/games/Quiz";
 
 /* Page de jeu PARTAGEABLE (newsletter / site) : …/jeu/<id>
    La cliente entre email + n° de dernière commande, joue (jeu d'adresse ou tirage),
@@ -131,6 +132,7 @@ export default function JeuPage() {
           <div style={card()}>
             {slug === "sept" && <SeptDifferences onWin={attribuer} />}
             {slug === "memoire" && <Memoire inline onWin={attribuer} />}
+            {slug === "quiz" && <Quiz onWin={attribuer} />}
             {busy && <p style={{ textAlign: "center", opacity: 0.6, fontSize: 13 }}>On prépare ta moodaille… 🤍</p>}
           </div>
         )}

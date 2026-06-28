@@ -23,7 +23,7 @@ export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; 
 export const GAMES: GameDef[] = [
   { id: "sept", nom: "7 différences", emoji: "🔍", jouable: true, partageable: true, jour: 1, jourNom: "Lundi", type: "skill" },
   { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true, partageable: true, jour: 2, jourNom: "Mardi", type: "skill" },
-  { id: "coffre", nom: "Coffre surprise", emoji: "🎁", jouable: true, partageable: true, jour: 3, jourNom: "Mercredi", type: "chance" },
+  { id: "quiz", nom: "Quiz mood", emoji: "❓", jouable: true, partageable: true, jour: 3, jourNom: "Mercredi", type: "skill" },
   { id: "pioche", nom: "Pioche mystère", emoji: "🃏", jouable: true, partageable: true, jour: 4, jourNom: "Jeudi", type: "chance" },
   { id: "slot", nom: "Machine à moods", emoji: "🎰", jouable: true, partageable: true, jour: 5, jourNom: "Vendredi", type: "chance" },
   { id: "etoile", nom: "Étoile chance", emoji: "✨", jouable: true, partageable: true, jour: 6, jourNom: "Samedi", type: "chance" },
@@ -183,6 +183,15 @@ export const DECO: DecoDef[] = [
   { id: "acc-surf-neon-mood", nom: "Néon « mood » (surf)", emoji: "🤍", type: "accessoire", valeur: "neon-surf", img: "/chambre/acc-surf-neon-mood.png", pos: { left: 88, top: 6, w: 16, z: 2 } },
   { id: "acc-surf-affiche-surfer", nom: "Affiche surfeur (surf)", emoji: "🖼️", type: "accessoire", valeur: "affiche-surfer-surf", img: "/chambre/acc-surf-affiche-surfer.png", pos: { left: 52, top: 13, w: 12, z: 2 } },
   { id: "acc-surf-tapis", nom: "Tapis palmiers (surf)", emoji: "🟫", type: "accessoire", valeur: "tapis-surf", img: "/chambre/acc-surf-tapis.png", pos: { left: 50, top: 90, w: 40, z: 0 } },
+];
+
+// Questions du Quiz mood (jeu de Mercredi). libre=true → réponse ouverte, sans bonne réponse (juste pour le fun).
+// bonne = index de la bonne réponse dans choix. Éditable par Stéphanie plus tard (admin).
+export type QuizQuestion = { id: string; q: string; choix?: string[]; bonne?: number; libre?: boolean };
+export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  { id: "nagoya-fleurs", q: "De quelle couleur sont les fleurs de l'addon Nagoya Coco ?", choix: ["Blanches", "Roses", "Dorées"], bonne: 0 },
+  { id: "coco-nombre", q: "Combien d'addons compte la collection Coco ?", choix: ["25", "35", "45"], bonne: 1 },
+  { id: "mood-jour", q: "Dans quel mood es-tu aujourd'hui ?", libre: true },
 ];
 
 export function gameById(id: string): GameDef | undefined {
