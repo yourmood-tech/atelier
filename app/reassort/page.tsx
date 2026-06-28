@@ -72,7 +72,9 @@ interface ResultRow {
   targetStock: number;
   recommendedQty: number;
   riskNote: string;
-  coloralMin?: number; // minimum Coloral appliqué sur ce (type+couleur), si réf Coloral
+  coloralMin?: number;       // minimum Coloral pour ce (type+couleur), si réf Coloral
+  coloralColor?: string;     // libellé du groupe couleur (ex. "MEDALU AUBERGINE")
+  coloralGroupQty?: number;  // total commandé pour cette couleur (toutes tailles)
 }
 
 // ─── Aliases colonnes ─────────────────────────────────────────────────────────
@@ -385,42 +387,59 @@ function parseColoralSku(sku: string, mins: ColoralMins): { type: string; color:
   return { type, color };
 }
 
-// Remonte chaque (type+couleur) Coloral à son minimum, en répartissant la hausse
-// proportionnellement aux tailles qui se vendent (jamais en dessous de l'existant).
-// Marque toutes les lignes Coloral avec leur min pour traçabilité. Renvoie la liste re-triée.
+// Demande utilisée pour répartir le surplus : on privilégie la vélocité de vente.
+function coloralDemandWeight(r: ResultRow): number {
+  if (r.planningDailyDemand > 0) return r.planningDailyDemand;
+  if (r.totalQty30 > 0) return r.totalQty30;
+  if (r.totalQty90 > 0) return r.totalQty90;
+  return 1; // dernier recours : poids égal
+}
+
+// Regroupe les tailles d'une même COULEUR (par type Coloral) et garantit le minimum
+// PAR COULEUR au total, pas par taille. Chaque taille garde d'abord son besoin réel ;
+// le surplus nécessaire pour atteindre le minimum est réparti là où ça se vend le mieux
+// (proportionnel à la demande, méthode du plus fort reste pour tomber juste sur l'entier).
 function applyColoralMoq(rows: ResultRow[], mins: ColoralMins): ResultRow[] {
-  const groups = new Map<string, { min: number; idx: number[] }>();
+  const groups = new Map<string, { min: number; label: string; idx: number[] }>();
   rows.forEach((r, i) => {
     const parsed = parseColoralSku(r.sku, mins);
     if (!parsed) return;
     const key = `${parsed.type}|${parsed.color}`;
-    if (!groups.has(key)) groups.set(key, { min: mins[parsed.type], idx: [] });
+    if (!groups.has(key)) groups.set(key, { min: mins[parsed.type], label: `${parsed.type} ${parsed.color}`, idx: [] });
     groups.get(key)!.idx.push(i);
   });
 
-  for (const { min, idx } of groups.values()) {
-    // Traçabilité : marque toutes les lignes du groupe avec le min applicable
-    idx.forEach((i) => { rows[i] = { ...rows[i], coloralMin: min }; });
-    if (!min || min <= 0) continue;
+  for (const { min, label, idx } of groups.values()) {
+    const need = idx.reduce((s, i) => s + rows[i].recommendedQty, 0); // besoin total de la couleur
+    // 0 = aucune demande sur la couleur → on ne lance pas la teinture
+    const surplus = min && min > 0 && need > 0 && need < min ? min - need : 0;
+    const groupQty = need + surplus; // total commandé pour cette couleur (≥ min si on remonte)
 
-    const sum = idx.reduce((s, i) => s + rows[i].recommendedQty, 0);
-    if (sum <= 0 || sum >= min) continue; // 0 = pas de demande → on ne commande pas
+    // Répartition du SURPLUS au prorata de la demande (besoin de chaque taille déjà couvert)
+    const add = new Array(idx.length).fill(0);
+    if (surplus > 0) {
+      const weights = idx.map((i) => coloralDemandWeight(rows[i]));
+      const wsum = weights.reduce((a, b) => a + b, 0) || 1;
+      const exact = weights.map((w) => (w / wsum) * surplus);
+      let allocated = 0;
+      exact.forEach((e, k) => { add[k] = Math.floor(e); allocated += add[k]; });
+      let rem = surplus - allocated;
+      const fracOrder = exact
+        .map((e, k) => ({ k, frac: e - Math.floor(e) }))
+        .sort((a, b) => b.frac - a.frac);
+      let oi = 0;
+      while (rem > 0) { add[fracOrder[oi % fracOrder.length].k] += 1; rem--; oi++; }
+    }
 
-    // Répartition proportionnelle, arrondie ; le reste va aux plus gros vendeurs
-    let allocated = 0;
-    const scaled = idx.map((i) => {
-      const q = Math.floor((rows[i].recommendedQty / sum) * min);
-      allocated += q;
-      return q;
+    idx.forEach((i, k) => {
+      rows[i] = {
+        ...rows[i],
+        recommendedQty: rows[i].recommendedQty + add[k],
+        coloralMin: min,
+        coloralColor: label,
+        coloralGroupQty: groupQty,
+      };
     });
-    let rem = min - allocated;
-    const order = idx
-      .map((_, k) => k)
-      .sort((a, b) => rows[idx[b]].recommendedQty - rows[idx[a]].recommendedQty);
-    let oi = 0;
-    while (rem > 0) { scaled[order[oi % order.length]] += 1; rem--; oi++; }
-
-    idx.forEach((i, k) => { rows[i] = { ...rows[i], recommendedQty: scaled[k], coloralMin: min }; });
   }
 
   return rows.sort((a, b) => {
@@ -443,7 +462,7 @@ function exportCSV(rows: ResultRow[]): void {
     "continuous_sales_flag", "continuity_note",
     "planning_daily_demand", "demand_volatility",
     "estimated_cover_days", "protection_days", "target_stock",
-    "recommended_qty", "coloral_min", "risk_note",
+    "recommended_qty", "coloral_color", "coloral_group_qty", "coloral_min", "risk_note",
   ];
   const lines = [headers.join(",")];
   for (const r of rows) {
@@ -456,7 +475,7 @@ function exportCSV(rows: ResultRow[]): void {
       `"${r.continuityNote}"`,
       f2(r.planningDailyDemand), f2(r.demandVolatility),
       f2(r.estimatedCoverDays), fi(r.protectionDays), fi(r.targetStock),
-      fi(r.recommendedQty), fi(r.coloralMin ?? 0),
+      fi(r.recommendedQty), `"${r.coloralColor ?? ""}"`, fi(r.coloralGroupQty ?? 0), fi(r.coloralMin ?? 0),
       `"${r.riskNote}"`,
     ].join(","));
   }
@@ -988,15 +1007,16 @@ export default function ReassortPage() {
                         {r.estimatedCoverDays >= 9999 ? "∞" : Math.round(r.estimatedCoverDays) + "j"}
                       </td>
                       <td className="px-3 py-2 text-right text-zinc-500">{Math.round(r.targetStock)}</td>
-                      <td className="px-3 py-2 text-right font-bold text-zinc-100 font-mono text-sm">
-                        {r.recommendedQty}
-                        {r.coloralMin ? (
-                          <span
-                            className="ml-1 align-middle text-[9px] font-normal text-teal-400"
-                            title={`Minimum Coloral ${r.coloralMin} par couleur (toutes tailles)`}
+                      <td className="px-3 py-2 text-right font-mono">
+                        <span className="font-bold text-zinc-100 text-sm">{r.recommendedQty}</span>
+                        {r.coloralColor ? (
+                          <div
+                            className="text-[9px] font-normal text-teal-400 leading-tight whitespace-nowrap"
+                            title={`Couleur ${r.coloralColor} : ${r.coloralGroupQty} au total toutes tailles (minimum ${r.coloralMin}/couleur)`}
                           >
-                            min&nbsp;{r.coloralMin}
-                          </span>
+                            {r.coloralColor}<br />
+                            Σ&nbsp;{r.coloralGroupQty} {r.coloralGroupQty && r.coloralMin && r.coloralGroupQty <= r.coloralMin ? `(min ${r.coloralMin})` : ""}
+                          </div>
                         ) : null}
                       </td>
                       <td className="px-3 py-2"><RiskBadge note={r.riskNote} /></td>
