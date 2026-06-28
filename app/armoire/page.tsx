@@ -9,6 +9,7 @@ import { Quiz } from "./games/Quiz";
 import { Mots } from "./games/Mots";
 import { Sudoku } from "./games/Sudoku";
 import { Taquin } from "./games/Taquin";
+import { Maze } from "./games/Maze";
 import { GAMES, DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
@@ -99,7 +100,7 @@ export default function ArmoirePage() {
       const j = await res.json();
       if (j.already) { setToast("Tu as déjà joué cette saison 🤍 Reviens au prochain drop de cartes !"); return; }
       if (j.won) {
-        setMoodaillesOwned((prev) => (prev.includes(j.won.id) ? prev : [...prev, j.won.id]));
+        setMoodaillesOwned((prev) => [...prev, j.won.id]);
         setToast(`🏅 Nouvelle moodaille : ${j.won.nom} !`);
       } else if (j.played) {
         setToast(j.message || "Bravo ! 🎉");
@@ -145,24 +146,24 @@ export default function ArmoirePage() {
     });
   }
 
-  async function ouvrir(e: React.FormEvent) {
-    e.preventDefault();
-    const staff = isStaffEmail(email);
-    if (!/\S+@\S+\.\S+/.test(email) || (!staff && !commande.replace(/\D/g, ""))) return;
+  async function connecter(em: string, cmd: string) {
+    const staff = isStaffEmail(em);
+    if (!/\S+@\S+\.\S+/.test(em) || (!staff && !cmd.replace(/\D/g, ""))) return;
     setStatus("chargement");
     try {
       const res = await fetch("/api/armoire/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, orderNumber: commande }),
+        body: JSON.stringify({ email: em, orderNumber: cmd }),
       });
       const json = await res.json();
       if (!res.ok) return setStatus("erreur");
       if (!json.found) return setStatus("introuvable");
       if (!json.verified) return setStatus("refus");
+      setPrenom(json.prenom || "");
       setData(json);
       try {
-        const k = email.trim().toLowerCase();
+        const k = em.trim().toLowerCase();
         setActive(JSON.parse(localStorage.getItem(`armoire:deco:${k}`) || "{}"));
         setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${k}`) || "{}"));
         setPlaced(JSON.parse(localStorage.getItem(`armoire:placed:${k}`) || "[]"));
@@ -170,6 +171,8 @@ export default function ArmoirePage() {
         setAvatarImage(localStorage.getItem(`armoire:avatarimg:${k}`) || null);
         setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
         setMoodaillesOwned(json.moodailles ?? []);
+        // mémorise la session pour revenir du jeu sans se reconnecter
+        localStorage.setItem("armoire:session", JSON.stringify({ email: em, commande: cmd }));
       } catch {
         /* ignore */
       }
@@ -179,7 +182,22 @@ export default function ArmoirePage() {
     }
   }
 
+  async function ouvrir(e: React.FormEvent) {
+    e.preventDefault();
+    await connecter(email, commande);
+  }
+
+  // Reconnexion auto : si on arrive depuis un jeu (ou retour), on rouvre l'armoire sans redemander.
+  useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("armoire:session") || "null");
+      if (s?.email) { setEmail(s.email); setCommande(s.commande || ""); connecter(s.email, s.commande || ""); }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function deconnexion() {
+    try { localStorage.removeItem("armoire:session"); } catch { /* ignore */ }
     setData(null);
     setStatus("connexion");
     setPrenom("");
@@ -419,6 +437,7 @@ export default function ArmoirePage() {
               if (playing === "sudoku") return <Sudoku onWin={win} />;
               if (playing === "mots") return <Mots onWin={win} />;
               if (playing === "taquin") return <Taquin onWin={win} />;
+              if (playing === "labyrinthe") return <Maze onWin={win} />;
               return null;
             })()}
           </div>
@@ -450,7 +469,7 @@ function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: str
           <div style={{ background: "#f6f1ea", borderRadius: 14, padding: 16, margin: "10px 0 16px" }}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>🤍 À gagner en ce moment chez Mood</div>
             <div style={{ fontSize: 12, opacity: 0.65, marginBottom: 10 }}>
-              Ma collection : {moodaillesOwned.length}/{actives.length || "…"} cartes du moment
+              Ma collection : {actives.filter((a) => moodaillesOwned.includes(a.id)).length}/{actives.length || "…"} cartes du moment
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(82px, 1fr))", gap: 10 }}>
               {actives.map((m) => {

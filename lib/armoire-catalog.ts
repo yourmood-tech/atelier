@@ -27,7 +27,7 @@ export const GAMES: GameDef[] = [
   { id: "sudoku", nom: "Sudoku mood", emoji: "🔢", jouable: true, partageable: true, jour: 4, jourNom: "Jeudi", type: "skill" },
   { id: "mots", nom: "Mots cachés", emoji: "🔤", jouable: true, partageable: true, jour: 5, jourNom: "Vendredi", type: "skill" },
   { id: "taquin", nom: "Taquin mood", emoji: "🧩", jouable: true, partageable: true, jour: 6, jourNom: "Samedi", type: "skill" },
-  { id: "cadeau", nom: "Cadeau du dimanche", emoji: "🎀", jouable: true, partageable: true, jour: 0, jourNom: "Dimanche", type: "chance" },
+  { id: "labyrinthe", nom: "Labyrinthe", emoji: "🌀", jouable: true, partageable: true, jour: 0, jourNom: "Dimanche", type: "skill" },
 ];
 
 // Les 10 icônes mood servant de faces au jeu de Mémoire (dans /public/jeux/memoire).

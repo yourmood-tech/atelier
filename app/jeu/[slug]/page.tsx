@@ -9,6 +9,7 @@ import { Quiz } from "@/app/armoire/games/Quiz";
 import { Mots } from "@/app/armoire/games/Mots";
 import { Sudoku } from "@/app/armoire/games/Sudoku";
 import { Taquin } from "@/app/armoire/games/Taquin";
+import { Maze } from "@/app/armoire/games/Maze";
 
 /* Page de jeu PARTAGEABLE (newsletter / site) : …/jeu/<id>
    La cliente entre email + n° de dernière commande, joue (jeu d'adresse ou tirage),
@@ -44,6 +45,11 @@ export default function JeuPage() {
 
   const identiteOk = /\S+@\S+\.\S+/.test(email) && Boolean(commande.replace(/\D/g, ""));
 
+  // mémorise la session → retour direct à l'armoire sans se reconnecter
+  function memoriser() {
+    try { localStorage.setItem("armoire:session", JSON.stringify({ email, commande })); } catch { /* ignore */ }
+  }
+
   // Appel serveur : attribue la moodaille (consomme la partie). Utilisé direct (chance) ou à la victoire (skill).
   async function attribuer() {
     setBusy(true);
@@ -54,6 +60,7 @@ export default function JeuPage() {
         body: JSON.stringify({ email, orderNumber: commande, jeu: slug }),
       });
       const j = await res.json();
+      if (!j?.error) memoriser();
       setResultat(j);
       setPhase("resultat");
     } catch {
@@ -77,6 +84,7 @@ export default function JeuPage() {
       const j = await res.json();
       if (j?.error) { setResultat({ error: j.error }); setPhase("resultat"); return; }
       if (j?.already) { setResultat({ already: true }); setPhase("resultat"); return; }
+      memoriser();
       setPhase("jeu");
     } catch {
       setResultat({ error: "Petit souci de connexion, réessaie 🤍" });
@@ -139,6 +147,7 @@ export default function JeuPage() {
             {slug === "sudoku" && <Sudoku onWin={attribuer} />}
             {slug === "mots" && <Mots onWin={attribuer} />}
             {slug === "taquin" && <Taquin onWin={attribuer} />}
+            {slug === "labyrinthe" && <Maze onWin={attribuer} />}
             {busy && <p style={{ textAlign: "center", opacity: 0.6, fontSize: 13 }}>On prépare ta moodaille… 🤍</p>}
           </div>
         )}

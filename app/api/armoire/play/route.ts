@@ -51,7 +51,10 @@ export async function POST(req: NextRequest) {
     const won = ((await kv.get(`moodwon:${email}`)) as { id: string }[] | null) ?? [];
     const ownedIds = new Set(won.map((w) => w.id));
     const dispo = catalog.filter((m) => {
-      if (m.actif === false || ownedIds.has(m.id)) return false;
+      if (m.actif === false) return false;
+      // Doublons autorisés pour commune/rare ; épique & ultra-rare = une seule fois par cliente.
+      const unique = m.rarete === "epique" || m.rarete === "ultrarare";
+      if (unique && ownedIds.has(m.id)) return false;
       const jeux = m.jeux && m.jeux.length ? m.jeux : (m.jeu ? [m.jeu] : []);
       return jeux.length === 0 || jeux.includes(jeu); // aucun jeu coché = valable pour tous
     });
@@ -70,7 +73,8 @@ export async function POST(req: NextRequest) {
     for (const m of dispo) { r -= POIDS[m.rarete || "commune"] ?? 10; if (r <= 0) { pick = m; break; } }
 
     const entry = { id: pick.id, code: pick.code || "", saison, ts: Date.now() };
-    if (!staff) await kv.set(`moodwon:${email}`, [...won, entry]);
+    // On enregistre la carte gagnée pour TOUT LE MONDE (y compris le staff, pour la voir dans la commood).
+    await kv.set(`moodwon:${email}`, [...won, entry]);
 
     return NextResponse.json({ played: true, won: { id: pick.id, nom: pick.nom, img: pick.img, avantage: pick.avantage, code: pick.code, rarete: pick.rarete } });
   } catch (e) {
