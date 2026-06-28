@@ -1,0 +1,57 @@
+import { NextRequest, NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
+import { auth } from "@/auth";
+import type { Moodaille } from "../moodailles-list/route";
+
+// Admin (toi + Stéphanie, @yourmood.net) : gérer les moodailles au jour le jour.
+const KEY = "moodailles:catalog";
+
+async function guard() {
+  const session = await auth();
+  const email = session?.user?.email ?? "";
+  if (!session || !email.endsWith("@yourmood.net")) return null;
+  return email;
+}
+
+export async function POST(req: NextRequest) {
+  const email = await guard();
+  if (!email) return NextResponse.json({ error: "Accès réservé à l'équipe Mood" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const action = String(body?.action ?? "");
+  const all = ((await kv.get(KEY)) as Moodaille[] | null) ?? [];
+
+  if (action === "list") {
+    return NextResponse.json({ moodailles: all });
+  }
+
+  if (action === "save") {
+    const m = body?.moodaille as Moodaille;
+    if (!m?.nom || !m?.img) return NextResponse.json({ error: "Nom et image requis" }, { status: 400 });
+    const id = m.id && String(m.id).trim() ? String(m.id) : `m_${Date.now().toString(36)}`;
+    const entry: Moodaille = {
+      id,
+      nom: String(m.nom).trim(),
+      img: String(m.img),
+      avantage: m.avantage ? String(m.avantage).trim() : "",
+      code: m.code ? String(m.code).trim() : "",
+      rarete: m.rarete ? String(m.rarete) : "commune",
+      jeu: m.jeu ? String(m.jeu) : "",
+      actif: m.actif !== false,
+    };
+    const idx = all.findIndex((x) => x.id === id);
+    if (idx >= 0) all[idx] = entry;
+    else all.push(entry);
+    await kv.set(KEY, all);
+    return NextResponse.json({ ok: true, moodaille: entry, moodailles: all });
+  }
+
+  if (action === "delete") {
+    const id = String(body?.id ?? "");
+    const next = all.filter((x) => x.id !== id);
+    await kv.set(KEY, next);
+    return NextResponse.json({ ok: true, moodailles: next });
+  }
+
+  return NextResponse.json({ error: "Action inconnue" }, { status: 400 });
+}

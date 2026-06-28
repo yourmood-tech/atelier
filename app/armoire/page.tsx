@@ -39,7 +39,7 @@ export default function ArmoirePage() {
   const [tab, setTab] = useState<"armoire" | "moodie" | "jeux" | "regles" | "guide">("armoire");
   const [playing, setPlaying] = useState<string | null>(null);
   // Moodailles = addons virtuels à collectionner, gagnés en jouant.
-  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; rarete?: string }[]>([]);
+  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; avantage?: string; code?: string; rarete?: string; jeu?: string }[]>([]);
   const [moodaillesOwned, setMoodaillesOwned] = useState<string[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
@@ -63,11 +63,15 @@ export default function ArmoirePage() {
     try { localStorage.setItem(`armoire:avataron:${email.trim().toLowerCase()}`, on ? "1" : "0"); } catch { /* ignore */ }
   }
 
-  // Catalogue des moodailles (images fournies par Amila → manifest).
+  // Catalogue des moodailles : géré par l'admin (toi + Stéphanie) → API.
+  // Repli sur le manifest statique si l'admin est encore vide.
   useEffect(() => {
-    fetch("/moodailles/moodailles.json", { cache: "no-store" })
+    fetch("/api/armoire/moodailles-list", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((m) => setMoodaillesCat(m?.moodailles ?? []))
+      .then((m) => {
+        if (m?.moodailles?.length) setMoodaillesCat(m.moodailles);
+        else return fetch("/moodailles/moodailles.json").then((r) => r.json()).then((s) => setMoodaillesCat(s?.moodailles ?? []));
+      })
       .catch(() => setMoodaillesCat([]));
   }, []);
 
@@ -78,11 +82,12 @@ export default function ArmoirePage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Gain : on tire une moodaille pas encore possédée (sinon une au hasard).
-  function gagnerMoodaille() {
-    if (!moodaillesCat.length) { setToast("Tu as gagné ! 🎉 (tes moodailles arrivent très bientôt)"); return; }
-    const manquantes = moodaillesCat.filter((m) => !moodaillesOwned.includes(m.id));
-    const pool = manquantes.length ? manquantes : moodaillesCat;
+  // Gain : on tire une moodaille de CE jeu (jeu=="" = valable pour tous), pas encore possédée.
+  function gagnerMoodaille(jeuId?: string) {
+    const duJeu = moodaillesCat.filter((m) => !m.jeu || m.jeu === jeuId);
+    if (!duJeu.length) { setToast("Tu as gagné ! 🎉 (tes moodailles arrivent très bientôt)"); return; }
+    const manquantes = duJeu.filter((m) => !moodaillesOwned.includes(m.id));
+    const pool = manquantes.length ? manquantes : duJeu;
     const win = pool[Math.floor((Date.now() / 1000) % pool.length)];
     setMoodaillesOwned((prev) => {
       const next = prev.includes(win.id) ? prev : [...prev, win.id];
@@ -330,10 +335,10 @@ export default function ArmoirePage() {
                             key: "moodailles",
                             label: "Mes moodailles",
                             emoji: "🏅",
-                            pieces: moodaillesOwned
-                              .map((id) => moodaillesCat.find((m) => m.id === id))
-                              .filter((m): m is { id: string; nom: string; img: string; rarete?: string } => !!m)
-                              .map((m) => ({ pid: 0, title: m.nom, image: m.img, date: "", quantity: 1 })),
+                            pieces: moodaillesOwned.flatMap((id) => {
+                              const m = moodaillesCat.find((x) => x.id === id);
+                              return m ? [{ pid: 0, title: m.nom, image: m.img, date: "", quantity: 1 }] : [];
+                            }),
                           },
                         ]}
                         open={open}
@@ -379,7 +384,7 @@ export default function ArmoirePage() {
         <Memoire
           images={data.tiroirs.flatMap((t) => t.pieces).map((p) => p.image).filter((x): x is string => !!x)}
           onClose={() => setPlaying(null)}
-          onWin={gagnerMoodaille}
+          onWin={() => gagnerMoodaille("memoire")}
         />
       )}
 
