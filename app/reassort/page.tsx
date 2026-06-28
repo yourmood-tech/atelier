@@ -387,62 +387,122 @@ function parseColoralSku(sku: string, mins: ColoralMins): { type: string; color:
   return { type, color };
 }
 
-// Demande utilisée pour répartir le surplus : on privilégie la vélocité de vente.
-function coloralDemandWeight(r: ResultRow): number {
-  if (r.planningDailyDemand > 0) return r.planningDailyDemand;
-  if (r.totalQty30 > 0) return r.totalQty30;
-  if (r.totalQty90 > 0) return r.totalQty90;
-  return 1; // dernier recours : poids égal
+// Vélocité de vente d'une taille (selon le mode), pour répartir la gamme.
+function coloralVelocity(m: MergedRow, mode: Mode): number {
+  const v = mode === "volatile" ? m.planningDailyDemandVolatile : m.planningDailyDemandContinuous;
+  if (v > 0) return v;
+  if (m.totalQty90 > 0) return m.totalQty90 / 90;
+  if (m.totalQty30 > 0) return m.totalQty30 / 30;
+  if (m.totalQty7 > 0) return m.totalQty7 / 7;
+  return 0;
 }
 
-// Regroupe les tailles d'une même COULEUR (par type Coloral) et garantit le minimum
-// PAR COULEUR au total, pas par taille. Chaque taille garde d'abord son besoin réel ;
-// le surplus nécessaire pour atteindre le minimum est réparti là où ça se vend le mieux
-// (proportionnel à la demande, méthode du plus fort reste pour tomber juste sur l'entier).
-function applyColoralMoq(rows: ResultRow[], mins: ColoralMins): ResultRow[] {
-  const groups = new Map<string, { min: number; label: string; idx: number[] }>();
-  rows.forEach((r, i) => {
-    const parsed = parseColoralSku(r.sku, mins);
-    if (!parsed) return;
+// Crée une ligne de réassort pour une taille pas encore dans la liste (ajoutée pour la gamme couleur).
+function coloralRowFromMerged(
+  m: MergedRow,
+  qty: number,
+  velocity: number,
+  fields: { coloralMin: number; coloralColor: string; coloralGroupQty: number }
+): ResultRow {
+  const estimatedCoverDays = velocity > 0 ? m.stockPosition / velocity : m.stockPosition > 0 ? 9999 : 0;
+  return {
+    sku: m.sku, name: m.name, supplier: m.supplier,
+    currentStock: m.currentStock, incomingStock: m.incomingStock, stockPosition: m.stockPosition,
+    totalQty7: m.totalQty7, totalQty30: m.totalQty30, totalQty90: m.totalQty90,
+    dailyDemand7: m.dailyDemand7, dailyDemand30: m.dailyDemand30, dailyDemand90: m.dailyDemand90,
+    continuousSalesFlag: m.continuousSalesFlag, continuityNote: m.continuityNote,
+    planningDailyDemand: velocity, demandVolatility: m.demandVolatility,
+    estimatedCoverDays, protectionDays: 0, targetStock: 0,
+    recommendedQty: qty, riskNote: "Ajout gamme (min couleur Coloral)",
+    ...fields,
+  };
+}
+
+// Garantit le minimum PAR COULEUR (toutes tailles d'un type) en reconstituant une gamme :
+//   1. chaque taille couvre d'abord son besoin réel, avec un plancher de minSku par SKU commandé ;
+//   2. le complément pour atteindre le minimum couleur est réparti vers les tailles qui se vendent
+//      (vélocité), en pouvant FAIRE ENTRER d'autres tailles 50-72 (chacune ≥ minSku) — jamais en
+//      gonflant une seule taille. Les tailles ajoutées deviennent de nouvelles lignes de réassort.
+function applyColoralMoq(
+  results: ResultRow[],
+  merged: MergedRow[],
+  mins: ColoralMins,
+  minSku: number,
+  mode: Mode
+): ResultRow[] {
+  const resBySku = new Map(results.map((r) => [r.sku, r]));
+
+  // Univers complet des tailles Coloral connues (issues des fichiers), groupé par type|couleur
+  const groups = new Map<string, { type: string; color: string; min: number; skus: MergedRow[] }>();
+  for (const m of merged) {
+    const parsed = parseColoralSku(m.sku, mins);
+    if (!parsed) continue;
     const key = `${parsed.type}|${parsed.color}`;
-    if (!groups.has(key)) groups.set(key, { min: mins[parsed.type], label: `${parsed.type} ${parsed.color}`, idx: [] });
-    groups.get(key)!.idx.push(i);
-  });
+    if (!groups.has(key)) groups.set(key, { type: parsed.type, color: parsed.color, min: mins[parsed.type], skus: [] });
+    groups.get(key)!.skus.push(m);
+  }
 
-  for (const { min, label, idx } of groups.values()) {
-    const need = idx.reduce((s, i) => s + rows[i].recommendedQty, 0); // besoin total de la couleur
-    // 0 = aucune demande sur la couleur → on ne lance pas la teinture
-    const surplus = min && min > 0 && need > 0 && need < min ? min - need : 0;
-    const groupQty = need + surplus; // total commandé pour cette couleur (≥ min si on remonte)
+  // On garde tel quel tout ce qui n'est pas Coloral ; on reconstruit les lignes Coloral.
+  const out: ResultRow[] = results.filter((r) => !parseColoralSku(r.sku, mins));
 
-    // Répartition du SURPLUS au prorata de la demande (besoin de chaque taille déjà couvert)
-    const add = new Array(idx.length).fill(0);
-    if (surplus > 0) {
-      const weights = idx.map((i) => coloralDemandWeight(rows[i]));
-      const wsum = weights.reduce((a, b) => a + b, 0) || 1;
-      const exact = weights.map((w) => (w / wsum) * surplus);
-      let allocated = 0;
-      exact.forEach((e, k) => { add[k] = Math.floor(e); allocated += add[k]; });
-      let rem = surplus - allocated;
-      const fracOrder = exact
-        .map((e, k) => ({ k, frac: e - Math.floor(e) }))
-        .sort((a, b) => b.frac - a.frac);
-      let oi = 0;
-      while (rem > 0) { add[fracOrder[oi % fracOrder.length].k] += 1; rem--; oi++; }
+  for (const { type, color, min, skus } of groups.values()) {
+    const label = `${type} ${color}`;
+    const need = skus.map((m) => resBySku.get(m.sku)?.recommendedQty ?? 0);
+    const totalNeed = need.reduce((a, b) => a + b, 0);
+    if (totalNeed <= 0) continue; // aucune taille à réassortir → on ne lance pas la couleur
+
+    // 1. Base : couvrir le besoin, plancher minSku sur toute taille commandée
+    const alloc = need.map((n) => (n > 0 ? Math.max(n, minSku) : 0));
+    const base = alloc.reduce((a, b) => a + b, 0);
+    const target = Math.max(min ?? 0, base);
+
+    // 2. Vélocité + part idéale dans la gamme
+    const vel = skus.map((m) => coloralVelocity(m, mode));
+    const velSum = vel.reduce((a, b) => a + b, 0);
+    const ideal = vel.map((v) => (velSum > 0 ? (v / velSum) * target : 0));
+
+    // 3. Répartir le complément : la taille la plus sous sa part idéale d'abord ;
+    //    une taille fermée ne s'ouvre qu'avec minSku d'un coup, et seulement si elle vend.
+    let surplus = target - base;
+    let guard = 0;
+    while (surplus > 0 && guard++ < 100000) {
+      let bestK = -1;
+      let bestDeficit = 0;
+      for (let k = 0; k < skus.length; k++) {
+        const deficit = ideal[k] - alloc[k];
+        if (deficit <= bestDeficit) continue;
+        const eligible = alloc[k] >= minSku ? true : surplus >= minSku && vel[k] > 0;
+        if (!eligible) continue;
+        bestK = k; bestDeficit = deficit;
+      }
+      if (bestK === -1) {
+        // reste à poser : sur la taille déjà ouverte qui a la plus grosse quantité
+        let fk = -1, mx = -1;
+        for (let k = 0; k < skus.length; k++) {
+          if (alloc[k] >= minSku && alloc[k] > mx) { mx = alloc[k]; fk = k; }
+        }
+        if (fk === -1) break;
+        alloc[fk] += 1; surplus -= 1; continue;
+      }
+      const step = alloc[bestK] >= minSku ? 1 : minSku;
+      alloc[bestK] += step; surplus -= step;
     }
 
-    idx.forEach((i, k) => {
-      rows[i] = {
-        ...rows[i],
-        recommendedQty: rows[i].recommendedQty + add[k],
-        coloralMin: min,
-        coloralColor: label,
-        coloralGroupQty: groupQty,
-      };
+    const groupQty = alloc.reduce((a, b) => a + b, 0);
+
+    skus.forEach((m, k) => {
+      if (alloc[k] <= 0) return;
+      const existing = resBySku.get(m.sku);
+      const fields = { coloralMin: min, coloralColor: label, coloralGroupQty: groupQty };
+      if (existing) {
+        out.push({ ...existing, recommendedQty: alloc[k], ...fields });
+      } else {
+        out.push(coloralRowFromMerged(m, alloc[k], vel[k], fields));
+      }
     });
   }
 
-  return rows.sort((a, b) => {
+  return out.sort((a, b) => {
     if (b.recommendedQty !== a.recommendedQty) return b.recommendedQty - a.recommendedQty;
     if (b.planningDailyDemand !== a.planningDailyDemand) return b.planningDailyDemand - a.planningDailyDemand;
     return a.estimatedCoverDays - b.estimatedCoverDays;
@@ -615,6 +675,7 @@ export default function ReassortPage() {
   // Minimums Coloral (par couleur, selon le type de produit), éditables
   const [coloralEnabled, setColoralEnabled] = useState(true);
   const [coloralMins, setColoralMins] = useState<ColoralMins>(DEFAULT_COLORAL_MINS);
+  const [coloralMinSku, setColoralMinSku] = useState(5); // plancher par taille (SKU), spécifique Coloral
 
   function set<K extends keyof Params>(key: K, value: Params[K]) {
     setParams((p) => ({ ...p, [key]: value }));
@@ -682,9 +743,9 @@ export default function ReassortPage() {
       let recs = computeRecommendations(params, merged);
 
       if (coloralEnabled) {
-        recs = applyColoralMoq(recs, coloralMins);
+        recs = applyColoralMoq(recs, merged, coloralMins, coloralMinSku, params.mode);
         addLog(
-          `Minimums Coloral appliqués par couleur — ALU ${coloralMins.ALU} · 23ALU ${coloralMins["23ALU"]} · MEDALU ${coloralMins.MEDALU} · MINIALU ${coloralMins.MINIALU}`
+          `Gamme Coloral reconstituée — min/couleur ALU ${coloralMins.ALU} · 23ALU ${coloralMins["23ALU"]} · MEDALU ${coloralMins.MEDALU} · MINIALU ${coloralMins.MINIALU} | plancher ${coloralMinSku}/taille`
         );
       }
 
@@ -833,13 +894,16 @@ export default function ReassortPage() {
             </label>
           </div>
           <p className="text-[11px] text-zinc-500 leading-relaxed">
-            Pour chaque couleur Coloral (toutes tailles confondues), si le réassort calculé est sous le minimum, il est remonté au minimum et réparti sur les tailles qui se vendent. Détecté sur le SKU <span className="font-mono text-zinc-400">MTRL-TYPE-TAILLE-COULEUR</span>.
+            Pour chaque couleur Coloral (toutes tailles 50-72), si le réassort calculé est sous le minimum, on reconstitue une gamme jusqu'au minimum : chaque taille couvre son besoin, plancher par SKU, puis le complément va sur les tailles qui se vendent (au besoin en faisant entrer d'autres tailles). Détecté sur le SKU <span className="font-mono text-zinc-400">MTRL-TYPE-TAILLE-COULEUR</span>.
           </p>
           <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${coloralEnabled ? "" : "opacity-40 pointer-events-none"}`}>
             <SpinInput label="ALU" value={coloralMins.ALU} min={0} max={10000} onChange={(v) => setColoralMin("ALU", v)} />
             <SpinInput label="23ALU" value={coloralMins["23ALU"]} min={0} max={10000} onChange={(v) => setColoralMin("23ALU", v)} />
             <SpinInput label="MEDALU" value={coloralMins.MEDALU} min={0} max={10000} onChange={(v) => setColoralMin("MEDALU", v)} />
             <SpinInput label="MINIALU" value={coloralMins.MINIALU} min={0} max={10000} onChange={(v) => setColoralMin("MINIALU", v)} />
+          </div>
+          <div className={`pt-1 ${coloralEnabled ? "" : "opacity-40 pointer-events-none"}`}>
+            <SpinInput label="Plancher par taille (SKU)" value={coloralMinSku} min={1} max={1000} onChange={setColoralMinSku} />
           </div>
         </div>
 
