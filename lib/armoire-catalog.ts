@@ -46,14 +46,15 @@ export const MEMOIRE_FACES: string[] = [
 
 // Les 7 différences du jeu (fractions 0..1 de l'image) — calées sur /public/jeux/7diff/b.png.
 export type Diff = { id: string; x: number; y: number; r: number; indice: string };
+// Centres calculés sur la vraie carte des différences (centre de masse de chaque tache).
 export const SEPT_DIFFS: Diff[] = [
-  { id: "mouette", x: 0.32, y: 0.11, r: 0.08, indice: "Une mouette s'est envolée" },
-  { id: "noeud", x: 0.43, y: 0.25, r: 0.075, indice: "Un nœud a changé de couleur" },
-  { id: "casquette", x: 0.54, y: 0.39, r: 0.08, indice: "Une casquette a changé de couleur" },
-  { id: "etoile", x: 0.63, y: 0.875, r: 0.075, indice: "Quelque chose a disparu du sable" },
-  { id: "voilier", x: 0.06, y: 0.53, r: 0.075, indice: "Un bateau a quitté la mer" },
-  { id: "lunettes", x: 0.13, y: 0.89, r: 0.085, indice: "Des lunettes ont disparu de la serviette" },
-  { id: "chapeau", x: 0.08, y: 0.75, r: 0.08, indice: "Le ruban du chapeau a changé" },
+  { id: "mouette", x: 0.28, y: 0.12, r: 0.09, indice: "Une mouette s'est envolée" },
+  { id: "noeud", x: 0.444, y: 0.325, r: 0.08, indice: "Un nœud a changé de couleur" },
+  { id: "casquette", x: 0.587, y: 0.433, r: 0.08, indice: "Une casquette a changé de couleur" },
+  { id: "etoile", x: 0.715, y: 0.89, r: 0.09, indice: "Quelque chose a changé sur le sable" },
+  { id: "voilier", x: 0.053, y: 0.511, r: 0.075, indice: "Un bateau a quitté la mer" },
+  { id: "lunettes", x: 0.146, y: 0.888, r: 0.095, indice: "Des lunettes ont disparu de la serviette" },
+  { id: "chapeau", x: 0.05, y: 0.775, r: 0.085, indice: "Le ruban du chapeau a changé" },
 ];
 
 // Le jeu du jour (selon le jour de la semaine).
