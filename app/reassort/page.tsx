@@ -676,6 +676,10 @@ export default function ReassortPage() {
   const [coloralEnabled, setColoralEnabled] = useState(true);
   const [coloralMins, setColoralMins] = useState<ColoralMins>(DEFAULT_COLORAL_MINS);
   const [coloralMinSku, setColoralMinSku] = useState(5); // plancher par taille (SKU), spécifique Coloral
+  // Export commande Coloral (.xlsx au format fournisseur)
+  const [coloralExportLoading, setColoralExportLoading] = useState(false);
+  const [coloralExportError, setColoralExportError] = useState<string | null>(null);
+  const [coloralUnmatched, setColoralUnmatched] = useState<{ sku: string; qty: number; reason: string }[] | null>(null);
 
   function set<K extends keyof Params>(key: K, value: Params[K]) {
     setParams((p) => ({ ...p, [key]: value }));
@@ -797,6 +801,47 @@ export default function ReassortPage() {
       setPoError(e instanceof Error ? e.message : String(e));
     } finally {
       setPoLoading(false);
+    }
+  }
+
+  // Lignes Coloral présentes dans les recommandations (marquées par applyColoralMoq)
+  const coloralRows = results?.filter((r) => r.coloralColor) ?? [];
+
+  async function exportColoralOrder() {
+    if (coloralRows.length === 0) {
+      setColoralExportError("Aucune ligne Coloral dans les recommandations.");
+      return;
+    }
+    setColoralExportLoading(true);
+    setColoralExportError(null);
+    setColoralUnmatched(null);
+    try {
+      const items = coloralRows.map((r) => ({ sku: r.sku, qty: r.recommendedQty }));
+      const res = await fetch("/api/coloral-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Erreur lors de l'export Coloral");
+      }
+      const rawUnmatched = res.headers.get("X-Coloral-Unmatched");
+      const unmatched = rawUnmatched ? JSON.parse(decodeURIComponent(rawUnmatched)) : [];
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const now = new Date();
+      const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      a.href = url;
+      a.download = `Coloral commande ${stamp}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setColoralUnmatched(unmatched);
+    } catch (e) {
+      setColoralExportError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setColoralExportLoading(false);
     }
   }
 
@@ -924,6 +969,16 @@ export default function ReassortPage() {
               ↓ Télécharger CSV
             </button>
           )}
+          {coloralRows.length > 0 && (
+            <button
+              onClick={exportColoralOrder}
+              disabled={coloralExportLoading}
+              className="px-5 py-2.5 rounded-xl border border-teal-700 bg-teal-900/40 hover:bg-teal-900/70 disabled:opacity-40 disabled:cursor-not-allowed text-teal-200 font-semibold text-sm transition-colors"
+              title="Génère le fichier de commande au format exigé par Coloral"
+            >
+              {coloralExportLoading ? "Génération..." : `↓ Commande Coloral (.xlsx) · ${coloralRows.length} l.`}
+            </button>
+          )}
           {results && results.length > 0 && (
             <div className="flex items-center gap-2">
               <label className="text-xs text-zinc-400 whitespace-nowrap">
@@ -956,6 +1011,32 @@ export default function ReassortPage() {
         {poError && (
           <div className="rounded-xl border border-red-800 bg-red-900/30 p-4 text-sm text-red-300 whitespace-pre-wrap">
             {poError}
+          </div>
+        )}
+
+        {/* Erreur export Coloral */}
+        {coloralExportError && (
+          <div className="rounded-xl border border-red-800 bg-red-900/30 p-4 text-sm text-red-300 whitespace-pre-wrap">
+            {coloralExportError}
+          </div>
+        )}
+
+        {/* Couleurs non placées dans le fichier Coloral */}
+        {coloralUnmatched && coloralUnmatched.length > 0 && (
+          <div className="rounded-xl border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-200 space-y-2">
+            <p className="font-semibold">
+              ⚠ {coloralUnmatched.length} ligne(s) Coloral non placée(s) dans le fichier — à vérifier (rien n'a été perdu, mais ces quantités ne sont pas dans le .xlsx) :
+            </p>
+            <ul className="text-xs space-y-0.5 font-mono">
+              {coloralUnmatched.map((u) => (
+                <li key={u.sku}>{u.sku} ({u.qty}) — {u.reason}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {coloralUnmatched && coloralUnmatched.length === 0 && (
+          <div className="rounded-xl border border-teal-800 bg-teal-900/20 p-3 text-sm text-teal-200">
+            ✓ Fichier Coloral généré — toutes les lignes ont été placées.
           </div>
         )}
 
