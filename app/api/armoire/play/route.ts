@@ -34,6 +34,13 @@ export async function POST(req: NextRequest) {
     const saison = ((await kv.get("moodailles:saison")) as string | null) ?? "drop-1";
     const playKey = `moodplay:${email}:${jeu}:${saison}`;
 
+    // Mode "check" (jeux d'adresse) : on valide juste l'identité + déjà-joué, SANS consommer la partie.
+    // La partie ne sera consommée qu'à la victoire (appel normal).
+    if (body?.check) {
+      const already = !staff && Boolean(await kv.get(playKey));
+      return NextResponse.json({ ok: true, already, verified: true });
+    }
+
     // Une seule partie par jeu et par saison (le staff peut rejouer pour tester).
     if (!staff && (await kv.get(playKey))) {
       return NextResponse.json({ already: true });

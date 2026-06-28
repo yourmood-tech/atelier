@@ -1,19 +1,19 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { MEMOIRE_FACES } from "@/lib/armoire-catalog";
 
-/* Jeu de mémoire (paires) avec les vraies photos de bijoux mood de la cliente.
-   On peut jouer à 2 (même écran, chacun son tour) — score par joueur. */
+/* Jeu de mémoire (paires) avec les icônes mood. Solo (gain) ou à deux (sans gain).
+   inline=true → rendu plein (page partageable) ; sinon pop-up dans l'armoire. */
 
 type Card = { id: number; face: string; pairId: number; flipped: boolean; done: boolean };
 
 const EMOJI_POOL = ["🌸", "💍", "🤍", "💎", "✨", "🌺", "🩷", "🫧"];
-const isUrl = (s: string) => /^https?:|^data:/.test(s);
+const isUrl = (s: string) => /^https?:|^data:|^\//.test(s);
 
 function shuffle<T>(arr: T[], seed: number): T[] {
-  // mélange déterministe simple (pas de Math.random pour rester stable au rendu)
   const a = [...arr];
-  let s = seed;
+  let s = seed || 1;
   for (let i = a.length - 1; i > 0; i--) {
     s = (s * 9301 + 49297) % 233280;
     const j = Math.floor((s / 233280) * (i + 1));
@@ -22,12 +22,24 @@ function shuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-export function Memoire({ images, onClose, onWin, seed = 7 }: { images: string[]; onClose: () => void; onWin?: () => void; seed?: number }) {
-  const [deux, setDeux] = useState(false); // mode 2 joueurs
-  const pairs = 6;
+export function Memoire({
+  images = MEMOIRE_FACES,
+  onClose,
+  onWin,
+  pairs = 8,
+  inline = false,
+  seed = 7,
+}: {
+  images?: string[];
+  onClose?: () => void;
+  onWin?: () => void;
+  pairs?: number;
+  inline?: boolean;
+  seed?: number;
+}) {
+  const [deux, setDeux] = useState(false);
 
   const initial = useMemo<Card[]>(() => {
-    // On prend les vraies bagues ; s'il en manque, on complète avec des emojis mood.
     const faces = [...images.slice(0, pairs)];
     for (let i = 0; faces.length < pairs; i++) faces.push(EMOJI_POOL[i % EMOJI_POOL.length]);
     const doubled = faces.flatMap((face, i) => [
@@ -42,12 +54,17 @@ export function Memoire({ images, onClose, onWin, seed = 7 }: { images: string[]
   const [open, setOpen] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
   const [coups, setCoups] = useState(0);
-  const [joueur, setJoueur] = useState(0); // 0 ou 1
+  const [joueur, setJoueur] = useState(0);
   const [scores, setScores] = useState([0, 0]);
+
+  // mélange différent à chaque ouverture (après hydratation, pas de mismatch SSR)
+  useEffect(() => {
+    setCards(shuffle(initial, Math.floor(Math.random() * 1e6) + 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const gagne = cards.length > 0 && cards.every((c) => c.done);
 
-  // Gain : on récompense UNE fois par partie gagnée (pas en mode 2 joueurs).
   const wonRef = useRef(false);
   useEffect(() => {
     if (gagne && !wonRef.current && !deux) {
@@ -57,7 +74,7 @@ export function Memoire({ images, onClose, onWin, seed = 7 }: { images: string[]
   }, [gagne, deux, onWin]);
 
   function reset() {
-    setCards(shuffle(initial, seed + coups + 1));
+    setCards(shuffle(initial, Math.floor(Math.random() * 1e6) + 1));
     setOpen([]);
     setBusy(false);
     setCoups(0);
@@ -97,56 +114,65 @@ export function Memoire({ images, onClose, onWin, seed = 7 }: { images: string[]
     }
   }
 
+  const cols = pairs <= 6 ? 4 : 4;
+
+  const body = (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <strong style={{ fontSize: 16 }}>🧠 Mémoire mood</strong>
+        {onClose && <button onClick={onClose} style={closeBtn()}>✕</button>}
+      </div>
+
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12, fontSize: 13 }}>
+        <button onClick={() => { setDeux((d) => !d); reset(); }} style={pill(deux)}>
+          {deux ? "👯 À deux" : "🙂 Solo"}
+        </button>
+        {deux ? (
+          <>
+            <span style={{ fontWeight: joueur === 0 ? 700 : 400 }}>J1 : {scores[0]}</span>
+            <span style={{ fontWeight: joueur === 1 ? 700 : 400 }}>J2 : {scores[1]}</span>
+            <span style={{ opacity: 0.6 }}>· au tour de J{joueur + 1}</span>
+          </>
+        ) : (
+          <span style={{ opacity: 0.7 }}>Coups : {coups}</span>
+        )}
+        <button onClick={reset} style={pill(false)}>↺ Rejouer</button>
+      </div>
+
+      {gagne && (
+        <div style={{ background: "#fff4f6", borderRadius: 10, padding: 10, marginBottom: 10, fontSize: 14 }}>
+          🎉 Bravo ! {deux ? (scores[0] === scores[1] ? "Égalité !" : `Joueur ${scores[0] > scores[1] ? 1 : 2} gagne !`) : `Terminé en ${coups} coups.`}
+          {!deux && " Ta moodaille arrive 🤍"}
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 8 }}>
+        {cards.map((c, idx) => {
+          const show = c.flipped || c.done;
+          return (
+            <button key={c.id} onClick={() => clic(idx)} style={cardBtn(show, c.done)}>
+              {show ? (
+                isUrl(c.face) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.face} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+                ) : (
+                  <span style={{ fontSize: 30 }}>{c.face}</span>
+                )
+              ) : (
+                <span style={{ fontSize: 22 }}>🤍</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  if (inline) return <div>{body}</div>;
+
   return (
     <div style={overlay()}>
-      <div style={modal()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <strong style={{ fontSize: 18 }}>🧠 Mémoire mood</strong>
-          <button onClick={onClose} style={closeBtn()}>✕</button>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12, fontSize: 13 }}>
-          <button onClick={() => { setDeux((d) => !d); reset(); }} style={pill(deux)}>
-            {deux ? "👯 À deux" : "🙂 Solo"}
-          </button>
-          {deux ? (
-            <>
-              <span style={{ fontWeight: joueur === 0 ? 700 : 400 }}>Joueur 1 : {scores[0]}</span>
-              <span style={{ fontWeight: joueur === 1 ? 700 : 400 }}>Joueur 2 : {scores[1]}</span>
-              <span style={{ opacity: 0.6 }}>· au tour de J{joueur + 1}</span>
-            </>
-          ) : (
-            <span style={{ opacity: 0.7 }}>Coups : {coups}</span>
-          )}
-          <button onClick={reset} style={pill(false)}>↺ Rejouer</button>
-        </div>
-
-        {gagne && (
-          <div style={{ background: "#fff4f6", borderRadius: 10, padding: 10, marginBottom: 10, fontSize: 14 }}>
-            🎉 Bravo ! {deux ? (scores[0] === scores[1] ? "Égalité !" : `Joueur ${scores[0] > scores[1] ? 1 : 2} gagne !`) : `Terminé en ${coups} coups.`}
-          </div>
-        )}
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-          {cards.map((c, idx) => {
-            const show = c.flipped || c.done;
-            return (
-              <button key={c.id} onClick={() => clic(idx)} style={cardBtn(show, c.done)}>
-                {show ? (
-                  isUrl(c.face) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.face} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
-                  ) : (
-                    <span style={{ fontSize: 30 }}>{c.face}</span>
-                  )
-                ) : (
-                  <span style={{ fontSize: 22 }}>🤍</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <div style={modal()}>{body}</div>
     </div>
   );
 }
@@ -155,7 +181,7 @@ function overlay(): React.CSSProperties {
   return { position: "fixed", inset: 0, background: "rgba(40,30,20,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50, padding: 16 };
 }
 function modal(): React.CSSProperties {
-  return { background: "#fffdfb", borderRadius: 18, padding: 18, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" };
+  return { background: "#fffdfb", borderRadius: 18, padding: 18, maxWidth: 440, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", maxHeight: "92vh", overflowY: "auto" };
 }
 function cardBtn(show: boolean, done: boolean): React.CSSProperties {
   return { aspectRatio: "1/1", borderRadius: 10, border: "1px solid #e6dccd", cursor: "pointer", background: show ? "#fff" : "linear-gradient(135deg, #d8b083, #c2945f)", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: done ? 0.55 : 1, overflow: "hidden" };

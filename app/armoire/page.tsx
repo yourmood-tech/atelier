@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Room } from "./Room";
 import { AvatarStudio, type AvatarPick } from "./AvatarStudio";
 import { Memoire } from "./games/Memoire";
+import { SeptDifferences } from "./games/SeptDifferences";
 import { GAMES, DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
@@ -311,7 +312,7 @@ export default function ArmoirePage() {
               <Jeux
                 moodaillesOwned={moodaillesOwned}
                 moodaillesCat={moodaillesCat}
-                onPlay={(id) => { if (id === "memoire") setPlaying("memoire"); else gagnerMoodaille(id); }}
+                onPlay={(id) => { const g = GAMES.find((x) => x.id === id); if (g?.type === "skill") setPlaying(id); else gagnerMoodaille(id); }}
               />
             )}
             {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
@@ -392,13 +393,24 @@ export default function ArmoirePage() {
         </footer>
       </div>
 
-      {/* Jeu Mémoire — gagner une moodaille en gagnant la partie */}
+      {/* Jeu Mémoire — paires avec les icônes mood ; gagne une moodaille en gagnant la partie */}
       {playing === "memoire" && data && (
         <Memoire
-          images={data.tiroirs.flatMap((t) => t.pieces).map((p) => p.image).filter((x): x is string => !!x)}
           onClose={() => setPlaying(null)}
           onWin={() => gagnerMoodaille("memoire")}
         />
+      )}
+
+      {/* Jeu des 7 différences */}
+      {playing === "sept" && data && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(40,30,20,0.45)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 50, padding: 16, overflowY: "auto" }}>
+          <div style={{ background: "#fffdfb", borderRadius: 18, padding: 18, maxWidth: 460, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", margin: "16px 0" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+              <button onClick={() => setPlaying(null)} style={{ border: "none", background: "transparent", fontSize: 18, cursor: "pointer", color: "#6b4f33" }}>✕</button>
+            </div>
+            <SeptDifferences onWin={() => { gagnerMoodaille("sept"); setTimeout(() => setPlaying(null), 1800); }} />
+          </div>
+        </div>
       )}
 
       {/* Toast de gain */}
@@ -480,9 +492,6 @@ function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: str
                   </div>
                 );
               })}
-            </div>
-            <div style={{ marginTop: 14, fontSize: 12, opacity: 0.6, textAlign: "center" }}>
-              🧠 Bonus : <button onClick={() => onPlay("memoire")} style={{ border: "none", background: "none", color: ENCRE, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}>Mémoire mood</button>
             </div>
           </>
         );

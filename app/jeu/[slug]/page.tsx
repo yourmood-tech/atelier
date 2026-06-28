@@ -3,25 +3,29 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { GAMES } from "@/lib/armoire-catalog";
+import { SeptDifferences } from "@/app/armoire/games/SeptDifferences";
+import { Memoire } from "@/app/armoire/games/Memoire";
 
 /* Page de jeu PARTAGEABLE (newsletter / site) : …/jeu/<id>
-   La cliente entre email + n° de dernière commande pour jouer → 1 partie par drop,
-   gain décidé par le serveur (tirage pondéré). Montre les cartes à gagner de la semaine. */
+   La cliente entre email + n° de dernière commande, joue (jeu d'adresse ou tirage),
+   et gagne une carte du moment — décidée par le serveur (tirage pondéré). */
 
 const ENCRE = "#3a3330";
 type Carte = { id: string; nom: string; img: string; avantage?: string; rarete?: string; actif?: boolean };
+type Resultat = { won?: Carte | null; already?: boolean; message?: string; error?: string };
 
 export default function JeuPage() {
   const params = useParams();
   const slug = String(params?.slug ?? "");
   const game = GAMES.find((g) => g.id === slug);
+  const isSkill = game?.type === "skill";
 
   const [cartes, setCartes] = useState<Carte[]>([]);
   const [email, setEmail] = useState("");
   const [commande, setCommande] = useState("");
   const [phase, setPhase] = useState<"intro" | "jeu" | "resultat">("intro");
   const [busy, setBusy] = useState(false);
-  const [resultat, setResultat] = useState<{ won?: Carte | null; already?: boolean; message?: string; error?: string } | null>(null);
+  const [resultat, setResultat] = useState<Resultat | null>(null);
 
   useEffect(() => {
     fetch("/api/armoire/moodailles-list", { cache: "no-store" })
@@ -34,8 +38,10 @@ export default function JeuPage() {
     return <Center><p>Ce jeu n&apos;existe pas (ou plus) 🤍</p></Center>;
   }
 
-  async function jouer() {
-    if (!/\S+@\S+\.\S+/.test(email) || !commande.replace(/\D/g, "")) return;
+  const identiteOk = /\S+@\S+\.\S+/.test(email) && Boolean(commande.replace(/\D/g, ""));
+
+  // Appel serveur : attribue la moodaille (consomme la partie). Utilisé direct (chance) ou à la victoire (skill).
+  async function attribuer() {
     setBusy(true);
     try {
       const res = await fetch("/api/armoire/play", {
@@ -54,12 +60,35 @@ export default function JeuPage() {
     }
   }
 
+  // Jeu d'adresse : on vérifie l'identité (sans consommer) puis on lance le jeu.
+  async function commencer() {
+    if (!identiteOk) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/armoire/play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, orderNumber: commande, jeu: slug, check: true }),
+      });
+      const j = await res.json();
+      if (j?.error) { setResultat({ error: j.error }); setPhase("resultat"); return; }
+      if (j?.already) { setResultat({ already: true }); setPhase("resultat"); return; }
+      setPhase("jeu");
+    } catch {
+      setResultat({ error: "Petit souci de connexion, réessaie 🤍" });
+      setPhase("resultat");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main style={{ minHeight: "100vh", background: `radial-gradient(circle at 50% 0%, #fff, #fbf7f2)`, color: ENCRE, fontFamily: "'Helvetica Neue', Arial, sans-serif", padding: "0 18px 64px" }}>
       <div style={{ maxWidth: 560, margin: "0 auto" }}>
         <header style={{ textAlign: "center", padding: "36px 0 6px" }}>
           <div style={{ fontSize: 12, letterSpacing: 4, textTransform: "uppercase", opacity: 0.55 }}>mood</div>
           <h1 style={{ fontSize: 28, fontWeight: 300, margin: "6px 0 0" }}>{game.emoji} {game.nom}</h1>
+          {game.jourNom && <div style={{ fontSize: 12, opacity: 0.5, marginTop: 4 }}>Le jeu du {game.jourNom}</div>}
         </header>
 
         {/* Cartes à gagner cette semaine */}
@@ -82,16 +111,27 @@ export default function JeuPage() {
           )}
         </div>
 
-        {/* GATE + JEU */}
-        {phase !== "resultat" && (
+        {/* GATE */}
+        {phase === "intro" && (
           <div style={card()}>
             <p style={{ opacity: 0.75, lineHeight: 1.6, marginTop: 0, fontSize: 14, textAlign: "center" }}>
-              Tente ta chance ! Entre ton email et ton <b>numéro de dernière commande</b> pour jouer.
+              {isSkill ? "Relève le défi !" : "Tente ta chance !"} Entre ton email et ton <b>numéro de dernière commande</b> pour jouer.
               <br /><span style={{ fontSize: 12, opacity: 0.8 }}>1 seule partie par drop · tes cartes sont personnelles (partage interdit → code annulé).</span>
             </p>
             <input style={inp()} placeholder="Ton email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <input style={inp()} placeholder="N° de ta dernière commande (ex. 392523)" value={commande} onChange={(e) => setCommande(e.target.value)} />
-            <button onClick={jouer} disabled={busy} style={btn()}>{busy ? "…" : `${game.emoji} Jouer`}</button>
+            <button onClick={isSkill ? commencer : attribuer} disabled={busy || !identiteOk} style={{ ...btn(), opacity: busy || !identiteOk ? 0.5 : 1 }}>
+              {busy ? "…" : isSkill ? `${game.emoji} Commencer` : `${game.emoji} Jouer`}
+            </button>
+          </div>
+        )}
+
+        {/* JEU D'ADRESSE */}
+        {phase === "jeu" && isSkill && (
+          <div style={card()}>
+            {slug === "sept" && <SeptDifferences onWin={attribuer} />}
+            {slug === "memoire" && <Memoire inline onWin={attribuer} />}
+            {busy && <p style={{ textAlign: "center", opacity: 0.6, fontSize: 13 }}>On prépare ta moodaille… 🤍</p>}
           </div>
         )}
 
