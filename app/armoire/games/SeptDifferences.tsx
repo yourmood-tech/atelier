@@ -14,7 +14,6 @@ const ENCRE = "#3a3330";
 export function SeptDifferences({ onWin, onReset }: { onWin?: () => void; onReset?: () => void }) {
   const [found, setFound] = useState<string[]>([]);
   const [miss, setMiss] = useState<{ x: number; y: number; k: number } | null>(null);
-  const [showHint, setShowHint] = useState(false);
   const wonRef = useRef(false);
   const missK = useRef(0);
 
@@ -76,7 +75,6 @@ export function SeptDifferences({ onWin, onReset }: { onWin?: () => void; onRese
         <strong style={{ fontSize: 15 }}>🔍 Trouve les 7 différences</strong>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ fontSize: 14, fontWeight: 700, color: win ? "#3c8c5a" : ENCRE }}>{found.length} / {total}</span>
-          <button onClick={() => setShowHint((s) => !s)} style={pill(showHint)}>💡 Indice</button>
           <button onClick={reset} style={pill(false)}>↺</button>
         </div>
       </div>
@@ -87,14 +85,6 @@ export function SeptDifferences({ onWin, onReset }: { onWin?: () => void; onRese
           <span key={d.id} style={{ flex: 1, height: 6, borderRadius: 3, background: found.includes(d.id) ? "#9ccfb0" : "#ece3d6" }} />
         ))}
       </div>
-
-      {showHint && (
-        <ul style={{ margin: "0 0 12px", padding: "10px 12px 10px 26px", background: "#fff8f0", borderRadius: 10, fontSize: 12.5, lineHeight: 1.7, color: ENCRE }}>
-          {SEPT_DIFFS.map((d) => (
-            <li key={d.id} style={{ textDecoration: found.includes(d.id) ? "line-through" : "none", opacity: found.includes(d.id) ? 0.45 : 1 }}>{d.indice}</li>
-          ))}
-        </ul>
-      )}
 
       <div style={{ display: "grid", gap: 12 }}>
         <div>
