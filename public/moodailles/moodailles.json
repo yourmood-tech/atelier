@@ -1,0 +1,40 @@
+{
+  "moodailles": [
+    {
+      "id": "rose",
+      "nom": "Cœur rose",
+      "img": "/moodailles/rose.svg",
+      "rarete": "commune"
+    },
+    {
+      "id": "or",
+      "nom": "Soleil d'or",
+      "img": "/moodailles/or.svg",
+      "rarete": "commune"
+    },
+    {
+      "id": "saphir",
+      "nom": "Saphir",
+      "img": "/moodailles/saphir.svg",
+      "rarete": "rare"
+    },
+    {
+      "id": "emeraude",
+      "nom": "Émeraude",
+      "img": "/moodailles/emeraude.svg",
+      "rarete": "rare"
+    },
+    {
+      "id": "amethyste",
+      "nom": "Améthyste",
+      "img": "/moodailles/amethyste.svg",
+      "rarete": "epique"
+    },
+    {
+      "id": "perle",
+      "nom": "Perle nacrée",
+      "img": "/moodailles/perle.svg",
+      "rarete": "epique"
+    }
+  ]
+}

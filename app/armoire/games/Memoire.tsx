@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 /* Jeu de mémoire (paires) avec les vraies photos de bijoux mood de la cliente.
    On peut jouer à 2 (même écran, chacun son tour) — score par joueur. */
@@ -22,7 +22,7 @@ function shuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-export function Memoire({ images, onClose, seed = 7 }: { images: string[]; onClose: () => void; seed?: number }) {
+export function Memoire({ images, onClose, onWin, seed = 7 }: { images: string[]; onClose: () => void; onWin?: () => void; seed?: number }) {
   const [deux, setDeux] = useState(false); // mode 2 joueurs
   const pairs = 6;
 
@@ -47,6 +47,15 @@ export function Memoire({ images, onClose, seed = 7 }: { images: string[]; onClo
 
   const gagne = cards.length > 0 && cards.every((c) => c.done);
 
+  // Gain : on récompense UNE fois par partie gagnée (pas en mode 2 joueurs).
+  const wonRef = useRef(false);
+  useEffect(() => {
+    if (gagne && !wonRef.current && !deux) {
+      wonRef.current = true;
+      onWin?.();
+    }
+  }, [gagne, deux, onWin]);
+
   function reset() {
     setCards(shuffle(initial, seed + coups + 1));
     setOpen([]);
@@ -54,6 +63,7 @@ export function Memoire({ images, onClose, seed = 7 }: { images: string[]; onClo
     setCoups(0);
     setJoueur(0);
     setScores([0, 0]);
+    wonRef.current = false;
   }
 
   function clic(idx: number) {

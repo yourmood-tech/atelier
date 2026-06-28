@@ -89,7 +89,7 @@ export function Cabinet({
             tiroir={t}
             isOpen={!!open[t.key]}
             onToggle={() => setOpen((o) => ({ ...o, [t.key]: !o[t.key] }))}
-            editable={editable}
+            editable={editable && t.key !== "moodailles"}
             onMove={onMove}
             onPhoto={onPhoto}
             palette={p}

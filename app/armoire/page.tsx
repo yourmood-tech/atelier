@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Room } from "./Room";
 import { AvatarStudio, type AvatarPick } from "./AvatarStudio";
-import { DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
+import { Memoire } from "./games/Memoire";
+import { GAMES, DECO, ARMOIRE_PALETTES, isStaffEmail } from "@/lib/armoire-catalog";
 
 /* Mon Armoire Mood — espace client (V1)
    Connexion : email + numéro de commande (preuve de propriété → on ne peut pas
@@ -35,7 +36,12 @@ export default function ArmoirePage() {
   const [commande, setCommande] = useState("");
   const [data, setData] = useState<Data | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [tab, setTab] = useState<"armoire" | "avatar" | "regles" | "guide">("armoire");
+  const [tab, setTab] = useState<"armoire" | "moodie" | "jeux" | "regles" | "guide">("armoire");
+  const [playing, setPlaying] = useState<string | null>(null);
+  // Moodailles = addons virtuels à collectionner, gagnés en jouant.
+  const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; rarete?: string }[]>([]);
+  const [moodaillesOwned, setMoodaillesOwned] = useState<string[]>([]);
+  const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
   const [placed, setPlaced] = useState<string[]>([]);
@@ -55,6 +61,35 @@ export default function ArmoirePage() {
   function setAvatarVisible(on: boolean) {
     setAvatarOn(on);
     try { localStorage.setItem(`armoire:avataron:${email.trim().toLowerCase()}`, on ? "1" : "0"); } catch { /* ignore */ }
+  }
+
+  // Catalogue des moodailles (images fournies par Amila → manifest).
+  useEffect(() => {
+    fetch("/moodailles/moodailles.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m) => setMoodaillesCat(m?.moodailles ?? []))
+      .catch(() => setMoodaillesCat([]));
+  }, []);
+
+  // Toast auto-dismiss.
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Gain : on tire une moodaille pas encore possédée (sinon une au hasard).
+  function gagnerMoodaille() {
+    if (!moodaillesCat.length) { setToast("Tu as gagné ! 🎉 (tes moodailles arrivent très bientôt)"); return; }
+    const manquantes = moodaillesCat.filter((m) => !moodaillesOwned.includes(m.id));
+    const pool = manquantes.length ? manquantes : moodaillesCat;
+    const win = pool[Math.floor((Date.now() / 1000) % pool.length)];
+    setMoodaillesOwned((prev) => {
+      const next = prev.includes(win.id) ? prev : [...prev, win.id];
+      try { localStorage.setItem(`armoire:moodailles:${email.trim().toLowerCase()}`, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+    setToast(manquantes.length ? `🏅 Nouvelle moodaille : ${win.nom} !` : `🎉 Bravo ! (tu as déjà toutes les moodailles)`);
   }
 
   function togglePlaced(id: string) {
@@ -115,6 +150,7 @@ export default function ArmoirePage() {
         try { setAvatarPick(JSON.parse(localStorage.getItem(`armoire:avatarpick:${k}`) || "null")); } catch { setAvatarPick(null); }
         setAvatarImage(localStorage.getItem(`armoire:avatarimg:${k}`) || null);
         setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
+        try { setMoodaillesOwned(JSON.parse(localStorage.getItem(`armoire:moodailles:${k}`) || "[]")); } catch { setMoodaillesOwned([]); }
       } catch {
         /* ignore */
       }
@@ -247,14 +283,18 @@ export default function ArmoirePage() {
 
             {/* ONGLETS */}
             <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "18px 0 4px", flexWrap: "wrap" }}>
-              <button style={tabBtn(tab === "armoire")} onClick={() => setTab("armoire")}>🪟 Mon armoire</button>
-              <button style={tabBtn(tab === "avatar")} onClick={() => setTab("avatar")}>🧍 Mon avatar</button>
+              <button style={tabBtn(tab === "armoire")} onClick={() => setTab("armoire")}>🪟 Ma commood</button>
+              <button style={tabBtn(tab === "moodie")} onClick={() => setTab("moodie")}>🧍 Mon moodie</button>
+              <button style={tabBtn(tab === "jeux")} onClick={() => setTab("jeux")}>🎮 Jeux</button>
               <button style={tabBtn(tab === "regles")} onClick={() => setTab("regles")}>🎁 Gagner des objets</button>
               <button style={tabBtn(tab === "guide")} onClick={() => setTab("guide")}>✨ Mode d&apos;emploi</button>
             </div>
 
-            {tab === "avatar" && (
+            {tab === "moodie" && (
               <AvatarStudio pick={avatarPick} onPick={onAvatarPick} avatarOn={avatarOn} onToggleRoom={setAvatarVisible} />
+            )}
+            {tab === "jeux" && (
+              <Jeux moodaillesOwned={moodaillesOwned} moodaillesCat={moodaillesCat} onPlay={(id) => setPlaying(id)} />
             )}
             {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
             {tab === "guide" && <Guide />}
@@ -284,7 +324,18 @@ export default function ArmoirePage() {
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <Room
-                        tiroirs={data.tiroirs}
+                        tiroirs={[
+                          ...data.tiroirs,
+                          {
+                            key: "moodailles",
+                            label: "Mes moodailles",
+                            emoji: "🏅",
+                            pieces: moodaillesOwned
+                              .map((id) => moodaillesCat.find((m) => m.id === id))
+                              .filter((m): m is { id: string; nom: string; img: string; rarete?: string } => !!m)
+                              .map((m) => ({ pid: 0, title: m.nom, image: m.img, date: "", quantity: 1 })),
+                          },
+                        ]}
                         open={open}
                         setOpen={setOpen}
                         unlocked={data.unlocks.deco}
@@ -322,7 +373,67 @@ export default function ArmoirePage() {
           Mon Armoire Mood · prototype V1
         </footer>
       </div>
+
+      {/* Jeu Mémoire — gagner une moodaille en gagnant la partie */}
+      {playing === "memoire" && data && (
+        <Memoire
+          images={data.tiroirs.flatMap((t) => t.pieces).map((p) => p.image).filter((x): x is string => !!x)}
+          onClose={() => setPlaying(null)}
+          onWin={gagnerMoodaille}
+        />
+      )}
+
+      {/* Toast de gain */}
+      {toast && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: ENCRE, color: "#fff", padding: "12px 20px", borderRadius: 999, fontSize: 14, boxShadow: "0 6px 24px rgba(0,0,0,0.25)", zIndex: 200 }}>
+          {toast}
+        </div>
+      )}
     </main>
+  );
+}
+
+function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: string[]; moodaillesCat: { id: string; nom: string; img: string; rarete?: string }[]; onPlay: (id: string) => void }) {
+  return (
+    <div style={card()}>
+      <h2 style={{ fontSize: 18, fontWeight: 500, margin: "0 0 4px" }}>🎮 Jeux mood</h2>
+      <p style={{ opacity: 0.75, marginTop: 0, fontSize: 14, lineHeight: 1.6 }}>
+        Joue et gagne des <b>moodailles</b> 🏅 — des bijoux virtuels à collectionner, rangés dans ta commood.
+      </p>
+
+      {/* Compteur de collection */}
+      <div style={{ background: "#f6f1ea", borderRadius: 14, padding: 14, margin: "10px 0 16px" }}>
+        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+          Ma collection : {moodaillesOwned.length}/{moodaillesCat.length || "…"} moodailles
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {moodaillesCat.map((m) => {
+            const owned = moodaillesOwned.includes(m.id);
+            return (
+              <div key={m.id} title={owned ? m.nom : "à gagner"} style={{ width: 44, height: 44, borderRadius: "50%", overflow: "hidden", border: "1px solid #e3d9cd", background: "#fff", filter: owned ? "none" : "grayscale(1)", opacity: owned ? 1 : 0.35 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={m.img} alt={m.nom} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              </div>
+            );
+          })}
+          {!moodaillesCat.length && <span style={{ fontSize: 12, opacity: 0.6 }}>Les moodailles arrivent très bientôt 🤍</span>}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
+        {GAMES.map((g) => (
+          <div key={g.id} style={{ borderRadius: 14, border: "1px solid #efe7dd", background: "#fff", padding: 14, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div style={{ fontSize: 32 }}>{g.emoji}</div>
+            <div style={{ fontSize: 14, fontWeight: 500 }}>{g.nom}</div>
+            {g.jouable ? (
+              <button onClick={() => onPlay(g.id)} style={{ border: "none", borderRadius: 999, padding: "8px 18px", fontSize: 13, cursor: "pointer", background: ENCRE, color: "#fff" }}>Jouer</button>
+            ) : (
+              <span style={{ fontSize: 11, opacity: 0.55 }}>bientôt</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
