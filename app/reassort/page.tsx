@@ -72,6 +72,7 @@ interface ResultRow {
   targetStock: number;
   recommendedQty: number;
   riskNote: string;
+  coloralMin?: number; // minimum Coloral appliqué sur ce (type+couleur), si réf Coloral
 }
 
 // ─── Aliases colonnes ─────────────────────────────────────────────────────────
@@ -359,6 +360,76 @@ function computeRecommendations(params: Params, merged: MergedRow[]): ResultRow[
   });
 }
 
+// ─── Minimums Coloral (par couleur, selon le type) ──────────────────────────────
+// SKU Coloral : MTRL-{TYPE}-{TAILLE}-{COULEUR}  (ex. MTRL-MEDALU-50-AUBERGINE).
+// Le minimum s'applique au TOTAL d'un (type + couleur), toutes tailles confondues
+// (logique bain de teinture : on ne lance pas une couleur en dessous d'un volume).
+
+type ColoralMins = Record<string, number>;
+
+const DEFAULT_COLORAL_MINS: ColoralMins = {
+  ALU: 35,
+  "23ALU": 40,
+  MEDALU: 45,
+  MINIALU: 45,
+};
+
+// Lit le type et la couleur d'une référence Coloral. null si ce n'est pas une réf
+// Coloral connue. Découpage sur les tirets (pas de "contains" — ALU ⊂ MEDALU/MINIALU/23ALU).
+function parseColoralSku(sku: string, mins: ColoralMins): { type: string; color: string } | null {
+  const parts = (sku ?? "").trim().toUpperCase().split("-");
+  if (parts[0] !== "MTRL" || parts.length < 4) return null;
+  const type = parts[1];
+  if (!(type in mins)) return null;
+  const color = parts.slice(3).join("-"); // tout ce qui suit la taille (gère BLEU-MARINE)
+  return { type, color };
+}
+
+// Remonte chaque (type+couleur) Coloral à son minimum, en répartissant la hausse
+// proportionnellement aux tailles qui se vendent (jamais en dessous de l'existant).
+// Marque toutes les lignes Coloral avec leur min pour traçabilité. Renvoie la liste re-triée.
+function applyColoralMoq(rows: ResultRow[], mins: ColoralMins): ResultRow[] {
+  const groups = new Map<string, { min: number; idx: number[] }>();
+  rows.forEach((r, i) => {
+    const parsed = parseColoralSku(r.sku, mins);
+    if (!parsed) return;
+    const key = `${parsed.type}|${parsed.color}`;
+    if (!groups.has(key)) groups.set(key, { min: mins[parsed.type], idx: [] });
+    groups.get(key)!.idx.push(i);
+  });
+
+  for (const { min, idx } of groups.values()) {
+    // Traçabilité : marque toutes les lignes du groupe avec le min applicable
+    idx.forEach((i) => { rows[i] = { ...rows[i], coloralMin: min }; });
+    if (!min || min <= 0) continue;
+
+    const sum = idx.reduce((s, i) => s + rows[i].recommendedQty, 0);
+    if (sum <= 0 || sum >= min) continue; // 0 = pas de demande → on ne commande pas
+
+    // Répartition proportionnelle, arrondie ; le reste va aux plus gros vendeurs
+    let allocated = 0;
+    const scaled = idx.map((i) => {
+      const q = Math.floor((rows[i].recommendedQty / sum) * min);
+      allocated += q;
+      return q;
+    });
+    let rem = min - allocated;
+    const order = idx
+      .map((_, k) => k)
+      .sort((a, b) => rows[idx[b]].recommendedQty - rows[idx[a]].recommendedQty);
+    let oi = 0;
+    while (rem > 0) { scaled[order[oi % order.length]] += 1; rem--; oi++; }
+
+    idx.forEach((i, k) => { rows[i] = { ...rows[i], recommendedQty: scaled[k], coloralMin: min }; });
+  }
+
+  return rows.sort((a, b) => {
+    if (b.recommendedQty !== a.recommendedQty) return b.recommendedQty - a.recommendedQty;
+    if (b.planningDailyDemand !== a.planningDailyDemand) return b.planningDailyDemand - a.planningDailyDemand;
+    return a.estimatedCoverDays - b.estimatedCoverDays;
+  });
+}
+
 // ─── Export CSV ───────────────────────────────────────────────────────────────
 
 function f2(n: number): string { return n.toFixed(2); }
@@ -372,7 +443,7 @@ function exportCSV(rows: ResultRow[]): void {
     "continuous_sales_flag", "continuity_note",
     "planning_daily_demand", "demand_volatility",
     "estimated_cover_days", "protection_days", "target_stock",
-    "recommended_qty", "risk_note",
+    "recommended_qty", "coloral_min", "risk_note",
   ];
   const lines = [headers.join(",")];
   for (const r of rows) {
@@ -385,7 +456,7 @@ function exportCSV(rows: ResultRow[]): void {
       `"${r.continuityNote}"`,
       f2(r.planningDailyDemand), f2(r.demandVolatility),
       f2(r.estimatedCoverDays), fi(r.protectionDays), fi(r.targetStock),
-      fi(r.recommendedQty),
+      fi(r.recommendedQty), fi(r.coloralMin ?? 0),
       `"${r.riskNote}"`,
     ].join(","));
   }
@@ -522,9 +593,16 @@ export default function ReassortPage() {
   const [poLoading, setPoLoading] = useState(false);
   // Seuil : ne mettre dans le bon de commande que les articles avec PLUS de N pièces recommandées
   const [poMinQty, setPoMinQty] = useState(2);
+  // Minimums Coloral (par couleur, selon le type de produit), éditables
+  const [coloralEnabled, setColoralEnabled] = useState(true);
+  const [coloralMins, setColoralMins] = useState<ColoralMins>(DEFAULT_COLORAL_MINS);
 
   function set<K extends keyof Params>(key: K, value: Params[K]) {
     setParams((p) => ({ ...p, [key]: value }));
+  }
+
+  function setColoralMin(type: string, value: number) {
+    setColoralMins((m) => ({ ...m, [type]: value }));
   }
 
   async function readFile(file: File): Promise<string> {
@@ -582,7 +660,14 @@ export default function ReassortPage() {
         addLog("Stock cible = demande journalière × (délai + sécurité)");
       }
 
-      const recs = computeRecommendations(params, merged);
+      let recs = computeRecommendations(params, merged);
+
+      if (coloralEnabled) {
+        recs = applyColoralMoq(recs, coloralMins);
+        addLog(
+          `Minimums Coloral appliqués par couleur — ALU ${coloralMins.ALU} · 23ALU ${coloralMins["23ALU"]} · MEDALU ${coloralMins.MEDALU} · MINIALU ${coloralMins.MINIALU}`
+        );
+      }
 
       const totalUnits = recs.reduce((s, r) => s + r.recommendedQty, 0);
       addLog(`SKU recommandés : ${recs.length} | Unités totales : ${totalUnits}`);
@@ -711,6 +796,31 @@ export default function ReassortPage() {
               />
               <span className="text-xs text-zinc-300">Ne garder que les SKU avec ventes continues</span>
             </label>
+          </div>
+        </div>
+
+        {/* Minimums Coloral */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-bold tracking-widest uppercase text-zinc-500">Minimums Coloral (par couleur)</h2>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={coloralEnabled}
+                onChange={(e) => setColoralEnabled(e.target.checked)}
+                className="accent-teal-500"
+              />
+              <span className="text-xs text-zinc-300">Activer</span>
+            </label>
+          </div>
+          <p className="text-[11px] text-zinc-500 leading-relaxed">
+            Pour chaque couleur Coloral (toutes tailles confondues), si le réassort calculé est sous le minimum, il est remonté au minimum et réparti sur les tailles qui se vendent. Détecté sur le SKU <span className="font-mono text-zinc-400">MTRL-TYPE-TAILLE-COULEUR</span>.
+          </p>
+          <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${coloralEnabled ? "" : "opacity-40 pointer-events-none"}`}>
+            <SpinInput label="ALU" value={coloralMins.ALU} min={0} max={10000} onChange={(v) => setColoralMin("ALU", v)} />
+            <SpinInput label="23ALU" value={coloralMins["23ALU"]} min={0} max={10000} onChange={(v) => setColoralMin("23ALU", v)} />
+            <SpinInput label="MEDALU" value={coloralMins.MEDALU} min={0} max={10000} onChange={(v) => setColoralMin("MEDALU", v)} />
+            <SpinInput label="MINIALU" value={coloralMins.MINIALU} min={0} max={10000} onChange={(v) => setColoralMin("MINIALU", v)} />
           </div>
         </div>
 
@@ -878,7 +988,17 @@ export default function ReassortPage() {
                         {r.estimatedCoverDays >= 9999 ? "∞" : Math.round(r.estimatedCoverDays) + "j"}
                       </td>
                       <td className="px-3 py-2 text-right text-zinc-500">{Math.round(r.targetStock)}</td>
-                      <td className="px-3 py-2 text-right font-bold text-zinc-100 font-mono text-sm">{r.recommendedQty}</td>
+                      <td className="px-3 py-2 text-right font-bold text-zinc-100 font-mono text-sm">
+                        {r.recommendedQty}
+                        {r.coloralMin ? (
+                          <span
+                            className="ml-1 align-middle text-[9px] font-normal text-teal-400"
+                            title={`Minimum Coloral ${r.coloralMin} par couleur (toutes tailles)`}
+                          >
+                            min&nbsp;{r.coloralMin}
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="px-3 py-2"><RiskBadge note={r.riskNote} /></td>
                     </tr>
                   ))}
