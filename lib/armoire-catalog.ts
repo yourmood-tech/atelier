@@ -10,23 +10,30 @@ export function isStaffEmail(email: string): boolean {
   return STAFF_EMAILS.has((email || "").trim().toLowerCase());
 }
 
-export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean; partageable?: boolean };
+// jour = jour de la semaine où le jeu est "le jeu du jour" (0=dimanche … 6=samedi, comme Date.getDay()).
+export type GameDef = { id: string; nom: string; emoji: string; jouable: boolean; partageable?: boolean; jour?: number; jourNom?: string };
 export type DecoType = "mur" | "sol" | "armoire" | "plante" | "cadre" | "objet" | "accessoire";
 // img = image photoréaliste (PNG transparent) servie depuis /public/chambre.
 // pos = emplacement de départ dans la pièce (centre en %, largeur en %, z = profondeur).
 export type DecoDef = { id: string; nom: string; emoji: string; type: DecoType; valeur: string; img?: string; pos?: { left: number; top: number; w: number; z: number } };
 
-// jouable = jeu prêt. partageable = a une page lien (/jeu/<id>) pour la newsletter/site.
+// 7 jeux, un par jour de la semaine. Chacun a sa page partageable /jeu/<id>
+// (newsletter / site) et fait gagner une carte du moment. + Mémoire en bonus dans l'appli.
 export const GAMES: GameDef[] = [
-  { id: "gratter", nom: "Carte à gratter", emoji: "🎟️", jouable: true, partageable: true },
-  { id: "roue", nom: "Roue de la chance", emoji: "🎡", jouable: true, partageable: true },
-  { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true, partageable: true },
-  { id: "quizz", nom: "Quizz mood", emoji: "❓", jouable: false },
-  { id: "differences", nom: "Jeu des différences", emoji: "🔍", jouable: false },
-  { id: "puzzle", nom: "Puzzle mood", emoji: "🧩", jouable: false },
-  { id: "sudoku", nom: "Sudoku mood", emoji: "🔢", jouable: false },
-  { id: "motsmeles", nom: "Mots mêlés mood", emoji: "🔤", jouable: false },
+  { id: "gratter", nom: "Carte à gratter", emoji: "🎟️", jouable: true, partageable: true, jour: 1, jourNom: "Lundi" },
+  { id: "roue", nom: "Roue de la chance", emoji: "🎡", jouable: true, partageable: true, jour: 2, jourNom: "Mardi" },
+  { id: "coffre", nom: "Coffre surprise", emoji: "🎁", jouable: true, partageable: true, jour: 3, jourNom: "Mercredi" },
+  { id: "pioche", nom: "Pioche mystère", emoji: "🃏", jouable: true, partageable: true, jour: 4, jourNom: "Jeudi" },
+  { id: "slot", nom: "Machine à moods", emoji: "🎰", jouable: true, partageable: true, jour: 5, jourNom: "Vendredi" },
+  { id: "etoile", nom: "Étoile chance", emoji: "✨", jouable: true, partageable: true, jour: 6, jourNom: "Samedi" },
+  { id: "cadeau", nom: "Cadeau du dimanche", emoji: "🎀", jouable: true, partageable: true, jour: 0, jourNom: "Dimanche" },
+  { id: "memoire", nom: "Mémoire mood", emoji: "🧠", jouable: true, partageable: false },
 ];
+
+// Le jeu du jour (selon le jour de la semaine).
+export function gameOfToday(day: number): GameDef | undefined {
+  return GAMES.find((g) => g.jour === day);
+}
 
 // Palettes de couleur pour l'ARMOIRE CENTRALE (on recolore la vraie armoire à tiroirs).
 export type ArmoirePalette = {

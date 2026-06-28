@@ -451,19 +451,42 @@ function Jeux({ moodaillesOwned, moodaillesCat, onPlay }: { moodaillesOwned: str
         );
       })()}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12 }}>
-        {GAMES.map((g) => (
-          <div key={g.id} style={{ borderRadius: 14, border: "1px solid #efe7dd", background: "#fff", padding: 14, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div style={{ fontSize: 32 }}>{g.emoji}</div>
-            <div style={{ fontSize: 14, fontWeight: 500 }}>{g.nom}</div>
-            {g.jouable ? (
-              <button onClick={() => onPlay(g.id)} style={{ border: "none", borderRadius: 999, padding: "8px 18px", fontSize: 13, cursor: "pointer", background: ENCRE, color: "#fff" }}>Jouer</button>
-            ) : (
-              <span style={{ fontSize: 11, opacity: 0.55 }}>bientôt</span>
+      {(() => {
+        const today = new Date().getDay();
+        const jourGame = GAMES.find((g) => g.jour === today);
+        const semaine = GAMES.filter((g) => typeof g.jour === "number").sort((a, b) => ((a.jour! + 6) % 7) - ((b.jour! + 6) % 7));
+        return (
+          <>
+            {jourGame && (
+              <div style={{ borderRadius: 16, border: "2px solid #3a3330", background: "#fff", padding: 16, textAlign: "center", margin: "0 0 16px" }}>
+                <div style={{ fontSize: 12, letterSpacing: 1, textTransform: "uppercase", opacity: 0.55 }}>Le jeu du jour</div>
+                <div style={{ fontSize: 40, margin: "6px 0" }}>{jourGame.emoji}</div>
+                <div style={{ fontSize: 17, fontWeight: 600 }}>{jourGame.nom}</div>
+                <button onClick={() => onPlay(jourGame.id)} style={{ border: "none", borderRadius: 999, padding: "11px 26px", fontSize: 15, cursor: "pointer", background: ENCRE, color: "#fff", marginTop: 10 }}>
+                  Jouer maintenant
+                </button>
+              </div>
             )}
-          </div>
-        ))}
-      </div>
+            <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.6, margin: "0 0 8px" }}>Les 7 jeux de la semaine</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+              {semaine.map((g) => {
+                const cestAujourdhui = g.jour === today;
+                return (
+                  <div key={g.id} style={{ borderRadius: 14, border: cestAujourdhui ? "2px solid #3a3330" : "1px solid #efe7dd", background: "#fff", padding: 12, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, opacity: 0.5, textTransform: "uppercase" }}>{g.jourNom}</div>
+                    <div style={{ fontSize: 28 }}>{g.emoji}</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{g.nom}</div>
+                    <button onClick={() => onPlay(g.id)} style={{ border: "none", borderRadius: 999, padding: "7px 16px", fontSize: 12, cursor: "pointer", background: cestAujourdhui ? ENCRE : "#d8cdbf", color: "#fff" }}>Jouer</button>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ marginTop: 14, fontSize: 12, opacity: 0.6, textAlign: "center" }}>
+              🧠 Bonus : <button onClick={() => onPlay("memoire")} style={{ border: "none", background: "none", color: ENCRE, textDecoration: "underline", cursor: "pointer", fontSize: 12 }}>Mémoire mood</button>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }
