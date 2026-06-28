@@ -164,7 +164,7 @@ export default function JeuPage() {
               <>
                 <div style={{ fontSize: 40 }}>⏳</div>
                 <p style={{ lineHeight: 1.6 }}>Tu as déjà joué cette saison 🤍 Reviens au prochain drop de cartes !</p>
-                <a href="/armoire" style={lien()}>Voir ma commood →</a>
+                <a href="/armoire" style={btnLink()}>🤍 Ouvrir ma commood</a>
               </>
             ) : resultat.won ? (
               <>
@@ -175,13 +175,13 @@ export default function JeuPage() {
                 </div>
                 <div style={{ fontSize: 18, fontWeight: 600, marginTop: 12 }}>{resultat.won.nom}</div>
                 {resultat.won.avantage && <div style={{ fontSize: 14, opacity: 0.8 }}>{resultat.won.avantage}</div>}
-                <a href="/armoire" style={lien()}>Elle est dans ta commood → ouvre-la 🤍</a>
+                <a href="/armoire" style={btnLink()}>🤍 Ouvrir ma commood</a>
               </>
             ) : (
               <>
                 <div style={{ fontSize: 40 }}>🤍</div>
                 <p style={{ lineHeight: 1.6 }}>{resultat.message || "Pas de nouvelle carte cette fois — reviens au prochain drop !"}</p>
-                <a href="/armoire" style={lien()}>Voir ma commood →</a>
+                <a href="/armoire" style={btnLink()}>🤍 Ouvrir ma commood</a>
               </>
             )}
           </div>
@@ -201,3 +201,4 @@ function inp(): React.CSSProperties { return { width: "100%", boxSizing: "border
 function btn(): React.CSSProperties { return { width: "100%", padding: "14px", borderRadius: 999, border: "none", background: ENCRE, color: "#fff", fontSize: 16, cursor: "pointer", letterSpacing: 0.3 }; }
 function btnLight(): React.CSSProperties { return { padding: "11px 22px", borderRadius: 999, border: "1px solid #d9cdbf", background: "transparent", color: ENCRE, fontSize: 14, cursor: "pointer" }; }
 function lien(): React.CSSProperties { return { display: "inline-block", marginTop: 16, color: ENCRE, fontSize: 14, fontWeight: 600 }; }
+function btnLink(): React.CSSProperties { return { display: "inline-block", marginTop: 18, padding: "14px 28px", borderRadius: 999, background: ENCRE, color: "#fff", fontSize: 16, fontWeight: 600, textDecoration: "none", boxShadow: "0 6px 18px rgba(58,51,48,0.25)" }; }

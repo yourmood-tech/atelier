@@ -7,7 +7,7 @@ import { ARMOIRE_PALETTES, type ArmoirePalette } from "@/lib/armoire-catalog";
    editable=true (page cliente) → chaque bijou a un menu "déplacer" + "photo perso".
    palette → recolore la VRAIE armoire (déco). */
 
-export type Piece = { pid: number; title: string; image: string | null; date: string; quantity: number };
+export type Piece = { pid: number; title: string; image: string | null; date: string; quantity: number; card?: string; avantage?: string; code?: string; rarete?: string };
 export type Tiroir = { key: string; label: string; emoji: string; pieces: Piece[] };
 export type Choice = { key: string; label: string };
 
@@ -59,6 +59,7 @@ export function Cabinet({
   palette?: ArmoirePalette;
 }) {
   const p = palette;
+  const [zoom, setZoom] = useState<Piece | null>(null);
   return (
     <div style={{ maxWidth: 760, margin: "10px auto 0" }}>
       <div
@@ -92,6 +93,7 @@ export function Cabinet({
             editable={editable && t.key !== "moodailles"}
             onMove={onMove}
             onPhoto={onPhoto}
+            onZoom={setZoom}
             palette={p}
           />
         ))}
@@ -100,6 +102,24 @@ export function Cabinet({
         <span style={foot(p.frame)} />
         <span style={foot(p.frame)} />
       </div>
+
+      {/* Zoom carte moodaille — la cliente clique l'icône, la carte s'affiche en grand pour bien la lire */}
+      {zoom && (
+        <div onClick={() => setZoom(null)} style={{ position: "fixed", inset: 0, background: "rgba(40,30,20,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 120, padding: 18 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fffdfb", borderRadius: 18, padding: 16, maxWidth: 360, width: "100%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setZoom(null)} style={{ border: "none", background: "transparent", fontSize: 20, cursor: "pointer", color: "#6b4f33" }}>✕</button>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={zoom.card || zoom.image || ""} alt={zoom.title} style={{ width: "100%", borderRadius: 14, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }} />
+            <div style={{ fontSize: 18, fontWeight: 600, marginTop: 12 }}>{zoom.title}</div>
+            {zoom.avantage && <div style={{ fontSize: 14, opacity: 0.85, marginTop: 4 }}>{zoom.avantage}</div>}
+            {zoom.code && <div style={{ fontSize: 13, marginTop: 10, letterSpacing: 1, background: "#f6f1ea", borderRadius: 8, padding: "8px 10px", fontWeight: 600 }}>Code : {zoom.code}</div>}
+            {zoom.rarete && <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8, textTransform: "uppercase", letterSpacing: 1 }}>{zoom.rarete}</div>}
+            <div style={{ fontSize: 11, opacity: 0.5, marginTop: 10 }}>⚠️ Carte personnelle — ne partage pas ton code 🤍</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -111,6 +131,7 @@ function Drawer({
   editable,
   onMove,
   onPhoto,
+  onZoom,
   palette,
 }: {
   tiroir: Tiroir;
@@ -119,6 +140,7 @@ function Drawer({
   editable: boolean;
   onMove?: (key: string, tiroirKey: string) => void;
   onPhoto?: (key: string, dataUrl: string) => void;
+  onZoom?: (piece: Piece) => void;
   palette: ArmoirePalette;
 }) {
   const [dropHover, setDropHover] = useState(false);
@@ -200,7 +222,7 @@ function Drawer({
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 10 }}>
             {tiroir.pieces.map((p, i) => (
-              <PieceCell key={i} piece={p} editable={editable} onPhoto={onPhoto} />
+              <PieceCell key={i} piece={p} editable={editable} onPhoto={onPhoto} onZoom={onZoom} />
             ))}
           </div>
         </div>
@@ -213,13 +235,16 @@ function PieceCell({
   piece,
   editable,
   onPhoto,
+  onZoom,
 }: {
   piece: Piece;
   editable: boolean;
   onPhoto?: (key: string, dataUrl: string) => void;
+  onZoom?: (piece: Piece) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const k = keyOf(piece);
+  const isMoodaille = Boolean(piece.card);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -237,14 +262,18 @@ function PieceCell({
       <div
         draggable={editable}
         onDragStart={editable ? (e) => e.dataTransfer.setData("text/plain", k) : undefined}
-        style={{ ...pieceBox(), position: "relative", cursor: editable ? "grab" : "default" }}
-        title={editable ? "Glisse-moi sur un tiroir pour me ranger" : undefined}
+        onClick={isMoodaille ? () => onZoom?.(piece) : undefined}
+        style={{ ...pieceBox(), position: "relative", cursor: isMoodaille ? "zoom-in" : editable ? "grab" : "default" }}
+        title={isMoodaille ? "Clique pour voir ta carte en grand" : editable ? "Glisse-moi sur un tiroir pour me ranger" : undefined}
       >
         {piece.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={piece.image} alt={piece.title} style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }} />
         ) : (
           <span style={{ fontSize: 24 }}>💍</span>
+        )}
+        {isMoodaille && (
+          <span style={{ position: "absolute", bottom: 3, right: 3, fontSize: 11, background: "rgba(255,255,255,0.9)", borderRadius: 999, padding: "1px 6px", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>🔍</span>
         )}
 
         {editable && (

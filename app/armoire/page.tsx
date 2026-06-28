@@ -322,20 +322,12 @@ export default function ArmoirePage() {
             <div style={{ display: "flex", gap: 8, justifyContent: "center", margin: "18px 0 4px", flexWrap: "wrap" }}>
               <button style={tabBtn(tab === "armoire")} onClick={() => setTab("armoire")}>🪟 Ma commood</button>
               <button style={tabBtn(tab === "moodie")} onClick={() => setTab("moodie")}>🧍 Mon moodie</button>
-              <button style={tabBtn(tab === "jeux")} onClick={() => setTab("jeux")}>🎮 Jeux</button>
               <button style={tabBtn(tab === "regles")} onClick={() => setTab("regles")}>🎁 Gagner des objets</button>
               <button style={tabBtn(tab === "guide")} onClick={() => setTab("guide")}>✨ Mode d&apos;emploi</button>
             </div>
 
             {tab === "moodie" && (
               <AvatarStudio pick={avatarPick} onPick={onAvatarPick} avatarOn={avatarOn} onToggleRoom={setAvatarVisible} />
-            )}
-            {tab === "jeux" && (
-              <Jeux
-                moodaillesOwned={moodaillesOwned}
-                moodaillesCat={moodaillesCat}
-                onPlay={(id) => { const g = GAMES.find((x) => x.id === id); if (g?.type === "skill") setPlaying(id); else gagnerMoodaille(id); }}
-              />
             )}
             {tab === "regles" && <Regles budget={data.entitlements.decoBudget} debloques={data.unlocks.deco.length} />}
             {tab === "guide" && <Guide />}
@@ -373,7 +365,7 @@ export default function ArmoirePage() {
                             emoji: "🏅",
                             pieces: moodaillesOwned.flatMap((id) => {
                               const m = moodaillesCat.find((x) => x.id === id);
-                              return m ? [{ pid: 0, title: m.nom, image: m.icone || m.img, date: "", quantity: 1 }] : [];
+                              return m ? [{ pid: 0, title: m.nom, image: m.icone || m.img, date: "", quantity: 1, card: m.img, avantage: m.avantage, code: m.code, rarete: m.rarete }] : [];
                             }),
                           },
                         ]}

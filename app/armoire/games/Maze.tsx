@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
    Quand il arrive sur la commode → onWin(). Simple : labyrinthe "parfait" (toujours une solution). */
 
 const ENCRE = "#3a3330";
-const N = 9;
+const N = 13;
 const AVATAR = "/jeux/labyrinthe/avatar.png";
 const COMMODE = "/jeux/labyrinthe/commode.png";
 
