@@ -82,6 +82,7 @@ body{font-family:'Inter',system-ui,sans-serif;color:#2a221a;background:#f3ece0;m
 <div class="mb-tabs">
   <button id="mb-tab-fiches" class="mb-tab actif" onclick="montrerMB('fiches')">💎 Fiches clientes</button>
   <button id="mb-tab-reves" class="mb-tab" onclick="montrerMB('reves')">🌟 Pièces de rêve</button>
+  <button id="mb-tab-aimees" class="mb-tab" onclick="montrerMB('aimees')">💍 Pièces aimées</button>
 </div>
 <div id="sommaire">
   <h2>Sommaire</h2>
@@ -91,6 +92,7 @@ body{font-family:'Inter',system-ui,sans-serif;color:#2a221a;background:#f3ece0;m
 </div>
 <div id="fiches"></div>
 <div id="reves" style="display:none"></div>
+<div id="aimees" style="display:none"></div>
 
 <script>
 const CLIENTS = /*__CLIENTS__*/;
@@ -230,13 +232,52 @@ function fiche(c){
 }
 
 function montrerMB(v){
-  var fiches = v === 'fiches';
-  document.getElementById('sommaire').style.display = fiches ? '' : 'none';
-  document.getElementById('fiches').style.display = fiches ? '' : 'none';
-  document.getElementById('reves').style.display = fiches ? 'none' : '';
-  document.getElementById('mb-tab-fiches').classList.toggle('actif', fiches);
-  document.getElementById('mb-tab-reves').classList.toggle('actif', !fiches);
-  if (fiches) window.scrollTo(0,0);
+  document.getElementById('sommaire').style.display = v === 'fiches' ? '' : 'none';
+  document.getElementById('fiches').style.display = v === 'fiches' ? '' : 'none';
+  document.getElementById('reves').style.display = v === 'reves' ? '' : 'none';
+  document.getElementById('aimees').style.display = v === 'aimees' ? '' : 'none';
+  document.getElementById('mb-tab-fiches').classList.toggle('actif', v === 'fiches');
+  document.getElementById('mb-tab-reves').classList.toggle('actif', v === 'reves');
+  document.getElementById('mb-tab-aimees').classList.toggle('actif', v === 'aimees');
+  if (v === 'fiches') window.scrollTo(0,0);
+}
+// valeur d'une réponse de sondage par libellé
+function mbRow(c, label){
+  var bl = c.blocks || [];
+  for (var i=0;i<bl.length;i++){ var rows = bl[i].rows||[]; for (var j=0;j<rows.length;j++){ if (rows[j][0]===label) return rows[j][1]||''; } }
+  return '';
+}
+// téléchargement CSV (s'ouvre dans Google Sheets / Excel)
+function telechargerCSV(nom, entetes, lignes){
+  function cell(v){ return '"' + (v==null?'':String(v)).replace(/"/g,'""') + '"'; }
+  var csv = entetes.map(cell).join(';') + '\r\n' + lignes.map(function(r){ return r.map(cell).join(';'); }).join('\r\n');
+  var blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+}
+function exportReves(){
+  var avec = CLIENTS.filter(function(c){return c.responded && c.dream && String(c.dream).trim();}).sort(function(a,b){return b.spent-a.spent;});
+  telechargerCSV('pieces-de-reve-mood.csv', ['Cliente','Email','Pièce de rêve','Dépenses CHF'], avec.map(function(c){return [c.name,c.email,c.dream,c.spent];}));
+}
+function exportAimees(){
+  var rep = CLIENTS.filter(function(c){return c.responded;}).sort(function(a,b){return b.spent-a.spent;});
+  telechargerCSV('pieces-aimees-mood.csv', ['Cliente','Email','Pièces joaillerie aimées','Dépenses CHF'], rep.map(function(c){return [c.name,c.email,mbRow(c,'Pièces joaillerie qui la font rêver'),c.spent];}));
+}
+function renderAimees(){
+  var rep = CLIENTS.filter(function(c){return c.responded;}).sort(function(a,b){return b.spent-a.spent;});
+  var counts = {};
+  rep.forEach(function(c){ mbRow(c,'Pièces joaillerie qui la font rêver').split('·').map(function(s){return s.trim();}).filter(Boolean).forEach(function(p){ counts[p]=(counts[p]||0)+1; }); });
+  var top = Object.keys(counts).map(function(k){return [k,counts[k]];}).sort(function(a,b){return b[1]-a[1];});
+  var max = top.length ? top[0][1] : 1;
+  var h = '';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:14px 0 6px;"><h2 style="margin:0;">💍 Pièces joaillerie qu\'elles aiment</h2><button class="mb-copy" onclick="exportAimees()">⬇️ Export Sheet (CSV)</button></div>';
+  h += '<div style="color:#8a7d6c;font-size:.85rem;margin-bottom:14px;">' + rep.length + ' clientes · classement de ce qui les fait rêver le plus</div>';
+  h += '<div style="margin-bottom:22px;">';
+  top.forEach(function(t){ var pct = Math.round(t[1]/max*100); h += '<div style="margin-bottom:7px;font-size:.85rem;"><div style="display:flex;justify-content:space-between;"><span>' + esc(t[0]) + '</span><span style="color:#8a7d6c;">' + t[1] + '</span></div><div style="height:7px;background:#ece3d6;border-radius:4px;overflow:hidden;margin-top:2px;"><div style="height:100%;width:' + pct + '%;background:#c79a5b;"></div></div></div>'; });
+  h += '</div>';
+  h += '<table class="reves-table"><thead><tr><th>Cliente</th><th>Pièces qu\'elle aime</th><th style="text-align:right;">Dépenses</th></tr></thead><tbody>';
+  rep.forEach(function(c){ h += '<tr><td><a href="#' + c.id + '" onclick="montrerMB(\'fiches\')" style="font-weight:600;color:#3a3330;text-decoration:none;">' + esc(c.name) + '</a>' + (c.vip?' 👑':'') + '</td><td>' + esc(mbRow(c,'Pièces joaillerie qui la font rêver')) + '</td><td style="text-align:right;white-space:nowrap;color:#8a7d6c;">' + c.spent.toLocaleString('fr-CH') + ' CHF</td></tr>'; });
+  h += '</tbody></table>';
+  document.getElementById('aimees').innerHTML = h;
 }
 function renderReves(){
   var rep = CLIENTS.filter(function(c){return c.responded;}).sort(function(a,b){return b.spent-a.spent;});
@@ -244,7 +285,7 @@ function renderReves(){
   var h = '';
   h += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:14px 0 6px;">';
   h += '<h2 style="margin:0;">🌟 Pièces de rêve — sondage</h2>';
-  h += '<button class="mb-copy" onclick="copierReves()">📋 Copier la liste</button></div>';
+  h += '<div style="display:flex;gap:6px;"><button class="mb-copy" onclick="exportReves()">⬇️ Export Sheet (CSV)</button><button class="mb-copy" onclick="copierReves()">📋 Copier</button></div></div>';
   h += '<div style="color:#8a7d6c;font-size:.85rem;margin-bottom:14px;">' + rep.length + ' clientes ont répondu · ' + avec.length + ' ont décrit leur pièce de rêve</div>';
   h += '<table class="reves-table"><thead><tr><th>Cliente</th><th>Sa pièce de rêve (ses mots)</th><th style="text-align:right;">Dépenses</th></tr></thead><tbody>';
   rep.forEach(function(c){
@@ -272,6 +313,7 @@ async function boot(){
   renderStats();renderToc();
   document.getElementById('fiches').innerHTML=CLIENTS.map(fiche).join('');
   renderReves();
+  renderAimees();
   CLIENTS.forEach(c=>{renderTags(c.email);renderPal(c.email);renderInsp(c.email);
     const n=document.getElementById('notes-'+c.id);if(n)n.value=ST[c.email].notes;});
 }
