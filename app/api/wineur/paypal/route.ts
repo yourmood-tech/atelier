@@ -75,8 +75,11 @@ export async function GET(req: NextRequest) {
   const unknowns:  UnknownEntry[] = [];
   const mappings   = await getMappings("paypal");
 
-  // Codes ignorés : paires internes PayPal qui se neutralisent
-  const IGNORE_CODES = new Set(["T1501", "T1105"]);
+  // Codes ignorés (aucune écriture) :
+  //  T1501 / T1105 — paires internes PayPal qui se neutralisent
+  //  T0700 — recharge du solde PayPal par la carte Visa PF : désormais portée
+  //          en entier par l'import Visa (écriture unique 100401 / 220001), pas ici.
+  const IGNORE_CODES = new Set(["T1501", "T1105", "T0700"]);
 
   for (const tx of txs) {
     const info  = tx.transaction_info as Record<string, unknown>;
@@ -99,13 +102,14 @@ export async function GET(req: NextRequest) {
 
     // ═══════════════════════════════════════════════════════════════
     // T0200 — Conversion de devise (vente EUR/USD → CHF)
-    // Enregistre le débit du compte devise ; la contrepartie CHF
-    // vient du T0700 correspondant dans la même période.
-    // L'écart de change est absorbé par le compte 670004.
+    // Enregistre le débit du compte devise ; l'écart de change est absorbé
+    // par le compte 670004 (différence de change — son vrai usage).
+    // (La recharge du solde PayPal par la carte (ex-T0700) est désormais
+    //  portée par l'import Visa, elle ne transite plus par 670004.)
     // ═══════════════════════════════════════════════════════════════
     if (code === "T0200") {
       // montant = contre-valeur CHF (ESTV), montant_orig = montant en devise
-      // DIFF_CHANGE absorbe l'écart entre taux ESTV et taux réel PayPal (T0700)
+      // DIFF_CHANGE (670004) absorbe l'écart entre le taux ESTV et le taux réel PayPal
       const lib        = `PayPal conversion ${devise}→CHF`;
       const rate       = await getESTVRate(date, devise);
       const rawAmtChf  = r2(rawAmt * rate);
@@ -114,24 +118,8 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // T0700 — Recharge du solde PayPal par la carte Visa PostFinance
-    // (ce N'EST PAS une conversion de monnaie : la jambe CHF d'une vraie
-    //  conversion est elle aussi un T0200 — vérifié janvier 2026, les
-    //  montants T0700 = exactement les lignes « PAYPAL *… » du relevé Visa).
-    //
-    // C'est ici (côté PayPal) qu'on enregistre la recharge sur 100401, car
-    // c'est calé sur le bon mois (le relevé Visa, lui, court du 29.12 au
-    // 27.01 → 3 jours de décembre fausseraient le mois). Contrepartie =
-    // compte de transit 670004 ; le relevé Visa décharge la carte (220001)
-    // contre ce MÊME 670004, qui ne garde que le petit écart de calendrier.
-    // ═══════════════════════════════════════════════════════════════
-    if (code === "T0700") {
-      const lib = "Recharge PayPal par carte Visa PF";
-      e(ecritures, date, COMPTES.PASSAGE_PAYPAL_CHF, lib,  rawAmt);
-      e(ecritures, date, COMPTES.DIFF_CHANGE,        lib, -rawAmt);
-      continue;
-    }
+    // T0700 (recharge du solde PayPal par la carte Visa PF) est ignoré ici —
+    // voir IGNORE_CODES : l'écriture est portée en entier par l'import Visa.
 
     // ═══════════════════════════════════════════════════════════════
     // T0201 — Remboursement partiel client étranger (EUR négatif)
