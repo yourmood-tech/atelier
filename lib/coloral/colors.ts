@@ -23,10 +23,13 @@ export function normColor(s: unknown): string {
 }
 
 // Le gabarit fournisseur écrit une même couleur de plusieurs façons selon la feuille.
-// "lila" (lila 2071C), "lila cashmer", "lila caschmere" et "Lila Cashmere" sont
-// TOUS la même couleur (confirmé Philippe) → on les ramène à une seule graphie.
+// Confirmé Philippe :
+//   - "lila" (lila 2071C) / "lila cashmer" / "lila caschmere" / "Lila Cashmere" = lila cashmere
+//   - sur la feuille ALU (7.1mm), la colonne "Jaune" est en réalité le jaune chaud
+// → on ramène ces graphies à une seule couleur.
 export function canonFileColor(n: string): string {
   if (n === "lila" || n === "lila cashmer" || n === "lila caschmere") return "lila cashmere";
+  if (n === "jaune") return "jaune chaud";
   return n;
 }
 
@@ -36,12 +39,15 @@ export function canonFileColor(n: string): string {
 export const COLORAL_COLOR_ALIASES: Record<string, string> = {
   rosep: "rose pastel",
   jaunechaud: "jaune chaud",
+  jaunep: "jaune clair", // Katana JAUNEP = "Jaune clair" dans le fichier (≠ jaune pastel)
   lagonbleu: "bleu lagon",
-  jaune: "jaune chaud",
+  // "jaune" (Katana) = jaune chaud : géré par canonFileColor (colonne "Jaune" de la feuille ALU).
   anth: "anthracite",
   bleuviolet: "bleu violet",
   lilacashmere: "lila cashmere",
+  lilas: "lila cashmere",
   // "lila" (Katana) et "lila 2071C" (fichier) = lila cashmere : géré par canonFileColor.
+  bp: "bleu pastel",
   bleupastel: "bleu pastel",
   vertpastel: "vert pastel",
   jaunepastel: "jaune pastel",
@@ -57,21 +63,21 @@ export function resolveColoralColor(rawColor: string): string {
 // Couleurs réellement présentes dans le gabarit Coloral, par type d'anneau (normalisées,
 // graphies du fichier unifiées). Généré depuis template-b64.ts — voir scripts/scan-coloral-colors.mjs.
 export const COLORAL_FILE_COLORS: Record<string, ReadonlySet<string>> = {
-  // anneaux 7.1 mm  (lila 2071C + LILA CASCHMERE = lila cashmere)
+  // anneaux 7.1 mm  (LILA CASCHMERE = lila cashmere ; colonne "Jaune" = jaune chaud)
   ALU: new Set([
-    "aubergine", "belinda", "bleu marine", "bleu pastel", "bleu violet", "emeraude", "gris",
-    "jaune", "jaune chaud", "jaune pastel", "lila cashmere", "myrtille", "noir", "noisette",
-    "ocre", "pourpre", "rouge", "taupe", "turquoise", "vert", "vert kale kaki", "vert mood",
-    "vert pastel",
+    "abricot", "anthracite", "aubergine", "belinda", "bleu pastel", "bleu violet", "brun",
+    "corail", "emeraude", "gris", "jaune chaud", "jaune pastel", "lila cashmere", "marine",
+    "menthe", "myrtille", "noir", "noisette", "ocre", "peche", "petrole", "pourpre",
+    "rose pastel", "rouge", "taupe", "turquoise", "vert", "vert pastel",
   ]),
   // anneaux 4.8mm  (lila 2071C = lila cashmere)
   "23ALU": new Set([
-    "abricot", "anthracite", "belinda", "bleu marine", "bleu pastel", "caramel", "corail",
-    "emeraude", "jaune chaud", "kaki", "lila cashmere", "marine", "noisette", "ocre", "orange",
-    "peche", "pistache", "rouge", "rubis", "taupe", "turquoise", "vert kale kaki",
-    "vert mood", "vert pastel", "violet",
+    "abricot", "anthracite", "aubergine", "belinda", "bleu pastel", "caramel", "corail",
+    "emeraude", "jaune chaud", "jaune clair", "kaki", "lila cashmere", "marine", "myrtille",
+    "noir", "noisette", "ocre", "orange", "peche", "pistache", "rose pastel", "rouge", "rubis",
+    "taupe", "turquoise", "vert mood", "vert pastel",
   ]),
-  // mediums 2,4mm
+  // mediums 2,4mm  (lila cashmer = lila cashmere)
   MEDALU: new Set([
     "abricot", "anthracite", "aubergine", "belinda", "bleu lagon", "bleu marine",
     "bleu pastel", "brun", "chili pepper", "corail", "emeraude", "gris", "jaune chaud",
@@ -79,11 +85,11 @@ export const COLORAL_FILE_COLORS: Record<string, ReadonlySet<string>> = {
     "peche", "petrole", "rose pastel", "rouge", "taupe", "turquoise", "vert kale kaki",
     "vert mood", "vert pastel", "violet",
   ]),
-  // anneaux 1.22mm
+  // anneaux 1.22mm  (2 blocs : Lila Cashmere = lila cashmere)
   MINIALU: new Set([
-    "abricot", "anthracite", "aubergine", "belipastel", "bleu marine", "jaune pastel",
-    "lila cashmere", "marine", "myrtille", "ocre", "pourpre", "rose pastel", "rouge",
-    "taupe", "turquoise", "vert kale kaki", "violet",
+    "abricot", "aubergine", "belipastel", "bleu pastel", "bleu violet", "corail", "emeraude",
+    "jaune pastel", "lila cashmere", "marine", "myrtille", "noisette", "ocre", "peche",
+    "rose pastel", "rouge", "taupe", "turquoise", "vert pastel", "violet",
   ]),
 };
 

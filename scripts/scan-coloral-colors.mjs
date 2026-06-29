@@ -5,6 +5,9 @@
 //   node scripts/scan-coloral-colors.mjs
 //
 // Aucune dépendance : un .xlsx est un zip, on lit directement sharedStrings + feuilles.
+// La détection des couleurs reproduit scanSheet() de lib/coloral/order.ts :
+// une ligne d'en-tête = colonne A vide + au moins 2 cellules "couleur". Une feuille
+// peut contenir PLUSIEURS blocs d'en-tête (fichier exporté depuis Numbers).
 
 import fs from "fs";
 import zlib from "zlib";
@@ -24,7 +27,17 @@ function normColor(s) {
 }
 function canonFileColor(n) {
   if (n === "lila" || n === "lila cashmer" || n === "lila caschmere") return "lila cashmere";
+  if (n === "jaune") return "jaune chaud";
   return n;
+}
+// — doit rester aligné avec looksLikeColor() de order.ts —
+function looksLikeColor(v) {
+  if (typeof v !== "string") return false;
+  if (v.includes("=") || v.includes("*")) return false;
+  if (/^\s*\d/.test(v)) return false;
+  const n = normColor(v);
+  if (n.startsWith("total") || n.startsWith("usiner")) return false;
+  return /[a-zA-Z]/.test(v);
 }
 // type Katana → feuille du gabarit (aligné avec COLORAL_TYPE_TO_SHEET de order.ts)
 const TYPE_TO_SHEET = {
@@ -55,10 +68,12 @@ function readZip(b) {
   return files;
 }
 
-function looksColor(v) {
-  if (/^[0-9.,= ]*$/.test(v)) return false;
-  if (/^total|usiner|^anneaux|medium|^chf|^tableau|exporté|numbers|feuille|^couleur|^par$|pces|quantité|minimale|fourni|addon|répartition|^mm$/i.test(v)) return false;
-  return /[a-z]/i.test(v);
+function colToIndex(ref) {
+  // "B12" -> 2 (1-based, comme ExcelJS)
+  const letters = ref.match(/^[A-Z]+/)[0];
+  let n = 0;
+  for (const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64);
+  return n;
 }
 
 const src = fs.readFileSync(new URL("../lib/coloral/template-b64.ts", import.meta.url), "utf8");
@@ -66,8 +81,13 @@ const m = src.match(/COLORAL_TEMPLATE_B64\s*=\s*([`"'])([\s\S]*?)\1/);
 const b64 = m[2].replace(/\s+/g, "");
 const f = readZip(Buffer.from(b64, "base64"));
 
-const strs = [...f["xl/sharedStrings.xml"].toString("utf8").matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)]
-  .map((x) => x[1].replace(/&amp;/g, "&"));
+// IMPORTANT : parser par <si> (une chaîne = un <si>, plusieurs <t> = morceaux à concaténer),
+// sinon les indices référencés par les cellules sont décalés.
+const ss = f["xl/sharedStrings.xml"].toString("utf8");
+const strs = [...ss.matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) =>
+  [...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join("").replace(/&amp;/g, "&")
+);
+
 const wbx = f["xl/workbook.xml"].toString("utf8");
 const sheets = [...wbx.matchAll(/<sheet[^>]*name="([^"]+)"[^>]*r:id="([^"]+)"/g)].map((x) => ({ name: x[1], rid: x[2] }));
 const relMap = {};
@@ -79,11 +99,18 @@ for (const [type, sheetName] of Object.entries(TYPE_TO_SHEET)) {
   if (!s) { console.log(`// ${type}: feuille "${sheetName}" introuvable`); continue; }
   const xml = (f["xl/" + relMap[s.rid].replace(/^\//, "")] || Buffer.alloc(0)).toString("utf8");
   const set = new Set();
-  for (const x of xml.matchAll(/t="s"[^>]*>\s*<v>(\d+)<\/v>/g)) {
-    const v = strs[+x[1]];
-    if (v && looksColor(v.trim())) {
-      const k = canonFileColor(normColor(v));
-      if (k) set.add(k);
+  for (const rm of xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)) {
+    const cells = [...rm[1].matchAll(/<c[^>]*r="([A-Z]+\d+)"([^>]*)>(?:<v>([\s\S]*?)<\/v>)?/g)]
+      .map(([, ref, attrs, v]) => ({ col: colToIndex(ref), val: v === undefined ? "" : (/t="s"/.test(attrs) ? strs[+v] : v) }));
+    const a = cells.find((c) => c.col === 1);
+    const aEmpty = !a || String(a.val ?? "").trim() === "";
+    const colorCells = cells.filter((c) => c.col > 1 && looksLikeColor(c.val));
+    // ligne d'en-tête seulement (comme scanSheet) : colonne A vide + ≥2 couleurs
+    if (aEmpty && colorCells.length >= 2) {
+      for (const c of colorCells) {
+        const k = canonFileColor(normColor(c.val));
+        if (k) set.add(k);
+      }
     }
   }
   const list = [...set].sort();
