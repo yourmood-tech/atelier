@@ -29,7 +29,9 @@ type Data = {
   entitlements: { gamesBudget: number; decoBudget: number; commandesQualifiantes: number };
   unlocks: Unlocks;
   moodailles?: string[];
+  moodaillesOwned?: OwnedCard[];
 };
+type OwnedCard = { id: string; nom: string; img: string; icone?: string; avantage?: string; code?: string; rarete?: string };
 
 const IVOIRE = "#fbf7f2";
 const ENCRE = "#3a3330";
@@ -48,6 +50,7 @@ export default function ArmoirePage() {
   // Moodailles = addons virtuels à collectionner, gagnés en jouant.
   const [moodaillesCat, setMoodaillesCat] = useState<{ id: string; nom: string; img: string; icone?: string; avantage?: string; code?: string; rarete?: string; jeu?: string; jeux?: string[]; actif?: boolean }[]>([]);
   const [moodaillesOwned, setMoodaillesOwned] = useState<string[]>([]);
+  const [ownedCards, setOwnedCards] = useState<OwnedCard[]>([]);
   const [toast, setToast] = useState<string | null>(null);
   const [active, setActive] = useState<{ mur?: string; sol?: string; armoire?: string }>({});
   const [layout, setLayout] = useState<Record<string, { left: number; top: number; w: number }>>({});
@@ -101,6 +104,7 @@ export default function ArmoirePage() {
       if (j.already) { setToast("Tu as déjà joué cette saison 🤍 Reviens au prochain drop de cartes !"); return; }
       if (j.won) {
         setMoodaillesOwned((prev) => [...prev, j.won.id]);
+        setOwnedCards((prev) => [...prev, j.won as OwnedCard]);
         setToast(`🏅 Nouvelle moodaille : ${j.won.nom} !`);
       } else if (j.played) {
         setToast(j.message || "Bravo ! 🎉");
@@ -171,6 +175,7 @@ export default function ArmoirePage() {
         setAvatarImage(localStorage.getItem(`armoire:avatarimg:${k}`) || null);
         setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
         setMoodaillesOwned(json.moodailles ?? []);
+        setOwnedCards(json.moodaillesOwned ?? []);
         // mémorise la session pour revenir du jeu sans se reconnecter
         localStorage.setItem("armoire:session", JSON.stringify({ email: em, commande: cmd }));
       } catch {
@@ -363,10 +368,7 @@ export default function ArmoirePage() {
                             key: "moodailles",
                             label: "Mes moodailles",
                             emoji: "🏅",
-                            pieces: moodaillesOwned.flatMap((id) => {
-                              const m = moodaillesCat.find((x) => x.id === id);
-                              return m ? [{ pid: 0, title: m.nom, image: m.icone || m.img, date: "", quantity: 1, card: m.img, avantage: m.avantage, code: m.code, rarete: m.rarete }] : [];
-                            }),
+                            pieces: ownedCards.map((m) => ({ pid: 0, title: m.nom, image: m.icone || m.img, date: "", quantity: 1, card: m.img, avantage: m.avantage, code: m.code, rarete: m.rarete })),
                           },
                         ]}
                         open={open}

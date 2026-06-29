@@ -58,7 +58,23 @@ export async function POST(req: NextRequest) {
       : perso.entitlements;
 
     // Moodailles gagnées (côté serveur, par cliente) — source de vérité, non falsifiable.
-    const won = ((await kv.get(`moodwon:${email.toLowerCase()}`)) as { id: string }[] | null) ?? [];
+    const won = ((await kv.get(`moodwon:${email.toLowerCase()}`)) as { id: string; code?: string }[] | null) ?? [];
+    // On ne livre la CARTE COMPLÈTE + le CODE qu'aux cartes RÉELLEMENT possédées par cette cliente.
+    const catalog = ((await kv.get("moodailles:catalog")) as Array<Record<string, unknown>> | null) ?? [];
+    const codeById: Record<string, string> = {};
+    won.forEach((w) => { codeById[w.id] = w.code || ""; });
+    const moodaillesOwned = won.map((w) => {
+      const m = catalog.find((x) => x.id === w.id) || {};
+      return {
+        id: w.id,
+        nom: (m.nom as string) || "Moodaille",
+        img: (m.img as string) || "",
+        icone: (m.icone as string) || "",
+        avantage: (m.avantage as string) || "",
+        rarete: (m.rarete as string) || "",
+        code: codeById[w.id] || (m.code as string) || "",
+      };
+    });
 
     return NextResponse.json({
       found: true,
@@ -71,6 +87,7 @@ export async function POST(req: NextRequest) {
       entitlements,
       unlocks,
       moodailles: won.map((w) => w.id),
+      moodaillesOwned,
     });
   } catch (e) {
     console.error("[armoire/verify] error", e);

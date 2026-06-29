@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     // On enregistre la carte gagnée pour TOUT LE MONDE (y compris le staff, pour la voir dans la commood).
     await kv.set(`moodwon:${email}`, [...won, entry]);
 
-    return NextResponse.json({ played: true, won: { id: pick.id, nom: pick.nom, img: pick.img, avantage: pick.avantage, code: pick.code, rarete: pick.rarete } });
+    return NextResponse.json({ played: true, won: { id: pick.id, nom: pick.nom, img: pick.img, icone: pick.icone || "", avantage: pick.avantage, code: pick.code, rarete: pick.rarete } });
   } catch (e) {
     console.error("[armoire/play] error", e);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
