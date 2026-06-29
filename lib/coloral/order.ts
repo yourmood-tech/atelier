@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { COLORAL_TEMPLATE_B64 } from "./template-b64";
+import { normColor, canonFileColor, resolveColoralColor } from "./colors";
 
 // ─── Mapping type de SKU Coloral → feuille du gabarit fournisseur ────────────────
 // Confirmé avec Philippe (par les minimums par couleur) :
@@ -17,20 +18,7 @@ const SIZES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
 export type ColoralItem = { sku: string; qty: number };
 export type ColoralUnmatched = { sku: string; qty: number; reason: string };
 
-// Normalise une couleur pour la comparaison : minuscules, sans accents, sans code
-// Pantone (938C, 2757C…), sans contenu entre parenthèses, sans chiffres ni ponctuation.
-function normColor(s: unknown): string {
-  return String(s ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/\(.*?\)/g, " ")
-    .replace(/p?\d{2,4}\s*c\b/gi, " ")
-    .replace(/\d+/g, " ")
-    .replace(/[^a-z\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+// normColor / canonFileColor / resolveColoralColor : voir lib/coloral/colors.ts (source unique).
 
 function isTotalish(v: unknown): boolean {
   const n = normColor(v);
@@ -71,7 +59,7 @@ function scanSheet(ws: ExcelJS.Worksheet): Map<string, ColorColumn> {
     if (aEmpty && colorCells.length >= 2) {
       active = new Map();
       for (const [c, name] of colorCells) {
-        const k = normColor(name);
+        const k = canonFileColor(normColor(name));
         if (!colors.has(k)) colors.set(k, { name, cells: new Map() });
         active.set(c, k);
       }
@@ -141,7 +129,7 @@ export async function buildColoralOrder(
       unmatched.push({ sku: it.sku, qty, reason: `type ${p.type} hors Coloral` });
       continue;
     }
-    const col = sc.get(normColor(p.color));
+    const col = sc.get(resolveColoralColor(p.color));
     if (!col) {
       unmatched.push({ sku: it.sku, qty, reason: `couleur "${p.color}" absente de la feuille ${sheet}` });
       continue;

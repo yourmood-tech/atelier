@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { coloralColorInFile } from "@/lib/coloral/colors";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -429,7 +430,7 @@ function applyColoralMoq(
   mins: ColoralMins,
   minSku: number,
   mode: Mode
-): ResultRow[] {
+): { rows: ResultRow[]; excluded: string[] } {
   const resBySku = new Map(results.map((r) => [r.sku, r]));
 
   // Univers complet des tailles Coloral connues (issues des fichiers), groupé par type|couleur
@@ -444,9 +445,17 @@ function applyColoralMoq(
 
   // On garde tel quel tout ce qui n'est pas Coloral ; on reconstruit les lignes Coloral.
   const out: ResultRow[] = results.filter((r) => !parseColoralSku(r.sku, mins));
+  const excluded: string[] = []; // couleurs Katana absentes du fichier Coloral → non commandées
 
   for (const { type, color, min, skus } of groups.values()) {
     const label = `${type} ${color}`;
+
+    // Couleur absente du fichier de commande Coloral → on ne la commande pas (ni xlsx, ni bon Katana).
+    if (!coloralColorInFile(type, color)) {
+      const need = skus.reduce((s, m) => s + (resBySku.get(m.sku)?.recommendedQty ?? 0), 0);
+      if (need > 0) excluded.push(label);
+      continue;
+    }
     const need = skus.map((m) => resBySku.get(m.sku)?.recommendedQty ?? 0);
     const totalNeed = need.reduce((a, b) => a + b, 0);
     if (totalNeed <= 0) continue; // aucune taille à réassortir → on ne lance pas la couleur
@@ -502,11 +511,12 @@ function applyColoralMoq(
     });
   }
 
-  return out.sort((a, b) => {
+  out.sort((a, b) => {
     if (b.recommendedQty !== a.recommendedQty) return b.recommendedQty - a.recommendedQty;
     if (b.planningDailyDemand !== a.planningDailyDemand) return b.planningDailyDemand - a.planningDailyDemand;
     return a.estimatedCoverDays - b.estimatedCoverDays;
   });
+  return { rows: out, excluded };
 }
 
 // ─── Export CSV ───────────────────────────────────────────────────────────────
@@ -676,6 +686,7 @@ export default function ReassortPage() {
   const [coloralEnabled, setColoralEnabled] = useState(true);
   const [coloralMins, setColoralMins] = useState<ColoralMins>(DEFAULT_COLORAL_MINS);
   const [coloralMinSku, setColoralMinSku] = useState(5); // plancher par taille (SKU), spécifique Coloral
+  const [coloralExcluded, setColoralExcluded] = useState<string[]>([]); // couleurs absentes du fichier Coloral
   // Export commande Coloral (.xlsx au format fournisseur)
   const [coloralExportLoading, setColoralExportLoading] = useState(false);
   const [coloralExportError, setColoralExportError] = useState<string | null>(null);
@@ -747,10 +758,17 @@ export default function ReassortPage() {
       let recs = computeRecommendations(params, merged);
 
       if (coloralEnabled) {
-        recs = applyColoralMoq(recs, merged, coloralMins, coloralMinSku, params.mode);
+        const moq = applyColoralMoq(recs, merged, coloralMins, coloralMinSku, params.mode);
+        recs = moq.rows;
+        setColoralExcluded(moq.excluded);
         addLog(
           `Gamme Coloral reconstituée — min/couleur ALU ${coloralMins.ALU} · 23ALU ${coloralMins["23ALU"]} · MEDALU ${coloralMins.MEDALU} · MINIALU ${coloralMins.MINIALU} | plancher ${coloralMinSku}/taille`
         );
+        if (moq.excluded.length > 0) {
+          addLog(`Couleurs absentes du fichier Coloral (non commandées) : ${moq.excluded.join(", ")}`);
+        }
+      } else {
+        setColoralExcluded([]);
       }
 
       const totalUnits = recs.reduce((s, r) => s + r.recommendedQty, 0);
@@ -1018,6 +1036,23 @@ export default function ReassortPage() {
         {coloralExportError && (
           <div className="rounded-xl border border-red-800 bg-red-900/30 p-4 text-sm text-red-300 whitespace-pre-wrap">
             {coloralExportError}
+          </div>
+        )}
+
+        {/* Couleurs absentes du fichier Coloral → écartées de la commande (xlsx + bon Katana) */}
+        {coloralExcluded.length > 0 && (
+          <div className="rounded-xl border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-200 space-y-2">
+            <p className="font-semibold">
+              {coloralExcluded.length} couleur(s) absente(s) du fichier Coloral — non commandée(s) (ni dans le .xlsx, ni dans le bon Katana) :
+            </p>
+            <ul className="text-xs space-y-0.5 font-mono">
+              {coloralExcluded.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+            <p className="text-xs opacity-80">
+              Si l&apos;une devrait se commander, c&apos;est qu&apos;il manque sa correspondance de couleur (à ajouter dans la table Coloral).
+            </p>
           </div>
         )}
 
