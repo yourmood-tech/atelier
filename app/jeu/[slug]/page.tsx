@@ -16,7 +16,7 @@ import { Maze } from "@/app/armoire/games/Maze";
    et gagne une carte du moment — décidée par le serveur (tirage pondéré). */
 
 const ENCRE = "#3a3330";
-type Carte = { id: string; nom: string; img: string; avantage?: string; rarete?: string; actif?: boolean };
+type Carte = { id: string; nom: string; img: string; icone?: string; avantage?: string; rarete?: string; actif?: boolean };
 type Resultat = { won?: Carte | null; already?: boolean; message?: string; error?: string };
 
 export default function JeuPage() {
@@ -110,11 +110,17 @@ export default function JeuPage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px,1fr))", gap: 8 }}>
               {cartes.map((c) => (
                 <div key={c.id} style={{ textAlign: "center" }} title={c.avantage || c.nom}>
-                  <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #e3d9cd", background: "#fff", aspectRatio: "3/4" }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.img} alt={c.nom} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  {/* aperçu SANS le code : on montre l'icône (pas la carte complète qui porte le code) */}
+                  <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #e3d9cd", background: "#fff", aspectRatio: "1/1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {c.icone ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.icone} alt={c.nom} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    ) : (
+                      <span style={{ fontSize: 30 }}>🎁</span>
+                    )}
                   </div>
                   <div style={{ fontSize: 10, marginTop: 3, opacity: 0.7 }}>{c.nom}</div>
+                  {c.avantage && <div style={{ fontSize: 9, opacity: 0.55, lineHeight: 1.2 }}>{c.avantage}</div>}
                 </div>
               ))}
             </div>
