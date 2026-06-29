@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
    Quand il arrive sur la commode → onWin(). Simple : labyrinthe "parfait" (toujours une solution). */
 
 const ENCRE = "#3a3330";
-const N = 13;
+const N = 11;
 const AVATAR = "/jeux/labyrinthe/avatar.png";
 const COMMODE = "/jeux/labyrinthe/commode.png";
 
@@ -86,7 +86,7 @@ export function Maze({ onWin }: { onWin?: () => void }) {
           const wall = "2px solid #3a3330", none = "2px solid transparent";
           return (
             <div key={i} style={{
-              position: "relative", aspectRatio: "1/1",
+              position: "relative", aspectRatio: "1/1", boxSizing: "border-box",
               borderTop: cell.N ? wall : none, borderRight: cell.E ? wall : none,
               borderBottom: cell.S ? wall : none, borderLeft: cell.W ? wall : none,
               display: "flex", alignItems: "center", justifyContent: "center",
