@@ -293,12 +293,23 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
   const billingCountry = ((o.billing_address as Record<string, unknown> | null)?.country_code as string | null)?.toUpperCase();
   const fromCountry = billingCountry ? COUNTRY_TO_LOCALE[billingCountry] : undefined;
 
-  // customer.locale — "Will receive notifications in X" — ALWAYS fetched, takes priority over order locale
+  // customer.locale — langue du profil ("recevra les notifications en X"), prioritaire sur
+  // la langue de la commande (checkout). ATTENTION : ce champ N'EXISTE PAS dans l'API REST
+  // client (il revient toujours vide, même avec ?fields=locale) — il faut le lire en GraphQL.
   let fromCustomer: string | undefined;
   if (customer.id) {
     try {
-      const { customer: fullCustomer } = await shopifyFetch(`/customers/${customer.id}.json?fields=id,locale`);
-      fromCustomer = (fullCustomer?.locale as string | null)?.split("-")[0]?.toLowerCase() || undefined;
+      const gql = await fetch(`https://${STORE}/admin/api/${API_VERSION}/graphql.json`, {
+        method: "POST",
+        headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "query($id:ID!){customer(id:$id){locale}}",
+          variables: { id: `gid://shopify/Customer/${customer.id}` },
+        }),
+      });
+      const gj = await gql.json();
+      const loc = gj?.data?.customer?.locale as string | null | undefined;
+      fromCustomer = loc?.split("-")[0]?.toLowerCase() || undefined;
     } catch {
       // non-blocking
     }
