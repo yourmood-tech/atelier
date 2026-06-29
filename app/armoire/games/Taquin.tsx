@@ -69,20 +69,22 @@ export function Taquin({ onWin }: { onWin?: () => void }) {
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${N}, 1fr)`, gap: 3, aspectRatio: "1/1" }}>
           {board.map((piece, pos) => {
             const isEmpty = piece === EMPTY && !gagne;
-            const row = Math.floor(piece / N), col = piece % N;
             return (
               <button
                 key={pos}
                 onClick={() => clic(pos)}
                 style={{
-                  aspectRatio: "1/1", border: "none", padding: 0, borderRadius: 6, cursor: "pointer", overflow: "hidden",
-                  background: isEmpty ? "#f0e9df" : `url(${IMG})`,
-                  backgroundSize: `${N * 100}% ${N * 100}%`,
-                  backgroundPosition: `${(col / (N - 1)) * 100}% ${(row / (N - 1)) * 100}%`,
+                  aspectRatio: "1/1", border: "none", padding: 0, borderRadius: 4, cursor: "pointer", overflow: "hidden",
+                  background: isEmpty ? "#f0e9df" : "transparent",
                   outline: "1px solid #e6dccd",
                   visibility: isEmpty ? "hidden" : "visible",
                 }}
-              />
+              >
+                {!isEmpty && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`/jeux/taquin/roller/${piece}.png`} alt="" draggable={false} style={{ width: "100%", height: "100%", display: "block", objectFit: "cover" }} />
+                )}
+              </button>
             );
           })}
         </div>
