@@ -7,7 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 const ENCRE = "#3a3330";
 const N = 3;
-const IMG = "/jeux/taquin/boite.png";
+const IMG = "/jeux/taquin/roller.png";
 const EMPTY = N * N - 1; // la dernière pièce est le trou
 
 function solved(): number[] { return Array.from({ length: N * N }, (_, i) => i); }
