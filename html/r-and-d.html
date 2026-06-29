@@ -582,10 +582,16 @@
   </div>
 </header>
 
+<div id="rd-tabs" style="display:flex;gap:.5rem;justify-content:center;margin:.7rem 0 .4rem;">
+  <button id="tab-planning" class="rd-tab actif" onclick="montrerVue('planning')">📅 Planning</button>
+  <button id="tab-bp" class="rd-tab" onclick="montrerVue('bp')">✍️ Mon BP du jour</button>
+</div>
+
 <div style="text-align:right;margin:-0.8rem 0 0.8rem 0;">
   <span id="sync-indicator" style="font-size:0.75rem;color:var(--gris);" title="Statut synchro cloud">⏳ Vérification…</span>
 </div>
 
+<div id="vue-planning">
 <div class="stage-legend">
   <div class="stage-legend-item"><div class="product-stage stage-1">1</div> Idée</div>
   <div class="stage-legend-item"><div class="product-stage stage-2">2</div> Dessin</div>
@@ -607,6 +613,48 @@
 </div>
 
 <div id="calendrier"></div>
+</div><!-- /vue-planning -->
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap">
+<style>
+  .rd-tab{border:1px solid #d9cdbf;background:#fff;border-radius:999px;padding:6px 16px;cursor:pointer;font-size:.85rem;color:#2a2a2a;}
+  .rd-tab.actif{background:#2a2a2a;color:#fff;}
+  #vue-bp{max-width:640px;margin:0 auto;}
+  .bp-sheet{background:repeating-linear-gradient(#fffdf8,#fffdf8 37px,#dfeaf2 37px,#dfeaf2 38px);background-position:0 8px;border:1px solid #e3d9c6;border-radius:10px;box-shadow:0 10px 30px rgba(120,100,70,.18);padding:16px 16px 22px 0;min-height:340px;}
+  .bp-empty{padding-left:40px;font-family:'Caveat',cursive;font-size:22px;opacity:.4;line-height:38px;}
+  .bp-task{display:flex;align-items:center;gap:8px;height:38px;padding-left:14px;border-left:2px solid #f0a8a0;margin-left:30px;}
+  .bp-subs{padding-left:56px;}
+  .bp-sub{display:flex;align-items:center;gap:8px;height:34px;}
+  .bp-line{flex:1;border:none;outline:none;background:transparent;font-family:'Caveat',cursive;font-size:20px;color:#3a3330;min-width:0;padding:0;}
+  .bp-line.sm{font-size:17px;}
+  .bp-line.done{text-decoration:line-through;color:#a89e8c;}
+  .bp-check{width:22px;height:22px;flex:none;border-radius:6px;border:2px solid #c9bda6;background:#fff;color:#3c8c5a;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+  .bp-check.sm{width:18px;height:18px;font-size:11px;}
+  .bp-check.on{border-color:#5aa17a;background:#dff0e6;}
+  .bp-chev{width:18px;flex:none;border:none;background:transparent;cursor:pointer;color:#3a3330;opacity:.5;font-size:13px;padding:0;}
+  .bp-mini{width:26px;height:26px;flex:none;border-radius:8px;border:1px solid #e3d9c6;background:#fff;color:#3a3330;cursor:pointer;font-size:13px;opacity:.8;}
+  .bp-addsub{border:none;background:transparent;color:#3a3330;opacity:.6;cursor:pointer;font-size:12px;padding:2px 0;}
+</style>
+
+<div id="vue-bp" style="display:none;">
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin:.4rem 0;">
+    <button class="outline" onclick="bpShift(-1)">‹</button>
+    <span id="bp-date" style="font-weight:600;min-width:240px;text-align:center;text-transform:capitalize;"></span>
+    <button class="outline" onclick="bpShift(1)">›</button>
+  </div>
+  <div style="text-align:center;margin-bottom:.8rem;">
+    <button class="outline" id="bp-today-btn" onclick="bpGoToday()">Aujourd'hui</button>
+    <button class="outline" id="bp-carnet-btn" onclick="bpToggleCarnet()">📒 Mes feuilles</button>
+    <span id="bp-count" style="font-size:.8rem;color:var(--gris);margin-left:.4rem;"></span>
+  </div>
+  <div id="bp-carnet" style="display:none;background:#fffdf8;border:1px solid #e3d9c6;border-radius:12px;padding:8px;margin-bottom:.8rem;max-height:220px;overflow-y:auto;"></div>
+  <div id="bp-sheet" class="bp-sheet"></div>
+  <div style="display:flex;gap:.5rem;margin-top:.6rem;">
+    <input id="bp-new" placeholder="+ Nouvelle tâche… (Entrée)" style="flex:1;padding:10px 12px;border:1px solid #e3d9c6;border-radius:10px;font-size:.9rem;" onkeydown="if(event.key==='Enter')bpAddTask()">
+    <button onclick="bpAddTask()">Ajouter</button>
+  </div>
+  <p style="text-align:center;font-size:.7rem;color:var(--gris);margin-top:1rem;">Tout est enregistré sur cet appareil · une nouvelle feuille chaque jour 🤍</p>
+</div>
 
 <!-- Modal édition produit -->
 <div class="modal-overlay" id="modal">
@@ -2257,6 +2305,95 @@ chargerDonneesCloud();
 majLabelSemaine();
 // Vraies ventes Shopify par produit (semaine sélectionnée) PUIS résumé du mois en cours (séquencé, anti-surcharge)
 chargerVentesReelles().then(() => { const m = new Date(); chargerVentesReellesMois(m.getFullYear(), m.getMonth()); });
+</script>
+
+<script>
+/* Mon BP du jour — carnet perso (local). Une feuille par jour, sous-étapes repliables. */
+var BP_KEY = 'bp:carnet:v1';
+var bpCarnet = {}, bpDate = '';
+function bpLoad(){ try { bpCarnet = JSON.parse(localStorage.getItem(BP_KEY) || '{}'); } catch(e){ bpCarnet = {}; } }
+function bpSave(){ try { localStorage.setItem(BP_KEY, JSON.stringify(bpCarnet)); } catch(e){} }
+function bpPad(n){ return (n < 10 ? '0' : '') + n; }
+function bpKeyOf(d){ return d.getFullYear() + '-' + bpPad(d.getMonth()+1) + '-' + bpPad(d.getDate()); }
+function bpToday(){ return bpKeyOf(new Date()); }
+function bpParse(s){ var p = s.split('-').map(Number); return new Date(p[0], p[1]-1, p[2]); }
+function bpFmt(s){ return bpParse(s).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'}); }
+function bpUid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function bpEsc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function bpTasks(){ return bpCarnet[bpDate] || []; }
+function bpCommit(arr){ bpCarnet[bpDate] = arr; bpSave(); bpRender(); }
+
+function montrerVue(v){
+  document.getElementById('vue-planning').style.display = v === 'planning' ? '' : 'none';
+  document.getElementById('vue-bp').style.display = v === 'bp' ? '' : 'none';
+  document.getElementById('tab-planning').classList.toggle('actif', v === 'planning');
+  document.getElementById('tab-bp').classList.toggle('actif', v === 'bp');
+  if (v === 'bp') { if (!bpDate) bpDate = bpToday(); bpRender(); }
+}
+
+function bpShift(n){ var d = bpParse(bpDate); d.setDate(d.getDate()+n); bpDate = bpKeyOf(d); bpRender(); }
+function bpGoToday(){ bpDate = bpToday(); bpRender(); }
+function bpToggleCarnet(){ var c = document.getElementById('bp-carnet'); c.style.display = c.style.display === 'none' ? '' : 'none'; if (c.style.display !== 'none') bpRenderCarnet(); }
+
+function bpAddTask(){
+  var i = document.getElementById('bp-new'); var t = (i.value||'').trim(); if (!t) return;
+  var a = bpTasks().slice(); a.push({ id: bpUid(), t: t, done: false, open: false, subs: [] });
+  i.value = ''; bpCommit(a);
+}
+function bpEditTask(id, v){ var t = bpTasks().find(function(x){return x.id===id;}); if (t){ t.t = v; bpSave(); } }
+function bpToggleTask(id){ var t = bpTasks().find(function(x){return x.id===id;}); if (t) t.done = !t.done; bpCommit(bpTasks()); }
+function bpToggleOpen(id){ var t = bpTasks().find(function(x){return x.id===id;}); if (t) t.open = !t.open; bpCommit(bpTasks()); }
+function bpDelTask(id){ bpCommit(bpTasks().filter(function(x){return x.id!==id;})); }
+function bpAddSub(id){ var t = bpTasks().find(function(x){return x.id===id;}); if (t){ t.open = true; t.subs.push({ id: bpUid(), t:'', done:false }); } bpCommit(bpTasks()); }
+function bpEditSub(id, sid, v){ var t = bpTasks().find(function(x){return x.id===id;}); if (t){ var s = t.subs.find(function(x){return x.id===sid;}); if (s){ s.t = v; bpSave(); } } }
+function bpToggleSub(id, sid){ var t = bpTasks().find(function(x){return x.id===id;}); if (t){ var s = t.subs.find(function(x){return x.id===sid;}); if (s) s.done = !s.done; } bpCommit(bpTasks()); }
+function bpDelSub(id, sid){ var t = bpTasks().find(function(x){return x.id===id;}); if (t) t.subs = t.subs.filter(function(x){return x.id!==sid;}); bpCommit(bpTasks()); }
+
+function bpRenderCarnet(){
+  var jours = Object.keys(bpCarnet).filter(function(d){ return (bpCarnet[d]||[]).length; }).sort().reverse();
+  var h = '';
+  if (!jours.length) h = '<div style="font-size:13px;opacity:.6;text-align:center;">Aucune feuille remplie pour l\'instant 🤍</div>';
+  jours.forEach(function(d){
+    var arr = bpCarnet[d] || []; var f = arr.filter(function(t){return t.done;}).length;
+    h += '<button onclick="bpDate=\''+d+'\';bpToggleCarnet();bpRender();" style="display:flex;justify-content:space-between;width:100%;border:none;background:'+(d===bpDate?'#f1e9da':'transparent')+';border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13px;color:#3a3330;text-transform:capitalize;"><span>'+bpFmt(d)+'</span><span style="opacity:.55;">'+f+'/'+arr.length+'</span></button>';
+  });
+  document.getElementById('bp-carnet').innerHTML = h;
+}
+
+function bpRender(){
+  if (!bpDate) bpDate = bpToday();
+  document.getElementById('bp-date').textContent = bpFmt(bpDate);
+  var tasks = bpTasks();
+  var faites = tasks.filter(function(t){return t.done;}).length;
+  document.getElementById('bp-count').textContent = faites + '/' + tasks.length + ' fait' + (faites>1?'s':'');
+  document.getElementById('bp-today-btn').style.display = (bpDate === bpToday()) ? 'none' : '';
+  var h = '';
+  if (!tasks.length) h = '<div class="bp-empty">Écris ta première tâche en bas 🤍</div>';
+  tasks.forEach(function(task){
+    h += '<div class="bp-task">';
+    h += '<button class="bp-chev" onclick="bpToggleOpen(\''+task.id+'\')">' + (task.open?'▾':'▸') + '</button>';
+    h += '<button class="bp-check'+(task.done?' on':'')+'" onclick="bpToggleTask(\''+task.id+'\')">' + (task.done?'✓':'') + '</button>';
+    h += '<input class="bp-line'+(task.done?' done':'')+'" value="'+bpEsc(task.t)+'" oninput="bpEditTask(\''+task.id+'\',this.value)" placeholder="…">';
+    h += '<button class="bp-mini" title="Sous-étape" onclick="bpAddSub(\''+task.id+'\')">＋</button>';
+    h += '<button class="bp-mini" title="Supprimer" onclick="bpDelTask(\''+task.id+'\')">✕</button>';
+    h += '</div>';
+    if (task.open){
+      h += '<div class="bp-subs">';
+      task.subs.forEach(function(s){
+        h += '<div class="bp-sub">';
+        h += '<button class="bp-check sm'+(s.done?' on':'')+'" onclick="bpToggleSub(\''+task.id+'\',\''+s.id+'\')">' + (s.done?'✓':'') + '</button>';
+        h += '<input class="bp-line sm'+(s.done?' done':'')+'" value="'+bpEsc(s.t)+'" oninput="bpEditSub(\''+task.id+'\',\''+s.id+'\',this.value)" placeholder="sous-étape…">';
+        h += '<button class="bp-mini" title="Supprimer" onclick="bpDelSub(\''+task.id+'\',\''+s.id+'\')">✕</button>';
+        h += '</div>';
+      });
+      h += '<button class="bp-addsub" onclick="bpAddSub(\''+task.id+'\')">＋ ajouter une sous-étape</button>';
+      h += '</div>';
+    }
+  });
+  document.getElementById('bp-sheet').innerHTML = h;
+}
+
+bpLoad();
 </script>
 </body>
 </html>
