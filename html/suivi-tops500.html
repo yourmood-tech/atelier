@@ -36,7 +36,7 @@ function build(c){
   var dispo=pk(["C’est disponible dès aujourd’hui, et je reste là pour vous si vous avez la moindre question.","C’est dispo dès maintenant ; je suis là si vous voulez en parler 🤍","Disponible tout de suite — n’hésitez pas, je réponds avec plaisir à vos questions."],h>>>8);
   var cl=pk(["À très vite","Belle journée à vous","Je vous souhaite une très belle journée"],h>>>10);
   var objet=pk([p+", un merci et une attention rien que pour vous 🤍","Pour vous, "+p+" — une attention mood 🤍",p+", on a pensé à vous chez mood 🤍","Une opportunité rien que pour vous, "+p+" 🤍"],h>>>12);
-  var message=salut+"\n\nJe suis "+sp.n+", de mood. "+perso+"\n\n"+merci+" "+intro+" la possibilité d’avoir 3 Auras (à choix), 2 minis, 1 base et une box de voyage, à un prix qu’on n’a encore jamais fait.\n\n"+dispo+"\n\n"+cl+",\n"+sp.n+" — mood";
+  var message=salut+"\n\nJe suis "+sp.n+", de mood. "+perso+"\n\n"+merci+" "+intro+" la possibilité d’avoir 3 Auras (à choix), 2 minis, 1 base et une box de voyage, à un prix qu’on n’a encore jamais fait.\n\n👉 C’est par ici : https://www.yourmood.net/products/ticket-business-class\n\n"+dispo+"\n\n"+cl+",\n"+sp.n+" — mood";
   return {objet:objet,message:message};
 }
 function render(){
