@@ -28,6 +28,7 @@ export default function IceleaArrivagePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const scanRef = useRef<HTMLInputElement>(null);
 
   // Lecture défensive : si le serveur renvoie du HTML (timeout Vercel…), on affiche
   // le vrai texte au lieu d'un « Unexpected token » cryptique.
@@ -84,7 +85,6 @@ export default function IceleaArrivagePage() {
     const d = recv[i] || { recvQty: "", pickQty: "" };
     const receivedQty = Number(d.recvQty || 0), pickQty = Number(d.pickQty || 0);
     if (!r.variantId || receivedQty <= 0) { alert("Saisis une quantité reçue > 0."); return; }
-    if (!confirm(`Réceptionner ${receivedQty} × ${r.sku}${pickQty ? ` et sortir ${pickQty} (picking)` : ""} ?\nLa réception s'écrit dans Katana et ne peut pas être annulée depuis l'appli.`)) return;
     setBusy((s) => ({ ...s, [i]: true }));
     try {
       const res = await fetch("/api/icelea-arrivage/receive", {
@@ -94,6 +94,7 @@ export default function IceleaArrivagePage() {
       const data = await readJson(res);
       if (!res.ok) { alert((data.error as string) || "Erreur réception"); return; }
       setDone((s) => ({ ...s, [i]: data.result as ReceiveResult }));
+      scanRef.current?.focus(); // retour au champ scan → produit suivant directement
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
     finally { setBusy((s) => ({ ...s, [i]: false })); }
   }
@@ -136,7 +137,7 @@ export default function IceleaArrivagePage() {
                 className="rounded-xl border border-neutral-300 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100">↧ Imprimer (avec code-barres)</button>
             )}
             {rows && (
-              <input placeholder="🔎 Scanner un code-barres…"
+              <input ref={scanRef} autoFocus placeholder="🔎 Scanner un code-barres…"
                 onKeyDown={(e) => { if (e.key === "Enter") { onScan(e.currentTarget.value); e.currentTarget.value = ""; } }}
                 className="rounded-xl border border-neutral-300 px-3 py-2 text-sm w-56" />
             )}
@@ -234,12 +235,14 @@ export default function IceleaArrivagePage() {
                               <label className="w-8 text-[10px] text-neutral-500">reçu</label>
                               <input type="number" min="0" data-recv={i} value={recv[i]?.recvQty ?? ""}
                                 onChange={(e) => setRecv((s) => ({ ...s, [i]: { recvQty: e.target.value, pickQty: s[i]?.pickQty ?? "" } }))}
+                                onKeyDown={(e) => { if (e.key === "Enter") validateReceive(i, r); }}
                                 className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
                             </div>
                             <div className="flex items-center gap-1">
                               <label className="w-8 text-[10px] text-neutral-500">sorti</label>
                               <input type="number" min="0" placeholder="0" value={recv[i]?.pickQty ?? ""}
                                 onChange={(e) => setRecv((s) => ({ ...s, [i]: { recvQty: s[i]?.recvQty ?? "", pickQty: e.target.value } }))}
+                                onKeyDown={(e) => { if (e.key === "Enter") validateReceive(i, r); }}
                                 className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
                             </div>
                             <button onClick={() => validateReceive(i, r)} disabled={busy[i]}
