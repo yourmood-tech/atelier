@@ -49,20 +49,25 @@ export async function refreshIndexStep(restart = false): Promise<RefreshProgress
     for (const st of ["NOT_RECEIVED", "PARTIALLY_RECEIVED"]) {
       const j = await kf(`/v1/purchase_orders?supplier_id=${ICELEA}&status=${st}&limit=100`);
       for (const po of ((j?.data as Record<string, unknown>[]) ?? [])) {
-        for (const row of ((po.purchase_order_rows as Record<string, unknown>[]) ?? [])) {
-          if (row.deleted_at || row.received_date) continue;
+        // position = n° de ligne visible dans Katana (parmi les lignes non supprimées)
+        const poRows = ((po.purchase_order_rows as Record<string, unknown>[]) ?? []).filter((r) => !r.deleted_at);
+        poRows.forEach((row, i) => {
+          if (row.received_date) return;
           openRows.push({
             vid: row.variant_id as number,
             qty: row.quantity as number,
             rowId: row.id as number,
             po: po.order_no as string,
+            line: i + 1,
             created: (po.order_created_date as string) ?? (po.created_at as string) ?? "",
           });
           ids.add(row.variant_id as number);
-        }
+        });
       }
     }
-    state = { ids: [...ids], openRows, vmap: {}, cursor: 0 };
+    // réutilise les variants déjà résolus (index précédent) → reconstruction rapide
+    const prev = await kv.get<VariantIndex>(KV_INDEX);
+    state = { ids: [...ids], openRows, vmap: prev?.vmap ?? {}, cursor: 0 };
     await kv.set(KV_BUILD, state);
     return { phase: "resolving", done: 0, total: state.ids.length };
   }
@@ -77,6 +82,7 @@ export async function refreshIndexStep(restart = false): Promise<RefreshProgress
     Date.now() - started < 30000
   ) {
     const id = state.ids[state.cursor + processed];
+    if (state.vmap[id]) { processed++; continue; } // déjà résolu (index précédent) → on saute
     const j = await kf(`/v1/variants/${id}`);
     if (j && j.id) {
       const t = ((j.config_attributes as { config_name: string; config_value: string }[]) ?? [])

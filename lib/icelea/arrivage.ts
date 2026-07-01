@@ -20,14 +20,14 @@ export interface ReceptionRow {
   sku: string | null;       // SKU Katana résolu
   variantId: number | null;
   barcode: string | null;   // code-barres Katana (Code128)
-  pos: { po: string; rowId: number; qty: number; created: string }[]; // PO ouverts FIFO
+  pos: { po: string; line: number; rowId: number; qty: number; created: string }[]; // PO ouverts FIFO
   openQty: number;          // total encore à recevoir dans les PO ouverts
   match: "code" | "nom" | "manuel"; // comment le SKU a été trouvé
 }
 
 export interface VariantIndex {
   vmap: Record<string, { sku: string; size: string | null; barcode: string | null }>;
-  openRows: { vid: number; qty: number; rowId: number; po: string; created: string }[];
+  openRows: { vid: number; qty: number; rowId: number; po: string; line: number; created: string }[];
 }
 
 // ── Normalisation ────────────────────────────────────────────────────────────
@@ -101,7 +101,8 @@ export async function extractInvoiceItems(buffer: Buffer): Promise<ParsedItem[]>
     const isProductLine = hasPcs && (isRef(ref0) || /\bRing\b/i.test(line));
     if (isProductLine) {
       const qty = Number((line.match(/(\d+)\s+Pcs?\b/i) || [])[1]) || 0;
-      const eur = (line.match(/EUROPE\s+([0-9=,\s]+)/i) || [])[1] || "";
+      // ne capture QUE la suite de paires "taille=qté" (s'arrête avant le prix)
+      const eur = (line.match(/EUROPE\s+((?:\d{2}\s*=\s*\d+\s*,?\s*)+)/i) || [])[1] || "";
       const sizes: Record<string, number> = {};
       for (const m of eur.matchAll(/(\d{2})\s*=\s*(\d+)/g)) sizes[m[1]] = (sizes[m[1]] || 0) + Number(m[2]);
       const nums = [...line.matchAll(/(\d+\.\d{2})/g)].map((m) => Number(m[1]));
@@ -177,7 +178,7 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
         sku: c0?.sku ?? null,
         variantId: c0?.vid ?? null,
         barcode: c0?.barcode ?? null,
-        pos: cands.map((c) => ({ po: c.po, rowId: c.rowId, qty: c.qty, created: c.created })),
+        pos: cands.map((c) => ({ po: c.po, line: c.line, rowId: c.rowId, qty: c.qty, created: c.created })),
         openQty: cands.reduce((s, c) => s + c.qty, 0),
         match: cands.length ? via : "manuel",
       });

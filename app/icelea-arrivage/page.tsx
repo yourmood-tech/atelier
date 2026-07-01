@@ -6,7 +6,7 @@ import { code128Svg } from "@/lib/icelea/barcode";
 type ReceptionRow = {
   code: string | null; label: string; size: string | null; invoiceQty: number;
   sku: string | null; variantId: number | null; barcode: string | null;
-  pos: { po: string; rowId: number; qty: number; created: string }[];
+  pos: { po: string; line: number; rowId: number; qty: number; created: string }[];
   openQty: number; match: "code" | "nom" | "manuel";
 };
 type Summary = {
@@ -30,16 +30,17 @@ export default function IceleaArrivagePage() {
     try { return JSON.parse(t); } catch { return { error: t.slice(0, 300) || `HTTP ${res.status}` }; }
   }
 
-  async function buildIndex(): Promise<boolean> {
-    setIndexMsg("Construction de l'index Icelea… (une seule fois, puis instantané)");
-    // restart:false → on REPREND la construction là où elle en était (KV garde la
-    // progression), pour survivre à un rafraîchissement de page ou un redéploiement.
+  async function buildIndex(force = false): Promise<boolean> {
+    setIndexMsg("Construction de l'index Icelea… (réutilise les variants déjà connus)");
+    // restart:false → on REPREND là où on en était (KV garde la progression).
+    // force=true (bouton) → on relit les PO ouverts (nouveaux PO / positions de ligne),
+    // mais les variants déjà résolus sont réutilisés → rapide.
     for (let i = 0; i < 60; i++) {
       let res: Response;
       try {
         res = await fetch("/api/icelea-arrivage/refresh-index", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restart: false }),
+          body: JSON.stringify({ restart: force && i === 0 }),
         });
       } catch { setError("Réseau interrompu pendant la construction de l'index — relance."); return false; }
       const p = await readJson(res);
@@ -74,6 +75,7 @@ export default function IceleaArrivagePage() {
 
   return (
     <div className="min-h-screen bg-white text-neutral-900">
+      <style>{`@media print { @page { margin: 8mm; } table { font-size: 10px; } tr { break-inside: avoid; } svg { max-height: 34px; } }`}</style>
       <div className="mx-auto max-w-6xl p-6 space-y-5">
         <div className="print:hidden space-y-4">
           <h1 className="text-2xl font-semibold">Arrivage marchandise Icelea</h1>
@@ -92,6 +94,8 @@ export default function IceleaArrivagePage() {
               <button onClick={() => window.print()}
                 className="rounded-xl border border-neutral-300 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100">↧ Imprimer (avec code-barres)</button>
             )}
+            <button onClick={async () => { setLoading(true); await buildIndex(true); setLoading(false); }} disabled={loading}
+              className="rounded-xl border border-neutral-300 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100 disabled:opacity-50">↻ Reconstruire l&apos;index (nouveaux PO)</button>
           </div>
           {indexMsg && <div className="rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-800">{indexMsg}</div>}
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
@@ -112,9 +116,11 @@ export default function IceleaArrivagePage() {
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b border-neutral-300 text-left text-neutral-500">
-                  <th className="p-2">Code-barres</th><th className="p-2">SKU Katana / Produit</th>
-                  <th className="p-2">Taille</th><th className="p-2">Qté facture</th>
-                  <th className="p-2">PO ouverts (FIFO)</th><th className="p-2">Reçu</th>
+                  <th className="p-2">Code-barres</th>
+                  <th className="p-2">Produit &amp; PO ouverts (FIFO — ligne dans le PO)</th>
+                  <th className="p-2 w-14">Taille</th>
+                  <th className="p-2 w-12">Qté</th>
+                  <th className="p-2 w-16">Reçu</th>
                 </tr>
               </thead>
               <tbody>
@@ -131,17 +137,17 @@ export default function IceleaArrivagePage() {
                     <td className="p-2">
                       <div className="font-mono text-xs">{r.sku ?? r.label}</div>
                       {r.sku && <div className="text-[11px] text-neutral-500">{r.label}</div>}
-                      <span className={`mt-1 inline-block rounded border px-1.5 py-0.5 text-[10px] ${badge(r.match)}`}>{r.match}</span>
+                      {r.pos.length
+                        ? <div className="mt-0.5 text-[11px] text-neutral-500">
+                            PO : {r.pos.map((p, j) => (
+                              <span key={j}>{j > 0 ? " · " : ""}{p.po} <span className="text-neutral-400">(l.{p.line ?? "?"} ×{p.qty})</span></span>
+                            ))}
+                          </div>
+                        : <div className="mt-0.5 text-[11px] text-amber-700">aucun PO ouvert</div>}
                     </td>
                     <td className="p-2 font-medium">{r.size ?? "—"}</td>
                     <td className="p-2 font-semibold">{r.invoiceQty}</td>
-                    <td className="p-2 text-xs">
-                      {r.pos.length
-                        ? r.pos.map((p, j) => <div key={j}>{p.po} <span className="text-neutral-400">×{p.qty}</span></div>)
-                        : <span className="text-neutral-400">aucun PO ouvert</span>}
-                      {r.openQty > 0 && <div className="text-neutral-400">reste PO: {r.openQty}</div>}
-                    </td>
-                    <td className="p-2"><div className="h-6 w-16 border-b border-neutral-400" /></td>
+                    <td className="p-2"><div className="h-6 w-14 border-b border-neutral-400" /></td>
                   </tr>
                 ))}
               </tbody>
