@@ -131,7 +131,7 @@ export async function extractInvoiceItems(buffer: Buffer): Promise<ParsedItem[]>
       items.push(cur);
     } else if (
       cur && ref0 && !/^\d+\.\d+$/.test(ref0) && !/\d,\d/.test(ref0) &&   // ni "0.00" ni prix "3,300"
-      /^[\w.#/\-()'’ ]+$/.test(ref0) && ref0.length < 45 &&
+      /^[\w.#/+&\-()'’ ]+$/.test(ref0) && ref0.length < 45 &&
       !/EUROPE|Ring|Item|Total|Price|Qty|Descr|Page|USD|Carton|Weight/i.test(ref0)
     ) {
       // continuation du SKU coupé sur plusieurs lignes (ex. "Glitter/Royal Blue PVD/50-60",
