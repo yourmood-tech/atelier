@@ -91,6 +91,9 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    // Chambre sauvegardée côté serveur (avatar + déco) — pour la synchro multi-appareils.
+    const room = (await kv.get(`armoire:room:${email.toLowerCase()}`)) as unknown | null;
+
     return NextResponse.json({
       found: true,
       verified: true,
@@ -103,6 +106,7 @@ export async function POST(req: NextRequest) {
       unlocks,
       moodailles: won.map((w) => w.id),
       moodaillesOwned,
+      room,
     });
   } catch (e) {
     console.error("[armoire/verify] error", e);

@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
       deco: string[];
     } | null) ?? { games: [], deco: [] };
 
+    // Chambre sauvegardée (avatar + déco posée) pour reconstituer son univers.
+    const room = (await kv.get(`armoire:room:${clientEmail.toLowerCase()}`)) as unknown | null;
+
     return NextResponse.json({
       found: true,
       prenom: perso.prenom,
@@ -40,6 +43,7 @@ export async function POST(req: NextRequest) {
       orderNames: perso.orderNames,
       entitlements: perso.entitlements,
       unlocks,
+      room,
     });
   } catch (e) {
     console.error("[armoire/admin] error", e);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Room } from "./Room";
 import { AvatarStudio, type AvatarPick } from "./AvatarStudio";
 import { Memoire } from "./games/Memoire";
@@ -168,12 +168,14 @@ export default function ArmoirePage() {
       setData(json);
       try {
         const k = em.trim().toLowerCase();
-        setActive(JSON.parse(localStorage.getItem(`armoire:deco:${k}`) || "{}"));
-        setLayout(JSON.parse(localStorage.getItem(`armoire:layout:${k}`) || "{}"));
-        setPlaced(JSON.parse(localStorage.getItem(`armoire:placed:${k}`) || "[]"));
-        try { setAvatarPick(JSON.parse(localStorage.getItem(`armoire:avatarpick:${k}`) || "null")); } catch { setAvatarPick(null); }
-        setAvatarImage(localStorage.getItem(`armoire:avatarimg:${k}`) || null);
-        setAvatarOn(localStorage.getItem(`armoire:avataron:${k}`) === "1");
+        // La chambre enregistrée sur le serveur a la priorité (synchro multi-appareils) ; sinon le navigateur.
+        const srv = json.room && typeof json.room === "object" ? json.room : null;
+        setActive(srv?.active ?? JSON.parse(localStorage.getItem(`armoire:deco:${k}`) || "{}"));
+        setLayout(srv?.layout ?? JSON.parse(localStorage.getItem(`armoire:layout:${k}`) || "{}"));
+        setPlaced(srv?.placed ?? JSON.parse(localStorage.getItem(`armoire:placed:${k}`) || "[]"));
+        try { setAvatarPick(srv?.avatarPick ?? JSON.parse(localStorage.getItem(`armoire:avatarpick:${k}`) || "null")); } catch { setAvatarPick(null); }
+        setAvatarImage((srv?.avatarImage ?? localStorage.getItem(`armoire:avatarimg:${k}`)) || null);
+        setAvatarOn(srv ? !!srv.avatarOn : localStorage.getItem(`armoire:avataron:${k}`) === "1");
         setMoodaillesOwned(json.moodailles ?? []);
         setOwnedCards(json.moodaillesOwned ?? []);
         // mémorise la session pour revenir du jeu sans se reconnecter
@@ -200,6 +202,21 @@ export default function ArmoirePage() {
     } catch { /* ignore */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Sauvegarde SERVEUR de la chambre (avatar + déco) — anti-spam (900 ms) → visible dans l'admin + synchro.
+  const roomSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (status !== "espace" || !/\S+@\S+\.\S+/.test(email)) return;
+    if (roomSaveRef.current) clearTimeout(roomSaveRef.current);
+    roomSaveRef.current = setTimeout(() => {
+      fetch("/api/armoire/room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, orderNumber: commande, room: { avatarPick, avatarImage, avatarOn, placed, active, layout } }),
+      }).catch(() => { /* la sauvegarde ne doit jamais gêner */ });
+    }, 900);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [placed, active, layout, avatarPick, avatarImage, avatarOn]);
 
   function deconnexion() {
     try { localStorage.removeItem("armoire:session"); } catch { /* ignore */ }

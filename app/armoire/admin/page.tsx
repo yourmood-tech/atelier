@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Cabinet } from "../Cabinet";
+import { Room } from "../Room";
 
 /* Mon Armoire Mood — vue ADMIN (équipe Mood).
    Protégée par la connexion Google @yourmood.net (middleware + contrôle serveur).
@@ -17,6 +17,13 @@ type Data = {
   orderNames: string[];
   entitlements: { gamesBudget: number; decoBudget: number; commandesQualifiantes: number };
   unlocks: { games: string[]; deco: string[] };
+  room?: {
+    avatarImage?: string | null;
+    avatarOn?: boolean;
+    placed?: string[];
+    active?: { mur?: string; sol?: string; armoire?: string };
+    layout?: Record<string, { left: number; top: number; w: number }>;
+  } | null;
 };
 type Cliente = {
   email: string; prenom: string; commandes: number; visites: number; derniere: string | null;
@@ -98,10 +105,24 @@ export default function ArmoireAdminPage() {
                 <span>{data.stats.totalDepense} {data.stats.devise}</span>
               </div>
               {(data.unlocks.deco.length > 0) && (
-                <div style={{ fontSize: 13, opacity: 0.75, marginTop: 8 }}>Objets débloqués : {data.unlocks.deco.length}</div>
+                <div style={{ fontSize: 13, opacity: 0.75, marginTop: 8 }}>
+                  Objets débloqués : {data.unlocks.deco.length}
+                  {data.room?.placed?.length ? ` · ${data.room.placed.length} posé(s) dans sa chambre` : ""}
+                  {data.room?.avatarImage ? " · avatar créé 🧍" : ""}
+                </div>
               )}
             </div>
-            <Cabinet tiroirs={data.tiroirs} open={open} setOpen={setOpen} />
+            <Room
+              tiroirs={data.tiroirs}
+              open={open}
+              setOpen={setOpen}
+              unlocked={data.unlocks.deco}
+              placed={data.room?.placed ?? []}
+              active={data.room?.active ?? {}}
+              layout={data.room?.layout ?? {}}
+              avatarOn={!!data.room?.avatarOn}
+              avatarImage={data.room?.avatarImage ?? null}
+            />
           </div>
         )}
 
