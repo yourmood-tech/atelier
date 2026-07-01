@@ -14,12 +14,16 @@ type Summary = {
   matchedRows: number; approxRows: number; manualRows: number; noAssocRows?: number; iceleaVariants: number;
 };
 type CatalogEntry = { vid: number; sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
+type ReceiveResult = { receivedOnPO: { po: string; line: number; qty: number }[]; totalReceivedPO: number; surplus: number; forcedNoPO: number; picked: number };
 
 export default function IceleaArrivagePage() {
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<ReceptionRow[] | null>(null);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [editRows, setEditRows] = useState<Record<number, boolean>>({});
+  const [recv, setRecv] = useState<Record<number, { recvQty: string; pickQty: string }>>({}); // saisie réception/picking par ligne
+  const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées
+  const [busy, setBusy] = useState<Record<number, boolean>>({});
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,6 +79,33 @@ export default function IceleaArrivagePage() {
     setEditRows((e) => ({ ...e, [i]: false }));
   }
 
+  // valide la réception d'une ligne : imputation FIFO PO + surplus + picking (écrit dans Katana)
+  async function validateReceive(i: number, r: ReceptionRow) {
+    const d = recv[i] || { recvQty: "", pickQty: "" };
+    const receivedQty = Number(d.recvQty || 0), pickQty = Number(d.pickQty || 0);
+    if (!r.variantId || receivedQty <= 0) { alert("Saisis une quantité reçue > 0."); return; }
+    if (!confirm(`Réceptionner ${receivedQty} × ${r.sku}${pickQty ? ` et sortir ${pickQty} (picking)` : ""} ?\nLa réception s'écrit dans Katana et ne peut pas être annulée depuis l'appli.`)) return;
+    setBusy((s) => ({ ...s, [i]: true }));
+    try {
+      const res = await fetch("/api/icelea-arrivage/receive", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantId: r.variantId, receivedQty, pickQty }),
+      });
+      const data = await readJson(res);
+      if (!res.ok) { alert((data.error as string) || "Erreur réception"); return; }
+      setDone((s) => ({ ...s, [i]: data.result as ReceiveResult }));
+    } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy((s) => ({ ...s, [i]: false })); }
+  }
+  // scan code-barres → focalise la ligne correspondante
+  function onScan(code: string) {
+    const c = code.trim(); if (!c || !rows) return;
+    const idx = rows.findIndex((r) => r.barcode === c);
+    if (idx < 0) { alert(`Code-barres « ${c} » absent de la liste.`); return; }
+    const el = document.querySelector<HTMLInputElement>(`[data-recv="${idx}"]`);
+    el?.scrollIntoView({ block: "center" }); el?.focus();
+  }
+
   const badge = (m: ReceptionRow["match"]) =>
     m === "manuel" ? "bg-red-100 text-red-800 border-red-300"
     : m === "approx" ? "bg-amber-100 text-amber-800 border-amber-300"
@@ -103,6 +134,11 @@ export default function IceleaArrivagePage() {
             {rows && (
               <button onClick={() => window.print()}
                 className="rounded-xl border border-neutral-300 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100">↧ Imprimer (avec code-barres)</button>
+            )}
+            {rows && (
+              <input placeholder="🔎 Scanner un code-barres…"
+                onKeyDown={(e) => { if (e.key === "Enter") { onScan(e.currentTarget.value); e.currentTarget.value = ""; } }}
+                className="rounded-xl border border-neutral-300 px-3 py-2 text-sm w-56" />
             )}
           </div>
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
@@ -179,7 +215,39 @@ export default function IceleaArrivagePage() {
                     </td>
                     <td className="p-2 font-medium">{r.size ?? "—"}</td>
                     <td className="p-2 font-semibold">{r.invoiceQty}</td>
-                    <td className="p-2"><div className="h-6 w-14 border-b border-neutral-400" /></td>
+                    <td className="p-2">
+                      <div className="hidden h-6 w-14 border-b border-neutral-400 print:block" />
+                      <div className="print:hidden">
+                        {!r.variantId ? (
+                          <span className="text-[11px] text-neutral-400">—</span>
+                        ) : done[i] ? (
+                          <div className="text-[11px] text-emerald-700">
+                            <div className="font-medium">✓ reçu {done[i].totalReceivedPO + done[i].surplus + done[i].forcedNoPO}</div>
+                            {done[i].receivedOnPO.map((p, k) => <div key={k} className="text-neutral-500">{p.po} l.{p.line} ×{p.qty}</div>)}
+                            {done[i].surplus > 0 && <div className="text-amber-700">surplus stock +{done[i].surplus}</div>}
+                            {done[i].forcedNoPO > 0 && <div className="text-amber-700">sans PO +{done[i].forcedNoPO}</div>}
+                            {done[i].picked > 0 && <div className="text-sky-700">picking −{done[i].picked}</div>}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1">
+                              <label className="w-8 text-[10px] text-neutral-500">reçu</label>
+                              <input type="number" min="0" data-recv={i} value={recv[i]?.recvQty ?? ""}
+                                onChange={(e) => setRecv((s) => ({ ...s, [i]: { recvQty: e.target.value, pickQty: s[i]?.pickQty ?? "" } }))}
+                                className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <label className="w-8 text-[10px] text-neutral-500">sorti</label>
+                              <input type="number" min="0" placeholder="0" value={recv[i]?.pickQty ?? ""}
+                                onChange={(e) => setRecv((s) => ({ ...s, [i]: { recvQty: s[i]?.recvQty ?? "", pickQty: e.target.value } }))}
+                                className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
+                            </div>
+                            <button onClick={() => validateReceive(i, r)} disabled={busy[i]}
+                              className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">{busy[i] ? "…" : "Valider"}</button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
