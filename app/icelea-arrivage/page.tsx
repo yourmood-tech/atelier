@@ -145,8 +145,14 @@ export default function IceleaArrivagePage() {
                             <button onClick={() => markNoAssoc(i, r.label)} className="block text-[11px] text-neutral-500 underline">∅ sans association Katana</button>
                           </div>
                         ) : (
-                          <button onClick={() => setEditRows((e) => ({ ...e, [i]: true }))}
-                            className="block text-[11px] text-sky-700 underline">{r.match === "aucun" ? "✎ associer un SKU" : "✎ changer le SKU"}</button>
+                          <div className="flex flex-wrap gap-3">
+                            <button onClick={() => setEditRows((e) => ({ ...e, [i]: true }))}
+                              className="text-[11px] text-sky-700 underline">{r.match === "aucun" ? "✎ associer un SKU" : "✎ changer le SKU"}</button>
+                            {r.match !== "aucun" && (
+                              <button onClick={() => markNoAssoc(i, r.label)}
+                                className="text-[11px] text-neutral-500 underline">∅ retirer l&apos;association</button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
