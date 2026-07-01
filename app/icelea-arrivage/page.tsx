@@ -12,6 +12,7 @@ type ReceptionRow = {
 type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
   matchedRows: number; approxRows: number; manualRows: number; openVariants: number;
+  newResolved?: number; unresolved?: number;
 };
 type CatalogEntry = { sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
 
@@ -111,6 +112,11 @@ export default function IceleaArrivagePage() {
           </div>
           {indexMsg && <div className="rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-800">{indexMsg}</div>}
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          {summary && (summary.unresolved ?? 0) > 0 && (
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+              {summary.unresolved} variant(s) pas encore indexé(s) (nouveau(x) produit(s)) — clique « ↻ Reconstruire l&apos;index » puis relance « Préparer ».
+            </div>
+          )}
           {summary && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
               <Stat k="Lignes facture" v={summary.invoiceLines} />
