@@ -23,9 +23,12 @@ type Profile = {
   commandes: number;
   visites: number;
   derniere: string | null;
-  personnalise: boolean;   // a sauvé de la déco
+  personnalise: boolean;   // a sauvé quelque chose
   objets: number;          // objets déco débloqués
+  poses: number;           // objets réellement posés dans la chambre
+  avatar: boolean;         // a un avatar
   moodailles: number;      // cartes gagnées
+  staff: boolean;          // membre de l'équipe (@yourmood.net)
   aFait: boolean;          // a "fait" sa commood
 };
 
@@ -37,17 +40,18 @@ export async function GET() {
   }
 
   try {
-    const [seenK, ovK, unlK, wonK] = await Promise.all([
+    const [seenK, ovK, unlK, wonK, roomK] = await Promise.all([
       scan("armoire:seen:*"),
       scan("armoire:ov:*"),
       scan("armoire:unlocks:*"),
       scan("moodwon:*"),
+      scan("armoire:room:*"),
     ]);
 
     const map = new Map<string, Profile>();
     const get = (em: string): Profile => {
       const key = em.toLowerCase();
-      if (!map.has(key)) map.set(key, { email: key, prenom: "", commandes: 0, visites: 0, derniere: null, personnalise: false, objets: 0, moodailles: 0, aFait: false });
+      if (!map.has(key)) map.set(key, { email: key, prenom: "", commandes: 0, visites: 0, derniere: null, personnalise: false, objets: 0, poses: 0, avatar: false, moodailles: 0, staff: key.endsWith("@yourmood.net"), aFait: false });
       return map.get(key)!;
     };
 
@@ -68,17 +72,23 @@ export async function GET() {
       const w = (await kv.get(k)) as unknown[] | null;
       get(emailOf(k)).moodailles = Array.isArray(w) ? w.length : 0;
     }
+    for (const k of roomK) {
+      const r = (await kv.get(k)) as { avatarImage?: string | null; placed?: string[]; active?: Record<string, string> } | null;
+      const p = get(emailOf(k));
+      p.avatar = !!r?.avatarImage;
+      p.poses = Array.isArray(r?.placed) ? r!.placed.length : 0;
+      if (p.poses > 0 || Object.keys(r?.active ?? {}).length > 0 || p.avatar) p.personnalise = true;
+    }
 
-    const staff = new Set(["amila@yourmood.net", "stephanie@yourmood.net"]);
-    const list = [...map.values()].filter((p) => !staff.has(p.email));
-    list.forEach((p) => { p.aFait = p.personnalise || p.objets > 0 || p.moodailles > 0; });
+    const list = [...map.values()];
+    list.forEach((p) => { p.aFait = p.personnalise || p.objets > 0 || p.moodailles > 0 || p.poses > 0 || p.avatar; });
 
-    const score = (p: Profile) => (p.aFait ? 1000 : 0) + p.moodailles * 50 + p.objets * 20 + (p.personnalise ? 30 : 0) + p.visites;
+    const score = (p: Profile) => (p.aFait ? 1000 : 0) + p.moodailles * 50 + p.poses * 25 + p.objets * 20 + (p.avatar ? 40 : 0) + (p.personnalise ? 30 : 0) + p.visites;
     list.sort((a, b) => score(b) - score(a) || (b.derniere ?? "").localeCompare(a.derniere ?? ""));
 
     return NextResponse.json({
-      total: list.length,
-      aFait: list.filter((p) => p.aFait).length,
+      total: list.filter((p) => !p.staff).length,
+      aFait: list.filter((p) => p.aFait && !p.staff).length,
       clientes: list,
     });
   } catch (e) {

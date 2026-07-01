@@ -96,7 +96,7 @@ export function AvatarStudio({
             )}
           </div>
           <button
-            onClick={() => onToggleRoom(!avatarOn)}
+            onClick={() => { const on = !avatarOn; if (on && img) onPick(cur, img); onToggleRoom(on); }}
             disabled={!img}
             style={{
               width: "100%",

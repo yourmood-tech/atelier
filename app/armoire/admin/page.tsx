@@ -27,7 +27,7 @@ type Data = {
 };
 type Cliente = {
   email: string; prenom: string; commandes: number; visites: number; derniere: string | null;
-  personnalise: boolean; objets: number; moodailles: number; aFait: boolean;
+  personnalise: boolean; objets: number; poses: number; avatar: boolean; moodailles: number; staff: boolean; aFait: boolean;
 };
 
 const ENCRE = "#3a3330";
@@ -67,8 +67,9 @@ export default function ArmoireAdminPage() {
     } catch { setState("error"); }
   }
 
-  const fait = liste.filter((c) => c.aFait);
-  const ouverts = liste.filter((c) => !c.aFait);
+  const fait = liste.filter((c) => c.aFait && !c.staff);
+  const ouverts = liste.filter((c) => !c.aFait && !c.staff);
+  const equipe = liste.filter((c) => c.staff);
 
   return (
     <main style={{ minHeight: "100vh", background: "#faf7f3", color: ENCRE, fontFamily: "'Helvetica Neue', Arial, sans-serif", padding: "0 18px 64px" }}>
@@ -112,17 +113,32 @@ export default function ArmoireAdminPage() {
                 </div>
               )}
             </div>
-            <Room
-              tiroirs={data.tiroirs}
-              open={open}
-              setOpen={setOpen}
-              unlocked={data.unlocks.deco}
-              placed={data.room?.placed ?? []}
-              active={data.room?.active ?? {}}
-              layout={data.room?.layout ?? {}}
-              avatarOn={!!data.room?.avatarOn}
-              avatarImage={data.room?.avatarImage ?? null}
-            />
+            {(() => {
+              const synced = !!(data.room && ((data.room.placed?.length ?? 0) > 0 || data.room.avatarImage));
+              // Si la chambre n'est pas encore synchronisée, on montre au moins les objets DÉBLOQUÉS (données serveur).
+              const placed = data.room?.placed?.length ? data.room.placed : data.unlocks.deco;
+              return (
+                <>
+                  {!synced && (
+                    <div style={{ ...box(), background: "#fff8ef", borderColor: "#f0e2c8", fontSize: 13 }}>
+                      🕓 Sa déco exacte et son avatar ne sont <b>pas encore synchronisés</b> (elle doit rouvrir sa commood une fois).
+                      En attendant, voici les <b>objets qu&apos;elle a débloqués</b>, posés à titre indicatif.
+                    </div>
+                  )}
+                  <Room
+                    tiroirs={data.tiroirs}
+                    open={open}
+                    setOpen={setOpen}
+                    unlocked={data.unlocks.deco}
+                    placed={placed}
+                    active={data.room?.active ?? {}}
+                    layout={data.room?.layout ?? {}}
+                    avatarOn={!!data.room?.avatarOn}
+                    avatarImage={data.room?.avatarImage ?? null}
+                  />
+                </>
+              );
+            })()}
           </div>
         )}
 
@@ -141,6 +157,12 @@ export default function ArmoireAdminPage() {
             {ouverts.map((c) => <Row key={c.email} c={c} onClick={() => ouvrir(c.email)} />)}
           </>
         )}
+        {!data && equipe.length > 0 && (
+          <>
+            <SectionTitle>🧪 Équipe Mood (tests)</SectionTitle>
+            {equipe.map((c) => <Row key={c.email} c={c} onClick={() => ouvrir(c.email)} highlight />)}
+          </>
+        )}
       </div>
     </main>
   );
@@ -148,7 +170,8 @@ export default function ArmoireAdminPage() {
 
 function Row({ c, onClick, highlight }: { c: Cliente; onClick: () => void; highlight?: boolean }) {
   const badges: string[] = [];
-  if (c.personnalise) badges.push("🎨 personnalisé");
+  if (c.avatar) badges.push("🧍 avatar");
+  if (c.poses > 0) badges.push(`🪴 ${c.poses} posé${c.poses > 1 ? "s" : ""}`);
   if (c.objets > 0) badges.push(`🔓 ${c.objets} objet${c.objets > 1 ? "s" : ""}`);
   if (c.moodailles > 0) badges.push(`🏅 ${c.moodailles} moodaille${c.moodailles > 1 ? "s" : ""}`);
   if (c.visites > 0) badges.push(`👁 ${c.visites} visite${c.visites > 1 ? "s" : ""}`);
