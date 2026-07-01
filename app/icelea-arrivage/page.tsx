@@ -32,16 +32,16 @@ export default function IceleaArrivagePage() {
 
   async function buildIndex(): Promise<boolean> {
     setIndexMsg("Construction de l'index Icelea… (une seule fois, puis instantané)");
-    let restart = true;
+    // restart:false → on REPREND la construction là où elle en était (KV garde la
+    // progression), pour survivre à un rafraîchissement de page ou un redéploiement.
     for (let i = 0; i < 60; i++) {
       let res: Response;
       try {
         res = await fetch("/api/icelea-arrivage/refresh-index", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restart }),
+          body: JSON.stringify({ restart: false }),
         });
       } catch { setError("Réseau interrompu pendant la construction de l'index — relance."); return false; }
-      restart = false;
       const p = await readJson(res);
       if (!res.ok) { setError((p.error as string) || "Erreur construction index"); return false; }
       if (p.phase === "done") { setIndexMsg(`Index prêt (${p.total} variants).`); return true; }
