@@ -22,8 +22,11 @@ export interface ReceptionRow {
   barcode: string | null;   // code-barres Katana (Code128)
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[]; // PO ouverts FIFO
   openQty: number;          // total encore à recevoir dans les PO ouverts
-  match: "code" | "nom" | "approx" | "manuel" | "corrige"; // corrige = correction mémorisée réappliquée
+  match: "code" | "nom" | "approx" | "manuel" | "corrige" | "aucun"; // corrige = mémorisé · aucun = sans association Katana (volontaire)
 }
+
+// Marqueur d'override signifiant "cette ligne n'a volontairement PAS d'association Katana".
+export const OVERRIDE_NONE = "__NONE__";
 
 export interface VariantIndex {
   vmap: Record<string, { sku: string; size: string | null; barcode: string | null }>;
@@ -239,9 +242,13 @@ export function applyOverrides(rows: ReceptionRow[], overrides: Record<string, s
   const byFamSize = new Map<string, CatalogEntry>();
   for (const e of catalog) if (e.size) byFamSize.set(`${familyOf(e.sku)}|${e.size}`, e);
   return rows.map((r) => {
-    if (!r.size) return r;
     const fam = overrides[overrideKey(r.label)];
     if (!fam) return r;
+    if (fam === OVERRIDE_NONE) {
+      // correction mémorisée = "pas d'association Katana"
+      return { ...r, sku: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" as const };
+    }
+    if (!r.size) return r;
     const e = byFamSize.get(`${fam}|${r.size}`);
     if (!e) return r;
     return {

@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       matchedRows: rows.filter((r) => r.match === "code" || r.match === "nom" || r.match === "corrige").length,
       approxRows: rows.filter((r) => r.match === "approx").length,
       manualRows: rows.filter((r) => r.match === "manuel").length,
+      noAssocRows: rows.filter((r) => r.match === "aucun").length,
       iceleaVariants: catalog.length,
     };
     return NextResponse.json({ rows, summary, catalog });

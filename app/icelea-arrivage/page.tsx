@@ -7,11 +7,11 @@ type ReceptionRow = {
   code: string | null; label: string; size: string | null; invoiceQty: number;
   sku: string | null; variantId: number | null; barcode: string | null;
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[];
-  openQty: number; match: "code" | "nom" | "approx" | "manuel" | "corrige";
+  openQty: number; match: "code" | "nom" | "approx" | "manuel" | "corrige" | "aucun";
 };
 type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
-  matchedRows: number; approxRows: number; manualRows: number; iceleaVariants: number;
+  matchedRows: number; approxRows: number; manualRows: number; noAssocRows?: number; iceleaVariants: number;
 };
 type CatalogEntry = { vid: number; sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
 
@@ -54,18 +54,26 @@ export default function IceleaArrivagePage() {
     } : r) : prev);
   }
   // mémorise la correction côté serveur → réappliquée aux prochaines factures
+  // (sku null = mémorise "sans association Katana")
   function learnPick(label: string, sku: string | null) {
-    if (!sku) return;
     fetch("/api/icelea-arrivage/learn", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label, sku }),
     }).catch(() => {});
+  }
+  // marque une ligne comme "sans association Katana" (article hors Katana) + mémorise
+  function markNoAssoc(i: number, label: string) {
+    setRows((prev) => prev ? prev.map((r, idx) => idx === i
+      ? { ...r, sku: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" } : r) : prev);
+    learnPick(label, null);
+    setEditRows((e) => ({ ...e, [i]: false }));
   }
 
   const badge = (m: ReceptionRow["match"]) =>
     m === "manuel" ? "bg-red-100 text-red-800 border-red-300"
     : m === "approx" ? "bg-amber-100 text-amber-800 border-amber-300"
     : m === "corrige" ? "bg-violet-100 text-violet-800 border-violet-300"
+    : m === "aucun" ? "bg-neutral-100 text-neutral-600 border-neutral-300"
     : m === "nom" ? "bg-sky-100 text-sky-800 border-sky-300"
     : "bg-emerald-100 text-emerald-800 border-emerald-300";
 
@@ -129,12 +137,16 @@ export default function IceleaArrivagePage() {
                       <div className="print:hidden mt-1 space-y-1">
                         {r.match === "approx" && <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("approx")}`}>à vérifier</span>}
                         {r.match === "corrige" && <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("corrige")}`}>corrigé (mémorisé)</span>}
-                        {!r.barcode && <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>}
-                        {(editRows[i] || !r.barcode) ? (
-                          <ManualPick catalog={catalog} onPick={(c) => { updateRow(i, c); learnPick(r.label, c.sku); setEditRows((e) => ({ ...e, [i]: false })); }} />
+                        {r.match === "aucun" && <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("aucun")}`}>sans association</span>}
+                        {r.match === "manuel" && <span className={`rounded border px-2 py-0.5 text-xs ${badge("manuel")}`}>SKU à confirmer</span>}
+                        {(editRows[i] || r.match === "manuel") ? (
+                          <div className="space-y-1">
+                            <ManualPick catalog={catalog} onPick={(c) => { updateRow(i, c); learnPick(r.label, c.sku); setEditRows((e) => ({ ...e, [i]: false })); }} />
+                            <button onClick={() => markNoAssoc(i, r.label)} className="block text-[11px] text-neutral-500 underline">∅ sans association Katana</button>
+                          </div>
                         ) : (
                           <button onClick={() => setEditRows((e) => ({ ...e, [i]: true }))}
-                            className="block text-[11px] text-sky-700 underline">✎ changer le SKU</button>
+                            className="block text-[11px] text-sky-700 underline">{r.match === "aucun" ? "✎ associer un SKU" : "✎ changer le SKU"}</button>
                         )}
                       </div>
                     </td>

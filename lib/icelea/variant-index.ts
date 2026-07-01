@@ -5,7 +5,7 @@
 // Plus aucun cache ni index à reconstruire : la source de vérité est relue à chaque fois.
 import { kv } from "@vercel/kv";
 import type { VariantIndex } from "./arrivage";
-import { overrideKey, familyOf } from "./arrivage";
+import { overrideKey, familyOf, OVERRIDE_NONE } from "./arrivage";
 
 const BASE = process.env.KATANA_BASE_URL!;
 const KEY = process.env.KATANA_API_KEY!;
@@ -16,11 +16,12 @@ const KV_OVERRIDES = "icelea_arrivage_overrides"; // corrections mémorisées : 
 export async function getOverrides(): Promise<Record<string, string>> {
   try { return (await kv.get<Record<string, string>>(KV_OVERRIDES)) ?? {}; } catch { return {}; }
 }
-export async function saveOverride(label: string, sku: string): Promise<void> {
+// sku non vide → mémorise la famille SKU ; sku vide/null → mémorise "sans association".
+export async function saveOverride(label: string, sku: string | null): Promise<void> {
   const key = overrideKey(label);
-  if (!key || !sku) return;
+  if (!key) return;
   const all = await getOverrides();
-  all[key] = familyOf(sku);
+  all[key] = sku ? familyOf(sku) : OVERRIDE_NONE;
   await kv.set(KV_OVERRIDES, all);
 }
 
