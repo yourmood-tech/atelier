@@ -50,6 +50,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Upload la facture PDF Icelea, compare avec Katana, applique les nouveaux prix d'achat et génère le CSV Shopify pour les articles avec hausse >5%.",
       },
       {
+        href: "/icelea-arrivage",
+        emoji: "📥",
+        title: "Arrivage Icelea",
+        description: "Facture PDF → liste de réception avec code-barres, scan pour réceptionner les PO (FIFO partiel) + picking, et rapport de fin FR/EN. Arrivage reprenable en plusieurs fois.",
+      },
+      {
         href: "/reassort",
         emoji: "📦",
         title: "Réassort fournisseurs",
