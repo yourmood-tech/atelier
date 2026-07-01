@@ -22,7 +22,7 @@ export interface ReceptionRow {
   barcode: string | null;   // code-barres Katana (Code128)
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[]; // PO ouverts FIFO
   openQty: number;          // total encore à recevoir dans les PO ouverts
-  match: "code" | "nom" | "manuel"; // comment le SKU a été trouvé
+  match: "code" | "nom" | "approx" | "manuel"; // code=sûr · nom=sûr(sans réf) · approx=meilleur choix à vérifier · manuel=à résoudre
 }
 
 export interface VariantIndex {
@@ -188,15 +188,22 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
       const topSkus = new Set(scored.filter((x) => x.s === top).map((x) => x.c.sku));
       const best: Rec | null = scored.find((x) => x.s === top)?.c ?? null; // FIFO-first parmi les meilleurs
 
-      let accept = false;
-      const via: ReceptionRow["match"] = it.code ? "code" : "nom";
+      let accept = false, approx = false;
       if (best) {
         const distinct = new Set(pool.map((c) => c.sku)).size;
-        const unambiguous = topSkus.size === 1; // un seul SKU gagnant (sinon on ne devine pas)
-        if (distinct === 1) accept = true;                                       // un seul variant pour ce code+taille
-        else if (it.code && itEmail.length) accept = itEmail.some((code) => best.cmp.includes(code)) && unambiguous; // code émail obligatoire
-        else accept = top >= 1 && unambiguous;                                   // couleur en toutes lettres, gagnant net
+        if (distinct === 1) {
+          accept = true;                                                          // un seul variant pour ce code+taille
+        } else if (it.code && itEmail.length) {
+          // code émail présent : il DOIT se retrouver, sinon on ne devine pas (source d'erreur connue)
+          accept = itEmail.some((code) => best.cmp.includes(code));
+          approx = accept && topSkus.size > 1;                                    // plusieurs SKU avec ce code → à vérifier
+        } else {
+          // couleur en toutes lettres : on propose le meilleur choix (option B)
+          accept = top >= 1;
+          approx = accept && topSkus.size > 1;                                    // égalité → proposé mais à vérifier
+        }
       }
+      const via: ReceptionRow["match"] = approx ? "approx" : it.code ? "code" : "nom";
       const chosen = accept ? best : null;
       const posRows = chosen ? fifo(pool.filter((c) => c.sku === chosen.sku)) : [];
       rows.push({

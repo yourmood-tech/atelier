@@ -7,11 +7,11 @@ type ReceptionRow = {
   code: string | null; label: string; size: string | null; invoiceQty: number;
   sku: string | null; variantId: number | null; barcode: string | null;
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[];
-  openQty: number; match: "code" | "nom" | "manuel";
+  openQty: number; match: "code" | "nom" | "approx" | "manuel";
 };
 type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
-  matchedRows: number; manualRows: number; openVariants: number;
+  matchedRows: number; approxRows: number; manualRows: number; openVariants: number;
 };
 type CatalogEntry = { sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
 
@@ -80,7 +80,8 @@ export default function IceleaArrivagePage() {
   }
 
   const badge = (m: ReceptionRow["match"]) =>
-    m === "manuel" ? "bg-amber-100 text-amber-800 border-amber-300"
+    m === "manuel" ? "bg-red-100 text-red-800 border-red-300"
+    : m === "approx" ? "bg-amber-100 text-amber-800 border-amber-300"
     : m === "nom" ? "bg-sky-100 text-sky-800 border-sky-300"
     : "bg-emerald-100 text-emerald-800 border-emerald-300";
 
@@ -115,9 +116,9 @@ export default function IceleaArrivagePage() {
               <Stat k="Lignes facture" v={summary.invoiceLines} />
               <Stat k="Pièces facturées" v={summary.invoicePieces} />
               <Stat k="Lignes de réception" v={summary.receptionRows} />
-              <Stat k="Matchées auto" v={summary.matchedRows} />
+              <Stat k="Matchées (sûres)" v={summary.matchedRows} />
+              <Stat k="À vérifier" v={summary.approxRows} />
               <Stat k="À confirmer (manuel)" v={summary.manualRows} />
-              <Stat k="Variants PO ouverts" v={summary.openVariants} />
             </div>
           )}
         </div>
@@ -138,15 +139,24 @@ export default function IceleaArrivagePage() {
                 {rows.map((r, i) => (
                   <tr key={i} className="border-b border-neutral-200 align-top">
                     <td className="p-2">
-                      {r.barcode
-                        ? <div className="space-y-0.5">
-                            <div dangerouslySetInnerHTML={{ __html: code128Svg(r.barcode) }} />
-                            <div className="font-mono text-[10px] text-neutral-500">{r.barcode}</div>
-                          </div>
-                        : <div>
-                            <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>
-                            <div className="print:hidden"><ManualPick catalog={catalog} onPick={(c) => updateRow(i, c)} /></div>
-                          </div>}
+                      {r.barcode && (
+                        <div className="space-y-0.5">
+                          <div dangerouslySetInnerHTML={{ __html: code128Svg(r.barcode) }} />
+                          <div className="font-mono text-[10px] text-neutral-500">{r.barcode}</div>
+                        </div>
+                      )}
+                      {r.match === "approx" && (
+                        <div className="print:hidden mt-1">
+                          <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("approx")}`}>à vérifier</span>
+                          <ManualPick catalog={catalog} onPick={(c) => updateRow(i, c)} />
+                        </div>
+                      )}
+                      {!r.barcode && (
+                        <div>
+                          <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>
+                          <div className="print:hidden"><ManualPick catalog={catalog} onPick={(c) => updateRow(i, c)} /></div>
+                        </div>
+                      )}
                     </td>
                     <td className="p-2">
                       <div className="font-mono text-xs">{r.sku ?? r.label}</div>

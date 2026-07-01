@@ -27,13 +27,13 @@ export async function POST(req: NextRequest) {
     const rows = matchToOpenPOs(items, index);
 
     const invoicePieces = items.reduce((s, it) => s + it.qty, 0);
-    const matched = rows.filter((r) => r.match !== "manuel");
     const summary = {
       invoiceLines: items.length,
       invoicePieces,
       receptionRows: rows.length,
-      matchedRows: matched.length,
-      manualRows: rows.length - matched.length,
+      matchedRows: rows.filter((r) => r.match === "code" || r.match === "nom").length,
+      approxRows: rows.filter((r) => r.match === "approx").length,
+      manualRows: rows.filter((r) => r.match === "manuel").length,
       openVariants: Object.keys(index.vmap).length,
     };
     return NextResponse.json({ rows, summary, catalog: buildCatalog(index) });
