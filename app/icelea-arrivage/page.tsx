@@ -24,6 +24,18 @@ export default function IceleaArrivagePage() {
   const [recv, setRecv] = useState<Record<number, { recvQty: string; pickQty: string }>>({}); // saisie réception/picking par ligne
   const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées
   const [busy, setBusy] = useState<Record<number, boolean>>({});
+  // Lot 3 — rapport de fin d'arrivage
+  type RemainingPo = { po: string; created: string; lines: { sku: string; size: string | null; qty: number; line: number }[] };
+  type Report = {
+    neverScanned: { label: string; size: string | null; qty: number }[];
+    qtyDiffs: { label: string; size: string | null; invoiceQty: number; receivedQty: number }[];
+    remaining: { pos: RemainingPo[]; totalLines: number; totalQty: number };
+  };
+  const [report, setReport] = useState<Report | null>(null);
+  const [reportLang, setReportLang] = useState<"fr" | "en">("fr");
+  const [remarksFr, setRemarksFr] = useState("");
+  const [remarksEn, setRemarksEn] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +110,39 @@ export default function IceleaArrivagePage() {
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
     finally { setBusy((s) => ({ ...s, [i]: false })); }
   }
+  // fin d'arrivage → construit le rapport (jamais scanné · écarts · reste à livrer)
+  async function buildReport() {
+    if (!rows) return;
+    setReportBusy(true);
+    try {
+      const neverScanned = rows
+        .map((r, i) => ({ r, i }))
+        .filter(({ i }) => !done[i])
+        .map(({ r }) => ({ label: r.label, size: r.size, qty: r.invoiceQty }));
+      const qtyDiffs = rows
+        .map((r, i) => ({ r, d: done[i] }))
+        .filter(({ d }) => d)
+        .map(({ r, d }) => ({ label: r.label, size: r.size, invoiceQty: r.invoiceQty, receivedQty: d.totalReceivedPO + d.surplus + d.forcedNoPO }))
+        .filter((x) => x.receivedQty !== x.invoiceQty);
+      const res = await fetch("/api/icelea-arrivage/open-remaining");
+      const rem = await readJson(res);
+      if (!res.ok) { alert((rem.error as string) || "Erreur reste à livrer"); return; }
+      setReport({ neverScanned, qtyDiffs, remaining: rem as Report["remaining"] });
+    } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
+    finally { setReportBusy(false); }
+  }
+  async function translateRemarks() {
+    if (!remarksFr.trim()) { setRemarksEn(""); return; }
+    setReportBusy(true);
+    try {
+      const res = await fetch("/api/icelea-arrivage/translate", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: remarksFr }),
+      });
+      const data = await readJson(res);
+      setRemarksEn((data.translation as string) || "");
+    } catch { setRemarksEn(""); } finally { setReportBusy(false); }
+  }
+
   // scan code-barres → focalise la ligne correspondante
   function onScan(code: string) {
     const c = code.trim(); if (!c || !rows) return;
@@ -141,6 +186,11 @@ export default function IceleaArrivagePage() {
                 onKeyDown={(e) => { if (e.key === "Enter") { onScan(e.currentTarget.value); e.currentTarget.value = ""; } }}
                 className="rounded-xl border border-neutral-300 px-3 py-2 text-sm w-56" />
             )}
+            {rows && !report && (
+              <button onClick={buildReport} disabled={reportBusy}
+                className="rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-50">
+                {reportBusy ? "…" : "Terminer l'arrivage → rapport"}</button>
+            )}
           </div>
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
           {summary && (
@@ -155,7 +205,7 @@ export default function IceleaArrivagePage() {
           )}
         </div>
 
-        {rows && (
+        {rows && !report && (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
@@ -257,6 +307,68 @@ export default function IceleaArrivagePage() {
             </table>
           </div>
         )}
+
+        {report && (() => {
+          const fr = reportLang === "fr";
+          return (
+            <div className="space-y-5">
+              <div className="print:hidden flex flex-wrap items-center gap-3">
+                <button onClick={() => setReport(null)} className="rounded-xl border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100">← retour à la liste</button>
+                <div className="inline-flex overflow-hidden rounded-xl border border-neutral-300 text-sm">
+                  <button onClick={() => setReportLang("fr")} className={`px-3 py-2 ${fr ? "bg-neutral-800 text-white" : ""}`}>FR</button>
+                  <button onClick={() => setReportLang("en")} className={`px-3 py-2 ${!fr ? "bg-neutral-800 text-white" : ""}`}>EN</button>
+                </div>
+                <button onClick={() => window.print()} className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">↧ Imprimer / PDF ({reportLang.toUpperCase()})</button>
+              </div>
+
+              <div className="space-y-5 text-sm">
+                <h1 className="text-xl font-semibold">{fr ? "Rapport d'arrivage — Icelea" : "Goods receipt report — Icelea"}</h1>
+
+                <section>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "1. Pièces facturées non reçues" : "1. Invoiced items not received"}</h2>
+                  {report.neverScanned.length === 0 ? <p className="text-neutral-500">{fr ? "Aucune." : "None."}</p> : (
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-left text-neutral-500"><th className="py-1">{fr ? "Article" : "Item"}</th><th>{fr ? "Taille" : "Size"}</th><th>{fr ? "Qté facture" : "Invoice qty"}</th></tr></thead>
+                      <tbody>{report.neverScanned.map((x, k) => <tr key={k} className="border-t border-neutral-100"><td className="py-0.5 font-mono">{x.label}</td><td>{x.size ?? "—"}</td><td>{x.qty}</td></tr>)}</tbody>
+                    </table>
+                  )}
+                </section>
+
+                <section>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "2. Écarts de quantité (facture ≠ reçu)" : "2. Quantity discrepancies (invoice ≠ received)"}</h2>
+                  {report.qtyDiffs.length === 0 ? <p className="text-neutral-500">{fr ? "Aucun." : "None."}</p> : (
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-left text-neutral-500"><th className="py-1">{fr ? "Article" : "Item"}</th><th>{fr ? "Taille" : "Size"}</th><th>{fr ? "Facture" : "Invoice"}</th><th>{fr ? "Reçu" : "Received"}</th><th>{fr ? "Écart" : "Diff"}</th></tr></thead>
+                      <tbody>{report.qtyDiffs.map((x, k) => <tr key={k} className="border-t border-neutral-100"><td className="py-0.5 font-mono">{x.label}</td><td>{x.size ?? "—"}</td><td>{x.invoiceQty}</td><td>{x.receivedQty}</td><td>{x.receivedQty - x.invoiceQty}</td></tr>)}</tbody>
+                    </table>
+                  )}
+                </section>
+
+                <section>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "3. Reste à livrer — PO ouverts" : "3. Still to deliver — open POs"} ({report.remaining.totalQty} {fr ? "pièces" : "pcs"})</h2>
+                  {report.remaining.pos.map((po) => (
+                    <div key={po.po} className="mt-2">
+                      <div className="font-medium">{po.po} <span className="text-neutral-400">({po.lines.reduce((s, l) => s + l.qty, 0)} {fr ? "pcs" : "pcs"})</span></div>
+                      <table className="w-full text-xs">
+                        <tbody>{po.lines.map((l, k) => <tr key={k} className="border-t border-neutral-100"><td className="py-0.5 font-mono">{l.sku}</td><td className="w-14">{l.size ?? "—"}</td><td className="w-10">×{l.qty}</td></tr>)}</tbody>
+                      </table>
+                    </div>
+                  ))}
+                </section>
+
+                <section>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "Remarques" : "Remarks"}</h2>
+                  <div className="print:hidden space-y-2">
+                    <textarea value={remarksFr} onChange={(e) => setRemarksFr(e.target.value)} rows={3} placeholder="Remarques (FR)…" className="w-full rounded border border-neutral-300 p-2 text-sm" />
+                    <button onClick={translateRemarks} disabled={reportBusy} className="rounded-xl border border-neutral-300 px-3 py-1 text-xs hover:bg-neutral-100 disabled:opacity-50">{reportBusy ? "…" : "Traduire → EN"}</button>
+                    <textarea value={remarksEn} onChange={(e) => setRemarksEn(e.target.value)} rows={3} placeholder="Remarks (EN, pour le fournisseur)…" className="w-full rounded border border-neutral-300 p-2 text-sm" />
+                  </div>
+                  <div className="hidden whitespace-pre-wrap print:block">{fr ? remarksFr : remarksEn}</div>
+                </section>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
