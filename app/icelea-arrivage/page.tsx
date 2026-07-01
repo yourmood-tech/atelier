@@ -19,6 +19,7 @@ export default function IceleaArrivagePage() {
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<ReceptionRow[] | null>(null);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
+  const [editRows, setEditRows] = useState<Record<number, boolean>>({});
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,18 +117,16 @@ export default function IceleaArrivagePage() {
                           <div className="font-mono text-[10px] text-neutral-500">{r.barcode}</div>
                         </div>
                       )}
-                      {r.match === "approx" && (
-                        <div className="print:hidden mt-1">
-                          <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("approx")}`}>à vérifier</span>
-                          <ManualPick catalog={catalog} onPick={(c) => updateRow(i, c)} />
-                        </div>
-                      )}
-                      {!r.barcode && (
-                        <div>
-                          <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>
-                          <div className="print:hidden"><ManualPick catalog={catalog} onPick={(c) => updateRow(i, c)} /></div>
-                        </div>
-                      )}
+                      <div className="print:hidden mt-1 space-y-1">
+                        {r.match === "approx" && <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("approx")}`}>à vérifier</span>}
+                        {!r.barcode && <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>}
+                        {(editRows[i] || !r.barcode) ? (
+                          <ManualPick catalog={catalog} onPick={(c) => { updateRow(i, c); setEditRows((e) => ({ ...e, [i]: false })); }} />
+                        ) : (
+                          <button onClick={() => setEditRows((e) => ({ ...e, [i]: true }))}
+                            className="block text-[11px] text-sky-700 underline">✎ changer le SKU</button>
+                        )}
+                      </div>
                     </td>
                     <td className="p-2">
                       <div className="font-mono text-xs">{r.sku ?? r.label}</div>
