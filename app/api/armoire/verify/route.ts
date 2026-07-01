@@ -42,6 +42,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Suivi des ouvertures (pour la vue admin) — clientes vérifiées uniquement, pas le staff.
+    if (!staff) {
+      try {
+        const sk = `armoire:seen:${email.toLowerCase()}`;
+        const prev = (await kv.get(sk)) as { count?: number; first?: string } | null;
+        await kv.set(sk, {
+          count: (prev?.count ?? 0) + 1,
+          first: prev?.first ?? new Date().toISOString(),
+          last: new Date().toISOString(),
+          prenom: armoire.prenom || "",
+          commandes: armoire.stats.commandes,
+        });
+      } catch { /* le suivi ne doit jamais bloquer l'ouverture */ }
+    }
+
     // Personnalisations de la cliente (déplacer / photo perso)
     const overrides = (await kv.get(`armoire:ov:${email.toLowerCase()}`)) as ArmoireOverrides | null;
     const perso = applyArmoireOverrides(armoire, overrides);
