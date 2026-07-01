@@ -7,7 +7,7 @@ type ReceptionRow = {
   code: string | null; label: string; size: string | null; invoiceQty: number;
   sku: string | null; variantId: number | null; barcode: string | null;
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[];
-  openQty: number; match: "code" | "nom" | "approx" | "manuel";
+  openQty: number; match: "code" | "nom" | "approx" | "manuel" | "corrige";
 };
 type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
@@ -50,13 +50,22 @@ export default function IceleaArrivagePage() {
     setRows((prev) => prev ? prev.map((r, idx) => idx === i ? {
       ...r, sku: c.sku, variantId: c.vid, barcode: c.barcode, size: c.size ?? r.size,
       pos: c.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: "" })),
-      openQty: c.pos.reduce((s, p) => s + p.qty, 0), match: "nom",
+      openQty: c.pos.reduce((s, p) => s + p.qty, 0), match: "corrige",
     } : r) : prev);
+  }
+  // mémorise la correction côté serveur → réappliquée aux prochaines factures
+  function learnPick(label: string, sku: string | null) {
+    if (!sku) return;
+    fetch("/api/icelea-arrivage/learn", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label, sku }),
+    }).catch(() => {});
   }
 
   const badge = (m: ReceptionRow["match"]) =>
     m === "manuel" ? "bg-red-100 text-red-800 border-red-300"
     : m === "approx" ? "bg-amber-100 text-amber-800 border-amber-300"
+    : m === "corrige" ? "bg-violet-100 text-violet-800 border-violet-300"
     : m === "nom" ? "bg-sky-100 text-sky-800 border-sky-300"
     : "bg-emerald-100 text-emerald-800 border-emerald-300";
 
@@ -119,9 +128,10 @@ export default function IceleaArrivagePage() {
                       )}
                       <div className="print:hidden mt-1 space-y-1">
                         {r.match === "approx" && <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("approx")}`}>à vérifier</span>}
+                        {r.match === "corrige" && <span className={`rounded border px-1.5 py-0.5 text-[10px] ${badge("corrige")}`}>corrigé (mémorisé)</span>}
                         {!r.barcode && <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>}
                         {(editRows[i] || !r.barcode) ? (
-                          <ManualPick catalog={catalog} onPick={(c) => { updateRow(i, c); setEditRows((e) => ({ ...e, [i]: false })); }} />
+                          <ManualPick catalog={catalog} onPick={(c) => { updateRow(i, c); learnPick(r.label, c.sku); setEditRows((e) => ({ ...e, [i]: false })); }} />
                         ) : (
                           <button onClick={() => setEditRows((e) => ({ ...e, [i]: true }))}
                             className="block text-[11px] text-sky-700 underline">✎ changer le SKU</button>

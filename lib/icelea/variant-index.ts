@@ -3,11 +3,26 @@
 //    obtenus via /v1/materials?default_supplier_id=… (la liste inclut déjà les variants).
 //  - openRows : les lignes des PO Icelea ouverts (avec position). Toujours frais.
 // Plus aucun cache ni index à reconstruire : la source de vérité est relue à chaque fois.
+import { kv } from "@vercel/kv";
 import type { VariantIndex } from "./arrivage";
+import { overrideKey, familyOf } from "./arrivage";
 
 const BASE = process.env.KATANA_BASE_URL!;
 const KEY = process.env.KATANA_API_KEY!;
 const ICELEA = 755704;
+const KV_OVERRIDES = "icelea_arrivage_overrides"; // corrections mémorisées : signatureLibellé → familleSKU
+
+// Corrections apprises (réappliquées automatiquement aux prochaines factures).
+export async function getOverrides(): Promise<Record<string, string>> {
+  try { return (await kv.get<Record<string, string>>(KV_OVERRIDES)) ?? {}; } catch { return {}; }
+}
+export async function saveOverride(label: string, sku: string): Promise<void> {
+  const key = overrideKey(label);
+  if (!key || !sku) return;
+  const all = await getOverrides();
+  all[key] = familyOf(sku);
+  await kv.set(KV_OVERRIDES, all);
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function kf(path: string, tries = 3): Promise<Record<string, unknown> | null> {

@@ -22,7 +22,7 @@ export interface ReceptionRow {
   barcode: string | null;   // code-barres Katana (Code128)
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[]; // PO ouverts FIFO
   openQty: number;          // total encore à recevoir dans les PO ouverts
-  match: "code" | "nom" | "approx" | "manuel"; // code=sûr · nom=sûr(sans réf) · approx=meilleur choix à vérifier · manuel=à résoudre
+  match: "code" | "nom" | "approx" | "manuel" | "corrige"; // corrige = correction mémorisée réappliquée
 }
 
 export interface VariantIndex {
@@ -219,4 +219,35 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
     }
   }
   return rows;
+}
+
+// ── Apprentissage : mémoriser les corrections manuelles et les réappliquer ────
+// Clé = signature du libellé facture (sans dépendre de la casse/ponctuation).
+export function overrideKey(label: string): string {
+  return (label || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+// Famille d'un SKU = le SKU sans sa taille finale → une correction se généralise à
+// toutes les tailles du même produit (ex. …-BLK-CZ-WHITE-CZ-54 → …-BLK-CZ-WHITE-CZ).
+export function familyOf(sku: string): string {
+  return (sku || "").replace(/-\s*\d{1,3}\s*$/, "").trim().toUpperCase();
+}
+
+// overrides : { signatureLibellé → familleSKU }. Réapplique la correction sur chaque
+// ligne (toutes tailles), en retrouvant le variant famille+taille dans le catalogue.
+export function applyOverrides(rows: ReceptionRow[], overrides: Record<string, string>, catalog: CatalogEntry[]): ReceptionRow[] {
+  if (!overrides || Object.keys(overrides).length === 0) return rows;
+  const byFamSize = new Map<string, CatalogEntry>();
+  for (const e of catalog) if (e.size) byFamSize.set(`${familyOf(e.sku)}|${e.size}`, e);
+  return rows.map((r) => {
+    if (!r.size) return r;
+    const fam = overrides[overrideKey(r.label)];
+    if (!fam) return r;
+    const e = byFamSize.get(`${fam}|${r.size}`);
+    if (!e) return r;
+    return {
+      ...r, sku: e.sku, variantId: e.vid, barcode: e.barcode,
+      pos: e.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: "" })),
+      openQty: e.pos.reduce((s, p) => s + p.qty, 0), match: "corrige",
+    };
+  });
 }

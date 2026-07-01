@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractInvoiceItems, matchToOpenPOs, buildCatalog, type VariantIndex } from "@/lib/icelea/arrivage";
-import { fetchIceleaVmap, fetchOpenRows } from "@/lib/icelea/variant-index";
+import { extractInvoiceItems, matchToOpenPOs, buildCatalog, applyOverrides, type VariantIndex } from "@/lib/icelea/arrivage";
+import { fetchIceleaVmap, fetchOpenRows, getOverrides } from "@/lib/icelea/variant-index";
 
 export const maxDuration = 60;
 
@@ -18,16 +18,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Aucune ligne produit trouvée dans la facture" }, { status: 422 });
     }
 
-    const [vmap, openRows] = await Promise.all([fetchIceleaVmap(), fetchOpenRows()]);
+    const [vmap, openRows, overrides] = await Promise.all([fetchIceleaVmap(), fetchOpenRows(), getOverrides()]);
     const index: VariantIndex = { vmap, openRows };
-    const rows = matchToOpenPOs(items, index);
     const catalog = buildCatalog(index);
+    // matching automatique, puis réapplication des corrections mémorisées (elles priment)
+    const rows = applyOverrides(matchToOpenPOs(items, index), overrides, catalog);
 
     const summary = {
       invoiceLines: items.length,
       invoicePieces: items.reduce((s, it) => s + it.qty, 0),
       receptionRows: rows.length,
-      matchedRows: rows.filter((r) => r.match === "code" || r.match === "nom").length,
+      matchedRows: rows.filter((r) => r.match === "code" || r.match === "nom" || r.match === "corrige").length,
       approxRows: rows.filter((r) => r.match === "approx").length,
       manualRows: rows.filter((r) => r.match === "manuel").length,
       iceleaVariants: catalog.length,
