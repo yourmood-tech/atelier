@@ -9,7 +9,7 @@ const KEY = process.env.KATANA_API_KEY!;
 const ICELEA = 755704;
 const KV_INDEX = "icelea_arrivage_index";   // index finalisé (VariantIndex)
 const KV_BUILD = "icelea_arrivage_build";    // état de construction en cours
-const CHUNK = 50;                             // variants résolus par appel (tient dans 60s)
+const CHUNK = 1000;                           // borne haute — le time-box 45s ci-dessous gouverne
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function kf(path: string, tries = 5): Promise<Record<string, unknown> | null> {
@@ -67,9 +67,16 @@ export async function refreshIndexStep(restart = false): Promise<RefreshProgress
     return { phase: "resolving", done: 0, total: state.ids.length };
   }
 
-  // Phase 2 — résolution d'une tranche de variants
-  const slice = state.ids.slice(state.cursor, state.cursor + CHUNK);
-  for (const id of slice) {
+  // Phase 2 — résolution d'une tranche de variants, BORNÉE DANS LE TEMPS
+  // (on s'arrête avant les 60s Vercel : la fonction rend toujours du JSON propre).
+  const started = Date.now();
+  let processed = 0;
+  while (
+    state.cursor + processed < state.ids.length &&
+    processed < CHUNK &&
+    Date.now() - started < 45000
+  ) {
+    const id = state.ids[state.cursor + processed];
     const j = await kf(`/v1/variants/${id}`);
     if (j && j.id) {
       const t = ((j.config_attributes as { config_name: string; config_value: string }[]) ?? [])
@@ -80,9 +87,10 @@ export async function refreshIndexStep(restart = false): Promise<RefreshProgress
         barcode: (j.internal_barcode as string) ?? null,
       };
     }
-    await sleep(80);
+    processed++;
+    await sleep(50);
   }
-  state.cursor += slice.length;
+  state.cursor += processed;
 
   if (state.cursor >= state.ids.length) {
     const index: VariantIndex = { vmap: state.vmap, openRows: state.openRows };
