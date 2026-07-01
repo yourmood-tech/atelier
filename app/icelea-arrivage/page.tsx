@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { code128Svg } from "@/lib/icelea/barcode";
+import { rowSig } from "@/lib/icelea/arrivage";
 
 type ReceptionRow = {
   code: string | null; label: string; size: string | null; invoiceQty: number;
@@ -24,6 +25,7 @@ export default function IceleaArrivagePage() {
   const [recv, setRecv] = useState<Record<number, { recvQty: string; pickQty: string }>>({}); // saisie réception/picking par ligne
   const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées
   const [busy, setBusy] = useState<Record<number, boolean>>({});
+  const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
   // Lot 3 — rapport de fin d'arrivage
   type RemainingPo = { po: string; created: string; lines: { sku: string; size: string | null; qty: number; line: number }[] };
   type Report = {
@@ -57,8 +59,15 @@ export default function IceleaArrivagePage() {
       const res = await fetch("/api/icelea-arrivage/prepare", { method: "POST", body: fd });
       const data = await readJson(res);
       if (!res.ok) { setError((data.error as string) || "Erreur"); setLoading(false); return; }
-      setRows(data.rows as ReceptionRow[]); setSummary(data.summary as Summary);
+      const newRows = data.rows as ReceptionRow[];
+      setRows(newRows); setSummary(data.summary as Summary);
       setCatalog((data.catalog as CatalogEntry[]) ?? []);
+      // reprise : restaure les réceptions déjà faites pour cette facture
+      setInvoiceNo((data.invoiceNo as string) ?? null);
+      const prog = (data.progress as Record<string, ReceiveResult>) ?? {};
+      const restored: Record<number, ReceiveResult> = {};
+      newRows.forEach((r, i) => { const s = rowSig(r.label, r.size); if (prog[s]) restored[i] = prog[s]; });
+      setDone(restored); setRecv({}); setReport(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   }
@@ -101,7 +110,7 @@ export default function IceleaArrivagePage() {
     try {
       const res = await fetch("/api/icelea-arrivage/receive", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantId: r.variantId, receivedQty, pickQty }),
+        body: JSON.stringify({ variantId: r.variantId, receivedQty, pickQty, invoiceNo, rowSig: rowSig(r.label, r.size) }),
       });
       const data = await readJson(res);
       if (!res.ok) { alert((data.error as string) || "Erreur réception"); return; }
@@ -193,6 +202,14 @@ export default function IceleaArrivagePage() {
             )}
           </div>
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          {summary && invoiceNo && (
+            <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-700">
+              Facture <span className="font-mono font-medium">{invoiceNo}</span>
+              {Object.keys(done).length > 0
+                ? <> — <b>reprise</b> : {Object.keys(done).length} ligne(s) déjà reçue(s), tu peux continuer le scan des lignes restantes.</>
+                : <> — arrivage réceptionnable en plusieurs fois (la progression est sauvegardée à chaque validation).</>}
+            </div>
+          )}
           {summary && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
               <Stat k="Lignes facture" v={summary.invoiceLines} />

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractInvoiceItems, matchToOpenPOs, buildCatalog, applyOverrides, type VariantIndex } from "@/lib/icelea/arrivage";
-import { fetchIceleaVmap, fetchOpenRows, getOverrides } from "@/lib/icelea/variant-index";
+import { fetchIceleaVmap, fetchOpenRows, getOverrides, getProgress } from "@/lib/icelea/variant-index";
 
 export const maxDuration = 60;
 
@@ -13,12 +13,14 @@ export async function POST(req: NextRequest) {
     const file = form.get("pdf") as File | null;
     if (!file) return NextResponse.json({ error: "Aucun fichier PDF fourni" }, { status: 400 });
 
-    const items = await extractInvoiceItems(Buffer.from(await file.arrayBuffer()));
+    const { items, invoiceNo } = await extractInvoiceItems(Buffer.from(await file.arrayBuffer()));
     if (items.length === 0) {
       return NextResponse.json({ error: "Aucune ligne produit trouvée dans la facture" }, { status: 422 });
     }
 
-    const [vmap, openRows, overrides] = await Promise.all([fetchIceleaVmap(), fetchOpenRows(), getOverrides()]);
+    const [vmap, openRows, overrides, progress] = await Promise.all([
+      fetchIceleaVmap(), fetchOpenRows(), getOverrides(), invoiceNo ? getProgress(invoiceNo) : Promise.resolve({}),
+    ]);
     const index: VariantIndex = { vmap, openRows };
     const catalog = buildCatalog(index);
     // matching automatique, puis réapplication des corrections mémorisées (elles priment)
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
       noAssocRows: rows.filter((r) => r.match === "aucun").length,
       iceleaVariants: catalog.length,
     };
-    return NextResponse.json({ rows, summary, catalog });
+    return NextResponse.json({ rows, summary, catalog, invoiceNo, progress });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur serveur" }, { status: 500 });
   }

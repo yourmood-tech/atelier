@@ -61,7 +61,7 @@ export function codeOf(s: string | null | undefined): string | null {
   return m ? `MD-${m[0].match(/MD-([A-Z]{2})/)![1]}-${m[1]}` : null;
 }
 // ── Parse de la facture (pdfjs) ──────────────────────────────────────────────
-export async function extractInvoiceItems(buffer: Buffer): Promise<ParsedItem[]> {
+export async function extractInvoiceItems(buffer: Buffer): Promise<{ items: ParsedItem[]; invoiceNo: string | null }> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = "pdfjs-dist/legacy/build/pdf.worker.mjs";
   const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer), useSystemFonts: true }).promise;
@@ -143,7 +143,15 @@ export async function extractInvoiceItems(buffer: Buffer): Promise<ParsedItem[]>
       cur.code = cur.code || codeOf(cur.ref);
     }
   }
-  return items;
+  // n° de facture (clé de session pour reprendre un arrivage en plusieurs fois)
+  const allText = words.map((w) => w.t).join(" ");
+  const invoiceNo = (allText.match(/Invoice\s*No\.?\s*:?\s*([A-Z0-9][A-Z0-9\-/]{3,})/i) || [])[1] || null;
+  return { items, invoiceNo };
+}
+
+// Signature stable d'une ligne de réception (pour mémoriser la progression d'un arrivage).
+export function rowSig(label: string, size: string | null): string {
+  return `${overrideKey(label)}|${size ?? ""}`;
 }
 
 // ── Matching produit+taille → PO(s) ouverts FIFO ─────────────────────────────

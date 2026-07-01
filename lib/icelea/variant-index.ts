@@ -41,6 +41,25 @@ async function kf(path: string, tries = 3): Promise<Record<string, unknown> | nu
 
 export type Vmap = VariantIndex["vmap"];
 
+// ── Progression d'arrivage (reprise en plusieurs fois) ───────────────────────
+// Par n° de facture : signatureLigne → résultat de réception. Permet de reprendre
+// un gros arrivage plus tard (les lignes déjà reçues réapparaissent traitées).
+const KV_PROGRESS = (inv: string) => `icelea_arrivage_progress:${inv}`;
+export async function getProgress(invoiceNo: string): Promise<Record<string, unknown>> {
+  if (!invoiceNo) return {};
+  try { return (await kv.get<Record<string, unknown>>(KV_PROGRESS(invoiceNo))) ?? {}; } catch { return {}; }
+}
+export async function saveProgress(invoiceNo: string, sig: string, result: unknown): Promise<void> {
+  if (!invoiceNo || !sig) return;
+  const all = await getProgress(invoiceNo);
+  all[sig] = result;
+  await kv.set(KV_PROGRESS(invoiceNo), all);
+}
+export async function clearProgress(invoiceNo: string): Promise<void> {
+  if (!invoiceNo) return;
+  try { await kv.del(KV_PROGRESS(invoiceNo)); } catch { /* noop */ }
+}
+
 // Tous les variants Icelea (par pagination des matériaux du fournisseur).
 export async function fetchIceleaVmap(): Promise<Vmap> {
   const vmap: Vmap = {};
