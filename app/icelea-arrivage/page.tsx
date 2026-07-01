@@ -177,7 +177,7 @@ export default function IceleaArrivagePage() {
 
 function ManualPick({ catalog, onPick }: { catalog: CatalogEntry[]; onPick: (c: CatalogEntry) => void }) {
   const [q, setQ] = useState("");
-  const toks = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const toks = q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); // découpe sur +, -, /, espace…
   const results = toks.length === 0 ? [] : catalog.filter((c) => {
     const s = c.sku.toLowerCase();
     return toks.every((t) => s.includes(t));
