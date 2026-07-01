@@ -12,13 +12,13 @@ const KV_BUILD = "icelea_arrivage_build";    // état de construction en cours
 const CHUNK = 1000;                           // borne haute — le time-box 45s ci-dessous gouverne
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-async function kf(path: string, tries = 5): Promise<Record<string, unknown> | null> {
+async function kf(path: string, tries = 3): Promise<Record<string, unknown> | null> {
   for (let i = 0; i < tries; i++) {
     const r = await fetch(`${BASE}${path}`, {
       headers: { Accept: "application/json", Authorization: `Bearer ${KEY}` },
       cache: "no-store",
     });
-    if (r.status === 429) { await sleep(1200 * (i + 1)); continue; }
+    if (r.status === 429) { await sleep(500 * (i + 1)); continue; }
     if (!r.ok) return null;
     return r.json();
   }
@@ -74,7 +74,7 @@ export async function refreshIndexStep(restart = false): Promise<RefreshProgress
   while (
     state.cursor + processed < state.ids.length &&
     processed < CHUNK &&
-    Date.now() - started < 45000
+    Date.now() - started < 30000
   ) {
     const id = state.ids[state.cursor + processed];
     const j = await kf(`/v1/variants/${id}`);
