@@ -61,6 +61,12 @@ export default function IceleaArrivagePage() {
       body: JSON.stringify({ label, sku }),
     }).catch(() => {});
   }
+  // valide le choix proposé d'une ligne "à vérifier" → confirmé + mémorisé
+  function confirmRow(i: number, label: string, sku: string | null) {
+    if (!sku) return;
+    setRows((prev) => prev ? prev.map((r, idx) => idx === i ? { ...r, match: "corrige" } : r) : prev);
+    learnPick(label, sku);
+  }
   // marque une ligne comme "sans association Katana" (article hors Katana) + mémorise
   function markNoAssoc(i: number, label: string) {
     setRows((prev) => prev ? prev.map((r, idx) => idx === i
@@ -146,6 +152,10 @@ export default function IceleaArrivagePage() {
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-3">
+                            {r.match === "approx" && (
+                              <button onClick={() => confirmRow(i, r.label, r.sku)}
+                                className="text-[11px] font-medium text-emerald-700 underline">✓ OK, c&apos;est correct</button>
+                            )}
                             <button onClick={() => setEditRows((e) => ({ ...e, [i]: true }))}
                               className="text-[11px] text-sky-700 underline">{r.match === "aucun" ? "✎ associer un SKU" : "✎ changer le SKU"}</button>
                             {r.match !== "aucun" && (
