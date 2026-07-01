@@ -11,10 +11,9 @@ type ReceptionRow = {
 };
 type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
-  matchedRows: number; approxRows: number; manualRows: number; openVariants: number;
-  newResolved?: number; unresolved?: number;
+  matchedRows: number; approxRows: number; manualRows: number; iceleaVariants: number;
 };
-type CatalogEntry = { sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
+type CatalogEntry = { vid: number; sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
 
 export default function IceleaArrivagePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,7 +22,6 @@ export default function IceleaArrivagePage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [indexMsg, setIndexMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Lecture défensive : si le serveur renvoie du HTML (timeout Vercel…), on affiche
@@ -33,48 +31,23 @@ export default function IceleaArrivagePage() {
     try { return JSON.parse(t); } catch { return { error: t.slice(0, 300) || `HTTP ${res.status}` }; }
   }
 
-  async function buildIndex(force = false): Promise<boolean> {
-    setIndexMsg("Construction de l'index Icelea… (réutilise les variants déjà connus)");
-    // restart:false → on REPREND là où on en était (KV garde la progression).
-    // force=true (bouton) → on relit les PO ouverts (nouveaux PO / positions de ligne),
-    // mais les variants déjà résolus sont réutilisés → rapide.
-    for (let i = 0; i < 60; i++) {
-      let res: Response;
-      try {
-        res = await fetch("/api/icelea-arrivage/refresh-index", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restart: force && i === 0 }),
-        });
-      } catch { setError("Réseau interrompu pendant la construction de l'index — relance."); return false; }
-      const p = await readJson(res);
-      if (!res.ok) { setError((p.error as string) || "Erreur construction index"); return false; }
-      if (p.phase === "done") { setIndexMsg(`Index prêt (${p.total} variants).`); return true; }
-      setIndexMsg(`Construction de l'index… ${p.done ?? 0}/${p.total ?? "?"} variants`);
-    }
-    setError("Construction de l'index trop longue — relance."); return false;
-  }
-
   async function prepare() {
     if (!file) { setError("Choisis d'abord la facture PDF."); return; }
     setLoading(true); setError(null); setRows(null); setSummary(null);
     try {
-      const send = async () => {
-        const fd = new FormData(); fd.append("pdf", file);
-        return fetch("/api/icelea-arrivage/prepare", { method: "POST", body: fd });
-      };
-      let res = await send();
-      if (res.status === 409) { const ok = await buildIndex(); if (!ok) { setLoading(false); return; } res = await send(); }
+      const fd = new FormData(); fd.append("pdf", file);
+      const res = await fetch("/api/icelea-arrivage/prepare", { method: "POST", body: fd });
       const data = await readJson(res);
       if (!res.ok) { setError((data.error as string) || "Erreur"); setLoading(false); return; }
       setRows(data.rows as ReceptionRow[]); setSummary(data.summary as Summary);
-      setCatalog((data.catalog as CatalogEntry[]) ?? []); setIndexMsg(null);
+      setCatalog((data.catalog as CatalogEntry[]) ?? []);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   }
 
   function updateRow(i: number, c: CatalogEntry) {
     setRows((prev) => prev ? prev.map((r, idx) => idx === i ? {
-      ...r, sku: c.sku, barcode: c.barcode, size: c.size ?? r.size,
+      ...r, sku: c.sku, variantId: c.vid, barcode: c.barcode, size: c.size ?? r.size,
       pos: c.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: "" })),
       openQty: c.pos.reduce((s, p) => s + p.qty, 0), match: "nom",
     } : r) : prev);
@@ -107,16 +80,8 @@ export default function IceleaArrivagePage() {
               <button onClick={() => window.print()}
                 className="rounded-xl border border-neutral-300 px-4 py-2 text-sm text-neutral-800 hover:bg-neutral-100">↧ Imprimer (avec code-barres)</button>
             )}
-            <button onClick={async () => { setLoading(true); await buildIndex(true); setLoading(false); }} disabled={loading}
-              className="rounded-xl border border-neutral-300 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100 disabled:opacity-50">↻ Reconstruire l&apos;index (nouveaux PO)</button>
           </div>
-          {indexMsg && <div className="rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-800">{indexMsg}</div>}
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-          {summary && (summary.unresolved ?? 0) > 0 && (
-            <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
-              {summary.unresolved} variant(s) pas encore indexé(s) (nouveau(x) produit(s)) — clique « ↻ Reconstruire l&apos;index » puis relance « Préparer ».
-            </div>
-          )}
           {summary && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
               <Stat k="Lignes facture" v={summary.invoiceLines} />

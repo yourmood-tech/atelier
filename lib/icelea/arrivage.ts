@@ -33,21 +33,23 @@ export interface VariantIndex {
 // Catalogue des matériaux présents sur les PO Icelea ouverts (pour la recherche manuelle
 // des lignes non résolues) : un variant = son SKU/taille/code-barres + les PO où le trouver.
 export interface CatalogEntry {
+  vid: number;
   sku: string;
   size: string | null;
   barcode: string | null;
-  pos: { po: string; line: number; qty: number }[];
+  pos: { po: string; line: number; qty: number }[]; // PO ouverts (vide si aucun → réception sans PO)
 }
+// Catalogue de recherche = TOUS les variants Icelea, chacun avec ses PO ouverts (le cas
+// échéant). Permet de trouver un produit même s'il n'est sur aucun PO (réception forcée).
 export function buildCatalog(index: VariantIndex): CatalogEntry[] {
-  const byVid = new Map<number, CatalogEntry>();
+  const posByVid = new Map<number, { po: string; line: number; qty: number }[]>();
   for (const r of index.openRows) {
-    const v = index.vmap[r.vid];
-    if (!v) continue;
-    let e = byVid.get(r.vid);
-    if (!e) { e = { sku: v.sku, size: v.size, barcode: v.barcode, pos: [] }; byVid.set(r.vid, e); }
-    e.pos.push({ po: r.po, line: r.line, qty: r.qty });
+    (posByVid.get(r.vid) || posByVid.set(r.vid, []).get(r.vid)!).push({ po: r.po, line: r.line, qty: r.qty });
   }
-  return [...byVid.values()].sort((a, b) => a.sku.localeCompare(b.sku));
+  return Object.entries(index.vmap)
+    .filter(([, v]) => v.sku)
+    .map(([id, v]) => ({ vid: Number(id), sku: v.sku, size: v.size, barcode: v.barcode, pos: posByVid.get(Number(id)) ?? [] }))
+    .sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
 // ── Normalisation ────────────────────────────────────────────────────────────
