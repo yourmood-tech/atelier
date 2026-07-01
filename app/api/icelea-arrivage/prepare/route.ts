@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractInvoiceItems, matchToOpenPOs } from "@/lib/icelea/arrivage";
+import { extractInvoiceItems, matchToOpenPOs, buildCatalog } from "@/lib/icelea/arrivage";
 import { getIndex } from "@/lib/icelea/variant-index";
 
 export const maxDuration = 60;
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       manualRows: rows.length - matched.length,
       openVariants: Object.keys(index.vmap).length,
     };
-    return NextResponse.json({ rows, summary });
+    return NextResponse.json({ rows, summary, catalog: buildCatalog(index) });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur serveur" }, { status: 500 });
   }

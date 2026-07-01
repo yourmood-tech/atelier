@@ -13,10 +13,12 @@ type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
   matchedRows: number; manualRows: number; openVariants: number;
 };
+type CatalogEntry = { sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
 
 export default function IceleaArrivagePage() {
   const [file, setFile] = useState<File | null>(null);
   const [rows, setRows] = useState<ReceptionRow[] | null>(null);
+  const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,9 +65,18 @@ export default function IceleaArrivagePage() {
       if (res.status === 409) { const ok = await buildIndex(); if (!ok) { setLoading(false); return; } res = await send(); }
       const data = await readJson(res);
       if (!res.ok) { setError((data.error as string) || "Erreur"); setLoading(false); return; }
-      setRows(data.rows as ReceptionRow[]); setSummary(data.summary as Summary); setIndexMsg(null);
+      setRows(data.rows as ReceptionRow[]); setSummary(data.summary as Summary);
+      setCatalog((data.catalog as CatalogEntry[]) ?? []); setIndexMsg(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
+  }
+
+  function updateRow(i: number, c: CatalogEntry) {
+    setRows((prev) => prev ? prev.map((r, idx) => idx === i ? {
+      ...r, sku: c.sku, barcode: c.barcode, size: c.size ?? r.size,
+      pos: c.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: "" })),
+      openQty: c.pos.reduce((s, p) => s + p.qty, 0), match: "nom",
+    } : r) : prev);
   }
 
   const badge = (m: ReceptionRow["match"]) =>
@@ -132,7 +143,10 @@ export default function IceleaArrivagePage() {
                             <div dangerouslySetInnerHTML={{ __html: code128Svg(r.barcode) }} />
                             <div className="font-mono text-[10px] text-neutral-500">{r.barcode}</div>
                           </div>
-                        : <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>}
+                        : <div>
+                            <span className={`rounded border px-2 py-0.5 text-xs ${badge(r.match)}`}>SKU à confirmer</span>
+                            <div className="print:hidden"><ManualPick catalog={catalog} onPick={(c) => updateRow(i, c)} /></div>
+                          </div>}
                     </td>
                     <td className="p-2">
                       <div className="font-mono text-xs">{r.sku ?? r.label}</div>
@@ -155,6 +169,33 @@ export default function IceleaArrivagePage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ManualPick({ catalog, onPick }: { catalog: CatalogEntry[]; onPick: (c: CatalogEntry) => void }) {
+  const [q, setQ] = useState("");
+  const toks = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const results = toks.length === 0 ? [] : catalog.filter((c) => {
+    const s = c.sku.toLowerCase();
+    return toks.every((t) => s.includes(t));
+  }).slice(0, 10);
+  return (
+    <div className="mt-1">
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="chercher dans Katana (nom/SKU)…"
+        className="w-52 rounded border border-neutral-300 px-2 py-1 text-[11px]" />
+      {results.length > 0 && (
+        <div className="mt-1 max-h-44 w-72 overflow-auto rounded border border-neutral-200 bg-white text-[11px] shadow-lg">
+          {results.map((c) => (
+            <button key={c.sku} onClick={() => { onPick(c); setQ(""); }}
+              className="block w-full border-b border-neutral-100 px-2 py-1 text-left hover:bg-neutral-100">
+              <div className="font-mono">{c.sku}</div>
+              <div className="text-neutral-400">{c.pos.map((p) => `${p.po} l.${p.line}`).join(" · ")}</div>
+            </button>
+          ))}
+        </div>
+      )}
+      {toks.length > 0 && results.length === 0 && <div className="mt-1 text-[11px] text-neutral-400">aucun résultat dans les PO ouverts</div>}
     </div>
   );
 }

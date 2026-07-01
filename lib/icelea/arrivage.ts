@@ -30,6 +30,26 @@ export interface VariantIndex {
   openRows: { vid: number; qty: number; rowId: number; po: string; line: number; created: string }[];
 }
 
+// Catalogue des matériaux présents sur les PO Icelea ouverts (pour la recherche manuelle
+// des lignes non résolues) : un variant = son SKU/taille/code-barres + les PO où le trouver.
+export interface CatalogEntry {
+  sku: string;
+  size: string | null;
+  barcode: string | null;
+  pos: { po: string; line: number; qty: number }[];
+}
+export function buildCatalog(index: VariantIndex): CatalogEntry[] {
+  const byVid = new Map<number, CatalogEntry>();
+  for (const r of index.openRows) {
+    const v = index.vmap[r.vid];
+    if (!v) continue;
+    let e = byVid.get(r.vid);
+    if (!e) { e = { sku: v.sku, size: v.size, barcode: v.barcode, pos: [] }; byVid.set(r.vid, e); }
+    e.pos.push({ po: r.po, line: r.line, qty: r.qty });
+  }
+  return [...byVid.values()].sort((a, b) => a.sku.localeCompare(b.sku));
+}
+
 // ── Normalisation ────────────────────────────────────────────────────────────
 export function codeOf(s: string | null | undefined): string | null {
   const m = (s || "").toUpperCase().match(/MD-[A-Z]{2}-0*(\d+)/);
