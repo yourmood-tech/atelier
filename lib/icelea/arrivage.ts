@@ -55,14 +55,6 @@ export function codeOf(s: string | null | undefined): string | null {
   const m = (s || "").toUpperCase().match(/MD-[A-Z]{2}-0*(\d+)/);
   return m ? `MD-${m[0].match(/MD-([A-Z]{2})/)![1]}-${m[1]}` : null;
 }
-function nameTokens(s: string): string[] {
-  return (s || "")
-    .toUpperCase()
-    .replace(/MTRL-|MD-[A-Z]{2}-\d+|\d{2,3}\b|[^A-Z0-9]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 2);
-}
-
 // ── Parse de la facture (pdfjs) ──────────────────────────────────────────────
 export async function extractInvoiceItems(buffer: Buffer): Promise<ParsedItem[]> {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -149,58 +141,70 @@ export async function extractInvoiceItems(buffer: Buffer): Promise<ParsedItem[]>
 }
 
 // ── Matching produit+taille → PO(s) ouverts FIFO ─────────────────────────────
+// Discriminant fort : le CODE ÉMAIL de la facture (RP36, RK17, RM04, RB319…),
+// pris entre les slashes du libellé, doit se retrouver dans le SKU du variant.
+// Règle dure : pour une ligne AVEC code MD-RI, on ne sort JAMAIS de ce code.
+const EMAIL_RE = /^[A-Z]{1,3}\d{1,3}$/;
+const emailCodes = (s: string) => s.toUpperCase().split(/[^A-Z0-9]+/).filter((t) => EMAIL_RE.test(t));
+const wordToks = (s: string) => s.toUpperCase().replace(/MTRL-|MD-[A-Z]{2}-\d+/g, " ").split(/[^A-Z]+/).filter((w) => w.length >= 3);
+const compact = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+type Rec = VariantIndex["openRows"][number] & {
+  sku: string; size: string | null; barcode: string | null; code: string | null; cmp: string; w: string[];
+};
+
 export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): ReceptionRow[] {
   const { vmap, openRows } = index;
-  // index des lignes ouvertes par code|taille + par taille (pour le fallback nom)
-  const byCodeSize = new Map<string, ReturnType<typeof buildRec>[]>();
-  const bySize = new Map<string, ReturnType<typeof buildRec>[]>();
-  function buildRec(r: VariantIndex["openRows"][number]) {
+  const recs: Rec[] = openRows.map((r) => {
     const v = vmap[r.vid];
-    return { ...r, sku: v?.sku ?? "", size: v?.size ?? null, barcode: v?.barcode ?? null, code: codeOf(v?.sku), tk: nameTokens(v?.sku ?? "") };
-  }
-  for (const r of openRows) {
-    const rec = buildRec(r);
+    const sku = v?.sku ?? "";
+    return { ...r, sku, size: v?.size ?? null, barcode: v?.barcode ?? null, code: codeOf(sku), cmp: compact(sku), w: wordToks(sku) };
+  });
+  const byCodeSize = new Map<string, Rec[]>();
+  const bySize = new Map<string, Rec[]>();
+  for (const rec of recs) {
     if (!rec.size) continue;
-    if (rec.code) {
-      const k = `${rec.code}|${rec.size}`;
-      (byCodeSize.get(k) || byCodeSize.set(k, []).get(k)!).push(rec);
-    }
+    if (rec.code) (byCodeSize.get(`${rec.code}|${rec.size}`) || byCodeSize.set(`${rec.code}|${rec.size}`, []).get(`${rec.code}|${rec.size}`)!).push(rec);
     (bySize.get(rec.size) || bySize.set(rec.size, []).get(rec.size)!).push(rec);
   }
-  const fifo = <T extends { created: string }>(a: T[]) => a.sort((x, y) => (x.created || "").localeCompare(y.created || ""));
+  const fifo = (a: Rec[]) => [...a].sort((x, y) => (x.created || "").localeCompare(y.created || ""));
 
   const rows: ReceptionRow[] = [];
   for (const it of items) {
-    const sizeEntries = Object.entries(it.sizes);
-    const entries = sizeEntries.length ? sizeEntries : [["", it.qty] as [string, number]];
+    const itEmail = emailCodes(it.ref);
+    const itWords = wordToks(it.ref);
+    const entries = Object.keys(it.sizes).length ? Object.entries(it.sizes) : [["", it.qty] as [string, number]];
     for (const [size, q] of entries) {
-      let cands: ReturnType<typeof buildRec>[] = [];
-      let via: ReceptionRow["match"] = "code";
-      if (it.code && size) cands = byCodeSize.get(`${it.code}|${size}`) || [];
-      if (!cands.length && size) {
-        // fallback : jetons de nom (préfixe/inclusion) + taille
-        const pool = bySize.get(size) || [];
-        const itTk = nameTokens(it.ref);
-        let best: (typeof pool)[number] | null = null, bestScore = 0;
-        for (const c of pool) {
-          const score = c.tk.filter((w) => itTk.some((x) => x.startsWith(w) || w.startsWith(x))).length;
-          if (score > bestScore) { bestScore = score; best = c; }
-        }
-        if (best && bestScore >= 1) { cands = pool.filter((c) => c.sku === best!.sku); via = "nom"; }
+      // AVEC code MD-RI → uniquement ce code+taille ; SANS code → repli par taille (couleurs mot).
+      const pool = it.code && size ? (byCodeSize.get(`${it.code}|${size}`) || []) : size ? (bySize.get(size) || []) : [];
+      const scoreOf = (c: Rec) => {
+        let s = 0;
+        if (itEmail.length && itEmail.some((code) => c.cmp.includes(code))) s += 100;
+        s += itWords.filter((w) => c.w.includes(w)).length;
+        return s;
+      };
+      const scored = fifo(pool).map((c) => ({ c, s: scoreOf(c) }));
+      const top = scored.reduce((m, x) => Math.max(m, x.s), -1);
+      const topSkus = new Set(scored.filter((x) => x.s === top).map((x) => x.c.sku));
+      const best: Rec | null = scored.find((x) => x.s === top)?.c ?? null; // FIFO-first parmi les meilleurs
+
+      let accept = false;
+      const via: ReceptionRow["match"] = it.code ? "code" : "nom";
+      if (best) {
+        const distinct = new Set(pool.map((c) => c.sku)).size;
+        const unambiguous = topSkus.size === 1; // un seul SKU gagnant (sinon on ne devine pas)
+        if (distinct === 1) accept = true;                                       // un seul variant pour ce code+taille
+        else if (it.code && itEmail.length) accept = itEmail.some((code) => best.cmp.includes(code)) && unambiguous; // code émail obligatoire
+        else accept = top >= 1 && unambiguous;                                   // couleur en toutes lettres, gagnant net
       }
-      fifo(cands);
-      const c0 = cands[0];
+      const chosen = accept ? best : null;
+      const posRows = chosen ? fifo(pool.filter((c) => c.sku === chosen.sku)) : [];
       rows.push({
-        code: it.code,
-        label: it.ref,
-        size: size || null,
-        invoiceQty: q,
-        sku: c0?.sku ?? null,
-        variantId: c0?.vid ?? null,
-        barcode: c0?.barcode ?? null,
-        pos: cands.map((c) => ({ po: c.po, line: c.line, rowId: c.rowId, qty: c.qty, created: c.created })),
-        openQty: cands.reduce((s, c) => s + c.qty, 0),
-        match: cands.length ? via : "manuel",
+        code: it.code, label: it.ref, size: size || null, invoiceQty: q,
+        sku: chosen?.sku ?? null, variantId: chosen?.vid ?? null, barcode: chosen?.barcode ?? null,
+        pos: posRows.map((c) => ({ po: c.po, line: c.line, rowId: c.rowId, qty: c.qty, created: c.created })),
+        openQty: posRows.reduce((s, c) => s + c.qty, 0),
+        match: chosen ? via : "manuel",
       });
     }
   }
