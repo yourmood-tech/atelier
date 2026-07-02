@@ -60,6 +60,13 @@ export default function IceleaArrivagePage() {
     for (let k = 0; k < i; k++) if (rowSig(list[k].label, list[k].size) === base) occ++;
     return occ === 0 ? base : `${base}#${occ}`;
   }
+  // Annule une réouverture faite par erreur (scan en trop) : on referme la ligne sur
+  // son état déjà reçu, sans rien écrire dans Katana (aucune réception n'a été validée).
+  function revertReopen(i: number) {
+    setReopen((s) => ({ ...s, [i]: false }));
+    setRecv((s) => ({ ...s, [i]: { recvQty: "", pickQty: "" } }));
+    scanRef.current?.focus();
+  }
   // Cumule les réceptions successives d'une même ligne (scannée plusieurs fois).
   function mergeResult(a: ReceiveResult, b: ReceiveResult): ReceiveResult {
     return {
@@ -349,8 +356,14 @@ export default function IceleaArrivagePage() {
                                 onKeyDown={(e) => { if (e.key === "Enter") validateReceive(i, r); }}
                                 className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
                             </div>
-                            <button onClick={() => validateReceive(i, r)} disabled={busy[i]}
-                              className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">{busy[i] ? "…" : "Valider"}</button>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => validateReceive(i, r)} disabled={busy[i]}
+                                className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">{busy[i] ? "…" : "Valider"}</button>
+                              {done[i] && (
+                                <button onClick={() => revertReopen(i)} disabled={busy[i]}
+                                  className="rounded border border-neutral-300 px-2 py-0.5 text-[11px] text-neutral-600 hover:bg-neutral-100 disabled:opacity-50">Annuler</button>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
