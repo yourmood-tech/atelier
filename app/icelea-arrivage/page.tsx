@@ -23,7 +23,8 @@ export default function IceleaArrivagePage() {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [editRows, setEditRows] = useState<Record<number, boolean>>({});
   const [recv, setRecv] = useState<Record<number, { recvQty: string; pickQty: string }>>({}); // saisie réception/picking par ligne
-  const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées
+  const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées (cumulées)
+  const [reopen, setReopen] = useState<Record<number, boolean>>({}); // ligne déjà reçue rouverte pour une réception de plus
   const [busy, setBusy] = useState<Record<number, boolean>>({});
   const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
   // Lot 3 — rapport de fin d'arrivage
@@ -51,6 +52,25 @@ export default function IceleaArrivagePage() {
     try { return JSON.parse(t); } catch { return { error: t.slice(0, 300) || `HTTP ${res.status}` }; }
   }
 
+  // Clé de reprise par ligne : rowSig + indice d'occurrence quand 2 lignes de la
+  // facture portent le même article (2 PO livrés) → pas de collision de progression.
+  function sigForRow(list: ReceptionRow[], i: number): string {
+    const base = rowSig(list[i].label, list[i].size);
+    let occ = 0;
+    for (let k = 0; k < i; k++) if (rowSig(list[k].label, list[k].size) === base) occ++;
+    return occ === 0 ? base : `${base}#${occ}`;
+  }
+  // Cumule les réceptions successives d'une même ligne (scannée plusieurs fois).
+  function mergeResult(a: ReceiveResult, b: ReceiveResult): ReceiveResult {
+    return {
+      receivedOnPO: [...a.receivedOnPO, ...b.receivedOnPO],
+      totalReceivedPO: a.totalReceivedPO + b.totalReceivedPO,
+      surplus: a.surplus + b.surplus,
+      forcedNoPO: a.forcedNoPO + b.forcedNoPO,
+      picked: a.picked + b.picked,
+    };
+  }
+
   async function prepare() {
     if (!file) { setError("Choisis d'abord la facture PDF."); return; }
     setLoading(true); setError(null); setRows(null); setSummary(null);
@@ -66,8 +86,8 @@ export default function IceleaArrivagePage() {
       setInvoiceNo((data.invoiceNo as string) ?? null);
       const prog = (data.progress as Record<string, ReceiveResult>) ?? {};
       const restored: Record<number, ReceiveResult> = {};
-      newRows.forEach((r, i) => { const s = rowSig(r.label, r.size); if (prog[s]) restored[i] = prog[s]; });
-      setDone(restored); setRecv({}); setReport(null);
+      newRows.forEach((_, i) => { const s = sigForRow(newRows, i); if (prog[s]) restored[i] = prog[s]; });
+      setDone(restored); setRecv({}); setReopen({}); setReport(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   }
@@ -110,11 +130,15 @@ export default function IceleaArrivagePage() {
     try {
       const res = await fetch("/api/icelea-arrivage/receive", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantId: r.variantId, receivedQty, pickQty, invoiceNo, rowSig: rowSig(r.label, r.size) }),
+        body: JSON.stringify({ variantId: r.variantId, receivedQty, pickQty, invoiceNo, rowSig: rows ? sigForRow(rows, i) : rowSig(r.label, r.size) }),
       });
       const data = await readJson(res);
       if (!res.ok) { alert((data.error as string) || "Erreur réception"); return; }
-      setDone((s) => ({ ...s, [i]: data.result as ReceiveResult }));
+      const result = data.result as ReceiveResult;
+      // cumul si la ligne a déjà reçu (article scanné plusieurs fois dans l'arrivage)
+      setDone((s) => ({ ...s, [i]: s[i] ? mergeResult(s[i], result) : result }));
+      setRecv((s) => ({ ...s, [i]: { recvQty: "", pickQty: "" } }));
+      setReopen((s) => ({ ...s, [i]: false }));
       scanRef.current?.focus(); // retour au champ scan → produit suivant directement
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
     finally { setBusy((s) => ({ ...s, [i]: false })); }
@@ -152,13 +176,21 @@ export default function IceleaArrivagePage() {
     } catch { setRemarksEn(""); } finally { setReportBusy(false); }
   }
 
-  // scan code-barres → focalise la ligne correspondante
+  // scan code-barres → focalise la 1re ligne encore recevable de cet article.
+  // Un même article peut figurer sur plusieurs lignes de la facture (2 PO livrés) :
+  // on passe à la ligne suivante non reçue, et si toutes sont reçues on rouvre pour
+  // imputer sur une éventuelle ligne de PO encore ouverte.
   function onScan(code: string) {
     const c = code.trim(); if (!c || !rows) return;
-    const idx = rows.findIndex((r) => r.barcode === c);
-    if (idx < 0) { alert(`Code-barres « ${c} » absent de la liste.`); return; }
-    const el = document.querySelector<HTMLInputElement>(`[data-recv="${idx}"]`);
-    el?.scrollIntoView({ block: "center" }); el?.focus();
+    const matches = rows.map((r, idx) => ({ r, idx })).filter((m) => m.r.barcode === c);
+    if (matches.length === 0) { alert(`Code-barres « ${c} » absent de la liste.`); return; }
+    let target = matches.find((m) => !done[m.idx] || reopen[m.idx]);
+    if (!target) { target = matches[matches.length - 1]; setReopen((s) => ({ ...s, [target!.idx]: true })); }
+    const idx = target.idx;
+    setTimeout(() => {
+      const el = document.querySelector<HTMLInputElement>(`[data-recv="${idx}"]`);
+      el?.scrollIntoView({ block: "center" }); el?.focus();
+    }, 0);
   }
 
   const badge = (m: ReceptionRow["match"]) =>
@@ -288,16 +320,21 @@ export default function IceleaArrivagePage() {
                       <div className="print:hidden">
                         {!r.variantId ? (
                           <span className="text-[11px] text-neutral-400">—</span>
-                        ) : done[i] ? (
+                        ) : done[i] && !reopen[i] ? (
                           <div className="text-[11px] text-emerald-700">
                             <div className="font-medium">✓ reçu {done[i].totalReceivedPO + done[i].surplus + done[i].forcedNoPO}</div>
                             {done[i].receivedOnPO.map((p, k) => <div key={k} className="text-neutral-500">{p.po} l.{p.line} ×{p.qty}</div>)}
                             {done[i].surplus > 0 && <div className="text-amber-700">surplus stock +{done[i].surplus}</div>}
                             {done[i].forcedNoPO > 0 && <div className="text-amber-700">sans PO +{done[i].forcedNoPO}</div>}
                             {done[i].picked > 0 && <div className="text-sky-700">picking −{done[i].picked}</div>}
+                            <button onClick={() => setReopen((s) => ({ ...s, [i]: true }))}
+                              className="mt-1 block text-[11px] text-sky-700 underline">↻ recevoir encore</button>
                           </div>
                         ) : (
                           <div className="space-y-1">
+                            {done[i] && (
+                              <div className="text-[11px] text-emerald-700">déjà reçu {done[i].totalReceivedPO + done[i].surplus + done[i].forcedNoPO} — réception de plus :</div>
+                            )}
                             <div className="flex items-center gap-1">
                               <label className="w-8 text-[10px] text-neutral-500">reçu</label>
                               <input type="number" min="0" data-recv={i} value={recv[i]?.recvQty ?? ""}

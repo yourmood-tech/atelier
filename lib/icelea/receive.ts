@@ -37,6 +37,18 @@ export interface ReceiveResult {
   picked: number;            // sorti du stock (picking)
 }
 
+// Cumule plusieurs réceptions d'une même ligne (article scanné plusieurs fois dans
+// le même arrivage : 2ᵉ livraison, ligne de PO restante…). Le total reste juste.
+export function mergeReceiveResults(a: ReceiveResult, b: ReceiveResult): ReceiveResult {
+  return {
+    receivedOnPO: [...a.receivedOnPO, ...b.receivedOnPO],
+    totalReceivedPO: a.totalReceivedPO + b.totalReceivedPO,
+    surplus: a.surplus + b.surplus,
+    forcedNoPO: a.forcedNoPO + b.forcedNoPO,
+    picked: a.picked + b.picked,
+  };
+}
+
 // Réceptionne `receivedQty` du variant en imputant FIFO sur ses PO ouverts (partiel natif),
 // le surplus/absence de PO en entrée de stock, puis sort `pickQty` (picking).
 export async function receiveProduct(variantId: number, receivedQty: number, pickQty: number): Promise<ReceiveResult> {

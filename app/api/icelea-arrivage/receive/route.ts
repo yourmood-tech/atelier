@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { receiveProduct } from "@/lib/icelea/receive";
-import { saveProgress } from "@/lib/icelea/variant-index";
+import { receiveProduct, mergeReceiveResults, type ReceiveResult } from "@/lib/icelea/receive";
+import { getProgress, saveProgress } from "@/lib/icelea/variant-index";
 
 export const maxDuration = 60;
 
@@ -16,7 +16,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "variantId et receivedQty (>0) requis" }, { status: 400 });
     }
     const result = await receiveProduct(variantId, receivedQty, pickQty ?? 0);
-    if (invoiceNo && rowSig) await saveProgress(invoiceNo, rowSig, result);
+    // On cumule avec une éventuelle réception déjà enregistrée pour cette même ligne
+    // (article scanné plusieurs fois dans le même arrivage) → total juste à la reprise.
+    if (invoiceNo && rowSig) {
+      const prev = (await getProgress(invoiceNo))[rowSig] as ReceiveResult | undefined;
+      await saveProgress(invoiceNo, rowSig, prev ? mergeReceiveResults(prev, result) : result);
+    }
     return NextResponse.json({ ok: true, result });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur serveur" }, { status: 500 });
