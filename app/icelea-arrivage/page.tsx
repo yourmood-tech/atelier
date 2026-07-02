@@ -25,6 +25,7 @@ export default function IceleaArrivagePage() {
   const [recv, setRecv] = useState<Record<number, { recvQty: string; pickQty: string }>>({}); // saisie réception/picking par ligne
   const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées (cumulées)
   const [reopen, setReopen] = useState<Record<number, boolean>>({}); // ligne déjà reçue rouverte pour une réception de plus
+  const [comments, setComments] = useState<Record<number, string>>({}); // commentaire par article (ex. livré faux) → rapport
   const [busy, setBusy] = useState<Record<number, boolean>>({});
   const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
   // Lot 3 — rapport de fin d'arrivage
@@ -32,6 +33,7 @@ export default function IceleaArrivagePage() {
   type Report = {
     neverScanned: { label: string; size: string | null; qty: number }[];
     qtyDiffs: { label: string; size: string | null; invoiceQty: number; receivedQty: number }[];
+    itemRemarks: { sku: string | null; name: string | null; label: string; size: string | null; fr: string; en: string }[];
     remaining: { pos: RemainingPo[]; totalLines: number; totalQty: number };
   };
   const [report, setReport] = useState<Report | null>(null);
@@ -94,7 +96,7 @@ export default function IceleaArrivagePage() {
       const prog = (data.progress as Record<string, ReceiveResult>) ?? {};
       const restored: Record<number, ReceiveResult> = {};
       newRows.forEach((_, i) => { const s = sigForRow(newRows, i); if (prog[s]) restored[i] = prog[s]; });
-      setDone(restored); setRecv({}); setReopen({}); setReport(null);
+      setDone(restored); setRecv({}); setReopen({}); setComments({}); setReport(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   }
@@ -164,23 +166,33 @@ export default function IceleaArrivagePage() {
         .filter(({ d }) => d)
         .map(({ r, d }) => ({ label: r.label, size: r.size, invoiceQty: r.invoiceQty, receivedQty: d.totalReceivedPO + d.surplus + d.forcedNoPO }))
         .filter((x) => x.receivedQty !== x.invoiceQty);
+      // commentaires par article (ex. article livré faux) → traduits FR→EN pour le fournisseur
+      const commented = rows.map((r, i) => ({ r, c: (comments[i] || "").trim() })).filter((x) => x.c);
+      const itemRemarks = await Promise.all(commented.map(async ({ r, c }) => ({
+        sku: r.sku, name: r.name, label: r.label, size: r.size, fr: c, en: await translateText(c),
+      })));
       const res = await fetch("/api/icelea-arrivage/open-remaining");
       const rem = await readJson(res);
       if (!res.ok) { alert((rem.error as string) || "Erreur reste à livrer"); return; }
-      setReport({ neverScanned, qtyDiffs, remaining: rem as Report["remaining"] });
+      setReport({ neverScanned, qtyDiffs, itemRemarks, remaining: rem as Report["remaining"] });
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
     finally { setReportBusy(false); }
   }
-  async function translateRemarks() {
-    if (!remarksFr.trim()) { setRemarksEn(""); return; }
-    setReportBusy(true);
+  // traduit un texte FR→EN via le service (rendu vide en cas d'échec)
+  async function translateText(fr: string): Promise<string> {
+    if (!fr.trim()) return "";
     try {
       const res = await fetch("/api/icelea-arrivage/translate", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: remarksFr }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: fr }),
       });
       const data = await readJson(res);
-      setRemarksEn((data.translation as string) || "");
-    } catch { setRemarksEn(""); } finally { setReportBusy(false); }
+      return (data.translation as string) || "";
+    } catch { return ""; }
+  }
+  async function translateRemarks() {
+    setReportBusy(true);
+    try { setRemarksEn(await translateText(remarksFr)); }
+    finally { setReportBusy(false); }
   }
 
   // scan code-barres → focalise la 1re ligne encore recevable de cet article.
@@ -320,6 +332,11 @@ export default function IceleaArrivagePage() {
                             ))}
                           </div>
                         : <div className="mt-0.5 text-[11px] text-amber-700">aucun PO ouvert</div>}
+                      <div className="print:hidden mt-1">
+                        <input value={comments[i] ?? ""} onChange={(e) => setComments((s) => ({ ...s, [i]: e.target.value }))}
+                          placeholder="commentaire (ex. article livré faux)…"
+                          className="w-full max-w-xs rounded border border-neutral-300 px-1.5 py-0.5 text-[11px]" />
+                      </div>
                     </td>
                     <td className="p-2 font-medium">{r.size ?? "—"}</td>
                     <td className="p-2 font-semibold">{r.invoiceQty}</td>
@@ -413,7 +430,23 @@ export default function IceleaArrivagePage() {
                 </section>
 
                 <section>
-                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "3. Reste à livrer — PO ouverts" : "3. Still to deliver — open POs"} ({report.remaining.totalQty} {fr ? "pièces" : "pcs"})</h2>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "3. Articles signalés (commentaires)" : "3. Flagged items (comments)"}</h2>
+                  {report.itemRemarks.length === 0 ? <p className="text-neutral-500">{fr ? "Aucun." : "None."}</p> : (
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-left text-neutral-500"><th className="py-1">{fr ? "Article" : "Item"}</th><th className="w-14">{fr ? "Taille" : "Size"}</th><th>{fr ? "Commentaire" : "Comment"}</th></tr></thead>
+                      <tbody>{report.itemRemarks.map((x, k) => (
+                        <tr key={k} className="border-t border-neutral-100 align-top">
+                          <td className="py-0.5"><span className="font-mono">{x.sku ?? x.label}</span>{x.name && <span className="text-neutral-500"> — {x.name}</span>}</td>
+                          <td>{x.size ?? "—"}</td>
+                          <td className="whitespace-pre-wrap">{fr ? x.fr : (x.en || x.fr)}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  )}
+                </section>
+
+                <section>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "4. Reste à livrer — PO ouverts" : "4. Still to deliver — open POs"} ({report.remaining.totalQty} {fr ? "pièces" : "pcs"})</h2>
                   {report.remaining.pos.map((po) => (
                     <div key={po.po} className="mt-2">
                       <div className="font-medium">{po.po} <span className="text-neutral-400">({po.lines.reduce((s, l) => s + l.qty, 0)} {fr ? "pcs" : "pcs"})</span></div>
