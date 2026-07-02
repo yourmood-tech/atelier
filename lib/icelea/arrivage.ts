@@ -18,6 +18,7 @@ export interface ReceptionRow {
   size: string | null;
   invoiceQty: number;       // quantité facturée pour ce (produit, taille)
   sku: string | null;       // SKU Katana résolu
+  name: string | null;      // nom de l'ingrédient Katana
   variantId: number | null;
   barcode: string | null;   // code-barres Katana (Code128)
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[]; // PO ouverts FIFO
@@ -29,7 +30,7 @@ export interface ReceptionRow {
 export const OVERRIDE_NONE = "__NONE__";
 
 export interface VariantIndex {
-  vmap: Record<string, { sku: string; size: string | null; barcode: string | null }>;
+  vmap: Record<string, { sku: string; name: string | null; size: string | null; barcode: string | null }>;
   openRows: { vid: number; qty: number; rowId: number; po: string; line: number; created: string }[];
 }
 
@@ -38,6 +39,7 @@ export interface VariantIndex {
 export interface CatalogEntry {
   vid: number;
   sku: string;
+  name: string | null;
   size: string | null;
   barcode: string | null;
   pos: { po: string; line: number; qty: number; created: string }[]; // PO ouverts triés du plus ancien au plus récent (vide si aucun → réception sans PO)
@@ -53,7 +55,7 @@ export function buildCatalog(index: VariantIndex): CatalogEntry[] {
   for (const list of posByVid.values()) list.sort((a, b) => (a.created || "").localeCompare(b.created || ""));
   return Object.entries(index.vmap)
     .filter(([, v]) => v.sku)
-    .map(([id, v]) => ({ vid: Number(id), sku: v.sku, size: v.size, barcode: v.barcode, pos: posByVid.get(Number(id)) ?? [] }))
+    .map(([id, v]) => ({ vid: Number(id), sku: v.sku, name: v.name, size: v.size, barcode: v.barcode, pos: posByVid.get(Number(id)) ?? [] }))
     .sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
@@ -166,7 +168,7 @@ const wordToks = (s: string) => s.toUpperCase().replace(/MTRL-|MD-[A-Z]{2}-\d+/g
 const compact = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 type Rec = VariantIndex["openRows"][number] & {
-  sku: string; size: string | null; barcode: string | null; code: string | null; cmp: string; w: string[];
+  sku: string; name: string | null; size: string | null; barcode: string | null; code: string | null; cmp: string; w: string[];
 };
 
 export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): ReceptionRow[] {
@@ -174,7 +176,7 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
   const recs: Rec[] = openRows.map((r) => {
     const v = vmap[r.vid];
     const sku = v?.sku ?? "";
-    return { ...r, sku, size: v?.size ?? null, barcode: v?.barcode ?? null, code: codeOf(sku), cmp: compact(sku), w: wordToks(sku) };
+    return { ...r, sku, name: v?.name ?? null, size: v?.size ?? null, barcode: v?.barcode ?? null, code: codeOf(sku), cmp: compact(sku), w: wordToks(sku) };
   });
   const byCodeSize = new Map<string, Rec[]>();
   const bySize = new Map<string, Rec[]>();
@@ -224,7 +226,7 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
       const posRows = chosen ? fifo(pool.filter((c) => c.sku === chosen.sku)) : [];
       rows.push({
         code: it.code, label: it.ref, size: size || null, invoiceQty: q,
-        sku: chosen?.sku ?? null, variantId: chosen?.vid ?? null, barcode: chosen?.barcode ?? null,
+        sku: chosen?.sku ?? null, name: chosen?.name ?? null, variantId: chosen?.vid ?? null, barcode: chosen?.barcode ?? null,
         pos: posRows.map((c) => ({ po: c.po, line: c.line, rowId: c.rowId, qty: c.qty, created: c.created })),
         openQty: posRows.reduce((s, c) => s + c.qty, 0),
         match: chosen ? via : "manuel",
@@ -256,13 +258,13 @@ export function applyOverrides(rows: ReceptionRow[], overrides: Record<string, s
     if (!fam) return r;
     if (fam === OVERRIDE_NONE) {
       // correction mémorisée = "pas d'association Katana"
-      return { ...r, sku: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" as const };
+      return { ...r, sku: null, name: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" as const };
     }
     if (!r.size) return r;
     const e = byFamSize.get(`${fam}|${r.size}`);
     if (!e) return r;
     return {
-      ...r, sku: e.sku, variantId: e.vid, barcode: e.barcode,
+      ...r, sku: e.sku, name: e.name, variantId: e.vid, barcode: e.barcode,
       pos: e.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: p.created })),
       openQty: e.pos.reduce((s, p) => s + p.qty, 0), match: "corrige",
     };

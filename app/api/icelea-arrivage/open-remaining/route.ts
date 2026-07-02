@@ -8,11 +8,11 @@ export const maxDuration = 60;
 export async function GET() {
   try {
     const [vmap, openRows] = await Promise.all([fetchIceleaVmap(), fetchOpenRows()]);
-    const byPo = new Map<string, { po: string; created: string; lines: { sku: string; size: string | null; qty: number; line: number }[] }>();
+    const byPo = new Map<string, { po: string; created: string; lines: { sku: string; name: string | null; size: string | null; qty: number; line: number }[] }>();
     for (const r of openRows) {
       const v = vmap[r.vid];
       const g = byPo.get(r.po) || { po: r.po, created: r.created, lines: [] };
-      g.lines.push({ sku: v?.sku ?? `variant ${r.vid}`, size: v?.size ?? null, qty: r.qty, line: r.line });
+      g.lines.push({ sku: v?.sku ?? `variant ${r.vid}`, name: v?.name ?? null, size: v?.size ?? null, qty: r.qty, line: r.line });
       byPo.set(r.po, g);
     }
     const pos = [...byPo.values()]

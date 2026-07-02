@@ -67,12 +67,14 @@ export async function fetchIceleaVmap(): Promise<Vmap> {
     const j = await kf(`/v1/materials?default_supplier_id=${ICELEA}&limit=250&page=${page}`);
     const mats = (j?.data as Record<string, unknown>[]) ?? [];
     for (const m of mats) {
+      const name = (m.name as string) ?? null; // nom de l'ingrédient Katana (partagé par ses variants)
       for (const v of ((m.variants as Record<string, unknown>[]) ?? [])) {
         if (v.deleted_at) continue;
         const t = ((v.config_attributes as { config_name: string; config_value: string }[]) ?? [])
           .find((a) => /taille/i.test(a.config_name));
         vmap[v.id as number] = {
           sku: (v.sku as string) ?? "",
+          name,
           size: t ? t.config_value : null,
           barcode: (v.internal_barcode as string) ?? null,
         };

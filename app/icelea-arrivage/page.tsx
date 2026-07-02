@@ -6,7 +6,7 @@ import { rowSig } from "@/lib/icelea/arrivage";
 
 type ReceptionRow = {
   code: string | null; label: string; size: string | null; invoiceQty: number;
-  sku: string | null; variantId: number | null; barcode: string | null;
+  sku: string | null; name: string | null; variantId: number | null; barcode: string | null;
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[];
   openQty: number; match: "code" | "nom" | "approx" | "manuel" | "corrige" | "aucun";
 };
@@ -14,7 +14,7 @@ type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
   matchedRows: number; approxRows: number; manualRows: number; noAssocRows?: number; iceleaVariants: number;
 };
-type CatalogEntry = { vid: number; sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number; created: string }[] };
+type CatalogEntry = { vid: number; sku: string; name: string | null; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number; created: string }[] };
 type ReceiveResult = { receivedOnPO: { po: string; line: number; qty: number }[]; totalReceivedPO: number; surplus: number; forcedNoPO: number; picked: number };
 
 export default function IceleaArrivagePage() {
@@ -28,7 +28,7 @@ export default function IceleaArrivagePage() {
   const [busy, setBusy] = useState<Record<number, boolean>>({});
   const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
   // Lot 3 — rapport de fin d'arrivage
-  type RemainingPo = { po: string; created: string; lines: { sku: string; size: string | null; qty: number; line: number }[] };
+  type RemainingPo = { po: string; created: string; lines: { sku: string; name: string | null; size: string | null; qty: number; line: number }[] };
   type Report = {
     neverScanned: { label: string; size: string | null; qty: number }[];
     qtyDiffs: { label: string; size: string | null; invoiceQty: number; receivedQty: number }[];
@@ -101,7 +101,7 @@ export default function IceleaArrivagePage() {
 
   function updateRow(i: number, c: CatalogEntry) {
     setRows((prev) => prev ? prev.map((r, idx) => idx === i ? {
-      ...r, sku: c.sku, variantId: c.vid, barcode: c.barcode, size: c.size ?? r.size,
+      ...r, sku: c.sku, name: c.name, variantId: c.vid, barcode: c.barcode, size: c.size ?? r.size,
       pos: c.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: p.created })),
       openQty: c.pos.reduce((s, p) => s + p.qty, 0), match: "corrige",
     } : r) : prev);
@@ -123,7 +123,7 @@ export default function IceleaArrivagePage() {
   // marque une ligne comme "sans association Katana" (article hors Katana) + mémorise
   function markNoAssoc(i: number, label: string) {
     setRows((prev) => prev ? prev.map((r, idx) => idx === i
-      ? { ...r, sku: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" } : r) : prev);
+      ? { ...r, sku: null, name: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" } : r) : prev);
     learnPick(label, null);
     setEditRows((e) => ({ ...e, [i]: false }));
   }
@@ -311,6 +311,7 @@ export default function IceleaArrivagePage() {
                     </td>
                     <td className="p-2">
                       <div className="font-mono text-xs">{r.sku ?? r.label}</div>
+                      {r.name && <div className="text-[11px] font-medium text-neutral-700">{r.name}</div>}
                       {r.sku && <div className="text-[11px] text-neutral-500">{r.label}</div>}
                       {r.pos.length
                         ? <div className="mt-0.5 text-[11px] text-neutral-500">
@@ -417,7 +418,7 @@ export default function IceleaArrivagePage() {
                     <div key={po.po} className="mt-2">
                       <div className="font-medium">{po.po} <span className="text-neutral-400">({po.lines.reduce((s, l) => s + l.qty, 0)} {fr ? "pcs" : "pcs"})</span></div>
                       <table className="w-full text-xs">
-                        <tbody>{po.lines.map((l, k) => <tr key={k} className="border-t border-neutral-100"><td className="py-0.5 font-mono">{l.sku}</td><td className="w-14">{l.size ?? "—"}</td><td className="w-10">×{l.qty}</td></tr>)}</tbody>
+                        <tbody>{po.lines.map((l, k) => <tr key={k} className="border-t border-neutral-100"><td className="py-0.5"><span className="font-mono">{l.sku}</span>{l.name && <span className="text-neutral-500"> — {l.name}</span>}</td><td className="w-14">{l.size ?? "—"}</td><td className="w-10">×{l.qty}</td></tr>)}</tbody>
                       </table>
                     </div>
                   ))}
@@ -445,7 +446,7 @@ function ManualPick({ catalog, onPick }: { catalog: CatalogEntry[]; onPick: (c: 
   const [q, setQ] = useState("");
   const toks = q.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); // découpe sur +, -, /, espace…
   const results = toks.length === 0 ? [] : catalog.filter((c) => {
-    const s = c.sku.toLowerCase();
+    const s = `${c.sku} ${c.name ?? ""}`.toLowerCase(); // recherche sur SKU ET nom
     return toks.every((t) => s.includes(t));
   }).slice(0, 10);
   return (
@@ -458,6 +459,7 @@ function ManualPick({ catalog, onPick }: { catalog: CatalogEntry[]; onPick: (c: 
             <button key={c.sku} onClick={() => { onPick(c); setQ(""); }}
               className="block w-full border-b border-neutral-100 px-2 py-1 text-left hover:bg-neutral-100">
               <div className="font-mono">{c.sku}</div>
+              {c.name && <div className="text-neutral-600">{c.name}</div>}
               <div className="text-neutral-400">{c.pos.map((p) => `${p.po} l.${p.line}`).join(" · ")}</div>
             </button>
           ))}
