@@ -14,7 +14,7 @@ type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
   matchedRows: number; approxRows: number; manualRows: number; noAssocRows?: number; iceleaVariants: number;
 };
-type CatalogEntry = { vid: number; sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number }[] };
+type CatalogEntry = { vid: number; sku: string; size: string | null; barcode: string | null; pos: { po: string; line: number; qty: number; created: string }[] };
 type ReceiveResult = { receivedOnPO: { po: string; line: number; qty: number }[]; totalReceivedPO: number; surplus: number; forcedNoPO: number; picked: number };
 
 export default function IceleaArrivagePage() {
@@ -75,7 +75,7 @@ export default function IceleaArrivagePage() {
   function updateRow(i: number, c: CatalogEntry) {
     setRows((prev) => prev ? prev.map((r, idx) => idx === i ? {
       ...r, sku: c.sku, variantId: c.vid, barcode: c.barcode, size: c.size ?? r.size,
-      pos: c.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: "" })),
+      pos: c.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: p.created })),
       openQty: c.pos.reduce((s, p) => s + p.qty, 0), match: "corrige",
     } : r) : prev);
   }

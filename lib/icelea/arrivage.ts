@@ -40,15 +40,17 @@ export interface CatalogEntry {
   sku: string;
   size: string | null;
   barcode: string | null;
-  pos: { po: string; line: number; qty: number }[]; // PO ouverts (vide si aucun → réception sans PO)
+  pos: { po: string; line: number; qty: number; created: string }[]; // PO ouverts triés du plus ancien au plus récent (vide si aucun → réception sans PO)
 }
 // Catalogue de recherche = TOUS les variants Icelea, chacun avec ses PO ouverts (le cas
 // échéant). Permet de trouver un produit même s'il n'est sur aucun PO (réception forcée).
+// Les PO de chaque variant sont triés par DATE (plus ancien d'abord) = ordre réel de réception.
 export function buildCatalog(index: VariantIndex): CatalogEntry[] {
-  const posByVid = new Map<number, { po: string; line: number; qty: number }[]>();
+  const posByVid = new Map<number, { po: string; line: number; qty: number; created: string }[]>();
   for (const r of index.openRows) {
-    (posByVid.get(r.vid) || posByVid.set(r.vid, []).get(r.vid)!).push({ po: r.po, line: r.line, qty: r.qty });
+    (posByVid.get(r.vid) || posByVid.set(r.vid, []).get(r.vid)!).push({ po: r.po, line: r.line, qty: r.qty, created: r.created });
   }
+  for (const list of posByVid.values()) list.sort((a, b) => (a.created || "").localeCompare(b.created || ""));
   return Object.entries(index.vmap)
     .filter(([, v]) => v.sku)
     .map(([id, v]) => ({ vid: Number(id), sku: v.sku, size: v.size, barcode: v.barcode, pos: posByVid.get(Number(id)) ?? [] }))
@@ -261,7 +263,7 @@ export function applyOverrides(rows: ReceptionRow[], overrides: Record<string, s
     if (!e) return r;
     return {
       ...r, sku: e.sku, variantId: e.vid, barcode: e.barcode,
-      pos: e.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: "" })),
+      pos: e.pos.map((p) => ({ po: p.po, line: p.line, rowId: 0, qty: p.qty, created: p.created })),
       openQty: e.pos.reduce((s, p) => s + p.qty, 0), match: "corrige",
     };
   });
