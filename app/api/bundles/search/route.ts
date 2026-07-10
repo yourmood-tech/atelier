@@ -26,14 +26,16 @@ export async function GET(req: NextRequest) {
     // independently — avoids exact-phrase mismatch when the title still has a hyphen.
     const sanitized = q!.replace(/"/g, "").replace(/\s*-\s*/g, " ").trim();
     const sigWords = [...new Set(sanitized.split(/\s+/).filter((w) => w.length > 2))];
+    // Match each significant word against title OR tags, so a product findable by a
+    // collection tag (e.g. "évasion") surfaces even when that word isn't in its title.
     queryFilter =
       sigWords.length > 1
-        ? sigWords.map((w) => `title:*${w}*`).join(" ")
-        : `title:*${sanitized}*`;
+        ? sigWords.map((w) => `(title:*${w}* OR tag:*${w}*)`).join(" ")
+        : `(title:*${sanitized}* OR tag:*${sanitized}*)`;
   }
 
   const gql = `{
-    products(first: 10, query: "${queryFilter}") {
+    products(first: 50, query: "${queryFilter}", sortKey: CREATED_AT, reverse: true) {
       edges {
         node {
           id title status descriptionHtml
