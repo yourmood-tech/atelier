@@ -70,8 +70,23 @@ export default function IceleaPOPage() {
   const [openPosLoading, setOpenPosLoading] = useState(false);
   const [targetPoId, setTargetPoId] = useState<number | "">("");
 
-  // Manual ingredient lookup by SKU
-  type IngSearchState = { localId: string; sku: string; result: IceleaIngredient | null; error: string | null; loading: boolean };
+  // Manual ingredient lookup — either by product name (recipe → Icelea component)
+  // or directly by the Icelea ingredient SKU.
+  type ProductHit = { productId: number; title: string; status: string; variants: { sku: string; title: string }[] };
+  type IngSearchState = {
+    localId: string;
+    mode: "product" | "sku";
+    // "sku" mode
+    sku: string;
+    // "product" mode
+    productQuery: string;
+    productHits: ProductHit[] | null;
+    selectedProduct: ProductHit | null;
+    // shared — resolved Icelea ingredients ready to add
+    result: IceleaIngredient[] | null;
+    error: string | null;
+    loading: boolean;
+  };
   const [ingSearch, setIngSearch] = useState<IngSearchState | null>(null);
 
   // Manual order number entry
@@ -445,23 +460,76 @@ export default function IceleaPOPage() {
   }
 
   function openIngSearch(localId: string) {
-    setIngSearch({ localId, sku: "", result: null, error: null, loading: false });
+    setIngSearch({ localId, mode: "product", sku: "", productQuery: "", productHits: null, selectedProduct: null, result: null, error: null, loading: false });
   }
 
   function closeIngSearch() {
     setIngSearch(null);
   }
 
+  function setIngMode(mode: "product" | "sku") {
+    setIngSearch((prev) => prev ? { ...prev, mode, productHits: null, selectedProduct: null, result: null, error: null } : null);
+  }
+
+  // ── Mode "par nom de produit" : Shopify (recherche titre) → recette Katana → composant Icelea
+  async function searchProducts(query: string) {
+    if (!query.trim()) return;
+    setIngSearch((prev) => prev ? { ...prev, loading: true, productHits: null, selectedProduct: null, result: null, error: null } : null);
+    try {
+      const res = await fetch(`/api/icelea-po/search-product?q=${encodeURIComponent(query.trim())}`);
+      const data = await res.json() as { ok?: boolean; products?: ProductHit[]; error?: string };
+      if (!res.ok || !data.ok) {
+        setIngSearch((prev) => prev ? { ...prev, loading: false, error: data.error ?? "Introuvable" } : null);
+      } else {
+        const hits = data.products ?? [];
+        setIngSearch((prev) => prev ? { ...prev, loading: false, productHits: hits, error: hits.length ? null : "Aucun produit trouvé" } : null);
+      }
+    } catch {
+      setIngSearch((prev) => prev ? { ...prev, loading: false, error: "Erreur réseau" } : null);
+    }
+  }
+
+  function pickProduct(p: ProductHit) {
+    if (p.variants.length === 1) {
+      // Une seule variante avec SKU → on résout tout de suite
+      setIngSearch((prev) => prev ? { ...prev, selectedProduct: p } : null);
+      void resolveProductSku(p.variants[0].sku);
+    } else {
+      setIngSearch((prev) => prev ? { ...prev, selectedProduct: p, result: null, error: null } : null);
+    }
+  }
+
+  // Lit la recette Katana du SKU choisi et en sort le(s) composant(s) Icelea
+  async function resolveProductSku(sku: string) {
+    setIngSearch((prev) => prev ? { ...prev, loading: true, result: null, error: null } : null);
+    try {
+      const res = await fetch("/api/icelea-po/resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sku }),
+      });
+      const data = await res.json() as { ok?: boolean; icelea?: IceleaIngredient[]; error?: string };
+      if (!res.ok || !data.ok || !(data.icelea?.length)) {
+        setIngSearch((prev) => prev ? { ...prev, loading: false, error: data.error ?? "Aucun composant Icelea dans cette recette" } : null);
+      } else {
+        setIngSearch((prev) => prev ? { ...prev, loading: false, result: data.icelea!.map((x) => ({ ...x, purchasePrice: x.purchasePrice ?? 0 })) } : null);
+      }
+    } catch {
+      setIngSearch((prev) => prev ? { ...prev, loading: false, error: "Erreur réseau" } : null);
+    }
+  }
+
+  // ── Mode "par SKU ingrédient" (repli — inchangé)
   async function lookupIngSku(localId: string, sku: string) {
     if (!sku.trim()) return;
     setIngSearch((prev) => prev ? { ...prev, loading: true, result: null, error: null } : null);
     try {
       const res = await fetch(`/api/icelea-po/search-ingredient?sku=${encodeURIComponent(sku.trim())}`);
       const data = await res.json() as { ok?: boolean; result?: IceleaIngredient; error?: string };
-      if (!res.ok || !data.ok) {
+      if (!res.ok || !data.ok || !data.result) {
         setIngSearch((prev) => prev ? { ...prev, loading: false, error: data.error ?? "Introuvable" } : null);
       } else {
-        setIngSearch((prev) => prev ? { ...prev, loading: false, result: data.result ?? null } : null);
+        setIngSearch((prev) => prev ? { ...prev, loading: false, result: [data.result!] } : null);
       }
     } catch {
       setIngSearch((prev) => prev ? { ...prev, loading: false, error: "Erreur réseau" } : null);
@@ -770,39 +838,145 @@ export default function IceleaPOPage() {
                     )}
                     {ingSearch?.localId === item.localId && (
                       <div style={{ background: "#f9f9f9", border: "1px solid #e0e0e0", borderRadius: 8, padding: "10px 12px" }}>
-                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
-                          <input
-                            autoFocus
-                            type="text"
-                            placeholder="SKU Icelea (ex: AUR-TITAN-52)"
-                            value={ingSearch.sku}
-                            onChange={(e) => setIngSearch((prev) => prev ? { ...prev, sku: e.target.value, result: null, error: null } : null)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") { e.preventDefault(); void lookupIngSku(item.localId, ingSearch.sku); }
-                              if (e.key === "Escape") closeIngSearch();
-                            }}
-                            style={{ flex: 1, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, outline: "none" }}
-                          />
+                        {/* Bascule de mode + fermeture */}
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
                           <button
-                            onClick={() => void lookupIngSku(item.localId, ingSearch.sku)}
-                            disabled={ingSearch.loading || !ingSearch.sku.trim()}
-                            style={{ padding: "6px 12px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", opacity: ingSearch.loading || !ingSearch.sku.trim() ? 0.4 : 1 }}
+                            onClick={() => setIngMode("product")}
+                            style={{ padding: "4px 10px", border: "none", borderRadius: 20, fontSize: 12, cursor: "pointer", background: ingSearch.mode === "product" ? "#111" : "#eee", color: ingSearch.mode === "product" ? "#fff" : "#666" }}
                           >
-                            {ingSearch.loading ? "…" : "OK"}
+                            Par nom de produit
                           </button>
+                          <button
+                            onClick={() => setIngMode("sku")}
+                            style={{ padding: "4px 10px", border: "none", borderRadius: 20, fontSize: 12, cursor: "pointer", background: ingSearch.mode === "sku" ? "#111" : "#eee", color: ingSearch.mode === "sku" ? "#fff" : "#666" }}
+                          >
+                            Par SKU ingrédient
+                          </button>
+                          <div style={{ flex: 1 }} />
                           <button onClick={closeIngSearch} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: 16, padding: "0 4px" }}>✕</button>
                         </div>
+
+                        {/* MODE : par nom de produit */}
+                        {ingSearch.mode === "product" && (
+                          <>
+                            {!ingSearch.selectedProduct && (
+                              <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  placeholder="Nom du produit à commander (ex: Aura titane)"
+                                  value={ingSearch.productQuery}
+                                  onChange={(e) => setIngSearch((prev) => prev ? { ...prev, productQuery: e.target.value } : null)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") { e.preventDefault(); void searchProducts(ingSearch.productQuery); }
+                                    if (e.key === "Escape") closeIngSearch();
+                                  }}
+                                  style={{ flex: 1, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, outline: "none" }}
+                                />
+                                <button
+                                  onClick={() => void searchProducts(ingSearch.productQuery)}
+                                  disabled={ingSearch.loading || !ingSearch.productQuery.trim()}
+                                  style={{ padding: "6px 12px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", opacity: ingSearch.loading || !ingSearch.productQuery.trim() ? 0.4 : 1 }}
+                                >
+                                  {ingSearch.loading ? "…" : "Chercher"}
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Liste des produits trouvés */}
+                            {!ingSearch.selectedProduct && ingSearch.productHits && ingSearch.productHits.length > 0 && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 4 }}>
+                                {ingSearch.productHits.map((p) => (
+                                  <button
+                                    key={p.productId}
+                                    onClick={() => pickProduct(p)}
+                                    disabled={p.variants.length === 0}
+                                    style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", background: "#fff", border: "1px solid #ddd", borderRadius: 6, cursor: p.variants.length ? "pointer" : "default", fontSize: 13, opacity: p.variants.length ? 1 : 0.5 }}
+                                  >
+                                    <span style={{ fontWeight: 600, flex: 1 }}>{p.title}</span>
+                                    <span style={{ color: "#888", fontSize: 11 }}>
+                                      {p.variants.length ? `${p.variants.length} taille(s)` : "aucun SKU"}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Produit choisi → choix de la taille (variante) */}
+                            {ingSearch.selectedProduct && !ingSearch.result && (
+                              <div style={{ marginBottom: 4 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                                  <span style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>{ingSearch.selectedProduct.title}</span>
+                                  <button
+                                    onClick={() => setIngSearch((prev) => prev ? { ...prev, selectedProduct: null, result: null, error: null } : null)}
+                                    style={{ background: "none", border: "none", color: "#888", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+                                  >
+                                    changer
+                                  </button>
+                                </div>
+                                {!ingSearch.loading && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                                    {ingSearch.selectedProduct.variants.map((v) => (
+                                      <button
+                                        key={v.sku}
+                                        onClick={() => void resolveProductSku(v.sku)}
+                                        style={{ padding: "6px 10px", border: "1px solid #bbb", borderRadius: 6, background: "#fff", fontSize: 13, cursor: "pointer" }}
+                                        title={v.sku}
+                                      >
+                                        {v.title}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {ingSearch.loading && <div style={{ fontSize: 12, color: "#888" }}>Lecture de la recette…</div>}
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* MODE : par SKU ingrédient (repli) */}
+                        {ingSearch.mode === "sku" && (
+                          <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                            <input
+                              autoFocus
+                              type="text"
+                              placeholder="SKU Icelea (ex: AUR-TITAN-52)"
+                              value={ingSearch.sku}
+                              onChange={(e) => setIngSearch((prev) => prev ? { ...prev, sku: e.target.value, result: null, error: null } : null)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") { e.preventDefault(); void lookupIngSku(item.localId, ingSearch.sku); }
+                                if (e.key === "Escape") closeIngSearch();
+                              }}
+                              style={{ flex: 1, padding: "6px 10px", border: "1px solid #ddd", borderRadius: 6, fontSize: 13, outline: "none" }}
+                            />
+                            <button
+                              onClick={() => void lookupIngSku(item.localId, ingSearch.sku)}
+                              disabled={ingSearch.loading || !ingSearch.sku.trim()}
+                              style={{ padding: "6px 12px", background: "#111", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", opacity: ingSearch.loading || !ingSearch.sku.trim() ? 0.4 : 1 }}
+                            >
+                              {ingSearch.loading ? "…" : "OK"}
+                            </button>
+                          </div>
+                        )}
+
                         {ingSearch.error && <div style={{ fontSize: 12, color: "#c62828" }}>{ingSearch.error}</div>}
-                        {ingSearch.result && (
-                          <button
-                            onClick={() => addManualIngredient(item.localId, ingSearch.result!)}
-                            style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", background: "#fff", border: "1px solid #111", borderRadius: 6, cursor: "pointer", fontSize: 13 }}
-                          >
-                            <span style={{ fontWeight: 600, flex: 1 }}>{ingSearch.result.name}</span>
-                            {ingSearch.result.sku && <span style={{ color: "#888" }}>{ingSearch.result.sku}</span>}
-                            <span style={{ color: "#555" }}>CHF {ingSearch.result.purchasePrice.toFixed(2)}</span>
-                            <span style={{ color: "#2e7d32", fontWeight: 600 }}>+ Ajouter</span>
-                          </button>
+
+                        {/* Composant(s) Icelea résolu(s) → à ajouter */}
+                        {ingSearch.result && ingSearch.result.length > 0 && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+                            {ingSearch.result.map((ing) => (
+                              <button
+                                key={ing.variantId}
+                                onClick={() => addManualIngredient(item.localId, ing)}
+                                style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", background: "#fff", border: "1px solid #111", borderRadius: 6, cursor: "pointer", fontSize: 13 }}
+                              >
+                                <span style={{ fontWeight: 600, flex: 1 }}>{ing.name}</span>
+                                {ing.sku && <span style={{ color: "#888" }}>{ing.sku}</span>}
+                                <span style={{ color: "#555" }}>CHF {ing.purchasePrice.toFixed(2)}</span>
+                                <span style={{ color: "#2e7d32", fontWeight: 600 }}>+ Ajouter</span>
+                              </button>
+                            ))}
+                          </div>
                         )}
                       </div>
                     )}
