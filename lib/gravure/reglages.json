@@ -1,0 +1,146 @@
+{
+ "reglages": [
+  {
+   "nom": "mandala preto",
+   "matiere": "alu 2/3",
+   "laser": "vecteur",
+   "puissance": "80",
+   "vitesse": "5",
+   "passes": "1",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "noir",
+   "couleur_trait": "gris clair",
+   "temps": "3'"
+  },
+  {
+   "nom": "test sur argent",
+   "matiere": "argent",
+   "laser": "",
+   "puissance": "80",
+   "vitesse": "5",
+   "passes": "2",
+   "frequence": "45000",
+   "dpi": "600",
+   "couleur_addon": "argent ",
+   "couleur_trait": "noir",
+   "temps": ""
+  },
+  {
+   "nom": "qoqa crop",
+   "matiere": "",
+   "laser": "vecteur",
+   "puissance": "80",
+   "vitesse": "5",
+   "passes": "1er passage",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "",
+   "couleur_trait": "",
+   "temps": "3'46"
+  },
+  {
+   "nom": "qoqa zebre 50-58",
+   "matiere": "alu ",
+   "laser": "balayage",
+   "puissance": "30",
+   "vitesse": "100",
+   "passes": "1",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "petrole",
+   "couleur_trait": "gris",
+   "temps": ""
+  },
+  {
+   "nom": "qoqa zebre 60-72",
+   "matiere": "alu",
+   "laser": "balayage",
+   "puissance": "80",
+   "vitesse": "100",
+   "passes": "2",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "petrole",
+   "couleur_trait": "",
+   "temps": ""
+  },
+  {
+   "nom": "sur alu",
+   "matiere": "",
+   "laser": "vecteur",
+   "puissance": "80",
+   "vitesse": "15",
+   "passes": "1",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "noir",
+   "couleur_trait": "gris",
+   "temps": "1'50"
+  },
+  {
+   "nom": "sur titane",
+   "matiere": "",
+   "laser": "vecteur",
+   "puissance": "80",
+   "vitesse": "15",
+   "passes": "1",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "attention finir la surface avant",
+   "couleur_trait": "",
+   "temps": "1'50"
+  },
+  {
+   "nom": "sur full carbone",
+   "matiere": "full carbon",
+   "laser": "vecteur",
+   "puissance": "30",
+   "vitesse": "15",
+   "passes": "1",
+   "frequence": "45000",
+   "dpi": "800",
+   "couleur_addon": "",
+   "couleur_trait": "",
+   "temps": "1'50"
+  }
+ ],
+ "bases": [
+  {
+   "base": "Emeraude",
+   "z": "Z -9"
+  },
+  {
+   "base": "Rosée",
+   "z": "Z 0"
+  },
+  {
+   "base": "Dalmatien",
+   "z": "Z -3.5"
+  },
+  {
+   "base": "Zebrée black",
+   "z": "Z +1"
+  },
+  {
+   "base": "Halloween manoir",
+   "z": "Z -4.5"
+  },
+  {
+   "base": "Perce-Neige",
+   "z": "Z-6.4"
+  },
+  {
+   "base": "Toutes les autres",
+   "z": "Z -4"
+  },
+  {
+   "base": "Gris perle",
+   "z": "0"
+  },
+  {
+   "base": "Anthracite",
+   "z": "Z-9"
+  }
+ ]
+}
