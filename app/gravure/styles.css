@@ -75,3 +75,12 @@
 .grv .editrow{display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap}
 .grv .saved{color:var(--ok);font-size:12.5px}
 .grv .empty{color:var(--muted);text-align:center;padding:40px 10px;font-size:15px}
+.grv .manual-head{display:flex;gap:16px;align-items:center;margin-bottom:8px}
+.grv .pphoto{width:96px;height:96px;flex:none;object-fit:cover;border-radius:14px;border:1px solid var(--line);background:var(--bg)}
+.grv .pphoto.ph{background:repeating-linear-gradient(45deg,var(--bg),var(--bg) 6px,var(--line) 6px,var(--line) 7px)}
+.grv .cands{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.grv .cand{font:inherit;cursor:pointer;background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:7px 13px;color:inherit;display:flex;align-items:center;gap:8px}
+.grv .cand.on{border-color:var(--accent);background:var(--accent-soft)}
+.grv .cand .tag{margin:0;font-size:9.5px;padding:2px 7px}
+.grv .apercu{display:block;margin-top:14px;max-width:320px;width:100%;border-radius:12px;border:1px solid var(--line);background:#fff}
+.grv .tablewrap{overflow-x:auto}
