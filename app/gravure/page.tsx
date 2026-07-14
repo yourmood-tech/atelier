@@ -20,14 +20,16 @@ const norm = (s: string) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
 const regByName: Record<string, Reglage> = {};
-REGLAGES.forEach((r) => { regByName[norm(r.nom)] = r; });
+REGLAGES.forEach((r) => { if (!regByName[norm(r.nom)]) regByName[norm(r.nom)] = r; });
+// noms triés du plus long au plus court → on privilégie la correspondance la plus précise
+const regNames = Object.keys(regByName).sort((a, b) => b.length - a.length);
 const baseByName: Record<string, string> = {};
 BASES.forEach((b) => { baseByName[norm(b.base)] = b.z; });
 
 function findReglage(name: string): Reglage | null {
   const n = norm(name);
   if (regByName[n]) return regByName[n];
-  for (const k in regByName) if (k.length > 3 && (n.includes(k) || k.includes(n))) return regByName[k];
+  for (const k of regNames) if (k.length > 3 && (n.includes(k) || k.includes(n))) return regByName[k];
   return null;
 }
 function findBaseZ(name: string): { base: string; z: string } | null {
