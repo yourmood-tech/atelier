@@ -75,12 +75,10 @@ export default function GravurePage() {
   const openFiche = useCallback((f: F) => {
     setSel(f); setEditing(false); setCopied(false);
     setPhoto({ state: "loading" });
-    fetch("/api/mood-flyer-search?q=" + encodeURIComponent(f.nom))
+    fetch("/api/gravure/photo?q=" + encodeURIComponent(f.nom))
       .then((r) => r.json())
       .then((d) => {
-        const p = d.products && d.products[0];
-        const url = p?.featuredImage?.url || (p?.images && p.images[0]?.url);
-        if (url) setPhoto({ state: "idle", url, title: p.title });
+        if (d.photo?.url) setPhoto({ state: "idle", url: d.photo.url, title: d.photo.title });
         else setPhoto({ state: "none" });
       })
       .catch(() => setPhoto({ state: "none" }));
@@ -143,6 +141,7 @@ export default function GravurePage() {
               <div className="results">
                 {files.map((f) => (
                   <button key={idOf(f)} className="row" onClick={() => openFiche(f)}>
+                    <Thumb name={f.nom} />
                     <span>
                       <span className="nm">{f.nom}</span>
                       <span className="fd">{f.chemin}</span>
@@ -264,4 +263,24 @@ function Cell({ k, v }: { k: string; v: string }) {
       <div className="v">{v || "—"}</div>
     </div>
   );
+}
+
+// vignette photo Shopify pour la liste (mise en cache par nom, chargée à la volée)
+const photoCache = new Map<string, string | null>();
+function Thumb({ name }: { name: string }) {
+  const [url, setUrl] = useState<string | null | undefined>(photoCache.get(name));
+  useEffect(() => {
+    if (photoCache.has(name)) { setUrl(photoCache.get(name)!); return; }
+    let alive = true;
+    fetch("/api/gravure/photo?q=" + encodeURIComponent(name))
+      .then((r) => r.json())
+      .then((d) => { const u = d.photo?.url || null; photoCache.set(name, u); if (alive) setUrl(u); })
+      .catch(() => { photoCache.set(name, null); if (alive) setUrl(null); });
+    return () => { alive = false; };
+  }, [name]);
+  if (url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img className="thumb" src={url} alt="" loading="lazy" />;
+  }
+  return <span className="thumb ph" aria-hidden="true" />;
 }

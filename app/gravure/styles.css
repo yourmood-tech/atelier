@@ -28,6 +28,8 @@
 .grv .row{display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
   background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px;color:inherit;font:inherit}
 .grv .row:hover,.grv .row:focus-visible{border-color:var(--accent);outline:none}
+.grv .row .thumb{flex:none;width:46px;height:46px;border-radius:9px;object-fit:cover;border:1px solid var(--line);background:var(--bg)}
+.grv .row .thumb.ph{background:repeating-linear-gradient(45deg,var(--bg),var(--bg) 5px,var(--line) 5px,var(--line) 6px)}
 .grv .row .nm{font-weight:650;font-size:16px}
 .grv .row .fd{color:var(--muted);font-size:12px;margin-top:2px}
 .grv .tag{flex:none;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:4px 10px;border-radius:20px;font-weight:700;margin-left:auto;white-space:nowrap}
