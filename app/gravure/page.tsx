@@ -109,7 +109,7 @@ export default function GravurePage() {
     }
   }
 
-  const reg = sel ? findReglage(sel.nom) : null;
+  const reg = sel && sel.type === "Laser" ? findReglage(sel.nom) : null;
   const bz = sel ? findBaseZ(sel.nom) : null;
   const rec = sel ? recipes[idOf(sel)] : undefined;
 
@@ -199,9 +199,9 @@ export default function GravurePage() {
                 </div>
               </>
             ) : bz ? (
-              <div className="crumb">Base « {bz.base} » → <b>{bz.z}</b></div>
+              <div className="crumb">Gravure {sel.type.toLowerCase()} · Base « {bz.base} » → <b>{bz.z}</b></div>
             ) : (
-              <p className="none">Pas de réglage indiqué pour ce fichier.</p>
+              <p className="none">Gravure {sel.type.toLowerCase()} — pas de réglage laser pour ce fichier.</p>
             )}
           </div>
 

@@ -21,8 +21,14 @@ function keywords(name: string): string[] {
     .filter((w) => w.length > 2 && !STOP.has(w) && !/^t?\d+$/.test(w) && !/^z\d/.test(w));
 }
 
-async function shopify(query: string) {
-  const gql = `{ products(first: 5, query: ${JSON.stringify(query)}) {
+type Node = { title: string; handle: string; featuredImage?: { url: string } | null };
+
+const na = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const wholeWord = (word: string, title: string) =>
+  new RegExp("\\b" + na(word).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(na(title));
+
+async function shopify(query: string): Promise<Node[]> {
+  const gql = `{ products(first: 8, query: ${JSON.stringify(query)}) {
     edges { node { title handle featuredImage { url } } } } }`;
   const res = await fetch(`https://${STORE}/admin/api/${VERSION}/graphql.json`, {
     method: "POST",
@@ -32,26 +38,22 @@ async function shopify(query: string) {
   });
   if (!res.ok) return [];
   const data = await res.json();
-  return (data?.data?.products?.edges || []).map((e: { node: { title: string; handle: string; featuredImage?: { url: string } | null } }) => e.node);
+  return (data?.data?.products?.edges || []).map((e: { node: Node }) => e.node);
 }
 
-// Photo produit Shopify pour un fichier de gravure (recherche plein texte, pas de wildcard).
+// Photo produit Shopify pour un fichier de gravure.
+// Recherche dans le TITRE (title:mot*) puis ne garde que si TOUS les mots sont
+// présents comme mots entiers dans le titre (panda ≠ pandanus) → pas de fausse image.
 export async function GET(req: NextRequest) {
   const raw = (req.nextUrl.searchParams.get("q") || "").trim();
-  if (!raw) return NextResponse.json({ photo: null });
   const words = keywords(raw);
-  const tries: string[] = [];
-  if (words.length) tries.push(words.join(" "));
-  if (words.length > 1) tries.push(words.sort((a, b) => b.length - a.length)[0]); // mot le plus distinctif
-  if (!tries.length) tries.push(raw);
+  if (!words.length) return NextResponse.json({ photo: null });
 
   try {
-    for (const q of tries) {
-      const nodes = await shopify(q);
-      const withImg = nodes.find((n: { featuredImage?: { url: string } | null }) => n.featuredImage?.url);
-      if (withImg) {
-        return NextResponse.json({ photo: { url: withImg.featuredImage.url, title: withImg.title, handle: withImg.handle } });
-      }
+    const nodes = await shopify(words.map((w) => `title:${w}*`).join(" "));
+    const hit = nodes.find((n) => n.featuredImage?.url && words.every((w) => wholeWord(w, n.title)));
+    if (hit) {
+      return NextResponse.json({ photo: { url: hit.featuredImage!.url, title: hit.title, handle: hit.handle } });
     }
     return NextResponse.json({ photo: null });
   } catch (e) {
