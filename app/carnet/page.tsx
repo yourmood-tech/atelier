@@ -9,7 +9,9 @@ type Addon = {
   format?: string | string[]; matiere?: string; couleur?: string; finition?: string;
   croquis?: string[]; inspi?: string[]; ai?: FileRef[]; photos?: string[];
   laser?: string; realisation?: string; mtrl?: string; shopify?: string; fournisseur?: string[];
+  date_croquis?: string; date_dessin?: string; date_gravure?: string; date_sortie?: string;
 };
+const fdate = (v?: string) => v ? v.split("-").reverse().join(".") : "";
 type Collection = { id: string; name: string; month: string; cover?: string; addons: Addon[] };
 
 const FORMATS = ["addon", "deux tiers", "medium", "mini", "open mood", "base", "pack", "coffret"];
@@ -239,6 +241,13 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
 
       <MultiChips label="Fournisseur" options={FOURNISSEURS} value={addon.fournisseur} onSave={(v) => save({ fournisseur: v })} allowFree />
 
+      <div className="detrow">
+        <TextField label="Date croquis" type="date" val={addon.date_croquis} onSave={(v) => field("date_croquis", v)} />
+        <TextField label="Date dessin" type="date" val={addon.date_dessin} onSave={(v) => field("date_dessin", v)} />
+        <TextField label="Date gravure" type="date" val={addon.date_gravure} onSave={(v) => field("date_gravure", v)} />
+        <TextField label="Date de sortie" type="date" val={addon.date_sortie} onSave={(v) => field("date_sortie", v)} />
+      </div>
+
       <ImageZone title="Croquis" items={addon.croquis || []} onChange={(v) => save({ croquis: v })} />
       <ImageZone title="Inspiration / vectoriel" items={addon.inspi || []} onChange={(v) => save({ inspi: v })} />
       <FileZone title="Fichier .ai" items={addon.ai || []} onChange={(v) => save({ ai: v })} />
@@ -294,6 +303,18 @@ function FicheRender({ addon }: { addon: Addon }) {
           {tags.length > 0 && <div className="r-tags">{tags.map((t, i) => <span className="r-tag" key={i}>{t}</span>)}</div>}
         </div>
       </header>
+
+      {(addon.date_croquis || addon.date_dessin || addon.date_gravure || addon.date_sortie) && (
+        <section className="r-sec">
+          <h3>Dates</h3>
+          <div className="r-dates">
+            {addon.date_croquis && <span><b>Croquis</b>{fdate(addon.date_croquis)}</span>}
+            {addon.date_dessin && <span><b>Dessin</b>{fdate(addon.date_dessin)}</span>}
+            {addon.date_gravure && <span><b>Gravure</b>{fdate(addon.date_gravure)}</span>}
+            {addon.date_sortie && <span><b>Sortie</b>{fdate(addon.date_sortie)}</span>}
+          </div>
+        </section>
+      )}
 
       <RGallery title="Photos du produit" items={photos.length > 1 ? photos.slice(1) : (hero && photos[0] === hero ? [] : photos)} />
       <RGallery title="Croquis" items={addon.croquis} />
@@ -362,11 +383,11 @@ function FormatChips({ value, onSave }: { value?: string | string[]; onSave: (v:
   );
 }
 
-function TextField({ label, val, onSave, list, placeholder }: { label: string; val?: string; onSave: (v: string) => void; list?: string; placeholder?: string }) {
+function TextField({ label, val, onSave, list, placeholder, type }: { label: string; val?: string; onSave: (v: string) => void; list?: string; placeholder?: string; type?: string }) {
   return (
     <div className="field">
       <label>{label}</label>
-      <input defaultValue={val} list={list} placeholder={placeholder} onBlur={(e) => onSave(e.target.value)} />
+      <input type={type || "text"} defaultValue={val} list={list} placeholder={placeholder} onBlur={(e) => onSave(e.target.value)} />
     </div>
   );
 }
