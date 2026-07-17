@@ -6,13 +6,16 @@ import "./styles.css";
 type FileRef = { url: string; name: string };
 type Addon = {
   id: string; collectionId: string; nom: string;
-  format?: string; matiere?: string; couleur?: string; finition?: string;
+  format?: string | string[]; matiere?: string; couleur?: string; finition?: string;
   croquis?: string[]; inspi?: string[]; ai?: FileRef[]; photos?: string[];
   laser?: string; realisation?: string; mtrl?: string; shopify?: string;
 };
 type Collection = { id: string; name: string; month: string; addons: Addon[] };
 
 const FORMATS = ["addon", "deux tiers", "medium", "mini", "open mood", "base", "pack", "coffret"];
+// format peut être une chaîne (ancien) ou un tableau (nouveau) — on lit les deux sans rien perdre
+const fmtArr = (v?: string | string[]) => Array.isArray(v) ? v : (v ? String(v).split(/[,·]/).map((s) => s.trim()).filter(Boolean) : []);
+const fmtLabel = (v?: string | string[]) => fmtArr(v).join(" · ");
 const MATIERES = ["argent", "acier", "titane", "or", "aluminium", "polymère", "céramique", "bronze"];
 
 async function api(action: string, body: Record<string, unknown> = {}) {
@@ -103,7 +106,7 @@ export default function CarnetPage() {
                     ? <img className="kthumb" src={cover} alt="" />
                     : <div className="kthumb ph">✎</div>}
                   <div className="kname">{a.nom}</div>
-                  <div className="kmeta">{[a.format, a.matiere, a.couleur].filter(Boolean).join(" · ") || "à détailler"}</div>
+                  <div className="kmeta">{[fmtLabel(a.format), a.matiere, a.couleur].filter(Boolean).join(" · ") || "à détailler"}</div>
                 </button>
               );
             })}
@@ -154,12 +157,11 @@ function Fiche({ addon, onSave }: { addon: Addon; onSave: (id: string, patch: Pa
         <div className="save">{saved}</div>
       </div>
 
+      <FormatChips value={addon.format} onSave={(v) => save({ format: v })} />
       <div className="detrow">
-        <TextField label="Format" val={addon.format} list="fmt" onSave={(v) => field("format", v)} />
-        <TextField label="Type" val={addon.matiere} list="mat" onSave={(v) => field("matiere", v)} placeholder="matière" />
+        <TextField label="Matière" val={addon.matiere} list="mat" onSave={(v) => field("matiere", v)} placeholder="matière" />
         <TextField label="Couleur" val={addon.couleur} onSave={(v) => field("couleur", v)} />
         <TextField label="Finition" val={addon.finition} onSave={(v) => field("finition", v)} />
-        <datalist id="fmt">{FORMATS.map((f) => <option key={f} value={f} />)}</datalist>
         <datalist id="mat">{MATIERES.map((f) => <option key={f} value={f} />)}</datalist>
       </div>
 
@@ -181,6 +183,22 @@ function Fiche({ addon, onSave }: { addon: Addon; onSave: (id: string, patch: Pa
         <TextField label="Lien Shopify" val={addon.shopify} onSave={(v) => field("shopify", v)} placeholder="https://…" />
       </div>
       {addon.shopify && <p><a className="shoplink" href={addon.shopify} target="_blank" rel="noreferrer">Ouvrir la fiche Shopify ↗</a></p>}
+    </div>
+  );
+}
+
+function FormatChips({ value, onSave }: { value?: string | string[]; onSave: (v: string[]) => void }) {
+  const sel = fmtArr(value);
+  const opts = Array.from(new Set([...FORMATS, ...sel]));
+  const toggle = (f: string) => onSave(sel.includes(f) ? sel.filter((x) => x !== f) : [...sel, f]);
+  return (
+    <div className="field" style={{ marginTop: 22 }}>
+      <label>Format <span style={{ textTransform: "none", letterSpacing: 0 }}>(plusieurs possibles)</span></label>
+      <div className="chips">
+        {opts.map((f) => (
+          <button key={f} type="button" className={"chip" + (sel.includes(f) ? " on" : "")} onClick={() => toggle(f)}>{f}</button>
+        ))}
+      </div>
     </div>
   );
 }
