@@ -16,6 +16,7 @@ const FORMATS = ["addon", "deux tiers", "medium", "mini", "open mood", "base", "
 // format peut être une chaîne (ancien) ou un tableau (nouveau) — on lit les deux sans rien perdre
 const fmtArr = (v?: string | string[]) => Array.isArray(v) ? v : (v ? String(v).split(/[,·]/).map((s) => s.trim()).filter(Boolean) : []);
 const fmtLabel = (v?: string | string[]) => fmtArr(v).join(" · ");
+const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const MATIERES = ["argent", "acier", "titane", "or", "aluminium", "polymère", "céramique", "bronze"];
 
 async function api(action: string, body: Record<string, unknown> = {}) {
@@ -30,6 +31,8 @@ export default function CarnetPage() {
   const [colId, setColId] = useState<string | null>(null);
   const [addonId, setAddonId] = useState<string | null>(null);
   const [modal, setModal] = useState<null | "col" | "addon">(null);
+  const [q, setQ] = useState("");
+  const [mode, setMode] = useState<"mois" | "alpha">("mois");
   const [draft, setDraft] = useState("");
   const [draft2, setDraft2] = useState("");
 
@@ -40,6 +43,19 @@ export default function CarnetPage() {
 
   const col = cols.find((c) => c.id === colId) || null;
   const addon = col?.addons.find((a) => a.id === addonId) || null;
+
+  // classement des collections : recherche + par mois ou A→Z
+  const filteredCols = cols.filter((c) => norm(c.name).includes(norm(q)));
+  const colGroups: [string, Collection[]][] = (() => {
+    const m = new Map<string, Collection[]>();
+    const list = mode === "alpha" ? [...filteredCols].sort((a, b) => a.name.localeCompare(b.name, "fr")) : filteredCols;
+    for (const c of list) {
+      const k = mode === "alpha" ? (c.name.trim()[0] || "#").toUpperCase() : (c.month?.trim() || "Sans mois");
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push(c);
+    }
+    return [...m.entries()];
+  })();
 
   function patchAddonLocal(id: string, patch: Partial<Addon>) {
     setCols((prev) => prev.map((c) => ({ ...c, addons: c.addons.map((a) => (a.id === id ? { ...a, ...patch } : a)) })));
@@ -71,23 +87,38 @@ export default function CarnetPage() {
       {/* VUE COLLECTIONS */}
       {!loading && !colId && (
         <>
-          <h2>Collections</h2>
-          <div className="grid">
-            {canEdit && <button className="card add-card" onClick={() => { setModal("col"); setDraft(""); setDraft2(""); }}>+ Nouvelle collection</button>}
-            {cols.map((c) => {
-              const cover = c.addons.flatMap((a) => a.photos || [])[0] || c.addons.flatMap((a) => a.croquis || [])[0];
-              return (
-                <button key={c.id} className="card" onClick={() => setColId(c.id)}>
-                  {cover
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img className="kthumb" src={cover} alt="" />
-                    : <div className="kthumb ph">🌸</div>}
-                  <div className="kname">{c.name}</div>
-                  <div className="kmeta">{c.month || "—"} · {c.addons.length} pièce{c.addons.length > 1 ? "s" : ""}</div>
-                </button>
-              );
-            })}
+          <div className="cbar">
+            <div className="search">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher une collection…" />
+            </div>
+            <div className="modes">
+              <button className={mode === "mois" ? "on" : ""} onClick={() => setMode("mois")}>Par mois</button>
+              <button className={mode === "alpha" ? "on" : ""} onClick={() => setMode("alpha")}>A→Z</button>
+            </div>
+            {canEdit && <button className="btn sm" onClick={() => { setModal("col"); setDraft(""); setDraft2(""); }}>+ Nouvelle collection</button>}
           </div>
+          {colGroups.length === 0 && <div className="empty">Aucune collection{q ? ` pour « ${q} »` : ""}.</div>}
+          {colGroups.map(([label, items]) => (
+            <section className="cgroup" key={label}>
+              <h3 className="gdiv"><span>{label}</span></h3>
+              <div className="grid">
+                {items.map((c) => {
+                  const cover = c.addons.flatMap((a) => a.photos || [])[0] || c.addons.flatMap((a) => a.croquis || [])[0];
+                  return (
+                    <button key={c.id} className="card" onClick={() => setColId(c.id)}>
+                      {cover
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img className="kthumb" src={cover} alt="" />
+                        : <div className="kthumb ph">🌸</div>}
+                      <div className="kname">{c.name}</div>
+                      <div className="kmeta">{c.month || "—"} · {c.addons.length} pièce{c.addons.length > 1 ? "s" : ""}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </>
       )}
 
@@ -155,8 +186,11 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
   if (!editing) {
     return (
       <>
+        <div className="fiche-toolbar">
+          <button className="btn ghost sm" onClick={() => window.print()}>🖨️ Imprimer / PDF</button>
+          {canEdit && <button className="btn sm" onClick={() => setEditing(true)}>✎ Modifier la fiche</button>}
+        </div>
         <FicheRender addon={addon} />
-        {canEdit && <div className="editbar"><button className="btn" onClick={() => setEditing(true)}>✎ Modifier la fiche</button></div>}
       </>
     );
   }

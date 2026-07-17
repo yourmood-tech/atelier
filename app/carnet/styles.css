@@ -18,6 +18,34 @@
 .carnet .crumb{color:var(--muted);font-size:13.5px;margin-bottom:18px}
 .carnet .crumb button{background:none;border:none;color:var(--gold);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
 .carnet .backbtn{margin-bottom:18px}
+/* barre recherche + classement (classeur) */
+.carnet .cbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:26px}
+.carnet .search{position:relative;flex:1;min-width:200px}
+.carnet .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2}
+.carnet .search input{width:100%;padding:12px 14px 12px 42px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font-size:15px;outline:none}
+.carnet .search input:focus{border-color:var(--gold)}
+.carnet .modes{display:flex;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.carnet .modes button{font:inherit;font-size:13.5px;padding:9px 15px;border:none;background:var(--panel);color:var(--muted);cursor:pointer}
+.carnet .modes button.on{background:var(--gold);color:#fff;font-weight:600}
+.carnet .cgroup{margin-bottom:32px}
+.carnet .gdiv{display:flex;align-items:center;gap:14px;font-family:var(--serif);font-weight:500;font-size:15px;margin:0 0 16px;text-transform:capitalize}
+.carnet .gdiv span{background:var(--gold-soft);color:var(--gold);padding:6px 18px;border-radius:0 14px 14px 0;border-left:3px solid var(--gold);letter-spacing:.03em}
+.carnet .gdiv::after{content:"";flex:1;height:1px;background:var(--line)}
+/* cartes façon dossier/fiche */
+.carnet .card{position:relative}
+.carnet .cgroup .card::before{content:"";position:absolute;top:-1px;left:22px;width:64px;height:9px;background:var(--gold-soft);border:1px solid var(--line);border-bottom:none;border-radius:7px 7px 0 0;transform:translateY(-100%)}
+.carnet .fiche-toolbar{display:flex;gap:10px;justify-content:flex-end;margin-bottom:14px}
+/* impression / PDF */
+@media print{
+  .carnet{padding:0;max-width:none;background:#fff}
+  .carnet .top,.carnet .tagline,.carnet .backbtn,.carnet .crumb,.carnet .fiche-toolbar,.carnet .editbar,.carnet .cbar{display:none!important}
+  .carnet .render{box-shadow:none!important;border:1px solid #ddd!important}
+  .carnet .r-hero-img{height:auto!important;max-height:320px}
+  .carnet .r-hero-txt{position:static;background:none;color:#000;padding:14px 20px}
+  .carnet .r-hero-txt h1{text-shadow:none}
+  .carnet .r-tag{background:#f0eadf;border-color:#ddd;color:#7a5a2a}
+  .carnet .r-sec,.carnet .r-shot{break-inside:avoid}
+}
 .carnet h2{font-family:var(--serif);font-weight:500;font-size:24px;margin:0 0 18px}
 .carnet .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
 .carnet .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;cursor:pointer;transition:.15s;text-align:left;font:inherit;color:inherit;box-shadow:0 1px 0 rgba(0,0,0,.02)}
