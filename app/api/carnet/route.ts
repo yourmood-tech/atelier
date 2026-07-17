@@ -13,7 +13,7 @@ const COLS = "carnet:cols"; // [{id,name,month}]
 const colAddons = (id: string) => `carnet:col:${id}`; // [addonId,...]
 const addonKey = (id: string) => `carnet:addon:${id}`; // objet fiche
 
-type Collection = { id: string; name: string; month: string };
+type Collection = { id: string; name: string; month: string; cover?: string };
 type Addon = Record<string, unknown> & { id: string; collectionId: string; nom: string };
 
 async function getCols(): Promise<Collection[]> {
@@ -61,6 +61,7 @@ export async function POST(request: Request) {
       if (!c) return NextResponse.json({ error: "collection introuvable" }, { status: 404 });
       if (b.name !== undefined) c.name = String(b.name);
       if (b.month !== undefined) c.month = String(b.month);
+      if (b.cover !== undefined) c.cover = String(b.cover);
       await kv.set(COLS, cols);
       return NextResponse.json({ ok: true });
     }

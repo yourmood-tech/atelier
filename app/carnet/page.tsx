@@ -10,7 +10,7 @@ type Addon = {
   croquis?: string[]; inspi?: string[]; ai?: FileRef[]; photos?: string[];
   laser?: string; realisation?: string; mtrl?: string; shopify?: string; fournisseur?: string[];
 };
-type Collection = { id: string; name: string; month: string; addons: Addon[] };
+type Collection = { id: string; name: string; month: string; cover?: string; addons: Addon[] };
 
 const FORMATS = ["addon", "deux tiers", "medium", "mini", "open mood", "base", "pack", "coffret"];
 // format peut être une chaîne (ancien) ou un tableau (nouveau) — on lit les deux sans rien perdre
@@ -70,6 +70,12 @@ export default function CarnetPage() {
     const d = await api("createCollection", { name: draft.trim() || "Sans nom", month: draft2.trim() });
     if (d.collection) { setModal(null); setDraft(""); setDraft2(""); load(); }
   }
+  async function setColCover(id: string, file: File) {
+    const u = await uploadFile(file);
+    if (!u) return;
+    await api("updateCollection", { id, cover: u.url });
+    setCols((prev) => prev.map((c) => (c.id === id ? { ...c, cover: u.url } : c)));
+  }
   async function createAddon() {
     if (!colId) return;
     const d = await api("createAddon", { collectionId: colId, nom: draft.trim() || "Nouvel addon" });
@@ -105,7 +111,7 @@ export default function CarnetPage() {
               <h3 className="gdiv"><span>{label}</span></h3>
               <div className="grid">
                 {items.map((c) => {
-                  const cover = c.addons.flatMap((a) => a.photos || [])[0] || c.addons.flatMap((a) => a.croquis || [])[0];
+                  const cover = c.cover || c.addons.flatMap((a) => a.photos || [])[0] || c.addons.flatMap((a) => a.croquis || [])[0];
                   return (
                     <button key={c.id} className="card" onClick={() => setColId(c.id)}>
                       {cover
@@ -127,7 +133,18 @@ export default function CarnetPage() {
       {!loading && col && !addon && (
         <>
           <button className="btn ghost sm backbtn" onClick={() => setColId(null)}>← Retour aux collections</button>
-          <h2>{col.name} <span style={{ color: "var(--muted)", fontSize: 15 }}>{col.month}</span></h2>
+          {col.cover && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="col-cover" src={col.cover} alt="" />
+          )}
+          <div className="col-head">
+            <h2>{col.name} <span style={{ color: "var(--muted)", fontSize: 15 }}>{col.month}</span></h2>
+            {canEdit && (
+              <label className="btn ghost sm covbtn">{col.cover ? "Changer l'image" : "Ajouter une image"}
+                <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setColCover(col.id, f); }} />
+              </label>
+            )}
+          </div>
           <div className="grid">
             {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
             {col.addons.map((a) => {

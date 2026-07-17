@@ -18,6 +18,9 @@
 .carnet .crumb{color:var(--muted);font-size:13.5px;margin-bottom:18px}
 .carnet .crumb button{background:none;border:none;color:var(--gold);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
 .carnet .backbtn{margin-bottom:18px}
+.carnet .col-cover{width:100%;height:min(240px,32vw);object-fit:cover;border-radius:18px;border:1px solid var(--line);margin-bottom:16px;background:var(--gold-soft)}
+.carnet .col-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.carnet .covbtn{cursor:pointer}
 /* barre recherche + classement (classeur) */
 .carnet .cbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:26px}
 .carnet .search{position:relative;flex:1;min-width:200px}
