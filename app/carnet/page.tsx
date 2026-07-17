@@ -94,7 +94,7 @@ export default function CarnetPage() {
       {/* VUE ADDONS D'UNE COLLECTION */}
       {!loading && col && !addon && (
         <>
-          <div className="crumb"><button onClick={() => setColId(null)}>← Collections</button> · {col.name}</div>
+          <button className="btn ghost sm backbtn" onClick={() => setColId(null)}>← Retour aux collections</button>
           <h2>{col.name} <span style={{ color: "var(--muted)", fontSize: 15 }}>{col.month}</span></h2>
           <div className="grid">
             {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
@@ -118,8 +118,9 @@ export default function CarnetPage() {
       {/* FICHE ADDON */}
       {!loading && col && addon && (
         <>
+          <button className="btn ghost sm backbtn" onClick={() => setAddonId(null)}>← Retour à « {col.name} »</button>
           <div className="crumb">
-            <button onClick={() => setColId(null)}>Collections</button> · <button onClick={() => setAddonId(null)}>{col.name}</button> · {addon.nom}
+            <button onClick={() => { setColId(null); setAddonId(null); }}>Collections</button> · <button onClick={() => setAddonId(null)}>{col.name}</button> · {addon.nom}
           </div>
           <Fiche key={addon.id} addon={addon} onSave={saveAddon} canEdit={canEdit} />
         </>
