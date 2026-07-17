@@ -17,6 +17,27 @@ const FORMATS = ["addon", "deux tiers", "medium", "mini", "open mood", "base", "
 const fmtArr = (v?: string | string[]) => Array.isArray(v) ? v : (v ? String(v).split(/[,·]/).map((s) => s.trim()).filter(Boolean) : []);
 const fmtLabel = (v?: string | string[]) => fmtArr(v).join(" · ");
 const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+// petit bruit de page qui se tourne, synthétisé (aucun fichier son requis)
+function playFlip() {
+  try {
+    const AC = (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+    const ctx = new AC();
+    const dur = 0.34;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) { const t = i / d.length; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * (0.4 + t); }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.8;
+    bp.frequency.setValueAtTime(2400, ctx.currentTime);
+    bp.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.45, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+    src.start(); src.stop(ctx.currentTime + dur);
+    src.onended = () => ctx.close();
+  } catch { /* silencieux si l'audio est bloqué */ }
+}
 const MATIERES = ["argent", "acier", "titane", "or", "aluminium", "polymère", "céramique", "bronze"];
 const FOURNISSEURS = ["mood gravure mécanique", "mood gravure laser", "bijouterie", "icelea", "vacor"];
 
@@ -34,6 +55,15 @@ export default function CarnetPage() {
   const [modal, setModal] = useState<null | "col" | "addon">(null);
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<"mois" | "alpha">("mois");
+  const [turning, setTurning] = useState(false);
+
+  // tourne la page : son + animation, puis exécute la navigation à mi-parcours
+  function turnPage(fn: () => void) {
+    playFlip();
+    setTurning(true);
+    setTimeout(fn, 190);
+    setTimeout(() => setTurning(false), 540);
+  }
   const [draft, setDraft] = useState("");
   const [draft2, setDraft2] = useState("");
 
@@ -90,6 +120,7 @@ export default function CarnetPage() {
       </div>
       <p className="tagline">Chaque création, sa fiche. Le dictionnaire de fabrication Mood.</p>
 
+      <div className={"leaf" + (turning ? " turning" : "")}>
       {loading && <div className="empty">Chargement…</div>}
 
       {/* VUE COLLECTIONS */}
@@ -114,7 +145,7 @@ export default function CarnetPage() {
                 {items.map((c) => {
                   const cover = c.cover || c.addons.flatMap((a) => a.photos || [])[0] || c.addons.flatMap((a) => a.croquis || [])[0];
                   return (
-                    <button key={c.id} className="card" onClick={() => setColId(c.id)}>
+                    <button key={c.id} className="card" onClick={() => turnPage(() => setColId(c.id))}>
                       {cover
                         // eslint-disable-next-line @next/next/no-img-element
                         ? <img className="kthumb" src={cover} alt="" />
@@ -133,7 +164,7 @@ export default function CarnetPage() {
       {/* VUE ADDONS D'UNE COLLECTION */}
       {!loading && col && !addon && (
         <>
-          <button className="btn ghost sm backbtn" onClick={() => setColId(null)}>← Retour aux collections</button>
+          <button className="btn ghost sm backbtn" onClick={() => turnPage(() => setColId(null))}>← Retour aux collections</button>
           {col.cover && (
             // eslint-disable-next-line @next/next/no-img-element
             <img className="col-cover" src={col.cover} alt="" />
@@ -151,7 +182,7 @@ export default function CarnetPage() {
             {col.addons.map((a) => {
               const cover = (a.photos || [])[0] || (a.croquis || [])[0] || (a.inspi || [])[0];
               return (
-                <button key={a.id} className="card" onClick={() => setAddonId(a.id)}>
+                <button key={a.id} className="card" onClick={() => turnPage(() => setAddonId(a.id))}>
                   {cover
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img className="kthumb" src={cover} alt="" />
@@ -168,14 +199,15 @@ export default function CarnetPage() {
       {/* FICHE ADDON */}
       {!loading && col && addon && (
         <>
-          <button className="btn ghost sm backbtn" onClick={() => setAddonId(null)}>← Retour à « {col.name} »</button>
+          <button className="btn ghost sm backbtn" onClick={() => turnPage(() => setAddonId(null))}>← Retour à « {col.name} »</button>
           <div className="crumb">
-            <button onClick={() => { setColId(null); setAddonId(null); }}>Collections</button> · <button onClick={() => setAddonId(null)}>{col.name}</button> · {addon.nom}
+            <button onClick={() => turnPage(() => { setColId(null); setAddonId(null); })}>Collections</button> · <button onClick={() => turnPage(() => setAddonId(null))}>{col.name}</button> · {addon.nom}
           </div>
           <Fiche key={addon.id} addon={addon} onSave={saveAddon} canEdit={canEdit} />
         </>
       )}
 
+      </div>
       </div>
 
       {/* MODAL */}
