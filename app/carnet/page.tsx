@@ -303,7 +303,7 @@ function FicheRender({ addon }: { addon: Addon }) {
         <section className="r-sec">
           <h3>Fichier .ai</h3>
           <div className="zone">
-            {addon.ai.map((f, i) => <a className="filechip" key={f.url + i} href={f.url} target="_blank" rel="noreferrer">📄 {f.name || "fichier"}</a>)}
+            {addon.ai.map((f, i) => <button type="button" className="filechip" key={f.url + i} onClick={() => downloadFile(f.url, f.name)}>📄 {f.name || "fichier"} ⬇</button>)}
           </div>
         </section>
       )}
@@ -371,6 +371,20 @@ function TextField({ label, val, onSave, list, placeholder }: { label: string; v
   );
 }
 
+async function downloadFile(url: string, name: string) {
+  try {
+    const r = await fetch(url);
+    const b = await r.blob();
+    const u = URL.createObjectURL(b);
+    const a = document.createElement("a");
+    a.href = u; a.download = name || "fichier.ai";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(u), 1000);
+  } catch {
+    window.open(url, "_blank");
+  }
+}
+
 async function uploadFile(file: File): Promise<{ url: string; name: string; image: boolean } | null> {
   const fd = new FormData(); fd.append("file", file);
   const r = await fetch("/api/carnet/upload", { method: "POST", body: fd });
@@ -425,10 +439,10 @@ function FileZone({ title, items, onChange }: { title: string; items: FileRef[];
       <h3><span className="dot" /> {title}</h3>
       <div className="zone">
         {items.map((f, i) => (
-          <a className="filechip" key={f.url + i} href={f.url} target="_blank" rel="noreferrer">
-            📄 {f.name || "fichier"}
-            <button className="rm" onClick={(e) => { e.preventDefault(); onChange(items.filter((_, j) => j !== i)); }}>×</button>
-          </a>
+          <span className="filechip" key={f.url + i}>
+            <button type="button" className="dlname" onClick={() => downloadFile(f.url, f.name)}>📄 {f.name || "fichier"} ⬇</button>
+            <button className="rm" onClick={() => onChange(items.filter((_, j) => j !== i))}>×</button>
+          </span>
         ))}
         <div className={"drop" + (busy ? " busy" : "")} onClick={() => inp.current?.click()}>
           {busy ? "Envoi…" : <>＋<span>ajouter</span></>}

@@ -133,6 +133,8 @@
 .carnet .thumb .rm{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;font-size:13px;line-height:1}
 .carnet .filechip{display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:var(--bg);font-size:13.5px;text-decoration:none;color:var(--ink)}
 .carnet .filechip .rm{margin-left:6px;border:none;background:none;color:var(--muted);cursor:pointer}
+.carnet button.filechip{cursor:pointer;font:inherit}
+.carnet .filechip .dlname{background:none;border:none;cursor:pointer;color:inherit;font:inherit;display:flex;align-items:center;gap:8px}
 .carnet .drop{width:120px;height:120px;border:1.5px dashed var(--line);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--gold);cursor:pointer;font-size:12.5px;text-align:center}
 .carnet .drop:hover{border-color:var(--gold);background:var(--gold-soft)}
 .carnet .drop.busy{opacity:.6;pointer-events:none}
