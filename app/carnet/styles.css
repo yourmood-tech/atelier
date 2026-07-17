@@ -74,6 +74,8 @@
 .carnet .chip{font-family:var(--sans);font-size:13.5px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--muted);border-radius:20px;padding:8px 15px;transition:.12s}
 .carnet .chip:hover{border-color:var(--gold)}
 .carnet .chip.on{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
+.carnet .freeadd{display:flex;gap:8px;margin-top:10px}
+.carnet .freeadd input{flex:1;max-width:280px;font-family:var(--sans);font-size:14px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
 .carnet .sec{margin-top:28px}
 .carnet .sec h3{font-family:var(--serif);font-weight:500;font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
 .carnet .sec h3 .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}

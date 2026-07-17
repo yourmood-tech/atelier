@@ -8,7 +8,7 @@ type Addon = {
   id: string; collectionId: string; nom: string;
   format?: string | string[]; matiere?: string; couleur?: string; finition?: string;
   croquis?: string[]; inspi?: string[]; ai?: FileRef[]; photos?: string[];
-  laser?: string; realisation?: string; mtrl?: string; shopify?: string;
+  laser?: string; realisation?: string; mtrl?: string; shopify?: string; fournisseur?: string[];
 };
 type Collection = { id: string; name: string; month: string; addons: Addon[] };
 
@@ -18,6 +18,7 @@ const fmtArr = (v?: string | string[]) => Array.isArray(v) ? v : (v ? String(v).
 const fmtLabel = (v?: string | string[]) => fmtArr(v).join(" · ");
 const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const MATIERES = ["argent", "acier", "titane", "or", "aluminium", "polymère", "céramique", "bronze"];
+const FOURNISSEURS = ["mood gravure mécanique", "mood gravure laser", "bijouterie", "icelea", "vacor"];
 
 async function api(action: string, body: Record<string, unknown> = {}) {
   const r = await fetch("/api/carnet", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...body }) });
@@ -210,6 +211,8 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
         <datalist id="mat">{MATIERES.map((f) => <option key={f} value={f} />)}</datalist>
       </div>
 
+      <MultiChips label="Fournisseur" options={FOURNISSEURS} value={addon.fournisseur} onSave={(v) => save({ fournisseur: v })} allowFree />
+
       <ImageZone title="Croquis" items={addon.croquis || []} onChange={(v) => save({ croquis: v })} />
       <ImageZone title="Inspiration / vectoriel" items={addon.inspi || []} onChange={(v) => save({ inspi: v })} />
       <FileZone title="Fichier .ai" items={addon.ai || []} onChange={(v) => save({ ai: v })} />
@@ -284,13 +287,36 @@ function FicheRender({ addon }: { addon: Addon }) {
       {addon.realisation?.trim() && (
         <section className="r-sec"><h3>Réalisation</h3><pre className="r-text">{addon.realisation}</pre></section>
       )}
-      {(addon.mtrl || addon.shopify) && (
+      {(addon.mtrl || addon.shopify || (addon.fournisseur && addon.fournisseur.length > 0)) && (
         <footer className="r-foot">
+          {addon.fournisseur && addon.fournisseur.length > 0 && <span>Fournisseur&nbsp;: <b>{addon.fournisseur.join(" · ")}</b></span>}
           {addon.mtrl && <span>Code MTRL&nbsp;: <b>{addon.mtrl}</b></span>}
           {addon.shopify && <a href={addon.shopify} target="_blank" rel="noreferrer">Fiche Shopify ↗</a>}
         </footer>
       )}
     </article>
+  );
+}
+
+function MultiChips({ label, options, value, onSave, allowFree }: { label: string; options: string[]; value?: string[]; onSave: (v: string[]) => void; allowFree?: boolean }) {
+  const sel = Array.isArray(value) ? value : [];
+  const opts = Array.from(new Set([...options, ...sel]));
+  const [free, setFree] = useState("");
+  const toggle = (f: string) => onSave(sel.includes(f) ? sel.filter((x) => x !== f) : [...sel, f]);
+  const addFree = () => { const v = free.trim(); if (v && !sel.includes(v)) onSave([...sel, v]); setFree(""); };
+  return (
+    <div className="field" style={{ marginTop: 22 }}>
+      <label>{label} <span style={{ textTransform: "none", letterSpacing: 0 }}>(plusieurs possibles)</span></label>
+      <div className="chips">
+        {opts.map((f) => <button key={f} type="button" className={"chip" + (sel.includes(f) ? " on" : "")} onClick={() => toggle(f)}>{f}</button>)}
+      </div>
+      {allowFree && (
+        <div className="freeadd">
+          <input value={free} onChange={(e) => setFree(e.target.value)} placeholder="autre fournisseur…" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFree(); } }} />
+          <button className="btn ghost sm" type="button" onClick={addFree}>Ajouter</button>
+        </div>
+      )}
+    </div>
   );
 }
 
