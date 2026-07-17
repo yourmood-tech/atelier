@@ -72,6 +72,13 @@ export default function CarnetPage() {
     return [...m.entries()];
   })();
 
+  // produits (addons) qui correspondent à la recherche, tous collections confondues
+  const matchedAddons = nq
+    ? cols.flatMap((c) => c.addons
+        .filter((a) => norm([a.nom, a.matiere, a.couleur, a.finition, ...fmtArr(a.format), ...(a.tags || []), ...(a.fournisseur || [])].filter(Boolean).join(" ")).includes(nq))
+        .map((a) => ({ a, c })))
+    : [];
+
   function patchAddonLocal(id: string, patch: Partial<Addon>) {
     setCols((prev) => prev.map((c) => ({ ...c, addons: c.addons.map((a) => (a.id === id ? { ...a, ...patch } : a)) })));
   }
@@ -125,7 +132,27 @@ export default function CarnetPage() {
             </div>
             {canEdit && <button className="btn sm" onClick={() => { setModal("col"); setDraft(""); setDraft2(""); }}>+ Nouvelle collection</button>}
           </div>
-          {colGroups.length === 0 && <div className="empty">Aucune collection{q ? ` pour « ${q} »` : ""}.</div>}
+          {nq && matchedAddons.length > 0 && (
+            <section className="cgroup">
+              <h3 className="gdiv"><span>Produits trouvés</span></h3>
+              <div className="grid">
+                {matchedAddons.map(({ a, c }) => {
+                  const cover = (a.photos || [])[0] || (a.croquis || [])[0] || (a.inspi || [])[0];
+                  return (
+                    <button key={a.id} className="card" onClick={() => { setColId(c.id); setAddonId(a.id); }}>
+                      {cover
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img className="kthumb" src={cover} alt="" />
+                        : <div className="kthumb ph">✎</div>}
+                      <div className="kname">{a.nom}</div>
+                      <div className="kmeta">{c.name}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+          {colGroups.length === 0 && matchedAddons.length === 0 && <div className="empty">Aucun résultat{q ? ` pour « ${q} »` : ""}.</div>}
           {colGroups.map(([label, items]) => (
             <section className="cgroup" key={label}>
               <h3 className="gdiv"><span>{label}</span></h3>
