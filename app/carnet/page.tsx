@@ -51,8 +51,16 @@ export default function CarnetPage() {
   const col = cols.find((c) => c.id === colId) || null;
   const addon = col?.addons.find((a) => a.id === addonId) || null;
 
-  // classement des collections : recherche + par mois ou A→Z
-  const filteredCols = cols.filter((c) => norm(c.name).includes(norm(q)));
+  // classement des collections : recherche (nom + mots-clés/détails des addons) + par mois ou A→Z
+  const nq = norm(q);
+  const filteredCols = cols.filter((c) => {
+    if (!nq) return true;
+    const hay = norm([
+      c.name, c.month,
+      ...c.addons.flatMap((a) => [a.nom, a.matiere, a.couleur, a.finition, ...fmtArr(a.format), ...(a.tags || []), ...(a.fournisseur || [])]),
+    ].filter(Boolean).join(" "));
+    return hay.includes(nq);
+  });
   const colGroups: [string, Collection[]][] = (() => {
     const m = new Map<string, Collection[]>();
     const list = mode === "alpha" ? [...filteredCols].sort((a, b) => a.name.localeCompare(b.name, "fr")) : filteredCols;
@@ -109,7 +117,7 @@ export default function CarnetPage() {
           <div className="cbar">
             <div className="search">
               <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher une collection…" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher (collection, mot-clé, matière…)" />
             </div>
             <div className="modes">
               <button className={mode === "mois" ? "on" : ""} onClick={() => setMode("mois")}>Par mois</button>
