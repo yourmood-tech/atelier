@@ -61,8 +61,8 @@ export default function CarnetPage() {
   function turnPage(fn: () => void) {
     playFlip();
     setTurning(true);
-    setTimeout(fn, 190);
-    setTimeout(() => setTurning(false), 540);
+    setTimeout(fn, 320);           // on change le contenu quand la feuille est sur la tranche (invisible)
+    setTimeout(() => setTurning(false), 680);
   }
   const [draft, setDraft] = useState("");
   const [draft2, setDraft2] = useState("");
@@ -120,7 +120,7 @@ export default function CarnetPage() {
       </div>
       <p className="tagline">Chaque création, sa fiche. Le dictionnaire de fabrication Mood.</p>
 
-      <div className={"leaf" + (turning ? " turning" : "")}>
+      <div className="leaf">
       {loading && <div className="empty">Chargement…</div>}
 
       {/* VUE COLLECTIONS */}
@@ -207,6 +207,7 @@ export default function CarnetPage() {
         </>
       )}
 
+      <div className={"flipsheet" + (turning ? " go" : "")} aria-hidden="true" />
       </div>
       </div>
 
