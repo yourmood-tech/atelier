@@ -18,26 +18,6 @@ const fmtArr = (v?: string | string[]) => Array.isArray(v) ? v : (v ? String(v).
 const fmtLabel = (v?: string | string[]) => fmtArr(v).join(" · ");
 const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-// petit bruit de page qui se tourne, synthétisé (aucun fichier son requis)
-function playFlip() {
-  try {
-    const AC = (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
-    const ctx = new AC();
-    const dur = 0.34;
-    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) { const t = i / d.length; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * (0.4 + t); }
-    const src = ctx.createBufferSource(); src.buffer = buf;
-    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 0.8;
-    bp.frequency.setValueAtTime(2400, ctx.currentTime);
-    bp.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + dur);
-    const g = ctx.createGain(); g.gain.setValueAtTime(0.45, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-    src.connect(bp); bp.connect(g); g.connect(ctx.destination);
-    src.start(); src.stop(ctx.currentTime + dur);
-    src.onended = () => ctx.close();
-  } catch { /* silencieux si l'audio est bloqué */ }
-}
 const MATIERES = ["argent", "acier", "titane", "or", "aluminium", "polymère", "céramique", "bronze"];
 const FOURNISSEURS = ["mood gravure mécanique", "mood gravure laser", "bijouterie", "icelea", "vacor"];
 
@@ -55,15 +35,9 @@ export default function CarnetPage() {
   const [modal, setModal] = useState<null | "col" | "addon">(null);
   const [q, setQ] = useState("");
   const [mode, setMode] = useState<"mois" | "alpha">("mois");
-  const [turning, setTurning] = useState(false);
 
-  // tourne la page : son + animation, puis exécute la navigation à mi-parcours
-  function turnPage(fn: () => void) {
-    playFlip();
-    setTurning(true);
-    setTimeout(fn, 320);           // on change le contenu quand la feuille est sur la tranche (invisible)
-    setTimeout(() => setTurning(false), 680);
-  }
+  // navigation directe (animation de tournage retirée)
+  function turnPage(fn: () => void) { fn(); }
   const [draft, setDraft] = useState("");
   const [draft2, setDraft2] = useState("");
 
@@ -207,7 +181,6 @@ export default function CarnetPage() {
         </>
       )}
 
-      <div className={"flipsheet" + (turning ? " go" : "")} aria-hidden="true" />
       </div>
       </div>
 
