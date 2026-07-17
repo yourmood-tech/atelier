@@ -7,8 +7,8 @@ type FileRef = { url: string; name: string };
 type Addon = {
   id: string; collectionId: string; nom: string;
   format?: string | string[]; matiere?: string; couleur?: string; finition?: string;
-  croquis?: string[]; inspi?: string[]; ai?: FileRef[]; photos?: string[];
-  laser?: string; realisation?: string; mtrl?: string; shopify?: string; fournisseur?: string[];
+  croquis?: string[]; inspi?: string[]; ai?: FileRef[]; gnh?: FileRef[]; photos?: string[];
+  laser?: string; realisation?: string; mtrl?: string; shopify?: string; fournisseur?: string[]; tags?: string[];
   date_croquis?: string; date_dessin?: string; date_gravure?: string; date_sortie?: string;
 };
 const fdate = (v?: string) => v ? v.split("-").reverse().join(".") : "";
@@ -224,6 +224,12 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
   const flash = () => { setSaved("Enregistré ✓"); setTimeout(() => setSaved(""), 1500); };
   const save = (patch: Partial<Addon>) => { onSave(addon.id, patch); flash(); };
   const field = (k: keyof Addon, v: string) => save({ [k]: v } as Partial<Addon>);
+  async function importTags() {
+    if (!addon.shopify) return;
+    const r = await fetch("/api/carnet/shopify-tags?url=" + encodeURIComponent(addon.shopify));
+    const d = await r.json();
+    if (d.tags?.length) save({ tags: Array.from(new Set([...(addon.tags || []), ...d.tags])) });
+  }
 
   if (!editing) {
     return (
@@ -261,9 +267,13 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
         <TextField label="Date de sortie" type="date" val={addon.date_sortie} onSave={(v) => field("date_sortie", v)} />
       </div>
 
+      <MultiChips label="Mots-clés (pour la recherche)" options={[]} value={addon.tags} onSave={(v) => save({ tags: v })} allowFree freePlaceholder="ajouter un mot-clé…" />
+      {addon.shopify && <button type="button" className="btn ghost sm" style={{ marginTop: 8 }} onClick={importTags}>⬇ Importer les tags du produit Shopify</button>}
+
       <ImageZone title="Croquis" items={addon.croquis || []} onChange={(v) => save({ croquis: v })} />
       <ImageZone title="Inspiration / vectoriel" items={addon.inspi || []} onChange={(v) => save({ inspi: v })} />
       <FileZone title="Fichier .ai" items={addon.ai || []} onChange={(v) => save({ ai: v })} />
+      <FileZone title="Fichier .gnh (gravure)" items={addon.gnh || []} onChange={(v) => save({ gnh: v })} />
       <ImageZone title="Photo du produit" items={addon.photos || []} onChange={(v) => save({ photos: v })} />
 
       <div className="sec">
@@ -341,6 +351,20 @@ function FicheRender({ addon }: { addon: Addon }) {
           </div>
         </section>
       )}
+      {addon.gnh && addon.gnh.length > 0 && (
+        <section className="r-sec">
+          <h3>Fichier .gnh (gravure)</h3>
+          <div className="zone">
+            {addon.gnh.map((f, i) => <button type="button" className="filechip" key={f.url + i} onClick={() => downloadFile(f.url, f.name)}>📄 {f.name || "fichier"} ⬇</button>)}
+          </div>
+        </section>
+      )}
+      {addon.tags && addon.tags.length > 0 && (
+        <section className="r-sec">
+          <h3>Mots-clés</h3>
+          <div className="chips">{addon.tags.map((t, i) => <span className="chip on" key={i}>{t}</span>)}</div>
+        </section>
+      )}
       {addon.laser?.trim() && (
         <section className="r-sec"><h3>Réglage laser</h3><pre className="r-text">{addon.laser}</pre></section>
       )}
@@ -358,7 +382,7 @@ function FicheRender({ addon }: { addon: Addon }) {
   );
 }
 
-function MultiChips({ label, options, value, onSave, allowFree }: { label: string; options: string[]; value?: string[]; onSave: (v: string[]) => void; allowFree?: boolean }) {
+function MultiChips({ label, options, value, onSave, allowFree, freePlaceholder }: { label: string; options: string[]; value?: string[]; onSave: (v: string[]) => void; allowFree?: boolean; freePlaceholder?: string }) {
   const sel = Array.isArray(value) ? value : [];
   const opts = Array.from(new Set([...options, ...sel]));
   const [free, setFree] = useState("");
@@ -372,7 +396,7 @@ function MultiChips({ label, options, value, onSave, allowFree }: { label: strin
       </div>
       {allowFree && (
         <div className="freeadd">
-          <input value={free} onChange={(e) => setFree(e.target.value)} placeholder="autre fournisseur…" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFree(); } }} />
+          <input value={free} onChange={(e) => setFree(e.target.value)} placeholder={freePlaceholder || "autre…"} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addFree(); } }} />
           <button className="btn ghost sm" type="button" onClick={addFree}>Ajouter</button>
         </div>
       )}
