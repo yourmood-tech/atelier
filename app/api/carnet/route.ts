@@ -5,6 +5,10 @@ import { kv } from "@vercel/kv";
 import { auth } from "@/auth";
 import { randomUUID } from "crypto";
 
+// Seules ces personnes peuvent créer/modifier ; les autres ne font que consulter.
+const EDITORS = new Set(["amila@yourmood.net"]);
+const canEdit = (email?: string | null) => !!email && EDITORS.has(email.toLowerCase());
+
 const COLS = "carnet:cols"; // [{id,name,month}]
 const colAddons = (id: string) => `carnet:col:${id}`; // [addonId,...]
 const addonKey = (id: string) => `carnet:addon:${id}`; // objet fiche
@@ -28,7 +32,7 @@ export async function GET() {
       const addons = (ids.length ? await kv.mget<(Addon | null)[]>(...ids.map(addonKey)) : []).filter(Boolean);
       out.push({ ...c, addons });
     }
-    return NextResponse.json({ collections: out });
+    return NextResponse.json({ collections: out, canEdit: canEdit(session.user?.email) });
   } catch (e) {
     return NextResponse.json({ error: String((e as Error)?.message || e) }, { status: 500 });
   }
@@ -42,6 +46,7 @@ export async function POST(request: Request) {
   try { b = await request.json(); } catch { return NextResponse.json({ error: "JSON invalide" }, { status: 400 }); }
   const action = b.action as string;
   const by = session.user?.email || "";
+  if (!canEdit(by)) return NextResponse.json({ error: "lecture seule — seule Amila peut modifier le Carnet" }, { status: 403 });
   try {
     if (action === "createCollection") {
       const c: Collection = { id: randomUUID().slice(0, 8), name: String(b.name || "Sans nom"), month: String(b.month || "") };

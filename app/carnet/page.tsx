@@ -25,6 +25,7 @@ async function api(action: string, body: Record<string, unknown> = {}) {
 
 export default function CarnetPage() {
   const [cols, setCols] = useState<Collection[]>([]);
+  const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [colId, setColId] = useState<string | null>(null);
   const [addonId, setAddonId] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export default function CarnetPage() {
   const [draft2, setDraft2] = useState("");
 
   const load = useCallback(() => {
-    fetch("/api/carnet").then((r) => r.json()).then((d) => { setCols(d.collections || []); setLoading(false); }).catch(() => setLoading(false));
+    fetch("/api/carnet").then((r) => r.json()).then((d) => { setCols(d.collections || []); setCanEdit(!!d.canEdit); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -72,7 +73,7 @@ export default function CarnetPage() {
         <>
           <h2>Collections</h2>
           <div className="grid">
-            <button className="card add-card" onClick={() => { setModal("col"); setDraft(""); setDraft2(""); }}>+ Nouvelle collection</button>
+            {canEdit && <button className="card add-card" onClick={() => { setModal("col"); setDraft(""); setDraft2(""); }}>+ Nouvelle collection</button>}
             {cols.map((c) => {
               const cover = c.addons.flatMap((a) => a.photos || [])[0] || c.addons.flatMap((a) => a.croquis || [])[0];
               return (
@@ -96,7 +97,7 @@ export default function CarnetPage() {
           <div className="crumb"><button onClick={() => setColId(null)}>← Collections</button> · {col.name}</div>
           <h2>{col.name} <span style={{ color: "var(--muted)", fontSize: 15 }}>{col.month}</span></h2>
           <div className="grid">
-            <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>
+            {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
             {col.addons.map((a) => {
               const cover = (a.photos || [])[0] || (a.croquis || [])[0] || (a.inspi || [])[0];
               return (
@@ -120,7 +121,7 @@ export default function CarnetPage() {
           <div className="crumb">
             <button onClick={() => setColId(null)}>Collections</button> · <button onClick={() => setAddonId(null)}>{col.name}</button> · {addon.nom}
           </div>
-          <Fiche key={addon.id} addon={addon} onSave={saveAddon} />
+          <Fiche key={addon.id} addon={addon} onSave={saveAddon} canEdit={canEdit} />
         </>
       )}
 
@@ -143,18 +144,27 @@ export default function CarnetPage() {
   );
 }
 
-function Fiche({ addon, onSave }: { addon: Addon; onSave: (id: string, patch: Partial<Addon>) => void }) {
+function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, patch: Partial<Addon>) => void; canEdit: boolean }) {
+  const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState("");
   const flash = () => { setSaved("Enregistré ✓"); setTimeout(() => setSaved(""), 1500); };
   const save = (patch: Partial<Addon>) => { onSave(addon.id, patch); flash(); };
-
   const field = (k: keyof Addon, v: string) => save({ [k]: v } as Partial<Addon>);
+
+  if (!editing) {
+    return (
+      <>
+        <FicheRender addon={addon} />
+        {canEdit && <div className="editbar"><button className="btn" onClick={() => setEditing(true)}>✎ Modifier la fiche</button></div>}
+      </>
+    );
+  }
 
   return (
     <div className="fiche">
       <div className="fiche-head">
         <input className="nom-input" defaultValue={addon.nom} onBlur={(e) => field("nom", e.target.value)} />
-        <div className="save">{saved}</div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}><span className="save">{saved}</span><button className="btn ghost sm" onClick={() => setEditing(false)}>✓ Terminé</button></div>
       </div>
 
       <FormatChips value={addon.format} onSave={(v) => save({ format: v })} />
@@ -184,6 +194,68 @@ function Fiche({ addon, onSave }: { addon: Addon; onSave: (id: string, patch: Pa
       </div>
       {addon.shopify && <p><a className="shoplink" href={addon.shopify} target="_blank" rel="noreferrer">Ouvrir la fiche Shopify ↗</a></p>}
     </div>
+  );
+}
+
+function RGallery({ title, items }: { title: string; items?: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <section className="r-sec">
+      <h3>{title}</h3>
+      <div className="r-gallery">
+        {items.map((u, i) => (
+          <a key={u + i} href={u} target="_blank" rel="noreferrer" className="r-shot">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={u} alt="" loading="lazy" />
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FicheRender({ addon }: { addon: Addon }) {
+  const photos = addon.photos || [];
+  const hero = photos[0] || (addon.croquis || [])[0] || (addon.inspi || [])[0];
+  const tags = [...fmtArr(addon.format), addon.matiere, addon.couleur, addon.finition].filter(Boolean) as string[];
+  return (
+    <article className="render">
+      <header className="r-hero">
+        {hero
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img className="r-hero-img" src={hero} alt={addon.nom} />
+          : <div className="r-hero-img ph">🌸</div>}
+        <div className="r-hero-txt">
+          <h1>{addon.nom}</h1>
+          {tags.length > 0 && <div className="r-tags">{tags.map((t, i) => <span className="r-tag" key={i}>{t}</span>)}</div>}
+        </div>
+      </header>
+
+      <RGallery title="Photos du produit" items={photos.length > 1 ? photos.slice(1) : (hero && photos[0] === hero ? [] : photos)} />
+      <RGallery title="Croquis" items={addon.croquis} />
+      <RGallery title="Inspiration" items={addon.inspi} />
+
+      {addon.ai && addon.ai.length > 0 && (
+        <section className="r-sec">
+          <h3>Fichier .ai</h3>
+          <div className="zone">
+            {addon.ai.map((f, i) => <a className="filechip" key={f.url + i} href={f.url} target="_blank" rel="noreferrer">📄 {f.name || "fichier"}</a>)}
+          </div>
+        </section>
+      )}
+      {addon.laser?.trim() && (
+        <section className="r-sec"><h3>Réglage laser</h3><pre className="r-text">{addon.laser}</pre></section>
+      )}
+      {addon.realisation?.trim() && (
+        <section className="r-sec"><h3>Réalisation</h3><pre className="r-text">{addon.realisation}</pre></section>
+      )}
+      {(addon.mtrl || addon.shopify) && (
+        <footer className="r-foot">
+          {addon.mtrl && <span>Code MTRL&nbsp;: <b>{addon.mtrl}</b></span>}
+          {addon.shopify && <a href={addon.shopify} target="_blank" rel="noreferrer">Fiche Shopify ↗</a>}
+        </footer>
+      )}
+    </article>
   );
 }
 

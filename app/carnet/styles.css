@@ -61,6 +61,26 @@
 .carnet .save{font-size:12.5px;color:var(--ok);height:16px}
 .carnet .shoplink{color:var(--gold);font-size:13.5px}
 .carnet .empty{color:var(--muted);text-align:center;padding:50px 10px;font-size:15px}
+/* rendu final (lecture) */
+.carnet .render{background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 10px 40px rgba(120,90,50,.07)}
+.carnet .r-hero{position:relative}
+.carnet .r-hero-img{width:100%;height:min(460px,54vw);object-fit:cover;display:block;background:var(--gold-soft)}
+.carnet .r-hero-img.ph{display:flex;align-items:center;justify-content:center;font-size:60px;color:var(--gold)}
+.carnet .r-hero-txt{position:absolute;left:0;right:0;bottom:0;padding:40px clamp(20px,3vw,40px) 26px;background:linear-gradient(to top,rgba(20,14,8,.78),rgba(20,14,8,.18) 60%,transparent);color:#fff}
+.carnet .r-hero-txt h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,4.5vw,44px);margin:0 0 12px;text-shadow:0 1px 12px rgba(0,0,0,.35)}
+.carnet .r-tags{display:flex;flex-wrap:wrap;gap:8px}
+.carnet .r-tag{font-size:12.5px;letter-spacing:.03em;padding:5px 13px;border-radius:20px;background:rgba(255,255,255,.16);backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.28);text-transform:capitalize}
+.carnet .r-sec{padding:26px clamp(20px,3vw,40px);border-top:1px solid var(--line)}
+.carnet .r-sec h3{font-family:var(--serif);font-weight:500;font-size:19px;margin:0 0 16px;color:var(--gold)}
+.carnet .r-gallery{display:flex;flex-wrap:wrap;gap:14px}
+.carnet .r-shot{display:block;width:clamp(130px,20vw,180px);height:clamp(130px,20vw,180px);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.carnet .r-shot img{width:100%;height:100%;object-fit:cover;transition:.2s}
+.carnet .r-shot:hover img{transform:scale(1.04)}
+.carnet .r-text{font-family:var(--sans);white-space:pre-wrap;font-size:15.5px;line-height:1.65;margin:0;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:12px;padding:18px 20px}
+.carnet .r-foot{padding:22px clamp(20px,3vw,40px);border-top:1px solid var(--line);display:flex;gap:24px;flex-wrap:wrap;align-items:center;font-size:14px;color:var(--muted)}
+.carnet .r-foot b{color:var(--ink)}
+.carnet .r-foot a{color:var(--gold);text-decoration:none;font-weight:600}
+.carnet .editbar{margin-top:20px;display:flex;justify-content:center}
 .carnet .modal-bg{position:fixed;inset:0;background:rgba(30,24,18,.4);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
 .carnet .modal{background:var(--panel);border-radius:18px;padding:26px;max-width:400px;width:100%;border:1px solid var(--line)}
 .carnet .modal h3{font-family:var(--serif);font-weight:500;margin:0 0 16px;font-size:20px}
