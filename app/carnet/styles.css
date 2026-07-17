@@ -64,6 +64,8 @@
 .carnet .col-cover{width:100%;height:min(240px,32vw);object-fit:cover;border-radius:18px;border:1px solid var(--line);margin-bottom:16px;background:var(--gold-soft)}
 .carnet .col-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .carnet .covbtn{cursor:pointer}
+.carnet .colshop{max-width:520px;margin:6px 0 18px}
+.carnet .colshop input{width:100%;font-family:var(--sans);font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
 /* barre recherche + classement (classeur) */
 .carnet .cbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:26px}
 .carnet .search{position:relative;flex:1;min-width:200px}

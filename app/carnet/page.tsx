@@ -12,7 +12,7 @@ type Addon = {
   date_croquis?: string; date_dessin?: string; date_gravure?: string; date_sortie?: string;
 };
 const fdate = (v?: string) => v ? v.split("-").reverse().join(".") : "";
-type Collection = { id: string; name: string; month: string; cover?: string; addons: Addon[] };
+type Collection = { id: string; name: string; month: string; cover?: string; shopify?: string; addons: Addon[] };
 
 const FORMATS = ["addon", "deux tiers", "medium", "mini", "open mood", "base", "pack", "coffret"];
 // format peut être une chaîne (ancien) ou un tableau (nouveau) — on lit les deux sans rien perdre
@@ -81,6 +81,10 @@ export default function CarnetPage() {
     if (!u) return;
     await api("updateCollection", { id, cover: u.url });
     setCols((prev) => prev.map((c) => (c.id === id ? { ...c, cover: u.url } : c)));
+  }
+  async function saveColShopify(id: string, url: string) {
+    await api("updateCollection", { id, shopify: url });
+    setCols((prev) => prev.map((c) => (c.id === id ? { ...c, shopify: url } : c)));
   }
   async function createAddon() {
     if (!colId) return;
@@ -153,6 +157,15 @@ export default function CarnetPage() {
               </label>
             )}
           </div>
+          {canEdit ? (
+            <div className="field colshop">
+              <label>Lien de la collection Shopify</label>
+              <input defaultValue={col.shopify} placeholder="https://…" onBlur={(e) => saveColShopify(col.id, e.target.value)} />
+            </div>
+          ) : col.shopify ? (
+            <p><a className="shoplink" href={col.shopify} target="_blank" rel="noreferrer">Voir la collection sur Shopify ↗</a></p>
+          ) : null}
+          {canEdit && col.shopify && <p><a className="shoplink" href={col.shopify} target="_blank" rel="noreferrer">Ouvrir la collection Shopify ↗</a></p>}
           <div className="grid">
             {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
             {col.addons.map((a) => {
