@@ -84,6 +84,7 @@ export default function CarnetPage() {
 
   return (
     <div className="carnet">
+      <div className="book">
       <div className="top">
         <h1 className="brand">Le Carnet des <em>nouveautés</em></h1>
       </div>
@@ -174,6 +175,8 @@ export default function CarnetPage() {
           <Fiche key={addon.id} addon={addon} onSave={saveAddon} canEdit={canEdit} />
         </>
       )}
+
+      </div>
 
       {/* MODAL */}
       {modal && (
