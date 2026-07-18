@@ -97,6 +97,12 @@ function pfTransferAccount(addtl: string): string | null {
   return m ? (PF_ACCOUNTS[m[1]] ?? null) : null;
 }
 
+// Remboursement provenant d'une administration fiscale (Zurich, Vaud, communes, Confédération…)
+function isRemboursementImpot(debtorName: string, comm: string, addtl: string): boolean {
+  const s = `${debtorName} ${comm} ${addtl}`.toUpperCase();
+  return ["FINANZVERWALTUNG", "STEUERAMT", "STEUERVERWALTUNG", "STEUER", "IMPÔT", "IMPOT", "CONTRIBUTIONS"].some(k => s.includes(k));
+}
+
 // lookupPostfinance est appelé avec le config chargé dynamiquement dans POST
 
 interface CamtEntry {
@@ -149,7 +155,7 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
 function buildEcritures(entries: CamtEntry[], config: Record<string, string>): { ecritures: Ecriture[]; stats: Record<string, number>; unknowns: UnknownEntry[] } {
   const ecritures: Ecriture[] = [];
   const unknowns: UnknownEntry[] = [];
-  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0, extraordinaire: 0, transfert_pf: 0, transfert_ubs: 0, transfert_etranger: 0 };
+  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0, extraordinaire: 0, transfert_pf: 0, transfert_ubs: 0, transfert_etranger: 0, arlette: 0, impot: 0 };
 
   for (const e of entries) {
     const { date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte, counterpartyIban } = e;
@@ -202,6 +208,29 @@ function buildEcritures(entries: CamtEntry[], config: Record<string, string>): {
         }
         continue;
       }
+    }
+
+    // 4) Remboursements d'Arlette Belat → son compte courant 116002 (ni vente ni charge, sans TVA)
+    if (upNames.includes("BELAT")) {
+      stats.arlette++;
+      const lib = `Remb. Arlette ${(communication || addtlInfo).slice(0, 45)}`.replace(/,/g, "-").slice(0, 80);
+      if (direction === "CRDT") {
+        ecritures.push({ date, compte: pfCompte, libelle: lib, montant:  amount });
+        ecritures.push({ date, compte: "116002", libelle: lib, montant: -amount });
+      } else {
+        ecritures.push({ date, compte: "116002", libelle: lib, montant:  amount });
+        ecritures.push({ date, compte: pfCompte, libelle: lib, montant: -amount });
+      }
+      continue;
+    }
+
+    // 5) Remboursement d'impôts (administration fiscale) → compte d'attente 199001, sans TVA
+    if (direction === "CRDT" && isRemboursementImpot(debtorName, communication, addtlInfo)) {
+      stats.impot++;
+      const lib = `Remb. impôts ${(debtorName || communication || addtlInfo).slice(0, 45)}`.replace(/,/g, "-").slice(0, 80);
+      ecritures.push({ date, compte: pfCompte, libelle: lib, montant:  amount });
+      ecritures.push({ date, compte: "199001", libelle: lib, montant: -amount });
+      continue;
     }
 
     // ── DBIT OPAE → ignorer ──────────────────────────────────────────────────
