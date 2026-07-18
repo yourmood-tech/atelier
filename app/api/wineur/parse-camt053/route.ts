@@ -40,6 +40,33 @@ function ibanToCompte(iban: string): string {
   return "100101"; // fallback compte principal
 }
 
+// ── Dépôts cash des boutiques (versement sur propre compte via carte PostFinance) ──
+// Chaque boutique dépose son liquide avec sa propre carte ; le n° de carte identifie la caisse.
+const CAISSE_CARTE: Record<string, string> = {
+  "8693": "100003", // Martigny
+  "0718": "100004", // Carouge
+  "0726": "100001", // Orbe (dépôt à Chavornay)
+  "9283": "100006", // Fribourg
+};
+
+// La ligne est-elle un dépôt cash d'une boutique sur le compte PostFinance ?
+function isDepotCaisse(addtl: string): boolean {
+  const s = addtl.toUpperCase();
+  return s.includes("VERSEMENT SUR PROPRE COMPTE") || s.includes("MOOD STORE Z");
+}
+
+// Caisse WinEUR correspondant au dépôt, ou null si la carte est inconnue
+function caisseFromDeposit(addtl: string): string | null {
+  const s = addtl.toUpperCase();
+  // Zürich : dépôt boutique via filiale de la poste, sans carte
+  if (s.includes("MOOD STORE Z")) return "100005";
+  const card = addtl.match(/CARTE\s*NO\.?\s*X+(\d{4})/i)?.[1];
+  if (!card) return null;
+  // Carte …0456 : Zermatt si déposé à Zermatt, sinon événements/foire
+  if (card === "0456") return /ZERMATT/i.test(addtl) ? "100007" : "100009";
+  return CAISSE_CARTE[card] ?? null;
+}
+
 // lookupPostfinance est appelé avec le config chargé dynamiquement dans POST
 
 interface CamtEntry {
@@ -90,7 +117,7 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
 function buildEcritures(entries: CamtEntry[], config: Record<string, string>): { ecritures: Ecriture[]; stats: Record<string, number>; unknowns: UnknownEntry[] } {
   const ecritures: Ecriture[] = [];
   const unknowns: UnknownEntry[] = [];
-  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0 };
+  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0 };
 
   for (const e of entries) {
     const { date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte } = e;
@@ -123,6 +150,22 @@ function buildEcritures(entries: CamtEntry[], config: Record<string, string>): {
         ecritures.push({ date, compte: providerCompte, libelle: lib, montant: -amount }); // compte passage provider se vide
         continue;
       }
+    }
+
+    // ── CRDT dépôt cash boutique (versement sur propre compte / MOOD STORE ZÜRICH) ──
+    // Ce n'est PAS une vente : la banque monte, la caisse de la boutique baisse, sans TVA.
+    if (direction === "CRDT" && isDepotCaisse(addtlInfo)) {
+      stats.depot_caisse++;
+      const caisse = caisseFromDeposit(addtlInfo);
+      const ref = addtlInfo.replace(/\s+/g, " ").slice(0, 60).replace(/,/g, "-");
+      const lib = `Versement caisse ${ref}`.slice(0, 80);
+      if (!caisse) {
+        unknowns.push({ key: ref.toLowerCase().slice(0, 80), label: ref.slice(0, 60), amount, date, source: "postfinance" });
+      }
+      const cpteCaisse = caisse ?? "109999";
+      ecritures.push({ date, compte: pfCompte,   libelle: lib, montant:  amount }); // banque reçoit
+      ecritures.push({ date, compte: cpteCaisse, libelle: lib, montant: -amount }); // caisse boutique baisse
+      continue;
     }
 
     // ── CRDT : rentrée client sur compte PostFinance ─────────────────────────
