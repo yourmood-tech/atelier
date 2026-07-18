@@ -19,6 +19,9 @@ const PROVIDER_PASSAGE: Record<string, string> = {
   "paypal":          "100401",  // PayPal CHF
   "powerpay":        "220005",  // Powerpay passage
   "mf group":        "220005",  // Powerpay (raison sociale MF Group AG)
+  "deindeal":        "199001",  // DeinDeal → compte d'attente ventes flash (détail non fourni)
+  "qoqa":            "199001",  // Qoqa → compte d'attente ventes flash
+  "realdeal":        "199001",  // Realdeals → compte d'attente ventes flash
 };
 
 const TAUX = 8.1 / 100;
