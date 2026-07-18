@@ -82,6 +82,21 @@ function isIndemniteSalaire(debtorName: string, addtl: string): boolean {
   return false;
 }
 
+// ── Transferts internes entre comptes Mood (PostFinance ↔ PostFinance / PostFinance ↔ UBS) ──
+// Nos 3 comptes PostFinance (par IBAN) et nos 3 comptes UBS (par lettre finale de l'IBAN contrepartie).
+const PF_ACCOUNTS: Record<string, string> = {
+  "CH5009000000126631485": "100101",
+  "CH7509000000147238879": "100102",
+  "CH5609000000156657727": "100103",
+};
+const UBS_LETTER: Record<string, string> = { C: "100201", L: "100202", R: "100203" };
+
+// Si le libellé est "TRANSFERT SUR/DU COMPTE <un de nos IBAN PostFinance>", renvoie le compte concerné.
+function pfTransferAccount(addtl: string): string | null {
+  const m = addtl.toUpperCase().match(/TRANSFERT (?:SUR|DU) COMPTE\s+([A-Z0-9]+)/);
+  return m ? (PF_ACCOUNTS[m[1]] ?? null) : null;
+}
+
 // lookupPostfinance est appelé avec le config chargé dynamiquement dans POST
 
 interface CamtEntry {
@@ -95,6 +110,7 @@ interface CamtEntry {
   communication: string;
   addtlInfo: string;
   pfCompte: string; // compte PostFinance WinEUR selon IBAN du fichier
+  counterpartyIban: string; // IBAN de la contrepartie (hors nos comptes PostFinance)
 }
 
 function parseEntries(xml: string, iban: string): CamtEntry[] {
@@ -123,8 +139,9 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
       || tagText(rmtInf, "Ref")
       || tagText(firstBlock(rmtInf, "CdtrRefInf"), "Ref");
     const addtlInfo  = tagText(ntry, "AddtlNtryInf");
+    const counterpartyIban = ([...ntry.matchAll(/<IBAN>([^<]+)<\/IBAN>/g)].map(m => m[1])).find(ib => !(ib in PF_ACCOUNTS)) ?? "";
 
-    entries.push({ date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte });
+    entries.push({ date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte, counterpartyIban });
   }
   return entries;
 }
@@ -132,12 +149,60 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
 function buildEcritures(entries: CamtEntry[], config: Record<string, string>): { ecritures: Ecriture[]; stats: Record<string, number>; unknowns: UnknownEntry[] } {
   const ecritures: Ecriture[] = [];
   const unknowns: UnknownEntry[] = [];
-  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0, extraordinaire: 0 };
+  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0, extraordinaire: 0, transfert_pf: 0, transfert_ubs: 0, transfert_etranger: 0 };
 
   for (const e of entries) {
-    const { date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte } = e;
+    const { date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte, counterpartyIban } = e;
     const isCH    = country === "CH" || country === "";
     const addtlLc = addtlInfo.toLowerCase();
+
+    // ── Transferts internes entre comptes Mood — pas une vente/charge, sans TVA ──
+    const upNames = `${debtorName} ${creditorName}`.toUpperCase();
+
+    // 1) PostFinance ↔ PostFinance : les 2 comptes sont dans le fichier → on comptabilise UNIQUEMENT
+    //    la ligne d'entrée (CRDT), directement d'un compte à l'autre ; la ligne de départ (DBIT
+    //    "TRANSFERT SUR COMPTE") est ignorée pour ne pas compter le transfert deux fois.
+    const pfCptTransfer = pfTransferAccount(addtlInfo);
+    if (pfCptTransfer) {
+      if (direction === "CRDT") {
+        stats.transfert_pf++;
+        const lib = `Transfert interne ${addtlInfo.slice(0, 50)}`.replace(/,/g, "-").slice(0, 80);
+        ecritures.push({ date, compte: pfCompte,      libelle: lib, montant:  amount }); // compte qui reçoit
+        ecritures.push({ date, compte: pfCptTransfer, libelle: lib, montant: -amount }); // compte qui envoie
+      }
+      continue;
+    }
+
+    // 2) Transfert vers notre propre société à l'étranger (Mood Collection USA) → compte d'attente 199001
+    if (upNames.includes("MOOD COLLECTION USA")) {
+      stats.transfert_etranger++;
+      const lib = `Transfert Mood USA ${(communication || addtlInfo).slice(0, 45)}`.replace(/,/g, "-").slice(0, 80);
+      if (direction === "DBIT") { // argent quitte PostFinance vers la société US
+        ecritures.push({ date, compte: "199001", libelle: lib, montant:  amount });
+        ecritures.push({ date, compte: pfCompte,  libelle: lib, montant: -amount });
+      } else {                    // argent reçu de la société US
+        ecritures.push({ date, compte: pfCompte,  libelle: lib, montant:  amount });
+        ecritures.push({ date, compte: "199001",  libelle: lib, montant: -amount });
+      }
+      continue;
+    }
+
+    // 3) PostFinance ↔ UBS : une seule jambe dans le fichier → passée contre le bon compte UBS (lettre C/L/R)
+    if (upNames.includes("MOOD COLLECTION SA")) {
+      const ubsCpt = counterpartyIban ? (UBS_LETTER[counterpartyIban.slice(-1).toUpperCase()] ?? null) : null;
+      if (ubsCpt) {
+        stats.transfert_ubs++;
+        const lib = `Transfert UBS ${(communication || addtlInfo).slice(0, 45)}`.replace(/,/g, "-").slice(0, 80);
+        if (direction === "CRDT") { // UBS → PostFinance
+          ecritures.push({ date, compte: pfCompte, libelle: lib, montant:  amount });
+          ecritures.push({ date, compte: ubsCpt,   libelle: lib, montant: -amount });
+        } else {                    // PostFinance → UBS
+          ecritures.push({ date, compte: ubsCpt,   libelle: lib, montant:  amount });
+          ecritures.push({ date, compte: pfCompte, libelle: lib, montant: -amount });
+        }
+        continue;
+      }
+    }
 
     // ── DBIT OPAE → ignorer ──────────────────────────────────────────────────
     const isOpaeGrouped = direction === "DBIT" && addtlLc.includes("ordre groupé opae");
