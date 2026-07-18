@@ -67,6 +67,18 @@ function caisseFromDeposit(addtl: string): string | null {
   return CAISSE_CARTE[card] ?? null;
 }
 
+// ── Indemnités remboursant un salaire (assurances + caisse chômage) — pas une vente ──
+// Détectées uniquement quand l'EXPÉDITEUR est l'organisme (jamais un nom de banque ou de ville).
+function isIndemniteSalaire(debtorName: string, addtl: string): boolean {
+  const s = `${debtorName} ${addtl}`.toUpperCase();
+  if (s.includes("SWICA")) return true;                       // accident / maladie SWICA
+  const isZurich = s.includes("ZUERICH") || s.includes("ZÜRICH") || s.includes("ZURICH");
+  if (s.includes("VERSICHERUNG") && isZurich) return true;    // Zurich assurance (maladie)
+  if (s.includes("CHOMAGE") || s.includes("CHÔMAGE")) return true; // caisse cantonale de chômage
+  if (s.includes("CAISSE AVS") || s.includes("CAISSE DE COMPENSATION")) return true; // caisse AVS
+  return false;
+}
+
 // lookupPostfinance est appelé avec le config chargé dynamiquement dans POST
 
 interface CamtEntry {
@@ -117,7 +129,7 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
 function buildEcritures(entries: CamtEntry[], config: Record<string, string>): { ecritures: Ecriture[]; stats: Record<string, number>; unknowns: UnknownEntry[] } {
   const ecritures: Ecriture[] = [];
   const unknowns: UnknownEntry[] = [];
-  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0 };
+  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0 };
 
   for (const e of entries) {
     const { date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte } = e;
@@ -165,6 +177,18 @@ function buildEcritures(entries: CamtEntry[], config: Record<string, string>): {
       const cpteCaisse = caisse ?? "109999";
       ecritures.push({ date, compte: pfCompte,   libelle: lib, montant:  amount }); // banque reçoit
       ecritures.push({ date, compte: cpteCaisse, libelle: lib, montant: -amount }); // caisse boutique baisse
+      continue;
+    }
+
+    // ── CRDT indemnité de salaire (SWICA, Zurich assurance, caisse chômage) → 500050, sans TVA ──
+    // Ce n'est PAS une vente : la banque monte, l'indemnité vient en déduction des charges de personnel.
+    if (direction === "CRDT" && isIndemniteSalaire(debtorName, addtlInfo)) {
+      stats.indemnite++;
+      const src = debtorName || addtlInfo.replace(/^CRÉDIT\s*(DONNEUR D'ORDRE:)?\s*/i, "").slice(0, 60);
+      const ref = src.replace(/\s+/g, " ").slice(0, 60).replace(/,/g, "-");
+      const lib = `Indemnité ${ref}`.slice(0, 80);
+      ecritures.push({ date, compte: pfCompte, libelle: lib, montant:  amount }); // banque reçoit
+      ecritures.push({ date, compte: "500050", libelle: lib, montant: -amount }); // indemnités (déduction charges personnel)
       continue;
     }
 
