@@ -158,6 +158,12 @@ export default function WineurPage() {
       if (!res.ok) throw new Error(`Erreur serveur : ${(await res.text()).slice(0, 200)}`);
 
       const contentType = res.headers.get("content-type") ?? "";
+
+      // Nom du fichier de résultats = même nom que le fichier PostFinance déposé + "-wineur.csv"
+      const pfFile   = activeFiles.has("postfinance") ? files["postfinance"] : undefined;
+      const baseName = pfFile ? pfFile.name.replace(/\.[^.]+$/, "") : null;
+      const outName  = baseName ? `${baseName}-wineur.csv` : `wineur_${start}_${end}.csv`;
+
       if (contentType.includes("application/json")) {
         const j = await res.json() as {
           unknowns?: UnknownEntry[];
@@ -169,14 +175,15 @@ export default function WineurPage() {
         // Plusieurs années fiscales → un fichier par année, téléchargés à la suite
         if (j.multi_year && j.files) {
           for (const f of j.files) {
+            const dl   = baseName ? `${baseName}-${f.year}-wineur.csv` : f.filename;
             const blob = new Blob([f.csv], { type: "text/csv;charset=utf-8;" });
             const url  = URL.createObjectURL(blob);
             const a    = document.createElement("a");
-            a.href = url; a.download = f.filename; a.click();
+            a.href = url; a.download = dl; a.click();
             URL.revokeObjectURL(url);
             await new Promise(r => setTimeout(r, 400)); // éviter que le navigateur bloque les téléchargements multiples
           }
-          const detail = j.files.map(f => `${f.filename} (${f.lines})`).join(" + ");
+          const detail = j.files.map(f => `${baseName ? `${baseName}-${f.year}-wineur.csv` : f.filename} (${f.lines})`).join(" + ");
           setStatus(`✅ ${j.files.length} années fiscales détectées — ${j.files.length} fichiers téléchargés : ${detail}`);
           setUnknowns([]); setPendingEcritures([]);
           return;
@@ -193,7 +200,7 @@ export default function WineurPage() {
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
-      a.href = url; a.download = `wineur_${start}_${end}.csv`; a.click();
+      a.href = url; a.download = outName; a.click();
       URL.revokeObjectURL(url);
 
       const lines = csv.split("\n").length - 1;
