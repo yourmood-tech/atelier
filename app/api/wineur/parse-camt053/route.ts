@@ -132,7 +132,7 @@ function parseEntries(xml: string, iban: string): CamtEntry[] {
 function buildEcritures(entries: CamtEntry[], config: Record<string, string>): { ecritures: Ecriture[]; stats: Record<string, number>; unknowns: UnknownEntry[] } {
   const ecritures: Ecriture[] = [];
   const unknowns: UnknownEntry[] = [];
-  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0 };
+  const stats = { crdt: 0, crdt_skip: 0, opae: 0, carte: 0, dbit_other: 0, depot_caisse: 0, indemnite: 0, extraordinaire: 0 };
 
   for (const e of entries) {
     const { date, amount, direction, subFmlyCd, debtorName, creditorName, country, communication, addtlInfo, pfCompte } = e;
@@ -170,6 +170,16 @@ function buildEcritures(entries: CamtEntry[], config: Record<string, string>): {
     // ── CRDT dépôt cash boutique (versement sur propre compte / MOOD STORE ZÜRICH) ──
     // Ce n'est PAS une vente : la banque monte, la caisse de la boutique baisse, sans TVA.
     if (direction === "CRDT" && isDepotCaisse(addtlInfo)) {
+      // Carte perso …9237 = toujours un gain extraordinaire (ex. vente de vieil or, remboursement) → produits extraordinaires 700004, sans TVA
+      const carteDepot = addtlInfo.match(/CARTE\s*NO\.?\s*X+(\d{4})/i)?.[1];
+      if (carteDepot === "9237") {
+        stats.extraordinaire++;
+        const refX = addtlInfo.replace(/\s+/g, " ").slice(0, 60).replace(/,/g, "-");
+        const libX = `Produit extraordinaire ${refX}`.slice(0, 80);
+        ecritures.push({ date, compte: pfCompte, libelle: libX, montant:  amount }); // banque reçoit
+        ecritures.push({ date, compte: "700004", libelle: libX, montant: -amount }); // produits extraordinaires
+        continue;
+      }
       stats.depot_caisse++;
       const caisse = caisseFromDeposit(addtlInfo);
       const ref = addtlInfo.replace(/\s+/g, " ").slice(0, 60).replace(/,/g, "-");
