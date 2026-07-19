@@ -176,6 +176,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Calendrier annuel jeudi→mercredi pour planifier les nouveautés. Suivi des 9 étapes (idée → mise en ligne) + objectifs CA mensuels par produit.",
       },
       {
+        href: "/carnet",
+        emoji: "📓",
+        title: "Le Carnet des nouveautés",
+        description: "Le dictionnaire de fabrication Mood : chaque création a sa fiche, classée par mois et par collection, avec photos, tags et lien vers la fiche Shopify.",
+      },
+      {
         href: "/design-creator",
         emoji: "💡",
         title: "Création design Mood",
