@@ -172,3 +172,7 @@
 .carnet .modal h3{font-family:var(--serif);font-weight:500;margin:0 0 16px;font-size:20px}
 .carnet .modal input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font-size:15px;background:var(--bg);color:var(--ink)}
 .carnet .modal .row{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+
+/* Plan de sertissage — affichage en grand dans la fiche */
+.r-serti { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.r-serti img { width: 100%; max-width: 920px; height: auto; display: block; border-radius: 8px; box-shadow: 0 8px 30px rgba(88,52,0,0.15); }

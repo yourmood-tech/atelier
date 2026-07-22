@@ -7,7 +7,7 @@ type FileRef = { url: string; name: string };
 type Addon = {
   id: string; collectionId: string; nom: string;
   format?: string | string[]; matiere?: string; couleur?: string; finition?: string;
-  croquis?: string[]; inspi?: string[]; ai?: FileRef[]; gnh?: FileRef[]; photos?: string[];
+  croquis?: string[]; inspi?: string[]; ai?: FileRef[]; gnh?: FileRef[]; photos?: string[]; sertissage?: string[];
   laser?: string; realisation?: string; mtrl?: string; shopify?: string; fournisseur?: string[]; tags?: string[];
   date_croquis?: string; date_dessin?: string; date_gravure?: string; date_sortie?: string;
 };
@@ -310,6 +310,7 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
       <FileZone title="Fichier .ai" items={addon.ai || []} onChange={(v) => save({ ai: v })} />
       <FileZone title="Fichier .gnh (gravure)" items={addon.gnh || []} onChange={(v) => save({ gnh: v })} />
       <ImageZone title="Photo du produit" items={addon.photos || []} onChange={(v) => save({ photos: v })} />
+      <ImageZone title="Plan de sertissage" items={addon.sertissage || []} onChange={(v) => save({ sertissage: v })} />
 
       <div className="sec">
         <h3><span className="dot" /> Réglage (si laser)</h3>
@@ -370,6 +371,20 @@ function FicheRender({ addon }: { addon: Addon }) {
             {addon.date_dessin && <span><b>Dessin</b>{fdate(addon.date_dessin)}</span>}
             {addon.date_gravure && <span><b>Gravure</b>{fdate(addon.date_gravure)}</span>}
             {addon.date_sortie && <span><b>Sortie</b>{fdate(addon.date_sortie)}</span>}
+          </div>
+        </section>
+      )}
+
+      {addon.sertissage && addon.sertissage.length > 0 && (
+        <section className="r-sec">
+          <h3>Plan de sertissage</h3>
+          <div className="r-serti">
+            {addon.sertissage.map((u, i) => (
+              <a key={u + i} href={u} target="_blank" rel="noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={u} alt="Plan de sertissage" loading="lazy" />
+              </a>
+            ))}
           </div>
         </section>
       )}
