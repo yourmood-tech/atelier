@@ -102,6 +102,11 @@ export default function CarnetPage() {
     const d = await api("createCollection", { name: draft.trim() || "Sans nom", month: draft2.trim() });
     if (d.collection) { setModal(null); setDraft(""); setDraft2(""); load(); }
   }
+  async function deleteCollection(id: string) {
+    setCols((prev) => prev.filter((c) => c.id !== id));
+    setColId(null); setAddonId(null);
+    await api("deleteCollection", { id });
+  }
   async function setColCover(id: string, file: File) {
     const u = await uploadFile(file);
     if (!u) return;
@@ -215,6 +220,9 @@ export default function CarnetPage() {
           {col.shopify && <CollectionRevenue col={col} />}
           {col.addons.length > 0 && (
             <p><button className="btn ghost sm" onClick={() => setPrinting(true)}>🖨️ Exporter la collection en PDF ({col.addons.length} fiche{col.addons.length > 1 ? "s" : ""})</button></p>
+          )}
+          {canEdit && (
+            <p><button className="btn ghost sm" style={{ color: "#b00", borderColor: "#e0b4b4" }} onClick={() => { if (window.confirm(`Supprimer la collection « ${col.name} » et ses ${col.addons.length} fiche(s) ? Cette action est irréversible.`)) deleteCollection(col.id); }}>🗑 Supprimer la collection</button></p>
           )}
           <div className="grid">
             {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
