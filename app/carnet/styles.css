@@ -181,3 +181,9 @@
 .colrev { margin: 6px 0 14px; }
 .colrev-val { font-size: 15px; color: #1a1410; background: #fbf4ec; border: 1px solid #f0e2d2; border-radius: 8px; padding: 10px 14px; display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .colrev-since { color: var(--muted); font-size: 13px; }
+
+/* Détail des ventes par produit */
+.colrev-detail { margin-top: 8px; border-collapse: collapse; font-size: 14px; }
+.colrev-detail td { padding: 5px 14px 5px 0; border-bottom: 1px solid #f0e2d2; }
+.colrev-detail td:nth-child(2) { color: var(--muted); text-align: right; }
+.colrev-detail td:nth-child(3) { text-align: right; white-space: nowrap; }

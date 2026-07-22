@@ -55,15 +55,16 @@ export async function POST(request: Request) {
     const col = await resolveCollection(url);
     if (!col) return NextResponse.json({ error: "collection introuvable depuis ce lien" }, { status: 404 });
 
-    // produits de la collection + date de création la plus ancienne
+    // produits de la collection + date de création la plus ancienne + titres
     const prodIds = new Set<string>();
+    const titles = new Map<string, string>();
     let minCreated: string | null = null;
     let cursor: string | null = null;
     do {
-      const j: any = await gql(`query($id:ID!,$c:String){collection(id:$id){products(first:250,after:$c){pageInfo{hasNextPage endCursor} nodes{id createdAt}}}}`, { id: col.id, c: cursor });
+      const j: any = await gql(`query($id:ID!,$c:String){collection(id:$id){products(first:250,after:$c){pageInfo{hasNextPage endCursor} nodes{id createdAt title}}}}`, { id: col.id, c: cursor });
       const pr = j?.data?.collection?.products;
       if (!pr) break;
-      for (const p of pr.nodes) { prodIds.add(p.id); if (!minCreated || p.createdAt < minCreated) minCreated = p.createdAt; }
+      for (const p of pr.nodes) { prodIds.add(p.id); titles.set(p.id, p.title); if (!minCreated || p.createdAt < minCreated) minCreated = p.createdAt; }
       cursor = pr.pageInfo.hasNextPage ? pr.pageInfo.endCursor : null;
       await sleep(120);
     } while (cursor);
@@ -73,6 +74,7 @@ export async function POST(request: Request) {
 
     // parcours des commandes depuis la date de lancement
     let total = 0, units = 0, orders = 0;
+    const byId = new Map<string, { units: number; total: number }>();
     let oc: string | null = null;
     do {
       const j: any = await gql(`query($q:String!,$c:String){orders(first:100,query:$q,after:$c){pageInfo{hasNextPage endCursor} edges{node{lineItems(first:30){edges{node{quantity discountedTotalSet{shopMoney{amount}} product{id}}}}}}}}`, { q: `created_at:>=${since}`, c: oc });
@@ -82,14 +84,22 @@ export async function POST(request: Request) {
         orders++;
         for (const li of e.node.lineItems.edges) {
           const pid = li.node.product?.id;
-          if (pid && prodIds.has(pid)) { total += parseFloat(li.node.discountedTotalSet.shopMoney.amount || "0"); units += li.node.quantity; }
+          if (pid && prodIds.has(pid)) {
+            const amt = parseFloat(li.node.discountedTotalSet.shopMoney.amount || "0");
+            total += amt; units += li.node.quantity;
+            const cur = byId.get(pid) || { units: 0, total: 0 };
+            cur.units += li.node.quantity; cur.total += amt; byId.set(pid, cur);
+          }
         }
       }
       oc = o.pageInfo.hasNextPage ? o.pageInfo.endCursor : null;
       await sleep(200);
     } while (oc);
 
-    const result = { title: col.title, total: Math.round(total), units, since, products: prodIds.size, orders, at: new Date().toISOString() };
+    const byProduct = [...byId.entries()]
+      .map(([id, v]) => ({ name: titles.get(id) || "produit", units: v.units, total: Math.round(v.total) }))
+      .sort((a, b) => b.total - a.total);
+    const result = { title: col.title, total: Math.round(total), units, since, products: prodIds.size, orders, byProduct, at: new Date().toISOString() };
     if (colKey) await kv.set(colKey, result);
     return NextResponse.json(result);
   } catch (e) {

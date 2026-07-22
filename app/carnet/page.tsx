@@ -340,9 +340,10 @@ function Fiche({ addon, onSave, onDelete, canEdit }: { addon: Addon; onSave: (id
 }
 
 function CollectionRevenue({ col }: { col: Collection }) {
-  const [r, setR] = useState<{ total: number; units: number; since: string; orders?: number } | null>(null);
+  const [r, setR] = useState<{ total: number; units: number; since: string; orders?: number; byProduct?: { name: string; units: number; total: number }[] } | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [open, setOpen] = useState(false);
   async function load(refresh?: boolean) {
     setLoading(true); setErr("");
     try {
@@ -358,9 +359,21 @@ function CollectionRevenue({ col }: { col: Collection }) {
   return (
     <div className="colrev">
       {r ? (
-        <div className="colrev-val">
-          💰 <b>≈ {r.total.toLocaleString("fr-CH")} CHF</b> · {r.units} pièce{r.units > 1 ? "s" : ""} vendue{r.units > 1 ? "s" : ""} <span className="colrev-since">depuis le {fdate(r.since)}</span>
-          <button className="btn ghost sm" style={{ marginLeft: 10 }} onClick={() => load(true)} disabled={loading}>{loading ? "…" : "↻ recalculer"}</button>
+        <div>
+          <div className="colrev-val">
+            💰 <b>≈ {r.total.toLocaleString("fr-CH")} CHF</b> · {r.units} pièce{r.units > 1 ? "s" : ""} vendue{r.units > 1 ? "s" : ""} <span className="colrev-since">depuis le {fdate(r.since)}</span>
+            {r.byProduct && r.byProduct.length > 0 && <button className="btn ghost sm" style={{ marginLeft: 10 }} onClick={() => setOpen((o) => !o)}>{open ? "masquer le détail" : "voir le détail ↓"}</button>}
+            <button className="btn ghost sm" style={{ marginLeft: 6 }} onClick={() => load(true)} disabled={loading}>{loading ? "…" : "↻ recalculer"}</button>
+          </div>
+          {open && r.byProduct && (
+            <table className="colrev-detail">
+              <tbody>
+                {r.byProduct.map((p, i) => (
+                  <tr key={i}><td>{p.name}</td><td>{p.units}×</td><td><b>{p.total.toLocaleString("fr-CH")} CHF</b></td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       ) : loading ? (
         <div className="colrev-val">💰 Calcul des ventes en cours… (ça peut prendre un moment)</div>
