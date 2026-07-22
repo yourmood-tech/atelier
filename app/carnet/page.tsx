@@ -86,6 +86,11 @@ export default function CarnetPage() {
     patchAddonLocal(id, patch);
     await api("updateAddon", { id, patch });
   }
+  async function deleteAddon(id: string) {
+    setCols((prev) => prev.map((c) => ({ ...c, addons: c.addons.filter((a) => a.id !== id) })));
+    setAddonId(null);
+    await api("deleteAddon", { id });
+  }
 
   async function createCollection() {
     const d = await api("createCollection", { name: draft.trim() || "Sans nom", month: draft2.trim() });
@@ -227,7 +232,7 @@ export default function CarnetPage() {
           <div className="crumb">
             <button onClick={() => turnPage(() => { setColId(null); setAddonId(null); })}>Collections</button> · <button onClick={() => turnPage(() => setAddonId(null))}>{col.name}</button> · {addon.nom}
           </div>
-          <Fiche key={addon.id} addon={addon} onSave={saveAddon} canEdit={canEdit} />
+          <Fiche key={addon.id} addon={addon} onSave={saveAddon} onDelete={deleteAddon} canEdit={canEdit} />
         </>
       )}
 
@@ -253,7 +258,7 @@ export default function CarnetPage() {
   );
 }
 
-function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, patch: Partial<Addon>) => void; canEdit: boolean }) {
+function Fiche({ addon, onSave, onDelete, canEdit }: { addon: Addon; onSave: (id: string, patch: Partial<Addon>) => void; onDelete: (id: string) => void; canEdit: boolean }) {
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState("");
   const flash = () => { setSaved("Enregistré ✓"); setTimeout(() => setSaved(""), 1500); };
@@ -283,6 +288,10 @@ function Fiche({ addon, onSave, canEdit }: { addon: Addon; onSave: (id: string, 
       <div className="fiche-head">
         <input className="nom-input" defaultValue={addon.nom} onBlur={(e) => field("nom", e.target.value)} />
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}><span className="save">{saved}</span><button className="btn ghost sm" onClick={() => setEditing(false)}>✓ Terminé</button></div>
+      </div>
+
+      <div style={{ marginTop: 4, marginBottom: 12 }}>
+        <button className="btn ghost sm" style={{ color: "#b00", borderColor: "#e0b4b4" }} onClick={() => { if (window.confirm(`Supprimer définitivement la fiche « ${addon.nom} » ? Cette action est irréversible.`)) onDelete(addon.id); }}>🗑 Supprimer cette fiche</button>
       </div>
 
       <FormatChips value={addon.format} onSave={(v) => save({ format: v })} />
