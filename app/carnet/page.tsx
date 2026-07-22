@@ -206,6 +206,7 @@ export default function CarnetPage() {
             <p><a className="shoplink" href={col.shopify} target="_blank" rel="noreferrer">Voir la collection sur Shopify ↗</a></p>
           ) : null}
           {canEdit && col.shopify && <p><a className="shoplink" href={col.shopify} target="_blank" rel="noreferrer">Ouvrir la collection Shopify ↗</a></p>}
+          {col.shopify && <CollectionRevenue col={col} />}
           <div className="grid">
             {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
             {col.addons.map((a) => {
@@ -334,6 +335,39 @@ function Fiche({ addon, onSave, onDelete, canEdit }: { addon: Addon; onSave: (id
         <TextField label="Lien Shopify" val={addon.shopify} onSave={(v) => field("shopify", v)} placeholder="https://…" />
       </div>
       {addon.shopify && <p><a className="shoplink" href={addon.shopify} target="_blank" rel="noreferrer">Ouvrir la fiche Shopify ↗</a></p>}
+    </div>
+  );
+}
+
+function CollectionRevenue({ col }: { col: Collection }) {
+  const [r, setR] = useState<{ total: number; units: number; since: string; orders?: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  async function load(refresh?: boolean) {
+    setLoading(true); setErr("");
+    try {
+      const res = await fetch("/api/carnet/revenue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: col.shopify, colId: col.id, refresh, cacheOnly: !refresh }) });
+      const d = await res.json();
+      if (d.error) setErr(d.error);
+      else if (d.none) setR(null);
+      else setR(d);
+    } catch (e) { setErr(String(e)); }
+    setLoading(false);
+  }
+  useEffect(() => { setR(null); load(false); /* lit le cache à l'ouverture */ }, [col.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className="colrev">
+      {r ? (
+        <div className="colrev-val">
+          💰 <b>≈ {r.total.toLocaleString("fr-CH")} CHF</b> · {r.units} pièce{r.units > 1 ? "s" : ""} vendue{r.units > 1 ? "s" : ""} <span className="colrev-since">depuis le {fdate(r.since)}</span>
+          <button className="btn ghost sm" style={{ marginLeft: 10 }} onClick={() => load(true)} disabled={loading}>{loading ? "…" : "↻ recalculer"}</button>
+        </div>
+      ) : loading ? (
+        <div className="colrev-val">💰 Calcul des ventes en cours… (ça peut prendre un moment)</div>
+      ) : (
+        <button className="btn ghost sm" onClick={() => load(true)}>💰 Combien elle a rapporté ?</button>
+      )}
+      {err && <div className="colrev-err" style={{ color: "#b00", fontSize: 13, marginTop: 4 }}>⚠️ {err}</div>}
     </div>
   );
 }

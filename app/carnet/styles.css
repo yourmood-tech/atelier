@@ -176,3 +176,8 @@
 /* Plan de sertissage — affichage en grand dans la fiche */
 .r-serti { display: flex; flex-direction: column; gap: 14px; align-items: center; }
 .r-serti img { width: 100%; max-width: 920px; height: auto; display: block; border-radius: 8px; box-shadow: 0 8px 30px rgba(88,52,0,0.15); }
+
+/* Combien la collection a rapporté */
+.colrev { margin: 6px 0 14px; }
+.colrev-val { font-size: 15px; color: #1a1410; background: #fbf4ec; border: 1px solid #f0e2d2; border-radius: 8px; padding: 10px 14px; display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.colrev-since { color: var(--muted); font-size: 13px; }
