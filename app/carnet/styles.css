@@ -187,3 +187,15 @@
 .colrev-detail td { padding: 5px 14px 5px 0; border-bottom: 1px solid #f0e2d2; }
 .colrev-detail td:nth-child(2) { color: var(--muted); text-align: right; }
 .colrev-detail td:nth-child(3) { text-align: right; white-space: nowrap; }
+
+/* Export PDF de toute la collection */
+.print-all { display: none; }
+.print-coltitle { text-align: center; font-style: italic; }
+@media print {
+  .carnet.printing .book { display: none !important; }
+  .carnet.printing .modal-bg { display: none !important; }
+  .carnet.printing .print-all { display: block !important; }
+  .carnet.printing .print-coltitle { page-break-after: always; margin: 40px 0; }
+  .carnet.printing .print-fiche { page-break-after: always; }
+  .carnet.printing .print-fiche:last-child { page-break-after: auto; }
+}

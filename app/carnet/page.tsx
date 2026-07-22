@@ -42,11 +42,17 @@ export default function CarnetPage() {
   function turnPage(fn: () => void) { fn(); }
   const [draft, setDraft] = useState("");
   const [draft2, setDraft2] = useState("");
+  const [printing, setPrinting] = useState(false);
 
   const load = useCallback(() => {
     fetch("/api/carnet").then((r) => r.json()).then((d) => { setCols(d.collections || []); setCanEdit(!!d.canEdit); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!printing) return;
+    const t = setTimeout(() => { window.print(); setPrinting(false); }, 600);
+    return () => clearTimeout(t);
+  }, [printing]);
 
   const col = cols.find((c) => c.id === colId) || null;
   const addon = col?.addons.find((a) => a.id === addonId) || null;
@@ -113,7 +119,7 @@ export default function CarnetPage() {
   }
 
   return (
-    <div className="carnet">
+    <div className={"carnet" + (printing ? " printing" : "")}>
       <div className="book">
       <div className="top">
         <h1 className="brand">Le Carnet des <em>nouveautés</em></h1>
@@ -207,6 +213,9 @@ export default function CarnetPage() {
           ) : null}
           {canEdit && col.shopify && <p><a className="shoplink" href={col.shopify} target="_blank" rel="noreferrer">Ouvrir la collection Shopify ↗</a></p>}
           {col.shopify && <CollectionRevenue col={col} />}
+          {col.addons.length > 0 && (
+            <p><button className="btn ghost sm" onClick={() => setPrinting(true)}>🖨️ Exporter la collection en PDF ({col.addons.length} fiche{col.addons.length > 1 ? "s" : ""})</button></p>
+          )}
           <div className="grid">
             {canEdit && <button className="card add-card" onClick={() => { setModal("addon"); setDraft(""); }}>+ Ajouter un addon</button>}
             {col.addons.map((a) => {
@@ -239,6 +248,16 @@ export default function CarnetPage() {
 
       </div>
       </div>
+
+      {/* EXPORT PDF — toutes les fiches de la collection */}
+      {printing && col && (
+        <div className="print-all">
+          <h1 className="print-coltitle">{col.name} {col.month ? `· ${col.month}` : ""}</h1>
+          {col.addons.map((a) => (
+            <div className="print-fiche" key={a.id}><FicheRender addon={a} /></div>
+          ))}
+        </div>
+      )}
 
       {/* MODAL */}
       {modal && (
