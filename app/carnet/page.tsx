@@ -117,6 +117,10 @@ export default function CarnetPage() {
     await api("updateCollection", { id, shopify: url });
     setCols((prev) => prev.map((c) => (c.id === id ? { ...c, shopify: url } : c)));
   }
+  async function saveColField(id: string, patch: { name?: string; month?: string }) {
+    setCols((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+    await api("updateCollection", { id, ...patch });
+  }
   async function createAddon() {
     if (!colId) return;
     const d = await api("createAddon", { collectionId: colId, nom: draft.trim() || "Nouvel addon" });
@@ -201,7 +205,14 @@ export default function CarnetPage() {
             <img className="col-cover" src={col.cover} alt="" />
           )}
           <div className="col-head">
-            <h2>{col.name} <span style={{ color: "var(--muted)", fontSize: 15 }}>{col.month}</span></h2>
+            {canEdit ? (
+              <div className="col-headedit">
+                <input className="col-nameinput" defaultValue={col.name} placeholder="Nom de la collection" onBlur={(e) => saveColField(col.id, { name: e.target.value })} />
+                <input className="col-monthinput" defaultValue={col.month} placeholder="Mois (ex. Août 2026)" onBlur={(e) => saveColField(col.id, { month: e.target.value })} />
+              </div>
+            ) : (
+              <h2>{col.name} <span style={{ color: "var(--muted)", fontSize: 15 }}>{col.month}</span></h2>
+            )}
             {canEdit && (
               <label className="btn ghost sm covbtn">{col.cover ? "Changer l'image" : "Ajouter une image"}
                 <input type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setColCover(col.id, f); }} />
