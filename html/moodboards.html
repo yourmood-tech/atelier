@@ -115,7 +115,9 @@ function initState(){
       themes: ed.themes ? ed.themes.slice() : c.themes.slice(),
       palette: ed.palette ? ed.palette.map(p=>p.slice()) : c.palette.map(p=>p.slice()),
       images: ed.images ? ed.images.map(p=>p.slice()) : [],
-      notes: ed.notes!=null ? ed.notes : ''
+      notes: ed.notes!=null ? ed.notes : '',
+      contactedBy: ed.contactedBy||'',
+      suivi: ed.suivi!=null ? ed.suivi : ''
     };
   });
 }
@@ -174,18 +176,28 @@ function byEmail(e){return CLIENTS.find(c=>c.email===e);}
 const _timers={};
 function save(e){
   const c=byEmail(e);ST[e].notes=document.getElementById('notes-'+c.id).value;
+  const _sv=document.getElementById('suivi-'+c.id);if(_sv)ST[e].suivi=_sv.value;
   clearTimeout(_timers[e]);
   const tag=document.getElementById('save-'+c.id);if(tag)tag.textContent='enregistrement…';
   _timers[e]=setTimeout(async()=>{
     try{
       const r=await fetch('/api/moodboards',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:e,edit:{themes:ST[e].themes,palette:ST[e].palette,images:ST[e].images,notes:ST[e].notes}})});
+        body:JSON.stringify({email:e,edit:{themes:ST[e].themes,palette:ST[e].palette,images:ST[e].images,notes:ST[e].notes,contactedBy:ST[e].contactedBy,suivi:ST[e].suivi}})});
       if(tag)tag.textContent=r.ok?'✓ enregistré (partagé)':'⚠️ erreur sauvegarde';
     }catch(err){if(tag)tag.textContent='⚠️ hors ligne';}
     setTimeout(()=>{if(tag)tag.textContent='';},2500);
   },900);
 }
 
+function renderContact(e){const c=byEmail(e);const el=document.getElementById('contact-'+c.id);if(!el)return;
+  const by=ST[e].contactedBy;
+  el.innerHTML = by
+    ? `<span style="display:inline-flex;align-items:center;gap:8px;background:#e8f3ea;color:#2f7a45;border:1px solid #bfe0c8;border-radius:999px;padding:5px 12px;font-size:.85rem">✅ Déjà contactée par <b>${esc(by)}</b> <span style="cursor:pointer;color:#2f7a45;font-weight:700" onclick="effacerContact('${e}')">×</span></span>`
+    : `<span class="addbtn" onclick="marquerContact('${e}')">✉️ Marquer « déjà contactée par… »</span>`;
+}
+function marquerContact(e){const nom=prompt('Contactée par qui ? (ton prénom)');if(nom&&nom.trim()){ST[e].contactedBy=nom.trim();renderContact(e);save(e);}}
+function effacerContact(e){if(!confirm('Retirer « déjà contactée » ?'))return;ST[e].contactedBy='';renderContact(e);save(e);}
+function ajoutDate(e){const c=byEmail(e);const ta=document.getElementById('suivi-'+c.id);if(!ta)return;const d=new Date().toLocaleDateString('fr-CH');const pre=ta.value?ta.value.replace(/\s*$/,'')+'\n':'';ta.value=pre+d+' — ';ta.focus();ST[e].suivi=ta.value;save(e);}
 function recurrenceChart(c){
   const m=c.monthly||[];
   if(!m.length || !c.monthlyTotal){return '';}
@@ -221,11 +233,15 @@ function fiche(c){
   return `<section class="fiche" id="${c.id}">
     <div class="fhead"><div><div class="kicker">Moodboard cliente${c.responded?' · 🟢 a répondu au sondage':''}</div>
       <h2>${esc(c.name)}</h2><a class="mail" href="mailto:${esc(e)}">${esc(e)}</a></div>${badge}</div>
+    <div id="contact-${c.id}" style="margin:2px 0 6px"></div>
     ${dream}
     <div class="sec"><h3>Son univers <span style="font-size:.7rem;color:#a8946e;font-style:normal">(modifiable)</span></h3><div class="row" id="tags-${c.id}"></div></div>
     <div class="sec"><h3>Sa palette de couleurs <span style="font-size:.7rem;color:#a8946e;font-style:normal">(modifiable)</span></h3><div class="row" id="pal-${c.id}"></div></div>
     <div class="sec"><h3>Images d'inspiration <span style="font-size:.7rem;color:#a8946e;font-style:normal">(ajoute des photos)</span></h3><div class="grid" id="insp-${c.id}"></div></div>
     ${pieces}${infosShop}${recurrenceChart(c)}${blocks}${notRespNote}
+    <div class="sec"><h3>Suivi des échanges</h3>
+      <div style="margin-bottom:6px"><span class="addbtn" onclick="ajoutDate('${e}')">＋ date du jour</span></div>
+      <textarea class="notes" id="suivi-${c.id}" placeholder="Le suivi des échanges : appels, messages, ce qui a été dit, prochaine étape…" oninput="save('${e}')"></textarea></div>
     <div class="sec"><h3>Notes de l'équipe</h3>
       <textarea class="notes" id="notes-${c.id}" placeholder="Ce qu'elle a dit en boutique, ses envies, le suivi du projet, rendez-vous…" oninput="save('${e}')"></textarea>
       <div class="savetag" id="save-${c.id}"></div></div>
@@ -336,8 +352,9 @@ async function boot(){
   renderReves();
   renderAimees();
   renderAutre();
-  CLIENTS.forEach(c=>{renderTags(c.email);renderPal(c.email);renderInsp(c.email);
-    const n=document.getElementById('notes-'+c.id);if(n)n.value=ST[c.email].notes;});
+  CLIENTS.forEach(c=>{renderTags(c.email);renderPal(c.email);renderInsp(c.email);renderContact(c.email);
+    const n=document.getElementById('notes-'+c.id);if(n)n.value=ST[c.email].notes;
+    const sv=document.getElementById('suivi-'+c.id);if(sv)sv.value=ST[c.email].suivi;});
 }
 boot();
 </script>
