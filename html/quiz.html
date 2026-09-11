@@ -80,7 +80,7 @@ const TREE={
    {em:"🏍️",t:"Rock & cuir",pack:"Biker"},
    {em:"🖤",t:"Noir chic",q2:"Contrasté, scintillant ou épuré ?",opts2:[{t:"Contrasté",pack:"Business"},{t:"Scintillant",pack:"City Minimal"},{t:"Épuré",pack:"Basic Pastel"}]}]},
 };
-let CURFAM=null;
+let CURFAM=null, PENDING=null, SENDING=false;
 const app=document.getElementById('app');
 function intro(){app.innerHTML=`
   <p class="eyebrow">mood · le grand test</p>
@@ -109,13 +109,13 @@ function chooseStyle(key){CURFAM=key;const node=TREE[key];
     <button class="back" onclick="q1()">← retour</button>
   </div>`;}
 function pickOpt(i){const o=TREE[CURFAM].opts[i];
-  if(o.pack){suspense(o.pack);return;}
+  if(o.pack){askEmail(o.pack);return;}
   const tiles=FINTILES[CURFAM+'#'+i];
   let inner;
   if(tiles){
-    inner=`<div class="tiles" style="grid-template-columns:repeat(${Math.min(o.opts2.length,3)},1fr)">${o.opts2.map((x,j)=>`<div class="tile" onclick="suspense('${x.pack.replace(/'/g,"\\'")}')"><img src="${tiles[j]}" alt="${x.t}"></div>`).join('')}</div>`;
+    inner=`<div class="tiles" style="grid-template-columns:repeat(${Math.min(o.opts2.length,3)},1fr)">${o.opts2.map((x,j)=>`<div class="tile" onclick="askEmail('${x.pack.replace(/'/g,"\\'")}')"><img src="${tiles[j]}" alt="${x.t}"></div>`).join('')}</div>`;
   }else{
-    inner=`<div class="opts">${o.opts2.map(x=>`<button class="opt" onclick="suspense('${x.pack.replace(/'/g,"\\'")}')"><b>${x.t}</b></button>`).join('')}</div>`;
+    inner=`<div class="opts">${o.opts2.map(x=>`<button class="opt" onclick="askEmail('${x.pack.replace(/'/g,"\\'")}')"><b>${x.t}</b></button>`).join('')}</div>`;
   }
   app.innerHTML=`<div class="card">
     <p class="ttl">${o.q2}</p>
@@ -123,6 +123,30 @@ function pickOpt(i){const o=TREE[CURFAM].opts[i];
     ${inner}
     <button class="back" onclick="chooseStyle('${CURFAM}')">← retour</button>
   </div>`;}
+function askEmail(pack){PENDING=pack;
+  app.innerHTML=`<div class="card">
+    <p class="res-lead">✨ presque fini ✨</p>
+    <p class="ttl">Où on t'envoie ton résultat&nbsp;?</p>
+    <p class="th">🎁 avec ton code cadeau de 30.–</p>
+    <input id="mail" type="email" inputmode="email" autocomplete="email" placeholder="ton@email.com"
+      onkeydown="if(event.key==='Enter')submitLead()"
+      style="width:100%;padding:15px 16px;border:1px solid var(--line);border-radius:12px;font-size:1rem;font-family:inherit;margin-top:4px;text-align:center;background:#fbfaf7;color:var(--ink)" />
+    <p id="mailerr" style="color:#c56b4a;font-size:.8rem;text-align:center;min-height:1.1em;margin:8px 0 0"></p>
+    <button class="start" id="mailbtn" style="width:100%;margin-top:6px" onclick="submitLead()">Révéler mon pack →</button>
+    <p style="color:var(--muted);font-size:.72rem;text-align:center;margin-top:14px;line-height:1.5">On t'écrit seulement pour tes pépites mood — jamais de spam. 🤍</p>
+    <button class="back" onclick="chooseStyle(CURFAM)">← retour</button>
+  </div>`;
+  setTimeout(()=>{const m=document.getElementById('mail');if(m)m.focus();},60);}
+function submitLead(){
+  if(SENDING)return;
+  const m=document.getElementById('mail'), err=document.getElementById('mailerr');
+  const email=((m&&m.value)||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){err.textContent="Oups, ton e-mail n'a pas l'air complet.";if(m)m.focus();return;}
+  SENDING=true; err.textContent='';
+  const btn=document.getElementById('mailbtn'); if(btn){btn.textContent='Un instant…';btn.style.opacity='.7';}
+  fetch('/api/quiz-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,pack:PENDING})})
+    .catch(()=>{}).finally(()=>{SENDING=false;suspense(PENDING);});
+}
 function suspense(packName){const names=Object.keys(PACKS);
   app.innerHTML=`<div class="card"><div class="slot"><div class="big">💍</div><div class="rolling" id="roll">…</div><div class="say">On révèle ton pack…</div></div></div>`;
   const roll=document.getElementById('roll');
