@@ -32,6 +32,11 @@ export default auth((req) => {
     return;
   }
 
+  // /quiz (quizz public clientes — « Quel starter pack es-tu ? »)
+  if (pathname === "/quiz" || pathname.startsWith("/quiz/")) {
+    return;
+  }
+
   // /pronostics (jeu-concours public clientes — Mondial 2026) — exclut /pronostics/admin (staff)
   if (pathname === "/pronostics" || (pathname.startsWith("/pronostics/") && !pathname.startsWith("/pronostics/admin"))) {
     return;
