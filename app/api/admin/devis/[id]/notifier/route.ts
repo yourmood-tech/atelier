@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { appendTimeline } from "../../_timeline";
-import { getKlaviyoProfileLocale } from "@/lib/email";
+import { getCustomerLocale } from "@/lib/email";
 
 const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -74,7 +74,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const designProp = props.find((p) => ["Design SVG", "SVG Gravure", "SVG Complet"].includes(p.name));
     const designUrl: string = designProp?.value ?? "";
 
-    const rawLocale = await getKlaviyoProfileLocale(email);
+    const rawLocale = await getCustomerLocale(email);
     const locale: Locale = (["fr", "de", "en"].includes(rawLocale ?? "") ? rawLocale : "fr") as Locale;
 
     const texts = buildTexts(locale, firstName, orderName, totalPrice, customMessage);

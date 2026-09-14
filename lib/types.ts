@@ -78,7 +78,10 @@ export type ShopifyCustomer = {
   firstName: string;
   lastName: string;
   email: string;
-  locale: string; // e.g. "fr", "de", "en"
+  locale: string; // e.g. "fr", "de", "en" — valeur retenue (profil, sinon repli)
+  /** Langue du PROFIL client Shopify ("recevra les notifications en X"). null si le
+   *  client n'en a aucune — dans ce cas seulement, un repli est legitime. */
+  localeFromProfile: string | null;
 };
 
 export type ShopifyOrderLineItem = {

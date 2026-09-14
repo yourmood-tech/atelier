@@ -197,9 +197,11 @@ export async function POST(req: NextRequest) {
           }
         });
 
-        // Locale overrides 5 at a time
+        // Langue : le profil client Shopify fait foi. Klaviyo n'est consulte que
+        // si ce profil n'a aucune langue enregistree (son champ derive, cf. lib/email.ts).
         await pLimit(
           Array.from(orderMap.values()).map((order) => async () => {
+            if (order.customer.localeFromProfile) return;
             const locale = await getKlaviyoProfileLocale(order.customer.email);
             if (locale) order.customer.locale = locale;
           }),

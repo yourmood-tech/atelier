@@ -327,6 +327,7 @@ export async function getOrderById(id: string): Promise<import("./types").Shopif
       lastName: (customer.last_name as string) ?? "",
       email: (o.email as string) ?? (customer.email as string) ?? "",
       locale,
+      localeFromProfile: fromCustomer ?? null,
     },
     lineItems: ((o.line_items as Record<string, unknown>[]) ?? []).map((li) => ({
       id: li.id as number,

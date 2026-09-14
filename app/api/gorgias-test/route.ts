@@ -49,9 +49,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: `Commande introuvable: ${detection.order_number}` });
   }
 
-  // 4. Override locale from Klaviyo
-  const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
-  if (klaviyoLocale) order.customer.locale = klaviyoLocale;
+  // 4. Langue : le profil client Shopify fait foi ; Klaviyo seulement en repli.
+  if (!order.customer.localeFromProfile) {
+    const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
+    if (klaviyoLocale) order.customer.locale = klaviyoLocale;
+  }
 
   // 5. Backorder analysis per product
   const backorderItems = (

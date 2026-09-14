@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { appendTimeline } from "../../_timeline";
-import { getKlaviyoProfileLocale } from "@/lib/email";
+import { getCustomerLocale } from "@/lib/email";
 
 const STORE = process.env.SHOPIFY_STORE!;
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -31,8 +31,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     if (!email) return NextResponse.json({ error: "Pas d'email associé à ce draft" }, { status: 400 });
 
-    // Locale : Klaviyo profile, fallback fr
-    const rawLocale = await getKlaviyoProfileLocale(email);
+    // Langue : profil client Shopify d'abord, Klaviyo en repli, sinon francais
+    const rawLocale = await getCustomerLocale(email);
     const locale = (["fr", "de", "en"].includes(rawLocale ?? "") ? rawLocale : "fr") as "fr" | "de" | "en";
 
     // Message "non modifiable" fixe + message optionnel de l'équipe

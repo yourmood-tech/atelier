@@ -1,8 +1,20 @@
 import type { BackorderAnalysis, ProductionAnalysis, ProductionDirection } from "./types";
 
-// ── Klaviyo — profile locale lookup ──────────────────────────────────────────
-// Shopify REST API often returns a stale locale (e.g. "fr" for a de customer).
-// Klaviyo's profile, synced by the native integration, is more reliable.
+// ── Langue du client ─────────────────────────────────────────────────────────
+// SOURCE DE VERITE = le champ "locale" du PROFIL client Shopify ("recevra les
+// notifications en X"), lu en GraphQL (il est toujours vide en REST).
+//
+// Historique : le 18.04.2026 on avait fait de Klaviyo la source de verite, parce
+// que la langue Shopify etait alors lue en REST et sortait fausse. Le 29.06.2026
+// la lecture Shopify a ete corrigee (GraphQL, profil client). Le detour par
+// Klaviyo est reste et ECRASAIT depuis la bonne valeur : le champ locale de
+// Klaviyo derive (il suit la langue de navigation / du dernier checkout) et
+// affiche "en" pour des clientes francophones. Mesure du 14.09.2026 sur 90 jours :
+// 98 notifications sur 1726 (5,7 %) parties dans la mauvaise langue, dont 77
+// francophones en anglais.
+//
+// Klaviyo ne sert donc plus que de REPLI, quand le profil Shopify n'a aucune
+// langue enregistree.
 
 export async function getKlaviyoProfileLocale(email: string): Promise<string | null> {
   try {
@@ -29,6 +41,34 @@ export async function getKlaviyoProfileLocale(email: string): Promise<string | n
   } catch {
     return null;
   }
+}
+
+// Langue du profil client Shopify, lue en GraphQL. null si le client n'en a pas.
+export async function getShopifyProfileLocale(email: string): Promise<string | null> {
+  try {
+    const store = process.env.SHOPIFY_STORE!;
+    const token = process.env.SHOPIFY_API_TOKEN!;
+    const version = process.env.SHOPIFY_API_VERSION ?? "2025-01";
+    const res = await fetch(`https://${store}/admin/api/${version}/graphql.json`, {
+      method: "POST",
+      headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: "query($q:String!){customers(first:1,query:$q){edges{node{locale}}}}",
+        variables: { q: `email:"${email}"` },
+      }),
+    });
+    if (!res.ok) return null;
+    const j = await res.json() as { data?: { customers?: { edges?: { node?: { locale?: string | null } }[] } } };
+    const loc = j?.data?.customers?.edges?.[0]?.node?.locale;
+    return loc ? loc.split("-")[0].toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Langue a utiliser pour ecrire au client : profil Shopify d'abord, Klaviyo en repli. */
+export async function getCustomerLocale(email: string): Promise<string | null> {
+  return (await getShopifyProfileLocale(email)) ?? (await getKlaviyoProfileLocale(email));
 }
 
 // ── Klaviyo — track BackorderNotification event → triggers Flow ───────────────

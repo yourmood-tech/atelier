@@ -75,9 +75,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // 3. Override locale from Klaviyo
-    const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
-    if (klaviyoLocale) order.customer.locale = klaviyoLocale;
+    // 3. Langue : le profil client Shopify fait foi ; Klaviyo seulement en repli.
+    if (!order.customer.localeFromProfile) {
+      const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
+      if (klaviyoLocale) order.customer.locale = klaviyoLocale;
+    }
 
     // 4. Check backorder status for each product in the order
     const backorderItems = (
