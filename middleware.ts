@@ -12,6 +12,11 @@ const WINEUR_ALLOWED = new Set([
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
+  // Fichiers statiques publics servis depuis /public (vidéos de fond, images, polices…)
+  if (/\.(mp4|webm|mov|jpe?g|png|webp|gif|svg|ico|css|js|woff2?)$/i.test(pathname)) {
+    return;
+  }
+
   // /sondage (page publique pour clientes) — exclut /sondage/admin
   if (pathname === "/sondage" || (pathname.startsWith("/sondage/") && !pathname.startsWith("/sondage/admin"))) {
     return;
