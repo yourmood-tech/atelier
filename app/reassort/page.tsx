@@ -24,6 +24,10 @@ interface PeriodRow {
   name: string;
   supplier: string;
   inStock: number;
+  /** Pièces réellement dans le tiroir (avant déduction de ce qui est promis). */
+  physicalStock?: number;
+  /** Pièces déjà promises à des commandes clientes des 50 derniers jours. */
+  committedStock?: number;
   expected: number;
   totalQty: number;
   avgDemandReported: number;
@@ -41,6 +45,8 @@ interface MergedRow {
   dailyDemand7: number; dailyDemand30: number; dailyDemand90: number;
   avgDemandReported7: number; avgDemandReported30: number; avgDemandReported90: number;
   currentStock: number;
+  physicalStock: number;
+  committedStock: number;
   incomingStock: number;
   stockPosition: number;
   salesShare7in30: number;
@@ -57,6 +63,8 @@ interface ResultRow {
   name: string;
   supplier: string;
   currentStock: number;
+  physicalStock: number;
+  committedStock: number;
   incomingStock: number;
   stockPosition: number;
   totalQty7: number;
@@ -224,6 +232,11 @@ function mergeSources(
     const dailyDemand90 = r90?.dailyDemand ?? 0;
 
     const currentStock = Math.max(inStock7, inStock30, inStock90);
+    // Les deux chiffres qui EXPLIQUENT currentStock, quand la source est Katana :
+    // physique = ce qu'il y a dans le tiroir, promis = ce qui est déjà vendu et pas
+    // encore sorti. currentStock = physique − promis dès que le tiroir passe sous 3.
+    const physicalStock = r7?.physicalStock ?? r30?.physicalStock ?? r90?.physicalStock ?? currentStock;
+    const committedStock = r7?.committedStock ?? r30?.committedStock ?? r90?.committedStock ?? 0;
     const incomingStock = Math.max(expected7, expected30, expected90);
     const stockPosition = currentStock + incomingStock;
 
@@ -265,7 +278,7 @@ function mergeSources(
       avgDemandReported7: r7?.avgDemandReported ?? 0,
       avgDemandReported30: r30?.avgDemandReported ?? 0,
       avgDemandReported90: r90?.avgDemandReported ?? 0,
-      currentStock, incomingStock, stockPosition,
+      currentStock, physicalStock, committedStock, incomingStock, stockPosition,
       salesShare7in30, salesShare30in90,
       demandVolatility,
       planningDailyDemandVolatile,
@@ -353,6 +366,8 @@ function computeRecommendations(params: Params, merged: MergedRow[]): ResultRow[
       name: r.name,
       supplier: r.supplier,
       currentStock: r.currentStock,
+      physicalStock: r.physicalStock,
+      committedStock: r.committedStock,
       incomingStock: r.incomingStock,
       stockPosition: r.stockPosition,
       totalQty7: r.totalQty7,
@@ -425,7 +440,8 @@ function coloralRowFromMerged(
   const estimatedCoverDays = velocity > 0 ? m.stockPosition / velocity : m.stockPosition > 0 ? 9999 : 0;
   return {
     sku: m.sku, name: m.name, supplier: m.supplier,
-    currentStock: m.currentStock, incomingStock: m.incomingStock, stockPosition: m.stockPosition,
+    currentStock: m.currentStock, physicalStock: m.physicalStock, committedStock: m.committedStock,
+    incomingStock: m.incomingStock, stockPosition: m.stockPosition,
     totalQty7: m.totalQty7, totalQty30: m.totalQty30, totalQty90: m.totalQty90,
     dailyDemand7: m.dailyDemand7, dailyDemand30: m.dailyDemand30, dailyDemand90: m.dailyDemand90,
     continuousSalesFlag: m.continuousSalesFlag, continuityNote: m.continuityNote,
@@ -566,7 +582,7 @@ function fi(n: number): string { return Math.round(n).toString(); }
 
 function exportCSV(rows: ResultRow[]): void {
   const headers = [
-    "sku", "name", "supplier", "current_stock", "incoming_stock", "stock_position",
+    "sku", "name", "supplier", "physical_stock", "committed_stock", "current_stock", "incoming_stock", "stock_position",
     "total_qty_7", "total_qty_30", "total_qty_90",
     "daily_demand_7", "daily_demand_30", "daily_demand_90",
     "continuous_sales_flag", "continuity_note",
@@ -578,7 +594,7 @@ function exportCSV(rows: ResultRow[]): void {
   for (const r of rows) {
     lines.push([
       r.sku, `"${r.name}"`, `"${r.supplier}"`,
-      fi(r.currentStock), fi(r.incomingStock), fi(r.stockPosition),
+      fi(r.physicalStock), fi(r.committedStock), fi(r.currentStock), fi(r.incomingStock), fi(r.stockPosition),
       fi(r.totalQty7), fi(r.totalQty30), fi(r.totalQty90),
       f2(r.dailyDemand7), f2(r.dailyDemand30), f2(r.dailyDemand90),
       r.continuousSalesFlag ? "true" : "false",
@@ -788,6 +804,8 @@ export default function ReassortPage() {
           name: r.name,
           supplier: r.supplier,
           inStock: r.inStock,
+          physicalStock: r.physicalStock,
+          committedStock: r.committedStock,
           expected: r.expected,
           totalQty,
           avgDemandReported: totalQty / days,
@@ -1390,7 +1408,9 @@ export default function ReassortPage() {
                   <tr className="border-b border-zinc-800 bg-zinc-900">
                     <th className="px-3 py-2.5 text-left text-zinc-500 font-semibold tracking-wide">SKU</th>
                     <th className="px-3 py-2.5 text-left text-zinc-500 font-semibold tracking-wide">Nom</th>
-                    <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide">Stock</th>
+                    <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide" title="Pièces réellement présentes dans le tiroir">En tiroir</th>
+                    <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide" title="Déjà promis à des commandes clientes des 50 derniers jours">Promis</th>
+                    <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide" title="En tiroir moins ce qui est promis — c'est ce chiffre qui commande le réassort. Le promis n'est déduit que sous 3 pièces en tiroir.">Dispo</th>
                     <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide">Entrant</th>
                     <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide">Ventes 7j</th>
                     <th className="px-3 py-2.5 text-right text-zinc-500 font-semibold tracking-wide">Ventes 30j</th>
@@ -1409,7 +1429,14 @@ export default function ReassortPage() {
                     >
                       <td className="px-3 py-2 font-mono text-zinc-300">{r.sku}</td>
                       <td className="px-3 py-2 text-zinc-300 max-w-[220px] truncate" title={r.name}>{r.name}</td>
-                      <td className="px-3 py-2 text-right text-zinc-300">{Math.round(r.currentStock)}</td>
+                      <td className="px-3 py-2 text-right text-zinc-400">{Math.round(r.physicalStock)}</td>
+                      <td className={`px-3 py-2 text-right ${r.committedStock > 0 ? "text-orange-400" : "text-zinc-600"}`}>
+                        {r.committedStock > 0 ? "−" + Math.round(r.committedStock) : "—"}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-semibold ${r.currentStock < 0 ? "text-red-400" : "text-zinc-300"}`}
+                          title={r.currentStock < 0 ? `${Math.round(r.physicalStock)} en tiroir − ${Math.round(r.committedStock)} promis : il en manque ${Math.abs(Math.round(r.currentStock))}` : undefined}>
+                        {Math.round(r.currentStock)}
+                      </td>
                       <td className="px-3 py-2 text-right text-zinc-500">{Math.round(r.incomingStock)}</td>
                       <td className="px-3 py-2 text-right text-zinc-400">{Math.round(r.totalQty7)}</td>
                       <td className="px-3 py-2 text-right text-zinc-400">{Math.round(r.totalQty30)}</td>
