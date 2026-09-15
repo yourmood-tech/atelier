@@ -164,11 +164,13 @@ const LOCALE_LABELS: Record<string, string> = {
 // qui produit un texte lu par une cliente.
 const BRAND_INTRO = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
 
-HARD PRODUCT RULES — never break these:
-- NEVER name a product category (ring, bracelet, necklace, earring, watch, pendant, brooch) unless that exact category already appears in the product title given to you in the context below. If no product title is given, or if you are not certain, write "votre commande" / "your order" / "deine Bestellung" / "il tuo ordine" / "tu pedido".
-- Mood's own workshop in Orbe produces RINGS and ring parts only. Any message about an engraving, setting, casting, colouring, laser-cutting or surface-treatment step therefore concerns a ring — never a bracelet.
+HOW TO REFER TO THE ITEM — this is the most important rule:
+- Refer to it ONLY as a generic item: "votre article" / "l'article que vous avez commandé" (FR), "your item" / "the item you ordered" (EN), "dein Artikel" / "der von dir bestellte Artikel" (DE), "il tuo articolo" (IT), "tu artículo" (ES) — or by the exact product name given in the context below, reproduced verbatim.
+- NEVER name a product category yourself: never "bague"/"ring", "bracelet", "collier"/"necklace", "boucle d'oreille"/"earring", "montre"/"watch", "pendentif"/"pendant", "broche"/"brooch". The format is already stated in the product name (base, medium, deux-tiers, addon, mini, XS, S, L). Adding a category of your own is how a false statement gets written to a customer.
+
+OTHER HARD PRODUCT RULES:
 - "Medium", "Small", "Extra Small", "Large", "addon", "deux-tiers", "mini", "base" are ring FORMATS or widths, not separate products.
-- Write "bague mood" in lower case. Never "bijou fantaisie" / "costume jewellery".
+- Write "bague mood" in lower case if the product name itself contains it. Never "bijou fantaisie" / "costume jewellery".
 - A base is 316L surgical steel or titanium — a "silver base" does not exist. An addon clips ONTO a base, it never replaces it.
 - Never invent a product name, a price, a stock level, a size or a delivery date. If it is not in the context below, do not state it.`;
 
@@ -274,7 +276,7 @@ Customer info:
 - Product: ${safeProductTitle}
 - Delivery situation: ${etaText}`;
 
-  const result = await callClaude(prompt, safeProductTitle);
+  const result = await callClaude(prompt, safeProductTitle, locale);
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
@@ -283,55 +285,109 @@ Customer info:
 // Origine : 15.09.2026, un avis d'entrée en gravure annonçait la gravure « sur le
 // bracelet » pour une Medium gravée. La règle écrite dans le prompt ne suffit pas :
 // on vérifie le texte produit avant de l'envoyer.
-const CATEGORY_WORDS: Record<string, RegExp> = {
-  bracelet: /\b(bracelets?|armb(a|ä)nder?|bracciali?|pulseras?)\b/i,
-  collier: /\b(colliers?|necklaces?|halsketten?|collane?|collares?)\b/i,
-  "boucle d'oreille": /\b(boucles? d['’]oreilles?|earrings?|ohrringe?|orecchini?|pendientes?)\b/i,
-  montre: /\b(montres?|watch(es)?|uhren?|orologi?|relojes?)\b/i,
-  pendentif: /\b(pendentifs?|pendants?|anh(a|ä)nger)\b/i,
-  broche: /\b(broches?|brooch(es)?|broschen?)\b/i,
+// Le mot de remplacement allemand suit le GENRE du mot remplacé, sinon l'article
+// qui le précède devient faux (« das Armband » → « das Artikel »).
+// der Ring / der Anhänger / der Ohrring → der Artikel · das Armband → das Schmuckstück
+// die Halskette / die Uhr / die Brosche → die Bestellung
+const CATEGORY_WORDS: Record<string, { re: RegExp; fr: string; en: string; de: string; it: string; es: string }> = {
+  bague:               { re: /\b(bagues?|rings?|ringe?|anell[oi]|anillos?)\b/i,                             fr: "article", en: "item", de: "Artikel",      it: "articolo", es: "artículo" },
+  bracelet:            { re: /\b(bracelets?|armb(a|ä)nd(er)?|braccial[ei]|pulseras?)\b/i,                    fr: "article", en: "item", de: "Schmuckstück", it: "articolo", es: "artículo" },
+  collier:             { re: /\b(colliers?|necklaces?|halsketten?|collan[ae]|collar(es)?)\b/i,                 fr: "article", en: "item", de: "Bestellung",   it: "articolo", es: "artículo" },
+  "boucle d'oreille":  { re: /\b(boucles? d['’]oreilles?|earrings?|ohrringe?|orecchin[oi]|pendientes?)\b/i,  fr: "article", en: "item", de: "Artikel",      it: "articolo", es: "artículo" },
+  montre:              { re: /\b(montres?|watch(es)?|uhr(en)?|orolog(io|i)|reloj(es)?)\b/i,                        fr: "article", en: "item", de: "Bestellung",   it: "articolo", es: "artículo" },
+  pendentif:           { re: /\b(pendentifs?|pendants?|anh(a|ä)nger)\b/i,                                  fr: "article", en: "item", de: "Artikel",      it: "articolo", es: "artículo" },
+  broche:              { re: /\b(broches?|brooch(es)?|broschen?)\b/i,                                      fr: "article", en: "item", de: "Bestellung",   it: "articolo", es: "artículo" },
 };
 
-/** Renvoie la première catégorie inventée, ou null si le texte est propre. */
+/** Renvoie la première catégorie nommée qui ne figure pas dans le titre du produit. */
 export function findInventedCategory(text: string, productTitle?: string | null): string | null {
   const title = (productTitle ?? "").toLowerCase();
-  for (const [label, re] of Object.entries(CATEGORY_WORDS)) {
+  for (const [label, { re }] of Object.entries(CATEGORY_WORDS)) {
     if (re.test(text) && !re.test(title)) return label;
   }
   return null;
 }
 
+/**
+ * Remplace toute catégorie de produit inventée par un terme générique
+ * (« votre article »), en rattrapant l'élision française (le/du/au/ce).
+ * On ne bloque JAMAIS l'envoi : une cliente sans nouvelle est pire qu'un mot neutre.
+ */
+export function neutralizeCategories(
+  text: string,
+  productTitle: string | null | undefined,
+  locale: string,
+): string {
+  const title = (productTitle ?? "").toLowerCase();
+  const lang = (locale || "fr").split("-")[0].toLowerCase();
+  // garde la majuscule de la tournure d'origine (début de phrase)
+  const keepCase = (original: string, replacement: string): string =>
+    original[0] === original[0].toUpperCase() && original[0] !== original[0].toLowerCase()
+      ? replacement[0].toUpperCase() + replacement.slice(1)
+      : replacement;
+
+  let out = text;
+  for (const { re, fr, en, de, it, es } of Object.values(CATEGORY_WORDS)) {
+    if (!re.test(out) || re.test(title)) continue;
+    const g = lang === "de" ? de : lang === "en" ? en : lang === "it" ? it : lang === "es" ? es : fr;
+    const src = re.source.replace(/^\\b|\\b$/g, "");
+    if (lang === "fr" || lang === "it") {
+      out = out.replace(new RegExp(`\\b(du)\\s+${src}\\b`, "gi"), (m) => keepCase(m, `de l'${g}`));
+      out = out.replace(new RegExp(`\\b(au)\\s+${src}\\b`, "gi"), (m) => keepCase(m, `à l'${g}`));
+      out = out.replace(new RegExp(`\\b(le|la)\\s+${src}\\b`, "gi"), (m) => keepCase(m, `l'${g}`));
+      out = out.replace(new RegExp(`\\b(cette|ce)\\s+${src}\\b`, "gi"), (m) => keepCase(m, `cet ${g}`));
+      out = out.replace(new RegExp(`\\b(une|un)\\s+${src}\\b`, "gi"), (m) => keepCase(m, `un ${g}`));
+      out = out.replace(new RegExp(`\\b(votre|vos|son|sa|ses)\\s+${src}\\b`, "gi"), (m) => keepCase(m, `votre ${g}`));
+    }
+    out = out.replace(new RegExp(re.source, "gi"), (m) => keepCase(m, g));
+  }
+  return out;
+}
+
 async function callClaude(
   prompt: string,
   productTitle?: string | null,
+  locale?: string,
 ): Promise<{ subject: string; body: string }> {
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 800,
-    messages: [{ role: "user", content: prompt }],
-  });
-  const text = response.content[0].type === "text" ? response.content[0].text : "";
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Claude did not return valid JSON");
 
-  // Try direct parse first; fall back to replacing literal newlines with spaces
-  // (Claude occasionally outputs unescaped control characters inside JSON string values)
-  let parsed: { subject: string; body: string };
-  try {
-    parsed = JSON.parse(jsonMatch[0]) as { subject: string; body: string };
-  } catch {
-    parsed = JSON.parse(jsonMatch[0].replace(/\r?\n/g, " ")) as { subject: string; body: string };
-  }
+  const ask = async (p: string): Promise<{ subject: string; body: string }> => {
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 800,
+      messages: [{ role: "user", content: p }],
+    });
+    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Claude did not return valid JSON");
+    try {
+      return JSON.parse(jsonMatch[0]) as { subject: string; body: string };
+    } catch {
+      // Claude sort parfois des retours à la ligne non échappés dans le JSON
+      return JSON.parse(jsonMatch[0].replace(/\r?\n/g, " ")) as { subject: string; body: string };
+    }
+  };
 
-  // Garde-fou catégorie de produit : on refuse plutôt que d'écrire un faux à une cliente.
-  const invented = findInventedCategory(`${parsed.subject}\n${parsed.body}`, productTitle);
+  let parsed = await ask(prompt);
+
+  // Garde-fou catégorie : on ne bloque pas, on redemande une fois puis on neutralise.
+  let invented = findInventedCategory(`${parsed.subject}\n${parsed.body}`, productTitle);
   if (invented) {
-    throw new Error(
-      `Message refusé : le texte parle d'un « ${invented} » alors que le produit est ` +
-      `« ${productTitle ?? "non précisé"} ». Rien n'a été envoyé à la cliente.`
+    console.warn(`[email] categorie inventee ("${invented}") pour "${productTitle ?? "?"}" — 2e tentative`);
+    parsed = await ask(
+      `${prompt}\n\nIMPORTANT — your previous draft named a "${invented}", which is wrong. ` +
+      `Do NOT name any product category. Refer to the item only as "votre article" / "your item" / ` +
+      `"dein Artikel", or by the exact product name given above.`
     );
+    invented = findInventedCategory(`${parsed.subject}\n${parsed.body}`, productTitle);
+    if (invented) {
+      console.warn(`[email] categorie inventee ("${invented}") encore presente — neutralisation`);
+      parsed = {
+        subject: neutralizeCategories(parsed.subject, productTitle, locale ?? "fr"),
+        body: neutralizeCategories(parsed.body, productTitle, locale ?? "fr"),
+      };
+    }
   }
   return parsed;
 }
@@ -441,7 +497,7 @@ Customer info:
 - Product: ${safeProductTitle}
 - Current status: ${remainingText}`;
 
-  const result = await callClaude(prompt, safeProductTitle);
+  const result = await callClaude(prompt, safeProductTitle, locale);
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
@@ -550,7 +606,7 @@ Customer info:
 ${productLines}
 - Delivery situation: ${etaText}`;
 
-  const result = await callClaude(prompt, safeProducts.map((p) => p.productTitle).join(" | "));
+  const result = await callClaude(prompt, safeProducts.map((p) => p.productTitle).join(" | "), locale);
   return { subject: result.subject, greeting: buildGreeting(firstName, locale), body: result.body, sign_off: buildSignOff(locale) };
 }
 
@@ -638,7 +694,7 @@ Customer info:
 ${productLines}
 - Current status: ${remainingText}`;
 
-  const result = await callClaude(prompt, safeProducts.map((p) => p.productTitle).join(" | "));
+  const result = await callClaude(prompt, safeProducts.map((p) => p.productTitle).join(" | "), locale);
   return { subject: result.subject, greeting: buildGreeting(firstName, locale), body: result.body, sign_off: buildSignOff(locale) };
 }
 
@@ -791,7 +847,7 @@ Context:
 - Order number: ${order.name}${productLine}
 - Completed step: ${stepName}`;
 
-  const result = await callClaude(prompt, product?.productTitle ?? null);
+  const result = await callClaude(prompt, product?.productTitle ?? null, locale);
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
