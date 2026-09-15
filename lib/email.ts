@@ -156,6 +156,22 @@ const LOCALE_LABELS: Record<string, string> = {
   pt: "Portuguese",
 };
 
+// ── Règles produit — valables pour TOUT texte envoyé à une cliente ────────────
+// Le 15.09.2026, l'e-mail d'entrée en gravure d'une Medium gravée annonçait à la
+// cliente la gravure « sur le bracelet ». L'atelier ne fabrique QUE des bagues :
+// le rédacteur n'avait pour tout contexte que « marque de joaillerie suisse » et
+// a inventé une catégorie de produit. Ces règles ouvrent désormais chaque prompt
+// qui produit un texte lu par une cliente.
+const BRAND_INTRO = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+
+HARD PRODUCT RULES — never break these:
+- NEVER name a product category (ring, bracelet, necklace, earring, watch, pendant, brooch) unless that exact category already appears in the product title given to you in the context below. If no product title is given, or if you are not certain, write "votre commande" / "your order" / "deine Bestellung" / "il tuo ordine" / "tu pedido".
+- Mood's own workshop in Orbe produces RINGS and ring parts only. Any message about an engraving, setting, casting, colouring, laser-cutting or surface-treatment step therefore concerns a ring — never a bracelet.
+- "Medium", "Small", "Extra Small", "Large", "addon", "deux-tiers", "mini", "base" are ring FORMATS or widths, not separate products.
+- Write "bague mood" in lower case. Never "bijou fantaisie" / "costume jewellery".
+- A base is 316L surgical steel or titanium — a "silver base" does not exist. An addon clips ONTO a base, it never replaces it.
+- Never invent a product name, a price, a stock level, a size or a delivery date. If it is not in the context below, do not state it.`;
+
 function buildEtaText(
   estimatedDelivery: string | null,
   leadTimeMin: number | null | undefined,
@@ -202,7 +218,7 @@ export async function generateBackorderEmail(
   const etaText = buildEtaText(estimatedDelivery, leadTimeMin, leadTimeMax);
 
   const prompt = isIcelea
-    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    ? `${BRAND_INTRO}
 Write the body of a clear, professional email informing a customer that one item in their order is produced in small quantities, mostly made-to-order.
 
 Key message to convey (state as facts, not marketing):
@@ -231,7 +247,7 @@ Customer info:
 - Product: ${safeProductTitle}
 - Delivery situation: ${etaText}`
 
-    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    : `${BRAND_INTRO}
 Write the body of a clear, professional email informing a customer that one item in their order is currently affected by a raw materials stock shortage at the supplier.
 
 Key message to convey:
@@ -258,11 +274,37 @@ Customer info:
 - Product: ${safeProductTitle}
 - Delivery situation: ${etaText}`;
 
-  const result = await callClaude(prompt);
+  const result = await callClaude(prompt, safeProductTitle);
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
-async function callClaude(prompt: string): Promise<{ subject: string; body: string }> {
+// ── Garde-fou : le rédacteur ne doit jamais nommer une catégorie de produit ───
+// qui ne figure pas dans le titre du produit qu'on lui a donné.
+// Origine : 15.09.2026, un avis d'entrée en gravure annonçait la gravure « sur le
+// bracelet » pour une Medium gravée. La règle écrite dans le prompt ne suffit pas :
+// on vérifie le texte produit avant de l'envoyer.
+const CATEGORY_WORDS: Record<string, RegExp> = {
+  bracelet: /\b(bracelets?|armb(a|ä)nder?|bracciali?|pulseras?)\b/i,
+  collier: /\b(colliers?|necklaces?|halsketten?|collane?|collares?)\b/i,
+  "boucle d'oreille": /\b(boucles? d['’]oreilles?|earrings?|ohrringe?|orecchini?|pendientes?)\b/i,
+  montre: /\b(montres?|watch(es)?|uhren?|orologi?|relojes?)\b/i,
+  pendentif: /\b(pendentifs?|pendants?|anh(a|ä)nger)\b/i,
+  broche: /\b(broches?|brooch(es)?|broschen?)\b/i,
+};
+
+/** Renvoie la première catégorie inventée, ou null si le texte est propre. */
+export function findInventedCategory(text: string, productTitle?: string | null): string | null {
+  const title = (productTitle ?? "").toLowerCase();
+  for (const [label, re] of Object.entries(CATEGORY_WORDS)) {
+    if (re.test(text) && !re.test(title)) return label;
+  }
+  return null;
+}
+
+async function callClaude(
+  prompt: string,
+  productTitle?: string | null,
+): Promise<{ subject: string; body: string }> {
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const response = await client.messages.create({
@@ -276,11 +318,22 @@ async function callClaude(prompt: string): Promise<{ subject: string; body: stri
 
   // Try direct parse first; fall back to replacing literal newlines with spaces
   // (Claude occasionally outputs unescaped control characters inside JSON string values)
+  let parsed: { subject: string; body: string };
   try {
-    return JSON.parse(jsonMatch[0]) as { subject: string; body: string };
+    parsed = JSON.parse(jsonMatch[0]) as { subject: string; body: string };
   } catch {
-    return JSON.parse(jsonMatch[0].replace(/\r?\n/g, " ")) as { subject: string; body: string };
+    parsed = JSON.parse(jsonMatch[0].replace(/\r?\n/g, " ")) as { subject: string; body: string };
   }
+
+  // Garde-fou catégorie de produit : on refuse plutôt que d'écrire un faux à une cliente.
+  const invented = findInventedCategory(`${parsed.subject}\n${parsed.body}`, productTitle);
+  if (invented) {
+    throw new Error(
+      `Message refusé : le texte parle d'un « ${invented} » alors que le produit est ` +
+      `« ${productTitle ?? "non précisé"} ». Rien n'a été envoyé à la cliente.`
+    );
+  }
+  return parsed;
 }
 
 export async function generateFollowUpEmail(
@@ -334,7 +387,7 @@ export async function generateFollowUpEmail(
   }
 
   const prompt = isIcelea
-    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    ? `${BRAND_INTRO}
 Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification.
 
 Purpose of this email:
@@ -361,7 +414,7 @@ Customer info:
 - Product: ${safeProductTitle}
 - Current status: ${remainingText}`
 
-    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    : `${BRAND_INTRO}
 Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification about a raw materials stock shortage.
 
 Purpose of this email:
@@ -388,7 +441,7 @@ Customer info:
 - Product: ${safeProductTitle}
 - Current status: ${remainingText}`;
 
-  const result = await callClaude(prompt);
+  const result = await callClaude(prompt, safeProductTitle);
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
@@ -439,7 +492,7 @@ export async function generateBackorderEmailMulti(params: {
     : "";
 
   const prompt = isIcelea
-    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    ? `${BRAND_INTRO}
 Write the body of a clear, professional email informing a customer that one or more items in their order(s) are produced in small quantities, mostly made-to-order.
 ${multiNote}
 
@@ -469,7 +522,7 @@ Customer info:
 ${productLines}
 - Delivery situation: ${etaText}`
 
-    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    : `${BRAND_INTRO}
 Write the body of a clear, professional email informing a customer that one or more items in their order(s) are currently affected by a raw materials stock shortage at the supplier.
 ${multiNote}
 
@@ -497,7 +550,7 @@ Customer info:
 ${productLines}
 - Delivery situation: ${etaText}`;
 
-  const result = await callClaude(prompt);
+  const result = await callClaude(prompt, safeProducts.map((p) => p.productTitle).join(" | "));
   return { subject: result.subject, greeting: buildGreeting(firstName, locale), body: result.body, sign_off: buildSignOff(locale) };
 }
 
@@ -531,7 +584,7 @@ export async function generateFollowUpEmailMulti(params: {
     : safeProducts.map((p) => `- ${p.productTitle} (order ${p.orderId})`).join("\n");
 
   const prompt = isIcelea
-    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    ? `${BRAND_INTRO}
 Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification.
 
 Purpose of this email:
@@ -558,7 +611,7 @@ Customer info:
 ${productLines}
 - Current status: ${remainingText}`
 
-    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    : `${BRAND_INTRO}
 Write a brief follow-up email to a customer. This is a proactive status update sent 15 days after their initial notification about a raw materials stock shortage.
 
 Purpose of this email:
@@ -585,7 +638,7 @@ Customer info:
 ${productLines}
 - Current status: ${remainingText}`;
 
-  const result = await callClaude(prompt);
+  const result = await callClaude(prompt, safeProducts.map((p) => p.productTitle).join(" | "));
   return { subject: result.subject, greeting: buildGreeting(firstName, locale), body: result.body, sign_off: buildSignOff(locale) };
 }
 
@@ -696,7 +749,7 @@ export async function generateProductionEmail(
     : "- Do NOT mention a specific product name — refer to \"your order\" only";
 
   const prompt = direction === "IN"
-    ? `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    ? `${BRAND_INTRO}
 Write the body of a short email informing a customer that their order has just entered the "${stepName}" production stage.${stepDescription ? `\n\nAbout this step: ${stepDescription}` : ""}
 
 Purpose: inform the customer their piece is now being actively worked on, and give an estimated duration for this step.
@@ -717,7 +770,7 @@ Context:
 - Order number: ${order.name}${productLine}
 - Step: ${stepName}${durationText ? `\n- Estimated duration: ${durationText}` : ""}`
 
-    : `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+    : `${BRAND_INTRO}
 Write the body of a short email informing a customer that their order has just completed the "${stepName}" production stage and is moving forward.
 
 Purpose: confirm this step is done, signal progress — do not announce delivery date.
@@ -738,7 +791,7 @@ Context:
 - Order number: ${order.name}${productLine}
 - Completed step: ${stepName}`;
 
-  const result = await callClaude(prompt);
+  const result = await callClaude(prompt, product?.productTitle ?? null);
   return { subject: result.subject, greeting, body: result.body, sign_off };
 }
 
@@ -803,7 +856,9 @@ export async function generateGorgiasResponse(params: {
       }).join("\n")
     : "No backorder detected — order appears to be processing normally.";
 
-  const prompt = `You are writing on behalf of Mood Collection, a Swiss jewelry brand, responding to a customer support inquiry.
+  const prompt = `${BRAND_INTRO}
+
+You are responding to a customer support inquiry.
 
 Brand context (use naturally, not as a pitch):
 - Mood Collection intentionally keeps a very small ready stock
