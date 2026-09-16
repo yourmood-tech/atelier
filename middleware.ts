@@ -37,6 +37,11 @@ export default auth((req) => {
     return;
   }
 
+  // /quiz-garde-mood (quizz public clientes — « Quel garde-mood est fait pour toi ? »)
+  if (pathname === "/quiz-garde-mood" || pathname.startsWith("/quiz-garde-mood/")) {
+    return;
+  }
+
   // /quiz (quizz public clientes — « Quel starter pack es-tu ? »)
   if (pathname === "/quiz" || pathname.startsWith("/quiz/")) {
     return;
@@ -77,6 +82,6 @@ export default auth((req) => {
 export const config = {
   matcher: [
     // Protect all routes except auth, login, gorgias webhook, shopify callback, public client perso pages, sondage public, and Next.js internals
-    "/((?!api/auth|api/wineur|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/creer-argent-cart-shopify|api/design|api/design-argent|api/admin|api/quiz-submit|api/quiz-lead|api/mood-lovers|api/sondage|api/pronostics/save|api/projet-joaillerie-submit|api/motif-submit|api/concours-submit|api/concours-public|api/concours-list|api/concours-detail|api/concours-image|api/concours-action|api/concours-vote|api/armoire/verify|api/armoire/save|api/armoire/unlock|api/armoire/moodailles-list|api/armoire/play|jeu|admin|creer|creer-argent|aluminium|argent|sertissages|login|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|api/wineur|api/gorgias-webhook|api/orders-webhook|api/produits/shopify-callback|api/creer-demande|api/creer-cart-shopify|api/creer-argent-cart-shopify|api/design|api/design-argent|api/admin|api/quiz-submit|api/quiz-lead|api/quiz-garde-mood-lead|api/mood-lovers|api/sondage|api/pronostics/save|api/projet-joaillerie-submit|api/motif-submit|api/concours-submit|api/concours-public|api/concours-list|api/concours-detail|api/concours-image|api/concours-action|api/concours-vote|api/armoire/verify|api/armoire/save|api/armoire/unlock|api/armoire/moodailles-list|api/armoire/play|jeu|admin|creer|creer-argent|aluminium|argent|sertissages|login|_next/static|_next/image|favicon.ico).*)",
   ],
 };
