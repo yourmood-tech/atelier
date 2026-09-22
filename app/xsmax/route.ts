@@ -318,15 +318,16 @@ h1,h2,h3,p{margin:0}
 }
 
 /* ---------- révélations ---------- */
-.js .reveal{opacity:.001;transform:translateY(22px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+.js .reveal{opacity:1;transform:translateY(16px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
 .js .reveal.in{opacity:1;transform:none}
+.js .reveal:not(.in){opacity:.999}
 .js .reveal.d1{transition-delay:.09s}
 .js .reveal.d2{transition-delay:.18s}
 .js .reveal.d3{transition-delay:.27s}
 
 /* ---------- ouverture ---------- */
 .js .hero .eyebrow,.js .hero h1,.js .hero .lede,.js .hero .link,.js .hero-rule{
-  opacity:0;transform:translateY(26px);
+  opacity:1;transform:translateY(26px);
   animation:rise .95s cubic-bezier(.2,.7,.2,1) forwards;
 }
 .js .hero h1{animation-delay:.10s}
