@@ -414,7 +414,7 @@ h1,h2,h3,p{margin:0}
       </figure>
 
       <figure class="carte-info reveal d1">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/collection-couleurs-chromaline-mood.jpg" alt="7 combos de couleurs" loading="lazy">
+        <img src="/chromaline/sept-anneaux.jpg" alt="Les sept anneaux de couleur Chromaline" loading="lazy">
         <figcaption>
           <span class="eyebrow">7 combos de couleurs</span>
           <h3 class="display h3">7 combos de couleurs &agrave; collectionner</h3>
