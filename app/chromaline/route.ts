@@ -81,6 +81,9 @@ h1,h2,h3,p{margin:0}
   width:clamp(96px,17vw,258px);aspect-ratio:1/1;
   margin:0 0 0 clamp(-14px,-1.6vw,-6px);
 }
+.stage-big{
+  display:block;width:min(520px,84vw);margin:clamp(6px,1.2vw,16px) auto clamp(10px,1.6vw,18px);
+}
 .stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transition:opacity 1.1s ease;
@@ -200,6 +203,8 @@ h1,h2,h3,p{margin:0}
     </h1>
     <p class="sous">Une bague. Sept humeurs.</p>
     <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
+
+    <div class="stage stage-big" id="stageBig"></div>
 
     <p class="sw-name" id="colorName">Acier brossé</p>
     <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
@@ -333,6 +338,7 @@ h1,h2,h3,p{margin:0}
 
   var root=document.documentElement;
   var stage=document.getElementById('stage');
+  var stageBig=document.getElementById('stageBig');
   var nom=document.getElementById('colorName');
   var sws=document.getElementById('swatches');
   var seven=document.getElementById('seven');
@@ -377,23 +383,29 @@ h1,h2,h3,p{margin:0}
   });
 
   /* les sept petits films empilés : celui de la couleur choisie tourne, les autres attendent */
-  var couches=[];
-  COLORS.forEach(function(col,i){
-    var v=document.createElement('video');
-    v.src='/chromaline/'+col.film+'.mp4';
-    v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
-    v.preload = i===0 ? 'auto' : 'none';
-    v.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
-    if(i===0){ v.className='on'; }
-    stage.appendChild(v);
-    couches.push(v);
-  });
-  function jouer(i){
-    couches.forEach(function(v,k){
+  var couches=[], couchesBig=[];
+  function poser(hote, liste){
+    if(!hote) return;
+    COLORS.forEach(function(col,i){
+      var v=document.createElement('video');
+      v.src='/chromaline/'+col.film+'.mp4';
+      v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
+      v.preload = i===0 ? 'auto' : 'none';
+      v.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
+      if(i===0){ v.className='on'; }
+      hote.appendChild(v);
+      liste.push(v);
+    });
+  }
+  poser(stage, couches);
+  poser(stageBig, couchesBig);
+  function jouerListe(liste,i){
+    liste.forEach(function(v,k){
       if(k===i){ if(v.preload==='none') v.preload='auto'; var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
       else { v.pause(); }
     });
   }
+  function jouer(i){ jouerListe(couches,i); jouerListe(couchesBig,i); }
   jouer(0);
 
   function choisir(i,auto){
@@ -403,6 +415,7 @@ h1,h2,h3,p{margin:0}
     root.style.setProperty('--c-soft',col.soft);
     nom.textContent=col.nom;
     for(var k=0;k<couches.length;k++) couches[k].classList.toggle('on',k===i);
+    for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
     jouer(i);
     var bs=sws.querySelectorAll('.sw');
     for(var k2=0;k2<bs.length;k2++) bs[k2].setAttribute('aria-pressed', k2===i?'true':'false');
