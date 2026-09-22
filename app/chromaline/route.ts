@@ -31,6 +31,19 @@ h1,h2,h3,p{margin:0}
 
 .wrap{max-width:1180px;margin:0 auto;padding-inline:24px}
 .band{padding-block:clamp(56px,7vw,110px)}
+.preuve{background:#fff;border-block:1px solid var(--line);padding:18px 0}
+.preuve-in{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
+  gap:clamp(12px,2vw,30px);text-align:center;
+}
+.preuve-i{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:clamp(14px,1.25vw,17px);color:var(--ink);font-weight:400;letter-spacing:.01em;
+}
+.etoiles{color:var(--c);font-style:normal;letter-spacing:2px;font-size:1.05em;transition:color .8s ease}
+.suisse{width:20px;height:20px;flex:none;border-radius:4px}
+.sep{width:1px;height:18px;background:var(--line)}
+@media (max-width:700px){ .sep{display:none} .preuve-in{gap:10px 18px} }
 .band-cream{background:var(--cream)}
 .center{text-align:center}
 
@@ -314,6 +327,17 @@ h1,h2,h3,p{margin:0}
     </div>
   </div>
 </section>
+
+<div class="preuve">
+  <div class="wrap preuve-in">
+    <span class="preuve-i"><em class="etoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</em> 4.8 / 5 &middot; 18 000+ avis</span>
+    <span class="sep"></span>
+    <span class="preuve-i">75 000+ clientes</span>
+    <span class="sep"></span>
+    <span class="preuve-i"><svg class="suisse" viewBox="0 0 32 32" aria-label="Suisse" role="img"><rect width="32" height="32" rx="4" fill="#D52B1E"/><path d="M13.5 6.5h5v7h7v5h-7v7h-5v-7h-7v-5h7z" fill="#fff"/></svg> Concept suisse depuis 2004</span>
+  </div>
+</div>
+
 
 <section class="band band-cream">
   <div class="wrap two">
