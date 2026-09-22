@@ -157,6 +157,11 @@ h1,h2,h3,p{margin:0}
 }
 .step h3{font-family:var(--serif);font-size:19px;margin-bottom:8px}
 .step p{font-size:13.5px;color:var(--mid);line-height:1.6}
+.step .geste{
+  width:calc(100% + 2*clamp(18px,2.4vw,30px));
+  margin:clamp(16px,2vw,24px) calc(-1*clamp(18px,2.4vw,30px)) calc(-1*clamp(18px,2.4vw,30px));
+  display:block;border-radius:0 0 4px 4px;
+}
 
 /* ---------- les sept ---------- */
 .seven{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(10px,1.6vw,20px);margin-top:clamp(28px,4vw,48px)}
@@ -278,13 +283,10 @@ h1,h2,h3,p{margin:0}
     <h2 class="display h2 reveal" style="margin:14px 0 12px">Le clic mood, en plus délicat.</h2>
     <p class="lede reveal d1" style="margin:0 auto">Trois anneaux dans le pack. Tu ouvres, tu glisses, tu referme. Cinq secondes, sans outil, sans bijoutier.</p>
     <div class="steps">
-      <div class="step reveal"><span class="n">1</span><h3>Tu ouvres</h3><p>La base s'ouvre sur son clip intégré, fabriqué en Suisse depuis 2004.</p></div>
-      <div class="step reveal d1"><span class="n">2</span><h3>Tu glisses</h3><p>L'anneau de couleur prend sa place au centre, entre les deux rangs de zircons.</p></div>
-      <div class="step reveal d2"><span class="n">3</span><h3>Tu refermes</h3><p>Le clic. La bague est scellée, la couleur est à toi jusqu'à la prochaine envie.</p></div>
+      <div class="step reveal"><span class="n">1</span><h3>Tu ouvres</h3><p>La base s'ouvre sur son clip intégré, fabriqué en Suisse depuis 2004.</p><img class="geste" src="/chromaline/geste-1.jpg" alt="Étape 1 : tu ouvres" loading="lazy"></div>
+      <div class="step reveal d1"><span class="n">2</span><h3>Tu glisses</h3><p>L'anneau de couleur prend sa place au centre, entre les deux rangs de zircons.</p><img class="geste" src="/chromaline/geste-2.jpg" alt="Étape 2 : tu glisses" loading="lazy"></div>
+      <div class="step reveal d2"><span class="n">3</span><h3>Tu refermes</h3><p>Le clic. La bague est scellée, la couleur est à toi jusqu'à la prochaine envie.</p><img class="geste" src="/chromaline/geste-3.jpg" alt="Étape 3 : tu refermes" loading="lazy"></div>
     </div>
-    <figure class="figure reveal" style="margin:clamp(28px,4vw,48px) auto 0;max-width:620px">
-      <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/chromaline-interchangeable.jpg" alt="Vue éclatée de la bague Chromaline : base, anneaux interchangeables et clip">
-    </figure>
   </div>
 </section>
 
