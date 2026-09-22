@@ -58,9 +58,9 @@ h1,h2,h3,p{margin:0}
   padding-block:clamp(48px,6vw,92px) clamp(40px,5vw,70px);
 }
 .hero::before{
-  content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse 52% 46% at 50% 56%,var(--c-soft),transparent 68%);
-  transition:background 1.1s ease;pointer-events:none;
+  content:"";position:absolute;left:0;right:0;bottom:0;height:46%;
+  background:radial-gradient(ellipse 60% 100% at 50% 100%,var(--c-soft),transparent 72%);
+  transition:background 1.1s ease;pointer-events:none;opacity:.75;
 }
 .hero-in{position:relative}
 .hero .eyebrow{margin-bottom:16px}
