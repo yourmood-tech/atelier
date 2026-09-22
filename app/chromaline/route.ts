@@ -1,4 +1,5 @@
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>mood Chromaline</title><meta name="robots" content="noindex,nofollow"></head><body style="margin:0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -468,5 +469,5 @@ h1,h2,h3,p{margin:0}
 </body></html>`;
 
 export async function GET() {
-  return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+  return new Response(PAGE, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store, max-age=0, must-revalidate' } });
 }
