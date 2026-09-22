@@ -271,7 +271,7 @@ h1,h2,h3,p{margin:0}
       <div class="choix-txt">
         <p class="sous">Une bague. Sept humeurs.</p>
         <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
-        <p class="sw-name" id="colorName">Acier brossé</p>
+        <p class="sw-name" id="colorName">Acier froissé</p>
         <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
         <p class="price">197<small>CHF · pack découverte, 3 anneaux inclus</small></p>
         <p><a class="btn btn-c" id="buy" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je choisis la mienne</a></p>
@@ -338,7 +338,7 @@ h1,h2,h3,p{margin:0}
 
     <div class="acheter reveal d1">
       <p class="etape">1 &middot; Couleur</p>
-      <p class="choix-nom" id="colorName2">Acier bross&eacute;</p>
+      <p class="choix-nom" id="colorName2">Acier froiss&eacute;</p>
       <div class="swatches" id="swatches2" role="group" aria-label="Choisir la couleur"></div>
       <p class="mini">*la couleur des anneaux peut l&eacute;g&egrave;rement varier selon la lumi&egrave;re ambiante.</p>
 
@@ -434,7 +434,7 @@ h1,h2,h3,p{margin:0}
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var COLORS=[
-    {k:'acier',   nom:'Acier brossé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste'},
+    {k:'acier',   nom:'Acier froissé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste'},
     {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise', humeur:'Serein(e)'},
     {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel', humeur:'Rêveur(se)'},
     {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)'},
