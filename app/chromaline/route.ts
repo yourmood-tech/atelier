@@ -341,10 +341,6 @@ h1,h2,h3,p{margin:0}
     {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude', humeur:'Précieux(se)'},
     {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot', humeur:'Solaire'}
   ];
-  var VIDS=['ed958f4f94f84fc38bf80ba505be60f6','8ccc5d2feb60427f979a52826b86753d',
-            'ce77b0ff357a4f86bdf0af4ca3714f6d','365d3f179d73410486295791701a5bda',
-            '2a074996716b48d5b0dc9ee8af292e41','36518517700d4ed2af71c7ded61e9926',
-            '7e5f470243ed4c68993e864428fb1093','cd040d593f6c4f92ba9a50048094a5ad'];
 
   var root=document.documentElement;
   var stage=document.getElementById('stage');
@@ -352,7 +348,6 @@ h1,h2,h3,p{margin:0}
   var nom=document.getElementById('colorName');
   var sws=document.getElementById('swatches');
   var seven=document.getElementById('seven');
-  var reel=document.getElementById('reel');
   var current=0;
 
   /* pastilles */
@@ -381,19 +376,6 @@ h1,h2,h3,p{margin:0}
     seven.appendChild(d);
   });
 
-  /* vidéos */
-  VIDS.forEach(function(id){
-    var f=document.createElement('figure');
-    var v=document.createElement('video');
-    v.src='https://cdn.shopify.com/videos/c/o/v/'+id+'.mov';
-    v.muted=true; v.loop=true; v.playsInline=true; v.preload='none';
-    f.appendChild(v);
-    var play=function(){ var q=v.play(); if(q&&q.catch) q.catch(function(){}); };
-    f.addEventListener('mouseenter',play);
-    f.addEventListener('mouseleave',function(){ v.pause(); });
-    f.addEventListener('click',function(){ v.paused?play():v.pause(); });
-    reel.appendChild(f);
-  });
 
   /* les sept petits films empilés : celui de la couleur choisie tourne, les autres attendent */
   var couches=[], couchesBig=[];
