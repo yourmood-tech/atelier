@@ -13,7 +13,8 @@ const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta n
   --ink:#191917;
   --mid:#8b8880;
   --line:#e6e0d6;
-  --c:#b9bdc0;          /* teinte vivante, change avec la couleur choisie */
+  --c:#b9bdc0;          /* la couleur choisie par la cliente */
+  --ct:#b9bdc0;         /* la couleur du titre, qui défile toute seule */
   --c-soft:#eef0f1;
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -73,7 +74,7 @@ h1,h2,h3,p{margin:0}
   font-family:var(--serif);font-size:clamp(19px,2.2vw,32px);color:var(--ink);
   margin:0 0 16px;letter-spacing:-.005em;
 }
-.hero .h1 .tint{color:var(--c);transition:color 1.1s ease}
+.hero .h1 .tint{color:var(--ct);transition:color 1.1s ease}
 .hero .lede{margin:0 auto 26px;text-align:center}
 
 .stage{
@@ -438,28 +439,31 @@ h1,h2,h3,p{margin:0}
   function jouer(i){ jouerListe(couches,i); }
   jouer(0);
 
-  function choisir(i,auto){
+  /* la cliente choisit : photo, nom, pastilles, bouton, halo */
+  function choisir(i){
     current=i;
     var col=COLORS[i];
     root.style.setProperty('--c',col.c);
     root.style.setProperty('--c-soft',col.soft);
     nom.textContent=col.nom;
-    for(var k=0;k<couches.length;k++) couches[k].classList.toggle('on',k===i);
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
-    jouer(i);
     var bs=sws.querySelectorAll('.sw');
     for(var k2=0;k2<bs.length;k2++) bs[k2].setAttribute('aria-pressed', k2===i?'true':'false');
-    if(!auto) arreter();
   }
 
-  /* défilé automatique, jusqu'à ce qu'on choisisse */
-  var minuteur=null, libre=true;
-  function demarrer(){
-    if(!libre) return;
-    minuteur=setInterval(function(){ choisir((current+1)%COLORS.length,true); },5200);
+  /* le titre vit sa vie : la bague tourne et change de couleur en boucle */
+  var titre=0;
+  function titreCouleur(i){
+    titre=i;
+    root.style.setProperty('--ct',COLORS[i].c);
+    for(var k=0;k<couches.length;k++) couches[k].classList.toggle('on',k===i);
+    jouer(i);
   }
-  function arreter(){ libre=false; if(minuteur){ clearInterval(minuteur); minuteur=null; } }
-  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) demarrer();
+  titreCouleur(0);
+  choisir(0);
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setInterval(function(){ titreCouleur((titre+1)%COLORS.length); },5200);
+  }
 
   /* révélation douce */
   var io=new IntersectionObserver(function(es){
