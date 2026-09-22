@@ -273,17 +273,6 @@ h1,h2,h3,p{margin:0}
         <span class="tick"><b>316L</b>acier chirurgical</span>
         <span class="tick"><b>À vie</b>garantie</span>
       </div>
-
-      <p class="lede" style="margin-top:clamp(20px,2.6vw,32px)">Succombe au charme de Chromaline, la création exclusive signée mood. Conçue pour les femmes audacieuses, créatives et passionnées de mode, cette bague réinvente notre concept iconique dans une silhouette d'une finesse absolue.</p>
-      <p class="lede" style="margin-top:14px">Tu aimais l'idée de pouvoir changer de style au gré de tes envies, mais tu cherchais un modèle plus délicat ? Chromaline est la réponse.</p>
-
-      <ul class="atouts">
-        <li>Largeur ultra-fine de 9 mm — même les mains les plus fines la portent</li>
-        <li>Base en argent 925 et acier chirurgical 316L, hypoallergénique</li>
-        <li>7 combos de couleurs modulables — aluminium anodisé, à combiner sans limite</li>
-        <li>Effet galbé, lumineux, infiniment sophistiqué</li>
-        <li>Le clic mood breveté — le même geste, la même durabilité</li>
-      </ul>
     </div>
     <figure class="figure reveal d1" style="margin:0">
       <span class="duos" id="duos">
@@ -296,6 +285,31 @@ h1,h2,h3,p{margin:0}
     </figure>
   </div>
 </section>
+
+<section class="band">
+  <div class="wrap two">
+    <div class="reveal">
+      <span class="eyebrow">La création</span>
+      <h2 class="display h2" style="margin:14px 0 18px">Chromaline, en mouvement.</h2>
+      <p class="lede">Succombe au charme de Chromaline, la création exclusive signée mood. Conçue pour les femmes audacieuses, créatives et passionnées de mode, cette bague réinvente notre concept iconique dans une silhouette d'une finesse absolue.</p>
+      <p class="lede" style="margin-top:14px">Tu aimais l'idée de pouvoir changer de style au gré de tes envies, mais tu cherchais un modèle plus délicat ? Chromaline est la réponse.</p>
+      <ul class="atouts">
+        <li>Largeur ultra-fine de 9 mm — même les mains les plus fines la portent</li>
+        <li>Base en argent 925 et acier chirurgical 316L, hypoallergénique</li>
+        <li>7 combos de couleurs modulables — aluminium anodisé, à combiner sans limite</li>
+        <li>Effet galbé, lumineux, infiniment sophistiqué</li>
+        <li>Le clic mood breveté — le même geste, la même durabilité</li>
+      </ul>
+    </div>
+    <div class="figure reveal d1" style="background:#0d0d0d">
+      <video src="https://cdn.shopify.com/videos/c/o/v/ed958f4f94f84fc38bf80ba505be60f6.mov"
+             autoplay muted loop playsinline preload="metadata"
+             style="width:100%;display:block" aria-label="La bague Chromaline en mouvement"></video>
+      <p class="cap">Le clic breveté depuis 2004 — ouvre, choisis, referme.</p>
+    </div>
+  </div>
+</section>
+
 
 <section class="band">
   <div class="wrap center">
