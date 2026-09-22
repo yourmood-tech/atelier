@@ -82,7 +82,7 @@ h1,h2,h3,p{margin:0}
   transition:background .5s ease,backdrop-filter .5s ease,transform .5s ease;
   transform:translateY(-100%);pointer-events:none;
 }
-.topbar.on{background:rgba(11,11,12,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transform:none;pointer-events:auto}
+.topbar.on{background:#0b0b0c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transform:none;pointer-events:auto}
 .topbar img{width:96px}
 .topbar .link{color:#f4f2ee;font-size:10px}
 
@@ -360,7 +360,7 @@ h1,h2,h3,p{margin:0}
 </style>
 
 <header class="topbar" id="topbar">
-  <img src="/xsmax/img/logo-blanc.png" alt="mood">
+  <img src="/xsmax/img/logo-blanc.jpg" alt="mood">
   <a class="link" href="#final">Je découvre la XS MAX</a>
 </header>
 
@@ -376,34 +376,34 @@ h1,h2,h3,p{margin:0}
   <div class="podium-grid" id="podium">
     <div class="pod" role="button" tabindex="0" data-color="acier">
       <span class="pod-media">
-        <img src="/xsmax/img/ring-acier-poli.png" alt="Base mood XS MAX en acier 316L, finition polie">
+        <img src="/xsmax/img/ring-acier-poli.jpg" alt="Base mood XS MAX en acier 316L, finition polie">
         <video src="/xsmax/vid/turn-acier.mp4" muted loop playsinline preload="none"></video>
       </span>
-      <span class="pod-mirror"><img src="/xsmax/img/ring-acier-poli.png" alt="" aria-hidden="true"></span>
+      <span class="pod-mirror"><img src="/xsmax/img/ring-acier-poli.jpg" alt="" aria-hidden="true"></span>
       <span class="pod-name">acier</span>
     </div>
     <div class="pod" role="button" tabindex="0" data-color="bleu">
       <span class="pod-media">
-        <img src="/xsmax/img/ring-bleu-poli.png" alt="Base mood XS MAX bleu électrique, finition polie">
+        <img src="/xsmax/img/ring-bleu-poli.jpg" alt="Base mood XS MAX bleu électrique, finition polie">
         <video src="/xsmax/vid/turn-bleu.mp4" muted loop playsinline preload="none"></video>
       </span>
-      <span class="pod-mirror"><img src="/xsmax/img/ring-bleu-poli.png" alt="" aria-hidden="true"></span>
+      <span class="pod-mirror"><img src="/xsmax/img/ring-bleu-poli.jpg" alt="" aria-hidden="true"></span>
       <span class="pod-name">bleu électrique</span>
     </div>
     <div class="pod" role="button" tabindex="0" data-color="gold">
       <span class="pod-media">
-        <img src="/xsmax/img/ring-gold-poli.png" alt="Base mood XS MAX gold, finition polie">
+        <img src="/xsmax/img/ring-gold-poli.jpg" alt="Base mood XS MAX gold, finition polie">
         <video src="/xsmax/vid/turn-gold.mp4" muted loop playsinline preload="none"></video>
       </span>
-      <span class="pod-mirror"><img src="/xsmax/img/ring-gold-poli.png" alt="" aria-hidden="true"></span>
+      <span class="pod-mirror"><img src="/xsmax/img/ring-gold-poli.jpg" alt="" aria-hidden="true"></span>
       <span class="pod-name">gold</span>
     </div>
     <div class="pod" role="button" tabindex="0" data-color="black">
       <span class="pod-media">
-        <img src="/xsmax/img/ring-black-poli.png" alt="Base mood XS MAX black, finition polie">
+        <img src="/xsmax/img/ring-black-poli.jpg" alt="Base mood XS MAX black, finition polie">
         <video src="/xsmax/vid/turn-black.mp4" muted loop playsinline preload="none"></video>
       </span>
-      <span class="pod-mirror"><img src="/xsmax/img/ring-black-poli.png" alt="" aria-hidden="true"></span>
+      <span class="pod-mirror"><img src="/xsmax/img/ring-black-poli.jpg" alt="" aria-hidden="true"></span>
       <span class="pod-name">black</span>
     </div>
   </div>
@@ -424,7 +424,7 @@ h1,h2,h3,p{margin:0}
       <p class="lede">Le milieu ne bouge pas : ton centre reste aussi fin qu'avant. Ce sont les bords qui grandissent — et toute la main change d'allure.</p>
     </div>
     <div class="mm-fig reveal d1">
-      <img src="/xsmax/img/ring-acier-poli.png" alt="Base mood XS MAX en acier, vue de profil">
+      <img src="/xsmax/img/ring-acier-poli.jpg" alt="Base mood XS MAX en acier, vue de profil">
       <div class="mm-caliper">
         <span class="rail"></span><span class="tick l"></span><span class="tick r"></span>
         <span class="val">11 mm</span>
@@ -475,19 +475,19 @@ h1,h2,h3,p{margin:0}
     </div>
     <div class="fin-grid reveal" id="finGrid">
       <div>
-        <div class="fin-cell"><img data-poli="/xsmax/img/ring-acier-poli.png" data-mat="/xsmax/img/ring-acier-mat.png" src="/xsmax/img/ring-acier-poli.png" alt="Base XS MAX acier"></div>
+        <div class="fin-cell"><img data-poli="/xsmax/img/ring-acier-poli.jpg" data-mat="/xsmax/img/ring-acier-mat.jpg" src="/xsmax/img/ring-acier-poli.jpg" alt="Base XS MAX acier"></div>
         <p class="fin-name">acier</p>
       </div>
       <div>
-        <div class="fin-cell"><img data-poli="/xsmax/img/ring-bleu-poli.png" data-mat="/xsmax/img/ring-bleu-mat.png" src="/xsmax/img/ring-bleu-poli.png" alt="Base XS MAX bleu électrique"></div>
+        <div class="fin-cell"><img data-poli="/xsmax/img/ring-bleu-poli.jpg" data-mat="/xsmax/img/ring-bleu-mat.jpg" src="/xsmax/img/ring-bleu-poli.jpg" alt="Base XS MAX bleu électrique"></div>
         <p class="fin-name">bleu électrique</p>
       </div>
       <div>
-        <div class="fin-cell"><img data-poli="/xsmax/img/ring-gold-poli.png" data-mat="/xsmax/img/ring-gold-mat.png" src="/xsmax/img/ring-gold-poli.png" alt="Base XS MAX gold"></div>
+        <div class="fin-cell"><img data-poli="/xsmax/img/ring-gold-poli.jpg" data-mat="/xsmax/img/ring-gold-mat.jpg" src="/xsmax/img/ring-gold-poli.jpg" alt="Base XS MAX gold"></div>
         <p class="fin-name">gold</p>
       </div>
       <div>
-        <div class="fin-cell"><img data-poli="/xsmax/img/ring-black-poli.png" data-mat="/xsmax/img/ring-black-mat.png" src="/xsmax/img/ring-black-poli.png" alt="Base XS MAX black"></div>
+        <div class="fin-cell"><img data-poli="/xsmax/img/ring-black-poli.jpg" data-mat="/xsmax/img/ring-black-mat.jpg" src="/xsmax/img/ring-black-poli.jpg" alt="Base XS MAX black"></div>
         <p class="fin-name">black</p>
       </div>
     </div>
@@ -541,7 +541,7 @@ h1,h2,h3,p{margin:0}
 </div>
 
 <section class="final" id="final">
-  <img class="mark" src="/xsmax/img/logo-blanc.png" alt="mood">
+  <img class="mark" src="/xsmax/img/logo-blanc.jpg" alt="mood">
   <h2 class="display line" style="margin-bottom:22px">XS au centre. MAX autour.</h2>
   <p class="lede" style="margin:0 auto 34px">Acier 316L, 11 mm, garantie à vie.<br>Quatre couleurs, deux finitions, treize tailles.</p>
   <a class="link" href="#couleurs">Je découvre la XS MAX</a>
