@@ -17,6 +17,11 @@ export default auth((req) => {
     return;
   }
 
+  // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
+  if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
+    return;
+  }
+
   // /xsmax (maquette de lancement de la base mood XS MAX — lien à montrer à l'équipe)
   if (pathname === "/xsmax" || pathname.startsWith("/xsmax/")) {
     return;
