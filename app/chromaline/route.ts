@@ -72,12 +72,11 @@ h1,h2,h3,p{margin:0}
   position:relative;width:min(560px,86vw);margin:clamp(6px,1.4vw,18px) auto clamp(14px,2vw,22px);
   aspect-ratio:1/1;
 }
-.stage img{
+.stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transition:opacity 1.1s ease;
-  animation:flotte 7s ease-in-out infinite;
 }
-.stage img.on{opacity:1}
+.stage video.on, .stage img.on{opacity:1}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .hero-copy .h1{margin:14px 0 18px}
 .hero-copy .lede{margin-bottom:26px}
@@ -308,13 +307,13 @@ h1,h2,h3,p{margin:0}
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var COLORS=[
-    {k:'acier',   nom:'Acier brossé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg'},
-    {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg'},
-    {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg'},
-    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg'},
-    {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg'},
-    {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg'},
-    {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg'}
+    {k:'acier',   nom:'Acier brossé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier'},
+    {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise'},
+    {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel'},
+    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red'},
+    {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg',film:'bleu-marine'},
+    {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude'},
+    {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot'}
   ];
   var VIDS=['ed958f4f94f84fc38bf80ba505be60f6','8ccc5d2feb60427f979a52826b86753d',
             'ce77b0ff357a4f86bdf0af4ca3714f6d','365d3f179d73410486295791701a5bda',
@@ -366,17 +365,25 @@ h1,h2,h3,p{margin:0}
     reel.appendChild(f);
   });
 
-  /* les sept photos empilées : on les fait juste apparaître l'une après l'autre */
+  /* les sept petits films empilés : celui de la couleur choisie tourne, les autres attendent */
   var couches=[];
   COLORS.forEach(function(col,i){
-    var im=document.createElement('img');
-    im.src=CDN+col.img;
-    im.alt='Bague mood Chromaline '+col.nom+', argent 925 et zircons';
-    im.style.animationDelay=(i*0.4)+'s';
-    if(i===0) im.className='on';
-    stage.appendChild(im);
-    couches.push(im);
+    var v=document.createElement('video');
+    v.src='/chromaline/'+col.film+'.mp4';
+    v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
+    v.preload = i===0 ? 'auto' : 'none';
+    v.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
+    if(i===0){ v.className='on'; }
+    stage.appendChild(v);
+    couches.push(v);
   });
+  function jouer(i){
+    couches.forEach(function(v,k){
+      if(k===i){ if(v.preload==='none') v.preload='auto'; var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+      else { v.pause(); }
+    });
+  }
+  jouer(0);
 
   function choisir(i,auto){
     current=i;
@@ -385,6 +392,7 @@ h1,h2,h3,p{margin:0}
     root.style.setProperty('--c-soft',col.soft);
     nom.textContent=col.nom;
     for(var k=0;k<couches.length;k++) couches[k].classList.toggle('on',k===i);
+    jouer(i);
     var bs=sws.querySelectorAll('.sw');
     for(var k2=0;k2<bs.length;k2++) bs[k2].setAttribute('aria-pressed', k2===i?'true':'false');
     if(!auto) arreter();
@@ -394,7 +402,7 @@ h1,h2,h3,p{margin:0}
   var minuteur=null, libre=true;
   function demarrer(){
     if(!libre) return;
-    minuteur=setInterval(function(){ choisir((current+1)%COLORS.length,true); },2600);
+    minuteur=setInterval(function(){ choisir((current+1)%COLORS.length,true); },5200);
   }
   function arreter(){ libre=false; if(minuteur){ clearInterval(minuteur); minuteur=null; } }
   if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) demarrer();
