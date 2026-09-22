@@ -200,7 +200,12 @@ h1,h2,h3,p{margin:0}
 }
 
 /* ---------- les sept ---------- */
-.seven{display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(6px,0.9vw,12px);margin-top:clamp(28px,4vw,48px)}
+.seven{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:clamp(6px,0.8vw,14px);
+  margin-top:clamp(28px,4vw,48px);
+  width:100vw;margin-left:calc(50% - 50vw);
+  padding-inline:clamp(10px,1.2vw,20px);
+}
 .card{
   background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden;
   cursor:pointer;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s;
@@ -212,7 +217,7 @@ h1,h2,h3,p{margin:0}
 .card .duo .main{opacity:0}
 .card:hover .duo .main,.card:focus-visible .duo .main{opacity:1;transform:scale(1.03)}
 .card:hover .duo .carte,.card:focus-visible .duo .carte{opacity:0}
-.card .nm{display:block;padding:10px 4px 4px;text-align:center;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mid);line-height:1.35}
+.card .nm{display:block;padding:12px 4px 4px;text-align:center;font-size:10.5px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mid);line-height:1.4}
 .card .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sc);margin-right:5px;vertical-align:1px}
 
 /* ---------- portées ---------- */
@@ -254,7 +259,7 @@ h1,h2,h3,p{margin:0}
 
 @media (max-width:900px){
   .hero-in,.two{grid-template-columns:1fr}
-  .seven{grid-template-columns:repeat(2,1fr)}
+  .seven{grid-template-columns:repeat(2,1fr);padding-inline:16px}
   .steps{grid-template-columns:1fr}
   .gal,.avis{grid-template-columns:1fr}
   .reel{grid-template-columns:repeat(2,1fr)}
