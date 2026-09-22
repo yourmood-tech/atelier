@@ -100,6 +100,8 @@ h1,h2,h3,p{margin:0}
   display:block;width:100%;max-width:520px;margin:0 auto;
   border-radius:6px;overflow:hidden;
 }
+#stageAchat{aspect-ratio:725/900;background:#f2f2f2}
+#stageAchat img{object-fit:cover}
 .choix{
   display:grid;grid-template-columns:0.9fr 1.1fr;align-items:center;
   gap:clamp(20px,3.4vw,56px);max-width:960px;margin:clamp(10px,2vw,26px) auto 0;
@@ -571,13 +573,13 @@ h1,h2,h3,p{margin:0}
 
   /* les sept petits films empilés : celui de la couleur choisie tourne, les autres attendent */
   var couches=[], couchesBig=[];
-  function poser(hote, liste, enPhoto){
+  function poser(hote, liste, enPhoto, prefixe){
     if(!hote) return;
     COLORS.forEach(function(col,i){
       var el;
       if(enPhoto){
         el=document.createElement('img');
-        el.src='/chromaline/fond-'+col.film+'.jpg';
+        el.src='/chromaline/'+(prefixe||'fond-')+col.film+'.jpg';
         el.alt='Bague mood Chromaline '+col.nom+', argent 925 et zircons';
         el.loading = i===0 ? 'eager' : 'lazy';
       } else {
@@ -593,9 +595,9 @@ h1,h2,h3,p{margin:0}
     });
   }
   poser(stage, couches, false);       /* le titre : la bague qui tourne */
-  poser(stageBig, couchesBig, true);  /* le choix des couleurs : les photos */
+  poser(stageBig, couchesBig, true, 'fond-');  /* le choix des couleurs : les photos */
   var couchesAchat=[];
-  poser(stageAchat, couchesAchat, true);
+  poser(stageAchat, couchesAchat, true, 'achat-');
   function jouerListe(liste,i){
     liste.forEach(function(v,k){
       if(!v.play) return;
