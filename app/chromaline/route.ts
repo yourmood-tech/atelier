@@ -171,12 +171,12 @@ h1,h2,h3,p{margin:0}
 }
 .card:hover{transform:translateY(-6px);box-shadow:0 18px 34px rgba(25,25,23,.10)}
 .card{position:relative;border:0;background:none}
-.card .duo{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:4px;background:#fff}
+.card .duo{display:block;position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:4px;background:#fff}
 .card .duo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .55s ease,transform 1.2s cubic-bezier(.2,.7,.2,1)}
 .card .duo .main{opacity:0}
 .card:hover .duo .main,.card:focus-visible .duo .main{opacity:1;transform:scale(1.03)}
 .card:hover .duo .carte,.card:focus-visible .duo .carte{opacity:0}
-.card .nm{padding:12px 10px 4px;text-align:center;font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mid)}
+.card .nm{display:block;padding:12px 10px 4px;text-align:center;font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mid)}
 .card .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sc);margin-right:8px;vertical-align:1px}
 
 /* ---------- portées ---------- */
