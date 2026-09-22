@@ -145,6 +145,15 @@ h1,h2,h3,p{margin:0}
 .mm-num{font-family:var(--serif);font-size:clamp(56px,7vw,104px);line-height:.9;letter-spacing:-.03em;font-variant-numeric:lining-nums}
 .mm-num small{font-size:.2em;letter-spacing:.14em;color:var(--mid);margin-left:.14em;vertical-align:.9em}
 .ticks{display:flex;gap:26px;margin-top:22px;flex-wrap:wrap}
+.atouts{margin:clamp(16px,2vw,22px) 0 0;padding:0;list-style:none;max-width:52ch}
+.atouts li{
+  position:relative;padding-left:22px;margin-bottom:9px;
+  font-size:clamp(13px,1vw,14.5px);color:var(--mid);line-height:1.65;
+}
+.atouts li::before{
+  content:"";position:absolute;left:0;top:.62em;width:10px;height:1px;background:var(--c);
+  transition:background .8s ease;
+}
 .tick{font-size:13px;color:var(--mid)}
 .tick b{display:block;color:var(--ink);font-weight:400;font-size:15px;font-family:var(--serif)}
 
@@ -264,6 +273,17 @@ h1,h2,h3,p{margin:0}
         <span class="tick"><b>316L</b>acier chirurgical</span>
         <span class="tick"><b>À vie</b>garantie</span>
       </div>
+
+      <p class="lede" style="margin-top:clamp(20px,2.6vw,32px)">Succombe au charme de Chromaline, la création exclusive signée mood. Conçue pour les femmes audacieuses, créatives et passionnées de mode, cette bague réinvente notre concept iconique dans une silhouette d'une finesse absolue.</p>
+      <p class="lede" style="margin-top:14px">Tu aimais l'idée de pouvoir changer de style au gré de tes envies, mais tu cherchais un modèle plus délicat ? Chromaline est la réponse.</p>
+
+      <ul class="atouts">
+        <li>Largeur ultra-fine de 9 mm — même les mains les plus fines la portent</li>
+        <li>Base en argent 925 et acier chirurgical 316L, hypoallergénique</li>
+        <li>7 combos de couleurs modulables — aluminium anodisé, à combiner sans limite</li>
+        <li>Effet galbé, lumineux, infiniment sophistiqué</li>
+        <li>Le clic mood breveté — le même geste, la même durabilité</li>
+      </ul>
     </div>
     <figure class="figure reveal d1" style="margin:0">
       <span class="duos" id="duos">
