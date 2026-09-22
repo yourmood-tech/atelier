@@ -169,12 +169,35 @@ h1,h2,h3,p{margin:0}
 }
 .tailles button:hover{border-color:var(--c)}
 .tailles button[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+.lien-guide a{border-bottom:1px solid var(--ink);color:var(--ink)}
+.pilule{
+  display:inline-block;margin:14px 0 8px;padding:13px 24px;border:1px solid var(--ink);
+  border-radius:999px;font-size:13px;color:var(--ink);transition:background .2s,color .2s;
+}
+.pilule:hover{background:var(--ink);color:#fff}
+.filet{border:0;border-top:1px solid var(--line);margin:22px 0}
+.powerpay{
+  background:var(--cream);border-radius:6px;padding:13px 16px;margin:14px 0 0;
+  font-size:13.5px;color:var(--mid);
+}
+.powerpay b{color:var(--ink);font-weight:500}
+.powerpay a{color:var(--ink);border-bottom:1px solid var(--ink)}
+.btn-achat{
+  display:block;text-align:center;margin:16px 0 0;background:#111;color:#fff;
+  border-radius:10px;padding:22px 20px;font-size:14px;font-weight:500;
+  letter-spacing:2.6px;text-transform:uppercase;transition:background .25s,transform .25s;
+}
+.btn-achat:hover{background:#000;transform:translateY(-1px)}
+.secu{margin:20px 0 10px;text-align:center;font-size:11px;letter-spacing:2.6px;text-transform:uppercase;color:var(--mid)}
+.logos{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:center}
+.logos img{height:30px;width:auto;border-radius:5px}
+.rassure{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
 .prix{margin:22px 0 0;font-family:var(--serif)}
 .prix s{color:var(--mid);font-size:19px;margin-right:12px}
-.prix b{font-weight:400;font-size:34px}
+.prix b{font-weight:400;font-size:40px}
 .btn-large{padding:18px 40px;font-size:12.5px}
 .paiements{font-size:11.5px;color:var(--mid);letter-spacing:.06em;margin:6px 0 0}
-.rassure{margin:20px 0 0;padding:0;list-style:none;display:grid;gap:7px}
+.rassure{margin:4px 0 0;padding:0;list-style:none}
 .rassure li{font-size:12.5px;color:var(--mid);position:relative;padding-left:20px}
 .rassure li::before{content:"\\2713";position:absolute;left:0;color:var(--c);transition:color .8s ease}
 .atouts li::before{
@@ -354,17 +377,30 @@ h1,h2,h3,p{margin:0}
 
       <p class="etape" style="margin-top:26px">2 &middot; Taille</p>
       <div class="tailles" id="tailles" role="group" aria-label="Choisir la taille"></div>
-      <p class="mini"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a> &middot; <a href="https://www.yourmood.net/search?q=baguier">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a></p>
+      <p class="mini lien-guide"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a></p>
+      <a class="pilule" href="https://www.yourmood.net/search?q=baguier">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a>
       <p class="mini">&#10003; En cas de mauvaise taille, nous &eacute;changeons la bague sans discussion.</p>
+
+      <hr class="filet">
 
       <p class="prix"><s>479 CHF</s><b>197 CHF</b></p>
       <p class="mini">Prix du pack d&eacute;couverte &middot; 1 base ultra fine + 3 anneaux inclus</p>
-      <p class="mini">ou paie en 3&times; 65.67 CHF avec Powerpay</p>
 
-      <p style="margin-top:18px"><a class="btn btn-c btn-large" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a></p>
+      <p class="powerpay">ou paie en 3&times; <b>65.67 CHF</b> avec Powerpay &middot; <a href="https://www.yourmood.net/pages/powerpay">en savoir plus</a></p>
 
-      <p class="mini" style="margin-top:16px;letter-spacing:2.4px;text-transform:uppercase">Paiement 100 % s&eacute;curis&eacute;</p>
-      <p class="paiements">Visa &middot; Mastercard &middot; TWINT &middot; PayPal &middot; Apple Pay &middot; Klarna</p>
+      <a class="btn-achat" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a>
+
+      <p class="secu">Paiement 100 % s&eacute;curis&eacute;</p>
+      <div class="logos">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-visa_93cd5991-8218-4067-abc6-40be4fe10b45.jpg" alt="Visa" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-mastercard_10d0177a-4960-4fec-b517-c98ed9541838.jpg" alt="Mastercard" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-twint_4ba05e68-0d6c-4e14-b8a8-f92559ce234c.jpg" alt="TWINT" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-paypal.jpg" alt="PayPal" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-applepay.jpg" alt="Apple Pay" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-klarna.jpg" alt="Klarna" loading="lazy">
+      </div>
+
+      <hr class="filet">
 
       <ul class="rassure">
         <li>Argent 925 &middot; Acier 316L &middot; 9 mm</li>
