@@ -136,6 +136,11 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- finesse ---------- */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:center}
+.mouv{align-items:stretch}
+.mouv .film{display:flex;flex-direction:column;overflow:hidden}
+.mouv .film video{flex:1 1 auto;width:100%;min-height:0;object-fit:cover;display:block}
+.mouv .film .cap{background:#0d0d0d;color:#8e8c88}
+@media (max-width:900px){ .mouv .film video{height:min(78vh,620px);flex:none} }
 .figure{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .figure img{width:100%}
 .duos{position:relative;display:block;width:100%;aspect-ratio:1100/738}
@@ -309,7 +314,7 @@ h1,h2,h3,p{margin:0}
 </section>
 
 <section class="band">
-  <div class="wrap two">
+  <div class="wrap two mouv">
     <div class="reveal">
       <span class="eyebrow">La création</span>
       <h2 class="display h2" style="margin:14px 0 18px">Chromaline, en mouvement.</h2>
@@ -323,12 +328,12 @@ h1,h2,h3,p{margin:0}
         <li>Le clic mood breveté — le même geste, la même durabilité</li>
       </ul>
     </div>
-    <div class="figure reveal d1" style="background:#0d0d0d">
+    <figure class="figure reveal d1 film" style="background:#0d0d0d;margin:0">
       <video src="https://cdn.shopify.com/videos/c/o/v/ed958f4f94f84fc38bf80ba505be60f6.mov"
              autoplay muted loop playsinline preload="metadata"
-             style="width:100%;display:block" aria-label="La bague Chromaline en mouvement"></video>
-      <p class="cap">Le clic breveté depuis 2004 — ouvre, choisis, referme.</p>
-    </div>
+             aria-label="La bague Chromaline en mouvement"></video>
+      <figcaption class="cap">Le clic breveté depuis 2004 — ouvre, choisis, referme.</figcaption>
+    </figure>
   </div>
 </section>
 
