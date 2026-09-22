@@ -3,11 +3,11 @@ export const dynamic = 'force-static';
 const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>mood XS MAX</title><meta name="robots" content="noindex,nofollow"></head><body style="margin:0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Poppins:wght@200;300;400;500&display=swap">
 <style>
 :root{
-  --serif:'Cormorant Garamond','Times New Roman',serif;
-  --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  --serif:'Playfair Display','Times New Roman',serif;
+  --sans:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
   --ivory:#f8f5f0;
   --cream:#f2ede6;
   --dark:#1a1a18;
@@ -36,24 +36,24 @@ h1,h2,h3,p{margin:0}
 /* ---------- utilitaires typo ---------- */
 .eyebrow{
   font-size:10px;letter-spacing:3.2px;text-transform:uppercase;
-  font-family:var(--serif);font-style:italic;color:var(--mid);
+  font-family:var(--sans);font-weight:400;font-style:normal;color:var(--mid);
 }
 .stage .eyebrow{color:var(--on-stage-mid)}
 .display{
-  font-family:var(--serif);font-weight:300;line-height:.98;
-  letter-spacing:-.02em;text-wrap:balance;
+  font-family:var(--serif);font-weight:400;line-height:1.06;
+  letter-spacing:-.012em;text-wrap:balance;
 }
-.h-xxl{font-size:clamp(38px,6.2vw,92px)}
+.h-xxl{font-size:clamp(34px,5.4vw,78px)}
 .line{
-  white-space:nowrap;font-style:normal;font-weight:300;
-  font-size:clamp(17px,4.5vw,76px);letter-spacing:-.005em;line-height:1.05;
+  white-space:nowrap;font-style:normal;font-weight:400;
+  font-size:clamp(15px,3.9vw,66px);letter-spacing:-.008em;line-height:1.12;
   color:#fff;
 }
-.h-xl{font-size:clamp(30px,4.4vw,62px)}
-.h-l{font-size:clamp(25px,3vw,42px)}
+.h-xl{font-size:clamp(26px,3.7vw,52px)}
+.h-l{font-size:clamp(22px,2.6vw,36px)}
 .lede{
-  font-family:var(--serif);font-style:normal;font-weight:300;
-  font-size:clamp(15px,1.35vw,18px);color:var(--mid);line-height:1.6;
+  font-family:var(--sans);font-style:normal;font-weight:300;
+  font-size:clamp(13px,1.05vw,15px);color:var(--mid);line-height:1.7;letter-spacing:.01em;
   max-width:44ch;
 }
 .stage .lede{color:var(--on-stage-mid)}
@@ -105,7 +105,7 @@ h1,h2,h3,p{margin:0}
 .hero .eyebrow{display:block;margin-bottom:18px}
 .hero .display{margin-bottom:18px}
 .hero .display em{font-style:italic}
-.hero .lede{margin:0 auto 26px;max-width:none;white-space:nowrap;font-size:clamp(11px,1.22vw,19px)}
+.hero .lede{margin:0 auto 26px;max-width:none;white-space:nowrap;font-size:clamp(9px,1.02vw,15px)}
 .hero-rule{
   width:min(460px,70%);height:1px;background:rgba(244,242,238,.22);margin:30px auto 0;
   transform-origin:center;
@@ -154,7 +154,7 @@ h1,h2,h3,p{margin:0}
 .pod:hover .pod-name{color:var(--on-stage)}
 .podium-note{
   position:relative;text-align:center;margin-top:clamp(28px,4vw,48px);
-  color:var(--on-stage-mid);font-family:var(--serif);font-style:italic;font-size:15px;
+  color:var(--on-stage-mid);font-family:var(--sans);font-weight:300;font-size:12.5px;letter-spacing:.02em;
 }
 
 /* ---------- bande de preuve ---------- */
@@ -187,9 +187,9 @@ h1,h2,h3,p{margin:0}
 .mm-caliper .tick.r{right:0}
 .mm-caliper .val{font-variant-numeric:lining-nums;
   position:absolute;top:18px;left:50%;transform:translateX(-50%);
-  font-family:var(--serif);font-size:19px;letter-spacing:.06em;
+  font-family:var(--sans);font-weight:300;font-size:15px;letter-spacing:.06em;
 }
-.mm-num{font-family:var(--serif);font-variant-numeric:lining-nums;letter-spacing:.01em;font-weight:300;font-size:clamp(58px,8vw,116px);line-height:.8;letter-spacing:-.04em}
+.mm-num{font-family:var(--serif);font-variant-numeric:lining-nums;letter-spacing:.01em;font-weight:300;font-size:clamp(50px,7vw,100px);line-height:.9;letter-spacing:-.04em}
 .mm-num small{font-size:.22em;letter-spacing:.12em;margin-left:.12em;vertical-align:.9em;color:var(--mid)}
 
 /* ---------- avant / après ---------- */
@@ -256,7 +256,7 @@ h1,h2,h3,p{margin:0}
   background:rgba(255,255,255,.22);transition:background .4s,transform .4s;
 }
 .colors-rail i.on{background:var(--c,#fff);transform:scale(1.5)}
-.colors-cap{margin-top:clamp(12px,2vw,20px);color:var(--on-stage-mid);font-family:var(--serif);font-style:italic;font-size:clamp(14px,1.2vw,17px)}
+.colors-cap{margin-top:clamp(12px,2vw,20px);color:var(--on-stage-mid);font-family:var(--sans);font-weight:300;font-size:clamp(12px,1vw,14px);letter-spacing:.02em}
 
 /* ---------- poli / mat ---------- */
 .fin-switch{display:flex;justify-content:center;gap:0;margin:clamp(24px,3.4vw,40px) 0 clamp(28px,4vw,48px)}
