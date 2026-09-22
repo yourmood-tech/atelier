@@ -52,27 +52,40 @@ h1,h2,h3,p{margin:0}
 .btn-c{background:var(--c);color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.16)}
 .btn-c:hover{background:var(--c);filter:brightness(.94)}
 
-/* ---------- ouverture : la bague qui change de couleur ---------- */
-.hero{position:relative;overflow:hidden;padding-block:clamp(44px,5.2vw,78px) clamp(40px,5vw,72px)}
+/* ---------- ouverture : fond blanc, la bague qui change de couleur ---------- */
+.hero{
+  position:relative;overflow:hidden;background:#fff;text-align:center;
+  padding-block:clamp(48px,6vw,92px) clamp(40px,5vw,70px);
+}
 .hero::before{
   content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse 58% 52% at 50% 42%,var(--c-soft),transparent 70%);
-  transition:background .8s ease;pointer-events:none;
+  background:radial-gradient(ellipse 52% 46% at 50% 56%,var(--c-soft),transparent 68%);
+  transition:background 1.1s ease;pointer-events:none;
 }
-.hero-in{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:center}
-.hero-fig{position:relative;background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden}
-.hero-fig img{
-  width:100%;
-  transition:opacity .45s ease,transform .8s cubic-bezier(.2,.7,.2,1);
+.hero-in{position:relative}
+.hero .eyebrow{margin-bottom:16px}
+.hero .h1{margin:0 0 14px}
+.hero .h1 .tint{color:var(--c);transition:color 1.1s ease}
+.hero .lede{margin:0 auto 26px;text-align:center}
+
+.stage{
+  position:relative;width:min(560px,86vw);margin:clamp(6px,1.4vw,18px) auto clamp(14px,2vw,22px);
+  aspect-ratio:1/1;
 }
-.hero-fig.swap img{opacity:0;transform:scale(.985)}
+.stage img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  opacity:0;transition:opacity 1.1s ease;
+  animation:flotte 7s ease-in-out infinite;
+}
+.stage img.on{opacity:1}
+@keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .hero-copy .h1{margin:14px 0 18px}
 .hero-copy .lede{margin-bottom:26px}
 .price{font-family:var(--serif);font-size:clamp(24px,2.3vw,32px);margin:0 0 6px}
 .price small{font-size:13px;font-family:var(--sans);color:var(--mid);letter-spacing:.04em;margin-left:8px}
 .hero-note{font-size:11.5px;color:var(--mid);margin-top:14px;letter-spacing:.02em}
 
-.swatches{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 20px}
+.swatches{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 20px;justify-content:center}
 .sw{
   width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
   background:var(--sc);cursor:pointer;padding:0;position:relative;
@@ -172,22 +185,18 @@ h1,h2,h3,p{margin:0}
 
 <section class="hero">
   <div class="wrap hero-in">
-    <div class="hero-copy">
-      <span class="eyebrow">mood Chromaline · pack découverte</span>
-      <h1 class="display h1">Une bague.<br>Sept humeurs.</h1>
-      <p class="lede">La plus fine des bagues mood : 9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux interchangeables dans le pack — tu changes de couleur comme tu changes d'avis.</p>
+    <span class="eyebrow">mood Chromaline · pack découverte</span>
+    <h1 class="display h1">Une bague.<br><span class="tint">Sept humeurs.</span></h1>
+    <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
 
-      <p class="sw-name" id="colorName">Acier brossé</p>
-      <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
+    <div class="stage" id="stage"></div>
 
-      <p class="price">197<small>CHF · pack découverte, 3 anneaux inclus</small></p>
-      <a class="btn btn-c" id="buy" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je choisis la mienne</a>
-      <p class="hero-note">Argent 925 · acier 316L · 9 mm · garantie à vie · échange gratuit 15 jours</p>
-    </div>
+    <p class="sw-name" id="colorName">Acier brossé</p>
+    <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
 
-    <div class="hero-fig" id="heroFig">
-      <img id="heroImg" src="https://cdn.shopify.com/s/files/1/0798/2303/files/chromaline-acier.jpg" alt="Bague mood Chromaline en acier brossé, argent 925 et zircons">
-    </div>
+    <p class="price">197<small>CHF · pack découverte, 3 anneaux inclus</small></p>
+    <p><a class="btn btn-c" id="buy" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je choisis la mienne</a></p>
+    <p class="hero-note">Argent 925 · acier 316L · 9 mm · garantie à vie · échange gratuit 15 jours</p>
   </div>
 </section>
 
@@ -313,8 +322,7 @@ h1,h2,h3,p{margin:0}
             '7e5f470243ed4c68993e864428fb1093','cd040d593f6c4f92ba9a50048094a5ad'];
 
   var root=document.documentElement;
-  var fig=document.getElementById('heroFig');
-  var img=document.getElementById('heroImg');
+  var stage=document.getElementById('stage');
   var nom=document.getElementById('colorName');
   var sws=document.getElementById('swatches');
   var seven=document.getElementById('seven');
@@ -358,22 +366,38 @@ h1,h2,h3,p{margin:0}
     reel.appendChild(f);
   });
 
-  function choisir(i){
-    if(i===current && img.src.indexOf(COLORS[i].img)>-1) return;
+  /* les sept photos empilées : on les fait juste apparaître l'une après l'autre */
+  var couches=[];
+  COLORS.forEach(function(col,i){
+    var im=document.createElement('img');
+    im.src=CDN+col.img;
+    im.alt='Bague mood Chromaline '+col.nom+', argent 925 et zircons';
+    im.style.animationDelay=(i*0.4)+'s';
+    if(i===0) im.className='on';
+    stage.appendChild(im);
+    couches.push(im);
+  });
+
+  function choisir(i,auto){
     current=i;
     var col=COLORS[i];
     root.style.setProperty('--c',col.c);
     root.style.setProperty('--c-soft',col.soft);
     nom.textContent=col.nom;
-    fig.classList.add('swap');
-    setTimeout(function(){
-      img.src=CDN+col.img;
-      img.alt='Bague mood Chromaline '+col.nom+', argent 925 et zircons';
-      fig.classList.remove('swap');
-    },260);
+    for(var k=0;k<couches.length;k++) couches[k].classList.toggle('on',k===i);
     var bs=sws.querySelectorAll('.sw');
-    for(var k=0;k<bs.length;k++) bs[k].setAttribute('aria-pressed', k===i?'true':'false');
+    for(var k2=0;k2<bs.length;k2++) bs[k2].setAttribute('aria-pressed', k2===i?'true':'false');
+    if(!auto) arreter();
   }
+
+  /* défilé automatique, jusqu'à ce qu'on choisisse */
+  var minuteur=null, libre=true;
+  function demarrer(){
+    if(!libre) return;
+    minuteur=setInterval(function(){ choisir((current+1)%COLORS.length,true); },2600);
+  }
+  function arreter(){ libre=false; if(minuteur){ clearInterval(minuteur); minuteur=null; } }
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) demarrer();
 
   /* révélation douce */
   var io=new IntersectionObserver(function(es){
