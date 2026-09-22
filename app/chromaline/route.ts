@@ -150,6 +150,17 @@ h1,h2,h3,p{margin:0}
 .sw-name{font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:var(--ink);min-height:18px}
 
 /* ---------- finesse ---------- */
+.duo-cartes{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.6vw,34px)}
+.carte-info{
+  margin:0;background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.carte-info img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+.carte-info figcaption{padding:clamp(20px,2.6vw,32px)}
+.carte-info .eyebrow{margin-bottom:10px}
+.carte-info h3{margin:0 0 10px}
+.carte-info p{font-size:14px;color:var(--mid);line-height:1.7}
+@media (max-width:820px){ .duo-cartes{grid-template-columns:1fr} }
 .two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:center}
 .mouv{align-items:center}
 .mouv .film{display:flex;flex-direction:column;overflow:hidden;aspect-ratio:1/1;max-height:560px}
@@ -389,6 +400,31 @@ h1,h2,h3,p{margin:0}
     </figure>
   </div>
 </section>
+
+<section class="band band-cream">
+  <div class="wrap">
+    <div class="duo-cartes">
+      <figure class="carte-info reveal">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/chromaline-schema.jpg" alt="Silhouette ultra fine" loading="lazy">
+        <figcaption>
+          <span class="eyebrow">Silhouette ultra fine</span>
+          <h3 class="display h3">Une silhouette ultra fine</h3>
+          <p>La bague interchangeable la plus fine au monde. Conserve la libert&eacute; de changer et offre-toi la d&eacute;licatesse du bijou.</p>
+        </figcaption>
+      </figure>
+
+      <figure class="carte-info reveal d1">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/collection-couleurs-chromaline-mood.jpg" alt="7 combos de couleurs" loading="lazy">
+        <figcaption>
+          <span class="eyebrow">7 combos de couleurs</span>
+          <h3 class="display h3">7 combos de couleurs &agrave; collectionner</h3>
+          <p>Acier froiss&eacute;, Turquoise, Belipastel, Rouge Swiss Edition, Bleu Marine, &Eacute;meraude, Abricot &mdash; &agrave; combiner selon tes looks et humeurs.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
 
 <section class="band band-cream" id="achat">
   <div class="wrap two">
