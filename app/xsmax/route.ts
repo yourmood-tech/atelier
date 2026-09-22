@@ -215,7 +215,7 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- univers couleur (collant) ---------- */
 .colors{position:relative;background:var(--stage)}
-.colors-track{height:420vh}
+.colors-track{height:210vh}
 .colors-sticky{
   position:sticky;top:0;height:100vh;overflow:hidden;
   display:grid;place-items:center;
