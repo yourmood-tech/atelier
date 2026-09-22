@@ -151,11 +151,10 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- finesse ---------- */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:center}
-.mouv{align-items:stretch}
-.mouv .film{display:flex;flex-direction:column;overflow:hidden}
+.mouv{align-items:center}
+.mouv .film{display:flex;flex-direction:column;overflow:hidden;aspect-ratio:1/1;max-height:560px}
 .mouv .film video{flex:1 1 auto;width:100%;min-height:0;object-fit:cover;display:block}
-.mouv .film .cap{background:#0d0d0d;color:#8e8c88}
-@media (max-width:900px){ .mouv .film video{height:min(78vh,620px);flex:none} }
+.mouv .film .cap{background:#0d0d0d;color:#8e8c88;flex:none}
 .figure{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .figure img{width:100%}
 .duos{position:relative;display:block;width:100%;aspect-ratio:1100/738}
