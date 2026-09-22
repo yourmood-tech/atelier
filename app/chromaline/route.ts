@@ -78,12 +78,13 @@ h1,h2,h3,p{margin:0}
 
 .stage{
   position:relative;display:inline-block;vertical-align:middle;
-  width:clamp(88px,15.5vw,236px);aspect-ratio:1/1;
-  margin:0 clamp(-10px,-1.4vw,-4px);
+  width:clamp(96px,17vw,258px);aspect-ratio:1/1;
+  margin:0 0 0 clamp(-14px,-1.6vw,-6px);
 }
 .stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transition:opacity 1.1s ease;
+  mix-blend-mode:multiply;          /* le fond blanc du film disparaît */
 }
 .stage video.on, .stage img.on{opacity:1}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -195,7 +196,7 @@ h1,h2,h3,p{margin:0}
   <div class="wrap hero-in">
     <span class="eyebrow">mood · pack découverte</span>
     <h1 class="display h1 nom">
-      <span class="tint">Chroma</span><span class="stage" id="stage" aria-hidden="true"></span><span class="tint">line</span>
+      <span class="tint">Chromaline</span><span class="stage" id="stage" aria-hidden="true"></span>
     </h1>
     <p class="sous">Une bague. Sept humeurs.</p>
     <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
