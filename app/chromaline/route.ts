@@ -161,8 +161,13 @@ h1,h2,h3,p{margin:0}
   cursor:pointer;transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s;
 }
 .card:hover{transform:translateY(-6px);box-shadow:0 18px 34px rgba(25,25,23,.10)}
-.card img{width:100%;aspect-ratio:1/1;object-fit:cover}
-.card .nm{padding:12px 10px 16px;text-align:center;font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mid)}
+.card{position:relative;border:0;background:none}
+.card .duo{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:4px;background:#fff}
+.card .duo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .55s ease,transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.card .duo .main{opacity:0}
+.card:hover .duo .main,.card:focus-visible .duo .main{opacity:1;transform:scale(1.03)}
+.card:hover .duo .carte,.card:focus-visible .duo .carte{opacity:0}
+.card .nm{padding:12px 10px 4px;text-align:center;font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mid)}
 .card .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sc);margin-right:8px;vertical-align:1px}
 
 /* ---------- portées ---------- */
@@ -278,7 +283,7 @@ h1,h2,h3,p{margin:0}
   <div class="wrap center">
     <span class="eyebrow">Sept couleurs</span>
     <h2 class="display h2 reveal" style="margin:14px 0 12px">Choisis ton humeur du jour.</h2>
-    <p class="lede reveal d1" style="margin:0 auto">Clique une couleur : elle prend toute la page — et le bouton d'en haut te la garde.</p>
+    <p class="lede reveal d1" style="margin:0 auto">Passe sur une humeur — tu la vois au doigt. Clique, et elle remonte en haut de page.</p>
     <div class="seven" id="seven"></div>
   </div>
 </section>
@@ -345,13 +350,13 @@ h1,h2,h3,p{margin:0}
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var COLORS=[
-    {k:'acier',   nom:'Acier brossé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier'},
-    {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise'},
-    {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel'},
-    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red'},
-    {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg',film:'bleu-marine'},
-    {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude'},
-    {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot'}
+    {k:'acier',   nom:'Acier brossé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste'},
+    {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise', humeur:'Serein(e)'},
+    {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel', humeur:'Rêveur(se)'},
+    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)'},
+    {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg',film:'bleu-marine', humeur:'Assuré(e)'},
+    {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude', humeur:'Précieux(se)'},
+    {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot', humeur:'Solaire'}
   ];
   var VIDS=['ed958f4f94f84fc38bf80ba505be60f6','8ccc5d2feb60427f979a52826b86753d',
             'ce77b0ff357a4f86bdf0af4ca3714f6d','365d3f179d73410486295791701a5bda',
@@ -381,7 +386,10 @@ h1,h2,h3,p{margin:0}
   COLORS.forEach(function(col,i){
     var d=document.createElement('button');
     d.type='button'; d.className='card'; d.style.setProperty('--sc',col.c);
-    d.innerHTML='<img src="'+CDN+col.img+'" alt="Bague mood Chromaline '+col.nom+'" loading="lazy">'+
+    d.innerHTML='<span class="duo">'+
+                  '<img class="carte" src="/chromaline/carte-'+col.film+'.jpg" alt="Nuancier '+col.humeur+'" loading="lazy">'+
+                  '<img class="main" src="/chromaline/main-'+col.film+'.jpg" alt="Bague mood Chromaline '+col.nom+' portée au doigt" loading="lazy">'+
+                '</span>'+
                 '<span class="nm"><i class="dot"></i>'+col.nom+'</span>';
     d.addEventListener('click',function(){
       choisir(i);
