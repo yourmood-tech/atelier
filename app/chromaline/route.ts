@@ -64,7 +64,12 @@ h1,h2,h3,p{margin:0}
 }
 .hero-in{position:relative}
 .hero .eyebrow{margin-bottom:16px}
-.hero .h1{margin:0 0 14px}
+.hero .h1{margin:0 0 10px}
+.hero .nom{font-size:clamp(46px,8.2vw,124px);letter-spacing:-.02em;line-height:1}
+.hero .sous{
+  font-family:var(--serif);font-size:clamp(19px,2.2vw,32px);color:var(--ink);
+  margin:0 0 16px;letter-spacing:-.005em;
+}
 .hero .h1 .tint{color:var(--c);transition:color 1.1s ease}
 .hero .lede{margin:0 auto 26px;text-align:center}
 
@@ -184,8 +189,9 @@ h1,h2,h3,p{margin:0}
 
 <section class="hero">
   <div class="wrap hero-in">
-    <span class="eyebrow">mood Chromaline · pack découverte</span>
-    <h1 class="display h1">Une bague.<br><span class="tint">Sept humeurs.</span></h1>
+    <span class="eyebrow">mood · pack découverte</span>
+    <h1 class="display h1 nom"><span class="tint">Chromaline</span></h1>
+    <p class="sous">Une bague. Sept humeurs.</p>
     <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
 
     <div class="stage" id="stage"></div>
