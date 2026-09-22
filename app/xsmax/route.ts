@@ -215,7 +215,7 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- univers couleur (collant) ---------- */
 .colors{position:relative;background:var(--stage)}
-.colors-track{height:210vh}
+.colors-track{height:150vh}
 .colors-sticky{
   position:sticky;top:0;height:100vh;overflow:hidden;
   display:grid;place-items:center;
@@ -237,7 +237,7 @@ h1,h2,h3,p{margin:0}
 }
 .colors-word span.on{opacity:1;transform:none}
 .colors-media{
-  position:relative;height:min(56vh,470px);margin:clamp(14px,2.6vw,30px) auto 0;
+  position:relative;height:min(52vh,430px);margin:clamp(10px,1.8vw,20px) auto 0;
   display:grid;place-items:center;
 }
 .colors-media video{
@@ -468,7 +468,7 @@ h1,h2,h3,p{margin:0}
 <section class="band band-cream">
   <div class="wrap center">
     <span class="eyebrow">Deux finitions</span>
-    <h2 class="display h-l reveal" style="margin-top:16px">Brillante ou sourde.</h2>
+    <h2 class="display h-l reveal" style="margin-top:16px">Polie ou mat.</h2>
     <div class="fin-switch" role="group" aria-label="Choisir la finition">
       <button type="button" id="btnPoli" aria-pressed="true">Poli</button>
       <button type="button" id="btnMat" aria-pressed="false">Mat</button>
