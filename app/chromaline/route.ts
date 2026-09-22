@@ -108,7 +108,7 @@ h1,h2,h3,p{margin:0}
   opacity:0;transition:opacity 1.1s ease;
 }
 .stage video{mix-blend-mode:multiply;}   /* le fond blanc du film disparaît */
-.stage-big img{mix-blend-mode:multiply;} /* la photo se fond dans le blanc */
+
 .stage video.on, .stage img.on{opacity:1}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .hero-copy .h1{margin:14px 0 18px}
