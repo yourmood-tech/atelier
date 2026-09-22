@@ -288,25 +288,7 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
-<section class="band">
-  <div class="wrap">
-    <div class="center">
-      <span class="eyebrow">Portée</span>
-      <h2 class="display h2 reveal" style="margin:14px 0 12px">Au quotidien, elle se fait oublier.</h2>
-    </div>
-    <div class="gal reveal" style="margin-top:clamp(24px,3vw,40px)">
-      <figure><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/image-chromaline-lifestyle-femme-manucure-ongles-rose.jpg" alt="Chromaline portée, manucure rose" loading="lazy"></figure>
-      <figure><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/image-lifestyle-femme-montre-whoop-turquoise-chromaline.jpg" alt="Chromaline turquoise portée avec une montre" loading="lazy"></figure>
-      <figure><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/image-lifestyle-femme-chromaline-emeraude-sac-_a-main.jpg" alt="Chromaline émeraude portée, sac à main" loading="lazy"></figure>
-      <figure><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/image-lifestyle-femme-bracelet-pandora-charms-bleu-marine-chromaline.jpg" alt="Chromaline bleu marine portée avec un bracelet à charms" loading="lazy"></figure>
-      <figure><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/photo-lifestyle-femme-chromaline-acier-froisse.jpg" alt="Chromaline acier portée" loading="lazy"></figure>
-      <figure><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/photo-lifestyle-femme-chromaline-rose.jpg" alt="Chromaline rose portée" loading="lazy"></figure>
-    </div>
 
-    <div class="reel reveal d1" id="reel"></div>
-    <p class="cap" style="text-align:center">Passe sur une vidéo — elle démarre.</p>
-  </div>
-</section>
 
 <section class="band band-cream">
   <div class="wrap center">
