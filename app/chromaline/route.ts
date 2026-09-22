@@ -150,6 +150,28 @@ h1,h2,h3,p{margin:0}
   position:relative;padding-left:22px;margin-bottom:9px;
   font-size:clamp(13px,1vw,14.5px);color:var(--mid);line-height:1.65;
 }
+.acheter{max-width:520px}
+.acheter .etape{font-size:10px;letter-spacing:3.2px;text-transform:uppercase;color:var(--mid);margin:0 0 8px}
+.acheter .choix-nom{font-family:var(--serif);font-size:22px;margin:0 0 12px}
+.acheter .swatches{justify-content:flex-start;margin:0 0 10px}
+.acheter .mini{font-size:12px;color:var(--mid);line-height:1.6;margin:6px 0 0}
+.acheter .mini a{border-bottom:1px solid var(--line)}
+.tailles{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+.tailles button{
+  font:inherit;font-size:12.5px;min-width:46px;padding:9px 6px;cursor:pointer;
+  background:#fff;border:1px solid var(--line);border-radius:3px;color:var(--ink);
+  transition:border-color .2s,background .2s,color .2s;
+}
+.tailles button:hover{border-color:var(--c)}
+.tailles button[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+.prix{margin:22px 0 0;font-family:var(--serif)}
+.prix s{color:var(--mid);font-size:19px;margin-right:12px}
+.prix b{font-weight:400;font-size:34px}
+.btn-large{padding:18px 40px;font-size:12.5px}
+.paiements{font-size:11.5px;color:var(--mid);letter-spacing:.06em;margin:6px 0 0}
+.rassure{margin:20px 0 0;padding:0;list-style:none;display:grid;gap:7px}
+.rassure li{font-size:12.5px;color:var(--mid);position:relative;padding-left:20px}
+.rassure li::before{content:"\\2713";position:absolute;left:0;color:var(--c);transition:color .8s ease}
 .atouts li::before{
   content:"";position:absolute;left:0;top:.62em;width:10px;height:1px;background:var(--c);
   transition:background .8s ease;
@@ -310,6 +332,41 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
+<section class="band band-cream" id="achat">
+  <div class="wrap two">
+    <div class="stage stage-big reveal" id="stageAchat"></div>
+
+    <div class="acheter reveal d1">
+      <p class="etape">1 &middot; Couleur</p>
+      <p class="choix-nom" id="colorName2">Acier bross&eacute;</p>
+      <div class="swatches" id="swatches2" role="group" aria-label="Choisir la couleur"></div>
+      <p class="mini">*la couleur des anneaux peut l&eacute;g&egrave;rement varier selon la lumi&egrave;re ambiante.</p>
+
+      <p class="etape" style="margin-top:26px">2 &middot; Taille</p>
+      <div class="tailles" id="tailles" role="group" aria-label="Choisir la taille"></div>
+      <p class="mini"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a> &middot; <a href="https://www.yourmood.net/search?q=baguier">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a></p>
+      <p class="mini">&#10003; En cas de mauvaise taille, nous &eacute;changeons la bague sans discussion.</p>
+
+      <p class="prix"><s>479 CHF</s><b>197 CHF</b></p>
+      <p class="mini">Prix du pack d&eacute;couverte &middot; 1 base ultra fine + 3 anneaux inclus</p>
+      <p class="mini">ou paie en 3&times; 65.67 CHF avec Powerpay</p>
+
+      <p style="margin-top:18px"><a class="btn btn-c btn-large" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a></p>
+
+      <p class="mini" style="margin-top:16px;letter-spacing:2.4px;text-transform:uppercase">Paiement 100 % s&eacute;curis&eacute;</p>
+      <p class="paiements">Visa &middot; Mastercard &middot; TWINT &middot; PayPal &middot; Apple Pay &middot; Klarna</p>
+
+      <ul class="rassure">
+        <li>Argent 925 &middot; Acier 316L &middot; 9 mm</li>
+        <li>&Eacute;change gratuit 15 jours</li>
+        <li>Garantie &agrave; vie</li>
+        <li>Swiss design depuis 2004</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+
 
 <section class="band">
   <div class="wrap center">
@@ -389,20 +446,41 @@ h1,h2,h3,p{margin:0}
   var root=document.documentElement;
   var stage=document.getElementById('stage');
   var stageBig=document.getElementById('stageBig');
+  var stageAchat=document.getElementById('stageAchat');
+  var sws2=document.getElementById('swatches2');
+  var nom2=document.getElementById('colorName2');
   var nom=document.getElementById('colorName');
   var sws=document.getElementById('swatches');
   var seven=document.getElementById('seven');
   var current=0;
 
   /* pastilles */
-  COLORS.forEach(function(col,i){
-    var b=document.createElement('button');
-    b.type='button'; b.className='sw'; b.style.setProperty('--sc',col.c);
-    b.setAttribute('aria-pressed', i===0?'true':'false');
-    b.setAttribute('aria-label', col.nom);
-    b.addEventListener('click',function(){ choisir(i); });
-    sws.appendChild(b);
+  [sws, sws2].forEach(function(hote){
+    if(!hote) return;
+    COLORS.forEach(function(col,i){
+      var b=document.createElement('button');
+      b.type='button'; b.className='sw'; b.style.setProperty('--sc',col.c);
+      b.setAttribute('aria-pressed', i===0?'true':'false');
+      b.setAttribute('aria-label', col.nom);
+      b.addEventListener('click',function(){ choisir(i); });
+      hote.appendChild(b);
+    });
   });
+
+  /* les tailles */
+  var tailles=document.getElementById('tailles');
+  if(tailles){
+    ['50','52','54','56','58','60','62','64','66','68','70','72'].forEach(function(t){
+      var b=document.createElement('button');
+      b.type='button'; b.textContent=t;
+      b.setAttribute('aria-pressed', t==='58'?'true':'false');
+      b.addEventListener('click',function(){
+        tailles.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+        b.setAttribute('aria-pressed','true');
+      });
+      tailles.appendChild(b);
+    });
+  }
 
   /* les sept en grand */
   COLORS.forEach(function(col,i){
@@ -446,6 +524,8 @@ h1,h2,h3,p{margin:0}
   }
   poser(stage, couches, false);       /* le titre : la bague qui tourne */
   poser(stageBig, couchesBig, true);  /* le choix des couleurs : les photos */
+  var couchesAchat=[];
+  poser(stageAchat, couchesAchat, true);
   function jouerListe(liste,i){
     liste.forEach(function(v,k){
       if(!v.play) return;
@@ -463,9 +543,14 @@ h1,h2,h3,p{margin:0}
     root.style.setProperty('--c',col.c);
     root.style.setProperty('--c-soft',col.soft);
     nom.textContent=col.nom;
+    if(nom2) nom2.textContent=col.nom;
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
-    var bs=sws.querySelectorAll('.sw');
-    for(var k2=0;k2<bs.length;k2++) bs[k2].setAttribute('aria-pressed', k2===i?'true':'false');
+    for(var ka=0;ka<couchesAchat.length;ka++) couchesAchat[ka].classList.toggle('on',ka===i);
+    [sws,sws2].forEach(function(hote){
+      if(!hote) return;
+      var bs=hote.querySelectorAll('.sw');
+      for(var k2=0;k2<bs.length;k2++) bs[k2].setAttribute('aria-pressed', k2===i?'true':'false');
+    });
   }
 
   /* le titre vit sa vie : la bague tourne et change de couleur en boucle */
