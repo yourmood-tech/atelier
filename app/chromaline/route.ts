@@ -89,6 +89,8 @@ h1,h2,h3,p{margin:0}
   gap:clamp(20px,3.4vw,56px);max-width:960px;margin:clamp(10px,2vw,26px) auto 0;
   text-align:left;
 }
+.choix-txt .sous{margin:0 0 12px;text-align:left}
+.choix-txt .lede{margin:0 0 22px;text-align:left;max-width:40ch}
 .choix-txt .sw-name{margin:0 0 10px}
 .choix-txt .swatches{justify-content:flex-start;margin:0 0 20px}
 .choix-txt .price{margin:0 0 14px}
@@ -98,6 +100,7 @@ h1,h2,h3,p{margin:0}
   .choix-txt{order:2}
   .choix .stage-big{order:1}
   .choix-txt .swatches{justify-content:center}
+  .choix-txt .sous,.choix-txt .lede{text-align:center;margin-left:auto;margin-right:auto}
 }
 .stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
@@ -216,11 +219,11 @@ h1,h2,h3,p{margin:0}
     <h1 class="display h1 nom">
       <span class="tint">Chromaline</span><span class="stage" id="stage" aria-hidden="true"></span>
     </h1>
-    <p class="sous">Une bague. Sept humeurs.</p>
-    <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
 
     <div class="choix">
       <div class="choix-txt">
+        <p class="sous">Une bague. Sept humeurs.</p>
+        <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
         <p class="sw-name" id="colorName">Acier brossé</p>
         <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
         <p class="price">197<small>CHF · pack découverte, 3 anneaux inclus</small></p>
