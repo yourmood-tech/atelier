@@ -17,6 +17,11 @@ export default auth((req) => {
     return;
   }
 
+  // /xsmax (maquette de lancement de la base mood XS MAX — lien à montrer à l'équipe)
+  if (pathname === "/xsmax" || pathname.startsWith("/xsmax/")) {
+    return;
+  }
+
   // /sondage (page publique pour clientes) — exclut /sondage/admin
   if (pathname === "/sondage" || (pathname.startsWith("/sondage/") && !pathname.startsWith("/sondage/admin"))) {
     return;
