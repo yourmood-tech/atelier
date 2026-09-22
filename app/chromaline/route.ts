@@ -150,6 +150,28 @@ h1,h2,h3,p{margin:0}
 .sw-name{font-size:12px;letter-spacing:2.4px;text-transform:uppercase;color:var(--ink);min-height:18px}
 
 /* ---------- finesse ---------- */
+.reel{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.4vw,16px)}
+.reel figure{position:relative;margin:0;overflow:hidden;border-radius:4px;background:#111;aspect-ratio:9/16;cursor:pointer}
+.reel video{width:100%;height:100%;object-fit:cover;display:block}
+.faq{max-width:840px;margin:0 auto}
+.q{border-bottom:1px solid var(--line);padding:4px 0}
+.q summary{
+  cursor:pointer;list-style:none;padding:18px 34px 18px 0;position:relative;
+  font-family:var(--serif);font-size:clamp(16px,1.5vw,20px);color:var(--ink);
+}
+.q summary::-webkit-details-marker{display:none}
+.q summary::after{content:"+";position:absolute;right:6px;top:16px;font-size:20px;color:var(--c);transition:transform .25s,color .8s}
+.q[open] summary::after{content:"\\2013"}
+.q p{padding:0 10px 20px 0;font-size:14px;color:var(--mid);line-height:1.75}
+.contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,2vw,24px);max-width:940px;margin:0 auto}
+.contact{
+  background:#fff;border:1px solid var(--line);border-radius:6px;padding:clamp(20px,2.4vw,30px);
+  display:grid;gap:8px;transition:transform .3s,box-shadow .3s;
+}
+.contact:hover{transform:translateY(-4px);box-shadow:0 16px 30px rgba(25,25,23,.08)}
+.contact b{font-family:var(--serif);font-weight:400;font-size:17px}
+.contact i{font-style:normal;font-size:12.5px;color:var(--mid)}
+@media (max-width:820px){ .reel{grid-template-columns:repeat(2,1fr)} .contacts{grid-template-columns:1fr} }
 .duo-cartes{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2.6vw,34px)}
 .carte-info{
   margin:0;background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden;
@@ -526,12 +548,66 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
+
+<section class="band">
+  <div class="wrap center">
+    <span class="eyebrow">Elles la portent</span>
+    <h2 class="display h2 reveal" style="margin:14px 0 12px">La bague qui vit avec sa communauté.</h2>
+    <p class="lede reveal d1" style="margin:0 auto clamp(24px,3vw,40px)">Passe sur une vidéo — elle démarre.</p>
+    <div class="reel" id="reel"></div>
+  </div>
+</section>
+
+<section class="band band-cream">
+  <div class="wrap">
+    <div class="center">
+      <span class="eyebrow">On répond</span>
+      <h2 class="display h2 reveal" style="margin:14px 0 12px">Questions fréquentes.</h2>
+      <p class="lede reveal d1" style="margin:0 auto clamp(24px,3vw,38px)">Tout ce que tu as besoin de savoir avant de glisser Chromaline à ton doigt.</p>
+    </div>
+    <div class="faq reveal">
+      <details class="q"><summary>Comment choisir ma taille de bague ?</summary><p>Les tailles vont de 50 à 72. Si tu connais déjà ta taille (en mm de tour de doigt), choisis-la directement. Sinon, mesure un anneau qui te va déjà avec une règle, ou consulte notre guide des tailles ci-dessus. Et surtout : l'échange est gratuit pendant 15 jours en cas de mauvaise taille, aucun stress.</p></details>
+      <details class="q"><summary>Et si je me trompe de taille ?</summary><p>Échange gratuit pendant 15 jours en cas de mauvaise taille — on s'occupe de tout. Tu nous écris, on t'envoie la bonne taille, tu renvoies la première. Simple.</p></details>
+      <details class="q"><summary>Quelle est la qualité de la bague ?</summary><p>La base Chromaline est en argent 925 et acier chirurgical 316L (hypoallergénique, inrayable), garantie à vie. Les anneaux interchangeables sont en aluminium anodisé, avec une palette de 7 combos de couleurs résistants à l'usure. Chaque bague est livrée avec sa carte d'authenticité.</p></details>
+      <details class="q"><summary>Combien de temps pour la livraison ?</summary><p>Nos créations sont fabriquées artisanalement, souvent après la commande. Les délais peuvent varier selon les pièces et la disponibilité des matériaux. En cas de besoin urgent (anniversaire, cadeau), contacte-nous — un traitement express peut être envisagé. Livraison en Suisse : 5 CHF, offerte dès 59 CHF d'achat.</p></details>
+      <details class="q"><summary>Puis-je acheter d'autres couleurs plus tard ?</summary><p>C'est tout le principe mood. Une fois ta base reçue, tu peux clipser n'importe quel addon de la collection — couleurs, métaux précieux, sertissages, éditions limitées. Plus de 40 variations existent déjà, et nous en sortons régulièrement.</p></details>
+      <details class="q"><summary>Puis-je payer en plusieurs fois ?</summary><p>Oui — paiement en 3× possible dès 100 CHF d'achat via Powerpay (Suisse uniquement), directement au moment du paiement. Carte bancaire, TWINT, PayPal et Apple/Google Pay sont aussi acceptés.</p></details>
+      <details class="q"><summary>Puis-je clipser des anneaux mood classiques sur la base Chromaline ?</summary><p>La base Chromaline est ultra fine (9 mm) et conçue pour les anneaux minis Chromaline. Les anneaux classiques mood (plus larges) ne sont pas compatibles — c'est ce qui fait toute la finesse du modèle.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap center">
+    <span class="eyebrow">Une question ?</span>
+    <h2 class="display h2 reveal" style="margin:14px 0 10px">On est là.</h2>
+    <p class="lede reveal d1" style="margin:0 auto clamp(24px,3vw,40px)">L'équipe mood te répond, du lundi au vendredi.</p>
+    <div class="contacts reveal">
+      <a class="contact" href="mailto:contact@yourmood.net">
+        <span class="eyebrow">Par email</span>
+        <b>contact@yourmood.net</b>
+        <i>Réponse sous 24 h</i>
+      </a>
+      <a class="contact" href="https://wa.me/41244544416">
+        <span class="eyebrow">Sur WhatsApp</span>
+        <b>+41 24 454 44 16</b>
+        <i>Réponse dans la journée</i>
+      </a>
+      <a class="contact" href="https://www.facebook.com/groups/moodlovers">
+        <span class="eyebrow">Rejoins la tribu</span>
+        <b>Groupe Facebook Mood Lovers</b>
+        <i>3 000+ membres actives</i>
+      </a>
+    </div>
+  </div>
+</section>
+
 <section class="final">
   <div class="wrap">
-    <span class="eyebrow">Pack découverte</span>
-    <h2 class="display h1" style="margin:14px 0 0">Prête à porter la plus fine ?</h2>
-    <p class="lede center" style="max-width:46ch">Une base en argent 925 et acier, trois anneaux de couleur, un écrin. 197 CHF, garantie à vie.</p>
-    <a class="btn btn-c" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je choisis la mienne</a>
+    <span class="eyebrow">Chromaline &middot; pack découverte</span>
+    <h2 class="display h1" style="margin:14px 0 0">Prête à porter<br>la plus fine ?</h2>
+    <p class="lede center" style="max-width:48ch"><s style="color:var(--mid)">479 CHF</s> <b style="color:var(--ink);font-weight:400">197 CHF</b> &middot; 9 mm à peine &middot; La bague qui dit oui à toutes les mains.</p>
+    <a class="btn-achat" style="max-width:420px;margin-left:auto;margin-right:auto" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a>
   </div>
 </section>
 
@@ -680,6 +756,24 @@ h1,h2,h3,p{margin:0}
   choisir(0);
   if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
     setInterval(function(){ titreCouleur((titre+1)%COLORS.length); duoSuivant(); },5200);
+  }
+
+  /* le mur de vidéos */
+  var VIDS=["8ccc5d2feb60427f979a52826b86753d", "ce77b0ff357a4f86bdf0af4ca3714f6d", "365d3f179d73410486295791701a5bda", "2a074996716b48d5b0dc9ee8af292e41", "36518517700d4ed2af71c7ded61e9926", "7e5f470243ed4c68993e864428fb1093", "cd040d593f6c4f92ba9a50048094a5ad", "ed958f4f94f84fc38bf80ba505be60f6"];
+  var reel=document.getElementById('reel');
+  if(reel){
+    VIDS.forEach(function(id){
+      var f=document.createElement('figure');
+      var v=document.createElement('video');
+      v.src='https://cdn.shopify.com/videos/c/o/v/'+id+'.mov';
+      v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline',''); v.preload='none';
+      f.appendChild(v);
+      var play=function(){ v.preload='auto'; var q=v.play(); if(q&&q.catch) q.catch(function(){}); };
+      f.addEventListener('mouseenter',play);
+      f.addEventListener('mouseleave',function(){ v.pause(); });
+      f.addEventListener('click',function(){ v.paused?play():v.pause(); });
+      reel.appendChild(f);
+    });
   }
 
   /* révélation douce */
