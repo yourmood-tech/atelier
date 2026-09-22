@@ -149,7 +149,7 @@ h1,h2,h3,p{margin:0}
 
 /* ---------- le clic ---------- */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,2.6vw,34px);margin-top:clamp(28px,4vw,52px)}
-.step{--pad:clamp(18px,2.4vw,30px);background:#fff;border:1px solid var(--line);border-radius:4px;padding:var(--pad);padding-bottom:0;text-align:center;overflow:hidden;display:flex;flex-direction:column}
+.step{--pad:clamp(18px,2.4vw,30px);background:#fff;border:1px solid var(--line);border-radius:4px;padding:var(--pad);text-align:center;overflow:hidden;display:flex;flex-direction:column}
 .step .n{
   display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;
   background:var(--c);color:#fff;font-size:12px;font-weight:500;margin-bottom:14px;
@@ -158,10 +158,8 @@ h1,h2,h3,p{margin:0}
 .step h3{font-family:var(--serif);font-size:19px;margin-bottom:8px}
 .step p{font-size:13.5px;color:var(--mid);line-height:1.6}
 .step .geste{
-  display:block;width:calc(100% + var(--pad) + var(--pad));
-  margin:auto calc(-1 * var(--pad)) 0;
-  margin-top:clamp(16px,2vw,24px);
-  border-radius:0 0 3px 3px;
+  display:block;width:100%;margin-top:auto;padding-top:clamp(16px,2vw,24px);
+  border-radius:3px;
 }
 
 /* ---------- les sept ---------- */
