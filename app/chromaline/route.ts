@@ -82,7 +82,22 @@ h1,h2,h3,p{margin:0}
   margin:0 0 0 clamp(-14px,-1.6vw,-6px);
 }
 .stage-big{
-  display:block;width:min(520px,84vw);margin:clamp(6px,1.2vw,16px) auto clamp(10px,1.6vw,18px);
+  display:block;width:100%;max-width:520px;margin:0 auto;
+}
+.choix{
+  display:grid;grid-template-columns:0.9fr 1.1fr;align-items:center;
+  gap:clamp(20px,3.4vw,56px);max-width:960px;margin:clamp(10px,2vw,26px) auto 0;
+  text-align:left;
+}
+.choix-txt .sw-name{margin:0 0 10px}
+.choix-txt .swatches{justify-content:flex-start;margin:0 0 20px}
+.choix-txt .price{margin:0 0 14px}
+.choix-txt .hero-note{margin-top:14px}
+@media (max-width:820px){
+  .choix{grid-template-columns:1fr;text-align:center}
+  .choix-txt{order:2}
+  .choix .stage-big{order:1}
+  .choix-txt .swatches{justify-content:center}
 }
 .stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
@@ -204,14 +219,16 @@ h1,h2,h3,p{margin:0}
     <p class="sous">Une bague. Sept humeurs.</p>
     <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
 
-    <div class="stage stage-big" id="stageBig"></div>
-
-    <p class="sw-name" id="colorName">Acier brossé</p>
-    <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
-
-    <p class="price">197<small>CHF · pack découverte, 3 anneaux inclus</small></p>
-    <p><a class="btn btn-c" id="buy" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je choisis la mienne</a></p>
-    <p class="hero-note">Argent 925 · acier 316L · 9 mm · garantie à vie · échange gratuit 15 jours</p>
+    <div class="choix">
+      <div class="choix-txt">
+        <p class="sw-name" id="colorName">Acier brossé</p>
+        <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
+        <p class="price">197<small>CHF · pack découverte, 3 anneaux inclus</small></p>
+        <p><a class="btn btn-c" id="buy" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je choisis la mienne</a></p>
+        <p class="hero-note">Argent 925 · acier 316L · 9 mm · garantie à vie · échange gratuit 15 jours</p>
+      </div>
+      <div class="stage stage-big" id="stageBig"></div>
+    </div>
   </div>
 </section>
 
