@@ -84,6 +84,7 @@ h1,h2,h3,p{margin:0}
 }
 .stage-big{
   display:block;width:100%;max-width:520px;margin:0 auto;
+  border-radius:6px;overflow:hidden;
 }
 .choix{
   display:grid;grid-template-columns:0.9fr 1.1fr;align-items:center;
@@ -402,7 +403,7 @@ h1,h2,h3,p{margin:0}
       var el;
       if(enPhoto){
         el=document.createElement('img');
-        el.src='/chromaline/photo-'+col.film+'.jpg';
+        el.src='/chromaline/fond-'+col.film+'.jpg';
         el.alt='Bague mood Chromaline '+col.nom+', argent 925 et zircons';
         el.loading = i===0 ? 'eager' : 'lazy';
       } else {
