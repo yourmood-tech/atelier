@@ -65,7 +65,10 @@ h1,h2,h3,p{margin:0}
 .hero-in{position:relative}
 .hero .eyebrow{margin-bottom:16px}
 .hero .h1{margin:0 0 10px}
-.hero .nom{font-size:clamp(46px,8.2vw,124px);letter-spacing:-.02em;line-height:1}
+.hero .nom{
+  font-size:clamp(40px,7.4vw,112px);letter-spacing:-.02em;line-height:1.05;
+  display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap;
+}
 .hero .sous{
   font-family:var(--serif);font-size:clamp(19px,2.2vw,32px);color:var(--ink);
   margin:0 0 16px;letter-spacing:-.005em;
@@ -74,8 +77,9 @@ h1,h2,h3,p{margin:0}
 .hero .lede{margin:0 auto 26px;text-align:center}
 
 .stage{
-  position:relative;width:min(560px,86vw);margin:clamp(6px,1.4vw,18px) auto clamp(14px,2vw,22px);
-  aspect-ratio:1/1;
+  position:relative;display:inline-block;vertical-align:middle;
+  width:clamp(88px,15.5vw,236px);aspect-ratio:1/1;
+  margin:0 clamp(-10px,-1.4vw,-4px);
 }
 .stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
@@ -190,11 +194,11 @@ h1,h2,h3,p{margin:0}
 <section class="hero">
   <div class="wrap hero-in">
     <span class="eyebrow">mood · pack découverte</span>
-    <h1 class="display h1 nom"><span class="tint">Chromaline</span></h1>
+    <h1 class="display h1 nom">
+      <span class="tint">Chroma</span><span class="stage" id="stage" aria-hidden="true"></span><span class="tint">line</span>
+    </h1>
     <p class="sous">Une bague. Sept humeurs.</p>
     <p class="lede">9 mm à peine, en argent 925 et acier chirurgical. Trois anneaux de couleur dans le pack — tu changes d'humeur comme tu changes d'avis.</p>
-
-    <div class="stage" id="stage"></div>
 
     <p class="sw-name" id="colorName">Acier brossé</p>
     <div class="swatches" id="swatches" role="group" aria-label="Choisir la couleur"></div>
