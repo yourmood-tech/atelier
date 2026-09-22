@@ -137,6 +137,9 @@ h1,h2,h3,p{margin:0}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px);align-items:center}
 .figure{background:#fff;border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .figure img{width:100%}
+.duos{position:relative;display:block;width:100%;aspect-ratio:1100/738}
+.duos img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.1s ease}
+.duos img.on{opacity:1}
 .cap{font-size:11px;letter-spacing:2.2px;text-transform:uppercase;color:var(--mid);padding:12px 16px;text-align:center}
 .mm-num{font-family:var(--serif);font-size:clamp(56px,7vw,104px);line-height:.9;letter-spacing:-.03em;font-variant-numeric:lining-nums}
 .mm-num small{font-size:.2em;letter-spacing:.14em;color:var(--mid);margin-left:.14em;vertical-align:.9em}
@@ -258,7 +261,12 @@ h1,h2,h3,p{margin:0}
       </div>
     </div>
     <figure class="figure reveal d1" style="margin:0">
-      <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/comparaison-chromaline-shiny.jpg" alt="Comparaison entre la bague Shiny Love et la Chromaline, bien plus fine">
+      <span class="duos" id="duos">
+        <img class="on" src="/chromaline/duo-1.jpg" alt="La Shiny Love et la Chromaline côte à côte, blanc">
+        <img src="/chromaline/duo-2.jpg" alt="La Shiny Love et la Chromaline côte à côte, rose gold">
+        <img src="/chromaline/duo-3.jpg" alt="La Shiny Love et la Chromaline côte à côte, turquoise">
+        <img src="/chromaline/duo-4.jpg" alt="La Shiny Love et la Chromaline côte à côte, lilas">
+      </span>
       <figcaption class="cap">Shiny Love · Chromaline</figcaption>
     </figure>
   </div>
@@ -432,10 +440,18 @@ h1,h2,h3,p{margin:0}
     for(var k=0;k<couches.length;k++) couches[k].classList.toggle('on',k===i);
     jouer(i);
   }
+  /* les deux bagues côte à côte : elles changent en parallèle */
+  var duos=document.querySelectorAll('#duos img'), duoIdx=0;
+  function duoSuivant(){
+    if(!duos.length) return;
+    duoIdx=(duoIdx+1)%duos.length;
+    for(var k=0;k<duos.length;k++) duos[k].classList.toggle('on',k===duoIdx);
+  }
+
   titreCouleur(0);
   choisir(0);
   if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    setInterval(function(){ titreCouleur((titre+1)%COLORS.length); },5200);
+    setInterval(function(){ titreCouleur((titre+1)%COLORS.length); duoSuivant(); },5200);
   }
 
   /* révélation douce */
