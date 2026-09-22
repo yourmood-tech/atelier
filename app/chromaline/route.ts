@@ -105,8 +105,9 @@ h1,h2,h3,p{margin:0}
 .stage video, .stage img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   opacity:0;transition:opacity 1.1s ease;
-  mix-blend-mode:multiply;          /* le fond blanc du film disparaît */
 }
+.stage video{mix-blend-mode:multiply;}   /* le fond blanc du film disparaît */
+.stage-big img{mix-blend-mode:multiply;} /* la photo se fond dans le blanc */
 .stage video.on, .stage img.on{opacity:1}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 .hero-copy .h1{margin:14px 0 18px}
@@ -404,28 +405,37 @@ h1,h2,h3,p{margin:0}
 
   /* les sept petits films empilés : celui de la couleur choisie tourne, les autres attendent */
   var couches=[], couchesBig=[];
-  function poser(hote, liste){
+  function poser(hote, liste, enPhoto){
     if(!hote) return;
     COLORS.forEach(function(col,i){
-      var v=document.createElement('video');
-      v.src='/chromaline/'+col.film+'.mp4';
-      v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline','');
-      v.preload = i===0 ? 'auto' : 'none';
-      v.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
-      if(i===0){ v.className='on'; }
-      hote.appendChild(v);
-      liste.push(v);
+      var el;
+      if(enPhoto){
+        el=document.createElement('img');
+        el.src='/chromaline/photo-'+col.film+'.jpg';
+        el.alt='Bague mood Chromaline '+col.nom+', argent 925 et zircons';
+        el.loading = i===0 ? 'eager' : 'lazy';
+      } else {
+        el=document.createElement('video');
+        el.src='/chromaline/'+col.film+'.mp4';
+        el.muted=true; el.loop=true; el.playsInline=true; el.setAttribute('playsinline','');
+        el.preload = i===0 ? 'auto' : 'none';
+        el.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
+      }
+      if(i===0){ el.className='on'; }
+      hote.appendChild(el);
+      liste.push(el);
     });
   }
-  poser(stage, couches);
-  poser(stageBig, couchesBig);
+  poser(stage, couches, false);       /* le titre : la bague qui tourne */
+  poser(stageBig, couchesBig, true);  /* le choix des couleurs : les photos */
   function jouerListe(liste,i){
     liste.forEach(function(v,k){
+      if(!v.play) return;
       if(k===i){ if(v.preload==='none') v.preload='auto'; var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
       else { v.pause(); }
     });
   }
-  function jouer(i){ jouerListe(couches,i); jouerListe(couchesBig,i); }
+  function jouer(i){ jouerListe(couches,i); }
   jouer(0);
 
   function choisir(i,auto){
