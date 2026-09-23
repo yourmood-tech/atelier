@@ -100,10 +100,27 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
   var l2=new THREE.DirectionalLight(0xffffff, 0.55); l2.position.set(-40,10,-25); scene.add(l2);
   var l3=new THREE.DirectionalLight(0xffffff, 0.35); l3.position.set(0,-40,20); scene.add(l3);
 
-  var acier=new THREE.MeshStandardMaterial({color:0xd8dadc, metalness:1, roughness:0.18});
-  var emailc=new THREE.MeshStandardMaterial({color:0x4fc3c0, metalness:0.25, roughness:0.42});
-  var creux=new THREE.MeshStandardMaterial({color:0x1d4f52, metalness:0.4, roughness:0.6});
-  var couvercle=new THREE.MeshStandardMaterial({color:0xd8dadc, metalness:1, roughness:0.22});
+  /* un petit studio pour que le métal ait quelque chose à refléter */
+  function studio(){
+    var t=document.createElement('canvas'); t.width=t.height=256;
+    var g=t.getContext('2d');
+    var d=g.createLinearGradient(0,0,0,256);
+    d.addColorStop(0,'#ffffff'); d.addColorStop(0.45,'#f2f3f4');
+    d.addColorStop(0.55,'#d9dcde'); d.addColorStop(1,'#a9adb1');
+    g.fillStyle=d; g.fillRect(0,0,256,256);
+    g.fillStyle='rgba(255,255,255,0.95)'; g.fillRect(40,20,176,70);
+    var faces=[];
+    for(var i=0;i<6;i++){ var c=document.createElement('canvas'); c.width=c.height=256; c.getContext('2d').drawImage(t,0,0); faces.push(c); }
+    var cube=new THREE.CubeTexture(faces);
+    cube.mapping=THREE.CubeReflectionMapping; cube.needsUpdate=true;
+    return cube;
+  }
+  var env=studio();
+
+  var acier=new THREE.MeshStandardMaterial({color:0xe6e8ea, metalness:0.95, roughness:0.16, envMap:env, envMapIntensity:1.35});
+  var emailc=new THREE.MeshStandardMaterial({color:0x4fc3c0, metalness:0.15, roughness:0.38, envMap:env, envMapIntensity:0.55});
+  var creux=new THREE.MeshStandardMaterial({color:0x19484b, metalness:0.3, roughness:0.62, envMap:env, envMapIntensity:0.4});
+  var couvercle=new THREE.MeshStandardMaterial({color:0xe6e8ea, metalness:0.95, roughness:0.2, envMap:env, envMapIntensity:1.35});
 
   var bague=new THREE.Group(); scene.add(bague);
 
