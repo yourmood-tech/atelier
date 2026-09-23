@@ -17,6 +17,11 @@ export default auth((req) => {
     return;
   }
 
+  // /bague3d (maquette 3D d'une bague — lien à montrer à l'équipe)
+  if (pathname === "/bague3d" || pathname.startsWith("/bague3d/")) {
+    return;
+  }
+
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
