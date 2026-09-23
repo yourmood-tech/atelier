@@ -62,7 +62,7 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
 
   <div class="barre">
     <button class="bt" id="btTourne" aria-pressed="true" type="button">Rotation auto</button>
-    <button class="bt" id="btOuvre" type="button">Ouvrir les boîtes</button>
+    <button class="bt" id="btOuvre" type="button">Ouvrir toutes les boîtes</button>
     <button class="bt" id="btCoupe" type="button">Vue en coupe</button>
   </div>
 
@@ -137,25 +137,50 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
     new THREE.CylinderGeometry(R_EXT+0.02, R_EXT+0.02, demiEmail*2, 160, 1, true), emailc);
   bague.add(bande);
 
-  /* ---- les boîtes ---- */
+  /* ---- les boîtes : deux rangées de trappes, certaines ouvertes ---- */
+  var N_COL=12, N_RANG=2;
+  var pasY=3.6;                       /* écart entre les deux rangées */
+  var OUVERTES=[2, 7, 15];            /* celles qui sont ouvertes */
   var lesCouvercles=[];
-  for(var k=0;k<N_BOITES;k++){
-    var ang=(k/N_BOITES)*Math.PI*2;
-    var g=new THREE.Group();
-    g.rotation.y=ang;
-    /* le creux */
-    var c=new THREE.Mesh(new THREE.BoxGeometry(BOITE, BOITE, PROF), creux);
-    c.position.set(0,0,R_EXT+0.02-PROF/2);
-    g.add(c);
-    /* le couvercle, articulé sur son bord haut */
-    var charniere=new THREE.Group();
-    charniere.position.set(0, BOITE/2, R_EXT+0.04);
-    var cv=new THREE.Mesh(new THREE.BoxGeometry(BOITE, BOITE, 0.28), couvercle);
-    cv.position.set(0, -BOITE/2, 0.14);
-    charniere.add(cv);
-    g.add(charniere);
-    lesCouvercles.push(charniere);
-    bague.add(g);
+  var trait=new THREE.MeshStandardMaterial({color:0x0f3b3d, metalness:0.1, roughness:0.75});
+  var capot=new THREE.MeshStandardMaterial({color:0x46bfbb, metalness:0.08, roughness:0.45});
+  var anneauInt=new THREE.MeshStandardMaterial({color:0xdfe3e6, metalness:0.6, roughness:0.28});
+
+  var compteur=0;
+  for(var r=0;r<N_RANG;r++){
+    var y=(r===0? -pasY/2 : pasY/2);
+    var decalage=(r===1? 0.5 : 0);          /* rangées décalées, comme sur la photo */
+    for(var k=0;k<N_COL;k++){
+      var ang=((k+decalage)/N_COL)*Math.PI*2;
+      var g=new THREE.Group(); g.rotation.y=ang; bague.add(g);
+
+      /* le creux sombre */
+      var c=new THREE.Mesh(new THREE.BoxGeometry(BOITE, BOITE, PROF), creux);
+      c.position.set(0, y, R_EXT+0.02-PROF/2); g.add(c);
+
+      /* le petit cercle au fond */
+      var o=new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.15, 10, 28), anneauInt);
+      o.position.set(0, y, R_EXT+0.02-PROF+0.35); g.add(o);
+
+      /* le liseré gravé autour de la trappe */
+      var l=new THREE.Mesh(new THREE.BoxGeometry(BOITE+0.34, BOITE+0.34, 0.05), trait);
+      l.position.set(0, y, R_EXT+0.035); g.add(l);
+
+      /* le couvercle, articulé sur son bord gauche */
+      var charniere=new THREE.Group();
+      charniere.position.set(-BOITE/2, y, R_EXT+0.06);
+      var cv=new THREE.Mesh(new THREE.BoxGeometry(BOITE, BOITE, 0.26), capot);
+      cv.position.set(BOITE/2, 0, 0.13);
+      charniere.add(cv);
+      /* la petite encoche pour soulever */
+      var enc=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.3,16), trait);
+      enc.rotation.x=Math.PI/2; enc.position.set(BOITE-0.2, BOITE/2-0.15, 0.2);
+      charniere.add(enc);
+      g.add(charniere);
+
+      lesCouvercles.push({g:charniere, ouvrable:(OUVERTES.indexOf(compteur)>=0)});
+      compteur++;
+    }
   }
 
   /* ---- cadrage ---- */
@@ -196,14 +221,13 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
   });
 
   /* ---- l'animation ---- */
-  var cible=0;
   function boucle(){
     requestAnimationFrame(boucle);
     if(auto && !tientSouris) bague.rotation.y += 0.006;
-    cible = ouvert ? -1.35 : 0;
     for(var i=0;i<lesCouvercles.length;i++){
-      var c=lesCouvercles[i];
-      c.rotation.x += (cible - c.rotation.x)*0.09;
+      var e=lesCouvercles[i];
+      var but = (ouvert || e.ouvrable) ? 2.0 : 0;
+      e.g.rotation.y += (but - e.g.rotation.y)*0.08;
     }
     moteur.render(scene, cam);
   }
