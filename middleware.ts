@@ -17,6 +17,11 @@ export default auth((req) => {
     return;
   }
 
+  // /coffret3d (maquette 3D du coffret en forme de bague)
+  if (pathname === "/coffret3d" || pathname.startsWith("/coffret3d/")) {
+    return;
+  }
+
   // /bague3d (maquette 3D d'une bague — lien à montrer à l'équipe)
   if (pathname === "/bague3d" || pathname.startsWith("/bague3d/")) {
     return;
