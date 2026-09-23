@@ -134,7 +134,7 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
   /* ---- la bande de couleur, en retrait entre les deux bords acier ---- */
   var demiEmail=(LARGEUR/2)-BORD;
   var bande=new THREE.Mesh(
-    new THREE.CylinderGeometry(R_EXT-0.12, R_EXT-0.12, demiEmail*2, 160, 1, true), emailc);
+    new THREE.CylinderGeometry(R_EXT+0.02, R_EXT+0.02, demiEmail*2, 160, 1, true), emailc);
   bague.add(bande);
 
   /* ---- les boîtes ---- */
@@ -145,11 +145,11 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
     g.rotation.y=ang;
     /* le creux */
     var c=new THREE.Mesh(new THREE.BoxGeometry(BOITE, BOITE, PROF), creux);
-    c.position.set(0,0,R_EXT-0.12-PROF/2);
+    c.position.set(0,0,R_EXT+0.02-PROF/2);
     g.add(c);
     /* le couvercle, articulé sur son bord haut */
     var charniere=new THREE.Group();
-    charniere.position.set(0, BOITE/2, R_EXT-0.10);
+    charniere.position.set(0, BOITE/2, R_EXT+0.04);
     var cv=new THREE.Mesh(new THREE.BoxGeometry(BOITE, BOITE, 0.28), couvercle);
     cv.position.set(0, -BOITE/2, 0.14);
     charniere.add(cv);
