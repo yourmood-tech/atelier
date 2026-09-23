@@ -95,7 +95,8 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
   hote.appendChild(moteur.domElement);
 
   /* ---- lumières de studio ---- */
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xdfe3e6, 0.85));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd7dbde, 1.05));
   var l1=new THREE.DirectionalLight(0xffffff, 1.15); l1.position.set(30,40,45); scene.add(l1);
   var l2=new THREE.DirectionalLight(0xffffff, 0.55); l2.position.set(-40,10,-25); scene.add(l2);
   var l3=new THREE.DirectionalLight(0xffffff, 0.35); l3.position.set(0,-40,20); scene.add(l3);
@@ -117,10 +118,10 @@ h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,4vw,52px);line-
   }
   var env=studio();
 
-  var acier=new THREE.MeshStandardMaterial({color:0xe6e8ea, metalness:0.95, roughness:0.16, envMap:env, envMapIntensity:1.35});
-  var emailc=new THREE.MeshStandardMaterial({color:0x4fc3c0, metalness:0.15, roughness:0.38, envMap:env, envMapIntensity:0.55});
-  var creux=new THREE.MeshStandardMaterial({color:0x19484b, metalness:0.3, roughness:0.62, envMap:env, envMapIntensity:0.4});
-  var couvercle=new THREE.MeshStandardMaterial({color:0xe6e8ea, metalness:0.95, roughness:0.2, envMap:env, envMapIntensity:1.35});
+  var acier=new THREE.MeshStandardMaterial({color:0xcfd4d8, metalness:0.32, roughness:0.22, envMap:env, envMapIntensity:1.1});
+  var emailc=new THREE.MeshStandardMaterial({color:0x5ecfcb, metalness:0.08, roughness:0.42, envMap:env, envMapIntensity:0.35});
+  var creux=new THREE.MeshStandardMaterial({color:0x1d5a5c, metalness:0.15, roughness:0.7, envMap:env, envMapIntensity:0.3});
+  var couvercle=new THREE.MeshStandardMaterial({color:0xd6dade, metalness:0.32, roughness:0.26, envMap:env, envMapIntensity:1.1});
 
   var bague=new THREE.Group(); scene.add(bague);
 
