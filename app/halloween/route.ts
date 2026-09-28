@@ -54,6 +54,12 @@ section.s .w{max-width:1360px;margin:0 auto;padding:0 40px}
 .eb{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#8C8798}
 section.s h2{font-size:clamp(28px,3.4vw,42px);font-weight:200;margin:12px 0 0;letter-spacing:-.01em;color:#EDE8E4}
 .lede{font-size:15px;line-height:1.7;color:#9F98A6;max-width:56ch;margin:14px 0 0;font-weight:300}
+.pastille{display:inline-block;padding:5px 12px;border-radius:999px;background:#E9E2D8;color:#07070a;
+ font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:600;margin-bottom:14px}
+.att{display:block}
+.attph{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1.06;border-radius:3px;
+ background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px dashed rgba(255,255,255,.16)}
+.attph span{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#7C7688}
 .vg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:34px}
 .v{display:block;transition:.4s}
 .vph{display:block;position:relative;aspect-ratio:1/1.06;overflow:hidden;border-radius:3px;background:#0D0D12;
@@ -117,9 +123,22 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
   </figure>
 </header>
 
-<nav class="sommaire"><div><a href="#cranes">Les skull</a><a href="#witch">Witch</a><a href="#citrouilles">Pumpkin</a><a href="#spider">Spider</a><a href="#snake">Snake</a><a href="#bat">Bat</a><a href="#blood">Blood</a><a href="#bestioles">Les bestioles</a><a href="#ahs">Les saisons</a><a href="#nuit">Les nuits noires</a><a href="#minis">Les minis</a><a href="#bases">Les bases</a><a href="#coffrets">Les coffrets</a></div></nav>
+<nav class="sommaire"><div><a href="#nouveau2026">2026</a><a href="#cranes">Les skull</a><a href="#witch">Witch</a><a href="#citrouilles">Pumpkin</a><a href="#spider">Spider</a><a href="#snake">Snake</a><a href="#bat">Bat</a><a href="#blood">Blood</a><a href="#bestioles">Les bestioles</a><a href="#ahs">Les saisons</a><a href="#nuit">Les nuits noires</a><a href="#minis">Les minis</a><a href="#bases">Les bases</a><a href="#coffrets">Les coffrets</a></div></nav>
 
 <div class="intro"><p>Chez mood, Halloween n'est pas un déguisement.<br>C'est une humeur — et elle se clipse.</p></div>
+
+<section class="s" id="nouveau2026"><div class="w">
+  <div class="pastille">Nouveauté 2026</div>
+  <div class="eb">La collection Halloween 2026</div>
+  <h2>Les pièces de cette année, bientôt.</h2>
+  <p class="lede">Elles arrivent une à une d'ici le 31 octobre.</p>
+  <div class="vg">
+    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 1</span></div>
+    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 2</span></div>
+    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 3</span></div>
+    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 4</span></div>
+  </div>
+</div></section>
 
 <section class="s" id="cranes">
   <div class="w">
