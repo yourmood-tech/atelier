@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Maquette de la page Halloween — fond noir + deux vraies fumées filmées (libres de droits, Mixkit).
+// Maquette de la page Halloween — fond noir + brume d'Amila animée + une fumée qui passe devant.
 const PAGE = String.raw`<!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -99,7 +99,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 </head><body>
 
 <div class="grain"></div>
-<video id="fumee-fond" class="fum" src="/fumee/fumee-fond.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+<video id="fumee-fond" class="fum" src="/fumee/brume-fond.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
 <video id="fumee-avant" class="fum" src="/fumee/fumee-avant.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
 
 <div class="page">
@@ -108,7 +108,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
   <div>
     <div class="kick">La collection Halloween 2026</div>
     <h1>La nuit<em>nous va bien.</em></h1>
-    <p>Des crânes gravés à la main, des araignées serties, une famille entière au bout des doigts. 109 pièces à clipser sur votre bague mood — et à garder bien après minuit.</p>
+    <p>Des crânes gravés à la main, des araignées serties, une famille entière au bout des doigts. 128 pièces à clipser sur votre bague mood — et à garder bien après minuit.</p>
     <a class="cta" href="#cranes">Entrer dans la collection</a>
   </div>
   <figure>
@@ -117,7 +117,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
   </figure>
 </header>
 
-<nav class="sommaire"><div><a href="#cranes">Les skull</a><a href="#witch">Witch</a><a href="#citrouilles">Pumpkin</a><a href="#spider">Spider</a><a href="#bat">Bat</a><a href="#blood">Blood</a><a href="#bestioles">Les bestioles</a><a href="#ahs">Les saisons</a><a href="#addams">La famille</a><a href="#nuit">Les nuits noires</a><a href="#minis">Les minis</a><a href="#bases">Les bases</a><a href="#coffrets">Les coffrets</a></div></nav>
+<nav class="sommaire"><div><a href="#cranes">Les skull</a><a href="#witch">Witch</a><a href="#citrouilles">Pumpkin</a><a href="#spider">Spider</a><a href="#snake">Snake</a><a href="#bat">Bat</a><a href="#blood">Blood</a><a href="#bestioles">Les bestioles</a><a href="#ahs">Les saisons</a><a href="#nuit">Les nuits noires</a><a href="#minis">Les minis</a><a href="#bases">Les bases</a><a href="#coffrets">Les coffrets</a></div></nav>
 
 <div class="intro"><p>Chez mood, Halloween n'est pas un déguisement.<br>C'est une humeur — et elle se clipse.</p></div>
 
@@ -177,6 +177,20 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
     <div class="glis">Glissez pour voir les 8 pièces</div>
   </div>
 </section>
+<section class="s" id="snake">
+  <div class="w">
+    <div class="eb">Snake</div>
+    <h2>Écailles, venin et reflets froids.</h2>
+    <p class="lede">Serpents gravés, écailles d'acier et de titane — la ligne la plus longue de la collection.</p>
+    
+    <div class="rail-zone">
+      <button type="button" class="fl fg" aria-label="Précédent" onclick="this.parentNode.querySelector('.rail').scrollBy({left:-560,behavior:'smooth'})">&#8249;</button>
+      <div class="rail"><a class="c" href="https://www.yourmood.net/products/natrix" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-2-3-aluminium-grave-natrix-1.jpg?width=700" alt="Deux tiers Natrix"></span><span class="n">Deux tiers Natrix</span><span class="pr">75.–</span></a><a class="c" href="https://www.yourmood.net/products/mamba-vert" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-aluminium-grave-mamba-vert-1.jpg?width=700" alt="Addon Mamba Vert"></span><span class="n">Addon Mamba Vert</span><span class="pr">85.–</span></a><a class="c" href="https://www.yourmood.net/products/taipan" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-titane-grave-taipan-1.jpg?width=700" alt="Addon Taipan"></span><span class="n">Addon Taipan</span><span class="pr">189.–</span></a><a class="c" href="https://www.yourmood.net/products/cobra" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-argent-grave-cobra-1.jpg?width=700" alt="Addon Cobra"></span><span class="n">Addon Cobra</span><span class="pr">148.–</span></a><a class="c" href="https://www.yourmood.net/products/unwabu" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-titane-grave-unwabu-1.jpg?width=700" alt="Addon Unwabu"></span><span class="n">Addon Unwabu</span><span class="pr">94.–</span></a><a class="c" href="https://www.yourmood.net/products/inyoka" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-titane-grave-inyoka-1.jpg?width=700" alt="Addon Inyoka"></span><span class="n">Addon Inyoka</span><span class="pr">94.–</span></a><a class="c" href="https://www.yourmood.net/products/isibankwa" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-titane-grave-isibankwa-1.jpg?width=700" alt="Addon Isibankwa"></span><span class="n">Addon Isibankwa</span><span class="pr">94.–</span></a><a class="c" href="https://www.yourmood.net/products/2-3-ecailles-de-tortue" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-2-3-argent-2-3-ecailles-de-tortue-1.jpg?width=700" alt="2/3 Écailles de tortue"></span><span class="n">2/3 Écailles de tortue</span><span class="pr">112.–</span></a><a class="c" href="https://www.yourmood.net/products/addon-snake" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2240_modif_web.jpg?width=700" alt="Addon 3D Snake"></span><span class="n">Addon 3D Snake</span><span class="pr">189.–</span></a><a class="c" href="https://www.yourmood.net/products/addon-ngu-1" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2269_modif_web.jpg?width=700" alt="Addon NGŪ"></span><span class="n">Addon NGŪ</span><span class="pr">3900.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-medium-en-acier-emeraude-ecaillea-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-medium-acier-emeraude-01.jpg?width=700" alt="Anneau (Medium) en acier émeraude Ecaillea pour bague mood interchangeable"></span><span class="n">Anneau (Medium) en acier émeraude Ecaillea pour bague mood interchangeable</span><span class="pr">109.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-deux-tiers-en-acier-emeraude-ecaillea-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-2_3-acier-emeraude-02.jpg?width=700" alt="Anneau (Deux tiers) en acier émeraude Ecaillea pour bague mood interchangeable"></span><span class="n">Anneau (Deux tiers) en acier émeraude Ecaillea pour bague mood interchangeable</span><span class="pr">129.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-addon-en-acier-emeraude-ecaillea-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-addon-acier-emeraude-01.jpg?width=700" alt="Anneau (Addon) en acier émeraude Ecaillea pour bague mood interchangeable"></span><span class="n">Anneau (Addon) en acier émeraude Ecaillea pour bague mood interchangeable</span><span class="pr">189.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-addon-en-acier-noir-ondura-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-addon-acier-noir-01.jpg?width=700" alt="Anneau (Addon) en acier noir Ondura pour bague mood interchangeable"></span><span class="n">Anneau (Addon) en acier noir Ondura pour bague mood interchangeable</span><span class="pr">189.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-deux-tiers-en-acier-noir-ondura-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-2_3-acier-noir-01.jpg?width=700" alt="Anneau (Deux tiers) en acier noir Ondura pour bague mood interchangeable"></span><span class="n">Anneau (Deux tiers) en acier noir Ondura pour bague mood interchangeable</span><span class="pr">129.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-medium-en-acier-noir-ondura-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-medium-acier-noir-01.jpg?width=700" alt="Anneau (medium) en acier noir Ondura pour bague mood interchangeable"></span><span class="n">Anneau (medium) en acier noir Ondura pour bague mood interchangeable</span><span class="pr">109.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-medium-en-titane-nacre-scallia-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-medium-titane-nacree-01.jpg?width=700" alt="Anneau (medium) en titane nacré Scalia pour bague mood interchangeable"></span><span class="n">Anneau (medium) en titane nacré Scalia pour bague mood interchangeable</span><span class="pr">109.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-deux-tiers-en-titane-nacre-scalia-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-2_3-titane-nacree-01.jpg?width=700" alt="Anneau (deux tiers) en titane nacré Scalia pour bague mood interchangeable"></span><span class="n">Anneau (deux tiers) en titane nacré Scalia pour bague mood interchangeable</span><span class="pr">129.–</span></a><a class="c" href="https://www.yourmood.net/products/anneau-addon-en-titane-nacre-scalia-pour-bague-mood-interchangeable" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague-mood-interchangeable-anneau-addon-titane-nacree-01.jpg?width=700" alt="Anneau (addon) en titane nacré Scalia pour bague mood interchangeable"></span><span class="n">Anneau (addon) en titane nacré Scalia pour bague mood interchangeable</span><span class="pr">189.–</span></a><a class="c" href="https://www.yourmood.net/products/addon-pubert" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1179501138_e3dbbe4d-7d69-4f8c-8e52-abf0a885cc92.jpg?width=700" alt="Addon Pubert"></span><span class="n">Addon Pubert</span><span class="pr">179.–</span></a></div>
+      <button type="button" class="fl fd" aria-label="Suivant" onclick="this.parentNode.querySelector('.rail').scrollBy({left:560,behavior:'smooth'})">&#8250;</button>
+    </div>
+    <div class="glis">Glissez pour voir les 20 pièces</div>
+  </div>
+</section>
 <section class="s" id="bat">
   <div class="w">
     <div class="eb">Bat</div>
@@ -231,20 +245,6 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
       <button type="button" class="fl fd" aria-label="Suivant" onclick="this.parentNode.querySelector('.rail').scrollBy({left:560,behavior:'smooth'})">&#8250;</button>
     </div>
     <div class="glis">Glissez pour voir les 7 pièces</div>
-  </div>
-</section>
-<section class="s" id="addams">
-  <div class="w">
-    <div class="eb">La famille</div>
-    <h2>Mercredi, Gomez, Morticia et les autres.</h2>
-    <p class="lede">Une maisonnée entière au bout des doigts.</p>
-    
-    <div class="rail-zone">
-      <button type="button" class="fl fg" aria-label="Précédent" onclick="this.parentNode.querySelector('.rail').scrollBy({left:-560,behavior:'smooth'})">&#8249;</button>
-      <div class="rail"><a class="c" href="https://www.yourmood.net/products/addon-pubert" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1179501138_e3dbbe4d-7d69-4f8c-8e52-abf0a885cc92.jpg?width=700" alt="Addon Pubert"></span><span class="n">Addon Pubert</span><span class="pr">179.–</span></a></div>
-      <button type="button" class="fl fd" aria-label="Suivant" onclick="this.parentNode.querySelector('.rail').scrollBy({left:560,behavior:'smooth'})">&#8250;</button>
-    </div>
-    <div class="glis">Glissez pour voir les 1 pièces</div>
   </div>
 </section>
 <section class="s" id="nuit">
@@ -306,7 +306,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 
 <div class="fin">
   <div class="eb">Toute la collection</div>
-  <h2>109 pièces pour une seule nuit.<br>Ou pour toute l'année.</h2>
+  <h2>128 pièces pour une seule nuit.<br>Ou pour toute l'année.</h2>
   <p>Base, anneaux, coffrets — composez la vôtre.</p>
   <a class="cta" href="https://www.yourmood.net/collections/halloween" target="_blank" rel="noopener">Voir sur yourmood.net</a>
 </div>
