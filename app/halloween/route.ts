@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Maquette de la page Halloween — fond noir + brume d'Amila animée + une fumée qui passe devant.
+// Maquette de la page Halloween — fond noir + la brume d'Amila animée, en deux couches très lentes.
 const PAGE = String.raw`<!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -16,8 +16,8 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 a{color:inherit;text-decoration:none}
 
 .fum{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;mix-blend-mode:screen;}
-#fumee-fond{z-index:1;opacity:.62;}
-#fumee-avant{z-index:7;opacity:.34;transform:scaleX(-1);}
+#fumee-fond{z-index:1;opacity:.5;}
+#fumee-avant{z-index:7;opacity:.22;}
 @media (prefers-reduced-motion:reduce){.fum{display:none}}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.045;
  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.6'/></svg>");}
@@ -106,7 +106,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 
 <div class="grain"></div>
 <video id="fumee-fond" class="fum" src="/fumee/brume-fond.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
-<video id="fumee-avant" class="fum" src="/fumee/fumee-avant.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+<video id="fumee-avant" class="fum" src="/fumee/brume-avant.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
 
 <div class="page">
 
