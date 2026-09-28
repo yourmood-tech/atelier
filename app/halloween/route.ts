@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Maquette de la page Halloween (fond noir + brume) — lien à montrer à l'équipe.
+// Maquette de la page Halloween (fond noir + vraie fumée calculée en direct).
 const PAGE = String.raw`<!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,27 +14,11 @@ const PAGE = String.raw`<!doctype html>
 html,body{margin:0;padding:0;background:#07070a;color:#EDE8E4;}
 body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;}
 a{color:inherit;text-decoration:none}
-.brume{position:fixed;inset:-20vh -20vw;pointer-events:none;z-index:2;opacity:.55;mix-blend-mode:screen;}
-.brume span{position:absolute;border-radius:50%;filter:blur(70px);}
-.b1{width:70vw;height:52vh;left:-10vw;top:8vh;background:radial-gradient(circle at 40% 50%,rgba(150,150,170,.30),transparent 68%);animation:d1 46s ease-in-out infinite alternate;}
-.b2{width:64vw;height:46vh;right:-12vw;top:34vh;background:radial-gradient(circle at 55% 45%,rgba(120,110,140,.26),transparent 66%);animation:d2 61s ease-in-out infinite alternate;}
-.b3{width:88vw;height:40vh;left:2vw;bottom:-6vh;background:radial-gradient(circle at 50% 50%,rgba(170,160,175,.20),transparent 70%);animation:d3 74s ease-in-out infinite alternate;}
-@keyframes d1{from{transform:translate3d(-6%,0,0) scale(1)}to{transform:translate3d(14%,-6%,0) scale(1.22)}}
-@keyframes d2{from{transform:translate3d(8%,4%,0) scale(1.1)}to{transform:translate3d(-10%,-4%,0) scale(1)}}
-@keyframes d3{from{transform:translate3d(-8%,2%,0) scale(1.05)}to{transform:translate3d(10%,-3%,0) scale(1.25)}}
-@media (prefers-reduced-motion:reduce){.brume span{animation:none}}
-.voile{position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden;}
-.voile i{position:absolute;display:block;border-radius:50%;filter:blur(90px);mix-blend-mode:screen;opacity:0;}
-.v1{width:120vw;height:46vh;left:-120vw;top:6vh;background:radial-gradient(ellipse at 50% 50%,rgba(205,200,215,.40),rgba(160,155,175,.16) 45%,transparent 72%);animation:trav1 38s linear infinite;}
-.v2{width:150vw;height:60vh;left:-150vw;top:38vh;background:radial-gradient(ellipse at 50% 50%,rgba(190,185,205,.34),rgba(140,135,160,.14) 48%,transparent 74%);animation:trav2 57s linear infinite;animation-delay:11s;}
-.v3{width:135vw;height:38vh;left:-135vw;bottom:4vh;background:radial-gradient(ellipse at 50% 50%,rgba(215,210,225,.30),rgba(150,145,170,.12) 46%,transparent 72%);animation:trav3 46s linear infinite;animation-delay:25s;}
-@keyframes trav1{0%{transform:translate3d(0,0,0) scale(1);opacity:0}
- 12%{opacity:.5}55%{opacity:.62}88%{opacity:.34}100%{transform:translate3d(240vw,-4vh,0) scale(1.3);opacity:0}}
-@keyframes trav2{0%{transform:translate3d(0,0,0) scale(1.05);opacity:0}
- 14%{opacity:.42}60%{opacity:.5}86%{opacity:.26}100%{transform:translate3d(260vw,5vh,0) scale(1.35);opacity:0}}
-@keyframes trav3{0%{transform:translate3d(0,0,0) scale(1);opacity:0}
- 15%{opacity:.36}58%{opacity:.46}88%{opacity:.22}100%{transform:translate3d(250vw,-6vh,0) scale(1.28);opacity:0}}
-@media (prefers-reduced-motion:reduce){.voile i{animation:none;opacity:0}}
+
+#fumee-fond,#fumee-avant{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:block;}
+#fumee-fond{z-index:1;opacity:.85}
+#fumee-avant{z-index:7;opacity:.5}
+@media (prefers-reduced-motion:reduce){#fumee-fond,#fumee-avant{display:none}}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:.045;
  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.6'/></svg>");}
 .page{position:relative;z-index:4}
@@ -93,9 +77,11 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 }
 </style>
 </head><body>
-<div class="brume"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
 <div class="grain"></div>
-<div class="voile" aria-hidden="true"><i class="v1"></i><i class="v2"></i><i class="v3"></i></div>
+<canvas id="fumee-fond" aria-hidden="true"></canvas>
+<canvas id="fumee-avant" aria-hidden="true"></canvas>
+
 <div class="page">
 
 <header class="hero">
@@ -197,6 +183,69 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 
 <footer>mood collection · Orbe · Suisse</footer>
 </div>
+<script>
+(function(){
+  var VS = "attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}";
+  var FS = [
+   "precision highp float;",
+   "uniform vec2 R; uniform float T; uniform float DENS; uniform float SPD; uniform float SCL; uniform float SEED;",
+   "float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);} ",
+   "float n(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.0-2.0*f);",
+   " return mix(mix(h(i),h(i+vec2(1,0)),u.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x),u.y);} ",
+   "float fbm(vec2 p){float v=0.0,a=0.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);",
+   " for(int k=0;k<6;k++){v+=a*n(p);p=m*p;a*=0.5;} return v;} ",
+   "void main(){",
+   " vec2 uv=gl_FragCoord.xy/R.xy; vec2 q=uv; q.x*=R.x/R.y;",
+   " float t=T*SPD;",
+   " vec2 w1=vec2(fbm(q*SCL+vec2(t*0.10,t*0.04)+SEED), fbm(q*SCL+vec2(5.2,1.3)-vec2(t*0.06,t*0.03)));",
+   " vec2 w2=vec2(fbm(q*SCL+4.0*w1+vec2(1.7,9.2)+vec2(t*0.05,0.0)), fbm(q*SCL+4.0*w1+vec2(8.3,2.8)-vec2(0.0,t*0.04)));",
+   " float f=fbm(q*SCL+4.0*w2);",
+   " f=pow(smoothstep(0.30,0.92,f),1.35);",
+   " float bas=smoothstep(-0.25,0.85,uv.y);",
+   " float bords=smoothstep(0.0,0.30,uv.x)*smoothstep(1.0,0.70,uv.x);",
+   " float a=f*DENS*mix(1.0,0.55,bas)*mix(0.55,1.0,bords);",
+   " vec3 col=mix(vec3(0.62,0.61,0.68),vec3(0.86,0.85,0.90),f);",
+   " gl_FragColor=vec4(col*a,a);",
+   "}"].join("\n");
+
+  function start(id,opts){
+    var c=document.getElementById(id); if(!c) return;
+    var gl=c.getContext("webgl",{alpha:true,premultipliedAlpha:true,antialias:false});
+    if(!gl){ c.style.display="none"; return; }
+    function sh(t,s){var o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;}
+    var pr=gl.createProgram();
+    gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS)); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));
+    gl.linkProgram(pr); gl.useProgram(pr);
+    var b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+    var loc=gl.getAttribLocation(pr,"p"); gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    var uR=gl.getUniformLocation(pr,"R"), uT=gl.getUniformLocation(pr,"T"),
+        uD=gl.getUniformLocation(pr,"DENS"), uS=gl.getUniformLocation(pr,"SPD"),
+        uC=gl.getUniformLocation(pr,"SCL"), uE=gl.getUniformLocation(pr,"SEED");
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    function size(){
+      var r=Math.min(window.devicePixelRatio||1,1.5)*opts.res;
+      c.width=Math.max(2,Math.floor(innerWidth*r)); c.height=Math.max(2,Math.floor(innerHeight*r));
+      gl.viewport(0,0,c.width,c.height);
+    }
+    size(); addEventListener("resize",size,{passive:true});
+    var t0=performance.now(), vu=true;
+    document.addEventListener("visibilitychange",function(){vu=!document.hidden;});
+    (function boucle(now){
+      requestAnimationFrame(boucle);
+      if(!vu) return;
+      gl.uniform2f(uR,c.width,c.height);
+      gl.uniform1f(uT,(now-t0)/1000);
+      gl.uniform1f(uD,opts.dens); gl.uniform1f(uS,opts.spd);
+      gl.uniform1f(uC,opts.scl);  gl.uniform1f(uE,opts.seed);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    })(t0);
+  }
+  start("fumee-fond", {dens:0.80, spd:1.0, scl:2.1, seed:0.0,  res:0.55});
+  start("fumee-avant",{dens:0.42, spd:1.7, scl:1.35,seed:37.0, res:0.45});
+})();
+</script>
 </body></html>`;
 
 export async function GET() {
