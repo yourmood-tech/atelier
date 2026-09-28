@@ -27,6 +27,11 @@ export default auth((req) => {
     return;
   }
 
+  // /halloween (maquette de la page Halloween — lien à montrer à l'équipe)
+  if (pathname === "/halloween" || pathname.startsWith("/halloween/")) {
+    return;
+  }
+
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
