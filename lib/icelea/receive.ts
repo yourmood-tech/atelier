@@ -69,9 +69,19 @@ export async function receiveProduct(variantId: number, receivedQty: number, pic
     remaining -= q;
   }
 
-  if (dtos.length) {
-    const r = await kf("/v1/purchase_order_receive", { method: "POST", body: JSON.stringify(dtos) });
-    if (!r.ok) throw new Error(`Réception PO ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  // Katana refuse de réceptionner plusieurs PO dans le même envoi (« Cannot receive multiple
+  // Purchase Orders at once ») : un envoi par PO, dans l'ordre FIFO. Si un envoi échoue après
+  // d'autres réussis, l'erreur dit exactement ce qui est déjà entré, pour ne pas le revalider.
+  const byPO = new Map<string, typeof dtos>();
+  dtos.forEach((d, i) => { const po = receivedOnPO[i].po; (byPO.get(po) || byPO.set(po, []).get(po)!).push(d); });
+  const done: string[] = [];
+  for (const [po, list] of byPO) {
+    const r = await kf("/v1/purchase_order_receive", { method: "POST", body: JSON.stringify(list) });
+    if (!r.ok) {
+      const err = `Réception PO ${po} ${r.status}: ${(await r.text()).slice(0, 200)}`;
+      throw new Error(done.length ? `Réception PARTIELLE — déjà entré dans Katana : ${done.join(", ")}. Ne pas revalider ces quantités. ${err}` : err);
+    }
+    done.push(`${po} ×${list.reduce((s, d) => s + d.quantity, 0)}`);
   }
 
   const hadPO = rows.length > 0;
