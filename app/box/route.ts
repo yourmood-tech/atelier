@@ -157,7 +157,7 @@ footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter
 
 <section><div class="w">
   <div class="boite">
-    <div class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_7ffabd61-af13-46f9-b3b9-e51f6b3d3d21.png?width=1400" alt="La boîte de rangement turquoise, ouverte"></div>
+    <div class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_c2e00cbe-1cb6-4c61-a8ff-74d7efc4c08e.png?width=1600" alt="La boîte de rangement turquoise, ouverte"></div>
     <div>
       <div class="eb" style="text-align:left">La boîte de rangement</div>
       <h3 style="text-align:left">Turquoise clair. Elle ne demande la permission à personne, surtout pas à octobre.</h3>
