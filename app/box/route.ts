@@ -112,10 +112,9 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .ruban:before,.ruban:after{content:"";position:absolute;top:0;bottom:0;width:90px;z-index:2;pointer-events:none}
 .ruban:before{left:0;background:linear-gradient(90deg,#B5E0DD,rgba(181,224,221,0))}
 .ruban:after{right:0;background:linear-gradient(270deg,#B5E0DD,rgba(181,224,221,0))}
-.rp{display:flex;gap:12px;width:max-content;animation:glisse 70s linear infinite}
+.rp{display:flex;gap:12px;width:max-content;will-change:transform}
 .rp img{height:230px;width:auto;object-fit:contain;border-radius:2px;display:block}
-@keyframes glisse{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@media (prefers-reduced-motion:reduce){.rp{animation:none}}
+
 @media(max-width:900px){.rp img{height:150px}}
 .faq{max-width:760px;margin:24px auto 0}
 .faq details{border-bottom:1px solid rgba(16,32,31,.16);padding:13px 0}
@@ -246,6 +245,23 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 
 <footer>mood collection · Orbe · Suisse</footer>
 <script>
+(function(){
+  var p=document.querySelector('.rp'); if(!p) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var x=0, moitie=0, dernier=0;
+  function mesure(){ moitie = p.scrollWidth/2; }
+  window.addEventListener('load',mesure); window.addEventListener('resize',mesure); mesure();
+  function pas(t){
+    requestAnimationFrame(pas);
+    if(!dernier){ dernier=t; return; }
+    var dt=Math.min(t-dernier,64); dernier=t;
+    if(!moitie){ mesure(); return; }
+    x -= dt*0.035;                 // vitesse douce
+    if(x <= -moitie) x += moitie;  // boucle invisible
+    p.style.transform='translateX('+x+'px)';
+  }
+  requestAnimationFrame(pas);
+})();
 fetch('/api/box-reste').then(function(r){return r.json()}).then(function(d){
   if(typeof d.reste!=='number') return;
   var e=document.getElementById('reste'); if(e) e.textContent=d.reste;
