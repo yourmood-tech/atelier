@@ -151,7 +151,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   <p class="sub">Sept essentiels mood. Ceux que vous portez déjà, ceux que vous cherchez au fond du tiroir le matin. Réunis neufs, dans une boîte de rangement turquoise clair.</p>
   <div class="prixligne"><span class="avant">512.–</span><span class="apres">160.–</span></div>
   <a class="cta" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise">Je prends la mienne</a>
-  <div class="compte">Il en reste <b id="reste">300</b> box sur 300</div>
+  <div class="compte">Il reste <b id="reste">300</b> box sur 300</div>
    </div>
    <div class="vidcol"><video src="/box/boite-fermeture.mp4" autoplay muted loop playsinline preload="auto"></video></div>
   </div>
