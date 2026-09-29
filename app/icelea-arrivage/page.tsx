@@ -10,6 +10,11 @@ type ReceptionRow = {
   pos: { po: string; line: number; rowId: number; qty: number; created: string }[];
   openQty: number; match: "code" | "nom" | "approx" | "manuel" | "corrige" | "aucun";
 };
+type InvoiceCheck = {
+  footerPieces: number | null; footerPairs: number | null; footerTotal: number | null; footerCif: number | null;
+  charges: number; discount: number; pieces: number; pairs: number; total: number;
+  lineIssues: { ref: string; page: number; issues: string[] }[]; orphans: { page: number; text: string }[]; ok: boolean;
+};
 type Summary = {
   invoiceLines: number; invoicePieces: number; receptionRows: number;
   matchedRows: number; approxRows: number; manualRows: number; noAssocRows?: number; iceleaVariants: number;
@@ -42,6 +47,7 @@ export default function IceleaArrivagePage() {
   const [remarksEn, setRemarksEn] = useState("");
   const [reportBusy, setReportBusy] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [check, setCheck] = useState<InvoiceCheck | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -82,14 +88,14 @@ export default function IceleaArrivagePage() {
 
   async function prepare() {
     if (!file) { setError("Choisis d'abord la facture PDF."); return; }
-    setLoading(true); setError(null); setRows(null); setSummary(null);
+    setLoading(true); setError(null); setRows(null); setSummary(null); setCheck(null);
     try {
       const fd = new FormData(); fd.append("pdf", file);
       const res = await fetch("/api/icelea-arrivage/prepare", { method: "POST", body: fd });
       const data = await readJson(res);
       if (!res.ok) { setError((data.error as string) || "Erreur"); setLoading(false); return; }
       const newRows = data.rows as ReceptionRow[];
-      setRows(newRows); setSummary(data.summary as Summary);
+      setRows(newRows); setSummary(data.summary as Summary); setCheck((data.check as InvoiceCheck) ?? null);
       setCatalog((data.catalog as CatalogEntry[]) ?? []);
       // reprise : restaure les réceptions déjà faites pour cette facture
       setInvoiceNo((data.invoiceNo as string) ?? null);
@@ -261,6 +267,36 @@ export default function IceleaArrivagePage() {
                 : <> — arrivage réceptionnable en plusieurs fois (la progression est sauvegardée à chaque validation).</>}
             </div>
           )}
+          {check && (() => {
+            const eq = (a: number | null, b: number) => a == null || Math.abs(a - b) <= 0.02;
+            const money = (n: number | null) => n == null ? "—" : n.toLocaleString("fr-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const cifOk = check.footerCif == null || check.footerTotal == null || eq(check.footerCif, check.footerTotal + check.charges - check.discount);
+            return (
+              <div className={`rounded-xl border p-3 text-sm ${check.ok ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-400 bg-amber-50 text-amber-900"}`}>
+                <div className="font-medium">{check.ok ? "✓ Facture lue et contrôlée : tout concorde" : "⚠ Facture lue, mais des écarts sont à vérifier avant de réceptionner"}</div>
+                <div className="mt-1 grid gap-0.5 sm:grid-cols-3">
+                  <div className={eq(check.footerPieces, check.pieces) ? "" : "font-semibold text-red-700"}>Pièces : {check.pieces} lues / {check.footerPieces ?? "—"} sur la facture</div>
+                  <div className={eq(check.footerPairs, check.pairs) ? "" : "font-semibold text-red-700"}>Paires : {check.pairs} lues / {check.footerPairs ?? "—"} sur la facture</div>
+                  <div className={eq(check.footerTotal, check.total) ? "" : "font-semibold text-red-700"}>Marchandise : {money(check.total)} lu / {money(check.footerTotal)} USD</div>
+                </div>
+                {(check.charges > 0 || check.discount > 0 || check.footerCif != null) && (
+                  <div className={`mt-0.5 ${cifOk ? "" : "font-semibold text-red-700"}`}>
+                    {check.charges > 0 && <>Frais {money(check.charges)} · </>}{check.discount > 0 && <>Remise −{money(check.discount)} · </>}Total à payer {money(check.footerCif)} USD
+                  </div>
+                )}
+                {check.lineIssues.length > 0 && (
+                  <ul className="mt-2 list-disc pl-5 space-y-0.5">
+                    {check.lineIssues.map((l, k) => <li key={k}><span className="font-mono">{l.ref}</span> <span className="text-neutral-500">(p.{l.page})</span> — {l.issues.join(" ; ")}</li>)}
+                  </ul>
+                )}
+                {check.orphans.length > 0 && (
+                  <ul className="mt-2 list-disc pl-5 space-y-0.5">
+                    {check.orphans.map((o, k) => <li key={k}>Texte non rattaché à une ligne (p.{o.page}) : <span className="font-mono">{o.text}</span></li>)}
+                  </ul>
+                )}
+              </div>
+            );
+          })()}
           {summary && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
               <Stat k="Lignes facture" v={summary.invoiceLines} />
