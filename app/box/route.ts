@@ -101,6 +101,16 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 
 .grandeim{margin-top:0;border-radius:3px;overflow:hidden;background:#C4E7E4}
 .grandeim img{width:100%;display:block}
+
+.ruban{margin-top:52px;overflow:hidden;position:relative}
+.ruban:before,.ruban:after{content:"";position:absolute;top:0;bottom:0;width:90px;z-index:2;pointer-events:none}
+.ruban:before{left:0;background:linear-gradient(90deg,#B5E0DD,rgba(181,224,221,0))}
+.ruban:after{right:0;background:linear-gradient(270deg,#B5E0DD,rgba(181,224,221,0))}
+.rp{display:flex;gap:12px;width:max-content;animation:glisse 70s linear infinite}
+.rp img{height:230px;width:230px;object-fit:cover;border-radius:2px;display:block}
+@keyframes glisse{from{transform:translateX(0)}to{transform:translateX(-2662px)}}
+@media (prefers-reduced-motion:reduce){.rp{animation:none}}
+@media(max-width:900px){.rp img{height:150px;width:150px}}
 .faq{max-width:760px;margin:24px auto 0}
 .faq details{border-bottom:1px solid rgba(16,32,31,.16);padding:13px 0}
 .faq summary{cursor:pointer;list-style:none;font-size:16px;font-weight:400}
@@ -198,12 +208,14 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 
 <section><div class="w">
   <div class="chiffres">
-    <div class="ch"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_e236d241-869f-44eb-9507-0daf2a0a99dd.png?width=1200" alt=""><div class="in"><div class="n" id="ch-box">300</div><div class="q">box</div><div class="sv" id="sv-box">300 / 300 encore disponibles</div></div></div>
+    <div class="ch"><img loading="lazy" src="/box/empilees.jpg" alt=""><div class="in"><div class="n" id="ch-box">300</div><div class="q">box</div><div class="sv" id="sv-box">300 / 300 encore disponibles</div></div></div>
     <div class="ch"><div class="in"><div class="n">2</div><div class="q">jours</div><div class="sv" id="sv-temps">—</div></div></div>
     <div class="ch"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_39f77588-94cc-4e35-9b45-02b9771ae502.png?width=1200" alt=""><div class="in"><div class="n">7</div><div class="q">essentiels</div></div></div>
     <div class="ch"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_04ed00ca-cbce-43db-a19b-34b57026ea53.png?width=1200" alt=""><div class="in"><div class="n">160.–</div><div class="q">la box</div></div></div>
   </div>
 </div></section>
+
+<div class="ruban"><div class="rp"><img loading="lazy" src="/box/ru-01.jpg" alt=""><img loading="lazy" src="/box/ru-02.jpg" alt=""><img loading="lazy" src="/box/ru-03.jpg" alt=""><img loading="lazy" src="/box/ru-04.jpg" alt=""><img loading="lazy" src="/box/ru-05.jpg" alt=""><img loading="lazy" src="/box/ru-06.jpg" alt=""><img loading="lazy" src="/box/ru-07.jpg" alt=""><img loading="lazy" src="/box/ru-08.jpg" alt=""><img loading="lazy" src="/box/ru-09.jpg" alt=""><img loading="lazy" src="/box/ru-10.jpg" alt=""><img loading="lazy" src="/box/ru-11.jpg" alt=""><img loading="lazy" src="/box/ru-01.jpg" alt=""><img loading="lazy" src="/box/ru-02.jpg" alt=""><img loading="lazy" src="/box/ru-03.jpg" alt=""><img loading="lazy" src="/box/ru-04.jpg" alt=""><img loading="lazy" src="/box/ru-05.jpg" alt=""><img loading="lazy" src="/box/ru-06.jpg" alt=""><img loading="lazy" src="/box/ru-07.jpg" alt=""><img loading="lazy" src="/box/ru-08.jpg" alt=""><img loading="lazy" src="/box/ru-09.jpg" alt=""><img loading="lazy" src="/box/ru-10.jpg" alt=""><img loading="lazy" src="/box/ru-11.jpg" alt=""></div></div>
 
 <section><div class="w">
   <div class="eb">Questions</div>
