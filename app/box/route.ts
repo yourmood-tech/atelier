@@ -18,8 +18,14 @@ a{color:inherit;text-decoration:none}
 :root{--turq:#B5E0DD;--turq-fonce:#5FA9A4;--gris:#41615F}
 
 header.h{padding:0;text-align:center;overflow:hidden}
+.txtcol .sub{margin-left:0;margin-right:0}
+.txtcol .prixligne{justify-content:flex-start}
 .scene{display:grid;grid-template-columns:270px 1fr 270px;gap:0;align-items:center;min-height:min(86vh,720px)}
 .centre{padding-top:18px;padding-bottom:18px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.txtcol{text-align:left}
+.vidcol video{width:100%;display:block;border-radius:3px}
+@media(max-width:900px){.duo{grid-template-columns:1fr;gap:18px}.txtcol{text-align:center}.vidcol{order:-1}}
 .col{position:relative;height:min(86vh,720px);overflow:hidden}
 .col:before,.col:after{content:"";position:absolute;left:0;right:0;height:130px;z-index:2;pointer-events:none}
 .col:before{top:0;background:linear-gradient(#B5E0DD,rgba(181,224,221,0))}
@@ -137,12 +143,17 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 <div class="scene">
   <div class="col bas"><div class="piste"><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""></div></div>
   <div class="w centre">
+  <div class="duo">
+   <div class="txtcol">
   <div class="kick">Deux jours · 300 box</div>
   <h1>On n'en a<br><b>jamais trop.</b></h1>
   <p class="sub">Sept essentiels mood. Ceux que vous portez déjà, ceux que vous cherchez au fond du tiroir le matin. Réunis neufs, dans une boîte de rangement turquoise clair.</p>
   <div class="prixligne"><span class="avant">512.–</span><span class="apres">160.–</span></div>
   <a class="cta" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise">Je prends la mienne</a>
   <div class="compte">Il en reste <b id="reste">300</b> box sur 300</div>
+   </div>
+   <div class="vidcol"><video src="/box/boite-fermeture.mp4" autoplay muted loop playsinline preload="auto"></video></div>
+  </div>
   </div>
   <div class="col haut"><div class="piste"><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""></div></div>
 </div>
@@ -173,7 +184,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   <div class="grille"><a class="p" href="https://www.yourmood.net/products/deux-tiers-acier-froisse" target="_blank" rel="noopener">
       <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt="Deux tiers en acier froissé"><video class="pvid" src="/box/base-acier-brossee-zoom.mp4" autoplay muted loop playsinline preload="none"></video></span>
       <span class="pq">×1</span><span class="pn">Deux tiers en acier froissé</span><span class="pp">109.–</span></a><a class="p" href="https://www.yourmood.net/products/medium-en-acier-froisse" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt="Medium en acier froissé"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt="Medium en acier froissé"><video class="pvid" src="/box/duo-brossee-polie.mp4" autoplay muted loop playsinline preload="none"></video></span>
       <span class="pq">×2</span><span class="pn">Medium en acier froissé</span><span class="pp">77.– pièce</span></a><a class="p" href="https://www.yourmood.net/products/mini-acier-froisse" target="_blank" rel="noopener">
       <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt="Mini en acier froissé"></span>
       <span class="pq">×2</span><span class="pn">Mini en acier froissé</span><span class="pp">60.– pièce</span></a><a class="p" href="https://www.yourmood.net/products/addon-medium-blanc" target="_blank" rel="noopener">
