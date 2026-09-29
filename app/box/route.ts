@@ -24,7 +24,7 @@ header.h{padding:0;text-align:center;overflow:hidden}
 .centre{padding-top:18px;padding-bottom:18px}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
 .txtcol{text-align:right}
-.vidcol video{width:100%;display:block;border-radius:3px}
+.vidcol video{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;border-radius:3px;background:#C4E7E4}
 @media(max-width:900px){.duo{grid-template-columns:1fr;gap:18px}.txtcol{text-align:center}.vidcol{order:-1}}
 .col{position:relative;height:min(86vh,720px);overflow:hidden}
 .col:before,.col:after{content:"";position:absolute;left:0;right:0;height:130px;z-index:2;pointer-events:none}
