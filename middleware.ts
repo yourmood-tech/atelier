@@ -32,6 +32,11 @@ export default auth((req) => {
     return;
   }
 
+  // décompte public des box restantes
+  if (pathname === "/api/box-reste") {
+    return;
+  }
+
   // /box (maquette de la page « On n'en a jamais trop » — lien à montrer à l'équipe)
   if (pathname === "/box" || pathname.startsWith("/box/")) {
     return;

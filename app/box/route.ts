@@ -17,7 +17,20 @@ a{color:inherit;text-decoration:none}
 .w{max-width:1180px;margin:0 auto;padding:0 32px}
 :root{--turq:#B5E0DD;--turq-fonce:#5FA9A4;--gris:#41615F}
 
-header.h{padding:86px 0 0;text-align:center}
+header.h{padding:0;text-align:center;overflow:hidden}
+.scene{display:grid;grid-template-columns:200px 1fr 200px;gap:0;align-items:center;min-height:min(100vh,880px)}
+.centre{padding-top:34px;padding-bottom:34px}
+.col{position:relative;height:min(100vh,880px);overflow:hidden}
+.col:before,.col:after{content:"";position:absolute;left:0;right:0;height:130px;z-index:2;pointer-events:none}
+.col:before{top:0;background:linear-gradient(#B5E0DD,rgba(181,224,221,0))}
+.col:after{bottom:0;background:linear-gradient(rgba(181,224,221,0),#B5E0DD)}
+.piste{display:flex;flex-direction:column;gap:10px;padding:10px}
+.piste img{width:100%;display:block;border-radius:2px}
+.bas .piste{animation:descend 78s linear infinite}
+.haut .piste{animation:monte 78s linear infinite}
+@keyframes descend{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+@keyframes monte{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){.piste{animation:none}}
 .kick{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gris)}
 h1{font-size:clamp(42px,7.4vw,96px);line-height:.96;font-weight:200;margin:22px 0 0;letter-spacing:-.025em}
 h1 b{font-weight:500}
@@ -85,6 +98,8 @@ h2{font-size:clamp(26px,3.4vw,40px);font-weight:200;text-align:center;margin:14p
 footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter-spacing:.2em;text-transform:uppercase}
 
 @media(max-width:900px){
+ .scene{grid-template-columns:1fr}
+ .col{display:none}
  .w{padding:0 20px}
  .trio,.grille,.chiffres{grid-template-columns:repeat(2,1fr)}
  .boite{grid-template-columns:1fr;gap:26px}
@@ -92,14 +107,20 @@ footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter
 </style>
 </head><body>
 
-<header class="h"><div class="w">
+<header class="h">
+<div class="scene">
+  <div class="col bas"><div class="piste"><img loading="lazy" src="/box/deux-tiers-acier-emeraude-pail.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-lie-de.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-poli.jpg" alt=""><img loading="lazy" src="/box/copy-of-addon-rainbow-violet-r.jpg" alt=""><img loading="lazy" src="/box/medium-polymer-rose.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-paillettes.jpg" alt=""><img loading="lazy" src="/box/addon-medium-acier.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-ninja.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-paille.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rouge.jpg" alt=""><img loading="lazy" src="/box/addon-3d-princesse.jpg" alt=""><img loading="lazy" src="/box/avant-premiere-addon-3d-musiqu.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rubis.jpg" alt=""><img loading="lazy" src="/box/addon-rainbow-brun.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymere-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier-poli-c-d.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-emeraude-pail.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-lie-de.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-poli.jpg" alt=""><img loading="lazy" src="/box/copy-of-addon-rainbow-violet-r.jpg" alt=""><img loading="lazy" src="/box/medium-polymer-rose.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-paillettes.jpg" alt=""><img loading="lazy" src="/box/addon-medium-acier.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-ninja.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-paille.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rouge.jpg" alt=""><img loading="lazy" src="/box/addon-3d-princesse.jpg" alt=""><img loading="lazy" src="/box/avant-premiere-addon-3d-musiqu.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rubis.jpg" alt=""><img loading="lazy" src="/box/addon-rainbow-brun.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymere-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier-poli-c-d.jpg" alt=""></div></div>
+  <div class="w centre">
   <div class="kick">Deux jours · 300 box</div>
   <h1>On n'en a<br><b>jamais trop.</b></h1>
   <p class="sub">Sept essentiels mood. Ceux que vous portez déjà, ceux que vous cherchez au fond du tiroir le matin. Réunis neufs, dans une boîte de rangement turquoise clair.</p>
   <div class="prixligne"><span class="avant">512.–</span><span class="apres">160.–</span></div>
   <a class="cta" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise">Je prends la mienne</a>
-  <div class="compte">Il en reste <b id="reste">300</b></div>
-</div></header>
+  <div class="compte">Il en reste <b id="reste">300</b> box sur 300</div>
+  </div>
+  <div class="col haut"><div class="piste"><img loading="lazy" src="/box/medium-3d-coeur.jpg" alt=""><img loading="lazy" src="/box/addon-3d-edelweiss-bleu-minera.jpg" alt=""><img loading="lazy" src="/box/addon-3d-carnaval.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-rose-gold.jpg" alt=""><img loading="lazy" src="/box/addon-skull-bleu-bague-interch.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-froiss.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-minneryia.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-auberg.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-emeraude-froi.jpg" alt=""><img loading="lazy" src="/box/mini-acier-froisse.jpg" alt=""><img loading="lazy" src="/box/addon-medium-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-skull-violet-bague-inter.jpg" alt=""><img loading="lazy" src="/box/medium-3d-coeur.jpg" alt=""><img loading="lazy" src="/box/addon-3d-edelweiss-bleu-minera.jpg" alt=""><img loading="lazy" src="/box/addon-3d-carnaval.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-rose-gold.jpg" alt=""><img loading="lazy" src="/box/addon-skull-bleu-bague-interch.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-froiss.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-minneryia.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-auberg.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-emeraude-froi.jpg" alt=""><img loading="lazy" src="/box/mini-acier-froisse.jpg" alt=""><img loading="lazy" src="/box/addon-medium-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-skull-violet-bague-inter.jpg" alt=""></div></div>
+</div>
+</header>
 
 <div class="massue"><div class="w">
   <p>Vous les avez déjà&nbsp;?<br><b>C'est précisément pour ça qu'on les a choisis.</b></p>
@@ -190,6 +211,11 @@ footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter
 </div></div>
 
 <footer>mood collection · Orbe · Suisse</footer>
+<script>
+fetch('/api/box-reste').then(function(r){return r.json()}).then(function(d){
+  var e=document.getElementById('reste'); if(e && typeof d.reste==='number'){ e.textContent=d.reste; }
+}).catch(function(){});
+</script>
 </body></html>`;
 
 export async function GET() {
