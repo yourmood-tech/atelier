@@ -11,76 +11,78 @@ const PAGE = String.raw`<!doctype html>
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:#F6F5F2;color:#16161A;}
+html,body{margin:0;padding:0;background:#B5E0DD;color:#10201F;}
 body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
 a{color:inherit;text-decoration:none}
 .w{max-width:1180px;margin:0 auto;padding:0 32px}
-:root{--turq:#7EC8C8;--turq-pale:#DFF1F1;--gris:#6E6E76}
+:root{--turq:#B5E0DD;--turq-fonce:#5FA9A4;--gris:#41615F}
 
 header.h{padding:86px 0 0;text-align:center}
 .kick{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gris)}
 h1{font-size:clamp(42px,7.4vw,96px);line-height:.96;font-weight:200;margin:22px 0 0;letter-spacing:-.025em}
 h1 b{font-weight:500}
-.sub{font-size:17px;font-weight:300;color:#43434C;max-width:46ch;margin:26px auto 0}
+.sub{font-size:17px;font-weight:300;color:#274543;max-width:46ch;margin:26px auto 0}
 .prixligne{display:flex;align-items:baseline;justify-content:center;gap:16px;margin:34px 0 0}
-.avant{font-size:17px;color:#9A9AA2;text-decoration:line-through;font-weight:300}
+.avant{font-size:17px;color:#5C8480;text-decoration:line-through;font-weight:300}
 .apres{font-size:40px;font-weight:500;letter-spacing:-.02em}
-.cta{display:inline-flex;align-items:center;height:56px;padding:0 38px;margin-top:26px;background:#16161A;color:#F6F5F2;
+.cta{display:inline-flex;align-items:center;height:56px;padding:0 38px;margin-top:26px;background:#10201F;color:#EAF7F6;
  font-size:11px;letter-spacing:.24em;text-transform:uppercase;border-radius:2px;transition:.3s}
-.cta:hover{background:var(--turq);color:#16161A}
+.cta:hover{background:#FFFFFF;color:#10201F}
 .compte{margin-top:16px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
 
-.massue{margin:88px 0 0;background:#16161A;color:#F6F5F2;padding:72px 0}
+.massue{margin:88px 0 0;background:#10201F;color:#EAF7F6;padding:76px 0}
 .massue p{max-width:20ch;margin:0 auto;text-align:center;font-size:clamp(26px,3.6vw,44px);font-weight:200;line-height:1.24;letter-spacing:-.01em}
 .massue p b{font-weight:500}
 
 section{padding:86px 0 0}
 .eb{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gris);text-align:center}
 h2{font-size:clamp(26px,3.4vw,40px);font-weight:200;text-align:center;margin:14px 0 0;letter-spacing:-.015em}
-.lede{max-width:56ch;margin:20px auto 0;text-align:center;color:#4A4A53;font-weight:300}
+.lede{max-width:56ch;margin:20px auto 0;text-align:center;color:#274543;font-weight:300}
 
-.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#E4E2DD;margin-top:44px;border:1px solid #E4E2DD}
-.trio div{background:#F6F5F2;padding:40px 30px;text-align:center}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:44px;border:1px solid rgba(16,32,31,.16)}
+.trio div{background:#C4E7E4;padding:40px 30px;text-align:center}
 .trio .t{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gris)}
 .trio .d{margin-top:14px;font-size:19px;font-weight:300;line-height:1.45}
 
 .grille{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px}
 .p{display:block;text-align:center}
-.pim{display:block;position:relative;aspect-ratio:1/1;background:#EFEDE8;border-radius:2px;overflow:hidden}
+.pim{display:block;position:relative;aspect-ratio:1/1;background:#B5E0DD;border-radius:2px;overflow:hidden}
 .pim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
 .p:hover .pim img{transform:scale(1.06)}
-.pq{display:inline-block;margin-top:14px;font-size:11px;letter-spacing:.2em;color:#16161A;background:var(--turq-pale);padding:3px 9px;border-radius:99px}
+.pq{display:inline-block;margin-top:14px;font-size:11px;letter-spacing:.2em;color:#EAF7F6;background:#10201F;padding:3px 9px;border-radius:99px}
 .pn{display:block;margin-top:8px;font-size:14px;font-weight:300}
 .pp{display:block;margin-top:3px;font-size:13px;color:var(--gris)}
 
 .boite{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;margin-top:48px}
-.boite .ph{aspect-ratio:4/3;border-radius:3px;background:linear-gradient(150deg,#DFF1F1,#BFE4E4 60%,#A9DADA);
- display:flex;align-items:center;justify-content:center;color:#3E6E6E;font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+.boite .ph{aspect-ratio:4/3;border-radius:3px;overflow:hidden;background:#C4E7E4}
+.boite .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .boite h3{font-size:clamp(24px,3vw,34px);font-weight:200;margin:0 0 16px;letter-spacing:-.01em}
-.boite p{color:#4A4A53;font-weight:300;margin:0 0 12px}
+.boite p{color:#274543;font-weight:300;margin:0 0 12px}
 
-.calc{margin-top:48px;border:1px solid #E4E2DD;border-radius:3px;max-width:640px;margin-left:auto;margin-right:auto;background:#FBFAF8}
-.calc .l{display:flex;justify-content:space-between;padding:15px 26px;border-bottom:1px solid #EDEBE6;font-weight:300;font-size:15px}
+.calc{margin-top:48px;border:1px solid rgba(16,32,31,.18);border-radius:3px;max-width:640px;margin-left:auto;margin-right:auto;background:#C4E7E4}
+.calc .l{display:flex;justify-content:space-between;padding:15px 26px;border-bottom:1px solid rgba(16,32,31,.12);font-weight:300;font-size:15px}
 .calc .l:last-child{border:0}
-.calc .tot{background:#16161A;color:#F6F5F2;font-weight:400}
+.calc .tot{background:#10201F;color:#EAF7F6;font-weight:400}
 .calc .tot span:last-child{font-weight:500}
 
-.chiffres{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#E4E2DD;margin-top:48px;border:1px solid #E4E2DD}
-.chiffres div{background:#F6F5F2;padding:34px 12px;text-align:center}
+.chiffres{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:48px;border:1px solid rgba(16,32,31,.16)}
+.chiffres div{background:#C4E7E4;padding:34px 12px;text-align:center}
 .chiffres .n{font-size:34px;font-weight:300;letter-spacing:-.02em}
 .chiffres .q{margin-top:6px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gris)}
 
+.grandeim{margin-top:0;border-radius:3px;overflow:hidden;background:#C4E7E4}
+.grandeim img{width:100%;display:block}
 .faq{max-width:760px;margin:44px auto 0}
-.faq details{border-bottom:1px solid #E4E2DD;padding:18px 0}
+.faq details{border-bottom:1px solid rgba(16,32,31,.16);padding:18px 0}
 .faq summary{cursor:pointer;list-style:none;font-size:16px;font-weight:400}
 .faq summary::-webkit-details-marker{display:none}
-.faq p{margin:12px 0 0;color:#4A4A53;font-weight:300}
+.faq p{margin:12px 0 0;color:#274543;font-weight:300}
 
-.fin{margin-top:96px;background:#16161A;color:#F6F5F2;padding:86px 0;text-align:center}
-.fin h2{color:#F6F5F2;margin:0}
-.fin .cta{background:#F6F5F2;color:#16161A;margin-top:30px}
+.fin{margin-top:96px;background:#10201F;color:#EAF7F6;padding:86px 0;text-align:center}
+.fin h2{color:#EAF7F6;margin:0}
+.fin .cta{background:#EAF7F6;color:#10201F;margin-top:30px}
 .fin .cta:hover{background:var(--turq)}
-footer{padding:28px 0 54px;text-align:center;color:#9A9AA2;font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter-spacing:.2em;text-transform:uppercase}
 
 @media(max-width:900px){
  .w{padding:0 20px}
@@ -104,6 +106,10 @@ footer{padding:28px 0 54px;text-align:center;color:#9A9AA2;font-size:11px;letter
 </div></div>
 
 <section><div class="w">
+  <div class="grandeim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/mood-amelioration-1790665605561.jpg?width=1600" alt="La box On n'en a jamais trop"></div>
+</div></section>
+
+<section><div class="w">
   <div class="eb">Le principe</div>
   <h2>Il y a des choses qu'on possède déjà<br>et qu'on adore racheter.</h2>
   <div class="trio">
@@ -118,19 +124,19 @@ footer{padding:28px 0 54px;text-align:center;color:#9A9AA2;font-size:11px;letter
   <div class="eb">Dans la box</div>
   <h2>Sept bijoux et la boîte de rangement.</h2>
   <div class="grille"><a class="p" href="https://www.yourmood.net/products/deux-tiers-acier-froisse" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/froissegris.web.jpg?width=900" alt="Deux tiers en acier froissé"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt="Deux tiers en acier froissé"></span>
       <span class="pq">×1</span><span class="pn">Deux tiers en acier froissé</span><span class="pp">109.–</span></a><a class="p" href="https://www.yourmood.net/products/medium-en-acier-froisse" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-acier-medium-en-acier-froisse-1.jpg?width=900" alt="Medium en acier froissé"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt="Medium en acier froissé"></span>
       <span class="pq">×2</span><span class="pn">Medium en acier froissé</span><span class="pp">77.– pièce</span></a><a class="p" href="https://www.yourmood.net/products/mini-acier-froisse" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_mood_interchangeable_addon_mini_acier_froisse.jpg?width=900" alt="Mini en acier froissé"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt="Mini en acier froissé"></span>
       <span class="pq">×2</span><span class="pn">Mini en acier froissé</span><span class="pp">60.– pièce</span></a><a class="p" href="https://www.yourmood.net/products/addon-medium-blanc" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-medium-addon-medium-blanc-1.jpg?width=900" alt="Medium blanc"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt="Medium blanc"></span>
       <span class="pq">×2</span><span class="pn">Medium blanc</span><span class="pp">15.– pièce</span></a></div>
 </div></section>
 
 <section><div class="w">
   <div class="boite">
-    <div class="ph">Photo de la boîte turquoise</div>
+    <div class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_7ffabd61-af13-46f9-b3b9-e51f6b3d3d21.png?width=1400" alt="La boîte de rangement turquoise, ouverte"></div>
     <div>
       <div class="eb" style="text-align:left">La boîte de rangement</div>
       <h3 style="text-align:left">Turquoise clair. Elle ne demande la permission à personne, surtout pas à octobre.</h3>
@@ -138,6 +144,10 @@ footer{padding:28px 0 54px;text-align:center;color:#9A9AA2;font-size:11px;letter
       <p>Dedans, le froissé fait le reste — il attrape le peu de soleil qui traîne et le renvoie. Et le blanc, c'est le neuf.</p>
     </div>
   </div>
+</div></section>
+
+<section><div class="w">
+  <div class="grandeim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_720f179b-41c5-451d-9cd1-79d2b7947838.png?width=1400" alt="La boîte de rangement turquoise, ouverte"></div>
 </div></section>
 
 <section><div class="w">
