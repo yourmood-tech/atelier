@@ -18,46 +18,46 @@ a{color:inherit;text-decoration:none}
 :root{--turq:#B5E0DD;--turq-fonce:#5FA9A4;--gris:#41615F}
 
 header.h{padding:0;text-align:center;overflow:hidden}
-.scene{display:grid;grid-template-columns:200px 1fr 200px;gap:0;align-items:center;min-height:min(100vh,880px)}
-.centre{padding-top:34px;padding-bottom:34px}
-.col{position:relative;height:min(100vh,880px);overflow:hidden}
+.scene{display:grid;grid-template-columns:190px 1fr 190px;gap:0;align-items:center;min-height:min(86vh,720px)}
+.centre{padding-top:18px;padding-bottom:18px}
+.col{position:relative;height:min(86vh,720px);overflow:hidden}
 .col:before,.col:after{content:"";position:absolute;left:0;right:0;height:130px;z-index:2;pointer-events:none}
 .col:before{top:0;background:linear-gradient(#B5E0DD,rgba(181,224,221,0))}
 .col:after{bottom:0;background:linear-gradient(rgba(181,224,221,0),#B5E0DD)}
-.piste{display:flex;flex-direction:column;gap:10px;padding:10px}
-.piste img{width:100%;display:block;border-radius:2px}
-.bas .piste{animation:descend 78s linear infinite}
-.haut .piste{animation:monte 78s linear infinite}
-@keyframes descend{from{transform:translateY(-50%)}to{transform:translateY(0)}}
-@keyframes monte{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.piste{display:flex;flex-direction:column;gap:12px;padding:0 10px}
+.piste img{width:100%;height:190px;object-fit:cover;display:block;border-radius:2px}
+.bas .piste{animation:descend 42s linear infinite}
+.haut .piste{animation:monte 42s linear infinite}
+@keyframes descend{from{transform:translateY(-1212px)}to{transform:translateY(0)}}
+@keyframes monte{from{transform:translateY(0)}to{transform:translateY(-1212px)}}
 @media (prefers-reduced-motion:reduce){.piste{animation:none}}
 .kick{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gris)}
-h1{font-size:clamp(42px,7.4vw,96px);line-height:.96;font-weight:200;margin:22px 0 0;letter-spacing:-.025em}
+h1{font-size:clamp(40px,6.6vw,84px);line-height:.96;font-weight:200;margin:16px 0 0;letter-spacing:-.025em}
 h1 b{font-weight:500}
-.sub{font-size:17px;font-weight:300;color:#274543;max-width:46ch;margin:26px auto 0}
-.prixligne{display:flex;align-items:baseline;justify-content:center;gap:16px;margin:34px 0 0}
+.sub{font-size:16px;font-weight:300;color:#274543;max-width:46ch;margin:18px auto 0}
+.prixligne{display:flex;align-items:baseline;justify-content:center;gap:16px;margin:22px 0 0}
 .avant{font-size:17px;color:#5C8480;text-decoration:line-through;font-weight:300}
 .apres{font-size:40px;font-weight:500;letter-spacing:-.02em}
-.cta{display:inline-flex;align-items:center;height:56px;padding:0 38px;margin-top:26px;background:#10201F;color:#EAF7F6;
+.cta{display:inline-flex;align-items:center;height:56px;padding:0 38px;margin-top:18px;background:#10201F;color:#EAF7F6;
  font-size:11px;letter-spacing:.24em;text-transform:uppercase;border-radius:2px;transition:.3s}
 .cta:hover{background:#FFFFFF;color:#10201F}
-.compte{margin-top:16px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
+.compte{margin-top:12px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gris)}
 
-.massue{margin:88px 0 0;background:#10201F;color:#EAF7F6;padding:76px 0}
+.massue{margin:52px 0 0;background:#10201F;color:#EAF7F6;padding:52px 0}
 .massue p{max-width:20ch;margin:0 auto;text-align:center;font-size:clamp(26px,3.6vw,44px);font-weight:200;line-height:1.24;letter-spacing:-.01em}
 .massue p b{font-weight:500}
 
-section{padding:86px 0 0}
+section{padding:52px 0 0}
 .eb{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--gris);text-align:center}
-h2{font-size:clamp(26px,3.4vw,40px);font-weight:200;text-align:center;margin:14px 0 0;letter-spacing:-.015em}
-.lede{max-width:56ch;margin:20px auto 0;text-align:center;color:#274543;font-weight:300}
+h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10px 0 0;letter-spacing:-.015em}
+.lede{max-width:56ch;margin:14px auto 0;text-align:center;color:#274543;font-weight:300}
 
-.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:44px;border:1px solid rgba(16,32,31,.16)}
-.trio div{background:#C4E7E4;padding:40px 30px;text-align:center}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:28px;border:1px solid rgba(16,32,31,.16)}
+.trio div{background:#C4E7E4;padding:26px 22px;text-align:center}
 .trio .t{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gris)}
 .trio .d{margin-top:14px;font-size:19px;font-weight:300;line-height:1.45}
 
-.grille{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:48px}
+.grille{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:28px}
 .p{display:block;text-align:center}
 .pim{display:block;position:relative;aspect-ratio:1/1;background:#B5E0DD;border-radius:2px;overflow:hidden}
 .pim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
@@ -66,36 +66,36 @@ h2{font-size:clamp(26px,3.4vw,40px);font-weight:200;text-align:center;margin:14p
 .pn{display:block;margin-top:8px;font-size:14px;font-weight:300}
 .pp{display:block;margin-top:3px;font-size:13px;color:var(--gris)}
 
-.boite{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;margin-top:48px}
+.boite{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center;margin-top:8px}
 .boite .ph{aspect-ratio:4/3;border-radius:3px;overflow:hidden;background:#C4E7E4}
 .boite .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .boite h3{font-size:clamp(24px,3vw,34px);font-weight:200;margin:0 0 16px;letter-spacing:-.01em}
 .boite p{color:#274543;font-weight:300;margin:0 0 12px}
 
-.calc{margin-top:48px;border:1px solid rgba(16,32,31,.18);border-radius:3px;max-width:640px;margin-left:auto;margin-right:auto;background:#C4E7E4}
-.calc .l{display:flex;justify-content:space-between;padding:15px 26px;border-bottom:1px solid rgba(16,32,31,.12);font-weight:300;font-size:15px}
+.calc{margin-top:26px;border:1px solid rgba(16,32,31,.18);border-radius:3px;max-width:640px;margin-left:auto;margin-right:auto;background:#C4E7E4}
+.calc .l{display:flex;justify-content:space-between;padding:12px 24px;border-bottom:1px solid rgba(16,32,31,.12);font-weight:300;font-size:15px}
 .calc .l:last-child{border:0}
 .calc .tot{background:#10201F;color:#EAF7F6;font-weight:400}
 .calc .tot span:last-child{font-weight:500}
 
-.chiffres{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:48px;border:1px solid rgba(16,32,31,.16)}
-.chiffres div{background:#C4E7E4;padding:34px 12px;text-align:center}
+.chiffres{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:26px;border:1px solid rgba(16,32,31,.16)}
+.chiffres div{background:#C4E7E4;padding:24px 10px;text-align:center}
 .chiffres .n{font-size:34px;font-weight:300;letter-spacing:-.02em}
 .chiffres .q{margin-top:6px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gris)}
 
 .grandeim{margin-top:0;border-radius:3px;overflow:hidden;background:#C4E7E4}
 .grandeim img{width:100%;display:block}
-.faq{max-width:760px;margin:44px auto 0}
-.faq details{border-bottom:1px solid rgba(16,32,31,.16);padding:18px 0}
+.faq{max-width:760px;margin:24px auto 0}
+.faq details{border-bottom:1px solid rgba(16,32,31,.16);padding:13px 0}
 .faq summary{cursor:pointer;list-style:none;font-size:16px;font-weight:400}
 .faq summary::-webkit-details-marker{display:none}
 .faq p{margin:12px 0 0;color:#274543;font-weight:300}
 
-.fin{margin-top:96px;background:#10201F;color:#EAF7F6;padding:86px 0;text-align:center}
+.fin{margin-top:56px;background:#10201F;color:#EAF7F6;padding:58px 0;text-align:center}
 .fin h2{color:#EAF7F6;margin:0}
 .fin .cta{background:#EAF7F6;color:#10201F;margin-top:30px}
 .fin .cta:hover{background:var(--turq)}
-footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter-spacing:.2em;text-transform:uppercase}
+footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter-spacing:.2em;text-transform:uppercase}
 
 @media(max-width:900px){
  .scene{grid-template-columns:1fr}
@@ -109,7 +109,7 @@ footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter
 
 <header class="h">
 <div class="scene">
-  <div class="col bas"><div class="piste"><img loading="lazy" src="/box/deux-tiers-acier-emeraude-pail.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-lie-de.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-poli.jpg" alt=""><img loading="lazy" src="/box/copy-of-addon-rainbow-violet-r.jpg" alt=""><img loading="lazy" src="/box/medium-polymer-rose.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-paillettes.jpg" alt=""><img loading="lazy" src="/box/addon-medium-acier.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-ninja.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-paille.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rouge.jpg" alt=""><img loading="lazy" src="/box/addon-3d-princesse.jpg" alt=""><img loading="lazy" src="/box/avant-premiere-addon-3d-musiqu.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rubis.jpg" alt=""><img loading="lazy" src="/box/addon-rainbow-brun.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymere-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier-poli-c-d.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-emeraude-pail.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-lie-de.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-poli.jpg" alt=""><img loading="lazy" src="/box/copy-of-addon-rainbow-violet-r.jpg" alt=""><img loading="lazy" src="/box/medium-polymer-rose.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-paillettes.jpg" alt=""><img loading="lazy" src="/box/addon-medium-acier.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-ninja.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-paille.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rouge.jpg" alt=""><img loading="lazy" src="/box/addon-3d-princesse.jpg" alt=""><img loading="lazy" src="/box/avant-premiere-addon-3d-musiqu.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-rubis.jpg" alt=""><img loading="lazy" src="/box/addon-rainbow-brun.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymere-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier-poli-c-d.jpg" alt=""></div></div>
+  <div class="col bas"><div class="piste"><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""></div></div>
   <div class="w centre">
   <div class="kick">Deux jours · 300 box</div>
   <h1>On n'en a<br><b>jamais trop.</b></h1>
@@ -118,7 +118,7 @@ footer{padding:28px 0 54px;text-align:center;color:#41615F;font-size:11px;letter
   <a class="cta" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise">Je prends la mienne</a>
   <div class="compte">Il en reste <b id="reste">300</b> box sur 300</div>
   </div>
-  <div class="col haut"><div class="piste"><img loading="lazy" src="/box/medium-3d-coeur.jpg" alt=""><img loading="lazy" src="/box/addon-3d-edelweiss-bleu-minera.jpg" alt=""><img loading="lazy" src="/box/addon-3d-carnaval.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-rose-gold.jpg" alt=""><img loading="lazy" src="/box/addon-skull-bleu-bague-interch.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-froiss.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-minneryia.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-auberg.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-emeraude-froi.jpg" alt=""><img loading="lazy" src="/box/mini-acier-froisse.jpg" alt=""><img loading="lazy" src="/box/addon-medium-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-skull-violet-bague-inter.jpg" alt=""><img loading="lazy" src="/box/medium-3d-coeur.jpg" alt=""><img loading="lazy" src="/box/addon-3d-edelweiss-bleu-minera.jpg" alt=""><img loading="lazy" src="/box/addon-3d-carnaval.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-acier.jpg" alt=""><img loading="lazy" src="/box/pack-mini-en-acier-rose-gold.jpg" alt=""><img loading="lazy" src="/box/addon-skull-bleu-bague-interch.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-bleute-froiss.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-minneryia.jpg" alt=""><img loading="lazy" src="/box/addon-medium-en-polymer-auberg.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/pack-de-2-minis-acier-finition.jpg" alt=""><img loading="lazy" src="/box/deux-tiers-acier-emeraude-froi.jpg" alt=""><img loading="lazy" src="/box/mini-acier-froisse.jpg" alt=""><img loading="lazy" src="/box/addon-medium-blanc.jpg" alt=""><img loading="lazy" src="/box/addon-skull-violet-bague-inter.jpg" alt=""></div></div>
+  <div class="col haut"><div class="piste"><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""></div></div>
 </div>
 </header>
 
