@@ -74,6 +74,8 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .pp{display:block;margin-top:3px;font-size:13px;color:var(--gris)}
 
 .boite{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center;margin-top:8px}
+.boite.sanspho{grid-template-columns:1fr;max-width:760px;margin-left:auto;margin-right:auto;text-align:center}
+.boite.sanspho .eb,.boite.sanspho h3{text-align:center!important}
 .boite .ph{aspect-ratio:4/3;border-radius:3px;overflow:hidden;background:#C4E7E4}
 .boite .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .boite h3{font-size:clamp(24px,3vw,34px);font-weight:200;margin:0 0 16px;letter-spacing:-.01em}
@@ -170,8 +172,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 </div></section>
 
 <section><div class="w">
-  <div class="boite">
-    <div class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_c2e00cbe-1cb6-4c61-a8ff-74d7efc4c08e.png?width=1600" alt="La boîte de rangement turquoise, ouverte"></div>
+  <div class="boite sanspho">
     <div>
       <div class="eb" style="text-align:left">La boîte de rangement</div>
       <h3 style="text-align:left">Turquoise clair. Elle ne demande la permission à personne, surtout pas à octobre.</h3>
