@@ -67,6 +67,8 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .pim{display:block;position:relative;aspect-ratio:1/1;background:#B5E0DD;border-radius:2px;overflow:hidden}
 .pim img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
 .p:hover .pim img{transform:scale(1.06)}
+.pvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease;z-index:2}
+.p:hover .pvid{opacity:1}
 .pq{display:inline-block;margin-top:14px;font-size:11px;letter-spacing:.2em;color:#EAF7F6;background:#10201F;padding:3px 9px;border-radius:99px}
 .pn{display:block;margin-top:8px;font-size:14px;font-weight:300}
 .pp{display:block;margin-top:3px;font-size:13px;color:var(--gris)}
@@ -157,13 +159,13 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   <div class="eb">Dans la box</div>
   <h2>Sept bijoux et la boîte de rangement.</h2>
   <div class="grille"><a class="p" href="https://www.yourmood.net/products/deux-tiers-acier-froisse" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt="Deux tiers en acier froissé"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt="Deux tiers en acier froissé"><video class="pvid" src="/box/base-acier-brossee-zoom.mp4" autoplay muted loop playsinline preload="none"></video></span>
       <span class="pq">×1</span><span class="pn">Deux tiers en acier froissé</span><span class="pp">109.–</span></a><a class="p" href="https://www.yourmood.net/products/medium-en-acier-froisse" target="_blank" rel="noopener">
       <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt="Medium en acier froissé"></span>
       <span class="pq">×2</span><span class="pn">Medium en acier froissé</span><span class="pp">77.– pièce</span></a><a class="p" href="https://www.yourmood.net/products/mini-acier-froisse" target="_blank" rel="noopener">
       <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt="Mini en acier froissé"></span>
       <span class="pq">×2</span><span class="pn">Mini en acier froissé</span><span class="pp">60.– pièce</span></a><a class="p" href="https://www.yourmood.net/products/addon-medium-blanc" target="_blank" rel="noopener">
-      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt="Medium blanc"></span>
+      <span class="pim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt="Medium blanc"><video class="pvid" src="/box/duo-blanches-zoom.mp4" autoplay muted loop playsinline preload="none"></video></span>
       <span class="pq">×2</span><span class="pn">Medium blanc</span><span class="pp">15.– pièce</span></a></div>
 </div></section>
 
@@ -177,10 +179,6 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
       <p>Dedans, le froissé fait le reste — il attrape le peu de soleil qui traîne et le renvoie. Et le blanc, c'est le neuf.</p>
     </div>
   </div>
-</div></section>
-
-<section><div class="w">
-  <div class="grandeim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_720f179b-41c5-451d-9cd1-79d2b7947838.png?width=1400" alt="La boîte de rangement turquoise, ouverte"></div>
 </div></section>
 
 <section><div class="w">
