@@ -53,7 +53,12 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .lede{max-width:56ch;margin:14px auto 0;text-align:center;color:#274543;font-weight:300}
 
 .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:28px;border:1px solid rgba(16,32,31,.16)}
-.trio div{background:#C4E7E4;padding:26px 22px;text-align:center}
+.trio .tc{position:relative;background:#C4E7E4;text-align:center;overflow:hidden;min-height:178px;display:flex;align-items:center;justify-content:center}
+.trio .tc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+.trio .tc:hover img{opacity:1}
+.trio .txt{position:relative;z-index:2;padding:26px 22px;transition:.5s}
+.trio .tc:hover .txt{background:rgba(16,32,31,.58);color:#EAF7F6;backdrop-filter:blur(1px)}
+.trio .tc:hover .t{color:#EAF7F6}
 .trio .t{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gris)}
 .trio .d{margin-top:14px;font-size:19px;font-weight:300;line-height:1.45}
 
@@ -134,9 +139,9 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   <div class="eb">Le principe</div>
   <h2>Il y a des choses qu'on possède déjà<br>et qu'on adore racheter.</h2>
   <div class="trio">
-    <div><div class="t">La chemise</div><div class="d">Blanche. Impeccable. La même que la précédente.</div></div>
-    <div><div class="t">Les baskets</div><div class="d">Exactement le modèle d'avant, en blanc qui n'a rien vu.</div></div>
-    <div><div class="t">Les chaussettes blanches</div><div class="d">On en a déjà plein. On en rachète quand même.</div></div>
+    <div class="tc"><img loading="lazy" src="/box/trio-1.jpg" alt=""><div class="txt"><div class="t">La chemise</div><div class="d">Blanche. Impeccable. La même que la précédente.</div></div></div>
+    <div class="tc"><img loading="lazy" src="/box/trio-2.jpg" alt=""><div class="txt"><div class="t">Les baskets</div><div class="d">Exactement le modèle d'avant, en blanc qui n'a rien vu.</div></div></div>
+    <div class="tc"><img loading="lazy" src="/box/trio-3.jpg" alt=""><div class="txt"><div class="t">Les chaussettes blanches</div><div class="d">On en a déjà plein. On en rachète quand même.</div></div></div>
   </div>
   <p class="lede">Ce n'est pas de la nouveauté. C'est mieux&nbsp;: le plaisir de retrouver ce qu'on aime, parfaitement neuf.<br>Vos froissés, vous les connaissez. Ils ont attrapé toutes les lumières. On vous les remet entre les mains — neufs.</p>
 </div></section>
