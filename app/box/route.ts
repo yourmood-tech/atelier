@@ -18,18 +18,18 @@ a{color:inherit;text-decoration:none}
 :root{--turq:#B5E0DD;--turq-fonce:#5FA9A4;--gris:#41615F}
 
 header.h{padding:0;text-align:center;overflow:hidden}
-.scene{display:grid;grid-template-columns:190px 1fr 190px;gap:0;align-items:center;min-height:min(86vh,720px)}
+.scene{display:grid;grid-template-columns:270px 1fr 270px;gap:0;align-items:center;min-height:min(86vh,720px)}
 .centre{padding-top:18px;padding-bottom:18px}
 .col{position:relative;height:min(86vh,720px);overflow:hidden}
 .col:before,.col:after{content:"";position:absolute;left:0;right:0;height:130px;z-index:2;pointer-events:none}
 .col:before{top:0;background:linear-gradient(#B5E0DD,rgba(181,224,221,0))}
 .col:after{bottom:0;background:linear-gradient(rgba(181,224,221,0),#B5E0DD)}
-.piste{display:flex;flex-direction:column;gap:12px;padding:0 10px}
-.piste img{width:100%;height:190px;object-fit:cover;display:block;border-radius:2px}
+.piste{display:flex;flex-direction:column;gap:12px;padding:0 6px}
+.piste img{width:100%;height:268px;object-fit:cover;display:block;border-radius:2px}
 .bas .piste{animation:descend 42s linear infinite}
 .haut .piste{animation:monte 42s linear infinite}
-@keyframes descend{from{transform:translateY(-1212px)}to{transform:translateY(0)}}
-@keyframes monte{from{transform:translateY(0)}to{transform:translateY(-1212px)}}
+@keyframes descend{from{transform:translateY(-1680px)}to{transform:translateY(0)}}
+@keyframes monte{from{transform:translateY(0)}to{transform:translateY(-1680px)}}
 @media (prefers-reduced-motion:reduce){.piste{animation:none}}
 .kick{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gris)}
 h1{font-size:clamp(40px,6.6vw,84px);line-height:.96;font-weight:200;margin:16px 0 0;letter-spacing:-.025em}
@@ -109,7 +109,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 
 <header class="h">
 <div class="scene">
-  <div class="col bas"><div class="piste"><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""></div></div>
+  <div class="col bas"><div class="piste"><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""></div></div>
   <div class="w centre">
   <div class="kick">Deux jours · 300 box</div>
   <h1>On n'en a<br><b>jamais trop.</b></h1>
@@ -118,7 +118,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   <a class="cta" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise">Je prends la mienne</a>
   <div class="compte">Il en reste <b id="reste">300</b> box sur 300</div>
   </div>
-  <div class="col haut"><div class="piste"><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_b0c59ec8-9aca-4ed4-9ded-a31622d3c459.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_cee0fe29-58fd-43d0-865a-5b674e3fd38e.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a2a206c6-b079-4fbe-9b56-5e7a6cdd8b07.png?width=1000" alt=""><img loading="eager" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_a116e152-d2d2-4f3e-83d3-67c502189c49.png?width=1000" alt=""></div></div>
+  <div class="col haut"><div class="piste"><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-dt.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""><img loading="eager" src="/box/col-blanc.jpg" alt=""><img loading="eager" src="/box/col-med.jpg" alt=""><img loading="eager" src="/box/col-mini.jpg" alt=""></div></div>
 </div>
 </header>
 
