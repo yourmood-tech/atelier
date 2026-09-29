@@ -256,8 +256,14 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   var p=document.querySelector('.rp'); if(!p) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var x=0, moitie=0, dernier=0;
-  function mesure(){ moitie = p.scrollWidth/2; }
-  window.addEventListener('load',mesure); window.addEventListener('resize',mesure); mesure();
+  function mesure(){ var w=p.scrollWidth/2; if(w>50) moitie=w; }
+  mesure();
+  window.addEventListener('load',mesure);
+  window.addEventListener('resize',mesure);
+  Array.prototype.forEach.call(p.querySelectorAll('img'),function(im){
+    if(im.complete) mesure(); else im.addEventListener('load',mesure);
+  });
+  var essais=0, t=setInterval(function(){ mesure(); if(++essais>20) clearInterval(t); },700);
   function pas(t){
     requestAnimationFrame(pas);
     if(!dernier){ dernier=t; return; }
