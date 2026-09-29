@@ -136,7 +136,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
   <div class="trio">
     <div><div class="t">La chemise</div><div class="d">Blanche. Impeccable. La même que la précédente.</div></div>
     <div><div class="t">Les baskets</div><div class="d">Exactement le modèle d'avant, en blanc qui n'a rien vu.</div></div>
-    <div><div class="t">Les draps</div><div class="d">Changés le jeudi soir. Personne ne s'en lasse.</div></div>
+    <div><div class="t">Les chaussettes blanches</div><div class="d">On en a déjà plein. On en rachète quand même.</div></div>
   </div>
   <p class="lede">Ce n'est pas de la nouveauté. C'est mieux&nbsp;: le plaisir de retrouver ce qu'on aime, parfaitement neuf.<br>Vos froissés, vous les connaissez. Ils ont attrapé toutes les lumières. On vous les remet entre les mains — neufs.</p>
 </div></section>
