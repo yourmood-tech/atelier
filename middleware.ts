@@ -32,6 +32,11 @@ export default auth((req) => {
     return;
   }
 
+  // /box (maquette de la page « On n'en a jamais trop » — lien à montrer à l'équipe)
+  if (pathname === "/box" || pathname.startsWith("/box/")) {
+    return;
+  }
+
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
