@@ -105,7 +105,9 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .chiffres .n{font-size:34px;font-weight:300;letter-spacing:-.02em}
 .chiffres .q{margin-top:6px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gris)}
 
-.grandeim{margin-top:0;border-radius:3px;overflow:hidden;background:#C4E7E4}
+.grandeim{position:relative;margin-top:0;border-radius:3px;overflow:hidden;background:#C4E7E4}
+.gvid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+.grandeim:hover .gvid{opacity:1}
 .grandeim img{width:100%;display:block}
 
 .ruban{margin-top:52px;overflow:hidden;position:relative}
@@ -163,7 +165,7 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 </div></div>
 
 <section><div class="w">
-  <div class="grandeim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/mood-amelioration-1790665605561.jpg?width=1600" alt="La box On n'en a jamais trop"></div>
+  <div class="grandeim"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/mood-amelioration-1790665605561.jpg?width=1600" alt="La box On n'en a jamais trop"><video class="gvid" src="/box/boite-et-anneaux.mp4" muted loop playsinline preload="none"></video></div>
 </div></section>
 
 <section><div class="w">
@@ -245,6 +247,11 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 
 <footer>mood collection · Orbe · Suisse</footer>
 <script>
+(function(){
+  var g=document.querySelector('.grandeim'), v=g&&g.querySelector('.gvid');
+  if(g&&v){ g.addEventListener('mouseenter',function(){ v.play().catch(function(){}); });
+            g.addEventListener('mouseleave',function(){ v.pause(); }); }
+})();
 (function(){
   var p=document.querySelector('.rp'); if(!p) return;
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
