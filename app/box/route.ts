@@ -113,10 +113,10 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .ruban:before{left:0;background:linear-gradient(90deg,#B5E0DD,rgba(181,224,221,0))}
 .ruban:after{right:0;background:linear-gradient(270deg,#B5E0DD,rgba(181,224,221,0))}
 .rp{display:flex;gap:12px;width:max-content;animation:glisse 70s linear infinite}
-.rp img{height:230px;width:230px;object-fit:cover;border-radius:2px;display:block}
-@keyframes glisse{from{transform:translateX(0)}to{transform:translateX(-2662px)}}
+.rp img{height:230px;width:auto;object-fit:contain;border-radius:2px;display:block}
+@keyframes glisse{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media (prefers-reduced-motion:reduce){.rp{animation:none}}
-@media(max-width:900px){.rp img{height:150px;width:150px}}
+@media(max-width:900px){.rp img{height:150px}}
 .faq{max-width:760px;margin:24px auto 0}
 .faq details{border-bottom:1px solid rgba(16,32,31,.16);padding:13px 0}
 .faq summary{cursor:pointer;list-style:none;font-size:16px;font-weight:400}
