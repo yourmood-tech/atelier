@@ -84,7 +84,14 @@ h2{font-size:clamp(24px,3.1vw,36px);font-weight:200;text-align:center;margin:10p
 .calc .tot span:last-child{font-weight:500}
 
 .chiffres{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(16,32,31,.16);margin-top:26px;border:1px solid rgba(16,32,31,.16)}
-.chiffres div{background:#C4E7E4;padding:24px 10px;text-align:center}
+.chiffres .ch{position:relative;background:#C4E7E4;text-align:center;overflow:hidden;min-height:152px;display:flex;align-items:center;justify-content:center}
+.chiffres .ch img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+.chiffres .ch:hover img{opacity:1}
+.chiffres .in{position:relative;z-index:2;padding:24px 10px;width:100%;transition:.5s}
+.chiffres .ch:hover .in{background:rgba(16,32,31,.6);color:#EAF7F6}
+.chiffres .ch:hover .q{color:#EAF7F6}
+.sv{max-height:0;overflow:hidden;opacity:0;transition:.45s;font-size:12px;letter-spacing:.06em;margin-top:0}
+.chiffres .ch:hover .sv{max-height:60px;opacity:1;margin-top:8px}
 .chiffres .n{font-size:34px;font-weight:300;letter-spacing:-.02em}
 .chiffres .q{margin-top:6px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gris)}
 
@@ -192,10 +199,10 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 
 <section><div class="w">
   <div class="chiffres">
-    <div><div class="n">300</div><div class="q">box</div></div>
-    <div><div class="n">2</div><div class="q">jours</div></div>
-    <div><div class="n">7</div><div class="q">essentiels</div></div>
-    <div><div class="n">160.–</div><div class="q">la box</div></div>
+    <div class="ch"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_e236d241-869f-44eb-9507-0daf2a0a99dd.png?width=1200" alt=""><div class="in"><div class="n" id="ch-box">300</div><div class="q">box</div><div class="sv" id="sv-box">300 / 300 encore disponibles</div></div></div>
+    <div class="ch"><div class="in"><div class="n">2</div><div class="q">jours</div><div class="sv" id="sv-temps">—</div></div></div>
+    <div class="ch"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_39f77588-94cc-4e35-9b45-02b9771ae502.png?width=1200" alt=""><div class="in"><div class="n">7</div><div class="q">essentiels</div></div></div>
+    <div class="ch"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/box_oo_2_turquoise_04ed00ca-cbce-43db-a19b-34b57026ea53.png?width=1200" alt=""><div class="in"><div class="n">160.–</div><div class="q">la box</div></div></div>
   </div>
 </div></section>
 
@@ -218,8 +225,22 @@ footer{padding:20px 0 34px;text-align:center;color:#41615F;font-size:11px;letter
 <footer>mood collection · Orbe · Suisse</footer>
 <script>
 fetch('/api/box-reste').then(function(r){return r.json()}).then(function(d){
-  var e=document.getElementById('reste'); if(e && typeof d.reste==='number'){ e.textContent=d.reste; }
+  if(typeof d.reste!=='number') return;
+  var e=document.getElementById('reste'); if(e) e.textContent=d.reste;
+  var b=document.getElementById('ch-box'); if(b) b.textContent=d.reste;
+  var s=document.getElementById('sv-box'); if(s) s.textContent=d.reste+' / '+d.total+' encore disponibles';
 }).catch(function(){});
+(function(){
+  var fin=new Date('2026-10-01T00:00:00+02:00').getTime();
+  var el=document.getElementById('sv-temps'); if(!el) return;
+  function tic(){
+    var r=fin-Date.now();
+    if(r<=0){ el.textContent='C’est terminé.'; return; }
+    var m=Math.floor(r/60000), h=Math.floor(m/60), mm=m%60;
+    el.textContent = h>0 ? ('encore '+h+' h '+mm+' min') : ('encore '+mm+' min');
+  }
+  tic(); setInterval(tic,30000);
+})();
 </script>
 </body></html>`;
 
