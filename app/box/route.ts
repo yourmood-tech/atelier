@@ -18,12 +18,12 @@ a{color:inherit;text-decoration:none}
 :root{--turq:#B5E0DD;--turq-fonce:#5FA9A4;--gris:#41615F}
 
 header.h{padding:0;text-align:center;overflow:hidden}
-.txtcol .sub{margin-left:0;margin-right:0}
-.txtcol .prixligne{justify-content:flex-start}
+.txtcol .sub{margin-left:auto;margin-right:0}
+.txtcol .prixligne{justify-content:flex-end}
 .scene{display:grid;grid-template-columns:270px 1fr 270px;gap:0;align-items:center;min-height:min(86vh,720px)}
 .centre{padding-top:18px;padding-bottom:18px}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
-.txtcol{text-align:left}
+.txtcol{text-align:right}
 .vidcol video{width:100%;display:block;border-radius:3px}
 @media(max-width:900px){.duo{grid-template-columns:1fr;gap:18px}.txtcol{text-align:center}.vidcol{order:-1}}
 .col{position:relative;height:min(86vh,720px);overflow:hidden}
