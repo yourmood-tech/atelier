@@ -334,7 +334,7 @@ function computeRecommendations(params: Params, merged: MergedRow[]): ResultRow[
       );
     } else {
       planningDailyDemand = r.planningDailyDemandContinuous;
-      protectionDays = params.leadTimeDays + params.safetyDays;
+      protectionDays = params.leadTimeDays + params.reviewPeriodDays + params.safetyDays;
       targetStock = Math.ceil(planningDailyDemand * protectionDays);
     }
 
@@ -669,6 +669,10 @@ function SpinInput({
   onChange: (v: number) => void;
   disabled?: boolean;
 }) {
+  // Texte libre pendant la frappe (on peut vider la case et retaper) ; la valeur n'est
+  // transmise que si elle est un nombre dans les bornes, et la case se recale en quittant.
+  const [text, setText] = useState(String(value));
+  useEffect(() => { setText(String(value)); }, [value]);
   return (
     <div className="flex items-center gap-2">
       <span className="w-44 text-xs font-semibold text-zinc-400 shrink-0">{label}</span>
@@ -677,12 +681,14 @@ function SpinInput({
           type="number"
           min={min}
           max={max}
-          value={value}
+          value={text}
           disabled={disabled}
           onChange={(e) => {
+            setText(e.target.value);
             const v = parseInt(e.target.value, 10);
             if (!isNaN(v) && v >= min && v <= max) onChange(v);
           }}
+          onBlur={() => setText(String(value))}
           className="w-20 text-sm text-right bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus:border-zinc-500"
         />
         {suffix && <span className="text-xs text-zinc-500">{suffix}</span>}
@@ -707,14 +713,14 @@ function RiskBadge({ note }: { note: string }) {
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 
-// Objectif fixé par Philippe le 08.08.2026 : couvrir 45 jours de ventes avec le stock.
-// En mode volatil la protection vaut délai de livraison + période entre commandes, donc
-// 45 + 0 ; les jours de sécurité restent à 0 pour que la cible soit exactement 45 jours
-// de ventes et pas davantage. Les trois réglages restent modifiables sur l'écran.
+// Réglage par défaut (Philippe, 30.09.2026) : 45 jours de délai de livraison + 7 jours entre
+// deux commandes = 52 jours de ventes couverts. La période entre commandes compte dans les deux
+// modes (le stock doit tenir jusqu'à la livraison de la commande SUIVANTE). Les jours de sécurité
+// restent à 0. Les trois réglages restent modifiables sur l'écran.
 const DEFAULT_PARAMS: Params = {
   mode: "volatile",
   leadTimeDays: 45,
-  reviewPeriodDays: 0,
+  reviewPeriodDays: 7,
   safetyDays: 0,
   minOrderQty: 0,
   roundToPack: 1,
@@ -1161,7 +1167,7 @@ export default function ReassortPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <SpinInput label="Délai de livraison" value={params.leadTimeDays} min={0} max={365} suffix="jours" onChange={(v) => set("leadTimeDays", v)} />
             <SpinInput label="Quantité minimum" value={params.minOrderQty} min={0} max={100000} onChange={(v) => set("minOrderQty", v)} />
-            <SpinInput label="Période entre commandes" value={params.reviewPeriodDays} min={0} max={90} suffix="jours" disabled={params.mode === "continuous"} onChange={(v) => set("reviewPeriodDays", v)} />
+            <SpinInput label="Période entre commandes" value={params.reviewPeriodDays} min={0} max={90} suffix="jours" onChange={(v) => set("reviewPeriodDays", v)} />
             <SpinInput label="Arrondir au multiple" value={params.roundToPack} min={1} max={10000} onChange={(v) => set("roundToPack", v)} />
             <SpinInput label="Jours de sécurité" value={params.safetyDays} min={0} max={120} suffix="jours" onChange={(v) => set("safetyDays", v)} />
           </div>
