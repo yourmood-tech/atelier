@@ -27,6 +27,11 @@ export default auth((req) => {
     return;
   }
 
+  // /essayage (essai de la bague sur la main, par la caméra)
+  if (pathname === "/essayage" || pathname.startsWith("/essayage/")) {
+    return;
+  }
+
   // /halloween (maquette de la page Halloween — lien à montrer à l'équipe)
   if (pathname === "/halloween" || pathname.startsWith("/halloween/")) {
     return;
