@@ -45,9 +45,7 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   <div class="haut"><div class="k">mood</div><h1>J'essaie ma Chromaline</h1></div>
   <div class="bas">
     <div class="msg" id="msg">Montre ta main devant la caméra.</div>
-    <div class="lig">La base</div>
-    <div class="pal" id="palBase"></div>
-    <div class="lig">La couleur</div>
+    <div class="lig">La couleur des minis</div>
     <div class="pal" id="palCanal"></div>
   </div>
 </div>
@@ -201,8 +199,6 @@ function palette(el, liste, couleur, choisi, action){
     el.appendChild(b);
   });
 }
-palette(document.getElementById('palBase'), BASES, k => METAUX[k].color, 'acier',
-  k => { matMetal.color.setHex(METAUX[k].color); matMetal.roughness = METAUX[k].roughness; });
 palette(document.getElementById('palCanal'), LISTE_CANAUX, k => CANAUX[k], 'turquoise',
   k => matCanal.color.setHex(CANAUX[k]));
 
@@ -219,6 +215,27 @@ function cadre(){
 window.addEventListener('resize', cadre);
 
 const DEMO = new URLSearchParams(location.search).has('demo');
+const VITRINE = new URLSearchParams(location.search).has('vitrine');
+
+if (VITRINE) {
+  document.getElementById('demarrer').remove();
+  document.getElementById('cam').style.display = 'none';
+  document.querySelector('.bas').style.background = 'none';
+  document.getElementById('scene').style.background = '#EFEFEF';
+  msg.textContent = '';
+  const ang = parseFloat(new URLSearchParams(location.search).get('a') || '28');
+  cadre();
+  const cote = Math.min(toile.clientWidth, toile.clientHeight) * 0.40;
+  porteur.visible = true;
+  porteur.position.set(0, 0, 0);
+  porteur.scale.setScalar(cote);
+  porteur.rotation.set(0, 0, 0);
+  porteur.rotateZ(Math.PI / 2);                       // l'axe du trou a l'horizontale
+  porteur.rotateX(ang * Math.PI / 180);               // on la tourne de trois quarts
+  doigt3d.visible = false;
+  const dessine = () => { rendu.render(scene, cam3d); requestAnimationFrame(dessine); };
+  dessine();
+}
 
 async function demarre(){
   const d = document.getElementById('demarrer');
