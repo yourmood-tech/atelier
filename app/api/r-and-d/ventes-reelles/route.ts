@@ -106,7 +106,7 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
   const nomRaw = (p.shopifySearch || p.nom || "").trim();
   if (!tagRaw && !nomRaw) return { ids: [], skus: [], vids: [] };
 
-  const rck = `mood:resolve:v3:${tagRaw}|${nomRaw}`.slice(0, 120);
+  const rck = `mood:resolve:v4:${tagRaw}|${nomRaw}`.slice(0, 120);
   const rc = (await redisGet(rck)) as { ids: number[]; skus: string[]; vids: number[] } | null;
   if (rc && Array.isArray(rc.ids)) return rc;
 
@@ -131,7 +131,18 @@ async function resoudreProduit(p: ProduitDemande): Promise<{ ids: number[]; skus
   //    Union des résultats (dédupliqués) → attrape les produits même si le tag a été mal orthographié.
   let parTag = false;
   let edges: Array<{ node: Node }> = [];
-  if (tagRaw || nomRaw) {
+  // Étiquette avec exclusions : « 280926 -col-bleudesdieux -col-xs-max » = tous les produits
+  // de l'étiquette 280926 SAUF ceux qui portent aussi une des étiquettes précédées d'un tiret.
+  // Sert à ne pas compter deux fois une pièce déjà suivie sur sa propre ligne (sans toucher aux fiches).
+  const morceaux = tagRaw.split(/\s+/).filter(Boolean);
+  const exclus = morceaux.filter((m) => m.startsWith("-") && m.length > 1).map((m) => m.slice(1).replace(/'/g, ""));
+  if (exclus.length) {
+    const base = morceaux.filter((m) => !m.startsWith("-")).join(" ").replace(/'/g, "");
+    if (base) {
+      edges = await chercher(`tag:'${base}' ` + exclus.map((x) => `-tag:'${x}'`).join(" "));
+      parTag = edges.length > 0;
+    }
+  } else if (tagRaw || nomRaw) {
     const cand = new Set<string>();
     const add = (t: string) => { const v = (t || "").trim().replace(/'/g, ""); if (v) cand.add(v); };
     if (tagRaw) { add(tagRaw); add(tagRaw.toLowerCase()); add(tagRaw.toLowerCase().replace(/\s+/g, "-")); }
