@@ -107,70 +107,70 @@ const CANAUX = {
   marine: 0x3F4B80, emeraude: 0x1F7A68, abricot: 0xD99C6D
 };
 
-const R = 1, hw = 0.47, ri = 0.86;      // rayon extérieur, demi-largeur (9 mm), rayon intérieur
+// Cotes reelles d'une Chromaline taille 58 :
+//   tour interieur 58 mm  ->  diametre interieur 18.46 mm
+//   epaisseur du metal 1.5 mm  ->  diametre exterieur 21.46 mm
+//   largeur totale 9 mm, lue dans la tranche : acier 2.0 | couleur 1.4 | pierres 2.2 | couleur 1.4 | acier 2.0
+const DEXT = 21.46, U = 2 / DEXT;              // tout est ramene a un rayon exterieur de 1
+const R = 1, ri = 18.46 * U / 2, hw = 4.5 * U; // rayon exterieur, rayon interieur, demi-largeur
+const aA = 2.0 * U, aC = 1.4 * U, aP = 2.2 * U;
+const b1 = hw - aA, b2 = b1 - aC;              // frontieres : acier|couleur a b1, couleur|pierres a b2
+const ar = 0.35 * U;                           // arrondi des bords
 
 function revolu(pts){
-  const g = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), 140);
+  const g = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), 160);
   g.computeVertexNormals();
   return g;
 }
 
 const bague = new THREE.Group();
 
-// 1 — le corps en métal
+// 1 — le corps en metal : bords arrondis, gorge creusee au centre
 const matMetal = new THREE.MeshPhysicalMaterial({
   color: METAUX.acier.color, metalness: 1, roughness: METAUX.acier.roughness,
-  clearcoat: 0.35, clearcoatRoughness: 0.08, envMapIntensity: 1.25
+  clearcoat: 0.3, clearcoatRoughness: 0.07, envMapIntensity: 1.3
 });
+const Rg = R - 0.5 * U;                        // fond de la gorge (ou se logent couleur et pierres)
 bague.add(new THREE.Mesh(revolu([
-  [ri, -hw], [R - 0.05, -hw], [R, -hw + 0.055], [R, hw - 0.055], [R - 0.05, hw], [ri, hw], [ri, -hw]
-]), matMetal));
+  [ri, -hw], [R - ar, -hw], [R, -hw + ar],
+  [R, b1], [Rg, b1 - 0.1 * U],
+  [Rg, -b1 + 0.1 * U], [R, -b1],
+  [R, hw - ar], [R - ar, hw], [ri, hw], [ri, -hw]
+].map(([x, y]) => [x, -y])), matMetal));
 
-// 2 — les deux bandes de couleur, mates, légèrement en relief
+// 2 — les deux bandes de couleur, mates
 const matCanal = new THREE.MeshPhysicalMaterial({
-  color: CANAUX.turquoise, metalness: 0.5, roughness: 0.6, envMapIntensity: 0.8
+  color: CANAUX.turquoise, metalness: 0.45, roughness: 0.58, envMapIntensity: 0.75
 });
-for (const s of [-1, 1]) {
-  const a = s * 0.28 * hw, b = s * 0.76 * hw;
-  const y0 = Math.min(a, b), y1 = Math.max(a, b);
+for (const sgn of [-1, 1]) {
+  const y0 = Math.min(sgn * b1, sgn * b2), y1 = Math.max(sgn * b1, sgn * b2);
   bague.add(new THREE.Mesh(revolu([
-    [R * 0.985, y0], [R * 1.006, y0 + 0.014], [R * 1.006, y1 - 0.014], [R * 0.985, y1]
+    [Rg, y0 + 0.02 * U], [R - 0.08 * U, y0 + 0.12 * U],
+    [R - 0.08 * U, y1 - 0.12 * U], [Rg, y1 - 0.02 * U]
   ]), matCanal));
 }
 
-// 3 — la rangée de pierres au centre, et leurs griffes
+// 3 — la rangee de pierres : 2.0 mm de diametre, serties jointives
 const matPierre = new THREE.MeshPhysicalMaterial({
-  color: 0xFFFFFF, metalness: 0, roughness: 0.02, transmission: 0.9, thickness: 0.3,
-  ior: 2.1, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.6
+  color: 0xFFFFFF, metalness: 0, roughness: 0.015, transmission: 0.95, thickness: 0.22,
+  ior: 2.3, clearcoat: 1, clearcoatRoughness: 0.01, envMapIntensity: 3, dispersion: 2
 });
-const matGriffe = new THREE.MeshPhysicalMaterial({ color: 0xE6E8EA, metalness: 1, roughness: 0.08 });
-const N = 34, rp = 0.060;
-const gPierre = new THREE.ConeGeometry(rp, rp * 1.4, 8);
-const gTable  = new THREE.CylinderGeometry(rp, rp * 0.9, rp * 0.2, 8);
-const gGriffe = new THREE.SphereGeometry(rp * 0.3, 8, 8);
+const dp = 2.0 * U, rp = dp / 2;
+const N = Math.max(18, Math.round(Math.PI * (DEXT - 1.4) / 2.0));   // elles se touchent sur le tour
+const gPav = new THREE.ConeGeometry(rp, rp * 1.25, 10);             // le dessous taille
+const gTab = new THREE.CylinderGeometry(rp * 0.72, rp, rp * 0.34, 10); // la table
+const Rp = Rg + rp * 0.35;
 for (let i = 0; i < N; i++) {
-  const t = (i / N) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
-  const p = new THREE.Mesh(gPierre, matPierre);
-  p.position.set(c * (R - rp * 0.4), 0, s * (R - rp * 0.4));
-  p.lookAt(0, 0, 0); p.rotateX(Math.PI / 2);
-  bague.add(p);
-  const tb = new THREE.Mesh(gTable, matPierre);
-  tb.position.set(c * (R + rp * 0.06), 0, s * (R + rp * 0.06));
-  tb.lookAt(0, 0, 0); tb.rotateX(Math.PI / 2);
-  bague.add(tb);
-  for (const k of [-1, 1]) {
-    const g = new THREE.Mesh(gGriffe, matGriffe);
-    g.position.set(c * (R + rp * 0.02), k * rp * 0.9, s * (R + rp * 0.02));
-    bague.add(g);
-  }
+  const t = (i / N) * Math.PI * 2, c = Math.cos(t), sn = Math.sin(t);
+  const bas = new THREE.Mesh(gPav, matPierre);
+  bas.position.set(c * (Rp - rp * 0.55), 0, sn * (Rp - rp * 0.55));
+  bas.lookAt(0, 0, 0); bas.rotateX(Math.PI / 2);
+  bague.add(bas);
+  const tab = new THREE.Mesh(gTab, matPierre);
+  tab.position.set(c * (Rp + rp * 0.22), 0, sn * (Rp + rp * 0.22));
+  tab.lookAt(0, 0, 0); tab.rotateX(Math.PI / 2);
+  bague.add(tab);
 }
-
-// un doigt invisible : on ne le voit pas, mais il cache la partie de la bague qui passe derriere lui
-const doigt3d = new THREE.Mesh(
-  new THREE.CylinderGeometry(ri * 0.985, ri * 0.985, 14, 40, 1, true),
-  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
-);
-doigt3d.renderOrder = -1;
 
 const porteur = new THREE.Group();
 porteur.add(doigt3d);
@@ -290,13 +290,21 @@ function boucle(t){
   pos.set(bx + (px - bx) * 0.34, by + (py - by) * 0.34, 0);
   const e = doigt * 0.54;
 
-  // l'axe du trou suit le doigt, dans l'espace
+  // l'axe du trou suit le doigt tel qu'on le voit, et s'incline selon sa profondeur
   W3(a13, W[13]); W3(a14, W[14]);
-  axe.copy(a14).sub(a13).normalize();
+  u.copy(a14).sub(a13).normalize();                 // direction du doigt dans l'espace
+  const dz = Math.max(-0.95, Math.min(0.95, u.z));  // sa part de profondeur
+  const plat = Math.sqrt(1 - dz * dz);
+  const lx = (px - bx), ly = (py - by), ln = Math.hypot(lx, ly) || 1;
+  axe.set(lx / ln * plat, ly / ln * plat, dz).normalize();
+
   W3(p0, W[0]); W3(p5, W[5]); W3(p17, W[17]);
   u.copy(p5).sub(p0); v.copy(p17).sub(p0);
   nrm.copy(u).cross(v).normalize();
-  zz.copy(nrm).addScaledVector(axe, -nrm.dot(axe)).normalize();
+  if (nrm.z < 0) nrm.negate();                      // la paume regarde toujours du bon cote
+  zz.copy(nrm).addScaledVector(axe, -nrm.dot(axe));
+  if (zz.lengthSq() < 1e-6) zz.set(0, 0, 1).addScaledVector(axe, -axe.z);
+  zz.normalize();
   xx.copy(axe).cross(zz).normalize();
   mat.makeBasis(xx, axe, zz);
   cible.setFromRotationMatrix(mat);
