@@ -15,7 +15,7 @@ const PAGE = String.raw`<!doctype html>
 html,body{margin:0;padding:0;height:100%;background:#0E0E0E;color:#F4F3F1;overflow:hidden}
 body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
 #scene{position:fixed;inset:0;background:#000}
-#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #dessin{position:absolute;inset:0;width:100%;height:100%}
 .haut{position:absolute;top:0;left:0;right:0;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;
   background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0));text-align:center;pointer-events:none}
@@ -41,10 +41,12 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   <canvas id="dessin"></canvas>
   <div class="haut"><div class="k">mood</div><h1>J'essaie ma bague</h1></div>
   <div class="bas">
-    <div class="msg" id="msg">Montre ta main, paume vers toi.</div>
+    <div class="msg" id="msg">Montre ta main devant la caméra.</div>
     <div class="reglages">
       <label for="taille">Taille</label>
       <input id="taille" type="range" min="60" max="190" value="118">
+      <label for="haut">Position</label>
+      <input id="haut" type="range" min="10" max="70" value="38">
     </div>
   </div>
 </div>
@@ -63,6 +65,7 @@ const cv = document.getElementById('dessin');
 const cx = cv.getContext('2d');
 const msg = document.getElementById('msg');
 const taille = document.getElementById('taille');
+const haut = document.getElementById('haut');
 
 const bague = new Image();
 bague.src = '/essayage/bague.png';
@@ -81,7 +84,7 @@ document.getElementById('go').addEventListener('click', async () => {
   d.querySelector('button').textContent = 'Un instant…';
   try {
     const flux = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
     });
     video.srcObject = flux;
     await video.play();
@@ -106,7 +109,7 @@ function place(x, y){
   const e = Math.max(cw / vw, ch / vh);
   const dw = vw * e, dh = vh * e;
   const ox = (cw - dw) / 2, oy = (ch - dh) / 2;
-  return [ox + (1 - x) * dw, oy + y * dh]; // 1-x : l'image est en miroir
+  return [ox + x * dw, oy + y * dh];
 }
 
 let dernier = -1;
@@ -122,7 +125,7 @@ function boucle(t){
   cx.clearRect(0, 0, cv.width, cv.height);
 
   if (!res.landmarks || !res.landmarks.length) {
-    msg.textContent = "Montre ta main, paume vers toi.";
+    msg.textContent = "Montre ta main devant la caméra.";
     return;
   }
   msg.textContent = "Tourne doucement la main pour voir la bague sous tous les angles.";
@@ -137,8 +140,9 @@ function boucle(t){
   const [mx, my] = place(majB.x, majB.y);
 
   // la bague se pose entre la base et le pli, un peu au-dessus de la base
-  const cxp = bx + (px - bx) * 0.38;
-  const cyp = by + (py - by) * 0.38;
+  const f = haut.value / 100;
+  const cxp = bx + (px - bx) * f;
+  const cyp = by + (py - by) * f;
 
   // largeur du doigt estimee par l'ecart entre annulaire et majeur
   const ecart = Math.hypot(mx - bx, my - by);
@@ -149,13 +153,32 @@ function boucle(t){
   if (bague.complete && bague.naturalWidth) {
     const ratio = bague.naturalHeight / bague.naturalWidth;
     const w = largeur, h = w * ratio;
+
+    // 1 — la bague
     cx.save();
     cx.translate(cxp, cyp);
     cx.rotate(angle);
-    cx.shadowColor = 'rgba(0,0,0,.45)';
-    cx.shadowBlur = w * 0.06;
-    cx.shadowOffsetY = w * 0.02;
+    cx.shadowColor = 'rgba(0,0,0,.4)';
+    cx.shadowBlur = w * 0.05;
+    cx.shadowOffsetY = w * 0.015;
     cx.drawImage(bague, -w / 2, -h / 2, w, h);
+    cx.restore();
+
+    // 2 — le doigt repasse par-dessus la moitie de la bague qui passe derriere lui
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const ech = Math.max(cv.width / vw, cv.height / vh);
+    const dw2 = vw * ech, dh2 = vh * ech;
+    const ox2 = (cv.width - dw2) / 2, oy2 = (cv.height - dh2) / 2;
+    const doigt = ecart * 0.62;        // largeur du doigt
+    cx.save();
+    cx.translate(cxp, cyp);
+    cx.rotate(angle);
+    cx.beginPath();
+    cx.rect(-doigt / 2, -h * 0.75, doigt, h * 0.72);   // la bande du doigt, cote main
+    cx.clip();
+    cx.rotate(-angle);
+    cx.translate(-cxp, -cyp);
+    cx.drawImage(video, ox2, oy2, dw2, dh2);
     cx.restore();
   }
 }
