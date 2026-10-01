@@ -105,6 +105,7 @@ async function demarre(){
     cadre();
     requestAnimationFrame(boucle);
   } catch (e) {
+    if (DEMO) { msg.textContent = 'ERR ' + (e && e.message ? e.message : e); }
     d.querySelector('p').textContent = "La caméra n'a pas pu s'allumer. Vérifie que tu l'as autorisée pour ce site.";
     d.querySelector('button').textContent = 'Réessayer';
   }
@@ -149,7 +150,7 @@ function boucle(t){
   cx.clearRect(0, 0, cv.width, cv.height);
 
   if (!res.landmarks || !res.landmarks.length) {
-    msg.textContent = "Montre ta main devant la caméra.";
+    msg.textContent = DEMO ? ('aucune main — image ' + video.currentTime.toFixed(1) + 's') : "Montre ta main devant la caméra.";
     return;
   }
   msg.textContent = "Tourne doucement la main pour voir la bague sous tous les angles.";
