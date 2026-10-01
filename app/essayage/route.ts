@@ -42,18 +42,18 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 <div id="scene">
   <video id="cam" autoplay muted playsinline></video>
   <canvas id="gl"></canvas>
-  <div class="haut"><div class="k">mood</div><h1>J'essaie ma bague</h1></div>
+  <div class="haut"><div class="k">mood</div><h1>J'essaie ma Chromaline</h1></div>
   <div class="bas">
     <div class="msg" id="msg">Montre ta main devant la caméra.</div>
     <div class="lig">La base</div>
     <div class="pal" id="palBase"></div>
-    <div class="lig">La couleur du canal</div>
+    <div class="lig">La couleur</div>
     <div class="pal" id="palCanal"></div>
   </div>
 </div>
 
 <div class="demarrer" id="demarrer">
-  <h2>J'essaie ma bague</h2>
+  <h2>J'essaie ma Chromaline</h2>
   <p>On va allumer la caméra pour poser la bague sur ton annulaire. Rien n'est enregistré, rien ne quitte ton téléphone.</p>
   <button id="go">Allumer la caméra</button>
 </div>
@@ -103,9 +103,8 @@ const METAUX = {
   noir:   { color: 0x2A2A2C, roughness: 0.075 }
 };
 const CANAUX = {
-  plume: 0xEDEAE6, rosepastel: 0xE8BFC9, aubergine: 0x7E4160, bleumarine: 0x16307A,
-  myrtille: 0x7FB4E0, turquoise: 0x1FB8B8, ocre: 0xB5702A, belipastel: 0xC9A6DE,
-  rouge: 0xC00E22, aciernoir: 0x1C1C1E
+  acier: 0xA8ADB1, turquoise: 0x3FB3B2, belipastel: 0xCF94C8, rouge: 0xC2424F,
+  marine: 0x3F4B80, emeraude: 0x1F7A68, abricot: 0xD99C6D
 };
 
 const R = 1, hw = 0.47, ri = 0.86;      // rayon extérieur, demi-largeur (9 mm), rayon intérieur
@@ -129,7 +128,7 @@ bague.add(new THREE.Mesh(revolu([
 
 // 2 — les deux bandes de couleur, mates, légèrement en relief
 const matCanal = new THREE.MeshPhysicalMaterial({
-  color: CANAUX.plume, metalness: 0.5, roughness: 0.6, envMapIntensity: 0.8
+  color: CANAUX.turquoise, metalness: 0.5, roughness: 0.6, envMapIntensity: 0.8
 });
 for (const s of [-1, 1]) {
   const a = s * 0.28 * hw, b = s * 0.76 * hw;
@@ -166,7 +165,15 @@ for (let i = 0; i < N; i++) {
   }
 }
 
+// un doigt invisible : on ne le voit pas, mais il cache la partie de la bague qui passe derriere lui
+const doigt3d = new THREE.Mesh(
+  new THREE.CylinderGeometry(ri * 0.985, ri * 0.985, 14, 40, 1, true),
+  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
+);
+doigt3d.renderOrder = -1;
+
 const porteur = new THREE.Group();
+porteur.add(doigt3d);
 porteur.add(bague);
 porteur.visible = false;
 scene.add(porteur);
@@ -174,9 +181,8 @@ scene.add(porteur);
 /* ---------- les choix visibles ---------- */
 
 const BASES = [['acier', 'Acier'], ['orrose', 'Or rose'], ['noir', 'Noir']];
-const LISTE_CANAUX = [['plume', 'Plume'], ['rosepastel', 'Rose pastel'], ['aubergine', 'Aubergine'],
-  ['bleumarine', 'Bleu marine'], ['myrtille', 'Myrtille'], ['turquoise', 'Turquoise'],
-  ['ocre', 'Ocre'], ['belipastel', 'Belipastel'], ['rouge', 'Rouge'], ['aciernoir', 'Acier noir']];
+const LISTE_CANAUX = [['acier','Acier froissé'],['turquoise','Turquoise'],['belipastel','Belipastel'],
+  ['rouge','Rouge Swiss Edition'],['marine','Bleu Marine'],['emeraude','Émeraude'],['abricot','Abricot']];
 
 function palette(el, liste, couleur, choisi, action){
   el.innerHTML = '';
@@ -190,7 +196,7 @@ function palette(el, liste, couleur, choisi, action){
 }
 palette(document.getElementById('palBase'), BASES, k => METAUX[k].color, 'acier',
   k => { matMetal.color.setHex(METAUX[k].color); matMetal.roughness = METAUX[k].roughness; });
-palette(document.getElementById('palCanal'), LISTE_CANAUX, k => CANAUX[k], 'plume',
+palette(document.getElementById('palCanal'), LISTE_CANAUX, k => CANAUX[k], 'turquoise',
   k => matCanal.color.setHex(CANAUX[k]));
 
 /* ---------- caméra et repérage de la main ---------- */
