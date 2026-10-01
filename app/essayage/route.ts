@@ -172,6 +172,13 @@ for (let i = 0; i < N; i++) {
   bague.add(tab);
 }
 
+// un doigt invisible : on ne le voit pas, mais il cache la partie de la bague qui passe derriere lui
+const doigt3d = new THREE.Mesh(
+  new THREE.CylinderGeometry(ri * 0.99, ri * 0.99, 16, 48, 1, true),
+  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
+);
+doigt3d.renderOrder = -1;
+
 const porteur = new THREE.Group();
 porteur.add(doigt3d);
 porteur.add(bague);
