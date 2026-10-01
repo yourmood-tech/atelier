@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-// Essai de la bague sur la main, par la caméra du téléphone.
-// Repérage de la main en local (rien ne sort du téléphone), la bague est posée sur l'annulaire.
+// Essai de la bague sur la main — la bague est construite en volume et éclairée par un studio virtuel.
+// Le repérage de la main se fait sur le téléphone : rien n'est envoyé ailleurs.
 const PAGE = String.raw`<!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -16,17 +16,20 @@ html,body{margin:0;padding:0;height:100%;background:#0E0E0E;color:#F4F3F1;overfl
 body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
 #scene{position:fixed;inset:0;background:#000}
 #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#dessin{position:absolute;inset:0;width:100%;height:100%}
+#gl{position:absolute;inset:0;width:100%;height:100%}
 .haut{position:absolute;top:0;left:0;right:0;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;
-  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0));text-align:center;pointer-events:none}
+  background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0));text-align:center;pointer-events:none}
 .haut .k{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:#CFCAC2}
 .haut h1{margin:6px 0 0;font-size:19px;font-weight:200;letter-spacing:.01em}
-.bas{position:absolute;left:0;right:0;bottom:0;padding:16px 18px calc(18px + env(safe-area-inset-bottom,0px));
-  background:linear-gradient(0deg,rgba(0,0,0,.62),rgba(0,0,0,0))}
-.msg{text-align:center;font-size:13px;font-weight:300;color:#E8E4DE;min-height:20px}
-.reglages{display:flex;align-items:center;gap:14px;margin-top:12px}
-.reglages label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#CFCAC2;white-space:nowrap}
-.reglages input{flex:1;accent-color:#F4F3F1}
+.bas{position:absolute;left:0;right:0;bottom:0;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,rgba(0,0,0,.66),rgba(0,0,0,0))}
+.msg{text-align:center;font-size:13px;font-weight:300;color:#E8E4DE;min-height:19px;margin-bottom:8px}
+.pal{display:flex;gap:9px;overflow-x:auto;padding:2px 2px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.pal::-webkit-scrollbar{display:none}
+.pa{flex:0 0 auto;width:36px;height:36px;border-radius:50%;border:2px solid transparent;background-size:cover;
+  background-position:center;cursor:pointer;padding:0;outline:none}
+.pa.on{border-color:#F4F3F1}
+.lig{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#A9A49C;margin:7px 0 4px;text-align:center}
 .demarrer{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
   background:#0E0E0E;padding:24px;text-align:center;z-index:5}
 .demarrer p{margin:0;max-width:30ch;font-size:15px;font-weight:300;line-height:1.6;color:#CFCAC2}
@@ -38,11 +41,14 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 
 <div id="scene">
   <video id="cam" autoplay muted playsinline></video>
-  <canvas id="dessin"></canvas>
+  <canvas id="gl"></canvas>
   <div class="haut"><div class="k">mood</div><h1>J'essaie ma bague</h1></div>
   <div class="bas">
     <div class="msg" id="msg">Montre ta main devant la caméra.</div>
-
+    <div class="lig">La base</div>
+    <div class="pal" id="palBase"></div>
+    <div class="lig">La couleur du canal</div>
+    <div class="pal" id="palCanal"></div>
   </div>
 </div>
 
@@ -53,23 +59,137 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 </div>
 
 <script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js";
+import { RoomEnvironment } from "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/environments/RoomEnvironment.js";
 import { FilesetResolver, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
 const video = document.getElementById('cam');
-const cv = document.getElementById('dessin');
-const cx = cv.getContext('2d');
-const msg = document.getElementById('msg');
+const toile = document.getElementById('gl');
+const msg   = document.getElementById('msg');
 
+/* ---------- le studio et la bague en volume ---------- */
 
-const bague = new Image();
-bague.src = '/essayage/bague.png';
+const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
+rendu.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+rendu.toneMapping = THREE.ACESFilmicToneMapping;
+rendu.toneMappingExposure = 1.1;
+
+const scene = new THREE.Scene();
+const cam3d = new THREE.OrthographicCamera(-1, 1, 1, -1, -3000, 3000);
+cam3d.position.set(0, 0, 1000);
+
+// un studio virtuel : c'est lui qui donne ses reflets au métal
+const pmrem = new THREE.PMREMGenerator(rendu);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const key  = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(-1, 2, 2);  scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(2, -1, 1); scene.add(fill);
+
+const METAUX = {
+  acier:  { color: 0xD8DADC, roughness: 0.055 },
+  orrose: { color: 0xE0A585, roughness: 0.075 },
+  noir:   { color: 0x2A2A2C, roughness: 0.075 }
+};
+const CANAUX = {
+  plume: 0xEDEAE6, rosepastel: 0xE8BFC9, aubergine: 0x7E4160, bleumarine: 0x16307A,
+  myrtille: 0x7FB4E0, turquoise: 0x1FB8B8, ocre: 0xB5702A, belipastel: 0xC9A6DE,
+  rouge: 0xC00E22, aciernoir: 0x1C1C1E
+};
+
+const R = 1, hw = 0.47, ri = 0.86;      // rayon extérieur, demi-largeur (9 mm), rayon intérieur
+
+function revolu(pts){
+  const g = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), 140);
+  g.computeVertexNormals();
+  return g;
+}
+
+const bague = new THREE.Group();
+
+// 1 — le corps en métal
+const matMetal = new THREE.MeshPhysicalMaterial({
+  color: METAUX.acier.color, metalness: 1, roughness: METAUX.acier.roughness,
+  clearcoat: 0.35, clearcoatRoughness: 0.08, envMapIntensity: 1.25
+});
+bague.add(new THREE.Mesh(revolu([
+  [ri, -hw], [R - 0.05, -hw], [R, -hw + 0.055], [R, hw - 0.055], [R - 0.05, hw], [ri, hw], [ri, -hw]
+]), matMetal));
+
+// 2 — les deux bandes de couleur, mates, légèrement en relief
+const matCanal = new THREE.MeshPhysicalMaterial({
+  color: CANAUX.plume, metalness: 0.5, roughness: 0.6, envMapIntensity: 0.8
+});
+for (const s of [-1, 1]) {
+  const a = s * 0.28 * hw, b = s * 0.76 * hw;
+  const y0 = Math.min(a, b), y1 = Math.max(a, b);
+  bague.add(new THREE.Mesh(revolu([
+    [R * 0.985, y0], [R * 1.006, y0 + 0.014], [R * 1.006, y1 - 0.014], [R * 0.985, y1]
+  ]), matCanal));
+}
+
+// 3 — la rangée de pierres au centre, et leurs griffes
+const matPierre = new THREE.MeshPhysicalMaterial({
+  color: 0xFFFFFF, metalness: 0, roughness: 0.02, transmission: 0.9, thickness: 0.3,
+  ior: 2.1, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.6
+});
+const matGriffe = new THREE.MeshPhysicalMaterial({ color: 0xE6E8EA, metalness: 1, roughness: 0.08 });
+const N = 34, rp = 0.060;
+const gPierre = new THREE.ConeGeometry(rp, rp * 1.4, 8);
+const gTable  = new THREE.CylinderGeometry(rp, rp * 0.9, rp * 0.2, 8);
+const gGriffe = new THREE.SphereGeometry(rp * 0.3, 8, 8);
+for (let i = 0; i < N; i++) {
+  const t = (i / N) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+  const p = new THREE.Mesh(gPierre, matPierre);
+  p.position.set(c * (R - rp * 0.4), 0, s * (R - rp * 0.4));
+  p.lookAt(0, 0, 0); p.rotateX(Math.PI / 2);
+  bague.add(p);
+  const tb = new THREE.Mesh(gTable, matPierre);
+  tb.position.set(c * (R + rp * 0.06), 0, s * (R + rp * 0.06));
+  tb.lookAt(0, 0, 0); tb.rotateX(Math.PI / 2);
+  bague.add(tb);
+  for (const k of [-1, 1]) {
+    const g = new THREE.Mesh(gGriffe, matGriffe);
+    g.position.set(c * (R + rp * 0.02), k * rp * 0.9, s * (R + rp * 0.02));
+    bague.add(g);
+  }
+}
+
+const porteur = new THREE.Group();
+porteur.add(bague);
+porteur.visible = false;
+scene.add(porteur);
+
+/* ---------- les choix visibles ---------- */
+
+const BASES = [['acier', 'Acier'], ['orrose', 'Or rose'], ['noir', 'Noir']];
+const LISTE_CANAUX = [['plume', 'Plume'], ['rosepastel', 'Rose pastel'], ['aubergine', 'Aubergine'],
+  ['bleumarine', 'Bleu marine'], ['myrtille', 'Myrtille'], ['turquoise', 'Turquoise'],
+  ['ocre', 'Ocre'], ['belipastel', 'Belipastel'], ['rouge', 'Rouge'], ['aciernoir', 'Acier noir']];
+
+function palette(el, liste, couleur, choisi, action){
+  el.innerHTML = '';
+  liste.forEach(([k, nom]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pa' + (k === choisi ? ' on' : ''); b.title = nom;
+    b.style.background = '#' + couleur(k).toString(16).padStart(6, '0');
+    b.onclick = () => { action(k); [...el.children].forEach(c => c.classList.remove('on')); b.classList.add('on'); };
+    el.appendChild(b);
+  });
+}
+palette(document.getElementById('palBase'), BASES, k => METAUX[k].color, 'acier',
+  k => { matMetal.color.setHex(METAUX[k].color); matMetal.roughness = METAUX[k].roughness; });
+palette(document.getElementById('palCanal'), LISTE_CANAUX, k => CANAUX[k], 'plume',
+  k => matCanal.color.setHex(CANAUX[k]));
+
+/* ---------- caméra et repérage de la main ---------- */
 
 let detecteur = null;
 
 function cadre(){
-  const r = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = Math.round(cv.clientWidth * r);
-  cv.height = Math.round(cv.clientHeight * r);
+  const l = toile.clientWidth, h = toile.clientHeight;
+  rendu.setSize(l, h, false);
+  cam3d.left = -l / 2; cam3d.right = l / 2; cam3d.top = h / 2; cam3d.bottom = -h / 2;
+  cam3d.updateProjectionMatrix();
 }
 window.addEventListener('resize', cadre);
 
@@ -80,135 +200,98 @@ async function demarre(){
   d.querySelector('button').textContent = 'Un instant…';
   try {
     if (DEMO) {
-      video.src = '/essayage/main.mp4';
-      video.loop = true; video.muted = true; video.playsInline = true;
-      await new Promise(r => { video.onloadeddata = r; video.load(); });
-      const tt = parseFloat(new URLSearchParams(location.search).get('t') || '0');
-      if (tt > 0) { await new Promise(r => { video.onseeked = r; video.currentTime = tt; }); }
-      else { await video.play(); }
+      video.src = '/essayage/main.mp4'; video.loop = true; video.muted = true; video.playsInline = true;
+      await video.play();
     } else {
-    const flux = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
-    });
-    video.srcObject = flux;
-    await video.play();
+      const flux = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
+      });
+      video.srcObject = flux;
+      await video.play();
     }
     const fichiers = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
     detecteur = await HandLandmarker.createFromOptions(fichiers, {
-      baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: DEMO ? "CPU" : "GPU" },
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+        delegate: DEMO ? "CPU" : "GPU"
+      },
       runningMode: "VIDEO", numHands: 1
     });
     d.remove();
     cadre();
-    if (DEMO) { for (let i=0;i<6;i++){ await new Promise(r=>setTimeout(r,120)); tour(); } setInterval(tour, 90); }
-    else requestAnimationFrame(boucle);
+    requestAnimationFrame(boucle);
   } catch (e) {
-    if (DEMO) { msg.textContent = 'ERR ' + (e && e.message ? e.message : e); }
     d.querySelector('p').textContent = "La caméra n'a pas pu s'allumer. Vérifie que tu l'as autorisée pour ce site.";
     d.querySelector('button').textContent = 'Réessayer';
   }
 }
 document.getElementById('go').addEventListener('click', demarre);
-if (DEMO) demarre();
 
-// la vidéo est affichée en « remplir le cadre » : on calcule le même recadrage pour le dessin
+// la vidéo remplit le cadre : on reproduit le même recadrage
 function place(x, y){
   const vw = video.videoWidth, vh = video.videoHeight;
-  const cw = cv.width, ch = cv.height;
+  const cw = toile.clientWidth, ch = toile.clientHeight;
   const e = Math.max(cw / vw, ch / vh);
   const dw = vw * e, dh = vh * e;
-  const ox = (cw - dw) / 2, oy = (ch - dh) / 2;
-  return [ox + x * dw, oy + y * dh];
+  return [x * dw - dw / 2, -(y * dh - dh / 2)];
 }
 
-let dernier = -1;
-// lissage : la bague suit la main sans trembler
-let L = null;
-function lisse(o, k){
-  if (!L) { L = Object.assign({}, o); return L; }
-  for (const c in o){
-    if (c === 'a'){ // l'angle : on passe par le plus court chemin
-      let d = o.a - L.a;
-      while (d >  Math.PI) d -= 2*Math.PI;
-      while (d < -Math.PI) d += 2*Math.PI;
-      L.a += d * k;
-    } else L[c] += (o[c] - L[c]) * k;
-  }
-  return L;
-}
+const axe = new THREE.Vector3(), nrm = new THREE.Vector3(), xx = new THREE.Vector3(), zz = new THREE.Vector3();
+const p0 = new THREE.Vector3(), p5 = new THREE.Vector3(), p17 = new THREE.Vector3();
+const a13 = new THREE.Vector3(), a14 = new THREE.Vector3(), u = new THREE.Vector3(), v = new THREE.Vector3();
+const mat = new THREE.Matrix4(), cible = new THREE.Quaternion(), pos = new THREE.Vector3();
+let ech = 0, pret = false, dernier = -1;
+
+const W3 = (o, p) => o.set(p.x, -p.y, -p.z);
 
 function boucle(t){
   requestAnimationFrame(boucle);
-  if (t === dernier) return;
-  dernier = t;
-  tour();
-}
-
-function tour(){
   if (!detecteur || video.readyState < 2) return;
-  if (cv.width !== cv.clientWidth * Math.min(window.devicePixelRatio||1,2)) cadre();
+  if (t === dernier) return; dernier = t;
 
   const res = detecteur.detectForVideo(video, performance.now());
-  cx.clearRect(0, 0, cv.width, cv.height);
 
   if (!res.landmarks || !res.landmarks.length) {
-    msg.textContent = DEMO ? ('aucune main — image ' + video.currentTime.toFixed(1) + 's') : "Montre ta main devant la caméra.";
+    msg.textContent = "Montre ta main devant la caméra.";
+    porteur.visible = false;
+    rendu.render(scene, cam3d);
     return;
   }
-  msg.textContent = "Tourne doucement la main pour voir la bague sous tous les angles.";
+  msg.textContent = "Tourne doucement la main.";
+  porteur.visible = true;
 
   const m = res.landmarks[0];
-  const base = m[13];   // depart de l'annulaire
-  const pli  = m[14];   // premiere articulation
-  const majB = m[9];    // depart du majeur
-  const aurB = m[17];   // depart de l'auriculaire
+  const W = res.worldLandmarks[0];
 
-  const [bx, by] = place(base.x, base.y);
-  const [px, py] = place(pli.x, pli.y);
-  const [mx, my] = place(majB.x, majB.y);
-  const [ax, ay] = place(aurB.x, aurB.y);
-
-  // largeur du doigt : moyenne des deux ecarts entre departs de doigts voisins
+  const [bx, by] = place(m[13].x, m[13].y);
+  const [px, py] = place(m[14].x, m[14].y);
+  const [mx, my] = place(m[9].x,  m[9].y);
+  const [ax, ay] = place(m[17].x, m[17].y);
   const doigt = 0.5 * (Math.hypot(mx - bx, my - by) + Math.hypot(ax - bx, ay - by));
 
-  const brut = {
-    x: bx + (px - bx) * 0.34,
-    y: by + (py - by) * 0.34,
-    a: Math.atan2(py - by, px - bx) - Math.PI / 2,
-    d: doigt
-  };
-  const S = lisse(brut, 0.25);
+  pos.set(bx + (px - bx) * 0.34, by + (py - by) * 0.34, 0);
+  const e = doigt * 0.54;
 
-  if (bague.complete && bague.naturalWidth) {
-    const w = S.d * 1.06;                                       // la bague epouse le doigt
-    const h = w * (bague.naturalHeight / bague.naturalWidth);   // ses 9 mm de large
+  // l'axe du trou suit le doigt, dans l'espace
+  W3(a13, W[13]); W3(a14, W[14]);
+  axe.copy(a14).sub(a13).normalize();
+  W3(p0, W[0]); W3(p5, W[5]); W3(p17, W[17]);
+  u.copy(p5).sub(p0); v.copy(p17).sub(p0);
+  nrm.copy(u).cross(v).normalize();
+  zz.copy(nrm).addScaledVector(axe, -nrm.dot(axe)).normalize();
+  xx.copy(axe).cross(zz).normalize();
+  mat.makeBasis(xx, axe, zz);
+  cible.setFromRotationMatrix(mat);
 
-    cx.save();
-    cx.translate(S.x, S.y);
-    cx.rotate(S.a);
-
-    // ombre : elle epouse la forme de la bague, pas un rectangle
-    cx.save();
-    cx.globalAlpha = 0.5;
-    cx.filter = 'blur(' + Math.max(2, w * 0.045) + 'px) brightness(0)';
-    cx.drawImage(bague, -w / 2, -h / 2 + h * 0.10, w, h);
-    cx.restore();
-
-    cx.drawImage(bague, -w / 2, -h / 2, w, h);
-
-    // les bords s'enroulent autour du doigt : on les assombrit
-    const g1 = cx.createLinearGradient(-w / 2, 0, w / 2, 0);
-    g1.addColorStop(0,    'rgba(0,0,0,.45)');
-    g1.addColorStop(0.14, 'rgba(0,0,0,0)');
-    g1.addColorStop(0.86, 'rgba(0,0,0,0)');
-    g1.addColorStop(1,    'rgba(0,0,0,.45)');
-    cx.globalCompositeOperation = 'source-atop';
-    cx.fillStyle = g1;
-    cx.fillRect(-w / 2, -h / 2, w, h);
-    cx.globalCompositeOperation = 'source-over';
-
-    cx.restore();
+  if (!pret) { porteur.quaternion.copy(cible); porteur.position.copy(pos); ech = e; pret = true; }
+  else {
+    porteur.quaternion.slerp(cible, 0.3);
+    porteur.position.lerp(pos, 0.3);
+    ech += (e - ech) * 0.25;
   }
+  porteur.scale.setScalar(ech);
+
+  rendu.render(scene, cam3d);
 }
 </script>
 </body></html>`;
