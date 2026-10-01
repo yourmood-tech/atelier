@@ -79,18 +79,26 @@ function cadre(){
 }
 window.addEventListener('resize', cadre);
 
-document.getElementById('go').addEventListener('click', async () => {
+const DEMO = new URLSearchParams(location.search).has('demo');
+
+async function demarre(){
   const d = document.getElementById('demarrer');
   d.querySelector('button').textContent = 'Un instant…';
   try {
+    if (DEMO) {
+      video.src = '/essayage/main.mp4';
+      video.loop = true; video.muted = true;
+      await video.play();
+    } else {
     const flux = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
     });
     video.srcObject = flux;
     await video.play();
+    }
     const fichiers = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
     detecteur = await HandLandmarker.createFromOptions(fichiers, {
-      baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
+      baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: DEMO ? "CPU" : "GPU" },
       runningMode: "VIDEO", numHands: 1
     });
     d.remove();
@@ -100,7 +108,9 @@ document.getElementById('go').addEventListener('click', async () => {
     d.querySelector('p').textContent = "La caméra n'a pas pu s'allumer. Vérifie que tu l'as autorisée pour ce site.";
     d.querySelector('button').textContent = 'Réessayer';
   }
-});
+}
+document.getElementById('go').addEventListener('click', demarre);
+if (DEMO) demarre();
 
 // la vidéo est affichée en « remplir le cadre » : on calcule le même recadrage pour le dessin
 function place(x, y){
