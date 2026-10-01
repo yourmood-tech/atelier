@@ -88,9 +88,45 @@ const scene = new THREE.Scene();
 const cam3d = new THREE.OrthographicCamera(-1, 1, 1, -1, -3000, 3000);
 cam3d.position.set(0, 0, 1000);
 
-// un studio virtuel : c'est lui qui donne ses reflets au métal
+// un studio virtuel : deux boites a lumiere au-dessus, un sol sombre.
+// C'est ce decor qui donne a l'acier ses stries claires et sombres.
+function studio(){
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+  const x = c.getContext('2d');
+  const ciel = x.createLinearGradient(0, 0, 0, 512);
+  ciel.addColorStop(0.00, '#9A9A9E'); ciel.addColorStop(0.42, '#6E6E72');
+  ciel.addColorStop(0.52, '#232326'); ciel.addColorStop(1.00, '#0C0C0E');
+  x.fillStyle = ciel; x.fillRect(0, 0, 1024, 512);
+  // les deux boites a lumiere
+  for (const [cx, cy, w, h] of [[300, 120, 360, 120], [760, 150, 300, 100]]) {
+    const g = x.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h));
+    g.addColorStop(0, '#FFFFFF'); g.addColorStop(0.55, '#E9E9EC'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, w, h, 0, 0, 6.3); x.fill();
+  }
+  // un reflet sombre horizontal : c'est lui qui dessine la ligne noire sur le metal poli
+  x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, 248, 1024, 26);
+  const t = new THREE.CanvasTexture(c);
+  t.mapping = THREE.EquirectangularReflectionMapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 const pmrem = new THREE.PMREMGenerator(rendu);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environment = pmrem.fromEquirectangular(studio()).texture;
+
+// un grain fin, pour l'aluminium brosse des bandes de couleur
+function grainBrosse(){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 32;
+  const x = c.getContext('2d');
+  x.fillStyle = '#9a9a9a'; x.fillRect(0, 0, 512, 32);
+  for (let i = 0; i < 2600; i++) {
+    const v = 120 + Math.random() * 110;
+    x.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',.5)';
+    x.fillRect(Math.random() * 512, Math.random() * 32, 1 + Math.random() * 14, 1);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(10, 1);
+  return t;
+}
 
 const key  = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(-1, 2, 2);  scene.add(key);
 const fill = new THREE.DirectionalLight(0xffffff, 0.5); fill.position.set(2, -1, 1); scene.add(fill);
@@ -125,8 +161,7 @@ const bague = new THREE.Group();
 
 // 1 — le corps en metal : bords arrondis, gorge creusee au centre
 const matMetal = new THREE.MeshPhysicalMaterial({
-  color: METAUX.acier.color, metalness: 1, roughness: METAUX.acier.roughness,
-  clearcoat: 0.3, clearcoatRoughness: 0.07, envMapIntensity: 1.3
+  color: 0xBFC4C8, metalness: 1, roughness: 0.035, envMapIntensity: 1.9
 });
 const Rg = R - 0.5 * U;                        // fond de la gorge (ou se logent couleur et pierres)
 bague.add(new THREE.Mesh(revolu([
@@ -137,8 +172,10 @@ bague.add(new THREE.Mesh(revolu([
 ].map(([x, y]) => [x, -y])), matMetal));
 
 // 2 — les deux bandes de couleur, mates
+const grain = grainBrosse();
 const matCanal = new THREE.MeshPhysicalMaterial({
-  color: CANAUX.turquoise, metalness: 0.45, roughness: 0.58, envMapIntensity: 0.75
+  color: CANAUX.turquoise, metalness: 0.35, roughness: 0.52, roughnessMap: grain,
+  envMapIntensity: 0.9
 });
 for (const sgn of [-1, 1]) {
   const y0 = Math.min(sgn * b1, sgn * b2), y1 = Math.max(sgn * b1, sgn * b2);
@@ -148,34 +185,42 @@ for (const sgn of [-1, 1]) {
   ]), matCanal));
 }
 
-// 3 — la rangee de pierres : 2.0 mm de diametre, serties jointives
+// 3 — la rangee de pierres : vrais brillants (table, couronne, pavillon), serties jointives
 const matPierre = new THREE.MeshPhysicalMaterial({
-  color: 0xFFFFFF, metalness: 0, roughness: 0.015, transmission: 0.95, thickness: 0.22,
-  ior: 2.3, clearcoat: 1, clearcoatRoughness: 0.01, envMapIntensity: 3, dispersion: 2
+  color: 0xFFFFFF, metalness: 0, roughness: 0.01, transmission: 1, thickness: 0.9,
+  ior: 2.42, specularIntensity: 1, clearcoat: 1, clearcoatRoughness: 0,
+  envMapIntensity: 3.2, flatShading: true
 });
+const matGriffe = new THREE.MeshPhysicalMaterial({ color: 0xCFD4D8, metalness: 1, roughness: 0.05, envMapIntensity: 1.8 });
+
 const dp = 2.0 * U, rp = dp / 2;
-const N = Math.max(18, Math.round(Math.PI * (DEXT - 1.4) / 2.0));   // elles se touchent sur le tour
-const gPav = new THREE.ConeGeometry(rp, rp * 1.25, 10);             // le dessous taille
-const gTab = new THREE.CylinderGeometry(rp * 0.72, rp, rp * 0.34, 10); // la table
-const Rp = Rg + rp * 0.35;
+// un brillant : couronne (du bord vers la table) + pavillon (du bord vers la pointe)
+const gCour = new THREE.CylinderGeometry(rp * 0.58, rp, rp * 0.52, 16, 1);
+const gPav  = new THREE.ConeGeometry(rp, rp * 1.05, 16, 1);
+const gBord = new THREE.CylinderGeometry(rp, rp, rp * 0.09, 16, 1);
+const gBille = new THREE.SphereGeometry(rp * 0.21, 10, 8);
+
+const N = Math.max(18, Math.round(Math.PI * (DEXT - 1.5) / 2.0));
+const Rp = Rg + rp * 0.40;
 for (let i = 0; i < N; i++) {
   const t = (i / N) * Math.PI * 2, c = Math.cos(t), sn = Math.sin(t);
-  const bas = new THREE.Mesh(gPav, matPierre);
-  bas.position.set(c * (Rp - rp * 0.55), 0, sn * (Rp - rp * 0.55));
-  bas.lookAt(0, 0, 0); bas.rotateX(Math.PI / 2);
-  bague.add(bas);
-  const tab = new THREE.Mesh(gTab, matPierre);
-  tab.position.set(c * (Rp + rp * 0.22), 0, sn * (Rp + rp * 0.22));
-  tab.lookAt(0, 0, 0); tab.rotateX(Math.PI / 2);
-  bague.add(tab);
+  const dir = new THREE.Vector3(c, 0, sn);
+  const poser = (mesh, dist) => {
+    mesh.position.copy(dir).multiplyScalar(Rp + dist);
+    mesh.lookAt(0, 0, 0); mesh.rotateX(Math.PI / 2);
+    bague.add(mesh);
+  };
+  poser(new THREE.Mesh(gPav,  matPierre), -rp * 0.60);
+  poser(new THREE.Mesh(gBord, matPierre), -rp * 0.03);
+  poser(new THREE.Mesh(gCour, matPierre),  rp * 0.27);
+  // les petites billes qui tiennent la pierre, de chaque cote
+  for (const k of [-1, 1]) {
+    const b = new THREE.Mesh(gBille, matGriffe);
+    const tb = t + (k * Math.PI / N);
+    b.position.set(Math.cos(tb) * (Rp + rp * 0.10), 0, Math.sin(tb) * (Rp + rp * 0.10));
+    bague.add(b);
+  }
 }
-
-// un doigt invisible : on ne le voit pas, mais il cache la partie de la bague qui passe derriere lui
-const doigt3d = new THREE.Mesh(
-  new THREE.CylinderGeometry(ri * 0.99, ri * 0.99, 16, 48, 1, true),
-  new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true })
-);
-doigt3d.renderOrder = -1;
 
 const porteur = new THREE.Group();
 porteur.add(doigt3d);
