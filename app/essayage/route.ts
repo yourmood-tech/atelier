@@ -42,12 +42,7 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   <div class="haut"><div class="k">mood</div><h1>J'essaie ma bague</h1></div>
   <div class="bas">
     <div class="msg" id="msg">Montre ta main devant la caméra.</div>
-    <div class="reglages">
-      <label for="taille">Ajuster</label>
-      <input id="taille" type="range" min="80" max="130" value="100">
-      <label for="haut">Position</label>
-      <input id="haut" type="range" min="10" max="70" value="38">
-    </div>
+
   </div>
 </div>
 
@@ -64,8 +59,7 @@ const video = document.getElementById('cam');
 const cv = document.getElementById('dessin');
 const cx = cv.getContext('2d');
 const msg = document.getElementById('msg');
-const taille = document.getElementById('taille');
-const haut = document.getElementById('haut');
+
 
 const bague = new Image();
 bague.src = '/essayage/bague.png';
@@ -167,52 +161,50 @@ function tour(){
   const base = m[13];   // depart de l'annulaire
   const pli  = m[14];   // premiere articulation
   const majB = m[9];    // depart du majeur
+  const aurB = m[17];   // depart de l'auriculaire
 
   const [bx, by] = place(base.x, base.y);
   const [px, py] = place(pli.x, pli.y);
   const [mx, my] = place(majB.x, majB.y);
+  const [ax, ay] = place(aurB.x, aurB.y);
 
-  // la largeur reelle du doigt : l'ecart entre deux departs de doigts vaut environ 19 mm
-  const ecart = Math.hypot(mx - bx, my - by);
-  const mm = ecart / 19;                 // combien de points pour 1 mm
-  const doigt = mm * 17;                 // largeur du doigt
-  const f = haut.value / 100;
+  // largeur du doigt : moyenne des deux ecarts entre departs de doigts voisins
+  const doigt = 0.5 * (Math.hypot(mx - bx, my - by) + Math.hypot(ax - bx, ay - by));
 
   const brut = {
-    x: bx + (px - bx) * f,
-    y: by + (py - by) * f,
+    x: bx + (px - bx) * 0.34,
+    y: by + (py - by) * 0.34,
     a: Math.atan2(py - by, px - bx) - Math.PI / 2,
     d: doigt
   };
-  const S = lisse(brut, 0.22);
+  const S = lisse(brut, 0.25);
 
   if (bague.complete && bague.naturalWidth) {
-    const ajust = taille.value / 100;
-    const w = S.d * 1.02 * ajust;                                   // la bague barre le doigt
-    const h = w * (bague.naturalHeight / bague.naturalWidth);       // ses 9 mm de large
+    const w = S.d * 1.06;                                       // la bague epouse le doigt
+    const h = w * (bague.naturalHeight / bague.naturalWidth);   // ses 9 mm de large
 
     cx.save();
     cx.translate(S.x, S.y);
     cx.rotate(S.a);
 
-    // ombre portee du bijou sur le doigt
+    // ombre : elle epouse la forme de la bague, pas un rectangle
     cx.save();
-    cx.filter = 'blur(' + (w*0.05) + 'px)';
-    cx.fillStyle = 'rgba(0,0,0,.28)';
-    cx.fillRect(-w*0.46, -h/2 + h*0.14, w*0.92, h*0.95);
+    cx.globalAlpha = 0.5;
+    cx.filter = 'blur(' + Math.max(2, w * 0.045) + 'px) brightness(0)';
+    cx.drawImage(bague, -w / 2, -h / 2 + h * 0.10, w, h);
     cx.restore();
 
     cx.drawImage(bague, -w / 2, -h / 2, w, h);
 
     // les bords s'enroulent autour du doigt : on les assombrit
-    const g1 = cx.createLinearGradient(-w/2, 0, w/2, 0);
-    g1.addColorStop(0,   'rgba(0,0,0,.42)');
-    g1.addColorStop(0.16,'rgba(0,0,0,0)');
-    g1.addColorStop(0.84,'rgba(0,0,0,0)');
-    g1.addColorStop(1,   'rgba(0,0,0,.42)');
+    const g1 = cx.createLinearGradient(-w / 2, 0, w / 2, 0);
+    g1.addColorStop(0,    'rgba(0,0,0,.45)');
+    g1.addColorStop(0.14, 'rgba(0,0,0,0)');
+    g1.addColorStop(0.86, 'rgba(0,0,0,0)');
+    g1.addColorStop(1,    'rgba(0,0,0,.45)');
     cx.globalCompositeOperation = 'source-atop';
     cx.fillStyle = g1;
-    cx.fillRect(-w/2, -h/2, w, h);
+    cx.fillRect(-w / 2, -h / 2, w, h);
     cx.globalCompositeOperation = 'source-over';
 
     cx.restore();
