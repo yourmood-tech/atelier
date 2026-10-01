@@ -87,8 +87,11 @@ async function demarre(){
   try {
     if (DEMO) {
       video.src = '/essayage/main.mp4';
-      video.loop = true; video.muted = true;
-      await video.play();
+      video.loop = true; video.muted = true; video.playsInline = true;
+      await new Promise(r => { video.onloadeddata = r; video.load(); });
+      const tt = parseFloat(new URLSearchParams(location.search).get('t') || '0');
+      if (tt > 0) { await new Promise(r => { video.onseeked = r; video.currentTime = tt; }); }
+      else { await video.play(); }
     } else {
     const flux = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
@@ -103,7 +106,8 @@ async function demarre(){
     });
     d.remove();
     cadre();
-    requestAnimationFrame(boucle);
+    if (DEMO) { for (let i=0;i<6;i++){ await new Promise(r=>setTimeout(r,120)); tour(); } setInterval(tour, 90); }
+    else requestAnimationFrame(boucle);
   } catch (e) {
     if (DEMO) { msg.textContent = 'ERR ' + (e && e.message ? e.message : e); }
     d.querySelector('p').textContent = "La caméra n'a pas pu s'allumer. Vérifie que tu l'as autorisée pour ce site.";
@@ -141,10 +145,14 @@ function lisse(o, k){
 
 function boucle(t){
   requestAnimationFrame(boucle);
-  if (!detecteur || video.readyState < 2) return;
-  if (cv.width !== cv.clientWidth * Math.min(window.devicePixelRatio||1,2)) cadre();
   if (t === dernier) return;
   dernier = t;
+  tour();
+}
+
+function tour(){
+  if (!detecteur || video.readyState < 2) return;
+  if (cv.width !== cv.clientWidth * Math.min(window.devicePixelRatio||1,2)) cadre();
 
   const res = detecteur.detectForVideo(video, performance.now());
   cx.clearRect(0, 0, cv.width, cv.height);
