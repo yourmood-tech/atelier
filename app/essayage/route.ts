@@ -94,8 +94,8 @@ function studio(){
   const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
   const x = c.getContext('2d');
   const ciel = x.createLinearGradient(0, 0, 0, 512);
-  ciel.addColorStop(0.00, '#9A9A9E'); ciel.addColorStop(0.42, '#6E6E72');
-  ciel.addColorStop(0.52, '#232326'); ciel.addColorStop(1.00, '#0C0C0E');
+  ciel.addColorStop(0.00, '#C9CACC'); ciel.addColorStop(0.40, '#9B9CA0');
+  ciel.addColorStop(0.55, '#55565A'); ciel.addColorStop(1.00, '#2E2F33');
   x.fillStyle = ciel; x.fillRect(0, 0, 1024, 512);
   // les deux boites a lumiere
   for (const [cx, cy, w, h] of [[300, 120, 360, 120], [760, 150, 300, 100]]) {
@@ -104,7 +104,7 @@ function studio(){
     x.fillStyle = g; x.beginPath(); x.ellipse(cx, cy, w, h, 0, 0, 6.3); x.fill();
   }
   // un reflet sombre horizontal : c'est lui qui dessine la ligne noire sur le metal poli
-  x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(0, 248, 1024, 26);
+  x.fillStyle = 'rgba(0,0,0,.30)'; x.fillRect(0, 252, 1024, 16);
   const t = new THREE.CanvasTexture(c);
   t.mapping = THREE.EquirectangularReflectionMapping;
   t.colorSpace = THREE.SRGBColorSpace;
@@ -161,7 +161,7 @@ const bague = new THREE.Group();
 
 // 1 — le corps en metal : bords arrondis, gorge creusee au centre
 const matMetal = new THREE.MeshPhysicalMaterial({
-  color: 0xBFC4C8, metalness: 1, roughness: 0.035, envMapIntensity: 1.9
+  color: 0xCDD1D4, metalness: 1, roughness: 0.075, envMapIntensity: 1.35
 });
 const Rg = R - 0.5 * U;                        // fond de la gorge (ou se logent couleur et pierres)
 bague.add(new THREE.Mesh(revolu([
@@ -195,8 +195,8 @@ const matGriffe = new THREE.MeshPhysicalMaterial({ color: 0xCFD4D8, metalness: 1
 
 const dp = 2.0 * U, rp = dp / 2;
 // un brillant : couronne (du bord vers la table) + pavillon (du bord vers la pointe)
-const gCour = new THREE.CylinderGeometry(rp * 0.58, rp, rp * 0.52, 16, 1);
-const gPav  = new THREE.ConeGeometry(rp, rp * 1.05, 16, 1);
+const gCour = new THREE.CylinderGeometry(rp * 0.40, rp, rp * 0.62, 16, 1);
+const gPav  = new THREE.ConeGeometry(rp, rp * 1.25, 16, 1);
 const gBord = new THREE.CylinderGeometry(rp, rp, rp * 0.09, 16, 1);
 const gBille = new THREE.SphereGeometry(rp * 0.21, 10, 8);
 
@@ -210,9 +210,9 @@ for (let i = 0; i < N; i++) {
     mesh.lookAt(0, 0, 0); mesh.rotateX(Math.PI / 2);
     bague.add(mesh);
   };
-  poser(new THREE.Mesh(gPav,  matPierre), -rp * 0.60);
+  poser(new THREE.Mesh(gPav,  matPierre), -rp * 0.70);
   poser(new THREE.Mesh(gBord, matPierre), -rp * 0.03);
-  poser(new THREE.Mesh(gCour, matPierre),  rp * 0.27);
+  poser(new THREE.Mesh(gCour, matPierre),  rp * 0.32);
   // les petites billes qui tiennent la pierre, de chaque cote
   for (const k of [-1, 1]) {
     const b = new THREE.Mesh(gBille, matGriffe);
@@ -275,16 +275,15 @@ if (VITRINE) {
   document.querySelector('.bas').style.background = 'none';
   document.getElementById('scene').style.background = '#EFEFEF';
   msg.textContent = '';
-  const ang = parseFloat(new URLSearchParams(location.search).get('a') || '28');
+  const ang = parseFloat(new URLSearchParams(location.search).get('a') || '58');
   cadre();
-  const cote = Math.min(toile.clientWidth, toile.clientHeight) * 0.40;
+  const cote = Math.min(toile.clientWidth, toile.clientHeight) * 0.21;
   porteur.visible = true;
   porteur.position.set(0, 0, 0);
   porteur.scale.setScalar(cote);
   porteur.rotation.set(0, 0, 0);
   porteur.rotateZ(Math.PI / 2);                       // l'axe du trou a l'horizontale
   porteur.rotateX(ang * Math.PI / 180);               // on la tourne de trois quarts
-  doigt3d.visible = false;
   const dessine = () => { rendu.render(scene, cam3d); requestAnimationFrame(dessine); };
   dessine();
 }
