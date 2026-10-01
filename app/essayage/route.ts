@@ -44,7 +44,7 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
     <div class="msg" id="msg">Montre ta main devant la caméra.</div>
     <div class="reglages">
       <label for="taille">Taille</label>
-      <input id="taille" type="range" min="60" max="190" value="118">
+      <input id="taille" type="range" min="70" max="190" value="118">
       <label for="haut">Position</label>
       <input id="haut" type="range" min="10" max="70" value="38">
     </div>
@@ -151,34 +151,17 @@ function boucle(t){
   const angle = Math.atan2(py - by, px - bx) - Math.PI / 2;
 
   if (bague.complete && bague.naturalWidth) {
-    const ratio = bague.naturalHeight / bague.naturalWidth;
-    const w = largeur, h = w * ratio;
-
-    // 1 — la bague
+    // la bague est une bande qui barre le doigt : largeur = celle du doigt
+    const doigt = ecart * 0.70;
+    const w = doigt * (taille.value / 100);
+    const h = w * (bague.naturalHeight / bague.naturalWidth);
     cx.save();
     cx.translate(cxp, cyp);
     cx.rotate(angle);
-    cx.shadowColor = 'rgba(0,0,0,.4)';
-    cx.shadowBlur = w * 0.05;
-    cx.shadowOffsetY = w * 0.015;
+    cx.shadowColor = 'rgba(0,0,0,.38)';
+    cx.shadowBlur = w * 0.07;
+    cx.shadowOffsetY = w * 0.02;
     cx.drawImage(bague, -w / 2, -h / 2, w, h);
-    cx.restore();
-
-    // 2 — le doigt repasse par-dessus la moitie de la bague qui passe derriere lui
-    const vw = video.videoWidth, vh = video.videoHeight;
-    const ech = Math.max(cv.width / vw, cv.height / vh);
-    const dw2 = vw * ech, dh2 = vh * ech;
-    const ox2 = (cv.width - dw2) / 2, oy2 = (cv.height - dh2) / 2;
-    const doigt = ecart * 0.62;        // largeur du doigt
-    cx.save();
-    cx.translate(cxp, cyp);
-    cx.rotate(angle);
-    cx.beginPath();
-    cx.rect(-doigt / 2, -h * 0.75, doigt, h * 0.72);   // la bande du doigt, cote main
-    cx.clip();
-    cx.rotate(-angle);
-    cx.translate(-cxp, -cyp);
-    cx.drawImage(video, ox2, oy2, dw2, dh2);
     cx.restore();
   }
 }
