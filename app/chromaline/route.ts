@@ -722,6 +722,20 @@ h1,h2,h3,p{margin:0}
     });
   }
   function jouer(i){ jouerListe(couches,i); }
+  /* change de couleur sans recommencer : la nouvelle bague reprend au même moment du tour */
+  function enchainer(liste,i){
+    var t=0;
+    liste.forEach(function(v){ if(v.play && !v.paused) t=v.currentTime; });
+    liste.forEach(function(v,k){
+      if(!v.play) return;
+      if(k===i){
+        v.preload='auto';
+        var go=function(){ try{ v.currentTime = v.duration ? (t % v.duration) : t; }catch(e){} var q=v.play(); if(q&&q.catch) q.catch(function(){}); };
+        if(v.readyState>=1) go(); else v.addEventListener('loadedmetadata',go,{once:true});
+      } else { v.pause(); }
+    });
+  }
+  couchesBig.forEach(function(v){ if(v.play) v.preload='auto'; });
   jouer(0);
 
   /* la cliente choisit : photo, nom, pastilles, bouton, halo */
@@ -734,7 +748,7 @@ h1,h2,h3,p{margin:0}
     if(nom2) nom2.textContent=col.nom;
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
     for(var ka=0;ka<couchesAchat.length;ka++) couchesAchat[ka].classList.toggle('on',ka===i);
-    jouerListe(couchesBig,i);
+    enchainer(couchesBig,i);
     [sws,sws2].forEach(function(hote){
       if(!hote) return;
       var bs=hote.querySelectorAll('.sw');
