@@ -426,9 +426,9 @@ h1,h2,h3,p{margin:0}
 #achat{padding-top:clamp(14px,1.8vw,30px);background:var(--c-soft);transition:background .8s ease}
 
 /* la pellicule de photos sous la bague qui tourne */
-.colvis{order:0}
+.colvis{order:0;min-width:0;max-width:100%}
 .colvis .stage-big{margin:0}
-.pelli{margin-top:10px;overflow:hidden;
+.pelli{margin-top:10px;width:100%;max-width:100%;overflow:hidden;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent);
           mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent)}
 .pelli-piste{display:flex;gap:10px;width:max-content;animation:pelliDefile 30s linear infinite}
