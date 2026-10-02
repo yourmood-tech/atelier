@@ -104,27 +104,43 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   pos.addEventListener('input', dessine);
 
   var AIDE = 'Pose ton annulaire dans le repère, bien droit,<br>jusqu\'à en remplir toute la largeur.';
-  var suit = false, taillePosee = 0;
+  var suit = false, L = null, detecteur = null;
 
-  document.getElementById('ok').addEventListener('click', function(){
-    taillePosee = window.innerWidth * 0.17 * (larg.value / 110);
+  function replie(){
+    suit = false; L = null;
+    bague.style.left = '50%'; bague.style.top = '';
+    bague.style.transform = 'translateX(-50%)';
+    repere.classList.remove('cache');
+    reglages.classList.remove('cache');
+    msg.innerHTML = AIDE;
+    dessine();
+  }
+
+  document.getElementById('ok').addEventListener('click', function(ev){
+    ev.stopPropagation();
+    // on part de la position du repere : aucun saut au demarrage
+    var H = window.innerHeight;
+    var doigt = window.innerWidth * 0.17 * (larg.value / 110);
+    L = { x: window.innerWidth / 2, y: H * (pos.value / 100), a: 0, d: doigt };
+    bague.style.left = '0'; bague.style.top = '0';
+    pose();
     repere.classList.add('cache');
     reglages.classList.add('cache');
-    msg.innerHTML = 'La bague suit ta main. Touche l\'écran pour recommencer.';
+    msg.innerHTML = 'Un instant, je cale la bague sur ton doigt…';
     suit = true;
     accroche();
-    document.getElementById('scene').addEventListener('click', function(){
-      suit = false;
-      bague.style.transform = 'translateX(-50%)';
-      repere.classList.remove('cache');
-      reglages.classList.remove('cache');
-      msg.innerHTML = AIDE;
-      dessine();
-    }, { once: true });
+    setTimeout(function(){
+      document.getElementById('scene').addEventListener('click', replie, { once: true });
+    }, 400);
   });
 
-  // le suivi de la main : il ne demarre qu'une fois la bague posee
-  var detecteur = null, L = null;
+  function pose(){
+    var h = L.d * RAPPORT, l = h * FORME;
+    bague.style.width = l + 'px';
+    bague.style.height = h + 'px';
+    bague.style.transform = 'translate(' + (L.x - l / 2) + 'px,' + (L.y - h / 2) + 'px) rotate(' + L.a + 'rad)';
+  }
+
   function accroche(){
     if (detecteur) { tourne(); return; }
     import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs').then(function(V){
@@ -135,8 +151,13 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
             runningMode: 'VIDEO', numHands: 1
           });
         });
-    }).then(function(d){ detecteur = d; tourne(); })
-      .catch(function(){ msg.innerHTML = 'La bague reste fixe : le suivi de la main n\'a pas pu démarrer.'; });
+    }).then(function(d){
+      detecteur = d;
+      msg.innerHTML = 'La bague suit ta main. Touche l\'écran pour recommencer.';
+      tourne();
+    }).catch(function(){
+      msg.innerHTML = 'La bague reste là où tu l\'as posée. Touche l\'écran pour recommencer.';
+    });
   }
 
   function placeEcran(x, y){
@@ -151,34 +172,29 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
     if (!suit) return;
     requestAnimationFrame(tourne);
     if (!detecteur || video.readyState < 2) return;
-    var res = detecteur.detectForVideo(video, performance.now());
-    if (!res.landmarks || !res.landmarks.length) return;
+    var res;
+    try { res = detecteur.detectForVideo(video, performance.now()); } catch (e) { return; }
+    if (!res || !res.landmarks || !res.landmarks.length) return;   // pas de main : la bague ne bouge pas
     var m = res.landmarks[0];
-    var b = placeEcran(m[13].x, m[13].y);     // depart de l'annulaire
-    var p = placeEcran(m[14].x, m[14].y);     // premiere articulation
-    var mj = placeEcran(m[9].x, m[9].y);
+    var b  = placeEcran(m[13].x, m[13].y);
+    var p  = placeEcran(m[14].x, m[14].y);
+    var mj = placeEcran(m[9].x,  m[9].y);
     var au = placeEcran(m[17].x, m[17].y);
     var doigt = 0.5 * (Math.hypot(mj[0]-b[0], mj[1]-b[1]) + Math.hypot(au[0]-b[0], au[1]-b[1]));
+    if (!isFinite(doigt) || doigt < 8) return;
 
-    var cx = b[0] + (p[0] - b[0]) * 0.34;
-    var cy = b[1] + (p[1] - b[1]) * 0.34;
-    var ang = Math.atan2(p[1] - b[1], p[0] - b[0]) + Math.PI / 2;
-
-    var o = { x: cx, y: cy, a: ang, d: doigt };
-    if (!L) L = Object.assign({}, o);
-    else {
-      var da = o.a - L.a;
-      while (da >  Math.PI) da -= 2 * Math.PI;
-      while (da < -Math.PI) da += 2 * Math.PI;
-      L.a += da * 0.25;
-      L.x += (o.x - L.x) * 0.25; L.y += (o.y - L.y) * 0.25; L.d += (o.d - L.d) * 0.2;
-    }
-    var h = L.d * RAPPORT, l = h * FORME;
-    bague.style.width = l + 'px';
-    bague.style.height = h + 'px';
-    bague.style.left = '0px';
-    bague.style.top = '0px';
-    bague.style.transform = 'translate(' + (L.x - l/2) + 'px,' + (L.y - h/2) + 'px) rotate(' + L.a + 'rad)';
+    var o = {
+      x: b[0] + (p[0] - b[0]) * 0.34,
+      y: b[1] + (p[1] - b[1]) * 0.34,
+      a: Math.atan2(p[1] - b[1], p[0] - b[0]) + Math.PI / 2,
+      d: doigt
+    };
+    var da = o.a - L.a;
+    while (da >  Math.PI) da -= 2 * Math.PI;
+    while (da < -Math.PI) da += 2 * Math.PI;
+    L.a += da * 0.3;
+    L.x += (o.x - L.x) * 0.3; L.y += (o.y - L.y) * 0.3; L.d += (o.d - L.d) * 0.22;
+    pose();
   }
 
   document.getElementById('go').addEventListener('click', function(){
