@@ -102,9 +102,9 @@ h1,h2,h3,p{margin:0}
 }
 #stageBig{aspect-ratio:1/1;background:#d9d9db}
 #stageBig video{object-fit:cover;mix-blend-mode:normal}
-#stageAchat{aspect-ratio:725/900;background:#f2f2f2}
+#stageAchat{aspect-ratio:1/1;background:#e9e9ea}
 #stageAchat img,#stageAchat video{object-fit:cover}
-#stageAchat video{background:#f2f2f2}
+#stageAchat video{background:#e9e9ea}
 .choix{
   display:grid;grid-template-columns:1.1fr 0.9fr;align-items:center;
   gap:clamp(20px,3.4vw,56px);max-width:960px;margin:clamp(10px,2vw,26px) auto 0;
@@ -841,7 +841,7 @@ h1,h2,h3,p{margin:0}
   poser(stage, couches, false);       /* le titre : la bague qui tourne */
   poser(stageBig, couchesBig, false, 'achat-');  /* le premier bloc : la bague qui tourne */
   var couchesAchat=[];
-  poser(stageAchat, couchesAchat, true, 'achat-');
+  poser(stageAchat, couchesAchat, false, 'achat-');  /* le configurateur : la bague qui tourne */
   function jouerListe(liste,i){
     liste.forEach(function(v,k){
       if(!v.play) return;
@@ -875,7 +875,7 @@ h1,h2,h3,p{margin:0}
     nom.textContent=col.nom;
     if(nom2) nom2.textContent=col.nom;
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
-    for(var ka=0;ka<couchesAchat.length;ka++) couchesAchat[ka].classList.toggle('on',ka===i);
+    enchainer(couchesAchat,i);
     enchainer(couchesBig,i);
     [sws,sws2].forEach(function(hote){
       if(!hote) return;
