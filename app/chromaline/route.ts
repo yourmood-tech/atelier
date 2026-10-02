@@ -837,6 +837,8 @@ h1,h2,h3,p{margin:0}
 </div>
 
 <script>
+if(window.__chromaline){}else{window.__chromaline=1;
+
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var COLORS=[
@@ -862,6 +864,7 @@ h1,h2,h3,p{margin:0}
 
   /* pastilles */
   [sws, sws2].forEach(function(hote){
+    if(hote) hote.innerHTML='';
     if(!hote) return;
     COLORS.forEach(function(col,i){
       var b=document.createElement('button');
@@ -877,6 +880,7 @@ h1,h2,h3,p{margin:0}
   var tailleChoisie='58';
   var tailles=document.getElementById('tailles');
   if(tailles){
+    tailles.innerHTML='';
     ['50','52','54','56','58','60','62','64','66','68','70','72'].forEach(function(t){
       var b=document.createElement('button');
       b.type='button'; b.textContent=t;
@@ -891,6 +895,7 @@ h1,h2,h3,p{margin:0}
   }
 
   /* les sept en grand */
+  if(seven) seven.innerHTML='';
   COLORS.forEach(function(col,i){
     var d=document.createElement('button');
     d.type='button'; d.className='card'; d.style.setProperty('--sc',col.c);
@@ -909,6 +914,7 @@ h1,h2,h3,p{margin:0}
   var couches=[], couchesBig=[];
   function poser(hote, liste, enPhoto, prefixe){
     if(!hote) return;
+    hote.innerHTML='';
     COLORS.forEach(function(col,i){
       var el;
       if(enPhoto){
@@ -1243,6 +1249,8 @@ h1,h2,h3,p{margin:0}
     },2600);
   }
 })();
+
+}
 </script>
 </body></html>`;
 
