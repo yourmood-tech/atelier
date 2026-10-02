@@ -426,7 +426,7 @@ h1,h2,h3,p{margin:0}
 #achat{padding-top:clamp(14px,1.8vw,30px);background:var(--c-soft);transition:background .8s ease}
 
 /* la pellicule de photos sous la bague qui tourne */
-.colvis{order:0;min-width:0;max-width:100%}
+.colvis{order:0;min-width:0;width:100%;max-width:520px;margin-inline:auto}
 .colvis .stage-big{margin:0}
 .pelli{margin-top:10px;width:100%;max-width:100%;overflow:hidden;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent);
