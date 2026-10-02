@@ -445,6 +445,31 @@ h1,h2,h3,p{margin:0}
   background:rgba(255,255,255,.92);color:#191917;font-size:15px;line-height:1;cursor:pointer;
   box-shadow:0 2px 10px rgba(0,0,0,.14)}
 @media (prefers-reduced-motion:reduce){ .pelli-piste{animation:none} }
+
+/* le compte, sous le configurateur */
+.compte{background:var(--c-soft);transition:background .8s ease;padding-block:clamp(34px,4.2vw,70px);text-align:center}
+.compte-titre{font-size:clamp(26px,3.2vw,46px);font-weight:300;margin:12px 0 clamp(22px,2.6vw,38px)}
+.compte-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2vw,30px);align-items:stretch;text-align:left}
+.grille{border:1px solid rgba(25,25,23,.10);border-radius:4px;overflow:hidden;background:rgba(255,255,255,.42);
+  display:flex;flex-direction:column}
+.lg{display:flex;justify-content:space-between;align-items:center;gap:16px;flex:1;
+  padding:clamp(13px,1.5vw,20px) clamp(14px,1.8vw,24px);font-size:clamp(13px,1vw,15.5px);
+  border-bottom:1px solid rgba(25,25,23,.08)}
+.lg:last-child{border-bottom:0}
+.lg b{font-weight:400;white-space:nowrap}
+.lg.tot{background:#14150f;color:#fff}
+.lg.tot b{font-weight:500}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,1.1vw,16px)}
+.trio figure{margin:0;display:flex;flex-direction:column}
+.trio img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:4px;display:block;background:#fff}
+.trio figcaption{margin-top:9px;font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--mid);text-align:center}
+.minis{position:relative;display:block;width:100%;aspect-ratio:1/1;border-radius:4px;overflow:hidden;background:#fff}
+.minis img{position:absolute;inset:0;height:100%;opacity:0;border-radius:0}
+.minis img.on{opacity:1}
+.compte-pied{margin:clamp(16px,2vw,26px) auto 0;max-width:620px;font-size:clamp(12.5px,.95vw,14.5px);color:var(--mid);line-height:1.65}
+@media (max-width:860px){
+  .compte-in{grid-template-columns:1fr}
+}
 </style>
 
 <section class="hero2">
@@ -592,6 +617,37 @@ h1,h2,h3,p{margin:0}
         <li>Swiss design depuis 2004</li>
       </ul>
     </div>
+  </div>
+</section>
+
+<section class="compte">
+  <div class="wrap">
+    <span class="eyebrow cp-eye">Le compte</span>
+    <h2 class="display compte-titre">251.&#8212; de bijoux. 197.&#8212;.</h2>
+    <div class="compte-in">
+      <div class="grille">
+        <div class="lg"><span>1 base extra small en acier 316L (9&#8239;mm)</span><b>119.&#8212;</b></div>
+        <div class="lg"><span>1 mini &laquo;&nbsp;Aura Authentique&nbsp;&raquo; en argent 925 serti</span><b>72.&#8212;</b></div>
+        <div class="lg"><span>2 minis en aluminium, la couleur de ton choix</span><b>60.&#8212;</b></div>
+        <div class="lg tot"><span>Le pack d&eacute;couverte</span><b>197.&#8212;</b></div>
+      </div>
+      <div class="trio">
+        <figure><img src="/chromaline/compte/base.jpg" alt="La base extra small en acier" loading="lazy"><figcaption>La base</figcaption></figure>
+        <figure><img src="/chromaline/compte/aura.jpg" alt="Le mini Aura Authentique serti de zircons" loading="lazy"><figcaption>Le mini serti</figcaption></figure>
+        <figure class="tmini" id="trioMini">
+          <span class="minis">
+            <img class="on" src="/chromaline/compte/mini-1.jpg" alt="Les minis en aluminium" loading="lazy">
+            <img src="/chromaline/compte/mini-2.jpg" alt="" loading="lazy">
+            <img src="/chromaline/compte/mini-3.jpg" alt="" loading="lazy">
+            <img src="/chromaline/compte/mini-4.jpg" alt="" loading="lazy">
+            <img src="/chromaline/compte/mini-5.jpg" alt="" loading="lazy">
+            <img src="/chromaline/compte/mini-6.jpg" alt="" loading="lazy">
+          </span>
+          <figcaption>Les minis couleur</figcaption>
+        </figure>
+      </div>
+    </div>
+    <p class="compte-pied">Pas de petite ristourne, pas de calcul compliqu&eacute;. Le pack co&ucirc;te moins cher que ses pi&egrave;ces prises s&eacute;par&eacute;ment.</p>
   </div>
 </section>
 
@@ -907,6 +963,17 @@ h1,h2,h3,p{margin:0}
     },{rootMargin:'300px'});
     obs.observe(gros);
   } else if(gros){ gros.src=gros.getAttribute('data-src'); }
+
+  /* les minis du compte defilent */
+  var tm=document.querySelectorAll('#trioMini .minis img');
+  if(tm.length>1){
+    var im=0;
+    setInterval(function(){
+      tm[im].classList.remove('on');
+      im=(im+1)%tm.length;
+      tm[im].classList.add('on');
+    },1800);
+  }
 
   var pelli=document.getElementById('pelli');
   var pelliPiste=document.getElementById('pelliPiste');
