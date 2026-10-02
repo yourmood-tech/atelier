@@ -405,7 +405,7 @@ h1,h2,h3,p{margin:0}
 /* les trois gestes, en grand */
 .geste3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:start;
   gap:clamp(10px,1.6vw,30px);margin-top:clamp(26px,3vw,46px);text-align:left;
-  width:min(1560px,94vw);margin-inline:auto}
+  width:min(1560px,92vw);position:relative;left:50%;transform:translateX(-50%)}
 .g3{margin:0}
 .g3 img{width:100%;aspect-ratio:5/4;object-fit:cover;border-radius:3px;display:block;
   box-shadow:0 14px 34px rgba(25,25,23,.10)}
