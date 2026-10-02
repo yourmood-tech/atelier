@@ -414,7 +414,7 @@ h1,h2,h3,p{margin:0}
   font-size:11px;letter-spacing:2.2px;text-transform:uppercase}
 .g3f{align-self:center;margin-top:-6%;color:var(--mid);font-size:clamp(16px,1.6vw,24px);line-height:1}
 @media (max-width:860px){
-  .geste3{grid-template-columns:1fr;gap:22px}
+  .geste3{grid-template-columns:1fr;gap:22px;width:100%;position:static;transform:none}
   .g3f{display:none}
   .g3 img{aspect-ratio:16/10}
 }
