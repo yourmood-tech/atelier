@@ -428,12 +428,19 @@ h1,h2,h3,p{margin:0}
 /* la pellicule de photos sous la bague qui tourne */
 .colvis{order:0;min-width:0;width:100%;max-width:520px;margin-inline:auto}
 .colvis .stage-big{margin:0}
-.pelli{margin-top:10px;width:100%;max-width:100%;overflow:hidden;
+.pelli-bloc{position:relative;margin-top:10px;width:100%;max-width:100%}
+.pelli{width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent);
           mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent)}
-.pelli-piste{display:flex;gap:10px;width:max-content;animation:pelliDefile 30s linear infinite}
-.pelli:hover .pelli-piste{animation-play-state:paused}
-@keyframes pelliDefile{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.pelli::-webkit-scrollbar{display:none}
+.pelli-piste{display:flex;gap:10px;width:max-content}
+.fl{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:30px;height:30px;
+  border:0;border-radius:50%;background:rgba(255,255,255,.94);color:#191917;cursor:pointer;
+  font-size:19px;line-height:1;padding:0 0 2px;box-shadow:0 2px 10px rgba(0,0,0,.16);
+  display:flex;align-items:center;justify-content:center;transition:background .2s ease}
+.fl:hover{background:#fff}
+.fl-g{left:2px}
+.fl-d{right:2px}
 .pelli button{flex:0 0 auto;padding:0;border:0;background:#f1f1f2;cursor:pointer;
   height:clamp(74px,8.4vw,122px);aspect-ratio:1/1;border-radius:3px;overflow:hidden;
   transition:opacity .3s ease}
@@ -441,6 +448,7 @@ h1,h2,h3,p{margin:0}
 .pelli img{width:100%;height:100%;object-fit:cover;display:block}
 #grandVue{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;z-index:3;
   cursor:zoom-out;background:#e9e9ea;mix-blend-mode:normal}
+#stageAchat .fl{z-index:5}
 .fermer-vue{position:absolute;top:10px;right:10px;z-index:4;width:30px;height:30px;border:0;border-radius:50%;
   background:rgba(255,255,255,.92);color:#191917;font-size:15px;line-height:1;cursor:pointer;
   box-shadow:0 2px 10px rgba(0,0,0,.14)}
@@ -471,6 +479,32 @@ h1,h2,h3,p{margin:0}
 @media (max-width:860px){
   .compte-in{grid-template-columns:1fr}
 }
+
+/* les sept couleurs : l'anneau puis la main */
+.card .carte,.card .portee{width:100%;display:block;border-radius:4px;background:var(--cream)}
+.card .carte{aspect-ratio:1/1;object-fit:cover}
+.card .portee{aspect-ratio:3/2;object-fit:cover;margin-top:6px}
+
+/* le bandeau de reassurance + les questions */
+.rassure{background:var(--cream);border-block:1px solid var(--line);padding-block:clamp(16px,2vw,26px)}
+.rs-in{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,1.6vw,26px);align-items:center}
+.rs{display:flex;align-items:center;gap:10px;font-size:11.5px;line-height:1.35;color:var(--ink)}
+.rs svg{width:26px;height:26px;flex:0 0 auto;color:var(--ink)}
+.rs i{font-style:normal}
+.qa{padding-block:clamp(30px,3.6vw,58px)}
+.qa-titre{font-size:clamp(22px,2.4vw,34px);text-transform:uppercase;letter-spacing:-.01em;margin:0 0 clamp(16px,2vw,26px)}
+.qa-grille{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;align-content:start}
+.qa-grille .q{border:1px solid var(--line);border-radius:3px;background:#fff;height:fit-content}
+.qa-grille .q summary{display:flex;justify-content:space-between;align-items:center;gap:14px;
+  cursor:pointer;list-style:none;padding:13px 16px;font-size:14px;line-height:1.4}
+.qa-grille .q summary::-webkit-details-marker{display:none}
+.qa-grille .q summary em{font-style:normal;font-size:17px;color:var(--mid);line-height:1}
+.qa-grille .q[open] summary em{transform:rotate(45deg)}
+.qa-grille .q p{margin:0;padding:0 16px 15px;font-size:13px;line-height:1.7;color:var(--mid)}
+@media (max-width:860px){
+  .rs-in{grid-template-columns:1fr 1fr;gap:14px}
+  .qa-grille{grid-template-columns:1fr}
+}
 </style>
 
 <section class="hero2">
@@ -497,7 +531,7 @@ h1,h2,h3,p{margin:0}
       <p class="h2prix">CHF 197.–
         <span class="h2note"><em class="etoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</em> 4.8/5 &middot; 18&nbsp;000+ avis</span>
       </p>
-      <p style="margin:0"><a class="btn btn-c h2btn" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Créer la mienne &nbsp;&rarr;</a></p>
+      <p style="margin:0"><a class="btn btn-c h2btn" href="#achat">Créer la mienne &nbsp;&rarr;</a></p>
       <div class="h2res">
         <span class="h2r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 5h12v10H1zM13 8h4.5l3.5 3.5V15H13z"/><circle cx="5.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>Livraison depuis<br>la Suisse</span>
         <span class="h2r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.6 21 7v10l-9 4.4L3 17V7z"/><path d="M3 7l9 4.4L21 7M12 11.4V21.4"/></svg>Échange de taille<br>facile (30 jours)</span>
@@ -575,7 +609,11 @@ h1,h2,h3,p{margin:0}
   <div class="wrap two">
     <div class="colvis reveal">
       <div class="stage stage-big" id="stageAchat"></div>
-      <div class="pelli" id="pelli" hidden><div class="pelli-piste" id="pelliPiste"></div></div>
+      <div class="pelli-bloc" id="pelli" hidden>
+        <button type="button" class="fl fl-g" id="pelliG" aria-label="Photos pr&eacute;c&eacute;dentes">&lsaquo;</button>
+        <div class="pelli" id="pelliVue"><div class="pelli-piste" id="pelliPiste"></div></div>
+        <button type="button" class="fl fl-d" id="pelliD" aria-label="Photos suivantes">&rsaquo;</button>
+      </div>
     </div>
 
     <div class="acheter reveal d1">
@@ -592,7 +630,7 @@ h1,h2,h3,p{margin:0}
 
       <hr class="filet">
 
-      <p class="prix"><s>479 CHF</s><b>197 CHF</b></p>
+      <p class="prix"><s>509 CHF</s><b>197 CHF</b></p>
       <p class="mini">Prix du pack d&eacute;couverte &middot; 1 base ultra fine + 3 anneaux inclus</p>
 
       <p class="powerpay">ou paie en 3&times; <b>65.67 CHF</b> avec Powerpay &middot; <a href="https://www.yourmood.net/pages/powerpay">en savoir plus</a></p>
@@ -652,32 +690,6 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
-<section class="band band-cream">
-  <div class="wrap two">
-    <div class="reveal">
-      <span class="eyebrow">La signature Chromaline</span>
-      <p class="mm-num" style="margin:16px 0 18px">9<small>mm</small></p>
-      <h2 class="display h2" style="margin-bottom:18px">La plus fine de toutes.</h2>
-      <p class="lede">Même les mains les plus fines la portent. On a repris le système mood au complet — le clic breveté, la base à ouverture, les anneaux qui se changent — et on l'a glissé dans une silhouette deux fois plus discrète.</p>
-      <div class="ticks">
-        <span class="tick"><b>9 mm</b>de largeur</span>
-        <span class="tick"><b>925</b>argent massif</span>
-        <span class="tick"><b>316L</b>acier chirurgical</span>
-        <span class="tick"><b>À vie</b>garantie</span>
-      </div>
-    </div>
-    <figure class="figure reveal d1" style="margin:0">
-      <span class="duos" id="duos">
-        <img class="on" src="/chromaline/duo-1.jpg" alt="La Shiny Love et la Chromaline côte à côte, blanc">
-        <img src="/chromaline/duo-2.jpg" alt="La Shiny Love et la Chromaline côte à côte, rose gold">
-        <img src="/chromaline/duo-3.jpg" alt="La Shiny Love et la Chromaline côte à côte, turquoise">
-        <img src="/chromaline/duo-4.jpg" alt="La Shiny Love et la Chromaline côte à côte, lilas">
-      </span>
-      <figcaption class="cap">Shiny Love · Chromaline</figcaption>
-    </figure>
-  </div>
-</section>
-
 <section class="band">
   <div class="wrap two mouv">
     <div class="reveal">
@@ -703,31 +715,6 @@ h1,h2,h3,p{margin:0}
 </section>
 
 <section class="band band-cream">
-  <div class="wrap">
-    <div class="duo-cartes">
-      <figure class="carte-info reveal">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/chromaline-schema.jpg" alt="Silhouette ultra fine" loading="lazy">
-        <figcaption>
-          <span class="eyebrow">Silhouette ultra fine</span>
-          <h3 class="display h3">Une silhouette ultra fine</h3>
-          <p>La bague interchangeable la plus fine au monde. Conserve la libert&eacute; de changer et offre-toi la d&eacute;licatesse du bijou.</p>
-        </figcaption>
-      </figure>
-
-      <figure class="carte-info reveal d1">
-        <img src="/chromaline/sept-anneaux.jpg" alt="Les sept anneaux de couleur Chromaline" loading="lazy">
-        <figcaption>
-          <span class="eyebrow">7 combos de couleurs</span>
-          <h3 class="display h3">7 combos de couleurs &agrave; collectionner</h3>
-          <p>Acier froiss&eacute;, Turquoise, Belipastel, Rouge Swiss Edition, Bleu Marine, &Eacute;meraude, Abricot &mdash; &agrave; combiner selon tes looks et humeurs.</p>
-        </figcaption>
-      </figure>
-    </div>
-  </div>
-</section>
-
-
-<section class="band band-cream">
   <div class="wrap center">
     <span class="eyebrow">Sept couleurs</span>
     <h2 class="display h2 reveal" style="margin:14px 0 12px">Choisis ton humeur du jour.</h2>
@@ -736,34 +723,6 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
-
-
-<section class="band band-cream">
-  <div class="wrap center">
-    <span class="eyebrow">18 000+ avis vérifiés · 4.8 / 5</span>
-    <h2 class="display h2 reveal" style="margin:14px 0 0">Ce qu'en disent celles qui la portent.</h2>
-    <div class="avis">
-      <blockquote class="reveal">
-        <div class="stars">★★★★★</div>
-        <h4>Enfin la version fine que j'attendais</h4>
-        <p>Je connais le concept mood depuis des années, mais la bague était trop large pour ma main. Quand j'ai vu Chromaline, je l'ai tout de suite commandée. Fine, élégante, exactement ce que je cherchais.</p>
-        <cite>Isabelle Schutzbach</cite>
-      </blockquote>
-      <blockquote class="reveal d1">
-        <div class="stars">★★★★★</div>
-        <h4>Le concept mood en version délicate</h4>
-        <p>J'admirais les bagues mood depuis longtemps mais je les trouvais un peu massives pour moi. Avec Chromaline, je change tout — même liberté de style, une finesse qui va aux mains discrètes comme les miennes.</p>
-        <cite>Edith Balmer</cite>
-      </blockquote>
-      <blockquote class="reveal d2">
-        <div class="stars">★★★★★</div>
-        <h4>Un cadeau parfait</h4>
-        <p>Offerte à ma femme pour notre anniversaire. Elle avait toujours dit que les bagues mood étaient trop larges pour elle. Avec Chromaline, elle a trouvé sa version. On a déjà commandé deux couleurs de plus.</p>
-        <cite>Pierre Vaucher</cite>
-      </blockquote>
-    </div>
-  </div>
-</section>
 
 
 <section class="band">
@@ -775,22 +734,14 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
-<section class="band band-cream">
+<section class="rassure">
+  <div class="wrap"><div class="rs-in"><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M12 3h12l5 6-11 12L7 9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 9h22M12 3l3 6-3 12M24 3l-3 6 3 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg><i>Bijou<br>interchangeable</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="4" y="4" width="28" height="28" rx="2" fill="currentColor"/><path d="M18 11v14M11 18h14" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg><i>Maison suisse<br>depuis 2004</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="5" y="13" width="26" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13h30v5H3zM18 13v18" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M18 13c-4 0-7-1.5-7-4s4-2 7 4c3-5.5 7-6.5 7-4s-3 4-7 4z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><i>&Eacute;change gratuit<br>si la taille ne convient pas (15 jours)</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M3 9h17v14H3zM20 14h6l5 5v4h-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="26" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="25" cy="26" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><i>Livraison rapide<br>depuis la Suisse</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="7" y="15" width="22" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 15v-4a6 6 0 0 1 12 0v4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="23" r="2" fill="currentColor"/></svg><i>Paiement s&eacute;curis&eacute;<br>100&nbsp;% suisse</i></span></div></div>
+</section>
+
+<section class="band qa">
   <div class="wrap">
-    <div class="center">
-      <span class="eyebrow">On répond</span>
-      <h2 class="display h2 reveal" style="margin:14px 0 12px">Questions fréquentes.</h2>
-      <p class="lede reveal d1" style="margin:0 auto clamp(24px,3vw,38px)">Tout ce que tu as besoin de savoir avant de glisser Chromaline à ton doigt.</p>
-    </div>
-    <div class="faq reveal">
-      <details class="q"><summary>Comment choisir ma taille de bague ?</summary><p>Les tailles vont de 50 à 72. Si tu connais déjà ta taille (en mm de tour de doigt), choisis-la directement. Sinon, mesure un anneau qui te va déjà avec une règle, ou consulte notre guide des tailles ci-dessus. Et surtout : l'échange est gratuit pendant 15 jours en cas de mauvaise taille, aucun stress.</p></details>
-      <details class="q"><summary>Et si je me trompe de taille ?</summary><p>Échange gratuit pendant 15 jours en cas de mauvaise taille — on s'occupe de tout. Tu nous écris, on t'envoie la bonne taille, tu renvoies la première. Simple.</p></details>
-      <details class="q"><summary>Quelle est la qualité de la bague ?</summary><p>La base Chromaline est en argent 925 et acier chirurgical 316L (hypoallergénique, inrayable), garantie à vie. Les anneaux interchangeables sont en aluminium anodisé, avec une palette de 7 combos de couleurs résistants à l'usure. Chaque bague est livrée avec sa carte d'authenticité.</p></details>
-      <details class="q"><summary>Combien de temps pour la livraison ?</summary><p>Nos créations sont fabriquées artisanalement, souvent après la commande. Les délais peuvent varier selon les pièces et la disponibilité des matériaux. En cas de besoin urgent (anniversaire, cadeau), contacte-nous — un traitement express peut être envisagé. Livraison en Suisse : 5 CHF, offerte dès 59 CHF d'achat.</p></details>
-      <details class="q"><summary>Puis-je acheter d'autres couleurs plus tard ?</summary><p>C'est tout le principe mood. Une fois ta base reçue, tu peux clipser n'importe quel addon de la collection — couleurs, métaux précieux, sertissages, éditions limitées. Plus de 40 variations existent déjà, et nous en sortons régulièrement.</p></details>
-      <details class="q"><summary>Puis-je payer en plusieurs fois ?</summary><p>Oui — paiement en 3× possible dès 100 CHF d'achat via Powerpay (Suisse uniquement), directement au moment du paiement. Carte bancaire, TWINT, PayPal et Apple/Google Pay sont aussi acceptés.</p></details>
-      <details class="q"><summary>Puis-je clipser des anneaux mood classiques sur la base Chromaline ?</summary><p>La base Chromaline est ultra fine (9 mm) et conçue pour les anneaux minis Chromaline. Les anneaux classiques mood (plus larges) ne sont pas compatibles — c'est ce qui fait toute la finesse du modèle.</p></details>
-    </div>
+    <h2 class="display qa-titre">Vos questions, nos r&eacute;ponses.</h2>
+    <div class="qa-grille"><details class="q"><summary><span>Comment choisir ma taille de bague ?</span><em>+</em></summary><p>Les tailles vont de 50 à 72. Si tu connais déjà ta taille (en mm de tour de doigt), choisis-la directement. Sinon, mesure un anneau qui te va déjà avec une règle, ou consulte notre guide des tailles ci-dessus. Et surtout : l'échange est gratuit pendant 15 jours en cas de mauvaise taille, aucun stress.</p></details><details class="q"><summary><span>Et si je me trompe de taille ?</span><em>+</em></summary><p>Échange gratuit pendant 15 jours en cas de mauvaise taille — on s'occupe de tout. Tu nous écris, on t'envoie la bonne taille, tu renvoies la première. Simple.</p></details><details class="q"><summary><span>Quelle est la qualité de la bague ?</span><em>+</em></summary><p>La base Chromaline est en argent 925 et acier chirurgical 316L (hypoallergénique, inrayable), garantie à vie. Les anneaux interchangeables sont en aluminium anodisé, avec une palette de 7 combos de couleurs résistants à l'usure. Chaque bague est livrée avec sa carte d'authenticité.</p></details><details class="q"><summary><span>Combien de temps pour la livraison ?</span><em>+</em></summary><p>Nos créations sont fabriquées artisanalement, souvent après la commande. Les délais peuvent varier selon les pièces et la disponibilité des matériaux. En cas de besoin urgent (anniversaire, cadeau), contacte-nous — un traitement express peut être envisagé. Livraison en Suisse : 5 CHF, offerte dès 59 CHF d'achat.</p></details><details class="q"><summary><span>Puis-je acheter d'autres couleurs plus tard ?</span><em>+</em></summary><p>C'est tout le principe mood. Une fois ta base reçue, tu peux clipser n'importe quel addon de la collection — couleurs, métaux précieux, sertissages, éditions limitées. Plus de 40 variations existent déjà, et nous en sortons régulièrement.</p></details><details class="q"><summary><span>Puis-je payer en plusieurs fois ?</span><em>+</em></summary><p>Oui — paiement en 3× possible dès 100 CHF d'achat via Powerpay (Suisse uniquement), directement au moment du paiement. Carte bancaire, TWINT, PayPal et Apple/Google Pay sont aussi acceptés.</p></details><details class="q"><summary><span>Puis-je clipser des anneaux mood classiques sur la base Chromaline ?</span><em>+</em></summary><p>La base Chromaline est ultra fine (9 mm) et conçue pour les anneaux minis Chromaline. Les anneaux classiques mood (plus larges) ne sont pas compatibles — c'est ce qui fait toute la finesse du modèle.</p></details></div>
   </div>
 </section>
 
@@ -823,7 +774,7 @@ h1,h2,h3,p{margin:0}
   <div class="wrap">
     <span class="eyebrow">Chromaline &middot; pack découverte</span>
     <h2 class="display h1" style="margin:14px 0 0">Prête à porter<br>la plus fine ?</h2>
-    <p class="lede center" style="max-width:48ch"><s style="color:var(--mid)">479 CHF</s> <b style="color:var(--ink);font-weight:400">197 CHF</b> &middot; 9 mm à peine &middot; La bague qui dit oui à toutes les mains.</p>
+    <p class="lede center" style="max-width:48ch"><s style="color:var(--mid)">509 CHF</s> <b style="color:var(--ink);font-weight:400">197 CHF</b> &middot; 9 mm à peine &middot; La bague qui dit oui à toutes les mains.</p>
     <a class="btn-achat" style="max-width:420px;margin-left:auto;margin-right:auto" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a>
   </div>
 </section>
@@ -886,14 +837,12 @@ h1,h2,h3,p{margin:0}
   COLORS.forEach(function(col,i){
     var d=document.createElement('button');
     d.type='button'; d.className='card'; d.style.setProperty('--sc',col.c);
-    d.innerHTML='<span class="duo">'+
-                  '<img class="carte" src="/chromaline/carte-'+col.film+'.jpg" alt="Nuancier '+col.humeur+'" loading="lazy">'+
-                  '<img class="main" src="/chromaline/main-'+col.film+'.jpg" alt="Bague mood Chromaline '+col.nom+' portée au doigt" loading="lazy">'+
-                '</span>'+
+    d.innerHTML='<img class="carte" src="/chromaline/carte-'+col.film+'.jpg" alt="Anneau Chromaline '+col.nom+'" loading="lazy">'+
+                '<img class="portee" src="/chromaline/main-'+col.film+'.jpg" alt="Bague mood Chromaline '+col.nom+' portée au doigt" loading="lazy">'+
                 '<span class="nm"><i class="dot"></i>'+col.nom+'</span>';
     d.addEventListener('click',function(){
       choisir(i);
-      document.querySelector('.hero').scrollIntoView({behavior:'smooth',block:'start'});
+      document.getElementById('achat').scrollIntoView({behavior:'smooth',block:'start'});
     });
     seven.appendChild(d);
   });
@@ -978,37 +927,92 @@ h1,h2,h3,p{margin:0}
 
   var pelli=document.getElementById('pelli');
   var pelliPiste=document.getElementById('pelliPiste');
-  var grandVue=null;
-  function fermerVue(){ if(grandVue){ grandVue.remove(); grandVue=null; }
-    var x=stageAchat&&stageAchat.querySelector('.fermer-vue'); if(x) x.remove(); }
+  var pelliVue=document.getElementById('pelliVue');
+  var pelliG=document.getElementById('pelliG');
+  var pelliD=document.getElementById('pelliD');
+  var grandVue=null, vuesCourantes=[], vueIndex=0;
+
+  function fermerVue(){
+    if(grandVue){ grandVue.remove(); grandVue=null; }
+    if(stageAchat){
+      var x=stageAchat.querySelector('.fermer-vue'); if(x) x.remove();
+      var fl=stageAchat.querySelectorAll('.vue-fl');
+      for(var i2=0;i2<fl.length;i2++) fl[i2].remove();
+    }
+  }
+
   function posePelli(i){
     if(!pelli||!pelliPiste) return;
     fermerVue();
-    var vues=COLORS[i].vues||[];
-    if(!vues.length){ pelli.hidden=true; pelliPiste.innerHTML=''; return; }
+    vuesCourantes=COLORS[i].vues||[];
+    if(!vuesCourantes.length){ pelli.hidden=true; pelliPiste.innerHTML=''; return; }
     pelli.hidden=false;
-    var html=vues.map(function(v){
-      return '<button type="button" data-v="'+v+'" aria-label="Voir cette photo en grand">'+
+    var html=vuesCourantes.map(function(v,k){
+      return '<button type="button" data-k="'+k+'" aria-label="Voir cette photo en grand">'+
              '<img src="/chromaline/vues/mini/'+v+'.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></button>';
     }).join('');
-    pelliPiste.innerHTML = html + html;
+    pelliPiste.innerHTML = html + html + html;
+    if(pelliVue) pelliVue.scrollLeft = 0;
+  }
+
+  /* le defile avance tout seul et s'arrete sous la souris */
+  var survol=false, pousse=false;
+  if(pelliVue){
+    pelliVue.addEventListener('mouseenter',function(){survol=true;});
+    pelliVue.addEventListener('mouseleave',function(){survol=false;});
+    setInterval(function(){
+      if(survol || pousse || pelli.hidden) return;
+      var tiers=pelliPiste.scrollWidth/3;
+      if(!tiers) return;
+      pelliVue.scrollLeft += 0.5;
+      if(pelliVue.scrollLeft >= tiers*2) pelliVue.scrollLeft -= tiers;
+    },16);
+  }
+  function glisser(sens){
+    if(!pelliVue) return;
+    var b=pelliPiste.querySelector('button');
+    var pas=b ? (b.getBoundingClientRect().width+10)*2 : 220;
+    pousse=true;
+    pelliVue.scrollBy({left:sens*pas, behavior:'smooth'});
+    setTimeout(function(){
+      pousse=false;
+      var tiers=pelliPiste.scrollWidth/3;
+      if(!tiers) return;
+      if(pelliVue.scrollLeft < 2) pelliVue.scrollLeft += tiers;
+      if(pelliVue.scrollLeft >= tiers*2) pelliVue.scrollLeft -= tiers;
+    },560);
+  }
+  if(pelliG) pelliG.addEventListener('click',function(){ glisser(-1); });
+  if(pelliD) pelliD.addEventListener('click',function(){ glisser(1); });
+
+  function ouvrirVue(k){
+    if(!vuesCourantes.length) return;
+    fermerVue();
+    vueIndex=(k+vuesCourantes.length)%vuesCourantes.length;
+    grandVue=document.createElement('img');
+    grandVue.id='grandVue';
+    grandVue.src='/chromaline/vues/'+vuesCourantes[vueIndex]+'.jpg';
+    grandVue.alt='Bague mood Chromaline en photo';
+    grandVue.title='Revenir a la bague qui tourne';
+    grandVue.addEventListener('click',fermerVue);
+    stageAchat.appendChild(grandVue);
+    var x=document.createElement('button');
+    x.type='button'; x.className='fermer-vue'; x.innerHTML='&times;';
+    x.setAttribute('aria-label','Revenir a la bague qui tourne');
+    x.addEventListener('click',function(ev){ ev.stopPropagation(); fermerVue(); });
+    stageAchat.appendChild(x);
+    [['fl-g','‹',-1],['fl-d','›',1]].forEach(function(o){
+      var btn=document.createElement('button');
+      btn.type='button'; btn.className='fl vue-fl '+o[0]; btn.innerHTML=o[1];
+      btn.setAttribute('aria-label', o[2]<0?'Photo precedente':'Photo suivante');
+      btn.addEventListener('click',function(ev){ ev.stopPropagation(); ouvrirVue(vueIndex+o[2]); });
+      stageAchat.appendChild(btn);
+    });
   }
   if(pelliPiste){
     pelliPiste.addEventListener('click',function(e){
-      var b=e.target.closest('button[data-v]'); if(!b) return;
-      fermerVue();
-      grandVue=document.createElement('img');
-      grandVue.id='grandVue';
-      grandVue.src='/chromaline/vues/'+b.getAttribute('data-v')+'.jpg';
-      grandVue.alt='Bague mood Chromaline en photo';
-      grandVue.title='Revenir à la bague qui tourne';
-      grandVue.addEventListener('click',fermerVue);
-      stageAchat.appendChild(grandVue);
-      var x=document.createElement('button');
-      x.type='button'; x.className='fermer-vue'; x.innerHTML='&times;';
-      x.setAttribute('aria-label','Revenir à la bague qui tourne');
-      x.addEventListener('click',function(ev){ ev.stopPropagation(); fermerVue(); });
-      grandVue.after(x);
+      var b=e.target.closest('button[data-k]'); if(!b) return;
+      ouvrirVue(+b.getAttribute('data-k'));
     });
   }
 
