@@ -518,6 +518,53 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
+<section class="band band-cream" id="achat">
+  <div class="wrap two">
+    <div class="stage stage-big reveal" id="stageAchat"></div>
+
+    <div class="acheter reveal d1">
+      <p class="etape">1 &middot; Couleur</p>
+      <p class="choix-nom" id="colorName2">Acier froiss&eacute;</p>
+      <div class="swatches" id="swatches2" role="group" aria-label="Choisir la couleur"></div>
+      <p class="mini">*la couleur des anneaux peut l&eacute;g&egrave;rement varier selon la lumi&egrave;re ambiante.</p>
+
+      <p class="etape" style="margin-top:26px">2 &middot; Taille</p>
+      <div class="tailles" id="tailles" role="group" aria-label="Choisir la taille"></div>
+      <p class="mini lien-guide"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a></p>
+      <a class="pilule" href="https://www.yourmood.net/search?q=baguier">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a>
+      <p class="mini">&#10003; En cas de mauvaise taille, nous &eacute;changeons la bague sans discussion.</p>
+
+      <hr class="filet">
+
+      <p class="prix"><s>479 CHF</s><b>197 CHF</b></p>
+      <p class="mini">Prix du pack d&eacute;couverte &middot; 1 base ultra fine + 3 anneaux inclus</p>
+
+      <p class="powerpay">ou paie en 3&times; <b>65.67 CHF</b> avec Powerpay &middot; <a href="https://www.yourmood.net/pages/powerpay">en savoir plus</a></p>
+
+      <a class="btn-achat" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a>
+
+      <p class="secu">Paiement 100 % s&eacute;curis&eacute;</p>
+      <div class="logos">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-visa_93cd5991-8218-4067-abc6-40be4fe10b45.jpg" alt="Visa" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-mastercard_10d0177a-4960-4fec-b517-c98ed9541838.jpg" alt="Mastercard" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-twint_4ba05e68-0d6c-4e14-b8a8-f92559ce234c.jpg" alt="TWINT" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-paypal.jpg" alt="PayPal" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-applepay.jpg" alt="Apple Pay" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-klarna.jpg" alt="Klarna" loading="lazy">
+      </div>
+
+      <hr class="filet">
+
+      <ul class="rassure">
+        <li>Argent 925 &middot; Acier 316L &middot; 9 mm</li>
+        <li>&Eacute;change gratuit 15 jours</li>
+        <li>Garantie &agrave; vie</li>
+        <li>Swiss design depuis 2004</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
 <section class="band band-cream">
   <div class="wrap two">
     <div class="reveal">
@@ -591,55 +638,6 @@ h1,h2,h3,p{margin:0}
     </div>
   </div>
 </section>
-
-
-<section class="band band-cream" id="achat">
-  <div class="wrap two">
-    <div class="stage stage-big reveal" id="stageAchat"></div>
-
-    <div class="acheter reveal d1">
-      <p class="etape">1 &middot; Couleur</p>
-      <p class="choix-nom" id="colorName2">Acier froiss&eacute;</p>
-      <div class="swatches" id="swatches2" role="group" aria-label="Choisir la couleur"></div>
-      <p class="mini">*la couleur des anneaux peut l&eacute;g&egrave;rement varier selon la lumi&egrave;re ambiante.</p>
-
-      <p class="etape" style="margin-top:26px">2 &middot; Taille</p>
-      <div class="tailles" id="tailles" role="group" aria-label="Choisir la taille"></div>
-      <p class="mini lien-guide"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a></p>
-      <a class="pilule" href="https://www.yourmood.net/search?q=baguier">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a>
-      <p class="mini">&#10003; En cas de mauvaise taille, nous &eacute;changeons la bague sans discussion.</p>
-
-      <hr class="filet">
-
-      <p class="prix"><s>479 CHF</s><b>197 CHF</b></p>
-      <p class="mini">Prix du pack d&eacute;couverte &middot; 1 base ultra fine + 3 anneaux inclus</p>
-
-      <p class="powerpay">ou paie en 3&times; <b>65.67 CHF</b> avec Powerpay &middot; <a href="https://www.yourmood.net/pages/powerpay">en savoir plus</a></p>
-
-      <a class="btn-achat" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a>
-
-      <p class="secu">Paiement 100 % s&eacute;curis&eacute;</p>
-      <div class="logos">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-visa_93cd5991-8218-4067-abc6-40be4fe10b45.jpg" alt="Visa" loading="lazy">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-mastercard_10d0177a-4960-4fec-b517-c98ed9541838.jpg" alt="Mastercard" loading="lazy">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-twint_4ba05e68-0d6c-4e14-b8a8-f92559ce234c.jpg" alt="TWINT" loading="lazy">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-paypal.jpg" alt="PayPal" loading="lazy">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-applepay.jpg" alt="Apple Pay" loading="lazy">
-        <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/logo-klarna.jpg" alt="Klarna" loading="lazy">
-      </div>
-
-      <hr class="filet">
-
-      <ul class="rassure">
-        <li>Argent 925 &middot; Acier 316L &middot; 9 mm</li>
-        <li>&Eacute;change gratuit 15 jours</li>
-        <li>Garantie &agrave; vie</li>
-        <li>Swiss design depuis 2004</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
 
 
 <section class="band band-cream">
