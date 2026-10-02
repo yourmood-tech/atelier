@@ -372,6 +372,35 @@ h1,h2,h3,p{margin:0}
   .h2inner{max-width:none}
   .h2titre{font-size:clamp(30px,8.6vw,44px)}
 }
+
+/* le bandeau des avis */
+.avis{background:#fff;border-block:1px solid var(--line);padding:16px 0;overflow:hidden}
+.avis-piste{overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
+.avis-file{display:flex;gap:46px;width:max-content;animation:avisDefile 64s linear infinite}
+.avis:hover .avis-file{animation-play-state:paused}
+.avis-un{display:flex;align-items:center;gap:12px;white-space:nowrap;font-size:14px;color:var(--ink);font-weight:300}
+.avis-un b{font-weight:500}
+.avis-un .et{color:#e8b53a;letter-spacing:1px;font-size:12px}
+@keyframes avisDefile{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){ .avis-file{animation:none} }
+
+/* le concept */
+.concept{background:var(--cream);padding-block:clamp(40px,5vw,78px)}
+.cp-in{display:grid;grid-template-columns:.78fr 1.22fr;gap:clamp(26px,4vw,64px);align-items:center}
+.cp-titre{font-size:clamp(30px,3.5vw,50px);text-transform:uppercase;line-height:1.04;margin:14px 0 0;letter-spacing:-.012em}
+.cp-lede{margin:18px 0 0;font-size:clamp(13px,.98vw,15.5px);line-height:1.8;color:var(--ink)}
+.cp-sur{text-align:center;font-size:clamp(12.5px,1vw,15px);line-height:1.6;color:var(--ink);margin:0 0 14px}
+.cp-scene{position:relative;aspect-ratio:1918/820}
+.cp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .9s ease}
+.cp-img.on{opacity:1}
+.cp-leg{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:12px;margin-top:10px;
+  text-align:center;font-size:11.5px;line-height:1.5;color:var(--mid)}
+.cp-leg b{color:var(--ink);font-weight:500}
+@media (max-width:900px){
+  .cp-in{grid-template-columns:1fr;gap:22px}
+  .cp-titre{font-size:clamp(28px,8vw,40px)}
+  .cp-leg{font-size:10.5px;gap:8px}
+}
 </style>
 
 <section class="hero2">
@@ -413,6 +442,39 @@ h1,h2,h3,p{margin:0}
   </div>
 </div>
 
+
+<section class="avis">
+  <div class="avis-piste">
+    <div class="avis-file" id="avisFile"></div>
+  </div>
+</section>
+
+<section class="concept">
+  <div class="wrap cp-in">
+    <div class="cp-txt">
+      <span class="eyebrow">Le concept</span>
+      <h2 class="display cp-titre">Une bague<br>qui évolue<br>avec vous.</h2>
+      <p class="cp-lede">Votre bague mood fine est un système.<br>Une base et des anneaux interchangeables<br>que vous pouvez choisir, changer et<br>recomposer selon vos envies.</p>
+    </div>
+    <div class="cp-vis">
+      <p class="cp-sur">Des anneaux interchangeables<br>avec des pierres, des couleurs et des matières</p>
+      <div class="cp-scene" id="cpScene">
+        <img class="cp-img on" src="/chromaline/eclate/final-acier.jpg" alt="La base mood, les anneaux et la composition montée">
+        <img class="cp-img" src="/chromaline/eclate/final-turquoise.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/final-lavande.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/final-bleu.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/final-marine.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/final-rouge.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/final-abricot.jpg" alt="" loading="lazy">
+      </div>
+      <div class="cp-leg">
+        <span><b>La base mood</b><br>avec système de clip intégré</span>
+        <span><b>Les anneaux</b><br>à choisir selon vos envies</span>
+        <span><b>Une composition unique</b><br>à l'infini</span>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="band band-cream">
   <div class="wrap two">
@@ -852,6 +914,36 @@ h1,h2,h3,p{margin:0}
     i = (i + 1) % v.length;
     v[i].classList.add('on');
   }, 3600);
+})();
+</script>
+<script>
+(function(){
+  var A=[
+    ["Martine A.","Je suis très heureuse de ma bague, c'est une incroyable découverte !"],
+    ["Élodie D.","Les anneaux se clipsent parfaitement sur la bague, le rendu est très élégant et cela m'a donné envie de commander d'autres anneaux pour varier."],
+    ["Alexia C.","J'ai des petits doigts, c'est moins large, ravie de l'avoir achetée."],
+    ["Thomas D.","Service après-vente de très grande qualité, contact clientèle rapide et sympathique."],
+    ["Anonyme","Je remercie mood pour sa gentillesse, ils me les ont échangées sans problème. Chaque envoi est bien emballé et prêt à être offert."],
+    ["Samantha C.","Cliente depuis un certain temps, ça se passe toujours très bien et dans les temps."],
+    ["Élodie D.","Concept tout simplement génial."],
+    ["Joel D.","Suis content de ma première mood 😀"]
+  ];
+  var f=document.getElementById('avisFile');
+  if(f){
+    var html=A.map(function(a){
+      return '<span class="avis-un"><em class="et">&#9733;&#9733;&#9733;&#9733;&#9733;</em> « '+a[1]+' » <b>'+a[0]+'</b></span>';
+    }).join('');
+    f.innerHTML = html + html;
+  }
+  var v=document.querySelectorAll('#cpScene .cp-img');
+  if(v.length>1){
+    var i=0;
+    setInterval(function(){
+      v[i].classList.remove('on');
+      i=(i+1)%v.length;
+      v[i].classList.add('on');
+    },2800);
+  }
 })();
 </script>
 </body></html>`;
