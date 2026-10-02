@@ -420,6 +420,9 @@ h1,h2,h3,p{margin:0}
   .g3f{display:none}
   .g3 img{aspect-ratio:16/10}
 }
+
+.geste-band{padding-top:clamp(10px,1.4vw,24px)}
+.geste-band .geste3{margin-top:0}
 </style>
 
 <section class="hero2">
@@ -491,6 +494,27 @@ h1,h2,h3,p{margin:0}
         <span><b>Les anneaux</b><br>à choisir selon vos envies</span>
         <span><b>Une composition unique</b><br>à l'infini</span>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="band geste-band">
+  <div class="wrap center">
+    <div class="geste3">
+      <figure class="g3">
+        <img src="/chromaline/geste-1.jpg" alt="Étape 1 : tu ouvres" loading="lazy">
+        <figcaption><b>1 · Tu ouvres</b>La base s'ouvre sur son clip intégré, fabriqué en Suisse depuis 2004.</figcaption>
+      </figure>
+      <span class="g3f" aria-hidden="true">&rarr;</span>
+      <figure class="g3">
+        <img src="/chromaline/geste-2.jpg" alt="Étape 2 : tu glisses" loading="lazy">
+        <figcaption><b>2 · Tu glisses</b>L'anneau de couleur prend sa place au centre, entre les deux rangs de zircons.</figcaption>
+      </figure>
+      <span class="g3f" aria-hidden="true">&rarr;</span>
+      <figure class="g3">
+        <img src="/chromaline/geste-3.jpg" alt="Étape 3 : tu refermes" loading="lazy">
+        <figcaption><b>3 · Tu refermes</b>Le clic. La bague est scellée, la couleur est à toi jusqu'à la prochaine envie.</figcaption>
+      </figure>
     </div>
   </div>
 </section>
@@ -618,29 +642,6 @@ h1,h2,h3,p{margin:0}
 </section>
 
 
-
-<section class="band">
-  <div class="wrap center">
-    <span class="eyebrow">Le geste</span>
-    <h2 class="display h2 reveal" style="margin:14px 0 12px">Le clic mood, en plus délicat.</h2>
-    <p class="lede reveal d1" style="margin:0 auto">Trois anneaux dans le pack. Tu ouvres, tu glisses, tu referme. Cinq secondes, sans outil, sans bijoutier.</p>
-    <div class="geste3">
-      <figure class="g3">
-        <img src="/chromaline/geste-1.jpg" alt="Étape 1 : tu ouvres" loading="lazy">
-        <figcaption><b>1 · Tu ouvres</b>La base s'ouvre sur son clip intégré, fabriqué en Suisse depuis 2004.</figcaption>
-      </figure>
-      <span class="g3f" aria-hidden="true">&rarr;</span>
-      <figure class="g3">
-        <img src="/chromaline/geste-2.jpg" alt="Étape 2 : tu glisses" loading="lazy">
-        <figcaption><b>2 · Tu glisses</b>L'anneau de couleur prend sa place au centre, entre les deux rangs de zircons.</figcaption>
-      </figure>
-      <span class="g3f" aria-hidden="true">&rarr;</span>
-      <figure class="g3">
-        <img src="/chromaline/geste-3.jpg" alt="Étape 3 : tu refermes" loading="lazy">
-        <figcaption><b>3 · Tu refermes</b>Le clic. La bague est scellée, la couleur est à toi jusqu'à la prochaine envie.</figcaption>
-      </figure>
-    </div>
-  </section>
 
 <section class="band band-cream">
   <div class="wrap center">
