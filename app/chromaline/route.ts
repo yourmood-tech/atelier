@@ -481,12 +481,12 @@ h1,h2,h3,p{margin:0}
     <div class="cp-vis">
       <p class="cp-sur">Des anneaux interchangeables<br>avec des pierres, des couleurs et des matières</p>
       <div class="cp-scene" id="cpScene">
-        <img class="cp-img on" src="/chromaline/eclate/serre-acier.jpg" alt="La base mood, les anneaux et la composition montée">
-        <img class="cp-img" src="/chromaline/eclate/serre-turquoise.jpg" alt="">
-        <img class="cp-img" src="/chromaline/eclate/serre-lavande.jpg" alt="">
-        <img class="cp-img" src="/chromaline/eclate/serre-marine.jpg" alt="">
-        <img class="cp-img" src="/chromaline/eclate/serre-rouge.jpg" alt="">
-        <img class="cp-img" src="/chromaline/eclate/serre-abricot.jpg" alt="">
+        <img class="cp-img on" src="/chromaline/eclate/v2-acier.jpg" alt="La base mood, les anneaux et la composition montée">
+        <img class="cp-img" src="/chromaline/eclate/v2-turquoise.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/v2-lavande.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/v2-marine.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/v2-rouge.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/v2-abricot.jpg" alt="">
       </div>
       <div class="cp-leg">
         <span><b>La base mood</b><br>avec système de clip intégré</span>
