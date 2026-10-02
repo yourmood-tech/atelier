@@ -101,6 +101,7 @@ COULEURS.forEach(function(C){
 });
 
 var detecteur = null, choisi = -1, L = null, dernier = -1, doigtsEcran = [];
+var mesures = [], rapport = 0;
 
 function cadre(){
   var r = Math.min(window.devicePixelRatio || 1, 2);
@@ -126,7 +127,7 @@ cv.addEventListener('click', function(ev){
     var d = Math.hypot(doigtsEcran[i].cx - px, doigtsEcran[i].cy - py);
     if (d < dmin) { dmin = d; best = i; }
   }
-  choisi = best; L = null;
+  choisi = best; L = null; mesures = []; rapport = 0;
 });
 
 function poseBague(){
@@ -224,7 +225,7 @@ function boucle(t){
       sur: dansLImage(D[0]) && dansLImage(D[1]),
       cx: cx0, cy: cy0,
       a: Math.atan2(B[1]-A[1], B[0]-A[0]) + Math.PI/2,
-      l: mes * ech * 1.50,
+      l: mes * ech * 1.75,
       nom: D[2]
     };
   });
@@ -240,13 +241,30 @@ function boucle(t){
     if (L && bague.complete && bague.naturalWidth) poseBague();
     return;
   }
-  if (!L) L = { x: d.cx, y: d.cy, a: d.a, l: d.l };
+
+  // la taille se fixe une bonne fois : on mesure quelques images puis on garde la médiane.
+  // Ensuite la bague grandit ou rapetisse seulement avec la distance de la main.
+  var echelleMain = Math.hypot(
+    place(m[5].x, m[5].y)[0] - place(m[17].x, m[17].y)[0],
+    place(m[5].x, m[5].y)[1] - place(m[17].x, m[17].y)[1]
+  ) || 1;
+  if (!rapport) {
+    mesures.push(d.l / echelleMain);
+    if (mesures.length >= 14) {
+      var t = mesures.slice().sort(function(a,b){ return a-b; });
+      rapport = t[Math.floor(t.length/2)];
+    }
+  }
+  var taille = rapport ? rapport * echelleMain : d.l;
+
+  if (!L) L = { x: d.cx, y: d.cy, a: d.a, l: taille };
   else {
     var da = d.a - L.a;
     while (da >  Math.PI) da -= 2 * Math.PI;
     while (da < -Math.PI) da += 2 * Math.PI;
     L.a += da * 0.3;
-    L.x += (d.cx - L.x) * 0.35; L.y += (d.cy - L.y) * 0.35; L.l += (d.l - L.l) * 0.25;
+    L.x += (d.cx - L.x) * 0.35; L.y += (d.cy - L.y) * 0.35;
+    L.l += (taille - L.l) * 0.12;      // la taille change tout en douceur
   }
   msg.textContent = "Sur ton " + d.nom + ". Touche un autre doigt pour changer.";
   if (bague.complete && bague.naturalWidth) poseBague();
