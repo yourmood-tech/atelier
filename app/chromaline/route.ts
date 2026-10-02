@@ -484,7 +484,6 @@ h1,h2,h3,p{margin:0}
         <img class="cp-img on" src="/chromaline/eclate/serre-acier.jpg" alt="La base mood, les anneaux et la composition montée">
         <img class="cp-img" src="/chromaline/eclate/serre-turquoise.jpg" alt="">
         <img class="cp-img" src="/chromaline/eclate/serre-lavande.jpg" alt="">
-        <img class="cp-img" src="/chromaline/eclate/serre-bleu.jpg" alt="">
         <img class="cp-img" src="/chromaline/eclate/serre-marine.jpg" alt="">
         <img class="cp-img" src="/chromaline/eclate/serre-rouge.jpg" alt="">
         <img class="cp-img" src="/chromaline/eclate/serre-abricot.jpg" alt="">
@@ -873,7 +872,7 @@ h1,h2,h3,p{margin:0}
     var col=COLORS[i];
     root.style.setProperty('--c',col.c);
     root.style.setProperty('--c-soft',col.soft);
-    nom.textContent=col.nom;
+    if(nom) nom.textContent=col.nom;
     if(nom2) nom2.textContent=col.nom;
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
     for(var ka=0;ka<couchesAchat.length;ka++) couchesAchat[ka].classList.toggle('on',ka===i);
