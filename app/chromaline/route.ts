@@ -421,8 +421,9 @@ h1,h2,h3,p{margin:0}
   .g3 img{aspect-ratio:3/1}
 }
 
-.geste-band{padding-top:clamp(10px,1.4vw,24px)}
-.geste-band .geste3{margin-top:0}
+.geste-band{padding-top:clamp(6px,0.9vw,16px);padding-bottom:clamp(6px,0.9vw,16px)}
+.geste-band .geste3{margin-top:0;gap:clamp(8px,1.1vw,20px)}
+#achat{padding-top:clamp(14px,1.8vw,30px)}
 </style>
 
 <section class="hero2">
