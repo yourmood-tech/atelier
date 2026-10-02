@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 // Essai de la bague sur la main.
-// La cliente pose son doigt dans un repère dessiné à l'écran : la vraie photo de la bague
-// vient se placer dessus, à la bonne taille, sans rien avoir à deviner.
+// La caméra reconnaît la main, la cliente touche le doigt qu'elle veut, et la vraie photo
+// de la Chromaline s'accroche à ce doigt-là. Tout se calcule sur le téléphone.
+// Réglages éprouvés sur une vraie vidéo de main : la bague se pose à 40 % de la première
+// phalange, et sa longueur vaut 55 % de cette phalange.
 const PAGE = String.raw`<!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -17,212 +19,171 @@ html,body{margin:0;padding:0;height:100%;background:#0E0E0E;color:#F4F3F1;overfl
 body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
 #scene{position:fixed;inset:0;background:#000;overflow:hidden}
 #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-
-#repere{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;
-  border:2px dashed rgba(255,255,255,.85);border-bottom:0;border-radius:999px 999px 0 0}
-#bague{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;
-  filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
-
+#dessin{position:absolute;inset:0;width:100%;height:100%}
 .haut{position:absolute;top:0;left:0;right:0;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 16px;
-  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0));text-align:center;pointer-events:none}
+  background:linear-gradient(180deg,rgba(0,0,0,.5),rgba(0,0,0,0));text-align:center;pointer-events:none}
 .haut .k{font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:#CFCAC2}
 .haut h1{margin:6px 0 0;font-size:19px;font-weight:200;letter-spacing:.01em}
-.bas{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));
-  background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,0))}
-.msg{text-align:center;font-size:13.5px;font-weight:300;line-height:1.5;color:#EFEBE5;margin-bottom:12px}
-.lignes{display:flex;align-items:center;gap:12px;margin-top:6px}
-.lignes label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#B5B0A8;white-space:nowrap;width:72px}
-.lignes input{flex:1;accent-color:#F4F3F1}
-.ok{display:block;width:100%;height:50px;margin-top:14px;border:0;border-radius:2px;background:#F4F3F1;color:#1A1A1A;
-  font-family:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
+.bas{position:absolute;left:0;right:0;bottom:0;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(0deg,rgba(0,0,0,.7),rgba(0,0,0,0));pointer-events:none}
+.msg{text-align:center;font-size:13.5px;font-weight:300;line-height:1.5;color:#EFEBE5}
 .demarrer{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
   background:#0E0E0E;padding:24px;text-align:center;z-index:5}
 .demarrer p{margin:0;max-width:30ch;font-size:15px;font-weight:300;line-height:1.6;color:#CFCAC2}
 .demarrer button{height:52px;padding:0 34px;border:0;border-radius:2px;background:#F4F3F1;color:#1A1A1A;
   font-family:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
 .demarrer h2{margin:0;font-size:26px;font-weight:200;letter-spacing:-.01em}
-.cache{display:none!important}
 </style>
 </head><body>
 
 <div id="scene">
   <video id="cam" autoplay muted playsinline></video>
-  <div id="repere"></div>
-  <img id="bague" src="/essayage/chromaline.png" alt="Chromaline">
+  <canvas id="dessin"></canvas>
   <div class="haut"><div class="k">mood</div><h1>J'essaie ma Chromaline</h1></div>
-  <div class="bas">
-    <div class="msg" id="msg">Pose ton annulaire dans le repère, bien droit,<br>jusqu'à en remplir toute la largeur.</div>
-    <div id="reglages">
-      <div class="lignes"><label for="larg">Largeur</label><input id="larg" type="range" min="60" max="190" value="110"></div>
-      <div class="lignes"><label for="pos">Hauteur</label><input id="pos" type="range" min="25" max="72" value="55"></div>
-      <button class="ok" id="ok">C'est en place</button>
-    </div>
-  </div>
+  <div class="bas"><div class="msg" id="msg">Montre ta main bien à plat devant la caméra.</div></div>
 </div>
 
 <div class="demarrer" id="demarrer">
   <h2>J'essaie ma Chromaline</h2>
-  <p>On allume la caméra, tu poses ton doigt dans le repère, et la bague se met en place. Rien n'est enregistré, rien ne quitte ton téléphone.</p>
+  <p>On allume la caméra, tu montres ta main, puis tu touches le doigt où tu veux la bague. Rien n'est enregistré, rien ne quitte ton téléphone.</p>
   <button id="go">Allumer la caméra</button>
 </div>
 
-<script>
-(function(){
-  var video = document.getElementById('cam');
-  var repere = document.getElementById('repere');
-  var bague = document.getElementById('bague');
-  var msg = document.getElementById('msg');
-  var larg = document.getElementById('larg');
-  var pos = document.getElementById('pos');
-  var reglages = document.getElementById('reglages');
+<script type="module">
+import { FilesetResolver, HandLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
-  // la photo fait 1042 sur 359 : sa hauteur represente les 9 mm de la bague.
-  // Un annulaire fait environ 17 mm : la hauteur vaut donc 9/17 de la largeur du doigt,
-  // et la longueur suit les proportions de la photo pour que les diamants restent ronds.
-  var FORME = 1042 / 359;
-  var RAPPORT = 9 / 17;
+var video = document.getElementById('cam');
+var cv = document.getElementById('dessin');
+var cx = cv.getContext('2d');
+var msg = document.getElementById('msg');
 
-  function dessine(){
-    var L = window.innerWidth, H = window.innerHeight;
-    var doigt = L * 0.17 * (larg.value / 110);
-    var y = H * (pos.value / 100);
+// réglages éprouvés sur une vraie main
+var POS = 0.40;     // où la bague se pose sur la première phalange
+var LARG = 0.55;    // sa longueur, par rapport à cette phalange
+var DOIGTS = [[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[17,18,'auriculaire']];
 
-    // le repere montre le doigt en entier : du bout jusque vers la main
-    var hautDoigt = H * 0.13;
-    repere.style.width = doigt + 'px';
-    repere.style.top = hautDoigt + 'px';
-    repere.style.height = (H * 0.74 - hautDoigt) + 'px';
+var bague = new Image();
+bague.src = '/essayage/chromaline.png';
 
-    var h = doigt * RAPPORT;
-    var l = h * FORME;
-    bague.style.width = l + 'px';
-    bague.style.height = h + 'px';
-    bague.style.top = (y - h / 2) + 'px';
+var detecteur = null, choisi = -1, L = null, dernier = -1, doigtsEcran = [];
+
+function cadre(){
+  var r = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(cv.clientWidth * r);
+  cv.height = Math.round(cv.clientHeight * r);
+}
+window.addEventListener('resize', cadre);
+
+function place(x, y){
+  var vw = video.videoWidth, vh = video.videoHeight;
+  var e = Math.max(cv.width / vw, cv.height / vh);
+  var dw = vw * e, dh = vh * e;
+  return [(cv.width - dw) / 2 + x * dw, (cv.height - dh) / 2 + y * dh];
+}
+
+cv.addEventListener('click', function(ev){
+  if (!doigtsEcran.length) return;
+  var r = cv.getBoundingClientRect();
+  var px = (ev.clientX - r.left) * (cv.width / r.width);
+  var py = (ev.clientY - r.top) * (cv.height / r.height);
+  var best = -1, dmin = 1e9;
+  for (var i = 0; i < doigtsEcran.length; i++) {
+    var d = Math.hypot(doigtsEcran[i].cx - px, doigtsEcran[i].cy - py);
+    if (d < dmin) { dmin = d; best = i; }
   }
-  window.addEventListener('resize', dessine);
-  larg.addEventListener('input', dessine);
-  pos.addEventListener('input', dessine);
+  choisi = best; L = null;
+});
 
-  var AIDE = 'Pose ton annulaire dans le repère, bien droit,<br>jusqu\'à en remplir toute la largeur.';
-  var suit = false, L = null, detecteur = null;
+function poseBague(){
+  var l = L.l, h = l / (bague.naturalWidth / bague.naturalHeight);
+  cx.save();
+  cx.translate(L.x, L.y);
+  cx.rotate(L.a);
+  cx.shadowColor = 'rgba(0,0,0,.42)'; cx.shadowBlur = h * 0.45; cx.shadowOffsetY = h * 0.13;
+  cx.drawImage(bague, -l / 2, -h / 2, l, h);
+  cx.restore();
+}
 
-  function replie(){
-    suit = false; L = null;
-    bague.style.left = '50%'; bague.style.top = '';
-    bague.style.transform = 'translateX(-50%)';
-    repere.classList.remove('cache');
-    reglages.classList.remove('cache');
-    msg.innerHTML = AIDE;
-    dessine();
+function repere(d){
+  cx.save();
+  cx.translate(d.cx, d.cy); cx.rotate(d.a);
+  cx.strokeStyle = 'rgba(255,255,255,.75)'; cx.lineWidth = Math.max(2, d.l * 0.03);
+  cx.setLineDash([d.l * 0.11, d.l * 0.09]);
+  cx.beginPath(); cx.moveTo(-d.l / 2, 0); cx.lineTo(d.l / 2, 0); cx.stroke();
+  cx.restore();
+}
+
+function boucle(t){
+  requestAnimationFrame(boucle);
+  if (!detecteur || video.readyState < 2) return;
+  if (t === dernier) return; dernier = t;
+  if (cv.width !== Math.round(cv.clientWidth * Math.min(window.devicePixelRatio||1,2))) cadre();
+
+  var res;
+  try { res = detecteur.detectForVideo(video, performance.now()); } catch (e) { return; }
+  cx.clearRect(0, 0, cv.width, cv.height);
+
+  if (!res || !res.landmarks || !res.landmarks.length) {
+    if (choisi < 0) msg.textContent = "Montre ta main bien à plat devant la caméra.";
+    doigtsEcran = [];
+    return;
   }
 
-  document.getElementById('ok').addEventListener('click', function(ev){
-    ev.stopPropagation();
-    // on part de la position du repere : aucun saut au demarrage
-    var H = window.innerHeight;
-    var doigt = window.innerWidth * 0.17 * (larg.value / 110);
-    L = { x: window.innerWidth / 2, y: H * (pos.value / 100), a: 0, d: doigt };
-    bague.style.left = '0'; bague.style.top = '0';
-    pose();
-    repere.classList.add('cache');
-    reglages.classList.add('cache');
-    msg.innerHTML = 'Un instant, je cale la bague sur ton doigt…';
-    suit = true;
-    accroche();
-    setTimeout(function(){
-      document.getElementById('scene').addEventListener('click', replie, { once: true });
-    }, 400);
+  var m = res.landmarks[0];
+  doigtsEcran = DOIGTS.map(function(D){
+    var A = place(m[D[0]].x, m[D[0]].y);
+    var B = place(m[D[1]].x, m[D[1]].y);
+    var lg = Math.hypot(B[0]-A[0], B[1]-A[1]);
+    return {
+      cx: A[0] + (B[0]-A[0]) * POS,
+      cy: A[1] + (B[1]-A[1]) * POS,
+      a: Math.atan2(B[1]-A[1], B[0]-A[0]) + Math.PI/2,
+      l: lg * LARG,
+      nom: D[2]
+    };
   });
 
-  function pose(){
-    var h = L.d * RAPPORT, l = h * FORME;
-    bague.style.width = l + 'px';
-    bague.style.height = h + 'px';
-    bague.style.transform = 'translate(' + (L.x - l / 2) + 'px,' + (L.y - h / 2) + 'px) rotate(' + L.a + 'rad)';
+  if (choisi < 0) {
+    msg.textContent = "Touche le doigt où tu veux la bague.";
+    doigtsEcran.forEach(repere);
+    return;
   }
 
-  function accroche(){
-    if (detecteur) { tourne(); return; }
-    import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs').then(function(V){
-      return V.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm')
-        .then(function(f){
-          return V.HandLandmarker.createFromOptions(f, {
-            baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
-            runningMode: 'VIDEO', numHands: 1
-          });
-        });
-    }).then(function(d){
-      detecteur = d;
-      msg.innerHTML = 'La bague suit ta main. Touche l\'écran pour recommencer.';
-      tourne();
-    }).catch(function(){
-      msg.innerHTML = 'La bague reste là où tu l\'as posée. Touche l\'écran pour recommencer.';
-    });
-  }
-
-  function placeEcran(x, y){
-    var vw = video.videoWidth, vh = video.videoHeight;
-    var cw = window.innerWidth, ch = window.innerHeight;
-    var e = Math.max(cw / vw, ch / vh);
-    var dw = vw * e, dh = vh * e;
-    return [(cw - dw) / 2 + x * dw, (ch - dh) / 2 + y * dh];
-  }
-
-  function tourne(){
-    if (!suit) return;
-    requestAnimationFrame(tourne);
-    if (!detecteur || video.readyState < 2) return;
-    var res;
-    try { res = detecteur.detectForVideo(video, performance.now()); } catch (e) { return; }
-    if (!res || !res.landmarks || !res.landmarks.length) return;   // pas de main : la bague ne bouge pas
-    var m = res.landmarks[0];
-    var b  = placeEcran(m[13].x, m[13].y);
-    var p  = placeEcran(m[14].x, m[14].y);
-    var mj = placeEcran(m[9].x,  m[9].y);
-    var au = placeEcran(m[17].x, m[17].y);
-    var doigt = 0.5 * (Math.hypot(mj[0]-b[0], mj[1]-b[1]) + Math.hypot(au[0]-b[0], au[1]-b[1]));
-    if (!isFinite(doigt) || doigt < 8) return;
-
-    var o = {
-      x: b[0] + (p[0] - b[0]) * 0.34,
-      y: b[1] + (p[1] - b[1]) * 0.34,
-      a: Math.atan2(p[1] - b[1], p[0] - b[0]) + Math.PI / 2,
-      d: doigt
-    };
-    var da = o.a - L.a;
+  var d = doigtsEcran[choisi];
+  if (!L) L = { x: d.cx, y: d.cy, a: d.a, l: d.l };
+  else {
+    var da = d.a - L.a;
     while (da >  Math.PI) da -= 2 * Math.PI;
     while (da < -Math.PI) da += 2 * Math.PI;
     L.a += da * 0.3;
-    L.x += (o.x - L.x) * 0.3; L.y += (o.y - L.y) * 0.3; L.d += (o.d - L.d) * 0.22;
-    pose();
+    L.x += (d.cx - L.x) * 0.35; L.y += (d.cy - L.y) * 0.35; L.l += (d.l - L.l) * 0.25;
   }
+  msg.textContent = "Sur ton " + d.nom + ". Touche un autre doigt pour changer.";
+  if (bague.complete && bague.naturalWidth) poseBague();
+}
 
-  document.getElementById('go').addEventListener('click', function(){
-    var d = document.getElementById('demarrer');
-    d.querySelector('button').textContent = 'Un instant…';
-    navigator.mediaDevices.getUserMedia({
+document.getElementById('go').addEventListener('click', async function(){
+  var dm = document.getElementById('demarrer');
+  dm.querySelector('button').textContent = 'Un instant…';
+  try {
+    var flux = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false
-    }).then(function(flux){
-      video.srcObject = flux;
-      return video.play();
-    }).then(function(){
-      d.remove();
-      dessine();
-    }).catch(function(){
-      d.querySelector('p').textContent = "La caméra n'a pas pu s'allumer. Vérifie que tu l'as autorisée pour ce site.";
-      d.querySelector('button').textContent = 'Réessayer';
     });
-  });
-
-  // mode démonstration : la vidéo d'une main à la place de la caméra, pour juger le rendu
-  if (new URLSearchParams(location.search).has('demo')) {
-    var d = document.getElementById('demarrer');
-    if (d) d.remove();
-    video.src = '/essayage/main.mp4'; video.loop = true; video.muted = true; video.playsInline = true;
-    video.play().catch(function(){});
+    video.srcObject = flux;
+    await video.play();
+    var f = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    detecteur = await HandLandmarker.createFromOptions(f, {
+      baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
+      runningMode: "VIDEO", numHands: 1
+    });
+    dm.remove();
+    cadre();
+    requestAnimationFrame(boucle);
+  } catch (e) {
+    dm.querySelector('p').textContent = "Ça n'a pas démarré : " + (e && e.message ? e.message : e);
+    dm.querySelector('button').textContent = 'Réessayer';
   }
-  dessine();
-})();
+});
 </script>
 </body></html>`;
 
