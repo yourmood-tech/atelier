@@ -26,7 +26,10 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 .haut h1{margin:6px 0 0;font-size:19px;font-weight:200;letter-spacing:.01em}
 .bas{position:absolute;left:0;right:0;bottom:0;padding:14px 14px calc(16px + env(safe-area-inset-bottom,0px));
   background:linear-gradient(0deg,rgba(0,0,0,.7),rgba(0,0,0,0));pointer-events:none}
-.msg{text-align:center;font-size:13.5px;font-weight:300;line-height:1.5;color:#EFEBE5}
+.msg{text-align:center;font-size:13.5px;font-weight:300;line-height:1.5;color:#EFEBE5;margin-bottom:12px}
+.pal{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;pointer-events:auto}
+.pa{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;outline:none}
+.pa.on{border-color:#F4F3F1}
 .demarrer{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
   background:#0E0E0E;padding:24px;text-align:center;z-index:5}
 .demarrer p{margin:0;max-width:30ch;font-size:15px;font-weight:300;line-height:1.6;color:#CFCAC2}
@@ -40,7 +43,10 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   <video id="cam" autoplay muted playsinline></video>
   <canvas id="dessin"></canvas>
   <div class="haut"><div class="k">mood</div><h1>J'essaie ma Chromaline</h1></div>
-  <div class="bas"><div class="msg" id="msg">Montre ta main bien à plat devant la caméra.</div></div>
+  <div class="bas">
+    <div class="msg" id="msg">Montre ta main bien à plat devant la caméra.</div>
+    <div class="pal" id="pal"></div>
+  </div>
 </div>
 
 <div class="demarrer" id="demarrer">
@@ -65,8 +71,34 @@ var mx = mini.getContext('2d', { willReadFrequently: true });
 var pix = null;
 var DOIGTS = [[2,3,'pouce'],[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[17,18,'auriculaire']];
 
+var COULEURS = [
+  ['acier','Acier froissé','#A8ADB1'],
+  ['belipastel','Belipastel','#CF94C8'],
+  ['rouge','Rouge Swiss Edition','#C2424F'],
+  ['marine','Bleu Marine','#2A3C8C'],
+  ['emeraude','Émeraude','#1F7A68'],
+  ['abricot','Abricot','#D99C6D']
+];
 var bague = new Image();
-bague.src = '/essayage/chromaline.png';
+var couleur = 'belipastel';
+bague.src = '/essayage/chromaline-' + couleur + '.png';
+
+var pal = document.getElementById('pal');
+COULEURS.forEach(function(C){
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'pa' + (C[0] === couleur ? ' on' : '');
+  b.title = C[1]; b.style.background = C[2];
+  b.onclick = function(ev){
+    ev.stopPropagation();
+    couleur = C[0];
+    var n = new Image();
+    n.onload = function(){ bague = n; };
+    n.src = '/essayage/chromaline-' + couleur + '.png';
+    Array.prototype.forEach.call(pal.children, function(x){ x.classList.remove('on'); });
+    b.classList.add('on');
+  };
+  pal.appendChild(b);
+});
 
 var detecteur = null, choisi = -1, L = null, dernier = -1, doigtsEcran = [];
 
