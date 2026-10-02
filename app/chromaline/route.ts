@@ -9,11 +9,11 @@ const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta n
 :root{
   --serif:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
   --sans:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
-  --paper:#fdfcfa;
-  --cream:#f5f1ea;
+  --paper:#ffffff;
+  --cream:#f6f6f7;
   --ink:#191917;
   --mid:#8b8880;
-  --line:#e6e0d6;
+  --line:#e9e9ec;
   --c:#b9bdc0;          /* la couleur choisie par la cliente */
   --ct:#b9bdc0;         /* la couleur du titre, qui défile toute seule */
   --c-soft:#eef0f1;
