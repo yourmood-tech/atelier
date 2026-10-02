@@ -100,8 +100,8 @@ h1,h2,h3,p{margin:0}
   display:block;width:100%;max-width:520px;margin:0 auto;
   border-radius:6px;overflow:hidden;
 }
-#stageBig{aspect-ratio:1/1;background:var(--c-soft);transition:background .5s}
-#stageBig video{object-fit:cover}
+#stageBig{aspect-ratio:1/1;background:#d9d9db}
+#stageBig video{object-fit:cover;mix-blend-mode:normal}
 #stageAchat{aspect-ratio:725/900;background:#f2f2f2}
 #stageAchat img,#stageAchat video{object-fit:cover}
 #stageAchat video{background:#f2f2f2}
