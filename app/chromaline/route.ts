@@ -106,10 +106,12 @@ h1,h2,h3,p{margin:0}
 #stageAchat img,#stageAchat video{object-fit:cover}
 #stageAchat video{background:#f2f2f2}
 .choix{
-  display:grid;grid-template-columns:0.9fr 1.1fr;align-items:center;
+  display:grid;grid-template-columns:1.1fr 0.9fr;align-items:center;
   gap:clamp(20px,3.4vw,56px);max-width:960px;margin:clamp(10px,2vw,26px) auto 0;
   text-align:left;
 }
+.choix>.stage-big{order:1}
+.choix>.choix-txt{order:2}
 .choix-txt .sous{margin:0 0 12px;text-align:left}
 .choix-txt .lede{margin:0 0 22px;text-align:left;max-width:40ch}
 .choix-txt .sw-name{margin:0 0 10px}
