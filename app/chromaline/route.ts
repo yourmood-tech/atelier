@@ -491,8 +491,8 @@ h1,h2,h3,p{margin:0}
   </div>
   <div class="h2txt">
     <div class="h2inner">
-      <span class="eyebrow h2eye">Nouveauté</span>
-      <h1 class="display h2titre">La bague<br>mood fine<br><em>avec des pierres</em></h1>
+      <span class="eyebrow h2eye">Chromaline</span>
+      <h1 class="display h2titre">La bague<br>mood fine<br><em>sertie de pierres</em></h1>
       <p class="h2lede">Une bague fine, élégante et unique.<br>Des pierres, des couleurs, des matières.<br>Un système interchangeable pour créer<br>des compositions qui vous ressemblent.</p>
       <p class="h2prix">CHF 197.–
         <span class="h2note"><em class="etoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</em> 4.8/5 &middot; 18&nbsp;000+ avis</span>
