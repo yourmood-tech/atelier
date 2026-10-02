@@ -372,7 +372,7 @@ h1,h2,h3,p{margin:0}
       <span class="eyebrow" style="border-bottom:1px solid var(--ink);display:inline-block;padding-bottom:3px">Nouveauté</span>
       <h1 class="display h2titre">La bague<br>mood fine<br><em>avec des pierres</em></h1>
       <p class="lede h2lede">Une bague fine, élégante et unique.<br>Des pierres, des couleurs, des matières.<br>Un système interchangeable pour créer<br>des compositions qui vous ressemblent.</p>
-      <p class="h2prix">CHF 290.–
+      <p class="h2prix">CHF 197.–
         <span class="h2note"><em class="etoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</em> 4.8/5 &middot; 18&nbsp;000+ avis</span>
       </p>
       <p><a class="btn btn-c h2btn" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Créer la mienne &nbsp;&rarr;</a></p>
