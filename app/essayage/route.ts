@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 // Essai de la bague sur la main.
 // La caméra reconnaît la main, la cliente touche le doigt qu'elle veut, et la vraie photo
 // de la Chromaline s'accroche à ce doigt-là. Tout se calcule sur le téléphone.
-// Réglages éprouvés sur une vraie vidéo de main : la bague se pose à 40 % de la première
+// Réglages éprouvés sur une vraie vidéo de main : la bague se pose à 58 % de la première
 // phalange, et sa longueur vaut 55 % de cette phalange.
 const PAGE = String.raw`<!doctype html>
 <html lang="fr"><head>
@@ -58,7 +58,7 @@ var cx = cv.getContext('2d');
 var msg = document.getElementById('msg');
 
 // réglages éprouvés sur une vraie main
-var POS = 0.40;     // où la bague se pose sur la première phalange
+var POS = 0.58;     // où la bague se pose sur la première phalange
 var LARG = 0.55;    // sa longueur, par rapport à cette phalange
 var DOIGTS = [[2,3,'pouce'],[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[17,18,'auriculaire']];
 
