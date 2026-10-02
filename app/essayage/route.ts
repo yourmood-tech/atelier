@@ -59,7 +59,10 @@ var msg = document.getElementById('msg');
 
 // réglages éprouvés sur une vraie main
 var POS = 0.58;     // où la bague se pose sur la première phalange
-var LARG = 0.55;    // sa longueur, par rapport à cette phalange
+// on mesure la vraie largeur du doigt sur l'image, dans une copie réduite de la caméra
+var mini = document.createElement('canvas'); mini.width = 320; mini.height = 180;
+var mx = mini.getContext('2d', { willReadFrequently: true });
+var pix = null;
 var DOIGTS = [[2,3,'pouce'],[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[17,18,'auriculaire']];
 
 var bague = new Image();
@@ -130,15 +133,61 @@ function boucle(t){
   }
 
   var m = res.landmarks[0];
+
+  // on photographie une version réduite de l'image pour y mesurer les doigts
+  mini.height = Math.round(320 * video.videoHeight / video.videoWidth);
+  mx.drawImage(video, 0, 0, mini.width, mini.height);
+  try { pix = mx.getImageData(0, 0, mini.width, mini.height); } catch (e) { pix = null; }
+
+  function couleur(x, y){
+    var i = (Math.round(y) * pix.width + Math.round(x)) * 4;
+    return [pix.data[i], pix.data[i+1], pix.data[i+2]];
+  }
+  function largeurDoigt(cxn, cyn, ux, uy, maxi){
+    if (!pix) return 0;
+    var X = cxn * pix.width, Y = cyn * pix.height;
+    if (X < 1 || Y < 1 || X > pix.width-2 || Y > pix.height-2) return 0;
+    var ref = couleur(X, Y), total = 0;
+    for (var sgn = -1; sgn <= 1; sgn += 2) {
+      var d = 0;
+      while (d < maxi) {
+        d++;
+        var x = X + ux * d * sgn, y = Y + uy * d * sgn;
+        if (x < 0 || y < 0 || x >= pix.width || y >= pix.height) break;
+        var p = couleur(x, y);
+        if (Math.abs(p[0]-ref[0]) + Math.abs(p[1]-ref[1]) + Math.abs(p[2]-ref[2]) > 78) break;
+      }
+      total += d;
+    }
+    return total;
+  }
+  // une largeur de doigt « type », déduite de la largeur de la main
+  var refN = Math.hypot(m[5].x - m[17].x, (m[5].y - m[17].y) * pix.height / pix.width) / 4.2;
+
   doigtsEcran = DOIGTS.map(function(D){
     var A = place(m[D[0]].x, m[D[0]].y);
     var B = place(m[D[1]].x, m[D[1]].y);
-    var lg = Math.hypot(B[0]-A[0], B[1]-A[1]);
+    var cx0 = A[0] + (B[0]-A[0]) * POS, cy0 = A[1] + (B[1]-A[1]) * POS;
+
+    // la mesure se fait dans l'image réduite
+    var an = [m[D[0]].x * pix.width, m[D[0]].y * pix.height];
+    var bn = [m[D[1]].x * pix.width, m[D[1]].y * pix.height];
+    var vx = bn[0]-an[0], vy = bn[1]-an[1];
+    var ln = Math.hypot(vx, vy) || 1;
+    var ux = -vy/ln, uy = vx/ln;
+    var pouce = (D[2] === 'pouce');
+    var mxw = refN * pix.width * (pouce ? 2.2 : 1.6);
+    var mnw = refN * pix.width * 0.6;
+    var mes = largeurDoigt((an[0] + vx*POS)/pix.width, (an[1] + vy*POS)/pix.height, ux, uy, Math.round(mxw*1.4));
+    if (!(mes > mnw && mes < mxw)) mes = refN * pix.width * (pouce ? 1.35 : 1.0);
+
+    // on convertit cette mesure en pixels d'écran
+    var ech = Math.hypot(B[0]-A[0], B[1]-A[1]) / ln;
+
     return {
-      cx: A[0] + (B[0]-A[0]) * POS,
-      cy: A[1] + (B[1]-A[1]) * POS,
+      cx: cx0, cy: cy0,
       a: Math.atan2(B[1]-A[1], B[0]-A[0]) + Math.PI/2,
-      l: lg * LARG,
+      l: mes * ech * 1.06,
       nom: D[2]
     };
   });
