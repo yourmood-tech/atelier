@@ -18,8 +18,8 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 #scene{position:fixed;inset:0;background:#000;overflow:hidden}
 #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 
-#repere{position:absolute;left:50%;transform:translateX(-50%);top:0;pointer-events:none;
-  border:2px dashed rgba(255,255,255,.85);border-top:0;border-radius:0 0 999px 999px}
+#repere{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;
+  border:2px dashed rgba(255,255,255,.85);border-bottom:0;border-radius:999px 999px 0 0}
 #bague{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;
   filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 
@@ -54,7 +54,7 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
     <div class="msg" id="msg">Pose ton annulaire dans le repère, bien droit,<br>jusqu'à en remplir toute la largeur.</div>
     <div id="reglages">
       <div class="lignes"><label for="larg">Largeur</label><input id="larg" type="range" min="60" max="190" value="110"></div>
-      <div class="lignes"><label for="pos">Hauteur</label><input id="pos" type="range" min="15" max="75" value="42"></div>
+      <div class="lignes"><label for="pos">Hauteur</label><input id="pos" type="range" min="25" max="72" value="55"></div>
       <button class="ok" id="ok">C'est en place</button>
     </div>
   </div>
@@ -84,8 +84,11 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
     var doigt = L * 0.17 * (larg.value / 110);
     var y = H * (pos.value / 100);
 
+    // le repere montre le doigt en entier : du bout jusque vers la main
+    var hautDoigt = H * 0.13;
     repere.style.width = doigt + 'px';
-    repere.style.height = (y + doigt * 1.1) + 'px';
+    repere.style.top = hautDoigt + 'px';
+    repere.style.height = (H * 0.74 - hautDoigt) + 'px';
 
     var l = doigt * 1.06;
     var h = l * RAPPORT;
