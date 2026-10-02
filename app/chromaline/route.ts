@@ -374,10 +374,10 @@ h1,h2,h3,p{margin:0}
 }
 
 /* le bandeau des avis */
-.avis{background:#fff;border-block:1px solid var(--line);padding:16px 0;overflow:hidden}
+.bavis{background:#fff;border-block:1px solid var(--line);padding:16px 0;overflow:hidden}
 .avis-piste{overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
 .avis-file{display:flex;gap:46px;width:max-content;animation:avisDefile 64s linear infinite}
-.avis:hover .avis-file{animation-play-state:paused}
+.bavis:hover .avis-file{animation-play-state:paused}
 .avis-un{display:flex;align-items:center;gap:12px;white-space:nowrap;font-size:14px;color:var(--ink);font-weight:300}
 .avis-un b{font-weight:500}
 .avis-un .et{color:#e8b53a;letter-spacing:1px;font-size:12px}
@@ -400,6 +400,22 @@ h1,h2,h3,p{margin:0}
   .cp-in{grid-template-columns:1fr;gap:22px}
   .cp-titre{font-size:clamp(28px,8vw,40px)}
   .cp-leg{font-size:10.5px;gap:8px}
+}
+
+/* les trois gestes, en grand */
+.geste3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:start;
+  gap:clamp(10px,1.6vw,26px);margin-top:clamp(26px,3vw,46px);text-align:left}
+.g3{margin:0}
+.g3 img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px;display:block;
+  box-shadow:0 14px 34px rgba(25,25,23,.10)}
+.g3 figcaption{margin-top:14px;font-size:clamp(12.5px,.95vw,14.5px);line-height:1.65;color:var(--mid)}
+.g3 figcaption b{display:block;margin-bottom:5px;color:var(--ink);font-weight:500;
+  font-size:11px;letter-spacing:2.2px;text-transform:uppercase}
+.g3f{align-self:center;margin-top:-6%;color:var(--mid);font-size:clamp(16px,1.6vw,24px);line-height:1}
+@media (max-width:860px){
+  .geste3{grid-template-columns:1fr;gap:22px}
+  .g3f{display:none}
+  .g3 img{aspect-ratio:16/10}
 }
 </style>
 
@@ -443,7 +459,7 @@ h1,h2,h3,p{margin:0}
 </div>
 
 
-<section class="avis">
+<section class="bavis">
   <div class="avis-piste">
     <div class="avis-file" id="avisFile"></div>
   </div>
@@ -605,13 +621,23 @@ h1,h2,h3,p{margin:0}
     <span class="eyebrow">Le geste</span>
     <h2 class="display h2 reveal" style="margin:14px 0 12px">Le clic mood, en plus délicat.</h2>
     <p class="lede reveal d1" style="margin:0 auto">Trois anneaux dans le pack. Tu ouvres, tu glisses, tu referme. Cinq secondes, sans outil, sans bijoutier.</p>
-    <div class="steps">
-      <div class="step reveal"><span class="n">1</span><h3>Tu ouvres</h3><p>La base s'ouvre sur son clip intégré, fabriqué en Suisse depuis 2004.</p><img class="geste" src="/chromaline/geste-1.jpg" alt="Étape 1 : tu ouvres" loading="lazy"></div>
-      <div class="step reveal d1"><span class="n">2</span><h3>Tu glisses</h3><p>L'anneau de couleur prend sa place au centre, entre les deux rangs de zircons.</p><img class="geste" src="/chromaline/geste-2.jpg" alt="Étape 2 : tu glisses" loading="lazy"></div>
-      <div class="step reveal d2"><span class="n">3</span><h3>Tu refermes</h3><p>Le clic. La bague est scellée, la couleur est à toi jusqu'à la prochaine envie.</p><img class="geste" src="/chromaline/geste-3.jpg" alt="Étape 3 : tu refermes" loading="lazy"></div>
+    <div class="geste3">
+      <figure class="g3">
+        <img src="/chromaline/geste-1.jpg" alt="Étape 1 : tu ouvres" loading="lazy">
+        <figcaption><b>1 · Tu ouvres</b>La base s'ouvre sur son clip intégré, fabriqué en Suisse depuis 2004.</figcaption>
+      </figure>
+      <span class="g3f" aria-hidden="true">&rarr;</span>
+      <figure class="g3">
+        <img src="/chromaline/geste-2.jpg" alt="Étape 2 : tu glisses" loading="lazy">
+        <figcaption><b>2 · Tu glisses</b>L'anneau de couleur prend sa place au centre, entre les deux rangs de zircons.</figcaption>
+      </figure>
+      <span class="g3f" aria-hidden="true">&rarr;</span>
+      <figure class="g3">
+        <img src="/chromaline/geste-3.jpg" alt="Étape 3 : tu refermes" loading="lazy">
+        <figcaption><b>3 · Tu refermes</b>Le clic. La bague est scellée, la couleur est à toi jusqu'à la prochaine envie.</figcaption>
+      </figure>
     </div>
-  </div>
-</section>
+  </section>
 
 <section class="band band-cream">
   <div class="wrap center">
