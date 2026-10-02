@@ -837,7 +837,7 @@ h1,h2,h3,p{margin:0}
 </div>
 
 <script>
-if(window.__chromaline){}else{window.__chromaline=1;
+if(!window.__chx1){window.__chx1=1;
 
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
@@ -1195,8 +1195,10 @@ if(window.__chromaline){}else{window.__chromaline=1;
     else io.observe(el);
   });
 })();
+}
 </script>
 <script>
+if(!window.__chx2){window.__chx2=1;
 (function(){
   var v = document.querySelectorAll('.h2scene .h2bg');
   if (v.length < 2) return;
@@ -1207,8 +1209,10 @@ if(window.__chromaline){}else{window.__chromaline=1;
     v[i].classList.add('on');
   }, 3600);
 })();
+}
 </script>
 <script>
+if(!window.__chx3){window.__chx3=1;
 (function(){
   var A=[
     ["Martine A.","Je suis très heureuse de ma bague, c'est une incroyable découverte !"],
@@ -1249,8 +1253,8 @@ if(window.__chromaline){}else{window.__chromaline=1;
     },2600);
   }
 })();
-
 }
+
 </script>
 </body></html>`;
 
