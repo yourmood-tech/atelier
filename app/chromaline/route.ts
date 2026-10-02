@@ -423,7 +423,7 @@ h1,h2,h3,p{margin:0}
 
 .geste-band{padding-top:clamp(6px,0.9vw,16px);padding-bottom:clamp(6px,0.9vw,16px)}
 .geste-band .geste3{margin-top:0;gap:clamp(8px,1.1vw,20px)}
-#achat{padding-top:clamp(14px,1.8vw,30px);background:var(--c-soft);transition:background .8s ease}
+#achat{padding-top:clamp(14px,1.8vw,30px);padding-bottom:clamp(10px,1.2vw,22px);background:var(--c-soft);transition:background .8s ease}
 
 /* la pellicule de photos sous la bague qui tourne */
 .colvis{order:0;min-width:0;width:100%;max-width:520px;margin-inline:auto}
@@ -447,8 +447,9 @@ h1,h2,h3,p{margin:0}
 @media (prefers-reduced-motion:reduce){ .pelli-piste{animation:none} }
 
 /* le compte, sous le configurateur */
-.compte{background:var(--c-soft);transition:background .8s ease;padding-block:clamp(34px,4.2vw,70px);text-align:center}
-.compte-titre{font-size:clamp(26px,3.2vw,46px);font-weight:300;margin:12px 0 clamp(22px,2.6vw,38px)}
+.compte{background:var(--c-soft);transition:background .8s ease;
+  padding-top:0;padding-bottom:clamp(26px,3.2vw,54px);text-align:center;margin-top:-1px}
+.compte-titre{font-size:clamp(26px,3.2vw,46px);font-weight:300;margin:10px 0 clamp(18px,2.2vw,30px)}
 .compte-in{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2vw,30px);align-items:stretch;text-align:left}
 .grille{border:1px solid rgba(25,25,23,.10);border-radius:4px;overflow:hidden;background:rgba(255,255,255,.42);
   display:flex;flex-direction:column}
@@ -643,7 +644,7 @@ h1,h2,h3,p{margin:0}
             <img src="/chromaline/compte/mini-5.jpg" alt="" loading="lazy">
             <img src="/chromaline/compte/mini-6.jpg" alt="" loading="lazy">
           </span>
-          <figcaption>Les minis couleur</figcaption>
+          <figcaption>Les minis &middot; couleur &agrave; choix</figcaption>
         </figure>
       </div>
     </div>
