@@ -48,7 +48,7 @@ export default auth((req) => {
   }
 
   // /aura (page de la famille Aura — lien à montrer à l'équipe)
-  if (pathname === "/aura" || pathname === "/aura-small" || pathname.startsWith("/aura/")) {
+  if (pathname === "/aura" || pathname === "/aura-xs" || pathname.startsWith("/aura/")) {
     return;
   }
 
