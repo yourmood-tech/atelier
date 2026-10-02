@@ -30,6 +30,17 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
 .pal{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;pointer-events:auto}
 .pa{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;outline:none}
 .pa.on{border-color:#F4F3F1}
+.photo{display:block;width:100%;max-width:340px;margin:14px auto 0;height:48px;border:0;border-radius:2px;
+  background:#F4F3F1;color:#1A1A1A;font-family:inherit;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;cursor:pointer;pointer-events:auto}
+.apercu{position:fixed;inset:0;z-index:9;background:rgba(10,10,10,.94);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;padding:20px}
+.apercu img{max-width:100%;max-height:70vh;border-radius:3px}
+.apercu .bt2{display:flex;gap:10px}
+.apercu button{height:46px;padding:0 24px;border:0;border-radius:2px;font-family:inherit;font-size:11px;
+  letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+.apercu .ok2{background:#F4F3F1;color:#1A1A1A}
+.apercu .no2{background:transparent;color:#CFCAC2;border:1px solid #4A4A4A}
 .demarrer{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
   background:#0E0E0E;padding:24px;text-align:center;z-index:5}
 .demarrer p{margin:0;max-width:30ch;font-size:15px;font-weight:300;line-height:1.6;color:#CFCAC2}
@@ -46,6 +57,7 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   <div class="bas">
     <div class="msg" id="msg">Montre ta main bien à plat devant la caméra.</div>
     <div class="pal" id="pal"></div>
+    <button class="photo" id="photo">Prendre en photo</button>
   </div>
 </div>
 
@@ -270,6 +282,65 @@ function boucle(t){
   msg.textContent = "Sur ton " + d.nom + ". Touche un autre doigt pour changer.";
   if (bague.complete && bague.naturalWidth) poseBague();
 }
+
+var logo = new Image();
+logo.src = '/logo-mood.png';
+
+function teinte(){
+  for (var i = 0; i < COULEURS.length; i++) if (COULEURS[i][0] === couleur) return COULEURS[i][2];
+  return '#CFCAC2';
+}
+
+document.getElementById('photo').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  var W = cv.width, H = cv.height;
+  var bord = Math.round(Math.min(W, H) * 0.012);     // un cadre léger
+  var bande = Math.round(H * 0.085);                 // le bandeau du logo
+  var out = document.createElement('canvas');
+  out.width = W + bord * 2; out.height = H + bord * 2 + bande;
+  var o = out.getContext('2d');
+
+  // le cadre, de la couleur de la bague
+  o.fillStyle = teinte(); o.fillRect(0, 0, out.width, out.height);
+
+  // l'image : la caméra telle qu'on la voit, puis la bague par-dessus
+  var vw = video.videoWidth, vh = video.videoHeight;
+  var e = Math.max(W / vw, H / vh);
+  var dw = vw * e, dh = vh * e;
+  o.save();
+  o.beginPath(); o.rect(bord, bord, W, H); o.clip();
+  o.drawImage(video, bord + (W - dw) / 2, bord + (H - dh) / 2, dw, dh);
+  o.drawImage(cv, bord, bord, W, H);
+  o.restore();
+
+  // le bandeau blanc avec le logo
+  o.fillStyle = '#FFFFFF';
+  o.fillRect(bord, bord + H, W, bande - bord);
+  if (logo.complete && logo.naturalWidth) {
+    var lh = (bande - bord) * 0.46, lw = lh * logo.naturalWidth / logo.naturalHeight;
+    o.drawImage(logo, bord + (W - lw) / 2, bord + H + ((bande - bord) - lh) / 2, lw, lh);
+  }
+
+  var url = out.toDataURL('image/jpeg', 0.92);
+  var ap = document.createElement('div');
+  ap.className = 'apercu';
+  ap.innerHTML = '<img src="' + url + '" alt="Ma Chromaline">' +
+    '<div class="bt2"><button class="ok2" id="garder">Enregistrer</button>' +
+    '<button class="no2" id="fermer">Fermer</button></div>';
+  document.body.appendChild(ap);
+  ap.querySelector('#fermer').onclick = function(){ ap.remove(); };
+  ap.querySelector('#garder').onclick = function(){
+    out.toBlob(function(b){
+      var f = new File([b], 'ma-chromaline.jpg', { type: 'image/jpeg' });
+      if (navigator.canShare && navigator.canShare({ files: [f] })) {
+        navigator.share({ files: [f], title: 'Ma Chromaline' }).catch(function(){});
+      } else {
+        var a = document.createElement('a');
+        a.href = url; a.download = 'ma-chromaline.jpg'; a.click();
+      }
+    }, 'image/jpeg', 0.92);
+  };
+});
 
 document.getElementById('go').addEventListener('click', async function(){
   var dm = document.getElementById('demarrer');
