@@ -393,7 +393,7 @@ h1,h2,h3,p{margin:0}
 .cp-lede{margin:18px 0 0;font-size:clamp(13px,.98vw,15.5px);line-height:1.8;color:var(--ink)}
 .cp-sur{text-align:center;font-size:clamp(12.5px,1vw,15px);line-height:1.6;color:var(--ink);margin:0 0 6px}
 .cp-scene{position:relative;aspect-ratio:1848/716}
-.cp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .9s ease}
+.cp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0}
 .cp-img.on{opacity:1}
 .cp-leg{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:12px;margin-top:2px;
   text-align:center;font-size:11.5px;line-height:1.5;color:var(--mid)}
@@ -479,12 +479,12 @@ h1,h2,h3,p{margin:0}
       <p class="cp-sur">Des anneaux interchangeables<br>avec des pierres, des couleurs et des matières</p>
       <div class="cp-scene" id="cpScene">
         <img class="cp-img on" src="/chromaline/eclate/serre-acier.jpg" alt="La base mood, les anneaux et la composition montée">
-        <img class="cp-img" src="/chromaline/eclate/serre-turquoise.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/serre-lavande.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/serre-bleu.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/serre-marine.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/serre-rouge.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/serre-abricot.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/serre-turquoise.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/serre-lavande.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/serre-bleu.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/serre-marine.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/serre-rouge.jpg" alt="">
+        <img class="cp-img" src="/chromaline/eclate/serre-abricot.jpg" alt="">
       </div>
       <div class="cp-leg">
         <span><b>La base mood</b><br>avec système de clip intégré</span>
@@ -980,7 +980,7 @@ h1,h2,h3,p{margin:0}
       v[i].classList.remove('on');
       i=(i+1)%v.length;
       v[i].classList.add('on');
-    },2800);
+    },2600);
   }
 })();
 </script>
