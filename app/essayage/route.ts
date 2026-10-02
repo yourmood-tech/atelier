@@ -166,6 +166,17 @@ function boucle(t){
 
   var m = res.landmarks[0];
 
+  // la main doit être entière dans l'image, sinon le repérage dérape
+  var dehors = false;
+  for (var k = 0; k < m.length; k++) {
+    if (m[k].x < 0.015 || m[k].x > 0.985 || m[k].y < 0.015 || m[k].y > 0.985) { dehors = true; break; }
+  }
+  if (dehors) {
+    msg.textContent = "Montre ta main en entier dans l'image.";
+    doigtsEcran = [];
+    return;
+  }
+
   // on photographie une version réduite de l'image pour y mesurer les doigts
   mini.height = Math.round(320 * video.videoHeight / video.videoWidth);
   mx.drawImage(video, 0, 0, mini.width, mini.height);
@@ -219,7 +230,7 @@ function boucle(t){
     return {
       cx: cx0, cy: cy0,
       a: Math.atan2(B[1]-A[1], B[0]-A[0]) + Math.PI/2,
-      l: mes * ech * 1.06,
+      l: mes * ech * 1.50,
       nom: D[2]
     };
   });
