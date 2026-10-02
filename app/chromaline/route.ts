@@ -487,8 +487,8 @@ h1,h2,h3,p{margin:0}
 
 /* le bandeau de reassurance + les questions */
 .rassure{background:var(--cream);border-block:1px solid var(--line);padding-block:clamp(16px,2vw,26px)}
-.rs-in{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,1.6vw,26px);align-items:center}
-.rs{display:flex;align-items:center;gap:10px;font-size:11.5px;line-height:1.35;color:var(--ink)}
+.rs-in{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(14px,2.4vw,42px);align-items:center}
+.rs{display:flex;align-items:center;gap:10px;font-size:11.5px;line-height:1.35;color:var(--ink);text-align:left}
 .rs svg{width:26px;height:26px;flex:0 0 auto;color:var(--ink)}
 .rs i{font-style:normal}
 .qa{padding-block:clamp(30px,3.6vw,58px)}
@@ -503,9 +503,21 @@ h1,h2,h3,p{margin:0}
 .qa-grille .q[open] summary em{transform:rotate(45deg)}
 .qa-grille .q p{margin:0;padding:0 16px 15px;font-size:13px;line-height:1.7;color:var(--mid)}
 @media (max-width:860px){
-  .rs-in{grid-template-columns:1fr 1fr;gap:14px}
+  .rs-in{gap:14px 18px}
   .qa-grille{grid-template-columns:1fr}
 }
+
+/* la fenetre du guide des tailles */
+.gt-fond{position:fixed;inset:0;z-index:90;background:rgba(20,20,18,.55);display:flex;align-items:center;justify-content:center;padding:18px}
+.gt-fond[hidden]{display:none}
+.gt{position:relative;background:#fff;border-radius:6px;max-width:520px;width:100%;max-height:86vh;overflow:auto;padding:clamp(22px,3vw,34px)}
+.gt h3{font-family:var(--serif);font-weight:400;font-size:21px;margin:0 0 8px}
+.gt p{font-size:13.5px;color:var(--mid);line-height:1.6;margin:0 0 16px}
+.gt table{width:100%;border-collapse:collapse;font-size:13px}
+.gt th,.gt td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--line)}
+.gt th{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mid);font-weight:400}
+.gt-x{position:absolute;top:10px;right:12px;border:0;background:none;font-size:24px;line-height:1;color:var(--mid);cursor:pointer}
+.gt-pied{margin-top:16px!important;margin-bottom:0!important}
 </style>
 
 <section class="hero2">
@@ -625,7 +637,7 @@ h1,h2,h3,p{margin:0}
 
       <p class="etape" style="margin-top:26px">2 &middot; Taille</p>
       <div class="tailles" id="tailles" role="group" aria-label="Choisir la taille"></div>
-      <p class="mini lien-guide"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a></p>
+      <p class="mini lien-guide"><a href="#" id="ouvrirGuide">Voir le guide des tailles</a></p>
       <a class="pilule" href="https://www.yourmood.net/cart/39295901663325:1" target="_blank" rel="noopener">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a>
       <p class="mini">&#10003; En cas de mauvaise taille, nous &eacute;changeons la bague sans discussion.</p>
 
@@ -715,6 +727,17 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
+<section class="rassure">
+  <div class="wrap"><div class="rs-in"><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M12 3h12l5 6-11 12L7 9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 9h22M12 3l3 6-3 12M24 3l-3 6 3 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg><i>Bijou<br>interchangeable</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="4" y="4" width="28" height="28" rx="2" fill="currentColor"/><path d="M18 11v14M11 18h14" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg><i>Maison suisse<br>depuis 2004</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="5" y="13" width="26" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13h30v5H3zM18 13v18" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M18 13c-4 0-7-1.5-7-4s4-2 7 4c3-5.5 7-6.5 7-4s-3 4-7 4z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><i>&Eacute;change gratuit<br>si la taille ne convient pas (15 jours)</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M3 9h17v14H3zM20 14h6l5 5v4h-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="26" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="25" cy="26" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><i>Livraison rapide<br>depuis la Suisse</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="7" y="15" width="22" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 15v-4a6 6 0 0 1 12 0v4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="23" r="2" fill="currentColor"/></svg><i>Paiement s&eacute;curis&eacute;<br>100&nbsp;% suisse</i></span></div></div>
+</section>
+
+<section class="band qa">
+  <div class="wrap">
+    <h2 class="display qa-titre">Vos questions, nos r&eacute;ponses.</h2>
+    <div class="qa-grille"><details class="q"><summary><span>Comment choisir ma taille de bague ?</span><em>+</em></summary><p>Les tailles vont de 50 à 72. Si tu connais déjà ta taille (en mm de tour de doigt), choisis-la directement. Sinon, mesure un anneau qui te va déjà avec une règle, ou consulte notre guide des tailles ci-dessus. Et surtout : l'échange est gratuit pendant 15 jours en cas de mauvaise taille, aucun stress.</p></details><details class="q"><summary><span>Et si je me trompe de taille ?</span><em>+</em></summary><p>Échange gratuit pendant 15 jours en cas de mauvaise taille — on s'occupe de tout. Tu nous écris, on t'envoie la bonne taille, tu renvoies la première. Simple.</p></details><details class="q"><summary><span>Quelle est la qualité de la bague ?</span><em>+</em></summary><p>La base Chromaline est en argent 925 et acier chirurgical 316L (hypoallergénique, inrayable), garantie à vie. Les anneaux interchangeables sont en aluminium anodisé, avec une palette de 7 combos de couleurs résistants à l'usure. Chaque bague est livrée avec sa carte d'authenticité.</p></details><details class="q"><summary><span>Combien de temps pour la livraison ?</span><em>+</em></summary><p>Nos créations sont fabriquées artisanalement, souvent après la commande. Les délais peuvent varier selon les pièces et la disponibilité des matériaux. En cas de besoin urgent (anniversaire, cadeau), contacte-nous — un traitement express peut être envisagé. Livraison en Suisse : 5 CHF, offerte dès 59 CHF d'achat.</p></details><details class="q"><summary><span>Puis-je acheter d'autres couleurs plus tard ?</span><em>+</em></summary><p>C'est tout le principe mood. Une fois ta base reçue, tu peux clipser n'importe quel addon de la collection — couleurs, métaux précieux, sertissages, éditions limitées. Plus de 40 variations existent déjà, et nous en sortons régulièrement.</p></details><details class="q"><summary><span>Puis-je payer en plusieurs fois ?</span><em>+</em></summary><p>Oui — paiement en 3× possible dès 100 CHF d'achat via Powerpay (Suisse uniquement), directement au moment du paiement. Carte bancaire, TWINT, PayPal et Apple/Google Pay sont aussi acceptés.</p></details><details class="q"><summary><span>Puis-je clipser des anneaux mood classiques sur la base Chromaline ?</span><em>+</em></summary><p>La base Chromaline est ultra fine (9 mm) et conçue pour les anneaux minis Chromaline. Les anneaux classiques mood (plus larges) ne sont pas compatibles — c'est ce qui fait toute la finesse du modèle.</p></details></div>
+  </div>
+</section>
+
 <section class="band band-cream">
   <div class="wrap center">
     <span class="eyebrow">Sept couleurs</span>
@@ -732,17 +755,6 @@ h1,h2,h3,p{margin:0}
     <h2 class="display h2 reveal" style="margin:14px 0 12px">La bague qui vit avec sa communauté.</h2>
     <p class="lede reveal d1" style="margin:0 auto clamp(24px,3vw,40px)">Passe sur une vidéo — elle démarre.</p>
     <div class="reel" id="reel"></div>
-  </div>
-</section>
-
-<section class="rassure">
-  <div class="wrap"><div class="rs-in"><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M12 3h12l5 6-11 12L7 9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 9h22M12 3l3 6-3 12M24 3l-3 6 3 12" fill="none" stroke="currentColor" stroke-width="1.1"/></svg><i>Bijou<br>interchangeable</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="4" y="4" width="28" height="28" rx="2" fill="currentColor"/><path d="M18 11v14M11 18h14" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg><i>Maison suisse<br>depuis 2004</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="5" y="13" width="26" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 13h30v5H3zM18 13v18" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M18 13c-4 0-7-1.5-7-4s4-2 7 4c3-5.5 7-6.5 7-4s-3 4-7 4z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><i>&Eacute;change gratuit<br>si la taille ne convient pas (15 jours)</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M3 9h17v14H3zM20 14h6l5 5v4h-11z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="10" cy="26" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="25" cy="26" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><i>Livraison rapide<br>depuis la Suisse</i></span><span class="rs"><svg viewBox="0 0 36 36" aria-hidden="true"><rect x="7" y="15" width="22" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 15v-4a6 6 0 0 1 12 0v4" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="23" r="2" fill="currentColor"/></svg><i>Paiement s&eacute;curis&eacute;<br>100&nbsp;% suisse</i></span></div></div>
-</section>
-
-<section class="band qa">
-  <div class="wrap">
-    <h2 class="display qa-titre">Vos questions, nos r&eacute;ponses.</h2>
-    <div class="qa-grille"><details class="q"><summary><span>Comment choisir ma taille de bague ?</span><em>+</em></summary><p>Les tailles vont de 50 à 72. Si tu connais déjà ta taille (en mm de tour de doigt), choisis-la directement. Sinon, mesure un anneau qui te va déjà avec une règle, ou consulte notre guide des tailles ci-dessus. Et surtout : l'échange est gratuit pendant 15 jours en cas de mauvaise taille, aucun stress.</p></details><details class="q"><summary><span>Et si je me trompe de taille ?</span><em>+</em></summary><p>Échange gratuit pendant 15 jours en cas de mauvaise taille — on s'occupe de tout. Tu nous écris, on t'envoie la bonne taille, tu renvoies la première. Simple.</p></details><details class="q"><summary><span>Quelle est la qualité de la bague ?</span><em>+</em></summary><p>La base Chromaline est en argent 925 et acier chirurgical 316L (hypoallergénique, inrayable), garantie à vie. Les anneaux interchangeables sont en aluminium anodisé, avec une palette de 7 combos de couleurs résistants à l'usure. Chaque bague est livrée avec sa carte d'authenticité.</p></details><details class="q"><summary><span>Combien de temps pour la livraison ?</span><em>+</em></summary><p>Nos créations sont fabriquées artisanalement, souvent après la commande. Les délais peuvent varier selon les pièces et la disponibilité des matériaux. En cas de besoin urgent (anniversaire, cadeau), contacte-nous — un traitement express peut être envisagé. Livraison en Suisse : 5 CHF, offerte dès 59 CHF d'achat.</p></details><details class="q"><summary><span>Puis-je acheter d'autres couleurs plus tard ?</span><em>+</em></summary><p>C'est tout le principe mood. Une fois ta base reçue, tu peux clipser n'importe quel addon de la collection — couleurs, métaux précieux, sertissages, éditions limitées. Plus de 40 variations existent déjà, et nous en sortons régulièrement.</p></details><details class="q"><summary><span>Puis-je payer en plusieurs fois ?</span><em>+</em></summary><p>Oui — paiement en 3× possible dès 100 CHF d'achat via Powerpay (Suisse uniquement), directement au moment du paiement. Carte bancaire, TWINT, PayPal et Apple/Google Pay sont aussi acceptés.</p></details><details class="q"><summary><span>Puis-je clipser des anneaux mood classiques sur la base Chromaline ?</span><em>+</em></summary><p>La base Chromaline est ultra fine (9 mm) et conçue pour les anneaux minis Chromaline. Les anneaux classiques mood (plus larges) ne sont pas compatibles — c'est ce qui fait toute la finesse du modèle.</p></details></div>
   </div>
 </section>
 
@@ -771,28 +783,19 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
-<section class="final">
-  <div class="wrap">
-    <span class="eyebrow">Chromaline &middot; pack découverte</span>
-    <h2 class="display h1" style="margin:14px 0 0">Prête à porter<br>la plus fine ?</h2>
-    <p class="lede center" style="max-width:48ch"><s style="color:var(--mid)">509 CHF</s> <b style="color:var(--ink);font-weight:400">197 CHF</b> &middot; 9 mm à peine &middot; La bague qui dit oui à toutes les mains.</p>
-    <a class="btn-achat" style="max-width:420px;margin-left:auto;margin-right:auto" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Je m&rsquo;offre ma bague mood</a>
-  </div>
-</section>
-
 <p class="foot">Mood Collection · Orbe · Suisse · maquette</p>
 
 <script>
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var COLORS=[
-    {k:'acier',   nom:'Acier froissé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste', vues:['gris-1','gris-2','gris-3','gris-4','gris-5']},
-    {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise', humeur:'Serein(e)', vues:['turq-1','turq-2','turq-3','turq-4','turq-5']},
-    {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel', humeur:'Rêveur(se)', vues:['beli-1','beli-2','beli-3','beli-4','beli-5']},
-    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)', vues:['rouge-1','rouge-2','rouge-3','rouge-4','rouge-5']},
-    {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg',film:'bleu-marine', humeur:'Assuré(e)', vues:['marine-1','marine-2','marine-3','marine-4','marine-5','marine-6','marine-7']},
-    {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude', humeur:'Précieux(se)', vues:['emer-1','emer-2','emer-3','emer-4','emer-5','emer-6']},
-    {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot', humeur:'Solaire', vues:['abri-1','abri-2','abri-3','abri-4','abri-5','abri-6']}
+    {k:'acier',   nom:'Acier froissé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste', vues:['gris-1','gris-2','gris-3','gris-4','gris-5'], portee:'gris-1', vnom:'Acier brossé'},
+    {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise', humeur:'Serein(e)', vues:['turq-1','turq-2','turq-3','turq-4','turq-5'], portee:'turq-1', vnom:'Turquoise'},
+    {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel', humeur:'Rêveur(se)', vues:['beli-1','beli-2','beli-3','beli-4','beli-5'], portee:'beli-1', vnom:'Belipastel'},
+    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)', vues:['rouge-1','rouge-2','rouge-3','rouge-4','rouge-5'], portee:'rouge-1', vnom:'Rouge (Swiss Edition)'},
+    {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg',film:'bleu-marine', humeur:'Assuré(e)', vues:['marine-1','marine-2','marine-3','marine-4','marine-5','marine-6','marine-7'], portee:'marine-3', vnom:'Bleu Marine'},
+    {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude', humeur:'Précieux(se)', vues:['emer-1','emer-2','emer-3','emer-4','emer-5','emer-6'], portee:'emer-1', vnom:'Emeraude'},
+    {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot', humeur:'Solaire', vues:['abri-1','abri-2','abri-3','abri-4','abri-5','abri-6'], portee:'abri-1', vnom:'Abricot'}
   ];
 
   var root=document.documentElement;
@@ -820,6 +823,7 @@ h1,h2,h3,p{margin:0}
   });
 
   /* les tailles */
+  var tailleChoisie='58';
   var tailles=document.getElementById('tailles');
   if(tailles){
     ['50','52','54','56','58','60','62','64','66','68','70','72'].forEach(function(t){
@@ -829,6 +833,7 @@ h1,h2,h3,p{margin:0}
       b.addEventListener('click',function(){
         tailles.querySelectorAll('button').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
         b.setAttribute('aria-pressed','true');
+        tailleChoisie=t; majAchat();
       });
       tailles.appendChild(b);
     });
@@ -839,7 +844,7 @@ h1,h2,h3,p{margin:0}
     var d=document.createElement('button');
     d.type='button'; d.className='card'; d.style.setProperty('--sc',col.c);
     d.innerHTML='<img class="carte" src="/chromaline/carte-'+col.film+'.jpg" alt="Anneau Chromaline '+col.nom+'" loading="lazy">'+
-                '<img class="portee" src="/chromaline/main-'+col.film+'.jpg" alt="Bague mood Chromaline '+col.nom+' portée au doigt" loading="lazy">'+
+                '<img class="portee" src="/chromaline/vues/'+col.portee+'.jpg" alt="Bague mood Chromaline '+col.nom+' portée au doigt" loading="lazy">'+
                 '<span class="nm"><i class="dot"></i>'+col.nom+'</span>';
     d.addEventListener('click',function(){
       choisir(i);
@@ -924,6 +929,16 @@ h1,h2,h3,p{margin:0}
       im=(im+1)%tm.length;
       tm[im].classList.add('on');
     },1800);
+  }
+
+  var gFond=document.getElementById('guideTailles');
+  var gOuvrir=document.getElementById('ouvrirGuide');
+  var gFermer=document.getElementById('fermerGuide');
+  if(gOuvrir&&gFond){
+    gOuvrir.addEventListener('click',function(e){ e.preventDefault(); gFond.hidden=false; });
+    gFond.addEventListener('click',function(e){ if(e.target===gFond) gFond.hidden=true; });
+    if(gFermer) gFermer.addEventListener('click',function(){ gFond.hidden=true; });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape') gFond.hidden=true; });
   }
 
   var pelli=document.getElementById('pelli');
@@ -1017,9 +1032,24 @@ h1,h2,h3,p{margin:0}
     });
   }
 
+  var VARIANTES = {"50_Abricot": 63905921204601, "50_Acier brossé": 63905817330041, "50_Belipastel": 63905817428345, "50_Bleu Marine": 63905921139065, "50_Emeraude": 63905921171833, "50_Rouge (Swiss Edition)": 63905921106297, "50_Turquoise": 63905925497209, "52_Abricot": 63905921335673, "52_Acier brossé": 63905817461113, "52_Belipastel": 63905817559417, "52_Bleu Marine": 63905921270137, "52_Emeraude": 63905921302905, "52_Rouge (Swiss Edition)": 63905921237369, "52_Turquoise": 63905925529977, "54_Abricot": 63905921466745, "54_Acier brossé": 63905817592185, "54_Belipastel": 63905817690489, "54_Bleu Marine": 63905921401209, "54_Emeraude": 63905921433977, "54_Rouge (Swiss Edition)": 63905921368441, "54_Turquoise": 63905925562745, "56_Abricot": 63905921597817, "56_Acier brossé": 63905817723257, "56_Belipastel": 63905817821561, "56_Bleu Marine": 63905921532281, "56_Emeraude": 63905921565049, "56_Rouge (Swiss Edition)": 63905921499513, "56_Turquoise": 63905925595513, "58_Abricot": 63905921728889, "58_Acier brossé": 63905817854329, "58_Belipastel": 63905817952633, "58_Bleu Marine": 63905921663353, "58_Emeraude": 63905921696121, "58_Rouge (Swiss Edition)": 63905921630585, "58_Turquoise": 63905925628281, "60_Abricot": 63905921859961, "60_Acier brossé": 63905817985401, "60_Belipastel": 63905818083705, "60_Bleu Marine": 63905921794425, "60_Emeraude": 63905921827193, "60_Rouge (Swiss Edition)": 63905921761657, "60_Turquoise": 63905925661049, "62_Abricot": 63905921991033, "62_Acier brossé": 63905818116473, "62_Belipastel": 63905818214777, "62_Bleu Marine": 63905921925497, "62_Emeraude": 63905921958265, "62_Rouge (Swiss Edition)": 63905921892729, "62_Turquoise": 63905925693817, "64_Abricot": 63905922122105, "64_Acier brossé": 63905818247545, "64_Belipastel": 63905818345849, "64_Bleu Marine": 63905922056569, "64_Emeraude": 63905922089337, "64_Rouge (Swiss Edition)": 63905922023801, "64_Turquoise": 63905925726585, "66_Abricot": 63905922253177, "66_Acier brossé": 63905818378617, "66_Belipastel": 63905818476921, "66_Bleu Marine": 63905922187641, "66_Emeraude": 63905922220409, "66_Rouge (Swiss Edition)": 63905922154873, "66_Turquoise": 63905925759353, "68_Abricot": 63905922384249, "68_Acier brossé": 63905818509689, "68_Belipastel": 63905818607993, "68_Bleu Marine": 63905922318713, "68_Emeraude": 63905922351481, "68_Rouge (Swiss Edition)": 63905922285945, "68_Turquoise": 63905925792121, "70_Abricot": 63905922515321, "70_Acier brossé": 63905818640761, "70_Belipastel": 63905818739065, "70_Bleu Marine": 63905922449785, "70_Emeraude": 63905922482553, "70_Rouge (Swiss Edition)": 63905922417017, "70_Turquoise": 63905925824889, "72_Abricot": 63905922646393, "72_Acier brossé": 63905818771833, "72_Belipastel": 63905818870137, "72_Bleu Marine": 63905922580857, "72_Emeraude": 63905922613625, "72_Rouge (Swiss Edition)": 63905922548089, "72_Turquoise": 63905925857657};
+  function lienAchat(){
+    var col=COLORS[current], t=tailleChoisie;
+    if(!t) return null;
+    return VARIANTES[t+'_'+col.vnom] || null;
+  }
+  function majAchat(){
+    var id=lienAchat();
+    document.querySelectorAll('.btn-achat').forEach(function(a){
+      if(id){ a.href='https://www.yourmood.net/cart/'+id+':1'; a.removeAttribute('aria-disabled'); }
+      else   { a.href='#tailles'; a.setAttribute('aria-disabled','true'); }
+    });
+  }
+
   function choisir(i){
     current=i;
     posePelli(i);
+    majAchat();
     var col=COLORS[i];
     root.style.setProperty('--c',col.c);
     root.style.setProperty('--c-soft',col.soft);
@@ -1140,6 +1170,16 @@ h1,h2,h3,p{margin:0}
   }
 })();
 </script>
+
+<div class="gt-fond" id="guideTailles" hidden>
+  <div class="gt" role="dialog" aria-modal="true" aria-label="Guide des tailles">
+    <button type="button" class="gt-x" id="fermerGuide" aria-label="Fermer">&times;</button>
+    <h3>Guide des tailles</h3>
+    <p>Mesurez le diam&egrave;tre int&eacute;rieur d&rsquo;une bague qui vous va d&eacute;j&agrave; &mdash; c&rsquo;est la taille &agrave; choisir.</p>
+    <table><thead><tr><th>Taille mood</th><th>&Oslash; int&eacute;rieur (mm)</th><th>EU</th><th>UK</th><th>US</th></tr></thead><tbody><tr><td>50</td><td>15,9</td><td>50</td><td>J½</td><td>5</td></tr><tr><td>52</td><td>16,6</td><td>52</td><td>L½</td><td>6</td></tr><tr><td>54</td><td>17,2</td><td>54</td><td>N</td><td>6¾</td></tr><tr><td>56</td><td>17,8</td><td>56</td><td>O½</td><td>7½</td></tr><tr><td>58</td><td>18,5</td><td>58</td><td>P½</td><td>8¼</td></tr><tr><td>60</td><td>19,1</td><td>60</td><td>R</td><td>9</td></tr><tr><td>62</td><td>19,7</td><td>62</td><td>S½</td><td>9¾</td></tr><tr><td>64</td><td>20,4</td><td>64</td><td>U</td><td>10½</td></tr><tr><td>66</td><td>21,0</td><td>66</td><td>V½</td><td>11¼</td></tr><tr><td>68</td><td>21,6</td><td>68</td><td>X</td><td>12</td></tr><tr><td>70</td><td>22,3</td><td>70</td><td>Y½</td><td>12¾</td></tr><tr><td>72</td><td>22,9</td><td>72</td><td>—</td><td>13½</td></tr></tbody></table>
+    <p class="gt-pied">Toujours h&eacute;sitante ? Commande un <strong>baguier gratuit</strong> et prends ton temps.</p>
+  </div>
+</div>
 </body></html>`;
 
 export async function GET() {
