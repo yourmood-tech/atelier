@@ -487,8 +487,8 @@ h1,h2,h3,p{margin:0}
 
 /* le bandeau de reassurance + les questions */
 .rassure{background:var(--cream);border-block:1px solid var(--line);padding-block:clamp(16px,2vw,26px)}
-.rs-in{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(14px,2.4vw,42px);align-items:center}
-.rs{display:flex;align-items:center;gap:10px;font-size:11.5px;line-height:1.35;color:var(--ink);text-align:left}
+.rs-in{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(10px,1.4vw,22px);align-items:center;justify-items:center}
+.rs{display:flex;align-items:center;justify-content:center;gap:10px;font-size:11.5px;line-height:1.35;color:var(--ink);text-align:left}
 .rs svg{width:26px;height:26px;flex:0 0 auto;color:var(--ink)}
 .rs i{font-style:normal}
 .qa{padding-block:clamp(30px,3.6vw,58px)}
@@ -503,7 +503,7 @@ h1,h2,h3,p{margin:0}
 .qa-grille .q[open] summary em{transform:rotate(45deg)}
 .qa-grille .q p{margin:0;padding:0 16px 15px;font-size:13px;line-height:1.7;color:var(--mid)}
 @media (max-width:860px){
-  .rs-in{gap:14px 18px}
+  .rs-in{grid-template-columns:1fr 1fr;gap:14px 16px}
   .qa-grille{grid-template-columns:1fr}
 }
 
@@ -518,6 +518,27 @@ h1,h2,h3,p{margin:0}
 .gt th{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mid);font-weight:400}
 .gt-x{position:absolute;top:10px;right:12px;border:0;background:none;font-size:24px;line-height:1;color:var(--mid);cursor:pointer}
 .gt-pied{margin-top:16px!important;margin-bottom:0!important}
+
+/* l'essayage sur le telephone */
+.essai{background:#14150f;color:#f6f5f2;padding-block:clamp(36px,4.4vw,72px);text-align:center}
+.essai .eyebrow{color:#8f8c84}
+.essai-titre{font-size:clamp(26px,3.2vw,46px);font-weight:300;margin:10px 0 clamp(22px,2.6vw,38px);color:#fff}
+.essai-in{display:flex;flex-wrap:wrap;gap:clamp(24px,3.4vw,60px);align-items:center;justify-content:center;text-align:left}
+.essai-txt{margin:0 0 20px;font-size:clamp(13.5px,1vw,15.5px);line-height:1.75;color:#cfccc5;max-width:30ch}
+.essai-btn{background:#fff;color:#14150f;border-color:#fff}
+.essai-btn:hover{background:#eceae5}
+.essai-qr{display:flex;align-items:center;gap:16px}
+.essai-qr img{width:120px;height:120px;background:#fff;padding:7px;border-radius:5px;display:block}
+.essai-qr p{margin:0;font-size:11.5px;line-height:1.55;color:#9b988f}
+.essai-d video{height:clamp(300px,40vw,460px);width:auto;max-width:100%;display:block;border-radius:14px;background:#000}
+@media (max-width:860px){
+  .essai-in{text-align:center;justify-items:center}
+  .essai-g{display:flex;flex-direction:column;align-items:center}
+  .essai-txt{max-width:none}
+  .essai-qr{display:none}
+  .essai-d video{height:auto;width:min(250px,66vw)}
+}
+@media (min-width:861px){ .essai-btn{display:none} }
 </style>
 
 <section class="hero2">
@@ -702,6 +723,27 @@ h1,h2,h3,p{margin:0}
   </div>
 </section>
 
+<section class="essai">
+  <div class="wrap">
+    <span class="eyebrow">L&rsquo;essayage</span>
+    <h2 class="display essai-titre">Essaie-la sur ta main,<br>tout de suite.</h2>
+    <div class="essai-in">
+      <div class="essai-g">
+        <p class="essai-txt">Ouvre la cam&eacute;ra, choisis ton doigt&nbsp;: la bague se pose dessus et te suit. Change de couleur, prends-toi en photo.</p>
+        <a class="btn btn-c essai-btn" href="https://mood-tools.yourmood.net/essayage?v=26">Essayer sur mon t&eacute;l&eacute;phone &nbsp;&rarr;</a>
+        <div class="essai-qr">
+          <img src="/chromaline/essai/qr.png" alt="Code a scanner pour ouvrir l&rsquo;essayage sur le telephone" width="640" height="640" loading="lazy">
+          <p>Scanne ce code avec l&rsquo;appareil photo<br>de ton t&eacute;l&eacute;phone pour l&rsquo;essayer.</p>
+        </div>
+      </div>
+      <div class="essai-d">
+        <video src="/chromaline/essai/demo.mp4" autoplay muted loop playsinline preload="metadata"
+               aria-label="L&rsquo;essayage de la bague en video"></video>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="band">
   <div class="wrap two mouv">
     <div class="reveal">
@@ -801,7 +843,7 @@ h1,h2,h3,p{margin:0}
     {k:'acier',   nom:'Acier froissé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste', vues:['gris-1','gris-2','gris-3','gris-4','gris-5'], portee:'gris-1', vnom:'Acier brossé'},
     {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise', humeur:'Serein(e)', vues:['turq-1','turq-2','turq-3','turq-4','turq-5'], portee:'turq-1', vnom:'Turquoise'},
     {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel', humeur:'Rêveur(se)', vues:['beli-1','beli-2','beli-3','beli-4','beli-5'], portee:'beli-1', vnom:'Belipastel'},
-    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)', vues:['rouge-1','rouge-2','rouge-3','rouge-4','rouge-5'], portee:'rouge-1', vnom:'Rouge (Swiss Edition)'},
+    {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)', vues:['rouge-1','rouge-2','rouge-3','rouge-4','rouge-5'], portee:'rouge-4', vnom:'Rouge (Swiss Edition)'},
     {k:'marine',  nom:'Bleu Marine',           c:'#3f4b80', soft:'#e9ebf4', img:'chromaline-bleu-marine.jpg',film:'bleu-marine', humeur:'Assuré(e)', vues:['marine-1','marine-2','marine-3','marine-4','marine-5','marine-6','marine-7'], portee:'marine-3', vnom:'Bleu Marine'},
     {k:'emeraude',nom:'Émeraude',              c:'#1f7a68', soft:'#e4f1ee', img:'chromaline-emeraude.jpg',   film:'emeraude', humeur:'Précieux(se)', vues:['emer-1','emer-2','emer-3','emer-4','emer-5','emer-6'], portee:'emer-1', vnom:'Emeraude'},
     {k:'abricot', nom:'Abricot',               c:'#d99c6d', soft:'#faeee4', img:'chromaline-abricot.jpg',    film:'abricot', humeur:'Solaire', vues:['abri-1','abri-2','abri-3','abri-4','abri-5','abri-6'], portee:'abri-1', vnom:'Abricot'}
