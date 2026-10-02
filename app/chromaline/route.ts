@@ -347,7 +347,10 @@ h1,h2,h3,p{margin:0}
 
 /* le titre : la photo à gauche, le texte à côté, sans aucun dégradé */
 .hero2{display:grid;grid-template-columns:1.6fr 1fr;align-items:stretch;background:#fff}
-.h2bg{width:100%;height:100%;min-height:clamp(380px,42vw,600px);object-fit:cover;object-position:34% 46%}
+.h2scene{position:relative;min-height:clamp(380px,42vw,600px);background:#efe9e2;overflow:hidden}
+.h2bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:46% 48%;
+  opacity:0;transition:opacity 1.1s ease}
+.h2bg.on{opacity:1}
 .h2txt{display:flex;align-items:center;padding:clamp(28px,3vw,54px) clamp(24px,3.4vw,60px)}
 .h2inner{max-width:430px}
 .h2eye{border-bottom:1px solid var(--ink);display:inline-block;padding-bottom:3px}
@@ -364,7 +367,7 @@ h1,h2,h3,p{margin:0}
 .h2r svg{width:23px;height:23px;color:var(--ink)}
 @media (max-width:900px){
   .hero2{grid-template-columns:1fr}
-  .h2bg{min-height:0;height:74vw;object-position:40% 44%}
+  .h2scene{min-height:0;height:76vw}
   .h2txt{padding:26px 22px 34px}
   .h2inner{max-width:none}
   .h2titre{font-size:clamp(30px,8.6vw,44px)}
@@ -372,7 +375,16 @@ h1,h2,h3,p{margin:0}
 </style>
 
 <section class="hero2">
-  <img class="h2bg" src="/chromaline/hero-portee.jpg" alt="La bague mood fine portée au doigt" fetchpriority="high">
+  <div class="h2scene">
+    <img class="h2bg on" src="/chromaline/hero-portee.jpg" alt="La bague mood fine portée au doigt" fetchpriority="high">
+    <img class="h2bg" src="/chromaline/portee-froisse.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-emeraude.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-turquoise.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-bleu.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-marine.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-rouge.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-abricot.jpg" alt="" loading="lazy">
+  </div>
   <div class="h2txt">
     <div class="h2inner">
       <span class="eyebrow h2eye">Nouveauté</span>
@@ -828,6 +840,18 @@ h1,h2,h3,p{margin:0}
     if(el.getBoundingClientRect().top < window.innerHeight*0.95) el.classList.add('in');
     else io.observe(el);
   });
+})();
+</script>
+<script>
+(function(){
+  var v = document.querySelectorAll('.h2scene .h2bg');
+  if (v.length < 2) return;
+  var i = 0;
+  setInterval(function(){
+    v[i].classList.remove('on');
+    i = (i + 1) % v.length;
+    v[i].classList.add('on');
+  }, 3600);
 })();
 </script>
 </body></html>`;
