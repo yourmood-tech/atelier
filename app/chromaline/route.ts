@@ -498,7 +498,8 @@ h1,h2,h3,p{margin:0}
 .qa-grille .q summary{display:flex;justify-content:space-between;align-items:center;gap:14px;
   cursor:pointer;list-style:none;padding:13px 16px;font-size:14px;line-height:1.4}
 .qa-grille .q summary::-webkit-details-marker{display:none}
-.qa-grille .q summary em{font-style:normal;font-size:17px;color:var(--mid);line-height:1}
+.qa-grille .q summary::marker{content:""}
+.qa-grille .q summary em{font-style:normal;font-size:17px;color:var(--mid);line-height:1;transition:transform .25s ease;display:inline-block}
 .qa-grille .q[open] summary em{transform:rotate(45deg)}
 .qa-grille .q p{margin:0;padding:0 16px 15px;font-size:13px;line-height:1.7;color:var(--mid)}
 @media (max-width:860px){
