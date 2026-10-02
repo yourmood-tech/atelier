@@ -374,7 +374,9 @@ h1,h2,h3,p{margin:0}
 }
 
 /* le bandeau des avis */
-.bavis{background:#fff;border-block:1px solid var(--line);padding:16px 0;overflow:hidden}
+.bavis{background:#76797c;padding:17px 0;overflow:hidden;transition:background 1.4s ease}
+.bavis .avis-un{color:#fff}
+.bavis .avis-un .et{color:#ffd77a}
 .avis-piste{overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
 .avis-file{display:flex;gap:46px;width:max-content;animation:avisDefile 64s linear infinite}
 .bavis:hover .avis-file{animation-play-state:paused}
@@ -385,15 +387,15 @@ h1,h2,h3,p{margin:0}
 @media (prefers-reduced-motion:reduce){ .avis-file{animation:none} }
 
 /* le concept */
-.concept{background:var(--cream);padding-block:clamp(40px,5vw,78px)}
-.cp-in{display:grid;grid-template-columns:.78fr 1.22fr;gap:clamp(26px,4vw,64px);align-items:center}
+.concept{background:#fff;padding-block:clamp(26px,3.2vw,52px)}
+.cp-in{display:grid;grid-template-columns:.74fr 1.26fr;gap:clamp(18px,2.6vw,44px);align-items:center}
 .cp-titre{font-size:clamp(30px,3.5vw,50px);text-transform:uppercase;line-height:1.04;margin:14px 0 0;letter-spacing:-.012em}
 .cp-lede{margin:18px 0 0;font-size:clamp(13px,.98vw,15.5px);line-height:1.8;color:var(--ink)}
-.cp-sur{text-align:center;font-size:clamp(12.5px,1vw,15px);line-height:1.6;color:var(--ink);margin:0 0 14px}
-.cp-scene{position:relative;aspect-ratio:1918/820}
+.cp-sur{text-align:center;font-size:clamp(12.5px,1vw,15px);line-height:1.6;color:var(--ink);margin:0 0 6px}
+.cp-scene{position:relative;aspect-ratio:1848/716}
 .cp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .9s ease}
 .cp-img.on{opacity:1}
-.cp-leg{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:12px;margin-top:10px;
+.cp-leg{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:12px;margin-top:2px;
   text-align:center;font-size:11.5px;line-height:1.5;color:var(--mid)}
 .cp-leg b{color:var(--ink);font-weight:500}
 @media (max-width:900px){
@@ -476,13 +478,13 @@ h1,h2,h3,p{margin:0}
     <div class="cp-vis">
       <p class="cp-sur">Des anneaux interchangeables<br>avec des pierres, des couleurs et des matières</p>
       <div class="cp-scene" id="cpScene">
-        <img class="cp-img on" src="/chromaline/eclate/final-acier.jpg" alt="La base mood, les anneaux et la composition montée">
-        <img class="cp-img" src="/chromaline/eclate/final-turquoise.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/final-lavande.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/final-bleu.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/final-marine.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/final-rouge.jpg" alt="" loading="lazy">
-        <img class="cp-img" src="/chromaline/eclate/final-abricot.jpg" alt="" loading="lazy">
+        <img class="cp-img on" src="/chromaline/eclate/serre-acier.jpg" alt="La base mood, les anneaux et la composition montée">
+        <img class="cp-img" src="/chromaline/eclate/serre-turquoise.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/serre-lavande.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/serre-bleu.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/serre-marine.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/serre-rouge.jpg" alt="" loading="lazy">
+        <img class="cp-img" src="/chromaline/eclate/serre-abricot.jpg" alt="" loading="lazy">
       </div>
       <div class="cp-leg">
         <span><b>La base mood</b><br>avec système de clip intégré</span>
@@ -961,6 +963,15 @@ h1,h2,h3,p{margin:0}
       return '<span class="avis-un"><em class="et">&#9733;&#9733;&#9733;&#9733;&#9733;</em> « '+a[1]+' » <b>'+a[0]+'</b></span>';
     }).join('');
     f.innerHTML = html + html;
+  }
+  var bande=document.querySelector('.bavis');
+  if(bande){
+    var TEINTES=['#76797c','#b978b1','#2fa3a2','#2a3c8c','#1f7a68'];
+    var k=0;
+    setInterval(function(){
+      k=(k+1)%TEINTES.length;
+      bande.style.background=TEINTES[k];
+    },4200);
   }
   var v=document.querySelectorAll('#cpScene .cp-img');
   if(v.length>1){
