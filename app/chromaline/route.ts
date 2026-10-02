@@ -345,16 +345,13 @@ h1,h2,h3,p{margin:0}
 }
 
 
-/* le titre : une seule photo sur toute la largeur, le texte posé dessus à droite */
-.hero2{position:relative;min-height:clamp(420px,44vw,620px);overflow:hidden;background:#efe9e2}
-.h2bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:34% 46%}
-.h2voile{position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(100deg,rgba(255,255,255,0) 38%,rgba(255,253,250,.55) 55%,rgba(255,253,250,.88) 70%)}
-.h2txt{position:relative;display:flex;align-items:center;justify-content:flex-end;height:100%;
-  min-height:inherit;padding:clamp(28px,3.4vw,56px) clamp(22px,5vw,86px)}
-.h2inner{width:min(430px,46%)}
+/* le titre : la photo à gauche, le texte à côté, sans aucun dégradé */
+.hero2{display:grid;grid-template-columns:1.6fr 1fr;align-items:stretch;background:#fff}
+.h2bg{width:100%;height:100%;min-height:clamp(380px,42vw,600px);object-fit:cover;object-position:34% 46%}
+.h2txt{display:flex;align-items:center;padding:clamp(28px,3vw,54px) clamp(24px,3.4vw,60px)}
+.h2inner{max-width:430px}
 .h2eye{border-bottom:1px solid var(--ink);display:inline-block;padding-bottom:3px}
-.h2titre{font-size:clamp(30px,3.9vw,58px);text-transform:uppercase;letter-spacing:-.012em;margin:12px 0 0;line-height:1.02}
+.h2titre{font-size:clamp(30px,3.6vw,54px);text-transform:uppercase;letter-spacing:-.012em;margin:12px 0 0;line-height:1.02}
 .h2titre em{font-style:italic;text-transform:none;font-weight:400;font-size:.8em}
 .h2lede{margin:16px 0 0;color:var(--ink);font-size:clamp(13px,.95vw,15px);line-height:1.75}
 .h2prix{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 0;
@@ -366,18 +363,16 @@ h1,h2,h3,p{margin:0}
 .h2r{display:flex;flex-direction:column;align-items:center;gap:7px}
 .h2r svg{width:23px;height:23px;color:var(--ink)}
 @media (max-width:900px){
-  .hero2{min-height:0}
-  .h2bg{position:relative;height:72vw;object-position:40% 44%}
-  .h2voile{background:linear-gradient(to bottom,rgba(255,253,250,0) 52%,rgba(255,253,250,.9) 78%,#fffdfa 100%)}
-  .h2txt{padding:0 22px 30px;margin-top:-56px;justify-content:flex-start}
-  .h2inner{width:100%}
+  .hero2{grid-template-columns:1fr}
+  .h2bg{min-height:0;height:74vw;object-position:40% 44%}
+  .h2txt{padding:26px 22px 34px}
+  .h2inner{max-width:none}
   .h2titre{font-size:clamp(30px,8.6vw,44px)}
 }
 </style>
 
 <section class="hero2">
   <img class="h2bg" src="/chromaline/hero-portee.jpg" alt="La bague mood fine portée au doigt" fetchpriority="high">
-  <div class="h2voile"></div>
   <div class="h2txt">
     <div class="h2inner">
       <span class="eyebrow h2eye">Nouveauté</span>
