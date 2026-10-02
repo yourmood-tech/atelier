@@ -426,6 +426,8 @@ h1,h2,h3,p{margin:0}
 #achat{padding-top:clamp(14px,1.8vw,30px);background:var(--c-soft);transition:background .8s ease}
 
 /* la pellicule de photos sous la bague qui tourne */
+.colvis{order:0}
+.colvis .stage-big{margin:0}
 .pelli{margin-top:10px;overflow:hidden;
   -webkit-mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent);
           mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent)}
@@ -541,8 +543,10 @@ h1,h2,h3,p{margin:0}
 
 <section class="band band-cream" id="achat">
   <div class="wrap two">
-    <div class="stage stage-big reveal" id="stageAchat"></div>
-    <div class="pelli" id="pelli" hidden><div class="pelli-piste" id="pelliPiste"></div></div>
+    <div class="colvis reveal">
+      <div class="stage stage-big" id="stageAchat"></div>
+      <div class="pelli" id="pelli" hidden><div class="pelli-piste" id="pelliPiste"></div></div>
+    </div>
 
     <div class="acheter reveal d1">
       <p class="etape">1 &middot; Couleur</p>
