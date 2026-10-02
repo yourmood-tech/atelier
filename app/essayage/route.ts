@@ -74,6 +74,7 @@ var DOIGTS = [[2,3,'pouce'],[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[1
 var COULEURS = [
   ['acier','Acier froissé','#A8ADB1'],
   ['belipastel','Belipastel','#CF94C8'],
+  ['turquoise','Turquoise','#3FB3B2'],
   ['rouge','Rouge Swiss Edition','#C2424F'],
   ['marine','Bleu Marine','#2A3C8C'],
   ['emeraude','Émeraude','#1F7A68'],
@@ -225,7 +226,7 @@ function boucle(t){
       sur: dansLImage(D[0]) && dansLImage(D[1]),
       cx: cx0, cy: cy0,
       a: Math.atan2(B[1]-A[1], B[0]-A[0]) + Math.PI/2,
-      l: mes * ech * 1.75,
+      l: mes * ech * 1.62,
       nom: D[2]
     };
   });
