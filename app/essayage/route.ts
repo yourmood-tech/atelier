@@ -166,16 +166,9 @@ function boucle(t){
 
   var m = res.landmarks[0];
 
-  // la main doit être entière dans l'image, sinon le repérage dérape
-  var dehors = false;
-  for (var k = 0; k < m.length; k++) {
-    if (m[k].x < 0.015 || m[k].x > 0.985 || m[k].y < 0.015 || m[k].y > 0.985) { dehors = true; break; }
-  }
-  if (dehors) {
-    msg.textContent = "Montre ta main en entier dans l'image.";
-    doigtsEcran = [];
-    return;
-  }
+  // on ne regarde que les doigts : le poignet sort presque toujours du cadre, c'est normal.
+  // Si le doigt choisi sort vraiment de l'image, on garde la bague là où elle était.
+  function dansLImage(i){ return m[i].x > -0.04 && m[i].x < 1.04 && m[i].y > -0.04 && m[i].y < 1.04; }
 
   // on photographie une version réduite de l'image pour y mesurer les doigts
   mini.height = Math.round(320 * video.videoHeight / video.videoWidth);
@@ -228,6 +221,7 @@ function boucle(t){
     var ech = Math.hypot(B[0]-A[0], B[1]-A[1]) / ln;
 
     return {
+      sur: dansLImage(D[0]) && dansLImage(D[1]),
       cx: cx0, cy: cy0,
       a: Math.atan2(B[1]-A[1], B[0]-A[0]) + Math.PI/2,
       l: mes * ech * 1.50,
@@ -237,11 +231,15 @@ function boucle(t){
 
   if (choisi < 0) {
     msg.textContent = "Touche le doigt où tu veux la bague.";
-    doigtsEcran.forEach(repere);
+    doigtsEcran.forEach(function(d){ if (d.sur) repere(d); });
     return;
   }
 
   var d = doigtsEcran[choisi];
+  if (!d.sur) {                       // doigt hors de l'image : on ne bouge plus la bague
+    if (L && bague.complete && bague.naturalWidth) poseBague();
+    return;
+  }
   if (!L) L = { x: d.cx, y: d.cy, a: d.a, l: d.l };
   else {
     var da = d.a - L.a;
