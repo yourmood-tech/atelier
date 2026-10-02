@@ -908,7 +908,7 @@ h1,h2,h3,p{margin:0}
     pelli.hidden=false;
     var html=vues.map(function(v){
       return '<button type="button" data-v="'+v+'" aria-label="Voir cette photo en grand">'+
-             '<img src="/chromaline/vues/'+v+'.jpg" alt="" loading="lazy"></button>';
+             '<img src="/chromaline/vues/mini/'+v+'.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></button>';
     }).join('');
     pelliPiste.innerHTML = html + html;
   }
