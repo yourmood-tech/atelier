@@ -919,8 +919,11 @@ h1,h2,h3,p{margin:0}
       } else {
         el=document.createElement('video');
         el.src='/chromaline/'+(prefixe||'')+col.film+'.mp4';
-        el.muted=true; el.loop=true; el.playsInline=true; el.setAttribute('playsinline','');
+        el.muted=true; el.loop=true; el.playsInline=true;
+        el.setAttribute('playsinline',''); el.setAttribute('webkit-playsinline','');
+        el.setAttribute('muted',''); el.defaultMuted=true;
         el.preload = i===0 ? 'auto' : 'none';
+        if(i===0) el.setAttribute('autoplay','');
         el.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
       }
       if(i===0){ el.className='on'; }
@@ -981,6 +984,26 @@ h1,h2,h3,p{margin:0}
       tm[im].classList.add('on');
     },1800);
   }
+
+  /* sur telephone, le film doit partir seul des qu'il arrive a l'ecran */
+  function relancerFilms(){
+    document.querySelectorAll('.stage video.on').forEach(function(v){
+      if(v.paused){ v.preload='auto'; v.muted=true; var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+    });
+  }
+  if('IntersectionObserver' in window){
+    var obsFilm=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting) relancerFilms(); });
+    },{rootMargin:'200px'});
+    ['#stageAchat','#stageBig'].forEach(function(sel){
+      var el=document.querySelector(sel); if(el) obsFilm.observe(el);
+    });
+  }
+  ['touchstart','pointerdown','scroll','visibilitychange'].forEach(function(ev){
+    window.addEventListener(ev, relancerFilms, {passive:true});
+  });
+  setTimeout(relancerFilms, 900);
+  setTimeout(relancerFilms, 2500);
 
   var gFond=document.getElementById('guideTailles');
   var gOuvrir=document.getElementById('ouvrirGuide');
