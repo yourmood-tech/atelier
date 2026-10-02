@@ -626,7 +626,7 @@ h1,h2,h3,p{margin:0}
       <p class="etape" style="margin-top:26px">2 &middot; Taille</p>
       <div class="tailles" id="tailles" role="group" aria-label="Choisir la taille"></div>
       <p class="mini lien-guide"><a href="https://www.yourmood.net/pages/guide-des-tailles">Voir le guide des tailles</a></p>
-      <a class="pilule" href="https://www.yourmood.net/search?q=baguier">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a>
+      <a class="pilule" href="https://www.yourmood.net/cart/39295901663325:1" target="_blank" rel="noopener">Je ne connais pas ma taille &rarr; recevoir un baguier gratuit</a>
       <p class="mini">&#10003; En cas de mauvaise taille, nous &eacute;changeons la bague sans discussion.</p>
 
       <hr class="filet">
