@@ -979,8 +979,11 @@ h1,h2,h3,p{margin:0}
   if(v.length>1){
     var i=0;
     setInterval(function(){
+      var n=i, tours=0;
+      do { n=(n+1)%v.length; tours++; } while(tours<v.length && !(v[n].complete && v[n].naturalWidth>0));
+      if(!(v[n].complete && v[n].naturalWidth>0)) return;   /* jamais de trou : on garde la photo en place */
       v[i].classList.remove('on');
-      i=(i+1)%v.length;
+      i=n;
       v[i].classList.add('on');
     },2600);
   }
