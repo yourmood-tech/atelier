@@ -674,7 +674,6 @@ h1,h2,h3,p{margin:0}
 
 <section class="compte">
   <div class="wrap">
-    <span class="eyebrow cp-eye">Le compte</span>
     <h2 class="display compte-titre">509.&#8212; de bijoux. 197.&#8212;.</h2>
     <div class="compte-in">
       <div class="grille">
