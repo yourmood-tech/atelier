@@ -637,8 +637,8 @@ h1,h2,h3,p{margin:0}
       </ul>
     </div>
     <figure class="figure reveal d1 film" style="background:#0d0d0d;margin:0">
-      <video src="https://cdn.shopify.com/videos/c/o/v/ed958f4f94f84fc38bf80ba505be60f6.mov"
-             autoplay muted loop playsinline preload="metadata"
+      <video id="filmMouvement" data-src="https://cdn.shopify.com/videos/c/o/v/ed958f4f94f84fc38bf80ba505be60f6.mov"
+             muted loop playsinline preload="none"
              aria-label="La bague Chromaline en mouvement"></video>
       <figcaption class="cap">Le clic breveté depuis 2004 — ouvre, choisis, referme.</figcaption>
     </figure>
@@ -893,6 +893,21 @@ h1,h2,h3,p{margin:0}
   jouer(0);
 
   /* la cliente choisit : photo, nom, pastilles, bouton, halo */
+  /* le gros film ne se charge que lorsqu'il arrive a l'ecran */
+  var gros=document.getElementById('filmMouvement');
+  if(gros && 'IntersectionObserver' in window){
+    var obs=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting && !gros.src){
+          gros.src=gros.getAttribute('data-src'); gros.preload='auto';
+          var q=gros.play(); if(q&&q.catch) q.catch(function(){});
+          obs.disconnect();
+        }
+      });
+    },{rootMargin:'300px'});
+    obs.observe(gros);
+  } else if(gros){ gros.src=gros.getAttribute('data-src'); }
+
   var pelli=document.getElementById('pelli');
   var pelliPiste=document.getElementById('pelliPiste');
   var grandVue=null;
