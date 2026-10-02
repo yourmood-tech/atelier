@@ -424,6 +424,21 @@ h1,h2,h3,p{margin:0}
 .geste-band{padding-top:clamp(6px,0.9vw,16px);padding-bottom:clamp(6px,0.9vw,16px)}
 .geste-band .geste3{margin-top:0;gap:clamp(8px,1.1vw,20px)}
 #achat{padding-top:clamp(14px,1.8vw,30px)}
+
+/* la pellicule de photos sous la bague qui tourne */
+.pelli{margin-top:10px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent);
+          mask-image:linear-gradient(to right,transparent,#000 5%,#000 95%,transparent)}
+.pelli-piste{display:flex;gap:10px;width:max-content;animation:pelliDefile 30s linear infinite}
+.pelli:hover .pelli-piste{animation-play-state:paused}
+@keyframes pelliDefile{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.pelli button{flex:0 0 auto;padding:0;border:0;background:#f1f1f2;cursor:pointer;
+  height:clamp(74px,8.4vw,122px);aspect-ratio:1/1;border-radius:3px;overflow:hidden;
+  transition:opacity .3s ease}
+.pelli button:hover{opacity:.82}
+.pelli img{width:100%;height:100%;object-fit:cover;display:block}
+#grandVue{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:3;cursor:zoom-out;background:#e9e9ea}
+@media (prefers-reduced-motion:reduce){ .pelli-piste{animation:none} }
 </style>
 
 <section class="hero2">
@@ -527,6 +542,7 @@ h1,h2,h3,p{margin:0}
 <section class="band band-cream" id="achat">
   <div class="wrap two">
     <div class="stage stage-big reveal" id="stageAchat"></div>
+    <div class="pelli" id="pelli" hidden><div class="pelli-piste" id="pelliPiste"></div></div>
 
     <div class="acheter reveal d1">
       <p class="etape">1 &middot; Couleur</p>
@@ -753,7 +769,7 @@ h1,h2,h3,p{margin:0}
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var COLORS=[
-    {k:'acier',   nom:'Acier froissé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste'},
+    {k:'acier',   nom:'Acier froissé',          c:'#a8adb1', soft:'#eef0f1', img:'chromaline-acier.jpg',      film:'acier', humeur:'Minimaliste', vues:['gris-1','gris-2','gris-3','gris-4','gris-5']},
     {k:'turq',    nom:'Turquoise',             c:'#3fb3b2', soft:'#e4f4f3', img:'chromaline-turquoise.jpg',  film:'turquoise', humeur:'Serein(e)'},
     {k:'beli',    nom:'Belipastel',            c:'#cf94c8', soft:'#f6ebf5', img:'chromaline-belipastel.jpg', film:'belipastel', humeur:'Rêveur(se)'},
     {k:'rouge',   nom:'Rouge Swiss Edition',   c:'#c2424f', soft:'#f8e8e9', img:'chromaline-swiss-red.jpg',  film:'swiss-red', humeur:'Audacieux(se)'},
@@ -871,8 +887,39 @@ h1,h2,h3,p{margin:0}
   jouer(0);
 
   /* la cliente choisit : photo, nom, pastilles, bouton, halo */
+  var pelli=document.getElementById('pelli');
+  var pelliPiste=document.getElementById('pelliPiste');
+  var grandVue=null;
+  function fermerVue(){ if(grandVue){ grandVue.remove(); grandVue=null; } }
+  function posePelli(i){
+    if(!pelli||!pelliPiste) return;
+    fermerVue();
+    var vues=COLORS[i].vues||[];
+    if(!vues.length){ pelli.hidden=true; pelliPiste.innerHTML=''; return; }
+    pelli.hidden=false;
+    var html=vues.map(function(v){
+      return '<button type="button" data-v="'+v+'" aria-label="Voir cette photo en grand">'+
+             '<img src="/chromaline/vues/'+v+'.jpg" alt="" loading="lazy"></button>';
+    }).join('');
+    pelliPiste.innerHTML = html + html;
+  }
+  if(pelliPiste){
+    pelliPiste.addEventListener('click',function(e){
+      var b=e.target.closest('button[data-v]'); if(!b) return;
+      fermerVue();
+      grandVue=document.createElement('img');
+      grandVue.id='grandVue';
+      grandVue.src='/chromaline/vues/'+b.getAttribute('data-v')+'.jpg';
+      grandVue.alt='Bague mood Chromaline en photo';
+      grandVue.title='Revenir à la bague qui tourne';
+      grandVue.addEventListener('click',fermerVue);
+      stageAchat.appendChild(grandVue);
+    });
+  }
+
   function choisir(i){
     current=i;
+    posePelli(i);
     var col=COLORS[i];
     root.style.setProperty('--c',col.c);
     root.style.setProperty('--c-soft',col.soft);
