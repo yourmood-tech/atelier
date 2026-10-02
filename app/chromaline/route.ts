@@ -4,10 +4,10 @@ export const revalidate = 0;
 const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>mood Chromaline</title><meta name="robots" content="noindex,nofollow"></head><body style="margin:0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@200;300;400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;1,300;1,400&display=swap">
 <style>
 :root{
-  --serif:'Playfair Display','Times New Roman',serif;
+  --serif:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
   --sans:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
   --paper:#fdfcfa;
   --cream:#f5f1ea;
@@ -51,7 +51,7 @@ h1,h2,h3,p{margin:0}
   display:block;font-size:10px;letter-spacing:3.2px;text-transform:uppercase;
   color:var(--mid);font-weight:400;
 }
-.display{font-family:var(--serif);font-weight:400;line-height:1.08;letter-spacing:-.012em;text-wrap:balance}
+.display{font-family:var(--serif);font-weight:300;line-height:1.1;letter-spacing:-.018em;text-wrap:balance}
 .h1{font-size:clamp(34px,5.2vw,74px)}
 .h2{font-size:clamp(26px,3.4vw,46px)}
 .h3{font-size:clamp(19px,1.9vw,25px)}
