@@ -60,7 +60,7 @@ var msg = document.getElementById('msg');
 // réglages éprouvés sur une vraie main
 var POS = 0.40;     // où la bague se pose sur la première phalange
 var LARG = 0.55;    // sa longueur, par rapport à cette phalange
-var DOIGTS = [[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[17,18,'auriculaire']];
+var DOIGTS = [[2,3,'pouce'],[5,6,'index'],[9,10,'majeur'],[13,14,'annulaire'],[17,18,'auriculaire']];
 
 var bague = new Image();
 bague.src = '/essayage/chromaline.png';
