@@ -101,7 +101,8 @@ h1,h2,h3,p{margin:0}
   border-radius:6px;overflow:hidden;
 }
 #stageAchat{aspect-ratio:725/900;background:#f2f2f2}
-#stageAchat img{object-fit:cover}
+#stageAchat img,#stageAchat video{object-fit:cover}
+#stageAchat video{background:#f2f2f2}
 .choix{
   display:grid;grid-template-columns:0.9fr 1.1fr;align-items:center;
   gap:clamp(20px,3.4vw,56px);max-width:960px;margin:clamp(10px,2vw,26px) auto 0;
@@ -695,12 +696,13 @@ h1,h2,h3,p{margin:0}
         el.loading = i===0 ? 'eager' : 'lazy';
       } else {
         el=document.createElement('video');
-        el.src='/chromaline/'+col.film+'.mp4';
+        el.src='/chromaline/'+(prefixe||'')+col.film+'.mp4';
         el.muted=true; el.loop=true; el.playsInline=true; el.setAttribute('playsinline','');
         el.preload = i===0 ? 'auto' : 'none';
         el.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
       }
       if(i===0){ el.className='on'; }
+      if(!enPhoto && prefixe){ el.poster='/chromaline/'+prefixe+col.film+'.jpg'; }
       hote.appendChild(el);
       liste.push(el);
     });
@@ -708,7 +710,7 @@ h1,h2,h3,p{margin:0}
   poser(stage, couches, false);       /* le titre : la bague qui tourne */
   poser(stageBig, couchesBig, true, 'fond-');  /* le choix des couleurs : les photos */
   var couchesAchat=[];
-  poser(stageAchat, couchesAchat, true, 'achat-');
+  poser(stageAchat, couchesAchat, false, 'achat-');  /* le choix de la bague : la bague qui tourne */
   function jouerListe(liste,i){
     liste.forEach(function(v,k){
       if(!v.play) return;
@@ -729,6 +731,7 @@ h1,h2,h3,p{margin:0}
     if(nom2) nom2.textContent=col.nom;
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
     for(var ka=0;ka<couchesAchat.length;ka++) couchesAchat[ka].classList.toggle('on',ka===i);
+    jouerListe(couchesAchat,i);
     [sws,sws2].forEach(function(hote){
       if(!hote) return;
       var bs=hote.querySelectorAll('.sw');
