@@ -76,7 +76,10 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   var pos = document.getElementById('pos');
   var reglages = document.getElementById('reglages');
 
-  // une Chromaline fait 9 mm de large, un annulaire environ 17 mm : le rapport ne change jamais
+  // la photo fait 1042 sur 359 : sa hauteur represente les 9 mm de la bague.
+  // Un annulaire fait environ 17 mm : la hauteur vaut donc 9/17 de la largeur du doigt,
+  // et la longueur suit les proportions de la photo pour que les diamants restent ronds.
+  var FORME = 1042 / 359;
   var RAPPORT = 9 / 17;
 
   function dessine(){
@@ -90,8 +93,8 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
     repere.style.top = hautDoigt + 'px';
     repere.style.height = (H * 0.74 - hautDoigt) + 'px';
 
-    var l = doigt * 1.06;
-    var h = l * RAPPORT;
+    var h = doigt * RAPPORT;
+    var l = h * FORME;
     bague.style.width = l + 'px';
     bague.style.height = h + 'px';
     bague.style.top = (y - h / 2) + 'px';
@@ -101,16 +104,82 @@ body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing
   pos.addEventListener('input', dessine);
 
   var AIDE = 'Pose ton annulaire dans le repère, bien droit,<br>jusqu\'à en remplir toute la largeur.';
+  var suit = false, taillePosee = 0;
+
   document.getElementById('ok').addEventListener('click', function(){
+    taillePosee = window.innerWidth * 0.17 * (larg.value / 110);
     repere.classList.add('cache');
     reglages.classList.add('cache');
-    msg.innerHTML = 'Et voilà. Touche l\'écran pour revenir aux réglages.';
+    msg.innerHTML = 'La bague suit ta main. Touche l\'écran pour recommencer.';
+    suit = true;
+    accroche();
     document.getElementById('scene').addEventListener('click', function(){
+      suit = false;
+      bague.style.transform = 'translateX(-50%)';
       repere.classList.remove('cache');
       reglages.classList.remove('cache');
       msg.innerHTML = AIDE;
+      dessine();
     }, { once: true });
   });
+
+  // le suivi de la main : il ne demarre qu'une fois la bague posee
+  var detecteur = null, L = null;
+  function accroche(){
+    if (detecteur) { tourne(); return; }
+    import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs').then(function(V){
+      return V.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm')
+        .then(function(f){
+          return V.HandLandmarker.createFromOptions(f, {
+            baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
+            runningMode: 'VIDEO', numHands: 1
+          });
+        });
+    }).then(function(d){ detecteur = d; tourne(); })
+      .catch(function(){ msg.innerHTML = 'La bague reste fixe : le suivi de la main n\'a pas pu démarrer.'; });
+  }
+
+  function placeEcran(x, y){
+    var vw = video.videoWidth, vh = video.videoHeight;
+    var cw = window.innerWidth, ch = window.innerHeight;
+    var e = Math.max(cw / vw, ch / vh);
+    var dw = vw * e, dh = vh * e;
+    return [(cw - dw) / 2 + x * dw, (ch - dh) / 2 + y * dh];
+  }
+
+  function tourne(){
+    if (!suit) return;
+    requestAnimationFrame(tourne);
+    if (!detecteur || video.readyState < 2) return;
+    var res = detecteur.detectForVideo(video, performance.now());
+    if (!res.landmarks || !res.landmarks.length) return;
+    var m = res.landmarks[0];
+    var b = placeEcran(m[13].x, m[13].y);     // depart de l'annulaire
+    var p = placeEcran(m[14].x, m[14].y);     // premiere articulation
+    var mj = placeEcran(m[9].x, m[9].y);
+    var au = placeEcran(m[17].x, m[17].y);
+    var doigt = 0.5 * (Math.hypot(mj[0]-b[0], mj[1]-b[1]) + Math.hypot(au[0]-b[0], au[1]-b[1]));
+
+    var cx = b[0] + (p[0] - b[0]) * 0.34;
+    var cy = b[1] + (p[1] - b[1]) * 0.34;
+    var ang = Math.atan2(p[1] - b[1], p[0] - b[0]) + Math.PI / 2;
+
+    var o = { x: cx, y: cy, a: ang, d: doigt };
+    if (!L) L = Object.assign({}, o);
+    else {
+      var da = o.a - L.a;
+      while (da >  Math.PI) da -= 2 * Math.PI;
+      while (da < -Math.PI) da += 2 * Math.PI;
+      L.a += da * 0.25;
+      L.x += (o.x - L.x) * 0.25; L.y += (o.y - L.y) * 0.25; L.d += (o.d - L.d) * 0.2;
+    }
+    var h = L.d * RAPPORT, l = h * FORME;
+    bague.style.width = l + 'px';
+    bague.style.height = h + 'px';
+    bague.style.left = '0px';
+    bague.style.top = '0px';
+    bague.style.transform = 'translate(' + (L.x - l/2) + 'px,' + (L.y - h/2) + 'px) rotate(' + L.a + 'rad)';
+  }
 
   document.getElementById('go').addEventListener('click', function(){
     var d = document.getElementById('demarrer');
