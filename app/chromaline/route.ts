@@ -623,11 +623,11 @@ h1,h2,h3,p{margin:0}
 <section class="compte">
   <div class="wrap">
     <span class="eyebrow cp-eye">Le compte</span>
-    <h2 class="display compte-titre">251.&#8212; de bijoux. 197.&#8212;.</h2>
+    <h2 class="display compte-titre">539.&#8212; de bijoux. 197.&#8212;.</h2>
     <div class="compte-in">
       <div class="grille">
-        <div class="lg"><span>1 base extra small en acier 316L (9&#8239;mm)</span><b>119.&#8212;</b></div>
-        <div class="lg"><span>1 mini &laquo;&nbsp;Aura Authentique&nbsp;&raquo; en argent 925 serti</span><b>72.&#8212;</b></div>
+        <div class="lg"><span>1 base extra small en acier 316L (9&#8239;mm)</span><b>250.&#8212;</b></div>
+        <div class="lg"><span>1 mini &laquo;&nbsp;Aura Authentique&nbsp;&raquo; en argent 925 serti</span><b>229.&#8212;</b></div>
         <div class="lg"><span>2 minis en aluminium, la couleur de ton choix</span><b>60.&#8212;</b></div>
         <div class="lg tot"><span>Le pack d&eacute;couverte</span><b>197.&#8212;</b></div>
       </div>
