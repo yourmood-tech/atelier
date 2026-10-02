@@ -544,18 +544,18 @@ h1,h2,h3,p{margin:0}
 <section class="hero2">
   <div class="h2scene">
     <img class="h2bg on" src="/chromaline/hero-portee.jpg" alt="La bague mood fine portée au doigt" fetchpriority="high">
-    <img class="h2bg" src="/chromaline/portee-froisse.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee-emeraude.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee-turquoise.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee-bleu.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee-marine.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee-rouge.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee-abricot.jpg" alt="" loading="lazy">
     <img class="h2bg" src="/chromaline/portee2-belipastel.jpg" alt="" loading="lazy">
-    <img class="h2bg" src="/chromaline/portee2-abricot.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-emeraude.jpg" alt="" loading="lazy">
     <img class="h2bg" src="/chromaline/portee2-gris.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-rouge.jpg" alt="" loading="lazy">
     <img class="h2bg" src="/chromaline/portee2-bleu.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-turquoise.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee2-abricot.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-marine.jpg" alt="" loading="lazy">
     <img class="h2bg" src="/chromaline/portee2-vert.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-froisse.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-bleu.jpg" alt="" loading="lazy">
+    <img class="h2bg" src="/chromaline/portee-abricot.jpg" alt="" loading="lazy">
   </div>
   <div class="h2txt">
     <div class="h2inner">
