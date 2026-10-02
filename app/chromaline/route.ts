@@ -404,11 +404,12 @@ h1,h2,h3,p{margin:0}
 
 /* les trois gestes, en grand */
 .geste3{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:start;
-  gap:clamp(10px,1.6vw,26px);margin-top:clamp(26px,3vw,46px);text-align:left}
+  gap:clamp(10px,1.6vw,30px);margin-top:clamp(26px,3vw,46px);text-align:left;
+  width:min(1560px,94vw);margin-inline:auto}
 .g3{margin:0}
-.g3 img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px;display:block;
+.g3 img{width:100%;aspect-ratio:5/4;object-fit:cover;border-radius:3px;display:block;
   box-shadow:0 14px 34px rgba(25,25,23,.10)}
-.g3 figcaption{margin-top:14px;font-size:clamp(12.5px,.95vw,14.5px);line-height:1.65;color:var(--mid)}
+.g3 figcaption{margin-top:16px;font-size:clamp(13px,1vw,15px);line-height:1.65;color:var(--mid)}
 .g3 figcaption b{display:block;margin-bottom:5px;color:var(--ink);font-weight:500;
   font-size:11px;letter-spacing:2.2px;text-transform:uppercase}
 .g3f{align-self:center;margin-top:-6%;color:var(--mid);font-size:clamp(16px,1.6vw,24px);line-height:1}
