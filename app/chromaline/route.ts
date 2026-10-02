@@ -100,6 +100,8 @@ h1,h2,h3,p{margin:0}
   display:block;width:100%;max-width:520px;margin:0 auto;
   border-radius:6px;overflow:hidden;
 }
+#stageBig{aspect-ratio:1/1;background:var(--c-soft);transition:background .5s}
+#stageBig video{object-fit:cover}
 #stageAchat{aspect-ratio:725/900;background:#f2f2f2}
 #stageAchat img,#stageAchat video{object-fit:cover}
 #stageAchat video{background:#f2f2f2}
@@ -702,15 +704,14 @@ h1,h2,h3,p{margin:0}
         el.setAttribute('aria-label','Bague mood Chromaline '+col.nom+' qui tourne');
       }
       if(i===0){ el.className='on'; }
-      if(!enPhoto && prefixe){ el.poster='/chromaline/'+prefixe+col.film+'.jpg'; }
       hote.appendChild(el);
       liste.push(el);
     });
   }
   poser(stage, couches, false);       /* le titre : la bague qui tourne */
-  poser(stageBig, couchesBig, true, 'fond-');  /* le choix des couleurs : les photos */
+  poser(stageBig, couchesBig, false, 'achat-');  /* le premier bloc : la bague qui tourne */
   var couchesAchat=[];
-  poser(stageAchat, couchesAchat, false, 'achat-');  /* le choix de la bague : la bague qui tourne */
+  poser(stageAchat, couchesAchat, true, 'achat-');
   function jouerListe(liste,i){
     liste.forEach(function(v,k){
       if(!v.play) return;
@@ -731,7 +732,7 @@ h1,h2,h3,p{margin:0}
     if(nom2) nom2.textContent=col.nom;
     for(var kb=0;kb<couchesBig.length;kb++) couchesBig[kb].classList.toggle('on',kb===i);
     for(var ka=0;ka<couchesAchat.length;ka++) couchesAchat[ka].classList.toggle('on',ka===i);
-    jouerListe(couchesAchat,i);
+    jouerListe(couchesBig,i);
     [sws,sws2].forEach(function(hote){
       if(!hote) return;
       var bs=hote.querySelectorAll('.sw');
