@@ -890,8 +890,6 @@ h1,h2,h3,p{margin:0}
       } else { v.pause(); }
     });
   }
-  couchesBig.forEach(function(v){ if(v.play) v.preload='auto'; });
-  couchesAchat.forEach(function(v){ if(v.play) v.preload='auto'; });
   jouer(0);
 
   /* la cliente choisit : photo, nom, pastilles, bouton, halo */
