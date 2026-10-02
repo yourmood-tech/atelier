@@ -784,6 +784,16 @@ h1,h2,h3,p{margin:0}
 
 <p class="foot">Mood Collection · Orbe · Suisse · maquette</p>
 
+<div class="gt-fond" id="guideTailles" hidden>
+  <div class="gt" role="dialog" aria-modal="true" aria-label="Guide des tailles">
+    <button type="button" class="gt-x" id="fermerGuide" aria-label="Fermer">&times;</button>
+    <h3>Guide des tailles</h3>
+    <p>Mesurez le diam&egrave;tre int&eacute;rieur d&rsquo;une bague qui vous va d&eacute;j&agrave; &mdash; c&rsquo;est la taille &agrave; choisir.</p>
+    <table><thead><tr><th>Taille mood</th><th>&Oslash; int&eacute;rieur (mm)</th><th>EU</th><th>UK</th><th>US</th></tr></thead><tbody><tr><td>50</td><td>15,9</td><td>50</td><td>J½</td><td>5</td></tr><tr><td>52</td><td>16,6</td><td>52</td><td>L½</td><td>6</td></tr><tr><td>54</td><td>17,2</td><td>54</td><td>N</td><td>6¾</td></tr><tr><td>56</td><td>17,8</td><td>56</td><td>O½</td><td>7½</td></tr><tr><td>58</td><td>18,5</td><td>58</td><td>P½</td><td>8¼</td></tr><tr><td>60</td><td>19,1</td><td>60</td><td>R</td><td>9</td></tr><tr><td>62</td><td>19,7</td><td>62</td><td>S½</td><td>9¾</td></tr><tr><td>64</td><td>20,4</td><td>64</td><td>U</td><td>10½</td></tr><tr><td>66</td><td>21,0</td><td>66</td><td>V½</td><td>11¼</td></tr><tr><td>68</td><td>21,6</td><td>68</td><td>X</td><td>12</td></tr><tr><td>70</td><td>22,3</td><td>70</td><td>Y½</td><td>12¾</td></tr><tr><td>72</td><td>22,9</td><td>72</td><td>—</td><td>13½</td></tr></tbody></table>
+    <p class="gt-pied">Toujours h&eacute;sitante ? Commande un <strong>baguier gratuit</strong> et prends ton temps.</p>
+  </div>
+</div>
+
 <script>
 (function(){
   var CDN='https://cdn.shopify.com/s/files/1/0798/2303/files/';
@@ -1169,16 +1179,6 @@ h1,h2,h3,p{margin:0}
   }
 })();
 </script>
-
-<div class="gt-fond" id="guideTailles" hidden>
-  <div class="gt" role="dialog" aria-modal="true" aria-label="Guide des tailles">
-    <button type="button" class="gt-x" id="fermerGuide" aria-label="Fermer">&times;</button>
-    <h3>Guide des tailles</h3>
-    <p>Mesurez le diam&egrave;tre int&eacute;rieur d&rsquo;une bague qui vous va d&eacute;j&agrave; &mdash; c&rsquo;est la taille &agrave; choisir.</p>
-    <table><thead><tr><th>Taille mood</th><th>&Oslash; int&eacute;rieur (mm)</th><th>EU</th><th>UK</th><th>US</th></tr></thead><tbody><tr><td>50</td><td>15,9</td><td>50</td><td>J½</td><td>5</td></tr><tr><td>52</td><td>16,6</td><td>52</td><td>L½</td><td>6</td></tr><tr><td>54</td><td>17,2</td><td>54</td><td>N</td><td>6¾</td></tr><tr><td>56</td><td>17,8</td><td>56</td><td>O½</td><td>7½</td></tr><tr><td>58</td><td>18,5</td><td>58</td><td>P½</td><td>8¼</td></tr><tr><td>60</td><td>19,1</td><td>60</td><td>R</td><td>9</td></tr><tr><td>62</td><td>19,7</td><td>62</td><td>S½</td><td>9¾</td></tr><tr><td>64</td><td>20,4</td><td>64</td><td>U</td><td>10½</td></tr><tr><td>66</td><td>21,0</td><td>66</td><td>V½</td><td>11¼</td></tr><tr><td>68</td><td>21,6</td><td>68</td><td>X</td><td>12</td></tr><tr><td>70</td><td>22,3</td><td>70</td><td>Y½</td><td>12¾</td></tr><tr><td>72</td><td>22,9</td><td>72</td><td>—</td><td>13½</td></tr></tbody></table>
-    <p class="gt-pied">Toujours h&eacute;sitante ? Commande un <strong>baguier gratuit</strong> et prends ton temps.</p>
-  </div>
-</div>
 </body></html>`;
 
 export async function GET() {
