@@ -344,38 +344,43 @@ h1,h2,h3,p{margin:0}
   .reveal{transform:none}
 }
 
-.hero2{padding-block:clamp(26px,4vw,64px)}
-.h2in{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,4vw,64px);align-items:center}
-.h2img img{width:100%;height:auto;border-radius:4px}
-.h2titre{font-size:clamp(38px,4.8vw,64px);text-transform:uppercase;letter-spacing:-.01em;margin:16px 0 0}
-.h2titre em{font-style:italic;text-transform:none;font-weight:400}
-.h2lede{margin:22px 0 0;color:var(--ink);font-size:clamp(14px,1.08vw,16.5px);line-height:1.85}
-.h2prix{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:26px 0 0;
-  font-family:var(--sans);font-weight:500;font-size:clamp(19px,1.6vw,24px);letter-spacing:.01em}
-.h2note{font-size:12.5px;font-weight:300;color:var(--mid);letter-spacing:.02em}
-.h2btn{margin-top:22px}
-.h2res{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px;
-  font-size:11.5px;line-height:1.5;color:var(--mid);text-align:center}
-.h2r{display:flex;flex-direction:column;align-items:center;gap:9px}
-.h2r svg{width:26px;height:26px;color:var(--ink)}
-@media (max-width:860px){
-  .h2in{grid-template-columns:1fr;gap:26px}
-  .h2titre{font-size:clamp(32px,9vw,46px)}
-  .h2res{gap:12px}
+
+.hero2{display:grid;grid-template-columns:1.08fr .92fr;align-items:stretch;background:var(--paper)}
+.h2img{position:relative;min-height:clamp(340px,42vw,560px);overflow:hidden}
+.h2img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:52% 42%}
+.h2txt{display:flex;align-items:center;padding:clamp(26px,3.4vw,54px) clamp(22px,4vw,74px)}
+.h2inner{max-width:430px}
+.h2eye{border-bottom:1px solid var(--ink);display:inline-block;padding-bottom:3px}
+.h2titre{font-size:clamp(30px,3.7vw,54px);text-transform:uppercase;letter-spacing:-.01em;margin:12px 0 0;line-height:1.02}
+.h2titre em{font-style:italic;text-transform:none;font-weight:400;font-size:.82em}
+.h2lede{margin:16px 0 0;color:var(--ink);font-size:clamp(13px,.95vw,15px);line-height:1.75}
+.h2prix{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 0;
+  font-family:var(--sans);font-weight:500;font-size:clamp(17px,1.35vw,21px);letter-spacing:.01em}
+.h2note{font-size:11.5px;font-weight:300;color:var(--mid);letter-spacing:.02em}
+.h2btn{margin-top:16px;padding:14px 30px}
+.h2res{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px;
+  font-size:11px;line-height:1.45;color:var(--mid);text-align:center}
+.h2r{display:flex;flex-direction:column;align-items:center;gap:7px}
+.h2r svg{width:23px;height:23px;color:var(--ink)}
+@media (max-width:900px){
+  .hero2{grid-template-columns:1fr}
+  .h2img{min-height:52vw}
+  .h2inner{max-width:none}
+  .h2titre{font-size:clamp(30px,8.4vw,44px)}
 }
 </style>
 
 <section class="hero2">
-  <div class="wrap h2in">
-    <div class="h2img"><img src="/chromaline/hero-portee.jpg" alt="La bague mood fine portée au doigt" fetchpriority="high"></div>
-    <div class="h2txt">
-      <span class="eyebrow" style="border-bottom:1px solid var(--ink);display:inline-block;padding-bottom:3px">Nouveauté</span>
+  <div class="h2img"><img src="/chromaline/hero-portee.jpg" alt="La bague mood fine portée au doigt" fetchpriority="high"></div>
+  <div class="h2txt">
+    <div class="h2inner">
+      <span class="eyebrow h2eye">Nouveauté</span>
       <h1 class="display h2titre">La bague<br>mood fine<br><em>avec des pierres</em></h1>
-      <p class="lede h2lede">Une bague fine, élégante et unique.<br>Des pierres, des couleurs, des matières.<br>Un système interchangeable pour créer<br>des compositions qui vous ressemblent.</p>
+      <p class="h2lede">Une bague fine, élégante et unique.<br>Des pierres, des couleurs, des matières.<br>Un système interchangeable pour créer<br>des compositions qui vous ressemblent.</p>
       <p class="h2prix">CHF 197.–
         <span class="h2note"><em class="etoiles">&#9733;&#9733;&#9733;&#9733;&#9733;</em> 4.8/5 &middot; 18&nbsp;000+ avis</span>
       </p>
-      <p><a class="btn btn-c h2btn" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Créer la mienne &nbsp;&rarr;</a></p>
+      <p style="margin:0"><a class="btn btn-c h2btn" href="https://www.yourmood.net/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet">Créer la mienne &nbsp;&rarr;</a></p>
       <div class="h2res">
         <span class="h2r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 5h12v10H1zM13 8h4.5l3.5 3.5V15H13z"/><circle cx="5.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>Livraison depuis<br>la Suisse</span>
         <span class="h2r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M12 2.6 21 7v10l-9 4.4L3 17V7z"/><path d="M3 7l9 4.4L21 7M12 11.4V21.4"/></svg>Échange de taille<br>facile (30 jours)</span>
