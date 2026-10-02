@@ -439,7 +439,11 @@ h1,h2,h3,p{margin:0}
   transition:opacity .3s ease}
 .pelli button:hover{opacity:.82}
 .pelli img{width:100%;height:100%;object-fit:cover;display:block}
-#grandVue{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:3;cursor:zoom-out;background:#e9e9ea}
+#grandVue{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1;z-index:3;
+  cursor:zoom-out;background:#e9e9ea;mix-blend-mode:normal}
+.fermer-vue{position:absolute;top:10px;right:10px;z-index:4;width:30px;height:30px;border:0;border-radius:50%;
+  background:rgba(255,255,255,.92);color:#191917;font-size:15px;line-height:1;cursor:pointer;
+  box-shadow:0 2px 10px rgba(0,0,0,.14)}
 @media (prefers-reduced-motion:reduce){ .pelli-piste{animation:none} }
 </style>
 
@@ -894,7 +898,8 @@ h1,h2,h3,p{margin:0}
   var pelli=document.getElementById('pelli');
   var pelliPiste=document.getElementById('pelliPiste');
   var grandVue=null;
-  function fermerVue(){ if(grandVue){ grandVue.remove(); grandVue=null; } }
+  function fermerVue(){ if(grandVue){ grandVue.remove(); grandVue=null; }
+    var x=stageAchat&&stageAchat.querySelector('.fermer-vue'); if(x) x.remove(); }
   function posePelli(i){
     if(!pelli||!pelliPiste) return;
     fermerVue();
@@ -918,6 +923,11 @@ h1,h2,h3,p{margin:0}
       grandVue.title='Revenir à la bague qui tourne';
       grandVue.addEventListener('click',fermerVue);
       stageAchat.appendChild(grandVue);
+      var x=document.createElement('button');
+      x.type='button'; x.className='fermer-vue'; x.innerHTML='&times;';
+      x.setAttribute('aria-label','Revenir à la bague qui tourne');
+      x.addEventListener('click',function(ev){ ev.stopPropagation(); fermerVue(); });
+      grandVue.after(x);
     });
   }
 
