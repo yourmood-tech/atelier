@@ -106,6 +106,8 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
  section.s .w,nav.sommaire div,.intro,.fin{padding-left:20px;padding-right:20px}
  .g{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
 }
+
+.vd{display:block;margin-top:3px;font-size:11.5px;line-height:1.45;color:#8b8880;text-transform:none;letter-spacing:0}
 </style>
 </head><body>
 
@@ -134,13 +136,13 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 <section class="s" id="nouveau2026"><div class="w">
   <div class="pastille">Nouveauté 2026</div>
   <div class="eb">La collection Halloween 2026</div>
-  <h2>Les pièces de cette année, bientôt.</h2>
+  <h2>Les quatre pièces de cette année.</h2>
   <p class="lede">Elles arrivent une à une d'ici le 31 octobre.</p>
   <div class="vg">
-    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 1</span></div>
-    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 2</span></div>
-    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 3</span></div>
-    <div class="att"><span class="attph"><span>Bientôt</span></span><span class="vn">Pièce 4</span></div>
+    <div class="att"><span class="attph"><span>💀</span></span><span class="vn">Skully</span><span class="vd">l'anneau tête de mort, serti de huit pierres</span></div>
+    <div class="att"><span class="attph"><span>🕷️</span></span><span class="vn">Aranea</span><span class="vd">l'araignée et sa toile de six diamants</span></div>
+    <div class="att"><span class="attph"><span>🎃</span></span><span class="vn">Debbie</span><span class="vd">la citrouille sertie de treize diamants</span></div>
+    <div class="att"><span class="attph"><span>💀</span></span><span class="vn">Calavera</span><span class="vd">la calavera mexicaine, en fête</span></div>
   </div>
 </div></section>
 
