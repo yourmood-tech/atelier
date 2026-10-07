@@ -37,6 +37,11 @@ export default auth((req) => {
     return;
   }
 
+  // lecture des photos Halloween (la page /halloween en a besoin) + les photos ajoutées
+  if (pathname === "/api/hw-photos" || pathname === "/api/hw-photo") {
+    return;
+  }
+
   // décompte public des box restantes
   if (pathname === "/api/box-reste") {
     return;
