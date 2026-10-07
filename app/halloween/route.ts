@@ -140,7 +140,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
   </figure>
 </header>
 
-<nav class="sommaire"><div><a href="#nouveau2026">2026</a><a href="#cranes">Les skull</a><a href="#witch">Witch</a><a href="#citrouilles">Pumpkin</a><a href="#spider">Spider</a><a href="#snake">Snake</a><a href="#bat">Bat</a><a href="#blood">Blood</a><a href="#bestioles">Ghost</a><a href="#ahs">Les saisons</a><a href="#minis">Les minis</a><a href="#bases">Les bases</a><a href="#coffrets">Les coffrets</a></div></nav>
+<nav class="sommaire"><div><a href="#nouveau2026">2026</a><a href="#cranes">Les skull</a><a href="#witch">Witch</a><a href="#citrouilles">Pumpkin</a><a href="#spider">Spider</a><a href="#snake">Snake</a><a href="#bat">Bat</a><a href="#blood">Blood</a><a href="#ahs">Les saisons</a><a href="#minis">Les minis</a><a href="#bases">Les bases</a><a href="#coffrets">Les coffrets</a></div></nav>
 
 <div class="intro"><p>Chez mood, Halloween n'est pas un déguisement.<br>C'est une humeur — et elle se clipse.</p></div>
 
@@ -252,20 +252,6 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
       <button type="button" class="fl fd" aria-label="Suivant" onclick="this.parentNode.querySelector('.rail').scrollBy({left:560,behavior:'smooth'})">&#8250;</button>
     </div>
     <div class="glis">Glissez pour voir les 4 pièces</div>
-  </div>
-</section>
-<section class="s" id="bestioles">
-  <div class="w">
-    <div class="eb">Ghost</div>
-    <h2>Le fantôme.</h2>
-    <p class="lede">Ce qui passe sans bruit, gravé sur l'aluminium.</p>
-    
-    <div class="rail-zone">
-      <button type="button" class="fl fg" aria-label="Précédent" onclick="this.parentNode.querySelector('.rail').scrollBy({left:-560,behavior:'smooth'})">&#8249;</button>
-      <div class="rail"><a class="c" href="https://www.yourmood.net/products/fantomas" target="_blank" rel="noopener"><span class="ph"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-2-3-aluminium-grave-fantomas-1.jpg?width=700" alt="Deux tiers Fantomas"></span><span class="n">Deux tiers Fantomas</span><span class="pr">75.–</span></a></div>
-      <button type="button" class="fl fd" aria-label="Suivant" onclick="this.parentNode.querySelector('.rail').scrollBy({left:560,behavior:'smooth'})">&#8250;</button>
-    </div>
-    <div class="glis">Glissez pour voir les 1 pièces</div>
   </div>
 </section>
 <section class="s" id="ahs">
