@@ -119,6 +119,9 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 .pst i{width:13px;height:13px;border-radius:50%;display:block;border:1px solid rgba(255,255,255,.22)}
 .pst b{font-weight:400;font-size:11px;color:#8b8490;margin-left:4px}
 .fmt{display:block;margin-top:6px;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#7C7688}
+
+.hero figure video{width:100%;display:block;border-radius:3px;background:#000}
+.hero h1 em{color:#fff}
 </style>
 </head><body>
 
@@ -135,8 +138,8 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
     <a class="cta" href="#cranes">Entrer dans la collection</a>
   </div>
   <figure>
-    <img src="https://cdn.shopify.com/s/files/1/0798/2303/files/1179501138_f1dd7aa4-60ea-4b88-ad23-9122fedfdf2c.jpg?width=1600" alt="Addon Mercredi serti">
-    <figcaption class="cap">Addon Mercredi serti</figcaption>
+    <video src="/halloween/promo.mp4" autoplay muted loop playsinline preload="metadata"
+           aria-label="La collection Halloween 2026 en vidéo"></video>
   </figure>
 </header>
 
