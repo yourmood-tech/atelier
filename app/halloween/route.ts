@@ -112,7 +112,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 /* les quatre nouveautes 2026 : les photos produit defilent */
 .n26{display:block;text-decoration:none;color:inherit}
 .n26ph{position:relative;display:block;aspect-ratio:1/1.06;border-radius:3px;overflow:hidden;background:#17131f}
-.n26ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .9s ease}
+.n26ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.8s ease-in-out}
 .n26ph img.on{opacity:1}
 
 .pst{display:flex;align-items:center;gap:5px;margin-top:8px;flex-wrap:wrap}
@@ -339,17 +339,18 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 (function(){
   if(window.__n26) return; window.__n26=1;
   var go=function(){
-    document.querySelectorAll('.n26ph').forEach(function(ph,k){
-      var im=ph.querySelectorAll('img'); if(im.length<2) return;
-      var i=0;
-      setTimeout(function(){
-        setInterval(function(){
-          im[i].classList.remove('on');
-          i=(i+1)%im.length;
-          im[i].classList.add('on');
-        },2600);
-      }, k*500);
+    var g=[];
+    document.querySelectorAll('.n26ph').forEach(function(ph){
+      var im=ph.querySelectorAll('img'); if(im.length>1) g.push({im:im,i:0});
     });
+    if(!g.length) return;
+    setInterval(function(){
+      g.forEach(function(o){                 /* toutes en meme temps */
+        o.im[o.i].classList.remove('on');
+        o.i=(o.i+1)%o.im.length;
+        o.im[o.i].classList.add('on');
+      });
+    },4200);
   };
   if(document.readyState!=='loading') go(); else document.addEventListener('DOMContentLoaded',go);
 })();
