@@ -88,11 +88,11 @@ section.s h2{font-size:clamp(28px,3.4vw,42px);font-weight:200;margin:12px 0 0;le
 .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;margin-top:34px}
 .c{display:block;padding:14px 14px 20px;transition:.4s;border:1px solid transparent}
 .c:hover{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.07)}
-.ph{display:block;position:relative;aspect-ratio:1/1;overflow:hidden;background:#2B2B30;border-radius:2px}
+.ph{display:block;position:relative;aspect-ratio:1/1;overflow:hidden;background:#000000;border-radius:2px}
 .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.7,.2,1)}
 .c:hover .ph img{transform:scale(1.07)}
 .n{display:block;margin-top:13px;font-size:13px;line-height:1.45;color:#CFC8BC;min-height:38px;font-weight:300}
-.pr{display:block;margin-top:5px;font-size:12px;letter-spacing:.06em;color:#8C8798}
+.pr{display:none}
 
 .fin{max-width:1360px;margin:0 auto;padding:96px 40px 120px;text-align:center}
 .fin .eb{margin-bottom:14px}
