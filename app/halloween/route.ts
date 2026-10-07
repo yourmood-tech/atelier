@@ -62,16 +62,16 @@ section.s h2{font-size:clamp(28px,3.4vw,42px);font-weight:200;margin:12px 0 0;le
 .attph span{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#7C7688}
 .vg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:34px}
 .v{display:block;transition:.4s}
-.vph{display:block;position:relative;aspect-ratio:1/1.06;overflow:hidden;border-radius:3px;background:#2B2B30;
- border:1px solid rgba(255,255,255,.08)}
+.vph{display:block;position:relative;aspect-ratio:1/1.06;overflow:hidden;border-radius:3px;background:#07070A;
+ border:0}
 .vph video.vsur{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s ease;z-index:2}
 .v:hover .vph video.vsur{opacity:1}
 .vsur{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s ease;z-index:2}
 .v:hover .vsur{opacity:1}
-.vph video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#2B2B30}
+.vph video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#07070A}
 .vph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
 .v:hover .vph img{transform:scale(1.06)}
-.v:hover .vph{border-color:rgba(233,226,216,.30)}
+
 .vn{display:block;margin-top:14px;font-size:15px;line-height:1.4;color:#E4DED4;font-weight:300}
 .vpr{display:none}
 @media(max-width:900px){.vg{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -111,7 +111,7 @@ footer{border-top:1px solid rgba(255,255,255,.07);padding:30px 40px 60px;text-al
 
 /* les quatre nouveautes 2026 : les photos produit defilent */
 .n26{display:block;text-decoration:none;color:inherit}
-.n26ph{position:relative;display:block;aspect-ratio:1/1.06;border-radius:3px;overflow:hidden;background:#17131f}
+.n26ph{position:relative;display:block;aspect-ratio:1/1.06;border-radius:3px;overflow:hidden;background:#07070A}
 .n26ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.8s ease-in-out}
 .n26ph img.on{opacity:1}
 
