@@ -15,7 +15,7 @@ html,body{margin:0;padding:0;background:#000000;color:#EDE8E4;}
 body{font-family:'Jost','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;}
 a{color:inherit;text-decoration:none}
 
-.fum{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;mix-blend-mode:screen;transform:scale(1.25);}
+.fum{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;mix-blend-mode:screen;transform:scale(1.25);z-index:40;opacity:.5}
 #fumee-fond{z-index:1;opacity:.34;}
 
 @media (prefers-reduced-motion:reduce){.fum{display:none}}
