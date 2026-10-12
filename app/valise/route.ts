@@ -13,100 +13,83 @@ const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta n
   --texte:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box}
-html,body{margin:0;padding:0}
+html,body{margin:0;padding:0;height:100%}
 body{background:var(--nuit);color:var(--creme);font-family:var(--texte);font-weight:300;
-  line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 #neige{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
-.halo{position:fixed;left:50%;top:-18vh;width:120vw;height:70vh;transform:translateX(-50%);
-  background:radial-gradient(ellipse at center,rgba(142,31,47,.40),rgba(32,9,14,0) 68%);pointer-events:none;z-index:0}
-main{position:relative;z-index:2;width:min(1140px,100%);margin:0 auto;padding:0 20px}
+.halo{position:fixed;left:50%;top:-20vh;width:120vw;height:70vh;transform:translateX(-50%);
+  background:radial-gradient(ellipse at center,rgba(142,31,47,.38),rgba(32,9,14,0) 68%);pointer-events:none;z-index:0}
+main{position:relative;z-index:2;width:min(1280px,100%);margin:0 auto;padding:0 18px}
 
-header{padding-block:clamp(48px,8vw,92px) clamp(14px,2.4vw,26px);text-align:center}
-.sur{font-size:11px;letter-spacing:.38em;text-transform:uppercase;color:var(--or);margin:0 0 20px}
-h1{font-family:var(--titre);font-weight:400;font-size:clamp(38px,8.4vw,74px);line-height:1.06;margin:0;text-wrap:balance}
+header{padding-block:clamp(26px,4vw,44px) clamp(10px,1.6vw,18px);text-align:center}
+.sur{font-size:10px;letter-spacing:.36em;text-transform:uppercase;color:var(--or);margin:0 0 12px}
+h1{font-family:var(--titre);font-weight:400;font-size:clamp(30px,5.4vw,52px);line-height:1.05;margin:0}
 h1 em{font-style:italic;color:var(--or)}
-.prix-haut{margin:22px 0 0;font-size:clamp(17px,2.4vw,21px);letter-spacing:.05em}
-.prix-haut b{font-weight:500}
-.chapeau{margin:13px auto 0;max-width:34em;color:var(--doux);font-size:15px}
-.brouillon{display:inline-block;margin-top:18px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
-  color:rgba(247,241,232,.45);border:1px solid rgba(247,241,232,.18);border-radius:999px;padding:5px 14px}
+.chapeau{margin:12px auto 0;max-width:40em;color:var(--doux);font-size:13.5px}
+.brouillon{display:inline-block;margin-top:12px;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(247,241,232,.42);border:1px solid rgba(247,241,232,.16);border-radius:999px;padding:4px 12px}
 
-.grille{display:grid;grid-template-columns:1fr;gap:clamp(22px,3vw,36px);align-items:start;margin-top:clamp(24px,3.6vw,40px)}
-@media(min-width:960px){.grille{grid-template-columns:1fr 348px}}
-
-/* ——— une étape ——— */
-.etape{border-top:1px solid rgba(247,241,232,.10);padding:clamp(24px,3.2vw,34px) 0}
-.etape:first-child{border-top:0;padding-top:0}
-.tete{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;margin-bottom:4px}
-.num{font-family:var(--titre);font-style:italic;color:var(--or);font-size:19px;min-width:1.3em}
-.quoi{flex:1 1 220px;min-width:0;font-size:16.5px}
-.val{color:var(--doux);font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.sous{margin:0 0 0 calc(1.3em + 13px);color:var(--doux);font-size:13.5px}
-@media(max-width:560px){.sous{margin-left:0}}
-
-/* ——— le rail qui défile ——— */
-.rail{position:relative;margin-top:16px}
-.piste{display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;
-  padding:4px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+/* ——— les cinq colonnes ——— */
+.rangee{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:clamp(14px,2.2vw,24px)}
+.col{min-width:0;display:flex;flex-direction:column}
+.col h3{margin:0 0 2px;font-family:var(--titre);font-weight:400;font-size:14.5px;text-align:center;line-height:1.3}
+.col .px{margin:0 0 9px;text-align:center;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--doux)}
+.cage{position:relative;border:1px solid rgba(247,241,232,.11);border-radius:3px;overflow:hidden;
+  background:rgba(45,13,20,.5)}
+.cage::before,.cage::after{content:"";position:absolute;left:0;right:0;height:38px;pointer-events:none;z-index:2}
+.cage::before{top:0;background:linear-gradient(rgba(32,9,14,.95),rgba(32,9,14,0))}
+.cage::after{bottom:0;background:linear-gradient(rgba(32,9,14,0),rgba(32,9,14,.95))}
+.piste{height:clamp(300px,46vh,430px);overflow-y:auto;scroll-behavior:smooth;scrollbar-width:none;
+  padding:12px 10px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
 .piste::-webkit-scrollbar{display:none}
-.carte{flex:0 0 auto;scroll-snap-align:start;width:134px;background:transparent;border:0;padding:0;
-  cursor:pointer;font:inherit;color:var(--doux);text-align:center;transition:color .2s ease,transform .18s ease}
+.carte{flex:0 0 auto;background:transparent;border:0;padding:0;cursor:pointer;font:inherit;
+  color:var(--doux);text-align:center;transition:color .2s ease,transform .18s ease}
 .carte:hover{color:var(--creme);transform:translateY(-2px)}
-.rond{width:134px;height:134px;border-radius:3px;display:grid;place-items:center;
-  border:1px solid rgba(247,241,232,.14);overflow:hidden;position:relative;
+.rond{position:relative;width:100%;aspect-ratio:1/1;border-radius:3px;overflow:hidden;
+  border:1px solid rgba(247,241,232,.14);display:grid;place-items:center;
   transition:border-color .2s ease,box-shadow .2s ease}
 .rond img{width:100%;height:100%;object-fit:cover;display:block;background:#f3f1ee}
-.rond .pastille{width:58px;height:58px;border-radius:50%;display:block;
+.rond .pastille{width:46%;aspect-ratio:1/1;border-radius:50%;display:block;
   box-shadow:0 0 0 1px rgba(32,9,14,.25) inset,0 8px 20px rgba(0,0,0,.45)}
-.rond .avenir{position:absolute;bottom:8px;left:0;right:0;font-style:normal;
-  font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(247,241,232,.38)}
-.carte .nom{display:block;margin-top:10px;font-size:12.5px;line-height:1.35}
-.carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or),0 12px 30px rgba(0,0,0,.5)}
+.rond .avenir{position:absolute;bottom:6px;left:0;right:0;font-style:normal;font-size:8.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:rgba(247,241,232,.34)}
+.rond .pt{font-family:var(--titre);font-size:30px;color:var(--or)}
+.carte .nom{display:block;margin-top:6px;font-size:11.5px;line-height:1.3}
+.carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or)}
 .carte[aria-pressed="true"]{color:var(--or)}
-.carte[aria-pressed="true"] .rond::after{content:"✓";position:absolute;top:7px;right:9px;color:var(--or);font-size:13px}
-.fleche{position:absolute;top:44px;width:38px;height:38px;border-radius:50%;border:1px solid var(--ligne);
-  background:rgba(32,9,14,.86);color:var(--creme);cursor:pointer;display:grid;place-items:center;
-  font-size:15px;line-height:1;z-index:3;transition:background .2s ease}
-.fleche:hover{background:var(--rouge)}
-.fleche.g{left:-10px}.fleche.d{right:-10px}
-@media(max-width:620px){.fleche{display:none}}
+.carte[aria-pressed="true"] .rond::after{content:"✓";position:absolute;top:5px;right:7px;color:var(--or);font-size:12px}
+.flh{position:absolute;left:50%;transform:translateX(-50%);width:30px;height:22px;border-radius:999px;
+  border:1px solid var(--ligne);background:rgba(32,9,14,.9);color:var(--creme);cursor:pointer;
+  display:grid;place-items:center;font-size:11px;line-height:1;z-index:3;transition:background .2s ease}
+.flh:hover{background:var(--rouge)}
+.flh.h{top:5px}.flh.b{bottom:5px}
 
-/* la base surprise */
-.surprise{display:flex;align-items:center;gap:clamp(16px,3vw,28px);flex-wrap:wrap;margin-top:16px}
-.boite{flex:0 0 auto;width:148px;height:148px;border-radius:3px;border:1px dashed rgba(201,164,106,.45);
-  display:grid;place-items:center;background:linear-gradient(160deg,rgba(142,31,47,.30),rgba(32,9,14,.4))}
-.boite b{font-family:var(--titre);font-size:46px;color:var(--or);font-weight:400}
-.surprise .mot{flex:1 1 230px;min-width:0;color:var(--doux);font-size:14px}
-
-/* ——— la valise ——— */
-.valise{position:sticky;top:18px;background:linear-gradient(180deg,rgba(45,13,20,.96),rgba(32,9,14,.96));
-  border:1px solid var(--ligne);border-radius:4px;padding:26px 24px 24px;box-shadow:0 30px 70px rgba(0,0,0,.45)}
-.valise h2{font-family:var(--titre);font-weight:400;font-size:22px;margin:0;text-align:center}
-.compte{text-align:center;color:var(--or);font-size:11px;letter-spacing:.26em;text-transform:uppercase;margin:7px 0 20px}
-ul.dedans{list-style:none;margin:0;padding:0}
-ul.dedans li{display:flex;align-items:flex-start;gap:10px;padding:11px 0;
-  border-top:1px solid rgba(247,241,232,.08);font-size:13.5px;line-height:1.5}
-ul.dedans li:first-child{border-top:0}
-.coche{flex:0 0 auto;width:16px;height:16px;border-radius:50%;margin-top:3px;
-  border:1px solid rgba(247,241,232,.22);display:grid;place-items:center;font-size:9px;color:var(--nuit)}
-li.ok .coche{background:var(--or);border-color:var(--or)}
-li.ok .coche::after{content:"✓"}
-.ligne-txt{flex:1 1 auto;min-width:0;color:rgba(247,241,232,.38)}
-li.ok .ligne-txt{color:var(--creme)}
-.ligne-txt em{font-style:normal;display:block;font-size:12px;color:var(--doux);margin-top:1px}
-.trait{height:1px;background:var(--ligne);margin:20px 0 0}
-.total{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding-top:16px;font-size:14px;color:var(--doux)}
-.ticket{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding-top:8px}
-.ticket span{font-family:var(--titre);font-size:20px}
-.ticket strong{font-family:var(--titre);font-weight:500;color:var(--or);font-size:38px;line-height:1}
-.bouton{display:block;width:100%;text-align:center;margin-top:20px;background:var(--rouge);color:var(--creme);
-  border:0;border-radius:2px;padding:16px 20px;letter-spacing:.14em;text-transform:uppercase;
-  font-family:var(--texte);font-size:11.5px;cursor:pointer;transition:background .25s ease,opacity .25s ease}
+/* ——— la barre du bas ——— */
+.barre{position:sticky;bottom:0;z-index:4;margin-top:14px;
+  background:linear-gradient(rgba(32,9,14,.80),rgba(32,9,14,.97));
+  border-top:1px solid var(--ligne);
+  padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.resume{flex:1 1 320px;min-width:0;font-size:12.5px;color:rgba(247,241,232,.45);line-height:1.6}
+.resume b{color:var(--creme);font-weight:400}
+.resume .sep{color:var(--or);padding:0 6px}
+.droite{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.chiffres{text-align:right;line-height:1.25}
+.chiffres .barre-val{font-size:11.5px;color:var(--doux);text-decoration:line-through}
+.chiffres .px400{font-family:var(--titre);font-size:30px;color:var(--or);display:block}
+.bouton{background:var(--rouge);color:var(--creme);border:0;border-radius:2px;padding:15px 30px;
+  letter-spacing:.14em;text-transform:uppercase;font-family:var(--texte);font-size:11px;cursor:pointer;
+  transition:background .25s ease,opacity .25s ease;white-space:nowrap}
 .bouton:hover:not(:disabled){background:#a4283a}
 .bouton:disabled{opacity:.34;cursor:not-allowed}
-.apres{margin-top:12px;text-align:center;font-size:12px;color:rgba(247,241,232,.45);min-height:1.2em}
-.mention{margin:30px auto 0;max-width:30em;color:rgba(247,241,232,.42);font-size:12px;line-height:1.65;text-align:center}
-.pied{padding-bottom:clamp(50px,8vw,90px)}
+.apres{width:100%;font-size:11.5px;color:var(--or);padding-top:6px}
+.mention{margin:14px auto 26px;max-width:34em;color:rgba(247,241,232,.34);font-size:11px;text-align:center;line-height:1.6}
+
+@media(max-width:860px){
+  .rangee{grid-template-columns:repeat(2,1fr);gap:12px}
+  .piste{height:clamp(240px,36vh,320px)}
+}
+@media(max-width:460px){ .rangee{grid-template-columns:1fr 1fr} .col h3{font-size:13px} }
 </style>
 
 <div class="halo"></div>
@@ -116,107 +99,92 @@ li.ok .ligne-txt{color:var(--creme)}
   <header>
     <p class="sur">Édition de Noël · 2026</p>
     <h1>La valise <em>de Noël</em></h1>
-    <p class="prix-haut"><b>400.–</b> · vous composez la vôtre</p>
-    <p class="chapeau">Une base surprise, puis quatre choix. Vous cliquez, ça part dans votre valise.</p>
+    <p class="chapeau">Une base surprise, puis quatre choix. Faites défiler chaque colonne, cliquez — le prix ne bouge pas.</p>
     <span class="brouillon">Maquette — certaines pièces n'existent pas encore</span>
   </header>
 
-  <div class="grille">
-    <section id="etapes"></section>
+  <div class="rangee" id="rangee"></div>
 
-    <aside class="valise">
-      <h2>Ma valise</h2>
-      <p class="compte"><span id="fait">0</span> / 5 choisis</p>
-      <ul class="dedans" id="dedans"></ul>
-      <div class="trait"></div>
-      <p class="total"><span>Valeur totale</span><span>693.–</span></p>
-      <p class="ticket"><span>Le ticket</span><strong>400.–</strong></p>
+  <div class="barre">
+    <p class="resume" id="resume"></p>
+    <div class="droite">
+      <div class="chiffres">
+        <span class="barre-val">693.–</span>
+        <span class="px400">400.–</span>
+      </div>
       <button class="bouton" id="go" disabled>Je prends mon billet</button>
-      <p class="apres" id="apres"></p>
-    </aside>
+    </div>
+    <p class="apres" id="apres"></p>
   </div>
 
-  <div class="pied">
-    <p class="mention">📷 Photo non contractuelle — les nuances peuvent varier légèrement en raison du travail artisanal.</p>
-  </div>
+  <p class="mention">📷 Photo non contractuelle — les nuances peuvent varier légèrement en raison du travail artisanal.</p>
 </main>
 
 <script>
 (function(){
-  var BASE='https://cdn.shopify.com/s/files/1/0798/2303/files/';
+  var B='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var ETAPES=[
-   {t:"La base", court:"Base acier", v:"valeur 100.–", surprise:true,
-    sous:"Une base en acier unique, créée pour Noël. Vous la découvrirez en ouvrant la boîte — vous choisissez juste votre largeur.",
-    o:[{n:"extra small",c:"#cfd3d6"},{n:"small",c:"#cfd3d6"},{n:"large",c:"#cfd3d6"}]},
-   {t:"L'Aura medium en argent 925", court:"Aura medium", v:"valeur 119.–",
-    sous:"Celle qui se voit. Une seule, la vôtre.",
+   {t:"La base", court:"Base", px:"100.–", pt:true,
+    o:[{n:"extra small"},{n:"small"},{n:"large"}]},
+   {t:"L'Aura medium", court:"Aura medium", px:"119.–",
     o:[{n:"bordeaux",c:"#6E1B2A"},
        {n:"céleste",c:"#A8C8E0",i:"IMG_6186.jpg"},
        {n:"authentique rose gold",c:"#E3B7A0",i:"ChatGPTImage10aout2026a14_23_27.png"},
        {n:"coquelicot",c:"#D4342B",i:"5_12c85b4f-0393-4d5e-a226-243736caf26c.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8"}]},
-   {t:"Le pack de 2 minis Aura", court:"2 minis Aura", v:"valeur 120.–",
-    sous:"Deux fils fins, de chaque côté.",
+   {t:"Les 2 minis Aura", court:"2 minis", px:"120.–",
     o:[{n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
        {n:"céleste",c:"#A8C8E0",i:"bague5.jpg"},{n:"bordeaux",c:"#6E1B2A"}]},
-   {t:"Le deux tiers Aurheart en argent", court:"Aurheart", v:"valeur 177.–",
-    sous:"Les cœurs.",
+   {t:"Le deux tiers Aurheart", court:"Aurheart", px:"177.–",
     o:[{n:"rouge",c:"#9E1B2F",i:"Bague_eternite_en_saphir_rose.png"},
        {n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},{n:"céleste",c:"#A8C8E0"},
        {n:"azure",c:"#4E8FD0",i:"visuels_site_3_cases_-45.jpg"},
        {n:"white",c:"#F4F4F2",i:"ChatGPT_Image_22_juil._2026_a_15_09_37.png"}]},
-   {t:"Le deux tiers Auraline en argent", court:"Auraline", v:"valeur 177.–",
-    sous:"La ligne sertie.",
+   {t:"Le deux tiers Auraline", court:"Auraline", px:"177.–",
     o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
        {n:"white",c:"#F4F4F2",i:"Nouveaute_2.jpg"}]}
   ];
   var choix=new Array(ETAPES.length).fill(null);
-  var zone=document.getElementById('etapes'), dedans=document.getElementById('dedans'),
-      fait=document.getElementById('fait'), go=document.getElementById('go'), apres=document.getElementById('apres');
+  var rangee=document.getElementById('rangee'), resume=document.getElementById('resume'),
+      go=document.getElementById('go'), apres=document.getElementById('apres');
 
   ETAPES.forEach(function(e,i){
-    var s=document.createElement('div'); s.className='etape';
-    var h='<div class="tete"><span class="num">'+(i+1)+'</span><span class="quoi">'+e.t+'</span><span class="val">'+e.v+'</span></div>';
-    h+='<p class="sous">'+e.sous+'</p>';
-    if(e.surprise){
-      h+='<div class="surprise"><div class="boite"><b>?</b></div><div class="mot">Surprise de Noël — le motif reste secret jusqu\\'au déballage.</div></div>';
-    }
-    h+='<div class="rail"><button class="fleche g" type="button" data-r="'+i+'" data-s="-1">‹</button>'+
-       '<div class="piste" id="piste'+i+'">';
+    var col=document.createElement('div'); col.className='col';
+    var h='<h3>'+e.t+'</h3><p class="px">'+e.px+'</p>'+
+          '<div class="cage"><button class="flh h" type="button" data-r="'+i+'" data-s="-1">▲</button>'+
+          '<div class="piste" id="piste'+i+'">';
     e.o.forEach(function(op,j){
-      var dedansCarte = op.i
-        ? '<img src="'+BASE+op.i+'&width=420" alt="" loading="lazy">'
-        : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>';
+      var dedans = e.pt
+        ? '<span class="pt">?</span>'
+        : (op.i ? '<img src="'+B+op.i+'&width=420" alt="" loading="lazy">'
+                : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>');
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
-         '<span class="rond">'+dedansCarte+'</span>'+
-         '<span class="nom">'+op.n+'</span></button>';
+         '<span class="rond">'+dedans+'</span><span class="nom">'+op.n+'</span></button>';
     });
-    h+='</div><button class="fleche d" type="button" data-r="'+i+'" data-s="1">›</button></div>';
-    s.innerHTML=h; zone.appendChild(s);
+    h+='</div><button class="flh b" type="button" data-r="'+i+'" data-s="1">▼</button></div>';
+    col.innerHTML=h; rangee.appendChild(col);
   });
 
   function rendu(){
-    dedans.innerHTML='';
-    ETAPES.forEach(function(e,i){
-      var li=document.createElement('li'); var pris=choix[i]!==null;
-      li.className=pris?'ok':'';
-      li.innerHTML='<span class="coche"></span><span class="ligne-txt">'+e.court+
-        '<em>'+(pris?e.o[choix[i]].n:'à choisir')+'</em></span>';
-      dedans.appendChild(li);
+    var bouts=ETAPES.map(function(e,i){
+      return choix[i]===null
+        ? e.court+' <span style="opacity:.55">— à choisir</span>'
+        : e.court+' <b>'+e.o[choix[i]].n+'</b>';
     });
+    resume.innerHTML=bouts.join('<span class="sep">·</span>');
     var n=choix.filter(function(x){return x!==null}).length;
-    fait.textContent=n; go.disabled=n<ETAPES.length;
+    go.disabled=n<ETAPES.length;
     if(n<ETAPES.length) apres.textContent='';
   }
 
-  zone.addEventListener('click',function(ev){
-    var fl=ev.target.closest('.fleche');
-    if(fl){ var p=document.getElementById('piste'+fl.dataset.r);
-      p.scrollBy({left:(+fl.dataset.s)*280,behavior:'smooth'}); return; }
+  rangee.addEventListener('click',function(ev){
+    var fl=ev.target.closest('.flh');
+    if(fl){ document.getElementById('piste'+fl.dataset.r)
+      .scrollBy({top:(+fl.dataset.s)*180,behavior:'smooth'}); return; }
     var b=ev.target.closest('.carte'); if(!b) return;
     var i=+b.dataset.e, j=+b.dataset.o;
     choix[i]=(choix[i]===j)?null:j;
-    zone.querySelectorAll('.carte[data-e="'+i+'"]').forEach(function(x){
+    rangee.querySelectorAll('.carte[data-e="'+i+'"]').forEach(function(x){
       x.setAttribute('aria-pressed',(+x.dataset.o===choix[i])?'true':'false');
     });
     rendu();
@@ -224,7 +192,7 @@ li.ok .ligne-txt{color:var(--creme)}
 
   go.addEventListener('click',function(){
     var l=ETAPES.map(function(e,i){return e.court+' · '+e.o[choix[i]].n;}).join('  |  ');
-    apres.innerHTML='Sur la vraie page, on partirait au paiement avec&nbsp;:<br><span style="color:var(--or)">'+l+'</span>';
+    apres.innerHTML='Sur la vraie page, on partirait au paiement à 400.– avec&nbsp;: '+l;
   });
 
   rendu();
@@ -235,9 +203,9 @@ li.ok .ligne-txt{color:var(--creme)}
     function taille(){ L=c.width=innerWidth*devicePixelRatio; H=c.height=innerHeight*devicePixelRatio;
       c.style.width=innerWidth+'px'; c.style.height=innerHeight+'px'; }
     taille(); addEventListener('resize',taille);
-    var n=doux?26:70;
-    for(var i=0;i<n;i++) f.push({x:Math.random(),y:Math.random(),r:(Math.random()*1.7+.5)*devicePixelRatio,
-      v:(Math.random()*.00035+.00012),o:Math.random()*.45+.12,d:Math.random()*6.28});
+    var n=doux?24:60;
+    for(var i=0;i<n;i++) f.push({x:Math.random(),y:Math.random(),r:(Math.random()*1.6+.5)*devicePixelRatio,
+      v:(Math.random()*.00032+.00011),o:Math.random()*.42+.12,d:Math.random()*6.28});
     (function dessine(t){
       x.clearRect(0,0,L,H);
       for(var i=0;i<f.length;i++){ var p=f[i];
