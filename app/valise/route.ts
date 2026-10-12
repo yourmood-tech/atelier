@@ -7,7 +7,7 @@ const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta n
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@200;300;400;500&display=swap">
 <style>
 :root{
-  --nuit:#20090e; --nuit2:#2d0d14; --creme:#f7f1e8; --or:#c9a46a; --rouge:#8e1f2f;
+  --nuit:#20090e; --creme:#f7f1e8; --or:#c9a46a; --rouge:#8e1f2f;
   --doux:rgba(247,241,232,.62); --ligne:rgba(201,164,106,.28);
   --titre:'Playfair Display',Georgia,'Times New Roman',serif;
   --texte:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
@@ -19,37 +19,61 @@ body{background:var(--nuit);color:var(--creme);font-family:var(--texte);font-wei
 #neige{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
 .halo{position:fixed;left:50%;top:-18vh;width:120vw;height:70vh;transform:translateX(-50%);
   background:radial-gradient(ellipse at center,rgba(142,31,47,.40),rgba(32,9,14,0) 68%);pointer-events:none;z-index:0}
-main{position:relative;z-index:2;width:min(1120px,100%);margin:0 auto;padding:0 20px}
+main{position:relative;z-index:2;width:min(1140px,100%);margin:0 auto;padding:0 20px}
 
-header{padding-block:clamp(50px,8vw,96px) clamp(18px,3vw,32px);text-align:center}
+header{padding-block:clamp(48px,8vw,92px) clamp(14px,2.4vw,26px);text-align:center}
 .sur{font-size:11px;letter-spacing:.38em;text-transform:uppercase;color:var(--or);margin:0 0 20px}
 h1{font-family:var(--titre);font-weight:400;font-size:clamp(38px,8.4vw,74px);line-height:1.06;margin:0;text-wrap:balance}
 h1 em{font-style:italic;color:var(--or)}
-.prix-haut{margin:24px 0 0;font-size:clamp(17px,2.4vw,21px);letter-spacing:.05em}
+.prix-haut{margin:22px 0 0;font-size:clamp(17px,2.4vw,21px);letter-spacing:.05em}
 .prix-haut b{font-weight:500}
-.chapeau{margin:14px auto 0;max-width:34em;color:var(--doux);font-size:15px}
+.chapeau{margin:13px auto 0;max-width:34em;color:var(--doux);font-size:15px}
+.brouillon{display:inline-block;margin-top:18px;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(247,241,232,.45);border:1px solid rgba(247,241,232,.18);border-radius:999px;padding:5px 14px}
 
-.grille{display:grid;grid-template-columns:1fr;gap:clamp(22px,3vw,34px);align-items:start;
-  margin-top:clamp(26px,4vw,44px)}
-@media(min-width:900px){.grille{grid-template-columns:1fr 360px}}
+.grille{display:grid;grid-template-columns:1fr;gap:clamp(22px,3vw,36px);align-items:start;margin-top:clamp(24px,3.6vw,40px)}
+@media(min-width:960px){.grille{grid-template-columns:1fr 348px}}
 
-/* ——— les étapes ——— */
-.etape{border-top:1px solid rgba(247,241,232,.10);padding:clamp(20px,2.8vw,28px) 0}
+/* ——— une étape ——— */
+.etape{border-top:1px solid rgba(247,241,232,.10);padding:clamp(24px,3.2vw,34px) 0}
 .etape:first-child{border-top:0;padding-top:0}
-.tete{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap}
+.tete{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;margin-bottom:4px}
 .num{font-family:var(--titre);font-style:italic;color:var(--or);font-size:19px;min-width:1.3em}
-.quoi{flex:1 1 220px;min-width:0;font-size:16px}
+.quoi{flex:1 1 220px;min-width:0;font-size:16.5px}
 .val{color:var(--doux);font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.opts{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0 calc(1.3em + 13px)}
-@media(max-width:520px){.opts{margin-left:0}}
-.opt{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13px;color:var(--doux);
-  background:transparent;border:1px solid rgba(247,241,232,.15);border-radius:999px;
-  padding:7px 15px 7px 7px;cursor:pointer;white-space:nowrap;
-  transition:border-color .2s ease,color .2s ease,background .2s ease,transform .15s ease}
-.opt i{width:15px;height:15px;border-radius:50%;display:block;box-shadow:0 0 0 1px rgba(247,241,232,.25) inset}
-.opt:hover{color:var(--creme);border-color:rgba(201,164,106,.55);transform:translateY(-1px)}
-.opt[aria-pressed="true"]{color:var(--nuit);background:var(--or);border-color:var(--or);font-weight:400}
-.opt[aria-pressed="true"] i{box-shadow:0 0 0 1px rgba(32,9,14,.35) inset}
+.sous{margin:0 0 0 calc(1.3em + 13px);color:var(--doux);font-size:13.5px}
+@media(max-width:560px){.sous{margin-left:0}}
+
+/* ——— le rail qui défile ——— */
+.rail{position:relative;margin-top:16px}
+.piste{display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;
+  padding:4px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.piste::-webkit-scrollbar{display:none}
+.carte{flex:0 0 auto;scroll-snap-align:start;width:124px;background:transparent;border:0;padding:0;
+  cursor:pointer;font:inherit;color:var(--doux);text-align:center;transition:color .2s ease,transform .18s ease}
+.carte:hover{color:var(--creme);transform:translateY(-2px)}
+.rond{width:124px;height:124px;border-radius:3px;display:grid;place-items:center;
+  border:1px solid rgba(247,241,232,.14);overflow:hidden;position:relative;
+  transition:border-color .2s ease,box-shadow .2s ease}
+.rond span{width:62px;height:62px;border-radius:50%;display:block;
+  box-shadow:0 0 0 1px rgba(32,9,14,.25) inset,0 8px 20px rgba(0,0,0,.45)}
+.carte .nom{display:block;margin-top:10px;font-size:12.5px;line-height:1.35}
+.carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or),0 12px 30px rgba(0,0,0,.5)}
+.carte[aria-pressed="true"]{color:var(--or)}
+.carte[aria-pressed="true"] .rond::after{content:"✓";position:absolute;top:7px;right:9px;color:var(--or);font-size:13px}
+.fleche{position:absolute;top:44px;width:38px;height:38px;border-radius:50%;border:1px solid var(--ligne);
+  background:rgba(32,9,14,.86);color:var(--creme);cursor:pointer;display:grid;place-items:center;
+  font-size:15px;line-height:1;z-index:3;transition:background .2s ease}
+.fleche:hover{background:var(--rouge)}
+.fleche.g{left:-10px}.fleche.d{right:-10px}
+@media(max-width:620px){.fleche{display:none}}
+
+/* la base surprise */
+.surprise{display:flex;align-items:center;gap:clamp(16px,3vw,28px);flex-wrap:wrap;margin-top:16px}
+.boite{flex:0 0 auto;width:148px;height:148px;border-radius:3px;border:1px dashed rgba(201,164,106,.45);
+  display:grid;place-items:center;background:linear-gradient(160deg,rgba(142,31,47,.30),rgba(32,9,14,.4))}
+.boite b{font-family:var(--titre);font-size:46px;color:var(--or);font-weight:400}
+.surprise .mot{flex:1 1 230px;min-width:0;color:var(--doux);font-size:14px}
 
 /* ——— la valise ——— */
 .valise{position:sticky;top:18px;background:linear-gradient(180deg,rgba(45,13,20,.96),rgba(32,9,14,.96));
@@ -77,7 +101,8 @@ li.ok .ligne-txt{color:var(--creme)}
   font-family:var(--texte);font-size:11.5px;cursor:pointer;transition:background .25s ease,opacity .25s ease}
 .bouton:hover:not(:disabled){background:#a4283a}
 .bouton:disabled{opacity:.34;cursor:not-allowed}
-.mention{margin:28px auto 0;max-width:30em;color:rgba(247,241,232,.42);font-size:12px;line-height:1.65;text-align:center}
+.apres{margin-top:12px;text-align:center;font-size:12px;color:rgba(247,241,232,.45);min-height:1.2em}
+.mention{margin:30px auto 0;max-width:30em;color:rgba(247,241,232,.42);font-size:12px;line-height:1.65;text-align:center}
 .pied{padding-bottom:clamp(50px,8vw,90px)}
 </style>
 
@@ -88,8 +113,9 @@ li.ok .ligne-txt{color:var(--creme)}
   <header>
     <p class="sur">Édition de Noël · 2026</p>
     <h1>La valise <em>de Noël</em></h1>
-    <p class="prix-haut"><b>400.–</b> · vous choisissez vous-même</p>
-    <p class="chapeau">Cinq choix. Vous cliquez, ça part dans votre valise.</p>
+    <p class="prix-haut"><b>400.–</b> · vous composez la vôtre</p>
+    <p class="chapeau">Une base surprise, puis quatre choix. Vous cliquez, ça part dans votre valise.</p>
+    <span class="brouillon">Maquette — certaines pièces n'existent pas encore</span>
   </header>
 
   <div class="grille">
@@ -103,6 +129,7 @@ li.ok .ligne-txt{color:var(--creme)}
       <p class="total"><span>Valeur totale</span><span>693.–</span></p>
       <p class="ticket"><span>Le ticket</span><strong>400.–</strong></p>
       <button class="bouton" id="go" disabled>Je prends mon billet</button>
+      <p class="apres" id="apres"></p>
     </aside>
   </div>
 
@@ -114,59 +141,81 @@ li.ok .ligne-txt{color:var(--creme)}
 <script>
 (function(){
   var ETAPES=[
-   {t:"1 base en acier unique — spéciale Noël", court:"Base acier spéciale Noël", v:"valeur 100.–",
+   {t:"La base", court:"Base acier", v:"valeur 100.–", surprise:true,
+    sous:"Une base en acier unique, créée pour Noël. Vous la découvrirez en ouvrant la boîte — vous choisissez juste votre largeur.",
     o:[{n:"extra small",c:"#cfd3d6"},{n:"small",c:"#cfd3d6"},{n:"large",c:"#cfd3d6"}]},
-   {t:"1 Aura medium en argent 925", court:"Aura medium argent", v:"valeur 119.–",
+   {t:"L'Aura medium en argent 925", court:"Aura medium", v:"valeur 119.–",
+    sous:"Celle qui se voit. Une seule, la vôtre.",
     o:[{n:"bordeaux",c:"#6E1B2A"},{n:"céleste",c:"#A8C8E0"},{n:"authentique rose gold",c:"#E3B7A0"},
        {n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"}]},
-   {t:"1 pack de 2 minis Aura", court:"Pack de 2 minis Aura", v:"valeur 120.–",
+   {t:"Le pack de 2 minis Aura", court:"2 minis Aura", v:"valeur 120.–",
+    sous:"Deux fils fins, de chaque côté.",
     o:[{n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
        {n:"céleste",c:"#A8C8E0"},{n:"bordeaux",c:"#6E1B2A"}]},
-   {t:"1 deux tiers en argent Aurheart", court:"Deux tiers Aurheart", v:"valeur 177.–",
+   {t:"Le deux tiers Aurheart en argent", court:"Aurheart", v:"valeur 177.–",
+    sous:"Les cœurs.",
     o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
        {n:"céleste",c:"#A8C8E0"},{n:"azure",c:"#4E8FD0"},{n:"white",c:"#F4F4F2"}]},
-   {t:"1 deux tiers en argent Auraline", court:"Deux tiers Auraline", v:"valeur 177.–",
+   {t:"Le deux tiers Auraline en argent", court:"Auraline", v:"valeur 177.–",
+    sous:"La ligne sertie.",
     o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},{n:"white",c:"#F4F4F2"}]}
   ];
   var choix=new Array(ETAPES.length).fill(null);
   var zone=document.getElementById('etapes'), dedans=document.getElementById('dedans'),
-      fait=document.getElementById('fait'), go=document.getElementById('go');
+      fait=document.getElementById('fait'), go=document.getElementById('go'), apres=document.getElementById('apres');
 
   ETAPES.forEach(function(e,i){
     var s=document.createElement('div'); s.className='etape';
-    var h='<div class="tete"><span class="num">'+(i+1)+'</span><span class="quoi">'+e.t+'</span><span class="val">'+e.v+'</span></div><div class="opts">';
+    var h='<div class="tete"><span class="num">'+(i+1)+'</span><span class="quoi">'+e.t+'</span><span class="val">'+e.v+'</span></div>';
+    h+='<p class="sous">'+e.sous+'</p>';
+    if(e.surprise){
+      h+='<div class="surprise"><div class="boite"><b>?</b></div><div class="mot">Surprise de Noël — le motif reste secret jusqu\\'au déballage.</div></div>';
+    }
+    h+='<div class="rail"><button class="fleche g" type="button" data-r="'+i+'" data-s="-1">‹</button>'+
+       '<div class="piste" id="piste'+i+'">';
     e.o.forEach(function(op,j){
-      h+='<button type="button" class="opt" aria-pressed="false" data-e="'+i+'" data-o="'+j+'"><i style="background:'+op.c+'"></i>'+op.n+'</button>';
+      h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
+         '<span class="rond"><span style="background:'+op.c+'"></span></span>'+
+         '<span class="nom">'+op.n+'</span></button>';
     });
-    s.innerHTML=h+'</div>'; zone.appendChild(s);
+    h+='</div><button class="fleche d" type="button" data-r="'+i+'" data-s="1">›</button></div>';
+    s.innerHTML=h; zone.appendChild(s);
   });
 
   function rendu(){
     dedans.innerHTML='';
     ETAPES.forEach(function(e,i){
-      var li=document.createElement('li');
-      var pris=choix[i]!==null;
+      var li=document.createElement('li'); var pris=choix[i]!==null;
       li.className=pris?'ok':'';
       li.innerHTML='<span class="coche"></span><span class="ligne-txt">'+e.court+
-        (pris?'<em>'+e.o[choix[i]].n+'</em>':'<em>à choisir</em>')+'</span>';
+        '<em>'+(pris?e.o[choix[i]].n:'à choisir')+'</em></span>';
       dedans.appendChild(li);
     });
     var n=choix.filter(function(x){return x!==null}).length;
-    fait.textContent=n; go.disabled = n<ETAPES.length;
+    fait.textContent=n; go.disabled=n<ETAPES.length;
+    if(n<ETAPES.length) apres.textContent='';
   }
 
   zone.addEventListener('click',function(ev){
-    var b=ev.target.closest('.opt'); if(!b) return;
+    var fl=ev.target.closest('.fleche');
+    if(fl){ var p=document.getElementById('piste'+fl.dataset.r);
+      p.scrollBy({left:(+fl.dataset.s)*280,behavior:'smooth'}); return; }
+    var b=ev.target.closest('.carte'); if(!b) return;
     var i=+b.dataset.e, j=+b.dataset.o;
-    choix[i] = (choix[i]===j) ? null : j;
-    zone.querySelectorAll('.opt[data-e="'+i+'"]').forEach(function(x){
-      x.setAttribute('aria-pressed', (+x.dataset.o===choix[i])?'true':'false');
+    choix[i]=(choix[i]===j)?null:j;
+    zone.querySelectorAll('.carte[data-e="'+i+'"]').forEach(function(x){
+      x.setAttribute('aria-pressed',(+x.dataset.o===choix[i])?'true':'false');
     });
     rendu();
   });
+
+  go.addEventListener('click',function(){
+    var l=ETAPES.map(function(e,i){return e.court+' · '+e.o[choix[i]].n;}).join('  |  ');
+    apres.innerHTML='Sur la vraie page, on partirait au paiement avec&nbsp;:<br><span style="color:var(--or)">'+l+'</span>';
+  });
+
   rendu();
 
-  // la neige
   var c=document.getElementById('neige');
   if(c){
     var x=c.getContext('2d'), f=[], L=0, H=0, doux=matchMedia('(prefers-reduced-motion: reduce)').matches;
