@@ -143,7 +143,7 @@ h1 em{font-style:italic;color:var(--or)}
         <span class="barre-val">693.–</span>
         <span class="px400">400.–</span>
       </div>
-      <button class="bouton" id="go" disabled>Je prends mon billet</button>
+      <button class="bouton" id="go" disabled>Je prends ma valise</button>
     </div>
     <p class="apres" id="apres"></p>
   </div>
