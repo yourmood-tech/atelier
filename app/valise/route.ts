@@ -73,9 +73,31 @@ h1 em{font-style:italic;color:var(--or)}
   border-top:1px solid var(--ligne);
   padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));
   display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.resume{flex:1 1 320px;min-width:0;font-size:12.5px;color:rgba(247,241,232,.45);line-height:1.6}
+.bagage{flex:1 1 330px;min-width:0;display:flex;align-items:center;gap:14px}
+.malle{position:relative;flex:0 0 auto;width:188px;padding:11px 12px 14px;border-radius:7px;
+  background:linear-gradient(170deg,#56131f,#380d16);
+  border:1px solid rgba(201,164,106,.55);
+  box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07);
+  transition:transform .22s cubic-bezier(.3,1.5,.5,1)}
+.malle.pouf{transform:translateY(-5px) scale(1.035)}
+.malle::before{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:44px;height:11px;border:2px solid rgba(201,164,106,.75);border-bottom:0;border-radius:9px 9px 0 0}
+.malle::after{content:"";position:absolute;left:10px;right:10px;top:50%;height:1px;
+  background:rgba(201,164,106,.30)}
+.cases{display:flex;gap:6px;position:relative;z-index:2}
+.case{flex:1 1 0;aspect-ratio:1/1;border-radius:3px;overflow:hidden;position:relative;
+  border:1px dashed rgba(201,164,106,.45);background:rgba(0,0,0,.22)}
+.case img{width:100%;height:100%;object-fit:cover;display:block;
+  animation:atterri .42s cubic-bezier(.2,1.4,.4,1)}
+.case.plein{border-style:solid;border-color:rgba(201,164,106,.85)}
+@keyframes atterri{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+.malle .etiq{display:block;margin-top:9px;text-align:center;font-size:9px;letter-spacing:.24em;
+  text-transform:uppercase;color:rgba(247,241,232,.55)}
+.resume{flex:1 1 150px;min-width:0;font-size:12px;color:rgba(247,241,232,.45);line-height:1.55}
 .resume b{color:var(--creme);font-weight:400}
-.resume .sep{color:var(--or);padding:0 6px}
+.vol{position:fixed;z-index:60;border-radius:3px;overflow:hidden;pointer-events:none;
+  box-shadow:0 10px 28px rgba(0,0,0,.55);border:1px solid rgba(201,164,106,.7)}
+.vol img{width:100%;height:100%;object-fit:cover;display:block}
 .droite{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .chiffres{text-align:right;line-height:1.25}
 .chiffres .barre-val{font-size:11.5px;color:var(--doux);text-decoration:line-through}
@@ -109,7 +131,13 @@ h1 em{font-style:italic;color:var(--or)}
   <div class="rangee" id="rangee"></div>
 
   <div class="barre">
-    <p class="resume" id="resume"></p>
+    <div class="bagage">
+      <div class="malle" id="malle">
+        <div class="cases" id="cases"></div>
+        <span class="etiq"><span id="fait">0</span> / 5</span>
+      </div>
+      <p class="resume" id="resume"></p>
+    </div>
     <div class="droite">
       <div class="chiffres">
         <span class="barre-val">693.–</span>
@@ -158,7 +186,9 @@ h1 em{font-style:italic;color:var(--or)}
   ];
   var choix=new Array(ETAPES.length).fill(null);
   var rangee=document.getElementById('rangee'), resume=document.getElementById('resume'),
-      go=document.getElementById('go'), apres=document.getElementById('apres');
+      go=document.getElementById('go'), apres=document.getElementById('apres'),
+      cases=document.getElementById('cases'), malle=document.getElementById('malle'),
+      fait=document.getElementById('fait');
 
   ETAPES.forEach(function(e,i){
     var col=document.createElement('div'); col.className='col';
@@ -177,16 +207,44 @@ h1 em{font-style:italic;color:var(--or)}
     col.innerHTML=h; rangee.appendChild(col);
   });
 
+  function photo(i){ var op=ETAPES[i].o[choix[i]]; return op.f ? op.f : (op.i ? B+op.i+'?width=420' : ''); }
+
   function rendu(){
-    var bouts=ETAPES.map(function(e,i){
-      return choix[i]===null
-        ? e.court+' <span style="opacity:.55">— à choisir</span>'
-        : e.court+' <b>'+e.o[choix[i]].n+'</b>';
+    cases.innerHTML='';
+    ETAPES.forEach(function(e,i){
+      var d=document.createElement('span'); d.className='case';
+      if(choix[i]!==null){ d.classList.add('plein'); d.innerHTML='<img src="'+photo(i)+'" alt="">'; }
+      cases.appendChild(d);
     });
-    resume.innerHTML=bouts.join('<span class="sep">·</span>');
     var n=choix.filter(function(x){return x!==null}).length;
+    fait.textContent=n;
+    resume.innerHTML = n<ETAPES.length
+      ? 'Il manque&nbsp;: <b>'+ETAPES.filter(function(e,i){return choix[i]===null}).map(function(e){return e.court}).join(', ')+'</b>'
+      : ETAPES.map(function(e,i){return e.court+' <b>'+e.o[choix[i]].n+'</b>'}).join(' · ');
     go.disabled=n<ETAPES.length;
     if(n<ETAPES.length) apres.textContent='';
+  }
+
+  // la bague s'envole jusque dans la valise
+  function envole(depuis, src, place){
+    var a=depuis.getBoundingClientRect();
+    var cible=cases.children[place]; if(!cible) return;
+    var b=cible.getBoundingClientRect();
+    var v=document.createElement('div'); v.className='vol';
+    v.style.left=a.left+'px'; v.style.top=a.top+'px';
+    v.style.width=a.width+'px'; v.style.height=a.height+'px';
+    v.innerHTML='<img src="'+src+'" alt="">';
+    document.body.appendChild(v);
+    var dx=(b.left+b.width/2)-(a.left+a.width/2), dy=(b.top+b.height/2)-(a.top+a.height/2);
+    v.animate([
+      {transform:'translate(0,0) scale(1) rotate(0deg)',opacity:1,offset:0},
+      {transform:'translate('+(dx*0.45)+'px,'+(dy*0.30-70)+'px) scale(.72) rotate(-9deg)',opacity:1,offset:.55},
+      {transform:'translate('+dx+'px,'+dy+'px) scale('+(b.width/a.width)+') rotate(4deg)',opacity:.85,offset:1}
+    ],{duration:760,easing:'cubic-bezier(.35,.05,.25,1)'}).onfinish=function(){
+      v.remove();
+      malle.classList.add('pouf'); setTimeout(function(){malle.classList.remove('pouf');},260);
+      rendu();
+    };
   }
 
   rangee.addEventListener('click',function(ev){
@@ -195,11 +253,15 @@ h1 em{font-style:italic;color:var(--or)}
       .scrollBy({top:(+fl.dataset.s)*180,behavior:'smooth'}); return; }
     var b=ev.target.closest('.carte'); if(!b) return;
     var i=+b.dataset.e, j=+b.dataset.o;
+    var avant=choix[i];
     choix[i]=(choix[i]===j)?null:j;
     rangee.querySelectorAll('.carte[data-e="'+i+'"]').forEach(function(x){
       x.setAttribute('aria-pressed',(+x.dataset.o===choix[i])?'true':'false');
     });
-    rendu();
+    var img=b.querySelector('img');
+    if(choix[i]!==null && img && avant!==choix[i]){
+      envole(b.querySelector('.rond'), img.getAttribute('src'), i);
+    } else { rendu(); }
   });
 
   go.addEventListener('click',function(){
