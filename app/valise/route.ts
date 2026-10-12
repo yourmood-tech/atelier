@@ -70,6 +70,12 @@ ul.choix li:first-child{border-top:0}
 .val{flex:0 0 auto;color:var(--doux);font-size:14px;white-space:nowrap;
   font-variant-numeric:tabular-nums}
 
+.opts{display:flex;flex-wrap:wrap;gap:7px 8px;margin-top:11px}
+.opts b{display:inline-flex;align-items:center;gap:6px;font-weight:300;font-size:12.5px;
+  color:var(--doux);border:1px solid rgba(247,241,232,.13);border-radius:999px;padding:4px 11px 4px 5px;
+  white-space:nowrap}
+.opts i{width:13px;height:13px;border-radius:50%;display:block;
+  box-shadow:0 0 0 1px rgba(247,241,232,.25) inset}
 .pastilles{display:flex;gap:7px;margin-top:9px}
 .pastilles i{width:15px;height:15px;border-radius:50%;display:block;
   box-shadow:0 0 0 1px rgba(247,241,232,.22) inset,0 2px 6px rgba(0,0,0,.4)}
@@ -111,7 +117,7 @@ ul.choix li:first-child{border-top:0}
 
   <section class="billet">
     <h2>Ce que vous emportez</h2>
-    <p class="sous">Quatre choix. Tous en stock.</p>
+    <p class="sous">Cinq choix. Tous en stock.</p>
 
     <ul class="choix">
       <li>
@@ -122,27 +128,56 @@ ul.choix li:first-child{border-top:0}
       </li>
       <li>
         <span class="num">2</span>
-        <span class="quoi">3 Aura medium en argent 925, trois nouvelles couleurs
-          <small>bordeaux · pêche de vigne · lavande</small>
-          <span class="pastilles"><i style="background:#6E1B2A"></i><i style="background:#E8A08C"></i><i style="background:#B6A6D8"></i></span></span>
-        <span class="val">valeur 357.–</span>
+        <span class="quoi">1 Aura medium en argent 925, à choix
+          <span class="opts">
+            <b><i style="background:#6E1B2A"></i>bordeaux</b>
+            <b><i style="background:#A8C8E0"></i>céleste</b>
+            <b><i style="background:#E3B7A0"></i>authentique rose gold</b>
+            <b><i style="background:#D4342B"></i>coquelicot</b>
+            <b><i style="background:#F2A9B8"></i>sucre d'orge</b>
+          </span></span>
+        <span class="val">valeur 119.–</span>
       </li>
       <li>
         <span class="num">3</span>
-        <span class="quoi">1 pack de 2 minis Aura coquelicot
-          <span class="pastilles"><i style="background:#D4342B"></i><i style="background:#D4342B"></i></span></span>
+        <span class="quoi">1 pack de 2 minis Aura, à choix
+          <span class="opts">
+            <b><i style="background:#D4342B"></i>coquelicot</b>
+            <b><i style="background:#F2A9B8"></i>sucre d'orge</b>
+            <b><i style="background:#E8EEF2"></i>givré</b>
+            <b><i style="background:#A8C8E0"></i>céleste</b>
+            <b><i style="background:#6E1B2A"></i>bordeaux</b>
+          </span></span>
         <span class="val">valeur 120.–</span>
       </li>
       <li>
         <span class="num">4</span>
-        <span class="quoi">1 deux tiers en argent Aurheart rouge
-          <span class="pastilles"><i style="background:#9E1B2F"></i></span></span>
+        <span class="quoi">1 deux tiers en argent Aurheart, à choix
+          <span class="opts">
+            <b><i style="background:#9E1B2F"></i>rouge</b>
+            <b><i style="background:#F2A9B8"></i>sucre d'orge</b>
+            <b><i style="background:#E8EEF2"></i>givré</b>
+            <b><i style="background:#A8C8E0"></i>céleste</b>
+            <b><i style="background:#4E8FD0"></i>azure</b>
+            <b><i style="background:#F4F4F2"></i>white</b>
+          </span></span>
+        <span class="val">valeur 177.–</span>
+      </li>
+      <li>
+        <span class="num">5</span>
+        <span class="quoi">1 deux tiers en argent Auraline, à choix
+          <span class="opts">
+            <b><i style="background:#9E1B2F"></i>rouge</b>
+            <b><i style="background:#F2A9B8"></i>sucre d'orge</b>
+            <b><i style="background:#E8EEF2"></i>givré</b>
+            <b><i style="background:#F4F4F2"></i>white</b>
+          </span></span>
         <span class="val">valeur 177.–</span>
       </li>
     </ul>
 
     <div class="trait"></div>
-    <p class="total"><b>Valeur totale</b><b>754.–</b></p>
+    <p class="total"><b>Valeur totale</b><b>693.–</b></p>
     <p class="ticket"><span>Le ticket</span><strong>400.–</strong></p>
   </section>
 
