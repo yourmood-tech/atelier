@@ -57,6 +57,11 @@ export default auth((req) => {
     return;
   }
 
+  // /valise (maquette de la page « La valise de Noël » — lien à montrer à l'équipe)
+  if (pathname === "/valise" || pathname.startsWith("/valise/")) {
+    return;
+  }
+
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
