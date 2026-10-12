@@ -135,7 +135,7 @@ h1 em{font-style:italic;color:var(--or)}
     o:[{n:"bordeaux",c:"#6E1B2A",f:"/valise/aura-bordeaux.jpg"},
        {n:"céleste",c:"#A8C8E0",i:"MG_7645-modif.jpg"},
        {n:"authentique rose gold",c:"#E3B7A0",i:"ChatGPTImage10aout2026a14_23_27.png"},
-       {n:"coquelicot",c:"#D4342B",i:"1180790738_4c22aff9-a4a9-41fa-86f9-9b916d7e5ddd.jpg"},
+       {n:"coquelicot",c:"#D4342B",f:"/valise/aura-coquelicot.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/aura-sucredorge.jpg"}]},
    {t:"Les 2 minis Aura", court:"2 minis", px:"120.–",
     o:[{n:"coquelicot",c:"#D4342B",f:"/valise/mini-coquelicot.jpg"},
