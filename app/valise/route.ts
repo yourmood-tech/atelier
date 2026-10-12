@@ -147,7 +147,7 @@ h1 em{font-style:italic;color:var(--or)}
     o:[{n:"rouge",c:"#9E1B2F",f:"/valise/aurheart-rouge.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/aurheart-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/aurheart-givre.jpg"},
-       {n:"céleste",c:"#A8C8E0"},
+       {n:"céleste",c:"#A8C8E0",f:"/valise/aurheart-celeste.jpg"},
        {n:"azure",c:"#4E8FD0",f:"/valise/aurheart-azure.jpg"},
        {n:"white",c:"#F4F4F2",f:"/valise/aurheart-white.jpg"}]},
    {t:"Le deux tiers Auraline", court:"Auraline", px:"177.–",
