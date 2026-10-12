@@ -49,14 +49,17 @@ h1 em{font-style:italic;color:var(--or)}
 .piste{display:flex;gap:12px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;
   padding:4px 2px 14px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .piste::-webkit-scrollbar{display:none}
-.carte{flex:0 0 auto;scroll-snap-align:start;width:124px;background:transparent;border:0;padding:0;
+.carte{flex:0 0 auto;scroll-snap-align:start;width:134px;background:transparent;border:0;padding:0;
   cursor:pointer;font:inherit;color:var(--doux);text-align:center;transition:color .2s ease,transform .18s ease}
 .carte:hover{color:var(--creme);transform:translateY(-2px)}
-.rond{width:124px;height:124px;border-radius:3px;display:grid;place-items:center;
+.rond{width:134px;height:134px;border-radius:3px;display:grid;place-items:center;
   border:1px solid rgba(247,241,232,.14);overflow:hidden;position:relative;
   transition:border-color .2s ease,box-shadow .2s ease}
-.rond span{width:62px;height:62px;border-radius:50%;display:block;
+.rond img{width:100%;height:100%;object-fit:cover;display:block;background:#f3f1ee}
+.rond .pastille{width:58px;height:58px;border-radius:50%;display:block;
   box-shadow:0 0 0 1px rgba(32,9,14,.25) inset,0 8px 20px rgba(0,0,0,.45)}
+.rond .avenir{position:absolute;bottom:8px;left:0;right:0;font-style:normal;
+  font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(247,241,232,.38)}
 .carte .nom{display:block;margin-top:10px;font-size:12.5px;line-height:1.35}
 .carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or),0 12px 30px rgba(0,0,0,.5)}
 .carte[aria-pressed="true"]{color:var(--or)}
@@ -140,25 +143,32 @@ li.ok .ligne-txt{color:var(--creme)}
 
 <script>
 (function(){
+  var BASE='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var ETAPES=[
    {t:"La base", court:"Base acier", v:"valeur 100.–", surprise:true,
     sous:"Une base en acier unique, créée pour Noël. Vous la découvrirez en ouvrant la boîte — vous choisissez juste votre largeur.",
     o:[{n:"extra small",c:"#cfd3d6"},{n:"small",c:"#cfd3d6"},{n:"large",c:"#cfd3d6"}]},
    {t:"L'Aura medium en argent 925", court:"Aura medium", v:"valeur 119.–",
     sous:"Celle qui se voit. Une seule, la vôtre.",
-    o:[{n:"bordeaux",c:"#6E1B2A"},{n:"céleste",c:"#A8C8E0"},{n:"authentique rose gold",c:"#E3B7A0"},
-       {n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"}]},
+    o:[{n:"bordeaux",c:"#6E1B2A"},
+       {n:"céleste",c:"#A8C8E0",i:"IMG_6186.jpg"},
+       {n:"authentique rose gold",c:"#E3B7A0",i:"ChatGPTImage10aout2026a14_23_27.png"},
+       {n:"coquelicot",c:"#D4342B",i:"5_12c85b4f-0393-4d5e-a226-243736caf26c.jpg"},
+       {n:"sucre d'orge",c:"#F2A9B8"}]},
    {t:"Le pack de 2 minis Aura", court:"2 minis Aura", v:"valeur 120.–",
     sous:"Deux fils fins, de chaque côté.",
     o:[{n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
-       {n:"céleste",c:"#A8C8E0"},{n:"bordeaux",c:"#6E1B2A"}]},
+       {n:"céleste",c:"#A8C8E0",i:"bague5.jpg"},{n:"bordeaux",c:"#6E1B2A"}]},
    {t:"Le deux tiers Aurheart en argent", court:"Aurheart", v:"valeur 177.–",
     sous:"Les cœurs.",
-    o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
-       {n:"céleste",c:"#A8C8E0"},{n:"azure",c:"#4E8FD0"},{n:"white",c:"#F4F4F2"}]},
+    o:[{n:"rouge",c:"#9E1B2F",i:"Bague_eternite_en_saphir_rose.png"},
+       {n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},{n:"céleste",c:"#A8C8E0"},
+       {n:"azure",c:"#4E8FD0",i:"visuels_site_3_cases_-45.jpg"},
+       {n:"white",c:"#F4F4F2",i:"ChatGPT_Image_22_juil._2026_a_15_09_37.png"}]},
    {t:"Le deux tiers Auraline en argent", court:"Auraline", v:"valeur 177.–",
     sous:"La ligne sertie.",
-    o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},{n:"white",c:"#F4F4F2"}]}
+    o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
+       {n:"white",c:"#F4F4F2",i:"Nouveaute_2.jpg"}]}
   ];
   var choix=new Array(ETAPES.length).fill(null);
   var zone=document.getElementById('etapes'), dedans=document.getElementById('dedans'),
@@ -174,8 +184,11 @@ li.ok .ligne-txt{color:var(--creme)}
     h+='<div class="rail"><button class="fleche g" type="button" data-r="'+i+'" data-s="-1">‹</button>'+
        '<div class="piste" id="piste'+i+'">';
     e.o.forEach(function(op,j){
+      var dedansCarte = op.i
+        ? '<img src="'+BASE+op.i+'&width=420" alt="" loading="lazy">'
+        : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>';
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
-         '<span class="rond"><span style="background:'+op.c+'"></span></span>'+
+         '<span class="rond">'+dedansCarte+'</span>'+
          '<span class="nom">'+op.n+'</span></button>';
     });
     h+='</div><button class="fleche d" type="button" data-r="'+i+'" data-s="1">›</button></div>';
