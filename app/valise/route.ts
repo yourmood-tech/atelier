@@ -154,7 +154,7 @@ h1 em{font-style:italic;color:var(--or)}
     o:[{n:"rouge",c:"#9E1B2F",f:"/valise/auraline-rouge.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/auraline-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/auraline-givre.jpg"},
-       {n:"white",c:"#F4F4F2",i:"1180790738_0234375a-440a-4367-87da-252eae5e58b0.jpg"}]}
+       {n:"white",c:"#F4F4F2",f:"/valise/auraline-white.jpg"}]}
   ];
   var choix=new Array(ETAPES.length).fill(null);
   var rangee=document.getElementById('rangee'), resume=document.getElementById('resume'),
