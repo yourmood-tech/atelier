@@ -156,7 +156,7 @@ h1 em{font-style:italic;color:var(--or)}
     e.o.forEach(function(op,j){
       var dedans = e.pt
         ? '<span class="pt">?</span>'
-        : (op.i ? '<img src="'+B+op.i+'&width=420" alt="" loading="lazy">'
+        : (op.i ? '<img src="'+B+op.i+'?width=420" alt="" loading="lazy">'
                 : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>');
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
          '<span class="rond">'+dedans+'</span><span class="nom">'+op.n+'</span></button>';
