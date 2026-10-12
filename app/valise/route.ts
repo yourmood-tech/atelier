@@ -58,11 +58,13 @@ h1 em{font-style:italic;color:var(--or)}
 .carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or)}
 .carte[aria-pressed="true"]{color:var(--or)}
 .carte[aria-pressed="true"] .rond::after{content:"✓";position:absolute;top:5px;right:7px;color:var(--or);font-size:12px}
-.flh{position:absolute;left:50%;transform:translateX(-50%);width:30px;height:22px;border-radius:999px;
-  border:1px solid var(--ligne);background:rgba(32,9,14,.9);color:var(--creme);cursor:pointer;
-  display:grid;place-items:center;font-size:11px;line-height:1;z-index:3;transition:background .2s ease}
-.flh:hover{background:var(--rouge)}
-.flh.h{top:5px}.flh.b{bottom:5px}
+.cmd{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.flh{width:38px;height:26px;border-radius:999px;border:1px solid var(--ligne);
+  background:rgba(32,9,14,.9);color:var(--creme);cursor:pointer;display:grid;place-items:center;
+  font-size:11px;line-height:1;transition:background .2s ease,border-color .2s ease}
+.flh:hover{background:var(--rouge);border-color:var(--rouge)}
+@keyframes clin{0%,100%{transform:translateY(0)}35%{transform:translateY(-14px)}70%{transform:translateY(4px)}}
+.piste.clin>*{animation:clin 1.5s ease-in-out}
 
 /* ——— la barre du bas ——— */
 .barre{position:sticky;bottom:0;z-index:4;margin-top:14px;
@@ -128,21 +130,21 @@ h1 em{font-style:italic;color:var(--or)}
     o:[{n:"extra small"},{n:"small"},{n:"large"}]},
    {t:"L'Aura medium", court:"Aura medium", px:"119.–",
     o:[{n:"bordeaux",c:"#6E1B2A"},
-       {n:"céleste",c:"#A8C8E0",i:"IMG_6186.jpg"},
+       {n:"céleste",c:"#A8C8E0",i:"MG_7645-modif.jpg"},
        {n:"authentique rose gold",c:"#E3B7A0",i:"ChatGPTImage10aout2026a14_23_27.png"},
-       {n:"coquelicot",c:"#D4342B",i:"5_12c85b4f-0393-4d5e-a226-243736caf26c.jpg"},
+       {n:"coquelicot",c:"#D4342B",i:"1180790738_4c22aff9-a4a9-41fa-86f9-9b916d7e5ddd.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8"}]},
    {t:"Les 2 minis Aura", court:"2 minis", px:"120.–",
     o:[{n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
-       {n:"céleste",c:"#A8C8E0",i:"bague5.jpg"},{n:"bordeaux",c:"#6E1B2A"}]},
+       {n:"céleste",c:"#A8C8E0",i:"Bague_mood_interchangeable_addon_mini_celeste_argent_zircons_bleu_2.jpg"},{n:"bordeaux",c:"#6E1B2A"}]},
    {t:"Le deux tiers Aurheart", court:"Aurheart", px:"177.–",
-    o:[{n:"rouge",c:"#9E1B2F",i:"Bague_eternite_en_saphir_rose.png"},
+    o:[{n:"rouge",c:"#9E1B2F",i:"MG_4251-modif-Medium.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},{n:"céleste",c:"#A8C8E0"},
-       {n:"azure",c:"#4E8FD0",i:"visuels_site_3_cases_-45.jpg"},
-       {n:"white",c:"#F4F4F2",i:"ChatGPT_Image_22_juil._2026_a_15_09_37.png"}]},
+       {n:"azure",c:"#4E8FD0",i:"IMG_0527.jpg"},
+       {n:"white",c:"#F4F4F2",i:"Aurheart-blanc-Medium1.jpg"}]},
    {t:"Le deux tiers Auraline", court:"Auraline", px:"177.–",
     o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
-       {n:"white",c:"#F4F4F2",i:"Nouveaute_2.jpg"}]}
+       {n:"white",c:"#F4F4F2",i:"1180790738_0234375a-440a-4367-87da-252eae5e58b0.jpg"}]}
   ];
   var choix=new Array(ETAPES.length).fill(null);
   var rangee=document.getElementById('rangee'), resume=document.getElementById('resume'),
@@ -151,8 +153,7 @@ h1 em{font-style:italic;color:var(--or)}
   ETAPES.forEach(function(e,i){
     var col=document.createElement('div'); col.className='col';
     var h='<h3>'+e.t+'</h3><p class="px">'+e.px+'</p>'+
-          '<div class="cage"><button class="flh h" type="button" data-r="'+i+'" data-s="-1">▲</button>'+
-          '<div class="piste" id="piste'+i+'">';
+          '<div class="cage"><div class="piste" id="piste'+i+'">';
     e.o.forEach(function(op,j){
       var dedans = e.pt
         ? '<span class="pt">?</span>'
@@ -161,7 +162,9 @@ h1 em{font-style:italic;color:var(--or)}
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
          '<span class="rond">'+dedans+'</span><span class="nom">'+op.n+'</span></button>';
     });
-    h+='</div><button class="flh b" type="button" data-r="'+i+'" data-s="1">▼</button></div>';
+    h+='</div></div><div class="cmd">'+
+       '<button class="flh" type="button" data-r="'+i+'" data-s="-1">▲</button>'+
+       '<button class="flh" type="button" data-r="'+i+'" data-s="1">▼</button></div>';
     col.innerHTML=h; rangee.appendChild(col);
   });
 
@@ -196,6 +199,19 @@ h1 em{font-style:italic;color:var(--or)}
   });
 
   rendu();
+
+  // petit mouvement au depart : chaque colonne descend puis remonte, l'une apres l'autre
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    ETAPES.forEach(function(e,i){
+      var p=document.getElementById('piste'+i);
+      setTimeout(function(){
+        p.classList.add('clin');
+        p.scrollTo({top:96,behavior:'smooth'});
+        setTimeout(function(){ p.scrollTo({top:0,behavior:'smooth'});
+          setTimeout(function(){p.classList.remove('clin');},900); },760);
+      }, 500+i*190);
+    });
+  }
 
   var c=document.getElementById('neige');
   if(c){
