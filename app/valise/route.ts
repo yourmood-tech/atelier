@@ -53,7 +53,8 @@ h1 em{font-style:italic;color:var(--or)}
   box-shadow:0 0 0 1px rgba(32,9,14,.25) inset,0 8px 20px rgba(0,0,0,.45)}
 .rond .avenir{position:absolute;bottom:6px;left:0;right:0;font-style:normal;font-size:8.5px;
   letter-spacing:.1em;text-transform:uppercase;color:rgba(247,241,232,.34)}
-.rond .pt{font-family:var(--titre);font-size:30px;color:var(--or)}
+.rond .mystere{position:absolute;bottom:7px;left:0;right:0;font-style:normal;font-size:9px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--or);text-shadow:0 1px 6px rgba(0,0,0,.6)}
 .carte .nom{display:block;margin-top:6px;font-size:11.5px;line-height:1.3}
 .carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or)}
 .carte[aria-pressed="true"]{color:var(--or)}
@@ -126,8 +127,10 @@ h1 em{font-style:italic;color:var(--or)}
 (function(){
   var B='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var ETAPES=[
-   {t:"La base", court:"Base", px:"100.–", pt:true,
-    o:[{n:"extra small"},{n:"small"},{n:"large"}]},
+   {t:"La base", court:"Base", px:"100.–", surprise:true,
+    o:[{n:"extra small",f:"/valise/base-surprise.jpg"},
+       {n:"small",f:"/valise/base-surprise.jpg"},
+       {n:"large",f:"/valise/base-surprise.jpg"}]},
    {t:"L'Aura medium", court:"Aura medium", px:"119.–",
     o:[{n:"bordeaux",c:"#6E1B2A"},
        {n:"céleste",c:"#A8C8E0",i:"MG_7645-modif.jpg"},
@@ -157,13 +160,11 @@ h1 em{font-style:italic;color:var(--or)}
     var h='<h3>'+e.t+'</h3><p class="px">'+e.px+'</p>'+
           '<div class="cage"><div class="piste" id="piste'+i+'">';
     e.o.forEach(function(op,j){
-      var dedans = e.pt
-        ? '<span class="pt">?</span>'
-        : (op.f ? '<img src="'+op.f+'" alt="" loading="lazy">'
+      var dedans = (op.f ? '<img src="'+op.f+'" alt="" loading="lazy">'
            : op.i ? '<img src="'+B+op.i+'?width=420" alt="" loading="lazy">'
                 : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>');
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
-         '<span class="rond">'+dedans+'</span><span class="nom">'+op.n+'</span></button>';
+         '<span class="rond">'+dedans+(e.surprise?'<em class="mystere">surprise</em>':'')+'</span><span class="nom">'+op.n+'</span></button>';
     });
     h+='</div></div><div class="cmd">'+
        '<button class="flh" type="button" data-r="'+i+'" data-s="-1">▲</button>'+
