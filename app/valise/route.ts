@@ -138,10 +138,12 @@ h1 em{font-style:italic;color:var(--or)}
     o:[{n:"coquelicot",c:"#D4342B"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
        {n:"céleste",c:"#A8C8E0",i:"Bague_mood_interchangeable_addon_mini_celeste_argent_zircons_bleu_2.jpg"},{n:"bordeaux",c:"#6E1B2A"}]},
    {t:"Le deux tiers Aurheart", court:"Aurheart", px:"177.–",
-    o:[{n:"rouge",c:"#9E1B2F",i:"MG_4251-modif-Medium.jpg"},
-       {n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},{n:"céleste",c:"#A8C8E0"},
+    o:[{n:"rouge",c:"#9E1B2F",f:"/valise/aurheart-rouge.jpg"},
+       {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/aurheart-sucredorge.jpg"},
+       {n:"givré",c:"#E8EEF2",f:"/valise/aurheart-givre.jpg"},
+       {n:"céleste",c:"#A8C8E0"},
        {n:"azure",c:"#4E8FD0",i:"IMG_0527.jpg"},
-       {n:"white",c:"#F4F4F2",i:"Aurheart-blanc-Medium1.jpg"}]},
+       {n:"white",c:"#F4F4F2",f:"/valise/aurheart-white.jpg"}]},
    {t:"Le deux tiers Auraline", court:"Auraline", px:"177.–",
     o:[{n:"rouge",c:"#9E1B2F"},{n:"sucre d'orge",c:"#F2A9B8"},{n:"givré",c:"#E8EEF2"},
        {n:"white",c:"#F4F4F2",i:"1180790738_0234375a-440a-4367-87da-252eae5e58b0.jpg"}]}
@@ -157,7 +159,8 @@ h1 em{font-style:italic;color:var(--or)}
     e.o.forEach(function(op,j){
       var dedans = e.pt
         ? '<span class="pt">?</span>'
-        : (op.i ? '<img src="'+B+op.i+'?width=420" alt="" loading="lazy">'
+        : (op.f ? '<img src="'+op.f+'" alt="" loading="lazy">'
+           : op.i ? '<img src="'+B+op.i+'?width=420" alt="" loading="lazy">'
                 : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>');
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
          '<span class="rond">'+dedans+'</span><span class="nom">'+op.n+'</span></button>';
