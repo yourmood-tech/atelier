@@ -139,7 +139,7 @@ h1 em{font-style:italic;color:var(--or)}
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/aura-sucredorge.jpg"}]},
    {t:"Les 2 minis Aura", court:"2 minis", px:"120.–",
     o:[{n:"coquelicot",c:"#D4342B",f:"/valise/mini-coquelicot.jpg"},
-       {n:"sucre d'orge",c:"#F2A9B8"},
+       {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/mini-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/mini-givre.jpg"},
        {n:"céleste",c:"#A8C8E0",f:"/valise/mini-celeste.jpg"},
        {n:"bordeaux",c:"#6E1B2A",f:"/valise/mini-bordeaux.jpg"}]},
