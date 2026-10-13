@@ -53,7 +53,15 @@ h1 em{font-style:italic;color:var(--or)}
   box-shadow:0 0 0 1px rgba(32,9,14,.25) inset,0 8px 20px rgba(0,0,0,.45)}
 .rond .avenir{position:absolute;bottom:6px;left:0;right:0;font-style:normal;font-size:8.5px;
   letter-spacing:.1em;text-transform:uppercase;color:rgba(247,241,232,.34)}
-.rond .mystere{position:absolute;bottom:7px;left:0;right:0;font-style:normal;font-size:9px;
+.rond .larg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;font-style:normal;
+  background:linear-gradient(rgba(32,9,14,.10),rgba(32,9,14,.62))}
+.rond .larg b{font-family:var(--titre);font-weight:500;font-size:34px;line-height:1;color:var(--creme);
+  text-shadow:0 2px 12px rgba(0,0,0,.75);letter-spacing:.02em}
+.rond .larg s{text-decoration:none;font-size:10px;letter-spacing:.2em;color:var(--or);
+  text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.carte[aria-pressed="true"] .rond .larg{background:linear-gradient(rgba(32,9,14,.05),rgba(32,9,14,.45))}
+.rond .mystere{position:absolute;bottom:6px;left:0;right:0;font-style:normal;font-size:9px;
   letter-spacing:.2em;text-transform:uppercase;color:var(--or);text-shadow:0 1px 6px rgba(0,0,0,.6)}
 .carte .nom{display:block;margin-top:6px;font-size:11.5px;line-height:1.3}
 .carte[aria-pressed="true"] .rond{border-color:var(--or);box-shadow:0 0 0 1px var(--or)}
@@ -159,9 +167,9 @@ h1 em{font-style:italic;color:var(--or)}
   var B='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var ETAPES=[
    {t:"La base", court:"Base", px:"250.–", surprise:true,
-    o:[{n:"extra small",f:"/valise/base-surprise.jpg"},
-       {n:"small",f:"/valise/base-surprise.jpg"},
-       {n:"large",f:"/valise/base-surprise.jpg"}]},
+    o:[{n:"extra small",g:"XS",mm:"9 mm",f:"/valise/base-surprise.jpg"},
+       {n:"small",g:"S",mm:"11 mm",f:"/valise/base-surprise.jpg"},
+       {n:"large",g:"L",mm:"13 mm",f:"/valise/base-surprise.jpg"}]},
    {t:"L'Aura medium", court:"Aura medium", px:"199.–",
     o:[{n:"bordeaux",c:"#6E1B2A",f:"/valise/aura-bordeaux.jpg"},
        {n:"céleste",c:"#A8C8E0",i:"MG_7645-modif.jpg"},
@@ -216,7 +224,10 @@ h1 em{font-style:italic;color:var(--or)}
            : op.i ? '<img src="'+B+op.i+'?width=420" alt="" loading="lazy">'
                 : '<span class="pastille" style="background:'+op.c+'"></span><em class="avenir">photo à venir</em>');
       h+='<button type="button" class="carte" aria-pressed="false" data-e="'+i+'" data-o="'+j+'">'+
-         '<span class="rond">'+dedans+(e.surprise?'<em class="mystere">surprise</em>':'')+'</span><span class="nom">'+op.n+'</span></button>';
+         '<span class="rond">'+dedans+
+         (op.g?'<em class="larg"><b>'+op.g+'</b><s>'+op.mm+'</s></em>':'')+
+         (e.surprise?'<em class="mystere">surprise</em>':'')+
+         '</span><span class="nom">'+op.n+'</span></button>';
     });
     h+='</div></div><div class="cmd">'+
        '<button class="flh" type="button" data-r="'+i+'" data-s="-1">▲</button>'+
