@@ -33,7 +33,7 @@ h1 em{font-style:italic;color:var(--or)}
 .rangee{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:clamp(14px,2.2vw,24px)}
 .col{min-width:0;display:flex;flex-direction:column}
 .col h3{margin:0 0 2px;font-family:var(--titre);font-weight:400;font-size:14.5px;text-align:center;line-height:1.3}
-.col .px{margin:0 0 9px;text-align:center;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--doux)}
+.col .px{display:none;margin:0 0 9px;text-align:center;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--doux)}
 .cage{position:relative;border:1px solid rgba(247,241,232,.11);border-radius:3px;overflow:hidden;
   background:rgba(45,13,20,.5)}
 .cage::before,.cage::after{content:"";position:absolute;left:0;right:0;height:38px;pointer-events:none;z-index:2}
@@ -100,7 +100,7 @@ h1 em{font-style:italic;color:var(--or)}
 .vol img{width:100%;height:100%;object-fit:cover;display:block}
 .droite{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .chiffres{text-align:right;line-height:1.25}
-.chiffres .barre-val{font-size:11.5px;color:var(--doux);text-decoration:line-through}
+.chiffres .barre-val{font-size:11px;white-space:nowrap;color:var(--doux);text-decoration:line-through}
 .chiffres .px400{font-family:var(--titre);font-size:30px;color:var(--or);display:block}
 .bouton{background:var(--rouge);color:var(--creme);border:0;border-radius:2px;padding:15px 30px;
   letter-spacing:.14em;text-transform:uppercase;font-family:var(--texte);font-size:11px;cursor:pointer;
@@ -140,7 +140,7 @@ h1 em{font-style:italic;color:var(--or)}
     </div>
     <div class="droite">
       <div class="chiffres">
-        <span class="barre-val">1 217.–</span>
+        <span class="barre-val">jusqu'à 1 217.–</span>
         <span class="px400">429.–</span>
       </div>
       <button class="bouton" id="go" disabled>Je prends ma valise</button>
@@ -204,7 +204,7 @@ h1 em{font-style:italic;color:var(--or)}
 
   ETAPES.forEach(function(e,i){
     var col=document.createElement('div'); col.className='col';
-    var h='<h3>'+e.t+'</h3><p class="px">'+e.px+'</p>'+
+    var h='<h3>'+e.t+'</h3>'+
           '<div class="cage"><div class="piste" id="piste'+i+'">';
     e.o.forEach(function(op,j){
       var dedans = (op.f ? '<img src="'+op.f+'" alt="" loading="lazy">'
