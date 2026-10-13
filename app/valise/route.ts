@@ -39,7 +39,7 @@ h1 em{font-style:italic;color:var(--or)}
 .cage::before,.cage::after{content:"";position:absolute;left:0;right:0;height:38px;pointer-events:none;z-index:2}
 .cage::before{top:0;background:linear-gradient(rgba(32,9,14,.95),rgba(32,9,14,0))}
 .cage::after{bottom:0;background:linear-gradient(rgba(32,9,14,0),rgba(32,9,14,.95))}
-.piste{height:clamp(300px,46vh,430px);overflow-y:auto;scroll-behavior:smooth;scrollbar-width:none;
+.piste{height:clamp(240px,34vh,340px);overflow-y:auto;scroll-behavior:smooth;scrollbar-width:none;
   padding:12px 10px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
 .piste::-webkit-scrollbar{display:none}
 .carte{flex:0 0 auto;background:transparent;border:0;padding:0;cursor:pointer;font:inherit;
@@ -76,7 +76,10 @@ h1 em{font-style:italic;color:var(--or)}
 .piste.clin>*{animation:clin 1.5s ease-in-out}
 
 /* ——— la barre du bas ——— */
-.tailles{margin-top:18px;text-align:center;border:1px solid var(--ligne);border-radius:4px;
+.socle{position:sticky;bottom:0;z-index:6;margin-top:16px;
+  background:linear-gradient(rgba(32,9,14,.72),rgba(32,9,14,.98) 22%);
+  padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.tailles{margin-top:0;text-align:center;border:1px solid var(--ligne);border-radius:4px;
   padding:16px 14px 14px;background:linear-gradient(180deg,rgba(45,13,20,.55),rgba(32,9,14,.55));
   transition:border-color .3s ease,box-shadow .3s ease}
 .tailles.manque{border-color:var(--or);box-shadow:0 0 0 1px var(--or),0 0 34px rgba(201,164,106,.22);
@@ -93,10 +96,10 @@ h1 em{font-style:italic;color:var(--or)}
 .tb[aria-pressed="true"]{background:var(--or);border-color:var(--or);color:var(--nuit);font-weight:500;
   box-shadow:0 6px 18px rgba(201,164,106,.35)}
 .tb.inconnue{font-size:12.5px;letter-spacing:.06em}
-.barre{position:sticky;bottom:0;z-index:4;margin-top:14px;
+.barre{position:relative;z-index:4;margin-top:10px;
   background:linear-gradient(rgba(32,9,14,.80),rgba(32,9,14,.97));
   border-top:1px solid var(--ligne);
-  padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));
+  padding:12px 0 6px;
   display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .bagage{flex:1 1 330px;min-width:0;display:flex;align-items:center;gap:14px}
 .malle{position:relative;flex:0 0 auto;width:188px;padding:11px 12px 14px;border-radius:7px;
@@ -139,7 +142,7 @@ h1 em{font-style:italic;color:var(--or)}
 
 @media(max-width:860px){
   .rangee{grid-template-columns:repeat(2,1fr);gap:12px}
-  .piste{height:clamp(240px,36vh,320px)}
+  .piste{height:clamp(200px,28vh,280px)}
 }
 @media(max-width:460px){ .rangee{grid-template-columns:1fr 1fr} .col h3{font-size:13px} }
 </style>
@@ -157,6 +160,7 @@ h1 em{font-style:italic;color:var(--or)}
 
   <div class="rangee" id="rangee"></div>
 
+  <div class="socle">
   <div class="tailles">
     <p class="tt">Votre taille</p>
     <p class="ts" id="tsous">dernière étape</p>
@@ -180,6 +184,7 @@ h1 em{font-style:italic;color:var(--or)}
       <button class="bouton" id="go" disabled>Je prends ma valise</button>
     </div>
     <p class="apres" id="apres"></p>
+  </div>
   </div>
 
   <p class="mention">📷 Photo non contractuelle — les nuances peuvent varier légèrement en raison du travail artisanal.</p>
