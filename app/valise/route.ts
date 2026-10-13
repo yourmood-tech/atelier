@@ -76,13 +76,23 @@ h1 em{font-style:italic;color:var(--or)}
 .piste.clin>*{animation:clin 1.5s ease-in-out}
 
 /* ——— la barre du bas ——— */
-.tailles{margin-top:14px;text-align:center}
-.tailles .tt{margin:0 0 8px;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--or)}
-.tbtns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.tb{background:transparent;border:1px solid rgba(247,241,232,.16);border-radius:999px;color:var(--doux);
-  font:inherit;font-size:12px;padding:6px 13px;cursor:pointer;transition:all .18s ease}
-.tb:hover{color:var(--creme);border-color:rgba(201,164,106,.6)}
-.tb[aria-pressed="true"]{background:var(--or);border-color:var(--or);color:var(--nuit)}
+.tailles{margin-top:18px;text-align:center;border:1px solid var(--ligne);border-radius:4px;
+  padding:16px 14px 14px;background:linear-gradient(180deg,rgba(45,13,20,.55),rgba(32,9,14,.55));
+  transition:border-color .3s ease,box-shadow .3s ease}
+.tailles.manque{border-color:var(--or);box-shadow:0 0 0 1px var(--or),0 0 34px rgba(201,164,106,.22);
+  animation:respire 2.2s ease-in-out infinite}
+@keyframes respire{0%,100%{box-shadow:0 0 0 1px var(--or),0 0 26px rgba(201,164,106,.16)}
+  50%{box-shadow:0 0 0 1px var(--or),0 0 42px rgba(201,164,106,.34)}}
+.tailles .tt{margin:0 0 4px;font-family:var(--titre);font-size:19px;color:var(--creme)}
+.tailles .ts{margin:0 0 14px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--or)}
+.tbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tb{background:transparent;border:1px solid rgba(247,241,232,.22);border-radius:999px;color:var(--creme);
+  font:inherit;font-size:15px;min-width:52px;padding:11px 16px;cursor:pointer;transition:all .18s ease;
+  font-variant-numeric:tabular-nums}
+.tb:hover{border-color:var(--or);transform:translateY(-1px)}
+.tb[aria-pressed="true"]{background:var(--or);border-color:var(--or);color:var(--nuit);font-weight:500;
+  box-shadow:0 6px 18px rgba(201,164,106,.35)}
+.tb.inconnue{font-size:12.5px;letter-spacing:.06em}
 .barre{position:sticky;bottom:0;z-index:4;margin-top:14px;
   background:linear-gradient(rgba(32,9,14,.80),rgba(32,9,14,.97));
   border-top:1px solid var(--ligne);
@@ -149,6 +159,7 @@ h1 em{font-style:italic;color:var(--or)}
 
   <div class="tailles">
     <p class="tt">Votre taille</p>
+    <p class="ts" id="tsous">dernière étape</p>
     <div class="tbtns" id="tbtns"></div>
   </div>
 
@@ -265,6 +276,10 @@ h1 em{font-style:italic;color:var(--or)}
     resume.innerHTML = n<ETAPES.length
       ? 'Il manque&nbsp;: <b>'+ETAPES.filter(function(e,i){return choix[i]===null}).map(function(e){return e.court}).join(', ')+'</b>'
       : ETAPES.map(function(e,i){return e.court+' <b>'+e.o[choix[i]].n+'</b>'}).join(' · ');
+    var zt=document.querySelector('.tailles');
+    if(zt) zt.classList.toggle('manque', n===ETAPES.length && !taille);
+    var ts=document.getElementById('tsous');
+    if(ts) ts.textContent = taille ? ('taille '+(taille==='taille inconnue'?'à définir ensemble':taille)) : 'dernière étape';
     go.disabled=!complet;
     if(!complet){
       apres.textContent='';
@@ -334,7 +349,8 @@ h1 em{font-style:italic;color:var(--or)}
   TAILLES.forEach(function(t){
     var b=document.createElement('button'); b.type='button'; b.className='tb';
     b.setAttribute('aria-pressed','false'); b.dataset.t=t;
-    b.textContent = (t==='taille inconnue') ? 'je ne la connais pas' : t;
+    if(t==='taille inconnue'){ b.textContent='je ne la connais pas'; b.classList.add('inconnue'); }
+    else b.textContent=t;
     tb.appendChild(b);
   });
   tb.addEventListener('click',function(ev){
