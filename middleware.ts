@@ -57,6 +57,11 @@ export default auth((req) => {
     return;
   }
 
+  // le service qui prépare le panier de la Grande Valise
+  if (pathname === "/api/valise-panier") {
+    return;
+  }
+
   // /valise (maquette de la page « La valise de Noël » — lien à montrer à l'équipe)
   if (pathname === "/valise" || pathname.startsWith("/valise/")) {
     return;

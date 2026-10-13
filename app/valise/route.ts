@@ -332,21 +332,22 @@ h1 em{font-style:italic;color:var(--or)}
   });
 
   go.addEventListener('click',function(){
-    var ids=[], somme=0, manque=[];
+    var ids=[], manque=[];
     for(var i=0;i<ETAPES.length;i++){
       var nom=ETAPES[i].o[choix[i]].n;
       var fiche=(ACHAT[String(i)]||{})[nom];
       if(!fiche || !fiche.v[taille]){ manque.push(ETAPES[i].court+' · '+nom); continue; }
-      ids.push(fiche.v[taille]+':1'); somme+=fiche.px;
+      ids.push(fiche.v[taille]);
     }
-    if(manque.length){
-      apres.innerHTML='Pas encore commandable dans cette taille&nbsp;: '+manque.join(', ');
-      return;
-    }
-    var code='GV'+String(Math.round(somme*100)/100).replace('.','');
-    var lien='https://www.yourmood.net/cart/'+ids.join(',')+'?discount='+code;
-    apres.innerHTML='On vous emmène au paiement…';
-    window.location.href=lien;
+    if(manque.length){ apres.innerHTML='Pas encore commandable dans cette taille&nbsp;: '+manque.join(', '); return; }
+    go.disabled=true; apres.innerHTML='On prépare votre valise…';
+    fetch('/api/valise-panier',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:ids})})
+      .then(function(r){return r.json();})
+      .then(function(j){
+        if(j && j.lien){ apres.innerHTML='On vous emmène au paiement…'; window.location.href=j.lien; }
+        else { go.disabled=false; apres.innerHTML='Un souci est survenu, réessayez dans un instant.'; }
+      })
+      .catch(function(){ go.disabled=false; apres.innerHTML='Un souci est survenu, réessayez dans un instant.'; });
   });
 
   // les boutons de taille
