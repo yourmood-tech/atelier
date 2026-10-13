@@ -45,10 +45,10 @@ export async function POST(request: Request) {
 
     const code = "GV" + String(somme).replace(".", "");
 
-    // la remise existe-t-elle déjà ?
-    const ex = await gql(`query($q:String!){ codeDiscountNodes(first:1, query:$q){ nodes{ id } } }`, { q: `code:${code}` });
-    if (!(ex.codeDiscountNodes?.nodes || []).length) {
-      await gql(
+    // la remise existe-t-elle déjà ? (recherche exacte par le code)
+    const ex = await gql(`query($c:String!){ codeDiscountNodeByCode(code:$c){ id } }`, { c: code });
+    if (!ex.codeDiscountNodeByCode) {
+      const cr = await gql(
         `mutation($d:DiscountCodeBasicInput!){ discountCodeBasicCreate(basicCodeDiscount:$d){ userErrors{ field message } } }`,
         {
           d: {
@@ -62,8 +62,14 @@ export async function POST(request: Request) {
           },
         }
       );
-      // le temps que la boutique l'enregistre
-      await new Promise((r) => setTimeout(r, 1200));
+      const er = cr?.discountCodeBasicCreate?.userErrors || [];
+      if (er.length) return NextResponse.json({ error: "remise refusée : " + JSON.stringify(er).slice(0, 160) }, { status: 500 });
+      // on attend que la boutique la reconnaisse
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 700));
+        const v = await gql(`query($c:String!){ codeDiscountNodeByCode(code:$c){ id } }`, { c: code });
+        if (v.codeDiscountNodeByCode) break;
+      }
     }
 
     const lien = `https://www.yourmood.net/cart/${ids.map((i) => i + ":1").join(",")}?discount=${code}`;
