@@ -178,11 +178,16 @@ h1 em{font-style:italic;color:var(--or)}
        {n:"céleste",c:"#A8C8E0",f:"/valise/aurheart-celeste.jpg"},
        {n:"azure",c:"#4E8FD0",f:"/valise/aurheart-azure.jpg"},
        {n:"white",c:"#F4F4F2",f:"/valise/aurheart-white.jpg"}]},
-   {t:"Le deux tiers Auraline", court:"Auraline", px:"259.–",
+   {t:"Le deux tiers Auraline ou Willow", court:"Auraline / Willow", px:"259.–",
     o:[{n:"rouge",c:"#9E1B2F",f:"/valise/auraline-rouge.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/auraline-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/auraline-givre.jpg"},
-       {n:"white",c:"#F4F4F2",f:"/valise/auraline-white.jpg"}]}
+       {n:"white",c:"#F4F4F2",f:"/valise/auraline-white.jpg"},
+       {n:"Willow",c:"#C9C3CF",f:"/valise/willow.jpg"},
+       {n:"Willow purple",c:"#6E4A78",f:"/valise/willow-purple.jpg"},
+       {n:"Willow white",c:"#E9E6E2",f:"/valise/willow-white.jpg"},
+       {n:"Willow sucre d'orge",c:"#C0303A",f:"/valise/willow-sucredorge.jpg"},
+       {n:"Willow glacé",c:"#2F4E8C",f:"/valise/willow-glace.jpg"}]}
   ];
   var choix=new Array(ETAPES.length).fill(null);
   var rangee=document.getElementById('rangee'), resume=document.getElementById('resume'),
