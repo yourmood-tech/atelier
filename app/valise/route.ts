@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>La valise de Noël</title><meta name="robots" content="noindex,nofollow"></head><body>
+const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>La Grande Valise</title><meta name="robots" content="noindex,nofollow"></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@200;300;400;500&display=swap">
@@ -122,9 +122,9 @@ h1 em{font-style:italic;color:var(--or)}
 
 <main>
   <header>
-    <p class="sur">Édition de Noël · 2026</p>
-    <h1>La valise <em>de Noël</em></h1>
-    <p class="chapeau">Une base surprise, puis quatre choix. Faites défiler chaque colonne, cliquez — le prix ne bouge pas.</p>
+    <p class="sur">Édition d'hiver · 2026</p>
+    <h1>La <em>Grande</em> Valise</h1>
+    <p class="chapeau">Une base surprise, puis quatre choix. Faites défiler chaque colonne, cliquez — la pièce part dans votre valise et le prix ne bouge pas.</p>
     <span class="brouillon">Maquette — certaines pièces n'existent pas encore</span>
   </header>
 
@@ -140,8 +140,8 @@ h1 em{font-style:italic;color:var(--or)}
     </div>
     <div class="droite">
       <div class="chiffres">
-        <span class="barre-val">693.–</span>
-        <span class="px400">400.–</span>
+        <span class="barre-val">1 217.–</span>
+        <span class="px400">429.–</span>
       </div>
       <button class="bouton" id="go" disabled>Je prends ma valise</button>
     </div>
@@ -155,30 +155,30 @@ h1 em{font-style:italic;color:var(--or)}
 (function(){
   var B='https://cdn.shopify.com/s/files/1/0798/2303/files/';
   var ETAPES=[
-   {t:"La base", court:"Base", px:"100.–", surprise:true,
+   {t:"La base", court:"Base", px:"250.–", surprise:true,
     o:[{n:"extra small",f:"/valise/base-surprise.jpg"},
        {n:"small",f:"/valise/base-surprise.jpg"},
        {n:"large",f:"/valise/base-surprise.jpg"}]},
-   {t:"L'Aura medium", court:"Aura medium", px:"119.–",
+   {t:"L'Aura medium", court:"Aura medium", px:"199.–",
     o:[{n:"bordeaux",c:"#6E1B2A",f:"/valise/aura-bordeaux.jpg"},
        {n:"céleste",c:"#A8C8E0",i:"MG_7645-modif.jpg"},
        {n:"authentique rose gold",c:"#E3B7A0",i:"ChatGPTImage10aout2026a14_23_27.png"},
        {n:"coquelicot",c:"#D4342B",f:"/valise/aura-coquelicot.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/aura-sucredorge.jpg"}]},
-   {t:"Les 2 minis Aura", court:"2 minis", px:"120.–",
+   {t:"Les 2 minis Aura", court:"2 minis", px:"240.–",
     o:[{n:"coquelicot",c:"#D4342B",f:"/valise/mini-coquelicot.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/mini-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/mini-givre.jpg"},
        {n:"céleste",c:"#A8C8E0",f:"/valise/mini-celeste.jpg"},
        {n:"bordeaux",c:"#6E1B2A",f:"/valise/mini-bordeaux.jpg"}]},
-   {t:"Le deux tiers Aurheart", court:"Aurheart", px:"177.–",
+   {t:"Le deux tiers Aurheart", court:"Aurheart", px:"269.–",
     o:[{n:"rouge",c:"#9E1B2F",f:"/valise/aurheart-rouge.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/aurheart-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/aurheart-givre.jpg"},
        {n:"céleste",c:"#A8C8E0",f:"/valise/aurheart-celeste.jpg"},
        {n:"azure",c:"#4E8FD0",f:"/valise/aurheart-azure.jpg"},
        {n:"white",c:"#F4F4F2",f:"/valise/aurheart-white.jpg"}]},
-   {t:"Le deux tiers Auraline", court:"Auraline", px:"177.–",
+   {t:"Le deux tiers Auraline", court:"Auraline", px:"259.–",
     o:[{n:"rouge",c:"#9E1B2F",f:"/valise/auraline-rouge.jpg"},
        {n:"sucre d'orge",c:"#F2A9B8",f:"/valise/auraline-sucredorge.jpg"},
        {n:"givré",c:"#E8EEF2",f:"/valise/auraline-givre.jpg"},
@@ -266,7 +266,7 @@ h1 em{font-style:italic;color:var(--or)}
 
   go.addEventListener('click',function(){
     var l=ETAPES.map(function(e,i){return e.court+' · '+e.o[choix[i]].n;}).join('  |  ');
-    apres.innerHTML='Sur la vraie page, on partirait au paiement à 400.– avec&nbsp;: '+l;
+    apres.innerHTML='Sur la vraie page, on partirait au paiement à 429.– avec&nbsp;: '+l;
   });
 
   rendu();
