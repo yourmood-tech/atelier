@@ -99,7 +99,9 @@ h1 em{font-style:italic;color:var(--or)}
   box-shadow:0 10px 28px rgba(0,0,0,.55);border:1px solid rgba(201,164,106,.7)}
 .vol img{width:100%;height:100%;object-fit:cover;display:block}
 .droite{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.chiffres{text-align:right;line-height:1.25}
+.chiffres{text-align:right;line-height:1.2;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.chiffres .eco{display:inline-block;background:var(--or);color:var(--nuit);font-size:10px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:999px}
 .chiffres .barre-val{font-size:11px;white-space:nowrap;color:var(--doux);text-decoration:line-through}
 .chiffres .px400{font-family:var(--titre);font-size:30px;color:var(--or);display:block}
 .bouton{background:var(--rouge);color:var(--creme);border:0;border-radius:2px;padding:15px 30px;
@@ -140,7 +142,8 @@ h1 em{font-style:italic;color:var(--or)}
     </div>
     <div class="droite">
       <div class="chiffres">
-        <span class="barre-val">jusqu'à 1 217.–</span>
+        <span class="eco">−788.– d'économie</span>
+        <span class="barre-val">valeur jusqu'à 1 217.–</span>
         <span class="px400">429.–</span>
       </div>
       <button class="bouton" id="go" disabled>Je prends ma valise</button>
