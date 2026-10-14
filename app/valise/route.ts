@@ -141,10 +141,57 @@ h1 em{font-style:italic;color:var(--or)}
 .mention{margin:14px auto 26px;max-width:34em;color:rgba(247,241,232,.34);font-size:11px;text-align:center;line-height:1.6}
 
 @media(max-width:860px){
-  .rangee{grid-template-columns:repeat(2,1fr);gap:12px}
-  .piste{height:clamp(200px,28vh,280px)}
+  .rangee{grid-template-columns:repeat(2,1fr);gap:10px}
+  .piste{height:clamp(210px,30vh,260px);padding:10px 8px}
 }
-@media(max-width:460px){ .rangee{grid-template-columns:1fr 1fr} .col h3{font-size:13px} }
+@media(max-width:720px){
+  main{padding:0 12px}
+  header{padding-block:22px 8px}
+  h1{font-size:clamp(28px,8.6vw,40px)}
+  .chapeau{font-size:12.5px;margin-top:8px}
+  .brouillon{margin-top:8px;font-size:8.5px;padding:3px 9px}
+  .sur{font-size:9px;letter-spacing:.3em;margin-bottom:8px}
+  .rangee{grid-template-columns:repeat(2,1fr);gap:9px;margin-top:12px}
+  .col h3{font-size:12.5px;line-height:1.25}
+  .piste{height:200px;padding:9px 7px;gap:8px}
+  .carte .nom{font-size:10.5px;margin-top:4px}
+  .rond .larg b{font-size:24px}
+  .rond .larg s{font-size:8px;letter-spacing:.12em}
+  .rond .mystere{font-size:7.5px;bottom:4px}
+  .rond .avenir{font-size:7px}
+  .flh{width:34px;height:24px;font-size:10px}
+  .cmd{margin-top:6px;gap:6px}
+  /* le bloc du bas, compact */
+  .socle{margin-top:10px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
+  .tailles{padding:10px 8px 9px;border-radius:3px}
+  .tailles .tt{font-size:15px;margin-bottom:1px}
+  .tailles .ts{font-size:8.5px;letter-spacing:.14em;margin-bottom:8px}
+  .tbtns{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:6px;
+    padding-bottom:3px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tbtns::-webkit-scrollbar{display:none}
+  .tb{flex:0 0 auto;min-width:46px;padding:9px 12px;font-size:14px}
+  .tb.inconnue{font-size:11px;padding:9px 13px}
+  .barre{margin-top:8px;padding:9px 0 4px;gap:10px;align-items:center}
+  .bagage{flex:1 1 auto;gap:9px}
+  .malle{width:132px;padding:7px 8px 9px;border-radius:5px}
+  .malle::before{width:30px;height:7px;top:-6px}
+  .cases{gap:4px}
+  .malle .etiq{margin-top:5px;font-size:8px;letter-spacing:.16em}
+  .resume{display:none}
+  .droite{gap:9px}
+  .chiffres .eco{font-size:8.5px;padding:2px 7px;letter-spacing:.06em}
+  .chiffres .barre-val{font-size:9px}
+  .chiffres .px400{font-size:23px}
+  .bouton{padding:12px 16px;font-size:9.5px;letter-spacing:.1em}
+  .apres{font-size:10px;padding-top:4px;line-height:1.4}
+  .mention{font-size:9.5px;margin:10px auto 16px}
+}
+@media(max-width:460px){
+  .rangee{grid-template-columns:repeat(2,1fr)}
+  .piste{height:178px}
+  .malle{width:116px}
+  .chiffres .px400{font-size:21px}
+}
 </style>
 
 <div class="halo"></div>
