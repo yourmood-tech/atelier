@@ -43,6 +43,7 @@ interface Commande {
   cancelled_at: string | null;
   taxes_included: boolean;
   line_items: LigneCommande[];
+  discount_codes?: Array<{ code: string; amount?: string; type?: string }>;
 }
 
 interface Cible {
@@ -50,6 +51,10 @@ interface Cible {
   pids: Set<number>;
   skus: Set<string>;
   vids: Set<number>;
+  // Comptage par CODE DE REMISE : pour une opération vendue en panier composé
+  // (La Grande Valise : 5 vraies bagues + une remise « GV… »), aucune fiche unique
+  // n'est achetée. On repère alors la vente au code de remise porté par la commande.
+  code?: string;
 }
 
 async function redisGet(key: string): Promise<unknown> {
@@ -231,7 +236,7 @@ export async function POST(request: Request) {
     let url: string | null =
       `https://${domain}/admin/api/2024-10/orders.json?limit=250&status=any` +
       `&created_at_min=${encodeURIComponent(debut.toISOString())}&created_at_max=${encodeURIComponent(fin.toISOString())}` +
-      `&fields=id,cancelled_at,taxes_included,line_items`;
+      `&fields=id,cancelled_at,taxes_included,line_items,discount_codes`;
     let pages = 0;
     while (url && pages < 40) {
       pages++;
@@ -262,17 +267,20 @@ export async function POST(request: Request) {
   interface AggFenetre {
     direct: Record<string, [number, number]>;
     bundles: Array<[string, number, number]>;
+    codes: Record<string, [number, number]>; // code de remise → [nb commandes, total TTC]
   }
   async function aggFenetre(debut: Date, fin: Date, key: string): Promise<AggFenetre> {
     const ck = `mood:agg:${key}`;
     const cached = (await redisGet(ck)) as AggFenetre | null;
-    if (cached && cached.direct) return cached;
+    if (cached && cached.direct && cached.codes) return cached;
 
     const commandes = await commandesSemaine(debut, fin);
     const direct: Record<string, [number, number]> = {};
+    const codes: Record<string, [number, number]> = {};
     const groupes = new Map<string, { sku: string; vid: number; total: number }>();
     for (const o of commandes) {
       if (o.cancelled_at) continue;
+      let totalCommande = 0;
       for (const li of o.line_items || []) {
         const q = li.quantity || 0;
         const base = parseFloat(li.price || "0") * q;
@@ -280,6 +288,7 @@ export async function POST(request: Request) {
         const tax = (li.tax_lines || []).reduce((s, t) => s + parseFloat(t.price || "0"), 0);
         const net = base - disc;
         const totalAvecTaxe = o.taxes_included ? net : net + tax;
+        totalCommande += totalAvecTaxe;
         const grp = prop(li, "_sb_bundle_group");
         if (grp) {
           const bt = prop(li, "_sb_bundle_title") || "";
@@ -300,10 +309,19 @@ export async function POST(request: Request) {
           direct[pid] = d;
         }
       }
+      for (const dc of o.discount_codes || []) {
+        const c = (dc.code || "").trim().toUpperCase();
+        if (!c) continue;
+        const e = codes[c] || [0, 0];
+        e[0] += 1;
+        e[1] += totalCommande;
+        codes[c] = e;
+      }
     }
     const bundles: Array<[string, number, number]> = [];
     for (const e of groupes.values()) bundles.push([e.sku, e.vid, Math.round(e.total * 100) / 100]);
-    const agg: AggFenetre = { direct, bundles };
+    for (const c of Object.keys(codes)) codes[c][1] = Math.round(codes[c][1] * 100) / 100;
+    const agg: AggFenetre = { direct, bundles, codes };
     // Fenêtre passée (terminée) → cache long ; fenêtre en cours → cache court (les ventes bougent).
     const estCourant = fin.getTime() >= Date.now();
     await redisSetEx(ck, agg, estCourant ? 1200 : 604800);
@@ -314,6 +332,16 @@ export async function POST(request: Request) {
   function calcDepuisAgg(cible: Cible, agg: AggFenetre): { qty: number; total: number } {
     let qty = 0;
     let total = 0;
+    if (cible.code) {
+      const pref = cible.code.toUpperCase();
+      for (const [c, v] of Object.entries(agg.codes || {})) {
+        if (c.startsWith(pref)) {
+          qty += v[0];
+          total += v[1];
+        }
+      }
+      return { qty, total: Math.round(total * 100) / 100 };
+    }
     for (const pid of cible.pids) {
       const d = agg.direct[String(pid)];
       if (d) {
@@ -333,6 +361,12 @@ export async function POST(request: Request) {
   // 1) Résoudre chaque produit (ids + skus + vids) — SÉQUENTIEL (cache 6h) pour ne pas saturer Shopify
   const resolutions: Array<{ p: ProduitDemande; cible: Cible }> = [];
   for (const p of produits) {
+    const brut = (p.tag || "").trim();
+    const mCode = brut.match(/^code\s*:\s*(.+)$/i);
+    if (mCode) {
+      resolutions.push({ p, cible: { id: p.id, pids: new Set(), skus: new Set(), vids: new Set(), code: mCode[1].trim() } });
+      continue;
+    }
     const r = await resoudreProduit(p);
     resolutions.push({ p, cible: { id: p.id, pids: new Set(r.ids), skus: new Set(r.skus), vids: new Set(r.vids) } });
   }
@@ -371,7 +405,7 @@ export async function POST(request: Request) {
     for (const [key, w] of semaines.entries()) {
       const agg = await aggFenetre(w.debut, w.fin, key.replace(/[^A-Za-z0-9:_-]/g, ""));
       for (const cible of w.cibles) {
-        if (!cible.pids.size && !cible.skus.size) continue;
+        if (!cible.code && !cible.pids.size && !cible.skus.size) continue;
         resultats[cible.id] = calcDepuisAgg(cible, agg);
       }
     }
