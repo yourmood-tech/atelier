@@ -41,10 +41,9 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(64px,15vw,180px);lin
 
 /* la mosaïque, bord à bord */
 .mosaique{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;margin-top:clamp(26px,4vw,42px)}
-@media(min-width:1000px){.mosaique{grid-template-columns:repeat(4,1fr)}
-  .mosaique .p0,.mosaique .p4{grid-column:span 2;grid-row:span 2}}
+@media(min-width:1000px){.mosaique{grid-template-columns:repeat(4,1fr)}}
 .p{position:relative;overflow:hidden;background:#15130f;border:0;padding:0;cursor:pointer;
-  color:inherit;font:inherit;display:block;aspect-ratio:1/1}
+  color:inherit;font:inherit;display:block;aspect-ratio:4/5}
 .p img{width:100%;height:100%;object-fit:cover;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)}
 .p:hover img{transform:scale(1.06)}
 .p .ombre{position:absolute;inset:0;background:linear-gradient(rgba(10,10,9,0) 48%,rgba(10,10,9,.88));
