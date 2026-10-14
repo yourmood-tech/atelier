@@ -27,11 +27,10 @@ export default function IceleaArrivagePage() {
   const [rows, setRows] = useState<ReceptionRow[] | null>(null);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [editRows, setEditRows] = useState<Record<number, boolean>>({});
-  const [recv, setRecv] = useState<Record<number, { recvQty: string; pickQty: string }>>({}); // saisie réception/picking par ligne
-  const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées (cumulées)
-  const [reopen, setReopen] = useState<Record<number, boolean>>({}); // ligne déjà reçue rouverte pour une réception de plus
+  const [recv, setRecv] = useState<Record<number, string>>({}); // quantité reçue saisie (vide = qté facture)
+  const [done, setDone] = useState<Record<number, ReceiveResult>>({}); // réceptions validées
   const [comments, setComments] = useState<Record<number, string>>({}); // commentaire par article (ex. livré faux) → rapport
-  const [busy, setBusy] = useState<Record<number, boolean>>({});
+  const [bulk, setBulk] = useState<{ done: number; total: number } | null>(null); // validation de tout l'arrivage en cours
   const [invoiceNo, setInvoiceNo] = useState<string | null>(null);
   // Lot 3 — rapport de fin d'arrivage
   type RemainingPo = { po: string; created: string; lines: { sku: string; name: string | null; size: string | null; qty: number; line: number }[] };
@@ -68,24 +67,6 @@ export default function IceleaArrivagePage() {
     for (let k = 0; k < i; k++) if (rowSig(list[k].label, list[k].size) === base) occ++;
     return occ === 0 ? base : `${base}#${occ}`;
   }
-  // Annule une réouverture faite par erreur (scan en trop) : on referme la ligne sur
-  // son état déjà reçu, sans rien écrire dans Katana (aucune réception n'a été validée).
-  function revertReopen(i: number) {
-    setReopen((s) => ({ ...s, [i]: false }));
-    setRecv((s) => ({ ...s, [i]: { recvQty: "", pickQty: "" } }));
-    scanRef.current?.focus();
-  }
-  // Cumule les réceptions successives d'une même ligne (scannée plusieurs fois).
-  function mergeResult(a: ReceiveResult, b: ReceiveResult): ReceiveResult {
-    return {
-      receivedOnPO: [...a.receivedOnPO, ...b.receivedOnPO],
-      totalReceivedPO: a.totalReceivedPO + b.totalReceivedPO,
-      surplus: a.surplus + b.surplus,
-      forcedNoPO: a.forcedNoPO + b.forcedNoPO,
-      picked: a.picked + b.picked,
-    };
-  }
-
   async function prepare() {
     if (!file) { setError("Choisis d'abord la facture PDF."); return; }
     setLoading(true); setError(null); setRows(null); setSummary(null); setCheck(null);
@@ -102,7 +83,7 @@ export default function IceleaArrivagePage() {
       const prog = (data.progress as Record<string, ReceiveResult>) ?? {};
       const restored: Record<number, ReceiveResult> = {};
       newRows.forEach((_, i) => { const s = sigForRow(newRows, i); if (prog[s]) restored[i] = prog[s]; });
-      setDone(restored); setRecv({}); setReopen({}); setComments({}); setReport(null);
+      setDone(restored); setRecv({}); setComments({}); setReport(null);
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   }
@@ -136,27 +117,45 @@ export default function IceleaArrivagePage() {
     setEditRows((e) => ({ ...e, [i]: false }));
   }
 
-  // valide la réception d'une ligne : imputation FIFO PO + surplus + picking (écrit dans Katana)
-  async function validateReceive(i: number, r: ReceptionRow) {
-    const d = recv[i] || { recvQty: "", pickQty: "" };
-    const receivedQty = Number(d.recvQty || 0), pickQty = Number(d.pickQty || 0);
-    if (!r.variantId || receivedQty <= 0) { alert("Saisis une quantité reçue > 0."); return; }
-    setBusy((s) => ({ ...s, [i]: true }));
+  // quantité reçue d'une ligne : celle saisie, sinon celle de la facture (pré-remplie)
+  const recvQtyOf = (i: number, r: ReceptionRow) => Math.max(0, Math.floor(Number(recv[i] ?? r.invoiceQty) || 0));
+
+  // valide tout l'arrivage en une fois : chaque ligne associée à Katana et pas encore reçue
+  // passe par la même réception (imputation FIFO PO + surplus), une ligne après l'autre.
+  // La progression est sauvegardée ligne par ligne → si ça coupe, on relance et seules
+  // les lignes restantes partent. Qté 0 = non reçu (ressort dans le rapport).
+  async function validateAll() {
+    if (!rows) return;
+    // tout part d'un coup : on n'envoie pas un article proposé mais pas encore confirmé
+    const unsure = rows.filter((r, i) => !done[i] && (r.match === "approx" || r.match === "manuel")).length;
+    if (unsure > 0) { alert(`${unsure} ligne(s) encore « à vérifier » ou « SKU à confirmer » : confirme-les (ou retire l'association) avant de valider l'arrivage.`); return; }
+    const todo = rows.map((r, i) => ({ r, i })).filter(({ r, i }) => r.variantId && !done[i] && recvQtyOf(i, r) > 0);
+    if (todo.length === 0) { alert("Rien à valider : toutes les lignes associées sont déjà reçues."); return; }
+    const pieces = todo.reduce((s, { r, i }) => s + recvQtyOf(i, r), 0);
+    if (!confirm(`Réceptionner ${todo.length} ligne(s), ${pieces} pièce(s) dans Katana ?\nUne réception ne peut pas être annulée depuis l'outil.`)) return;
+    setBulk({ done: 0, total: todo.length });
+    const seen = new Set<number>();
     try {
-      const res = await fetch("/api/icelea-arrivage/receive", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ variantId: r.variantId, receivedQty, pickQty, invoiceNo, rowSig: rows ? sigForRow(rows, i) : rowSig(r.label, r.size) }),
-      });
-      const data = await readJson(res);
-      if (!res.ok) { alert((data.error as string) || "Erreur réception"); return; }
-      const result = data.result as ReceiveResult;
-      // cumul si la ligne a déjà reçu (article scanné plusieurs fois dans l'arrivage)
-      setDone((s) => ({ ...s, [i]: s[i] ? mergeResult(s[i], result) : result }));
-      setRecv((s) => ({ ...s, [i]: { recvQty: "", pickQty: "" } }));
-      setReopen((s) => ({ ...s, [i]: false }));
-      scanRef.current?.focus(); // retour au champ scan → produit suivant directement
+      for (let k = 0; k < todo.length; k++) {
+        const { r, i } = todo[k];
+        // même article sur 2 lignes de facture : Katana met un instant à fermer la ligne de PO
+        // déjà reçue → petite pause pour que l'imputation FIFO relise un état à jour
+        if (seen.has(r.variantId!)) await new Promise((res) => setTimeout(res, 4000));
+        seen.add(r.variantId!);
+        const res = await fetch("/api/icelea-arrivage/receive", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ variantId: r.variantId, receivedQty: recvQtyOf(i, r), pickQty: 0, invoiceNo, rowSig: sigForRow(rows, i) }),
+        });
+        const data = await readJson(res);
+        if (!res.ok) {
+          alert(`Arrêt sur ${r.sku ?? r.label}${r.size ? ` (${r.size})` : ""} : ${(data.error as string) || "erreur réception"}\n${k} ligne(s) déjà reçue(s) avant. Relance « Valider tout l'arrivage » pour continuer avec les lignes restantes.`);
+          return;
+        }
+        setDone((s) => ({ ...s, [i]: data.result as ReceiveResult }));
+        setBulk({ done: k + 1, total: todo.length });
+      }
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
-    finally { setBusy((s) => ({ ...s, [i]: false })); }
+    finally { setBulk(null); }
   }
   // fin d'arrivage → construit le rapport (jamais scanné · écarts · reste à livrer)
   async function buildReport() {
@@ -201,19 +200,15 @@ export default function IceleaArrivagePage() {
     finally { setReportBusy(false); }
   }
 
-  // scan code-barres → focalise la 1re ligne encore recevable de cet article.
-  // Un même article peut figurer sur plusieurs lignes de la facture (2 PO livrés) :
-  // on passe à la ligne suivante non reçue, et si toutes sont reçues on rouvre pour
-  // imputer sur une éventuelle ligne de PO encore ouverte.
+  // scan code-barres → focalise la quantité de la 1re ligne encore à recevoir de cet article
+  // (un même article peut figurer sur plusieurs lignes de la facture : 2 PO livrés).
   function onScan(code: string) {
     const c = code.trim(); if (!c || !rows) return;
     const matches = rows.map((r, idx) => ({ r, idx })).filter((m) => m.r.barcode === c);
     if (matches.length === 0) { alert(`Code-barres « ${c} » absent de la liste.`); return; }
-    let target = matches.find((m) => !done[m.idx] || reopen[m.idx]);
-    if (!target) { target = matches[matches.length - 1]; setReopen((s) => ({ ...s, [target!.idx]: true })); }
-    const idx = target.idx;
+    const idx = (matches.find((m) => !done[m.idx]) ?? matches[0]).idx;
     setTimeout(() => {
-      const el = document.querySelector<HTMLInputElement>(`[data-recv="${idx}"]`);
+      const el = document.querySelector<HTMLElement>(`[data-recv="${idx}"]`);
       el?.scrollIntoView({ block: "center" }); el?.focus();
     }, 0);
   }
@@ -253,6 +248,11 @@ export default function IceleaArrivagePage() {
                 className="rounded-xl border border-neutral-300 px-3 py-2 text-sm w-56" />
             )}
             {rows && !report && (
+              <button onClick={validateAll} disabled={!!bulk}
+                className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+                {bulk ? `Réception… ${bulk.done}/${bulk.total}` : "✓ Valider tout l'arrivage"}</button>
+            )}
+            {rows && !report && (
               <button onClick={buildReport} disabled={reportBusy}
                 className="rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-50">
                 {reportBusy ? "…" : "Terminer l'arrivage → rapport"}</button>
@@ -263,8 +263,8 @@ export default function IceleaArrivagePage() {
             <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-700">
               Facture <span className="font-mono font-medium">{invoiceNo}</span>
               {Object.keys(done).length > 0
-                ? <> — <b>reprise</b> : {Object.keys(done).length} ligne(s) déjà reçue(s), tu peux continuer le scan des lignes restantes.</>
-                : <> — arrivage réceptionnable en plusieurs fois (la progression est sauvegardée à chaque validation).</>}
+                ? <> — <b>reprise</b> : {Object.keys(done).length} ligne(s) déjà reçue(s) ; « Valider tout l&apos;arrivage » ne reçoit que les lignes restantes.</>
+                : <> — les quantités reçues sont pré-remplies avec celles de la facture : corrige les écarts, puis valide tout l&apos;arrivage en une fois.</>}
             </div>
           )}
           {check && (() => {
@@ -381,44 +381,19 @@ export default function IceleaArrivagePage() {
                       <div className="print:hidden">
                         {!r.variantId ? (
                           <span className="text-[11px] text-neutral-400">—</span>
-                        ) : done[i] && !reopen[i] ? (
+                        ) : done[i] ? (
                           <div className="text-[11px] text-emerald-700">
                             <div className="font-medium">✓ reçu {done[i].totalReceivedPO + done[i].surplus + done[i].forcedNoPO}</div>
                             {done[i].receivedOnPO.map((p, k) => <div key={k} className="text-neutral-500">{p.po} l.{p.line} ×{p.qty}</div>)}
                             {done[i].surplus > 0 && <div className="text-amber-700">surplus stock +{done[i].surplus}</div>}
                             {done[i].forcedNoPO > 0 && <div className="text-amber-700">sans PO +{done[i].forcedNoPO}</div>}
                             {done[i].picked > 0 && <div className="text-sky-700">picking −{done[i].picked}</div>}
-                            <button onClick={() => setReopen((s) => ({ ...s, [i]: true }))}
-                              className="mt-1 block text-[11px] text-sky-700 underline">↻ recevoir encore</button>
                           </div>
                         ) : (
-                          <div className="space-y-1">
-                            {done[i] && (
-                              <div className="text-[11px] text-emerald-700">déjà reçu {done[i].totalReceivedPO + done[i].surplus + done[i].forcedNoPO} — réception de plus :</div>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <label className="w-8 text-[10px] text-neutral-500">reçu</label>
-                              <input type="number" min="0" data-recv={i} value={recv[i]?.recvQty ?? ""}
-                                onChange={(e) => setRecv((s) => ({ ...s, [i]: { recvQty: e.target.value, pickQty: s[i]?.pickQty ?? "" } }))}
-                                onKeyDown={(e) => { if (e.key === "Enter") validateReceive(i, r); }}
-                                className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <label className="w-8 text-[10px] text-neutral-500">sorti</label>
-                              <input type="number" min="0" placeholder="0" value={recv[i]?.pickQty ?? ""}
-                                onChange={(e) => setRecv((s) => ({ ...s, [i]: { recvQty: s[i]?.recvQty ?? "", pickQty: e.target.value } }))}
-                                onKeyDown={(e) => { if (e.key === "Enter") validateReceive(i, r); }}
-                                className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-xs" />
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => validateReceive(i, r)} disabled={busy[i]}
-                                className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-50">{busy[i] ? "…" : "Valider"}</button>
-                              {done[i] && (
-                                <button onClick={() => revertReopen(i)} disabled={busy[i]}
-                                  className="rounded border border-neutral-300 px-2 py-0.5 text-[11px] text-neutral-600 hover:bg-neutral-100 disabled:opacity-50">Annuler</button>
-                              )}
-                            </div>
-                          </div>
+                          <input type="number" min="0" data-recv={i} value={recv[i] ?? String(r.invoiceQty)} disabled={!!bulk}
+                            onChange={(e) => setRecv((s) => ({ ...s, [i]: e.target.value }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") scanRef.current?.focus(); }}
+                            className={`w-14 rounded border px-1 py-0.5 text-xs ${recvQtyOf(i, r) !== r.invoiceQty ? "border-amber-500 bg-amber-50 font-semibold" : "border-neutral-300"}`} />
                         )}
                       </div>
                     </td>
