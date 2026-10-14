@@ -67,6 +67,11 @@ export default auth((req) => {
     return;
   }
 
+  // /yarrow (page joaillerie Yarrow)
+  if (pathname === "/yarrow" || pathname.startsWith("/yarrow/")) {
+    return;
+  }
+
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
