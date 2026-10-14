@@ -186,7 +186,7 @@ h1 em{font-style:italic;color:var(--or)}
   .malle .etiq{margin-top:5px;font-size:8px;letter-spacing:.16em}
   .resume{display:none}
   .droite{gap:9px}
-  .chiffres{gap:2px;align-items:flex-end;text-align:right}
+  .chiffres{gap:4px;align-items:flex-end;text-align:right}
   .chiffres .eco{font-size:8.5px;padding:3px 8px;letter-spacing:.06em;line-height:1.1}
   .chiffres .barre-val{font-size:9.5px;line-height:1.2}
   .chiffres .px400{font-size:24px;line-height:1}
@@ -440,9 +440,9 @@ h1 em{font-style:italic;color:var(--or)}
   var c=document.getElementById('neige');
   if(c){
     var x=c.getContext('2d'), f=[], L=0, H=0, doux=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    function taille(){ L=c.width=innerWidth*devicePixelRatio; H=c.height=innerHeight*devicePixelRatio;
+    function calibre(){ L=c.width=innerWidth*devicePixelRatio; H=c.height=innerHeight*devicePixelRatio;
       c.style.width=innerWidth+'px'; c.style.height=innerHeight+'px'; }
-    taille(); addEventListener('resize',taille);
+    calibre(); addEventListener('resize',calibre);
     var n=doux?24:60;
     for(var i=0;i<n;i++) f.push({x:Math.random(),y:Math.random(),r:(Math.random()*1.6+.5)*devicePixelRatio,
       v:(Math.random()*.00032+.00011),o:Math.random()*.42+.12,d:Math.random()*6.28});
