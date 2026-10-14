@@ -195,11 +195,27 @@ h1 em{font-style:italic;color:var(--or)}
   .mention{font-size:9.5px;margin:10px auto 12px}
   .pied{padding-bottom:10px}
 }
-@media(max-width:460px){
-  .rangee{grid-template-columns:repeat(2,1fr)}
-  .piste{height:178px}
-  .malle{width:116px}
-  .chiffres .px400{font-size:21px}
+@media(max-width:560px){
+  /* une seule colonne : les bagues deux fois plus grandes */
+  .rangee{grid-template-columns:1fr;gap:16px;margin-top:14px}
+  .col h3{font-size:17px;margin-bottom:6px}
+  .piste{height:300px;padding:12px 10px;gap:12px}
+  .carte .nom{font-size:14px;margin-top:7px}
+  .rond .larg b{font-size:52px}
+  .rond .larg s{font-size:12px;letter-spacing:.2em}
+  .rond .mystere{font-size:10px;bottom:8px}
+  .rond .avenir{font-size:9.5px}
+  .flh{width:52px;height:34px;font-size:13px}
+  .cmd{margin-top:9px;gap:10px}
+  .tailles .tt{font-size:18px}
+  .tailles .ts{font-size:10px}
+  .tb{min-width:56px;padding:12px 16px;font-size:17px}
+  .tb.inconnue{font-size:13px}
+  .malle{width:124px}
+  .chiffres .px400{font-size:26px}
+  .chiffres .barre-val{font-size:10.5px}
+  .chiffres .eco{font-size:9.5px}
+  .bouton{padding:15px 10px;font-size:11px}
 }
 </style>
 
