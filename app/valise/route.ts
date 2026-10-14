@@ -175,7 +175,10 @@ h1 em{font-style:italic;color:var(--or)}
     padding:9px 12px calc(7px + env(safe-area-inset-bottom,0px));gap:10px;align-items:center;
     background:linear-gradient(rgba(32,9,14,.70),rgba(32,9,14,.985) 38%);
     border-top:1px solid var(--ligne);
-    margin-left:-12px;margin-right:-12px}
+    margin-left:-12px;margin-right:-12px;flex-wrap:wrap;row-gap:8px}
+  .bagage{flex:0 0 auto}
+  .droite{flex:1 1 auto;justify-content:flex-end;gap:0}
+  .bouton{flex:0 0 100%;width:100%;order:3;padding:13px 10px}
   .bagage{flex:1 1 auto;gap:9px}
   .malle{width:132px;padding:7px 8px 9px;border-radius:5px}
   .malle::before{width:30px;height:7px;top:-6px}
@@ -183,7 +186,7 @@ h1 em{font-style:italic;color:var(--or)}
   .malle .etiq{margin-top:5px;font-size:8px;letter-spacing:.16em}
   .resume{display:none}
   .droite{gap:9px}
-  .chiffres{gap:3px;align-items:flex-end}
+  .chiffres{gap:2px;align-items:flex-end;text-align:right}
   .chiffres .eco{font-size:8.5px;padding:3px 8px;letter-spacing:.06em;line-height:1.1}
   .chiffres .barre-val{font-size:9.5px;line-height:1.2}
   .chiffres .px400{font-size:24px;line-height:1}
