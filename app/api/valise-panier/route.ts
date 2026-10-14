@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// la page peut être appelée depuis la boutique
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
 const SHOP = "yourmood.myshopify.com";
 const TOKEN = process.env.SHOPIFY_API_TOKEN || process.env.MOOD_SHOPIFY_ACCESS_TOKEN || "";
 const PRIX_VALISE = 429;
@@ -19,11 +30,11 @@ async function gql(query: string, variables?: Record<string, unknown>) {
 }
 
 export async function POST(request: Request) {
-  if (!TOKEN) return NextResponse.json({ error: "pas d'accès boutique" }, { status: 503 });
+  if (!TOKEN) return NextResponse.json({ error: "pas d'accès boutique" }, { status: 503, headers: CORS });
   try {
     const body = await request.json();
     const ids: string[] = (body?.ids || []).map(String).filter((x: string) => /^\d+$/.test(x));
-    if (ids.length !== 5) return NextResponse.json({ error: "il faut cinq pièces" }, { status: 400 });
+    if (ids.length !== 5) return NextResponse.json({ error: "il faut cinq pièces" }, { status: 400, headers: CORS });
 
     // les vrais prix, maintenant — et on vérifie que ce sont bien des pièces de la valise
     const d = await gql(
@@ -31,16 +42,16 @@ export async function POST(request: Request) {
       { ids: ids.map((i) => `gid://shopify/ProductVariant/${i}`) }
     );
     const vs = (d.nodes || []).filter(Boolean) as Array<{ id: string; price: string; availableForSale: boolean; product: { tags: string[] } }>;
-    if (vs.length !== 5) return NextResponse.json({ error: "une pièce est introuvable" }, { status: 400 });
+    if (vs.length !== 5) return NextResponse.json({ error: "une pièce est introuvable" }, { status: 400, headers: CORS });
     for (const v of vs) {
       if (!v.product.tags.includes("grande-valise"))
-        return NextResponse.json({ error: "pièce hors valise" }, { status: 400 });
+        return NextResponse.json({ error: "pièce hors valise" }, { status: 400, headers: CORS });
     }
 
     const somme = Math.round(vs.reduce((a, v) => a + parseFloat(v.price), 0) * 100) / 100;
     const remise = Math.round((somme - PRIX_VALISE) * 100) / 100;
     if (remise <= 0) {
-      return NextResponse.json({ lien: `https://www.yourmood.net/cart/${ids.map((i) => i + ":1").join(",")}`, somme, remise: 0 });
+      return NextResponse.json({ lien: `https://www.yourmood.net/cart/${ids.map((i) => i + ":1").join(",")}`, somme, remise: 0 }, { headers: CORS });
     }
 
     const code = "GV" + String(somme).replace(".", "");
@@ -63,7 +74,7 @@ export async function POST(request: Request) {
         }
       );
       const er = cr?.discountCodeBasicCreate?.userErrors || [];
-      if (er.length) return NextResponse.json({ error: "remise refusée : " + JSON.stringify(er).slice(0, 160) }, { status: 500 });
+      if (er.length) return NextResponse.json({ error: "remise refusée : " + JSON.stringify(er).slice(0, 160) }, { status: 500, headers: CORS });
       // on attend que la boutique la reconnaisse
       for (let i = 0; i < 10; i++) {
         await new Promise((r) => setTimeout(r, 700));
@@ -73,8 +84,8 @@ export async function POST(request: Request) {
     }
 
     const lien = `https://www.yourmood.net/cart/${ids.map((i) => i + ":1").join(",")}?discount=${code}`;
-    return NextResponse.json({ lien, somme, remise, code });
+    return NextResponse.json({ lien, somme, remise, code }, { headers: CORS });
   } catch (e) {
-    return NextResponse.json({ error: String((e as Error)?.message || e).slice(0, 200) }, { status: 500 });
+    return NextResponse.json({ error: String((e as Error)?.message || e).slice(0, 200) }, { status: 500, headers: CORS });
   }
 }
