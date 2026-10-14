@@ -11,10 +11,12 @@ const LOC = Number(process.env.KATANA_DEFAULT_LOCATION_ID!);
 const H = { Accept: "application/json", Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function kf(path: string, init?: RequestInit, tries = 3): Promise<Response> {
+// 429 = Katana refuse l'appel (trop d'appels par minute), rien n'est écrit : on attend
+// le délai indiqué (sinon 2 s, 4 s, 6 s…) puis on renvoie le même appel.
+async function kf(path: string, init?: RequestInit, tries = 5): Promise<Response> {
   for (let i = 0; i < tries; i++) {
     const r = await fetch(`${BASE}${path}`, { ...init, headers: H, cache: "no-store" });
-    if (r.status === 429) { await sleep(600 * (i + 1)); continue; }
+    if (r.status === 429) { await sleep(Math.max(Number(r.headers.get("retry-after")) * 1000 || 0, 2000 * (i + 1))); continue; }
     return r;
   }
   return fetch(`${BASE}${path}`, { ...init, headers: H, cache: "no-store" });

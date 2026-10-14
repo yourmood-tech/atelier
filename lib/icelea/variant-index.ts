@@ -26,13 +26,15 @@ export async function saveOverride(label: string, sku: string | null): Promise<v
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-async function kf(path: string, tries = 3): Promise<Record<string, unknown> | null> {
+// Katana limite le nombre d'appels par minute (429) : on attend le délai qu'il indique
+// (sinon 2 s, 4 s, 6 s…) avant de réessayer.
+async function kf(path: string, tries = 5): Promise<Record<string, unknown> | null> {
   for (let i = 0; i < tries; i++) {
     const r = await fetch(`${BASE}${path}`, {
       headers: { Accept: "application/json", Authorization: `Bearer ${KEY}` },
       cache: "no-store",
     });
-    if (r.status === 429) { await sleep(500 * (i + 1)); continue; }
+    if (r.status === 429) { await sleep(Math.max(Number(r.headers.get("retry-after")) * 1000 || 0, 2000 * (i + 1))); continue; }
     if (!r.ok) return null;
     return r.json();
   }
@@ -90,6 +92,9 @@ export async function fetchOpenRows(): Promise<VariantIndex["openRows"]> {
   const openRows: VariantIndex["openRows"] = [];
   for (const st of ["NOT_RECEIVED", "PARTIALLY_RECEIVED"]) {
     const j = await kf(`/v1/purchase_orders?supplier_id=${ICELEA}&status=${st}&limit=100`);
+    // lecture ratée ≠ « aucun PO ouvert » : sinon la réception entrerait en stock sans PO
+    // alors que des lignes de PO l'attendent (incident 14.10.2026, Katana saturé).
+    if (!j) throw new Error("Lecture des PO ouverts Katana impossible (Katana saturé ?) — rien n'a été réceptionné, réessaie.");
     for (const po of ((j?.data as Record<string, unknown>[]) ?? [])) {
       const poRows = ((po.purchase_order_rows as Record<string, unknown>[]) ?? []).filter((r) => !r.deleted_at);
       poRows.forEach((row, i) => {

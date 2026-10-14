@@ -142,11 +142,20 @@ export default function IceleaArrivagePage() {
         // déjà reçue → petite pause pour que l'imputation FIFO relise un état à jour
         if (seen.has(r.variantId!)) await new Promise((res) => setTimeout(res, 4000));
         seen.add(r.variantId!);
-        const res = await fetch("/api/icelea-arrivage/receive", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ variantId: r.variantId, receivedQty: recvQtyOf(i, r), pickQty: 0, invoiceNo, rowSig: sigForRow(rows, i) }),
-        });
-        const data = await readJson(res);
+        // Katana limite les appels par minute : on espace les lignes, et si Katana est saturé
+        // (429 = appel refusé, rien d'écrit — sauf message « PARTIELLE ») on patiente et on refait.
+        let res: Response, data: Record<string, unknown>;
+        for (let attempt = 0; ; attempt++) {
+          if (k > 0 || attempt > 0) await new Promise((w) => setTimeout(w, attempt === 0 ? 1500 : 20000));
+          res = await fetch("/api/icelea-arrivage/receive", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variantId: r.variantId, receivedQty: recvQtyOf(i, r), pickQty: 0, invoiceNo, rowSig: sigForRow(rows, i) }),
+          });
+          data = await readJson(res);
+          const err = String(data.error ?? "");
+          const saturated = !res.ok && !err.includes("PARTIELLE") && (err.includes("429") || err.includes("saturé"));
+          if (!saturated || attempt >= 3) break;
+        }
         if (!res.ok) {
           alert(`Arrêt sur ${r.sku ?? r.label}${r.size ? ` (${r.size})` : ""} : ${(data.error as string) || "erreur réception"}\n${k} ligne(s) déjà reçue(s) avant. Relance « Valider tout l'arrivage » pour continuer avec les lignes restantes.`);
           return;
