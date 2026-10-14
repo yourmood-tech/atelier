@@ -161,9 +161,9 @@ h1 em{font-style:italic;color:var(--or)}
   .rond .avenir{font-size:7px}
   .flh{width:34px;height:24px;font-size:10px}
   .cmd{margin-top:6px;gap:6px}
-  /* le bloc du bas, compact */
-  .socle{margin-top:10px;padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
-  .tailles{padding:10px 8px 9px;border-radius:3px}
+  /* sur telephone : la taille suit la page, seule la barre prix reste collee */
+  .socle{display:contents}
+  .tailles{position:static;margin-top:12px;padding:11px 9px 10px;border-radius:3px}
   .tailles .tt{font-size:15px;margin-bottom:1px}
   .tailles .ts{font-size:8.5px;letter-spacing:.14em;margin-bottom:8px}
   .tbtns{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:6px;
@@ -171,7 +171,11 @@ h1 em{font-style:italic;color:var(--or)}
   .tbtns::-webkit-scrollbar{display:none}
   .tb{flex:0 0 auto;min-width:46px;padding:9px 12px;font-size:14px}
   .tb.inconnue{font-size:11px;padding:9px 13px}
-  .barre{margin-top:8px;padding:9px 0 4px;gap:10px;align-items:center}
+  .barre{position:sticky;bottom:0;z-index:7;margin-top:10px;
+    padding:9px 12px calc(7px + env(safe-area-inset-bottom,0px));gap:10px;align-items:center;
+    background:linear-gradient(rgba(32,9,14,.70),rgba(32,9,14,.985) 38%);
+    border-top:1px solid var(--ligne);
+    margin-left:-12px;margin-right:-12px}
   .bagage{flex:1 1 auto;gap:9px}
   .malle{width:132px;padding:7px 8px 9px;border-radius:5px}
   .malle::before{width:30px;height:7px;top:-6px}
@@ -179,12 +183,14 @@ h1 em{font-style:italic;color:var(--or)}
   .malle .etiq{margin-top:5px;font-size:8px;letter-spacing:.16em}
   .resume{display:none}
   .droite{gap:9px}
-  .chiffres .eco{font-size:8.5px;padding:2px 7px;letter-spacing:.06em}
-  .chiffres .barre-val{font-size:9px}
-  .chiffres .px400{font-size:23px}
+  .chiffres{gap:3px;align-items:flex-end}
+  .chiffres .eco{font-size:8.5px;padding:3px 8px;letter-spacing:.06em;line-height:1.1}
+  .chiffres .barre-val{font-size:9.5px;line-height:1.2}
+  .chiffres .px400{font-size:24px;line-height:1}
   .bouton{padding:12px 16px;font-size:9.5px;letter-spacing:.1em}
   .apres{font-size:10px;padding-top:4px;line-height:1.4}
-  .mention{font-size:9.5px;margin:10px auto 16px}
+  .mention{font-size:9.5px;margin:10px auto 12px}
+  .pied{padding-bottom:10px}
 }
 @media(max-width:460px){
   .rangee{grid-template-columns:repeat(2,1fr)}
