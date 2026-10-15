@@ -72,6 +72,10 @@ export default auth((req) => {
     return;
   }
 
+  // /erable-kyoto (maquette de la page Érable de Kyoto)
+  if (pathname === "/erable-kyoto" || pathname.startsWith("/erable-kyoto/")) {
+    return;
+  }
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
