@@ -51,9 +51,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   .p:nth-child(even) .leg{order:1;text-align:right}
   .p:nth-child(even) .vis.film{order:-1}
 }
-.media{display:grid;gap:3px;min-width:0}
-.media.n2{grid-template-columns:repeat(2,1fr)}
-.media.n3{grid-template-columns:repeat(3,1fr)}
+.media{display:grid;gap:3px;min-width:0;grid-template-columns:repeat(3,1fr)}
 .vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:1/1;min-width:0}
 .vis img{width:100%;height:100%;object-fit:cover;transition:transform 1.8s cubic-bezier(.2,.7,.2,1);display:block}
 .p:hover .vis img{transform:scale(1.04)}
