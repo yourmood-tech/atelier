@@ -54,8 +54,39 @@ How to write:
 - Return the e-mail body only, plain text.`;
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-  let r;
-  try { r = await client.messages.create({ model: MODELE, max_tokens: 700, messages: [{ role: "user", content: prompt }] }); }
-  catch { r = await client.messages.create({ model: "claude-haiku-4-5-20251001", max_tokens: 700, messages: [{ role: "user", content: prompt }] }); }
-  return r.content[0]?.type === "text" ? r.content[0].text.trim() : "";
+  // tout le texte de la réponse (certains modèles placent d'abord un autre type de bloc)
+  const texte = (r: { content: { type: string; text?: string }[] }) =>
+    r.content.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n").trim();
+  for (const modele of [MODELE, "claude-haiku-4-5-20251001"]) {
+    try {
+      const r = await client.messages.create({ model: modele, max_tokens: 900, messages: [{ role: "user", content: prompt }] });
+      const t = texte(r as unknown as { content: { type: string; text?: string }[] });
+      if (t) return t;
+      console.error(`[délais] brouillon vide (${modele}), arrêt : ${(r as { stop_reason?: string }).stop_reason}`);
+    } catch (e) { console.error(`[délais] rédaction ${modele} :`, e); }
+  }
+  return brouillonDeSecours(f, p.prenom);
+}
+
+// Dernier recours si la rédaction échoue : un texte simple tiré des faits (Philippe le complète).
+function brouillonDeSecours(f: Faits, prenom: string): string {
+  const de = f.langue === "de", en = f.langue === "en";
+  const salut = de ? `Guten Tag${prenom ? " " + prenom : ""},` : en ? `Hello${prenom ? " " + prenom : ""},` : `Bonjour${prenom ? " " + prenom : ""},`;
+  const e = f.envois[f.envois.length - 1];
+  let statut: string;
+  if ((f.statut === "expediee" || f.statut === "expediee_partiel") && e)
+    statut = de ? `Ihre Bestellung ${f.commande} wurde am ${e.date} versandt${e.numero ? ` (Sendungsnummer ${e.numero})` : ""}.`
+      : en ? `Your order ${f.commande} was shipped on ${e.date}${e.numero ? ` (tracking number ${e.numero})` : ""}.`
+      : `Votre commande ${f.commande} est partie le ${e.date}${e.numero ? ` (numéro de suivi ${e.numero})` : ""}.`;
+  else if (f.estimation && !f.estimation.depassee)
+    statut = de ? `Ihre Bestellung ${f.commande} ist in Produktion, die Lieferung ist zwischen dem ${f.estimation.du} und dem ${f.estimation.au} vorgesehen (Schätzung).`
+      : en ? `Your order ${f.commande} is in production; delivery is expected between ${f.estimation.du} and ${f.estimation.au} (estimate).`
+      : `Votre commande ${f.commande} est en cours de production, la livraison est prévue entre le ${f.estimation.du} et le ${f.estimation.au} (estimation).`;
+  else statut = de ? `Ihre Bestellung ${f.commande ?? ""} ist in unserem Atelier in Produktion. Wir melden uns sehr bald mit einem genauen Datum.`
+      : en ? `Your order ${f.commande ?? ""} is in production in our workshop. We will come back to you very soon with a precise date.`
+      : `Votre commande ${f.commande ?? ""} est en cours de production dans notre atelier. Nous revenons vers vous très vite avec une date précise.`;
+  const fin = de ? "Vielen Dank für Ihre Bestellung und Ihre Geduld.\n\nEinen schönen Tag.\n\nFreundliche Grüsse,\nPhilippe"
+    : en ? "Thank you for your order and your patience.\n\nHave a lovely day.\n\nKind regards,\nPhilippe"
+    : "Merci pour votre commande et patience.\n\nExcellente journée.\n\nCordialement,\nPhilippe";
+  return `${salut}\n\n${statut}\n\n${fin}`;
 }
