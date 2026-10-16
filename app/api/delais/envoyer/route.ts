@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!t) return NextResponse.json({ error: "texte vide" }, { status: 400 });
     await sendEmailReply({
       ticketId: b.ticketId, agentId: PHILIPPE, fromAddress: b.depuis || "contact@yourmood.net", fromName: "Support mood collection",
-      toAddress: b.email, toName: b.client, subject: b.sujet ? (b.sujet.match(/^re:/i) ? b.sujet : `Re: ${b.sujet}`) : "Votre commande", text: t,
+      toAddress: b.email, toName: b.client, subject: b.sujet ? (b.sujet.match(/^(re:|votre commande)/i) ? b.sujet : `Re: ${b.sujet}`) : "Votre commande", text: t,
     });
     await closeTicket(b.ticketId).catch(() => {});
     b.etat = "envoye"; b.envoyeLe = new Date().toISOString(); b.texteEnvoye = t;
