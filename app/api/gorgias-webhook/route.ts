@@ -3,6 +3,7 @@ import { detectDelayInquiry } from "@/lib/email";
 import { assignTicket, getTicket, getTicketMessages } from "@/lib/gorgias";
 import { faitsCommande } from "@/lib/delais/faits";
 import { redigerBrouillon } from "@/lib/delais/brouillon";
+import { langueDuMessage } from "@/lib/delais/langue";
 import { detecterTaille, faitsTaille, redigerTaille } from "@/lib/delais/taille";
 import { enregistrer, lire } from "@/lib/delais/registre";
 
@@ -68,6 +69,7 @@ async function traiter(ticketId: number) {
   const faits = await faitsCommande(det.order_number, email);
   const prenom = faits.prenom || String(cust.firstname ?? "");
   const messageClient = String(dernier.stripped_text ?? dernier.body_text ?? "");
+  faits.langue = langueDuMessage(messageClient) ?? faits.langue;
   const brouillon = await redigerBrouillon({ faits, messageClient, prenom });
   const src = (dernier.source ?? {}) as Record<string, unknown>;
   const to = ((src.to ?? []) as Record<string, unknown>[])[0];
@@ -84,6 +86,7 @@ async function traiterTaille(ticketId: number, t: Record<string, unknown>, derni
   const email = String(cust.email ?? (dernier.sender as Record<string, unknown>)?.email ?? "");
   const f = await faitsTaille(tai.commande, email, tai.taille);
   const messageClient = String(dernier.stripped_text ?? dernier.body_text ?? "");
+  if (f) f.langue = langueDuMessage(messageClient) ?? f.langue;
   const brouillon = f ? await redigerTaille(f, messageClient)
     : "Bonjour,\n\nNous avons bien reçu votre demande de changement de taille. Pourriez-vous nous indiquer votre numéro de commande ?\n\nExcellente journée.\n\nCordialement,\nPhilippe";
   const src = (dernier.source ?? {}) as Record<string, unknown>;
