@@ -49,6 +49,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   .p{grid-template-columns:1.15fr .85fr;gap:clamp(30px,4.5vw,70px)}
   .p:nth-child(even) .media{order:2}
   .p:nth-child(even) .leg{order:1;text-align:right}
+  .p:nth-child(even) .vis.film{order:-1}
 }
 .media{display:grid;gap:3px;min-width:0}
 .media.n2{grid-template-columns:repeat(2,1fr)}
@@ -203,11 +204,12 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
     var b=document.createElement('button');
     b.className='p p'+k+(p.i.charAt(0)==='/'?' clair':''); b.dataset.k=k;
     var vis=[];
-    if(p.v) vis.push('<span class="vis"><video src="'+p.v+'" autoplay muted loop playsinline preload="metadata"></video></span>');
     var photos=(p.g&&p.g.length?p.g:[p.i]);
-    for(var q=0;q<photos.length && vis.length<3;q++){
+    var maxPhotos=p.v?2:3;
+    for(var q=0;q<photos.length && vis.length<maxPhotos;q++){
       vis.push('<span class="vis"><img loading="lazy" src="'+u(photos[q],900)+'" alt="'+p.t+'"></span>');
     }
+    if(p.v) vis.push('<span class="vis film"><video src="'+p.v+'" autoplay muted loop playsinline preload="metadata"></video></span>');
     b.innerHTML='<span class="media n'+vis.length+'">'+vis.join('')+'</span><span class="leg">'+
       '<span class="nom">'+p.t+'</span>'+
       '<span class="mot">'+p.m+'</span>'+
