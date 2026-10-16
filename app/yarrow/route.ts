@@ -47,10 +47,6 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   cursor:pointer;width:100%}
 @media(min-width:900px){
   .p{grid-template-columns:1.15fr .85fr;gap:clamp(30px,4.5vw,70px)}
-  .p:nth-child(even){grid-template-columns:.85fr 1.15fr}
-  .p:nth-child(even) .media{order:2}
-  .p:nth-child(even) .leg{order:1;text-align:right}
-  .p:nth-child(even) .vis.film{order:-1}
 }
 .media{display:grid;gap:3px;min-width:0;grid-template-columns:repeat(3,1fr)}
 .vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:1/1;min-width:0}
