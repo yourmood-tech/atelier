@@ -50,6 +50,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 }
 .media{display:grid;gap:3px;min-width:0;grid-template-columns:repeat(3,1fr)}
 .vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:1/1;min-width:0}
+.vis.film{grid-column:3}
 .vis img{width:100%;height:100%;object-fit:cover;transition:transform 1.8s cubic-bezier(.2,.7,.2,1);display:block}
 .p:hover .vis img{transform:scale(1.04)}
 .vis video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
