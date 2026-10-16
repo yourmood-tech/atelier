@@ -205,8 +205,9 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
     var vis=[];
     var photos=(p.g&&p.g.length?p.g:[p.i]);
     for(var q=0;q<photos.length && vis.length<2;q++){
-      if(q===1 && p.h2){
-        vis.push('<span class="vis"><img class="dessous" loading="lazy" src="'+u(p.h2,900)+'" alt="'+p.t+'">'+
+      var survol = (q===0?p.h1:(q===1?p.h2:null));
+      if(survol){
+        vis.push('<span class="vis"><img class="dessous" loading="lazy" src="'+u(survol,900)+'" alt="'+p.t+'">'+
                  '<img class="dessus" loading="lazy" src="'+u(photos[q],900)+'" alt="'+p.t+'"></span>');
       } else {
         vis.push('<span class="vis"><img loading="lazy" src="'+u(photos[q],900)+'" alt="'+p.t+'"></span>');
