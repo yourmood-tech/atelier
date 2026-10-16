@@ -214,7 +214,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
       }
     }
     while(vis.length<2) vis.push('<span class="vis"></span>');
-    var film=p.v?'<span class="vis film"><video src="'+p.v+'" muted loop playsinline preload="metadata"></video></span>':'<span class="vis"></span>';
+    var film=p.v?'<span class="vis film"><video src="'+p.v+'" autoplay muted loop playsinline preload="metadata"></video></span>':'<span class="vis"></span>';
     b.innerHTML=vis.join('')+'<span class="leg">'+
       '<span class="nom">'+p.t+'</span>'+
       '<span class="mot">'+p.m+'</span>'+
@@ -233,12 +233,6 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
     p.g.forEach(function(x,i){ var t=document.createElement('button');
       t.innerHTML='<img src="'+u(x,200)+'" alt="">'; t.onclick=function(){montre(p,i);}; vb.appendChild(t); });
     montre(p,0); vue.classList.add('on'); document.body.style.overflow='hidden'; }
-  Array.prototype.forEach.call(m.querySelectorAll('.p'),function(li){
-    var vd=li.querySelector('video');
-    if(!vd) return;
-    li.addEventListener('mouseenter',function(){ vd.play().catch(function(){}); });
-    li.addEventListener('mouseleave',function(){ vd.pause(); try{vd.currentTime=0;}catch(e){} });
-  });
   m.addEventListener('click',function(e){ var b=e.target.closest('.p'); if(b) ouvre(+b.dataset.k); });
   function ferme(){ vue.classList.remove('on'); document.body.style.overflow=''; }
   document.getElementById('vfermer').onclick=ferme;
