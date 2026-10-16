@@ -21,7 +21,7 @@ img{max-width:100%;display:block}
 
 /* ouverture */
 .hero{position:relative;height:34svh;min-height:250px;max-height:420px;display:grid;place-items:center;overflow:hidden}
-.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+.hero img,.hero video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   animation:resp 26s ease-in-out infinite alternate}
 @keyframes resp{from{transform:scale(1.03)}to{transform:scale(1.13)}}
 .hero::after{content:"";position:absolute;inset:0;
@@ -119,7 +119,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 </style>
 
 <section class="hero">
-  <img id="heroimg" alt="">
+  <video id="herovid" autoplay muted loop playsinline preload="auto" poster=""></video>
   <div class="txt">
     <p class="sur">mood joaillerie</p>
     <h1>Yarrow</h1>
@@ -181,8 +181,8 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 (function(){
   var P=[{"h":"yarrow","t":"Yarrow","p":"2350.00","m":"La première. Rubis, saphirs oranges, améthystes — tout l'automne dans un anneau.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow52.web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow52.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow2.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow6.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow7.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow5.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow4.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow3-web.jpg"]},{"h":"yarrow-glace","t":"Yarrow Glacé","p":"2350.00","m":"Le bleu sous la glace. Saphirs, topazes et diamants.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/glace4.web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/glace.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/glace4.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrowglace.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/glace3.web.jpg"]},{"h":"yarrow-vertical","t":"Yarrow Vertical","p":"2350.00","m":"Les pierres prennent la hauteur.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3999_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3971_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_4012_modif_web_44094c56-24e0-4325-8fc4-abea9153ebbf.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_4016_modif_web_47c5e52e-76f7-47ff-87d7-ed36d75c466b.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3982_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3984_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3999_modif_web.jpg"]},{"h":"yarrow-purple","t":"Yarrow Purple","p":"2350.00","m":"Du mauve le plus pâle au violet profond.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1904_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1930_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1904_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1923_modi_webf.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1927_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1910_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1919_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2146_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2177_modif_web_1.jpg"]},{"h":"yarrow-black-and-white","t":"Yarrow Black and White","p":"2350.00","m":"Diamants noirs et diamants blancs, sans transition.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1238_modif_carre-web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9685_modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1245_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9682_modif__carre_Web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1238_modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9665_modif_carre_Web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1235._modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1244_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1240_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9641_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9672_modif_carre_web_354bc01c-8be2-49da-ab47-9a805595fdad.jpg"]},{"h":"yarrow-white","t":"Yarrow White","p":"2350.00","m":"Rien que du blanc. La plus silencieuse.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite2_914e030f-df35-4f1f-84ef-82bbf532e181.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite2_914e030f-df35-4f1f-84ef-82bbf532e181.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite.jpg"]},{"h":"yarrow-love","t":"Yarrow love","p":"2350.00","m":"Les roses, les fuchsias, les rouges.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6111_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6100_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6130_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6080_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6095_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6135_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6111_modif_web.jpg"]},{"h":"yarrow-sucre-dorge","t":"Yarrow Sucre d'orge","p":"2350.00","m":"Rubis et diamants, comme un bâton de sucre d'orge.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4347-modif.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4332-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4343-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4353-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4349-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4325-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4347-modif.jpg"]}];
   var B='https://www.yourmood.net/products/';
-  function u(x,w){ return x+(x.indexOf('?')>-1?'&':'?')+'width='+w; }
-  document.getElementById('heroimg').src=u(P[0].i,2000);
+  function u(x,w){ if(x.charAt(0)==='/') return x; return x+(x.indexOf('?')>-1?'&':'?')+'width='+w; }
+  (function(){var v=document.getElementById('herovid');v.poster=u(P[0].i,1600);v.src='/yarrow/hero.mp4';v.play().catch(function(){});})();
   document.getElementById('bandeimg').src=u(P[4].g[2]||P[4].i,1800);
   document.getElementById('detimg').src=u(P[0].g[3]||P[0].i,1400);
   document.getElementById('finimg').src=u(P[7].g[1]||P[7].i,1800);
@@ -196,7 +196,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
       '<span class="ombre"></span><span class="leg">'+
       '<span class="nom">'+p.t+'</span>'+
       '<span class="mot">'+p.m+'</span>'+
-      '<span class="px">'+p.p.replace('.00','')+'.–</span></span>';
+      '<span class="px">'+(p.p?p.p.replace('.00','')+'.–':'nouveau')+'</span></span>';
     m.appendChild(b);
   });
 
@@ -206,7 +206,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   function montre(p,i){ vg.src=u(p.g[i],1600);
     Array.prototype.forEach.call(vb.children,function(c,j){c.classList.toggle('on',j===i);}); }
   function ouvre(k){ var p=P[k];
-    vt.textContent=p.t; vl.href=B+p.h; vl.textContent='Voir la fiche · '+p.p.replace('.00','')+'.–';
+    vt.textContent=p.t; if(p.h){vl.style.display='';vl.href=B+p.h;vl.textContent='Voir la fiche · '+p.p.replace('.00','')+'.–';}else{vl.style.display='none';}
     vb.innerHTML='';
     p.g.forEach(function(x,i){ var t=document.createElement('button');
       t.innerHTML='<img src="'+u(x,200)+'" alt="">'; t.onclick=function(){montre(p,i);}; vb.appendChild(t); });
