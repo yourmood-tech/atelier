@@ -7,8 +7,8 @@ const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta n
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Poppins:wght@200;300;400&display=swap">
 <style>
 :root{
-  --encre:#0a0a09; --creme:#f4f1ec; --or:#c3a271; --doux:rgba(244,241,236,.55);
-  --ligne:rgba(195,162,113,.22);
+  --encre:#ffffff; --creme:#1a1714; --or:#9d7742; --doux:rgba(26,23,20,.58);
+  --ligne:rgba(26,23,20,.14);
   --titre:'Cormorant Garamond',Georgia,serif;
   --texte:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;
 }
@@ -26,11 +26,11 @@ img{max-width:100%;display:block}
 @keyframes resp{from{transform:scale(1.03)}to{transform:scale(1.13)}}
 .hero::after{content:"";position:absolute;inset:0;
   background:linear-gradient(rgba(10,10,9,.52),rgba(10,10,9,.12) 38%,rgba(10,10,9,.88))}
-.hero .txt{position:relative;z-index:2;text-align:center;padding:0 20px}
-.sur{font-size:10px;letter-spacing:.48em;text-transform:uppercase;color:var(--or);margin:0 0 12px}
+.hero .txt{position:relative;z-index:2;text-align:center;padding:0 20px;color:#fff}
+.sur{font-size:10px;letter-spacing:.48em;text-transform:uppercase;color:#e2c091;margin:0 0 12px}
 h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-height:.95;margin:0}
 .hero .sous{margin:12px auto 0;max-width:28em;font-family:var(--titre);font-style:italic;
-  font-size:clamp(14px,1.6vw,19px);color:rgba(244,241,236,.9);line-height:1.4}
+  font-size:clamp(14px,1.6vw,19px);color:rgba(255,255,255,.92);line-height:1.4}
 
 /* manifeste, serré */
 .manif{padding:clamp(34px,4vw,52px) 0 clamp(30px,4vw,46px);text-align:center}
@@ -53,7 +53,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 .media{display:grid;gap:3px;min-width:0}
 .media.n2{grid-template-columns:repeat(2,1fr)}
 .media.n3{grid-template-columns:repeat(3,1fr)}
-.vis{position:relative;overflow:hidden;background:#15130f;aspect-ratio:4/5;min-width:0}
+.vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:4/5;min-width:0}
 .vis img{width:100%;height:100%;object-fit:cover;transition:transform 1.8s cubic-bezier(.2,.7,.2,1);display:block}
 .p:hover .vis img{transform:scale(1.04)}
 .vis video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
@@ -70,6 +70,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 .bande img{width:100%;height:100%;object-fit:cover}
 .bande .mot2{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;
   background:linear-gradient(rgba(10,10,9,.45),rgba(10,10,9,.62))}
+.bande .mot2{color:#fff}
 .bande .mot2 p{font-family:var(--titre);font-style:italic;font-size:clamp(24px,4vw,46px);
   max-width:16em;margin:0;line-height:1.35}
 
@@ -78,16 +79,16 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 @media(min-width:900px){.detail{grid-template-columns:1.05fr .95fr}}
 .detail .img{min-height:360px;position:relative;overflow:hidden}
 .detail .img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-.detail .bloc{padding:clamp(40px,5vw,72px) clamp(24px,4vw,60px);display:flex;flex-direction:column;justify-content:center}
+.detail .bloc{background:#f6f3ee;padding:clamp(40px,5vw,72px) clamp(24px,4vw,60px);display:flex;flex-direction:column;justify-content:center}
 .detail h2{font-family:var(--titre);font-weight:300;font-size:clamp(32px,4.4vw,50px);margin:0 0 6px}
 .detail .sous2{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--or);margin:0 0 20px}
-.detail p.intro{color:rgba(244,241,236,.78);font-size:14.5px;margin:0 0 22px;max-width:32em}
+.detail p.intro{color:rgba(26,23,20,.74);font-size:14.5px;margin:0 0 22px;max-width:32em}
 .fiche{list-style:none;margin:0;padding:0}
-.fiche li{display:flex;gap:16px;padding:10px 0;border-top:1px solid rgba(244,241,236,.08);font-size:13.5px}
+.fiche li{display:flex;gap:16px;padding:10px 0;border-top:1px solid rgba(26,23,20,.12);font-size:13.5px}
 .fiche li:first-child{border-top:0}
 .fiche b{flex:0 0 130px;font-weight:300;color:var(--or);font-size:9.5px;letter-spacing:.2em;
   text-transform:uppercase;padding-top:3px}
-.fiche span{flex:1 1 auto;color:rgba(244,241,236,.86)}
+.fiche span{flex:1 1 auto;color:rgba(26,23,20,.82)}
 .carats{font-family:var(--titre);font-size:clamp(50px,7vw,92px);line-height:1;color:var(--or);margin:26px 0 0}
 .carats small{display:block;font-family:var(--texte);font-size:10px;letter-spacing:.3em;
   text-transform:uppercase;color:var(--doux);margin-top:8px}
@@ -95,19 +96,19 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 /* fin */
 .fin{position:relative;height:clamp(520px,70vw,760px);overflow:hidden;margin-top:3px}
 .fin img{width:100%;height:100%;object-fit:cover}
-.fin .dedans{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;
+.fin .dedans{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:#fff;
   background:linear-gradient(rgba(10,10,9,.40),rgba(10,10,9,.82))}
 .fin h2{font-family:var(--titre);font-weight:300;font-size:clamp(34px,5.5vw,62px);margin:0}
-.fin .px2{font-family:var(--titre);font-size:clamp(44px,8vw,84px);color:var(--or);margin:14px 0 2px;line-height:1}
-.fin .inc{font-size:12px;color:var(--doux);letter-spacing:.06em;margin:0}
-.bouton{display:inline-block;margin-top:26px;text-decoration:none;background:var(--or);color:#16120b;
+.fin .px2{font-family:var(--titre);font-size:clamp(44px,8vw,84px);color:#e8c48d;margin:14px 0 2px;line-height:1}
+.fin .inc{font-size:12px;color:rgba(255,255,255,.72);letter-spacing:.06em;margin:0}
+.bouton{display:inline-block;margin-top:26px;text-decoration:none;background:#e8c48d;color:#2a200f;
   padding:17px 44px;letter-spacing:.2em;text-transform:uppercase;font-size:10.5px;
   transition:background .3s ease,transform .3s ease}
 .bouton:hover{background:#d8b985;transform:translateY(-2px)}
-.mentions{margin:24px auto 0;max-width:30em;font-size:11px;color:rgba(244,241,236,.42);line-height:1.65}
+.mentions{margin:24px auto 0;max-width:30em;font-size:11px;color:rgba(255,255,255,.55);line-height:1.65}
 
 /* visionneuse */
-.vue{position:fixed;inset:0;z-index:50;background:rgba(7,7,6,.985);display:none;flex-direction:column;padding:18px}
+.vue{position:fixed;inset:0;z-index:50;background:rgba(255,255,255,.985);display:none;flex-direction:column;padding:18px}
 .vue.on{display:flex}
 .vue .haut{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .vue .haut h3{font-family:var(--titre);font-weight:300;font-size:clamp(22px,3.2vw,32px);margin:0}
@@ -188,7 +189,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 
 <script>
 (function(){
-  var P=[{"h":"yarrow","t":"Yarrow","p":"2350.00","m":"La première. Rubis, saphirs oranges, améthystes — tout l'automne dans un anneau.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow52.web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow52.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow2.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow6.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow7.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow5.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow4.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow3-web.jpg"]},{"h":"yarrow-glace","t":"Yarrow Glacé","p":"2350.00","m":"Le bleu sous la glace. Saphirs, topazes et diamants.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/glace4.web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/glace.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/glace4.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrowglace.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/glace3.web.jpg"]},{"h":"yarrow-vertical","t":"Yarrow Vertical","p":"2350.00","m":"Les pierres prennent la hauteur.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3999_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3971_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_4012_modif_web_44094c56-24e0-4325-8fc4-abea9153ebbf.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_4016_modif_web_47c5e52e-76f7-47ff-87d7-ed36d75c466b.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3982_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3984_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3999_modif_web.jpg"]},{"h":"yarrow-purple","t":"Yarrow Purple","p":"2350.00","m":"Du mauve le plus pâle au violet profond.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1904_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1930_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1904_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1923_modi_webf.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1927_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1910_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1919_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2146_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2177_modif_web_1.jpg"]},{"h":"yarrow-black-and-white","t":"Yarrow Black and White","v":"/yarrow/tuile-blackwhite.mp4","p":"2350.00","m":"Diamants noirs et diamants blancs, sans transition.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1238_modif_carre-web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9685_modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1245_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9682_modif__carre_Web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1238_modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9665_modif_carre_Web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1235._modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1244_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1240_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9641_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9672_modif_carre_web_354bc01c-8be2-49da-ab47-9a805595fdad.jpg"]},{"h":"yarrow-white","t":"Yarrow White","v":"/yarrow/tuile-white.mp4","p":"2350.00","m":"Rien que du blanc. La plus silencieuse.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite2_914e030f-df35-4f1f-84ef-82bbf532e181.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite2_914e030f-df35-4f1f-84ef-82bbf532e181.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite.jpg"]},{"h":"yarrow-love","t":"Yarrow love","p":"2350.00","m":"Les roses, les fuchsias, les rouges.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6111_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6100_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6130_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6080_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6095_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6135_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6111_modif_web.jpg"]},{"h":"yarrow-sucre-dorge","t":"Yarrow Sucre d'orge","p":"2350.00","m":"Rubis et diamants, comme un bâton de sucre d'orge.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4347-modif.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4332-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4343-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4353-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4349-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4325-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4347-modif.jpg"]},{"h":"","t":"Yarrow Vert","v":"/yarrow/tuile-vert.mp4","p":"","m":"Emeraudes, turquoises et quelques eclats jaunes.","i":"/yarrow/vert.jpg","g":["/yarrow/vert.jpg"]},{"h":"","t":"Yarrow Rose Gold","v":"/yarrow/tuile-rosegold.mp4","p":"","m":"Or rose brosse, diamants blancs, roses et gris opaques.","i":"/yarrow/rosegold.jpg","g":["/yarrow/rosegold.jpg"]},{"h":"","t":"Yarrow Arc-en-ciel","v":"/yarrow/tuile-arcenciel.mp4","p":"","m":"Toutes les couleurs a la fois, posees en vrac.","i":"/yarrow/arcenciel.jpg","g":["/yarrow/arcenciel.jpg"]}];
+  var P=[{"h":"yarrow","t":"Yarrow","p":"2350.00","m":"La première. Rubis, saphirs oranges, améthystes — tout l'automne dans un anneau.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow52.web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow52.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow2.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow6.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow7.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow5.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow4.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrow3-web.jpg"]},{"h":"yarrow-glace","t":"Yarrow Glacé","v":"/yarrow/tuile-glace.mp4","p":"2350.00","m":"Le bleu sous la glace. Saphirs, topazes et diamants.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/glace4.web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/glace.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/glace4.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/yarrowglace.web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/glace3.web.jpg"]},{"h":"yarrow-vertical","t":"Yarrow Vertical","p":"2350.00","m":"Les pierres prennent la hauteur.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3999_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3971_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_4012_modif_web_44094c56-24e0-4325-8fc4-abea9153ebbf.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_4016_modif_web_47c5e52e-76f7-47ff-87d7-ed36d75c466b.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3982_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3984_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_3999_modif_web.jpg"]},{"h":"yarrow-purple","t":"Yarrow Purple","v":"/yarrow/tuile-purple.mp4","p":"2350.00","m":"Du mauve le plus pâle au violet profond.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1904_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1930_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1904_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1923_modi_webf.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1927_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1910_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1919_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2146_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_2177_modif_web_1.jpg"]},{"h":"yarrow-black-and-white","t":"Yarrow Black and White","v":"/yarrow/tuile-blackwhite.mp4","p":"2350.00","m":"Diamants noirs et diamants blancs, sans transition.","i":"https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1238_modif_carre-web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9685_modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1245_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9682_modif__carre_Web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1238_modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9665_modif_carre_Web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1235._modif_carre-web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1244_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1240_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9641_modif_carre_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_9672_modif_carre_web_354bc01c-8be2-49da-ab47-9a805595fdad.jpg"]},{"h":"yarrow-white","t":"Yarrow White","v":"/yarrow/tuile-white.mp4","p":"2350.00","m":"Rien que du blanc. La plus silencieuse.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite2_914e030f-df35-4f1f-84ef-82bbf532e181.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite2_914e030f-df35-4f1f-84ef-82bbf532e181.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/yarrowwhite.jpg"]},{"h":"yarrow-love","t":"Yarrow love","p":"2350.00","m":"Les roses, les fuchsias, les rouges.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6111_modif_web.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6100_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6130_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6080_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6095_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6135_modif_web.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6111_modif_web.jpg"]},{"h":"yarrow-sucre-dorge","t":"Yarrow Sucre d'orge","v":"/yarrow/tuile-sucredorge.mp4","p":"2350.00","m":"Rubis et diamants, comme un bâton de sucre d'orge.","i":"https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4347-modif.jpg","g":["https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4332-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4343-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4353-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4349-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4325-modif.jpg","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_4347-modif.jpg"]},{"h":"","t":"Yarrow Vert","v":"/yarrow/tuile-vert.mp4","p":"","m":"Emeraudes, turquoises et quelques eclats jaunes.","i":"/yarrow/vert.jpg","g":["/yarrow/vert.jpg"]},{"h":"","t":"Yarrow Rose Gold","v":"/yarrow/tuile-rosegold.mp4","p":"","m":"Or rose brosse, diamants blancs, roses et gris opaques.","i":"/yarrow/rosegold.jpg","g":["/yarrow/rosegold.jpg"]},{"h":"","t":"Yarrow Arc-en-ciel","v":"/yarrow/tuile-arcenciel.mp4","p":"","m":"Toutes les couleurs a la fois, posees en vrac.","i":"/yarrow/arcenciel.jpg","g":["/yarrow/arcenciel.jpg"]}];
   var B='https://www.yourmood.net/products/';
   function u(x,w){ if(x.charAt(0)==='/') return x; return x+(x.indexOf('?')>-1?'&':'?')+'width='+w; }
   (function(){var v=document.getElementById('herovid');v.poster=u(P[0].i,1600);v.src='/yarrow/hero.mp4';v.play().catch(function(){});})();
