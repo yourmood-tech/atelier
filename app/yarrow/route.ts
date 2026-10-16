@@ -33,7 +33,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   font-size:clamp(14px,1.6vw,19px);color:rgba(244,241,236,.9);line-height:1.4}
 
 /* manifeste, serré */
-.manif{padding:clamp(54px,7vw,92px) 0 clamp(36px,5vw,58px);text-align:center}
+.manif{padding:clamp(34px,4vw,52px) 0 clamp(30px,4vw,46px);text-align:center}
 .manif p{font-family:var(--titre);font-size:clamp(20px,2.7vw,29px);line-height:1.5;max-width:21em;margin:0 auto}
 .manif p + p{margin-top:.75em}
 .manif .pt{margin-top:1.1em;font-family:var(--texte);font-size:13px;letter-spacing:.2em;
