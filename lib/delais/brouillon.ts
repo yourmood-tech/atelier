@@ -19,6 +19,8 @@ function faitsEnClair(f: Faits): string {
     const dl = f.etape.delaiMin != null ? ` Typical duration of this step: ${f.etape.delaiMin}${f.etape.delaiMax && f.etape.delaiMax !== f.etape.delaiMin ? `–${f.etape.delaiMax}` : ""} ${f.etape.unite ?? "days"}.` : "";
     L.push(`Workshop step: ${f.etape.entree ? "entered" : "finished"} the step "${f.etape.nom}" on ${f.etape.date}.${dl}`);
   }
+  if (f.estimation && !f.estimation.depassee) L.push(`Based on the content of the order, it needs components from a partner workshop whose usual lead time is ${f.estimation.delaiMin}–${f.estimation.delaiMax} days after the order: estimated delivery window between ${f.estimation.du} and ${f.estimation.au} (estimate, never a promise — phrase it like "entre fin octobre et mi-novembre"). Never name the supplier.`);
+  if (f.estimation?.depassee) L.push(`The usual lead time for this order is already exceeded: do NOT give any date; say the piece is in its final production steps and that we will come back with a precise date very soon.`);
   if (f.rupture) L.push(`A component was marked as temporarily unavailable on ${f.rupture} (do not say "out of stock").`);
   return L.join("\n");
 }

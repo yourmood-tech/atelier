@@ -12,6 +12,7 @@ type Faits = {
   articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   etape: { nom: string; entree: boolean; date: string } | null; rupture: string | null; etiquettesUtilisees: string[];
+  estimation?: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
 };
 type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
@@ -24,6 +25,7 @@ const STATUT: Record<string, { txt: string; couleur: string }> = {
   piece_arrivee: { txt: "Pièce arrivée à l'atelier", couleur: "bg-sky-100 text-sky-800" },
   attente_icelea: { txt: "Attente pièce Icelea (date connue)", couleur: "bg-sky-50 text-sky-700" },
   etape: { txt: "Étape d'atelier connue", couleur: "bg-amber-100 text-amber-800" },
+  estimation_fournisseur: { txt: "Estimation d'après le fournisseur", couleur: "bg-violet-100 text-violet-800" },
   rien: { txt: "Rien de précis — à compléter", couleur: "bg-rose-100 text-rose-800" },
   introuvable: { txt: "Commande introuvable", couleur: "bg-rose-100 text-rose-800" },
   annulee: { txt: "Commande annulée", couleur: "bg-neutral-200 text-neutral-700" },
@@ -119,6 +121,7 @@ export default function Delais() {
                     {b.faits.iceleaLivraison && <li>🚚 pièce Icelea attendue le {b.faits.iceleaLivraison}</li>}
                     {b.faits.etape && <li>🔧 {b.faits.etape.entree ? "entrée" : "sortie"} « {b.faits.etape.nom} » le {b.faits.etape.date}</li>}
                     {b.faits.rupture && <li>⚠️ rupture signalée le {b.faits.rupture}</li>}
+                    {b.faits.estimation && <li>{b.faits.estimation.depassee ? "🔴" : "🗓️"} {b.faits.estimation.fournisseur} : {b.faits.estimation.delaiMin}–{b.faits.estimation.delaiMax} j après la commande → entre le {b.faits.estimation.du} et le {b.faits.estimation.au}{b.faits.estimation.depassee ? " — DÉLAI DÉPASSÉ, aucune date donnée à la cliente" : ""}</li>}
                   </ul>
                   {b.faits.etiquettesUtilisees.length > 0 && <div className="mt-1 text-xs text-neutral-400">étiquettes : {b.faits.etiquettesUtilisees.join(" · ")}</div>}
                 </div>

@@ -5,6 +5,7 @@
 import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getRecipeWithSuppliers } from "@/lib/katana";
 
 export type Statut =
   | "expediee"            // tout est parti : suivi colis
@@ -12,6 +13,7 @@ export type Statut =
   | "attente_icelea"      // pièce commandée chez Icelea, date de livraison à venir
   | "piece_arrivee"       // pièce Icelea arrivée à l'atelier (Icelea-recu / Icelea-partiel)
   | "etape"               // étape d'atelier connue
+  | "estimation_fournisseur" // rien de précis, mais délai estimé d'après le fournisseur des pièces
   | "rien"                // juste « en production » : à traiter par Philippe
   | "introuvable"         // aucune commande trouvée
   | "annulee";
@@ -29,6 +31,8 @@ export type Faits = {
   iceleaArrivee: { date: string; complet: boolean } | null;
   etape: { nom: string; entree: boolean; date: string; delaiMin: number | null; delaiMax: number | null; unite: string | null } | null;
   rupture: string | null;               // date de l'étiquette « Rupture »
+  // estimation d'après le contenu : fournisseur des pièces (recette Katana) et son délai habituel
+  estimation: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
   etiquettesUtilisees: string[];        // pour la page de validation (preuve)
 };
 
@@ -51,7 +55,7 @@ async function trouverCommande(numero: string | null, email: string): Promise<Re
 
 export async function faitsCommande(numero: string | null, email: string): Promise<Faits> {
   const vide: Faits = { statut: "introuvable", commande: null, commandeId: null, passeeLe: null, prenom: "", langue: "fr",
-    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, etape: null, rupture: null, etiquettesUtilisees: [] };
+    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, etape: null, rupture: null, estimation: null, etiquettesUtilisees: [] };
   const o = await trouverCommande(numero, email);
   if (!o) return vide;
   const cust = (o.customer ?? {}) as Record<string, unknown>;
@@ -110,9 +114,40 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   else if (f.iceleaLivraison) f.statut = "attente_icelea";
   else if (f.etape) f.statut = "etape";
   else f.statut = "rien";
+  // contenu encore à expédier → fournisseur des pièces → délai habituel compté depuis la commande
+  if (f.statut === "rien" || f.statut === "etape") {
+    try { f.estimation = await estimationFournisseur(lignes, f.passeeLe!); } catch (e) { console.error("[délais] estimation", e); }
+    if (f.statut === "rien" && f.estimation && !f.estimation.depassee) f.statut = "estimation_fournisseur";
+  }
   if (f.envois.length && f.articlesEnAttente.length && f.statut !== "expediee") {
     f.etiquettesUtilisees.push("envoi partiel");
     if (f.statut === "rien") f.statut = "expediee_partiel";
   }
   return f;
+}
+
+// Fournisseur au délai le plus long parmi les pièces achetées des articles encore à expédier
+// (délais habituels de la table supplier_lead_times, en jours, comptés depuis la date de commande).
+async function estimationFournisseur(lignes: Record<string, unknown>[], passeeLe: string): Promise<Faits["estimation"]> {
+  const skus = [...new Set(lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0).map((l) => String(l.sku ?? "")).filter(Boolean))];
+  if (!skus.length) return null;
+  const fournisseurs = new Map<number, string>();
+  for (const sku of skus.slice(0, 6)) {
+    const r = await getRecipeWithSuppliers(sku).catch(() => null);
+    (r?.ingredients ?? []).forEach((i) => { if (i.supplier) fournisseurs.set(i.supplier.id, i.supplier.name); });
+  }
+  if (!fournisseurs.size) return null;
+  const { data } = await supabaseAdmin.from("supplier_lead_times")
+    .select("supplier_id,supplier_name,lead_time_min,lead_time_max").in("supplier_id", [...fournisseurs.keys()]);
+  const rows = ((data ?? []) as { supplier_id: number; supplier_name: string; lead_time_min: number | null; lead_time_max: number | null }[])
+    .filter((x) => x.lead_time_min != null);
+  if (!rows.length) return null;
+  const pire = rows.sort((a, b) => (b.lead_time_max ?? b.lead_time_min!) - (a.lead_time_max ?? a.lead_time_min!))[0];
+  const min = pire.lead_time_min!, max = pire.lead_time_max ?? pire.lead_time_min!;
+  const base = new Date(passeeLe + "T12:00:00");
+  const plus = (j: number) => { const d = new Date(base); d.setDate(d.getDate() + j); return d; };
+  const fmt = (d: Date) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+  const auj = new Date(); auj.setHours(0, 0, 0, 0);
+  return { fournisseur: fournisseurs.get(pire.supplier_id) ?? pire.supplier_name, delaiMin: min, delaiMax: max,
+    du: fmt(plus(min)), au: fmt(plus(max)), depassee: plus(max) < auj };
 }
