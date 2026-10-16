@@ -20,17 +20,17 @@ img{max-width:100%;display:block}
 .wrap{width:min(1180px,100%);margin:0 auto;padding:0 20px}
 
 /* ouverture */
-.hero{position:relative;height:100svh;min-height:600px;display:grid;place-items:center;overflow:hidden}
+.hero{position:relative;height:34svh;min-height:250px;max-height:420px;display:grid;place-items:center;overflow:hidden}
 .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   animation:resp 26s ease-in-out infinite alternate}
 @keyframes resp{from{transform:scale(1.03)}to{transform:scale(1.13)}}
 .hero::after{content:"";position:absolute;inset:0;
   background:linear-gradient(rgba(10,10,9,.52),rgba(10,10,9,.12) 38%,rgba(10,10,9,.88))}
 .hero .txt{position:relative;z-index:2;text-align:center;padding:0 20px}
-.sur{font-size:10px;letter-spacing:.48em;text-transform:uppercase;color:var(--or);margin:0 0 22px}
-h1{font-family:var(--titre);font-weight:300;font-size:clamp(64px,15vw,180px);line-height:.9;margin:0}
-.hero .sous{margin:22px auto 0;max-width:28em;font-family:var(--titre);font-style:italic;
-  font-size:clamp(18px,2.4vw,25px);color:rgba(244,241,236,.88);line-height:1.45}
+.sur{font-size:10px;letter-spacing:.48em;text-transform:uppercase;color:var(--or);margin:0 0 12px}
+h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-height:.95;margin:0}
+.hero .sous{margin:12px auto 0;max-width:28em;font-family:var(--titre);font-style:italic;
+  font-size:clamp(14px,1.6vw,19px);color:rgba(244,241,236,.9);line-height:1.4}
 
 /* manifeste, serré */
 .manif{padding:clamp(54px,7vw,92px) 0 clamp(36px,5vw,58px);text-align:center}
