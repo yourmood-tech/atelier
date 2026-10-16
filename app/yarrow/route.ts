@@ -46,7 +46,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;
   cursor:pointer;width:100%}
 @media(min-width:900px){
-  .p{grid-template-columns:1fr 1fr 1.3fr 1fr}
+  .p{grid-template-columns:1fr 1fr 1.3fr 1.5fr}
 }
 .vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:1/1;min-width:0}
 .vis.film{grid-column:auto;aspect-ratio:3/2}
