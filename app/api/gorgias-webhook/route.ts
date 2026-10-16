@@ -31,7 +31,11 @@ export async function POST(req: NextRequest) {
 
 async function traiter(ticketId: number) {
   const t = await getTicket(ticketId);
-  if (t.channel !== "email" || t.spam) return;
+  // e-mail uniquement : une demande arrivée par WhatsApp se répond sur WhatsApp, pas par e-mail ;
+  // et jamais les robots (notifications Shopify « mentioned on order », PayPal, no-reply…)
+  if (t.channel !== "email" || t.via === "whatsapp" || t.spam) return;
+  const emailClient = String(((t.customer ?? {}) as Record<string, unknown>).email ?? "").toLowerCase();
+  if (!emailClient || /shopify\.com|konvoai|paypal|no-?reply|mailer|notification|facebookmail|pinterest|instagram/.test(emailClient)) return;
   const msgs = await getTicketMessages(ticketId);
   const clientes = msgs.filter((m) => m.from_agent === false && m.public !== false);
   const dernier = clientes[clientes.length - 1];
