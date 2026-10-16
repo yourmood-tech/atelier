@@ -12,6 +12,7 @@ export type Brouillon = {
   etat: "a_valider" | "envoye" | "ecarte";
   envoyeLe?: string; texteEnvoye?: string; retouche?: boolean;
   echange?: { commande: string; orderId: number; creeLe: string };   // commande d'échange de taille créée
+  ticketFerme?: boolean;                // ticket Gorgias clos par l'outil
 };
 
 const CLE = (id: number) => `delais:brouillon:${id}`;
@@ -30,4 +31,13 @@ export async function tous(): Promise<Brouillon[]> {
   if (!idx.length) return [];
   const vals = await kv.mget<(Brouillon | null)[]>(...idx.map(CLE));
   return vals.filter((x): x is Brouillon => !!x);
+}
+
+/** Règle de fermeture (Philippe, 16.10.2026) : on clôt le ticket dès que la réponse est partie,
+ *  sauf pour un échange de taille d'une commande déjà expédiée : seulement une fois la réponse
+ *  partie ET la commande d'échange créée. */
+export function peutFermer(b: Brouillon): boolean {
+  if (b.etat !== "envoye") return false;
+  if (b.type === "taille" && b.taille?.partie && !b.echange) return false;
+  return true;
 }

@@ -24,7 +24,7 @@ type Taille = {
 type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
   type?: "delai" | "taille"; taille?: Taille | null;
-  faits: Faits | null; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
+  faits: Faits | null; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; ticketFerme?: boolean; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
 };
 
 const STATUT: Record<string, { txt: string; couleur: string }> = {
@@ -56,7 +56,7 @@ export default function Delais() {
     try {
       const r = await fetch("/api/delais/echange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: b.ticketId, lignes }) });
       const j = await r.json();
-      alert(r.ok ? `Commande d'échange ${j.commande} créée.` : `Pas créée : ${j.error ?? r.status}`);
+      alert(r.ok ? `Commande d'échange ${j.commande} créée.${j.ferme ? " Le ticket est fermé." : j.erreurFermeture ? ` Ticket PAS fermé : ${j.erreurFermeture}` : " Le ticket se fermera dès que la réponse sera envoyée."}` : `Pas créée : ${j.error ?? r.status}`);
       await charger();
     } finally { setBusy(null); }
   }
@@ -84,6 +84,8 @@ export default function Delais() {
       const r = await fetch("/api/delais/envoyer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: b.ticketId, texte: t }) });
       const j = await r.json();
       if (!r.ok) alert(`Pas envoyé : ${j.error ?? r.status}`);
+      else if (j.erreurFermeture) alert(`Réponse envoyée, mais le ticket n'a pas pu être fermé : ${j.erreurFermeture}`);
+      else if (j.attendEchange) alert("Réponse envoyée. Le ticket reste ouvert jusqu'à la création de la commande d'échange.");
       await charger();
     } finally { setBusy(null); }
   }
@@ -188,7 +190,7 @@ export default function Delais() {
                   </>}
                 </div>
                 <div>
-                  <div className="text-xs font-medium uppercase text-neutral-400">{b.etat === "a_valider" ? "Brouillon (modifiable)" : b.etat === "envoye" ? `Envoyé le ${new Date(b.envoyeLe!).toLocaleString("fr-CH")}${b.retouche ? " · retouché" : " · tel quel"}` : "Écarté"}</div>
+                  <div className="text-xs font-medium uppercase text-neutral-400">{b.etat === "a_valider" ? "Brouillon (modifiable)" : b.etat === "envoye" ? `Envoyé le ${new Date(b.envoyeLe!).toLocaleString("fr-CH")}${b.retouche ? " · retouché" : " · tel quel"}${b.ticketFerme ? " · ticket fermé" : " · ticket encore ouvert"}` : "Écarté"}</div>
                   <textarea
                     className="mt-1 h-72 w-full rounded border border-neutral-300 p-2 text-sm"
                     value={texte[b.ticketId] ?? b.brouillon}

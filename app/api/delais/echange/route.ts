@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lire, enregistrer } from "@/lib/delais/registre";
+import { lire, enregistrer, peutFermer } from "@/lib/delais/registre";
+import { closeTicket } from "@/lib/gorgias";
 import { creerCommandeEchange } from "@/lib/sav";
 
 // POST { ticketId, lignes: [{ lineItemId, taille }] } → commande d'échange de taille à 0 CHF,
@@ -15,8 +16,13 @@ export async function POST(req: NextRequest) {
     if (l.some((x) => Number(x.taille) % 2 === 1)) return NextResponse.json({ error: "taille impaire impossible" }, { status: 400 });
     const r = await creerCommandeEchange(b.taille.commande, l);
     b.echange = { ...r, creeLe: new Date().toISOString() };
+    // réponse déjà partie → la commande d'échange était la dernière condition : on clôt le ticket
+    let erreurFermeture: string | null = null;
+    if (peutFermer(b) && !b.ticketFerme) {
+      try { await closeTicket(b.ticketId); b.ticketFerme = true; } catch (e) { erreurFermeture = e instanceof Error ? e.message : String(e); }
+    }
     await enregistrer(b);
-    return NextResponse.json({ ok: true, ...r });
+    return NextResponse.json({ ok: true, ...r, ferme: !!b.ticketFerme, erreurFermeture });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Erreur serveur" }, { status: 500 });
   }
