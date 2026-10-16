@@ -135,6 +135,7 @@ export default function IceleaArrivagePage() {
     if (!confirm(`Réceptionner ${todo.length} ligne(s), ${pieces} pièce(s) dans Katana ?\nUne réception ne peut pas être annulée depuis l'outil.`)) return;
     setBulk({ done: 0, total: todo.length });
     const seen = new Set<number>();
+    const recues: { po: string; variantId: number; qty: number }[] = [];   // pièces reçues pendant ce passage
     try {
       for (let k = 0; k < todo.length; k++) {
         const { r, i } = todo[k];
@@ -161,10 +162,25 @@ export default function IceleaArrivagePage() {
           return;
         }
         setDone((s) => ({ ...s, [i]: data.result as ReceiveResult }));
+        (data.result as ReceiveResult).receivedOnPO.forEach((p) => recues.push({ po: p.po, variantId: r.variantId!, qty: p.qty }));
         setBulk({ done: k + 1, total: todo.length });
       }
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
-    finally { setBulk(null); }
+    finally {
+      setBulk(null);
+      // même après un arrêt : les commandes clientes dont une pièce vient d'arriver sont marquées
+      // « Icelea-recu » (tout reçu) ou « Icelea-partiel » (en arrière-plan) → réponse aux demandes de délai
+      if (recues.length) {
+        try {
+          const t = await fetch("/api/icelea-arrivage/tag-orders", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lines: recues }),
+          });
+          const tj = await readJson(t);
+          if (!t.ok) alert(`Réception faite, mais les commandes clientes n'ont pas été marquées « reçu » : ${(tj.error as string) || t.status}`);
+        } catch (e) { alert(`Réception faite, mais les commandes clientes n'ont pas été marquées « reçu » : ${e instanceof Error ? e.message : String(e)}`); }
+      }
+    }
   }
   // fin d'arrivage → construit le rapport (jamais scanné · écarts · reste à livrer)
   async function buildReport() {

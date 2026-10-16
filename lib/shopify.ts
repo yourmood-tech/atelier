@@ -251,6 +251,32 @@ export async function setIceleaTags(orderId: number, poNumber: string, deliveryF
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
+// Lecture groupée légère (jusqu'à 250 commandes par appel) : lignes avec SKU et reste à expédier.
+export type OrderLite = {
+  id: number; name: string; created_at: string; cancelled_at: string | null;
+  line_items: { sku: string | null; quantity: number; fulfillable_quantity: number }[];
+};
+export async function getOrdersLite(ids: number[]): Promise<OrderLite[]> {
+  const out: OrderLite[] = [];
+  for (let i = 0; i < ids.length; i += 250) {
+    const chunk = ids.slice(i, i + 250).join(",");
+    const j = await shopifyFetch(`/orders.json?ids=${chunk}&status=any&limit=250&fields=id,name,created_at,cancelled_at,line_items`);
+    out.push(...((j.orders ?? []) as OrderLite[]));
+  }
+  return out;
+}
+
+// Arrivage Icelea validé : marque la commande « Icelea-recu:jj.mm.aaaa » (commande fournisseur
+// entièrement reçue) ou « Icelea-partiel:jj.mm.aaaa » (reçue en partie). Remplace l'éventuelle
+// marque d'un arrivage précédent ; garde Icelea-PO / Icelea-livraison (historique).
+export async function setIceleaReceptionTag(orderId: number, tag: string): Promise<void> {
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string).split(",").map((t: string) => t.trim()).filter(Boolean);
+  if (existing.includes(tag)) return;
+  const filtered = existing.filter(t => !t.startsWith("Icelea-recu:") && !t.startsWith("Icelea-partiel:"));
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: [...filtered, tag].join(", ") } });
+}
+
 // Returns a tag string like "Rupture 17.04.26 10:30"
 export function makeOrderTag(reason: string): string {
   const now = new Date();
