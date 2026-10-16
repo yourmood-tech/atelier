@@ -49,7 +49,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   .p{grid-template-columns:1fr 1fr 1.3fr 1fr}
 }
 .vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:1/1;min-width:0}
-.vis.film{grid-column:auto}
+.vis.film{grid-column:auto;aspect-ratio:2/3}
 .vis img{width:100%;height:100%;object-fit:cover;transition:transform 1.8s cubic-bezier(.2,.7,.2,1);display:block}
 .vis .dessous{position:absolute;inset:0}
 .vis .dessus{position:absolute;inset:0;transition:opacity .5s ease}
