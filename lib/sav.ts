@@ -1,15 +1,17 @@
 // Outil SAV (16.10.2026, cahier des charges de Philippe)
 //  • retour reçu : n° de commande + type (1 échange de taille, 2 problème de qualité, 3 annulation)
-//    → étiquette « SAV-<type>-RETOUR-LE-<jj.mm.aaaa>-NON-TRAITE », puis « …-TRAITE » une fois traité ;
+//    → étiquette « SAV-<ECHANGE|QUALITE|ANNULATION>-RETOUR-LE-<jj.mm.aaaa>-NON-TRAITE », puis « …-TRAITE » ;
 //  • échange de taille : la commande d'échange part en production tout de suite, étiquette
 //    « ECHANGE-<n° d'origine> » ; la commande d'origine reçoit dans ses notes « Echange-<n° d'échange> » ;
 //  • à l'expédition d'une commande d'échange : si l'original n'est pas revenu (pas d'étiquette
-//    SAV-1-RETOUR-LE…), la commande d'échange est « ORPHELINE » (étiquette ECHANGE-ORPHELINE + liste SAV).
+//    SAV-ECHANGE-RETOUR-LE…), la commande d'échange est « ORPHELINE » (étiquette ECHANGE-ORPHELINE + liste SAV).
 import { kv } from "@vercel/kv";
 import { shopifyGet, shopifyWrite } from "@/lib/shopify";
 
 export type TypeSav = 1 | 2 | 3;
 export const TYPES_SAV: Record<TypeSav, string> = { 1: "Échange de taille", 2: "Problème de qualité", 3: "Annulation" };
+// nom du type dans l'étiquette Shopify (demande Philippe : le nom, pas le chiffre)
+export const MOT_SAV: Record<TypeSav, string> = { 1: "ECHANGE", 2: "QUALITE", 3: "ANNULATION" };
 export type Retour = { orderId: number; commande: string; client: string; type: TypeSav; date: string; etat: "NON-TRAITE" | "TRAITE"; tag: string; par?: string; traiteLe?: string };
 export type Orpheline = { orderId: number; commande: string; original: string; client: string; depuis: string };
 
@@ -37,7 +39,7 @@ const nomClient = (o: Record<string, unknown>) => {
 export async function enregistrerRetour(numero: string, type: TypeSav, par: string): Promise<Retour> {
   const o = await commandeParNumero(numero);
   if (!o) throw new Error(`Commande #${num(numero)} introuvable dans Shopify`);
-  const tag = `SAV-${type}-RETOUR-LE-${auj()}-NON-TRAITE`;
+  const tag = `SAV-${MOT_SAV[type]}-RETOUR-LE-${auj()}-NON-TRAITE`;
   await ecrireTags(Number(o.id), [...tagsDe(o), tag]);
   const r: Retour = { orderId: Number(o.id), commande: String(o.name), client: nomClient(o), type, date: auj(), etat: "NON-TRAITE", tag, par };
   const all = (await kv.get<Retour[]>(K_RETOURS)) ?? [];
@@ -113,7 +115,7 @@ export async function controleExpedition(orderId: number): Promise<{ orpheline: 
   const ech = tagsDe(o).map((t) => t.match(/^ECHANGE-(\d+)$/)).find(Boolean);
   if (!ech) return { orpheline: false };
   const orig = await commandeParNumero(ech[1]);
-  const revenu = !!orig && tagsDe(orig).some((t) => t.startsWith("SAV-1-RETOUR-LE-"));
+  const revenu = !!orig && tagsDe(orig).some((t) => t.startsWith("SAV-ECHANGE-RETOUR-LE-"));
   if (revenu) return { orpheline: false, original: `#${ech[1]}` };
   if (!tagsDe(o).includes(ORPH_TAG)) await ecrireTags(orderId, [...tagsDe(o), ORPH_TAG]);
   const orph = (await kv.get<Orpheline[]>(K_ORPH)) ?? [];
