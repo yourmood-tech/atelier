@@ -53,8 +53,8 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 .vis img{width:100%;height:100%;object-fit:cover;transition:transform 1.8s cubic-bezier(.2,.7,.2,1);display:block}
 .vis .dessous{position:absolute;inset:0}
 .vis .dessus{position:absolute;inset:0;transition:opacity .5s ease}
-.p:hover .vis .dessus{opacity:0}
-.p:hover .vis img{transform:scale(1.04)}
+.vis:hover .dessus{opacity:0}
+.vis:hover img{transform:scale(1.04)}
 .vis video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 
 .p .ombre{display:none}
