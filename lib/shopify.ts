@@ -251,6 +251,11 @@ export async function setIceleaTags(orderId: number, poNumber: string, deliveryF
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
+// Lecture brute (assistant des délais : commande + envois + étiquettes).
+export async function shopifyGet(path: string): Promise<Record<string, unknown>> {
+  return shopifyFetch(path);
+}
+
 // Lecture groupée légère (jusqu'à 250 commandes par appel) : lignes avec SKU et reste à expédier.
 export type OrderLite = {
   id: number; name: string; created_at: string; cancelled_at: string | null;

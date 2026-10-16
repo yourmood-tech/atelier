@@ -162,7 +162,7 @@ const LOCALE_LABELS: Record<string, string> = {
 // le rédacteur n'avait pour tout contexte que « marque de joaillerie suisse » et
 // a inventé une catégorie de produit. Ces règles ouvrent désormais chaque prompt
 // qui produit un texte lu par une cliente.
-const BRAND_INTRO = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
+export const BRAND_INTRO = `You are writing on behalf of Mood Collection, a Swiss jewelry brand.
 
 HOW TO REFER TO THE ITEM — this is the most important rule:
 - Refer to it ONLY as a generic item: "votre article" / "l'article que vous avez commandé" (FR), "your item" / "the item you ordered" (EN), "dein Artikel" / "der von dir bestellte Artikel" (DE), "il tuo articolo" (IT), "tu artículo" (ES) — or by the exact product name given in the context below, reproduced verbatim.

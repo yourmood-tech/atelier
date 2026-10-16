@@ -2,6 +2,9 @@ const DOMAIN = process.env.GORGIAS_DOMAIN ?? "yourmood";
 const API_EMAIL = process.env.GORGIAS_API_EMAIL!;
 const API_KEY = process.env.GORGIAS_API_KEY!;
 
+// Gorgias est derrière Cloudflare : sans signature d'outil connue, refus « 1010 ».
+const UA = "curl/8.7.1";
+
 function auth() {
   return `Basic ${Buffer.from(`${API_EMAIL}:${API_KEY}`).toString("base64")}`;
 }
@@ -11,7 +14,7 @@ async function gorgiasGet(path: string) {
   const domain = DOMAIN.includes(".") ? DOMAIN : `${DOMAIN}.gorgias.com`;
   const url = `https://${domain}/api${path}`;
   const res = await fetch(url, {
-    headers: { Authorization: auth(), "Content-Type": "application/json" },
+    headers: { Authorization: auth(), "Content-Type": "application/json", "User-Agent": UA },
     cache: "no-store",
   });
   if (!res.ok) {
@@ -49,7 +52,7 @@ async function gorgiasPost(path: string, body: unknown) {
   const url = `https://${domain}/api${path}`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { Authorization: auth(), "Content-Type": "application/json" },
+    headers: { Authorization: auth(), "Content-Type": "application/json", "User-Agent": UA },
     body: JSON.stringify(body),
     cache: "no-store",
   });
@@ -80,5 +83,55 @@ export async function postInternalNote(ticketId: number, text: string): Promise<
     body_html: html,
     body_text: text,
     sender: { email: process.env.GORGIAS_API_EMAIL! },
+  });
+}
+
+async function gorgiasPut(path: string, body: unknown) {
+  const domain = DOMAIN.includes(".") ? DOMAIN : `${DOMAIN}.gorgias.com`;
+  const url = `https://${domain}/api${path}`;
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: auth(), "Content-Type": "application/json", "User-Agent": UA },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Gorgias ${res.status} on ${url}: ${(await res.text()).slice(0, 200)}`);
+  return res.json();
+}
+
+export async function getTicket(ticketId: number): Promise<Record<string, unknown>> {
+  return gorgiasGet(`/tickets/${ticketId}`) as Promise<Record<string, unknown>>;
+}
+
+/** Messages du ticket, du plus ancien au plus récent. */
+export async function getTicketMessages(ticketId: number): Promise<Record<string, unknown>[]> {
+  const d = await gorgiasGet(`/tickets/${ticketId}/messages?limit=50&order_by=created_datetime:asc`) as { data?: Record<string, unknown>[] };
+  return d?.data ?? [];
+}
+
+/** Attribue le ticket à un agent (par son identifiant Gorgias). */
+export async function assignTicket(ticketId: number, userId: number): Promise<void> {
+  await gorgiasPut(`/tickets/${ticketId}`, { assignee_user: { id: userId } });
+}
+
+export async function closeTicket(ticketId: number): Promise<void> {
+  await gorgiasPut(`/tickets/${ticketId}`, { status: "closed" });
+}
+
+/** Envoie une vraie réponse e-mail à la cliente, au nom d'un agent, depuis l'adresse du support. */
+export async function sendEmailReply(p: {
+  ticketId: number; agentId: number; fromAddress: string; fromName: string;
+  toAddress: string; toName: string; subject: string; text: string;
+}): Promise<void> {
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const html = p.text.split(/\n{2,}/).map((para) => `<p>${esc(para).replace(/\n/g, "<br>")}</p>`).join("");
+  await gorgiasPost(`/tickets/${p.ticketId}/messages`, {
+    channel: "email", via: "api", from_agent: true,
+    sender: { id: p.agentId },
+    receiver: { email: p.toAddress },
+    source: { type: "email", from: { address: p.fromAddress, name: p.fromName }, to: [{ address: p.toAddress, name: p.toName }] },
+    subject: p.subject,
+    body_text: p.text,
+    body_html: html,
   });
 }

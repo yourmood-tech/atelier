@@ -1,0 +1,118 @@
+// Assistant des délais — ce que Shopify sait de la commande, SANS rien inventer.
+// Sources : la commande (lignes, reste à expédier, envois + suivi) et ses étiquettes posées par
+// l'outil d'atelier (étapes de production, Icelea commandé / arrivé, rupture, pièce prête).
+// La langue vient du profil client Shopify (pas de Klaviyo — décision Philippe 16.10.2026).
+import { shopifyGet } from "@/lib/shopify";
+import { getShopifyProfileLocale } from "@/lib/email";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+export type Statut =
+  | "expediee"            // tout est parti : suivi colis
+  | "expediee_partiel"    // une partie est partie, le reste est encore à l'atelier
+  | "attente_icelea"      // pièce commandée chez Icelea, date de livraison à venir
+  | "piece_arrivee"       // pièce Icelea arrivée à l'atelier (Icelea-recu / Icelea-partiel)
+  | "etape"               // étape d'atelier connue
+  | "rien"                // juste « en production » : à traiter par Philippe
+  | "introuvable"         // aucune commande trouvée
+  | "annulee";
+
+export type Faits = {
+  statut: Statut;
+  commande: string | null;
+  commandeId: number | null;
+  passeeLe: string | null;
+  prenom: string;
+  langue: string;                       // fr / de / en / it…
+  articlesEnAttente: string[];          // titres encore à expédier
+  envois: { date: string; transporteur: string | null; numero: string | null; lien: string | null; articles: string[] }[];
+  iceleaLivraison: string | null;       // jj.mm.aaaa (à venir)
+  iceleaArrivee: { date: string; complet: boolean } | null;
+  etape: { nom: string; entree: boolean; date: string; delaiMin: number | null; delaiMax: number | null; unite: string | null } | null;
+  rupture: string | null;               // date de l'étiquette « Rupture »
+  etiquettesUtilisees: string[];        // pour la page de validation (preuve)
+};
+
+const d6 = (s: string) => `${s.slice(0, 2)}.${s.slice(2, 4)}.20${s.slice(4, 6)}`;
+const toDate = (jjmmaaaa: string) => { const [j, m, a] = jjmmaaaa.split("."); return new Date(Number(a), Number(m) - 1, Number(j)); };
+
+async function trouverCommande(numero: string | null, email: string): Promise<Record<string, unknown> | null> {
+  if (numero) {
+    const n = numero.replace(/\D/g, "");
+    const j = await shopifyGet(`/orders.json?name=%23${n}&status=any&limit=1`);
+    const o = ((j.orders ?? []) as Record<string, unknown>[])[0];
+    if (o) return o;
+  }
+  if (!email) return null;
+  // sinon : la commande la plus récente de cette adresse, en priorité une pas encore entièrement partie
+  const j = await shopifyGet(`/orders.json?email=${encodeURIComponent(email)}&status=any&limit=10`);
+  const os = ((j.orders ?? []) as Record<string, unknown>[]).filter((o) => !o.cancelled_at);
+  return os.find((o) => o.fulfillment_status !== "fulfilled") ?? os[0] ?? null;
+}
+
+export async function faitsCommande(numero: string | null, email: string): Promise<Faits> {
+  const vide: Faits = { statut: "introuvable", commande: null, commandeId: null, passeeLe: null, prenom: "", langue: "fr",
+    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, etape: null, rupture: null, etiquettesUtilisees: [] };
+  const o = await trouverCommande(numero, email);
+  if (!o) return vide;
+  const cust = (o.customer ?? {}) as Record<string, unknown>;
+  const langueProfil = await getShopifyProfileLocale(String(o.email ?? cust.email ?? email));
+  const langue = langueProfil ?? String(o.customer_locale ?? "fr").split("-")[0].toLowerCase();
+  const lignes = ((o.line_items ?? []) as Record<string, unknown>[]);
+  const tags = String(o.tags ?? "").split(",").map((t) => t.trim()).filter(Boolean);
+  const f: Faits = { ...vide, commande: String(o.name), commandeId: Number(o.id), passeeLe: String(o.created_at).slice(0, 10),
+    prenom: String(cust.first_name ?? ""), langue, statut: "rien" };
+  if (o.cancelled_at) { f.statut = "annulee"; return f; }
+
+  f.articlesEnAttente = lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0).map((l) => String(l.title));
+  f.envois = ((o.fulfillments ?? []) as Record<string, unknown>[]).filter((x) => x.status !== "cancelled").map((x) => ({
+    date: String(x.created_at).slice(0, 10),
+    transporteur: (x.tracking_company as string) ?? null,
+    numero: (x.tracking_number as string) ?? null,
+    lien: (x.tracking_url as string) ?? null,
+    articles: ((x.line_items ?? []) as Record<string, unknown>[]).map((l) => String(l.title)),
+  }));
+
+  // étiquettes d'atelier
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  for (const t of tags) {
+    let m = t.match(/^Icelea-livraison:(\d\d\.\d\d\.\d{4})$/);
+    if (m && toDate(m[1]) >= now) { f.iceleaLivraison = m[1]; f.etiquettesUtilisees.push(t); }
+    m = t.match(/^Icelea-(recu|partiel):(\d\d\.\d\d\.\d{4})$/);
+    if (m) { f.iceleaArrivee = { date: m[2], complet: m[1] === "recu" }; f.etiquettesUtilisees.push(t); }
+    m = t.match(/^Rupture.*-(\d{6})-\d\dh\d\d$/);
+    if (m) { f.rupture = d6(m[1]); f.etiquettesUtilisees.push(t); }
+  }
+  // dernière étape d'atelier (étiquettes « étape-in/out-jjmmaa-HHhMM »)
+  const etapes = tags.map((t) => t.match(/^(.+)-(in|out)-(\d{6})-(\d\d)h(\d\d)$/)).filter((m): m is RegExpMatchArray => !!m && !m[1].startsWith("Rupture"))
+    .map((m) => ({ key: m[1], entree: m[2] === "in", date: d6(m[3]), tri: `20${m[3].slice(4, 6)}${m[3].slice(2, 4)}${m[3].slice(0, 2)}${m[4]}${m[5]}`, tag: m[0] }))
+    .sort((a, b) => a.tri.localeCompare(b.tri));
+  const derniere = etapes[etapes.length - 1];
+  if (derniere) {
+    const { data } = await supabaseAdmin.from("production_steps")
+      .select("name,name_de,name_en,lead_time_min,lead_time_max,lead_time_unit").eq("step_key", derniere.key).limit(1);
+    const st = (data ?? [])[0] as Record<string, unknown> | undefined;
+    const nom = String((langue === "de" ? st?.name_de : langue === "en" ? st?.name_en : st?.name) ?? st?.name ?? derniere.key);
+    f.etape = { nom, entree: derniere.entree, date: derniere.date,
+      delaiMin: (st?.lead_time_min as number) ?? null, delaiMax: (st?.lead_time_max as number) ?? null, unite: (st?.lead_time_unit as string) ?? null };
+    f.etiquettesUtilisees.push(derniere.tag);
+  }
+
+  // une rupture déjà suivie d'une étape d'atelier ou d'une arrivée de pièce n'est plus d'actualité
+  if (f.rupture) {
+    const r = toDate(f.rupture).getTime();
+    const apres = (f.etape && toDate(f.etape.date).getTime() >= r) || (f.iceleaArrivee && toDate(f.iceleaArrivee.date).getTime() >= r);
+    if (apres) { f.etiquettesUtilisees = f.etiquettesUtilisees.filter((t) => !t.startsWith("Rupture")); f.rupture = null; }
+  }
+
+  // statut principal (du plus sûr au moins sûr)
+  if (f.articlesEnAttente.length === 0 && f.envois.length) f.statut = "expediee";
+  else if (f.iceleaArrivee) f.statut = "piece_arrivee";
+  else if (f.iceleaLivraison) f.statut = "attente_icelea";
+  else if (f.etape) f.statut = "etape";
+  else f.statut = "rien";
+  if (f.envois.length && f.articlesEnAttente.length && f.statut !== "expediee") {
+    f.etiquettesUtilisees.push("envoi partiel");
+    if (f.statut === "rien") f.statut = "expediee_partiel";
+  }
+  return f;
+}

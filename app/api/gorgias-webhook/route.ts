@@ -1,167 +1,66 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getOrderById } from "@/lib/shopify";
-import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
-import { detectDelayInquiry, generateGorgiasResponse, getKlaviyoProfileLocale } from "@/lib/email";
-import { postInternalNote, getTicketCustomerMessages, hasExistingDraftNote } from "@/lib/gorgias";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextRequest, NextResponse, after } from "next/server";
+import { detectDelayInquiry } from "@/lib/email";
+import { assignTicket, getTicket, getTicketMessages } from "@/lib/gorgias";
+import { faitsCommande } from "@/lib/delais/faits";
+import { redigerBrouillon } from "@/lib/delais/brouillon";
+import { enregistrer, lire } from "@/lib/delais/registre";
 
-const TARGET_GROUP = "Demande de Délais (Groupe)";
+export const maxDuration = 120;
+
+// Assistant des délais (16.10.2026) — chaque nouveau message cliente par e-mail :
+//  1. est-ce une demande de délai ? (groupe « Délais de livraison » ou détection du texte)
+//  2. si oui : le ticket est attribué à Philippe, et un brouillon est préparé à partir des seuls
+//     faits Shopify (commande, envois, étiquettes d'atelier) ;
+//  3. le brouillon attend la validation de Philippe sur la page /delais (rien n'est envoyé seul).
+const PHILIPPE = 15486626;            // compte Gorgias de Philippe
+const EQUIPE_DELAIS = 4403;           // groupe « Délais de livraison »
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json() as Record<string, unknown>;
+  let body: Record<string, unknown>;
+  try { body = await req.json() as Record<string, unknown>; } catch { return NextResponse.json({ ok: true, skipped: "corps illisible" }); }
+  const ev = (body?.event as Record<string, unknown>) ?? {};
+  const data = (ev.data as Record<string, unknown>) ?? {};
+  const ticket = data.ticket as Record<string, unknown> | undefined;
+  const message = data.message as Record<string, unknown> | undefined;
+  if (!ticket?.id) return NextResponse.json({ ok: true, skipped: "pas de ticket" });
+  if (message?.from_agent === true) return NextResponse.json({ ok: true, skipped: "message de l'équipe" });
+  // Gorgias attend une réponse rapide : le travail se fait juste après
+  after(async () => { try { await traiter(Number(ticket.id)); } catch (e) { console.error("[délais] ticket", ticket.id, e); } });
+  return NextResponse.json({ ok: true });
+}
 
-    const eventType = (body?.event as Record<string, unknown>)?.type as string | undefined;
-    const data = (body?.event as Record<string, unknown>)?.data as Record<string, unknown> | undefined;
-    const ticket = data?.ticket as Record<string, unknown> | undefined;
-    const message = data?.message as Record<string, unknown> | undefined;
+async function traiter(ticketId: number) {
+  const t = await getTicket(ticketId);
+  if (t.channel !== "email" || t.spam) return;
+  const msgs = await getTicketMessages(ticketId);
+  const clientes = msgs.filter((m) => m.from_agent === false && m.public !== false);
+  const dernier = clientes[clientes.length - 1];
+  if (!dernier) return;
+  // ce message-là a déjà son brouillon → rien à refaire (Gorgias peut prévenir deux fois)
+  const deja = await lire(ticketId);
+  if (deja && deja.messageId === Number(dernier.id)) return;
 
-    // Handle message-created, ticket-updated, and ticket-created events
-    const handledEvents = ["ticket-message-created", "ticket-updated", "ticket-created"];
-    if (!handledEvents.includes(eventType ?? "") || !ticket) {
-      return NextResponse.json({ ok: true, skipped: "not a relevant event" });
-    }
+  const equipe = Number((t.assignee_team as Record<string, unknown> | null)?.id ?? 0);
+  const chezPhilippe = Number((t.assignee_user as Record<string, unknown> | null)?.id ?? 0) === PHILIPPE && !!deja;
+  const texte = [String(t.subject ?? ""), ...clientes.map((m) => String(m.stripped_text ?? m.body_text ?? ""))].join("\n---\n");
+  const det = await detectDelayInquiry(texte.slice(-6000));
+  if (!(equipe === EQUIPE_DELAIS || chezPhilippe || det.is_delay_inquiry)) return;
 
-    // For message-created: skip agent messages
-    if (eventType === "ticket-message-created" && message?.from_agent === true) {
-      return NextResponse.json({ ok: true, skipped: "agent message" });
-    }
+  // 1) le ticket passe sur le compte de Philippe
+  if (Number((t.assignee_user as Record<string, unknown> | null)?.id ?? 0) !== PHILIPPE) await assignTicket(ticketId, PHILIPPE);
 
-    // Only process tickets assigned to the target group
-    const teamName =
-      (ticket.assignee_team as Record<string, unknown> | null)?.name ??
-      (ticket.team as Record<string, unknown> | null)?.name ?? "";
-
-    if (teamName !== TARGET_GROUP) {
-      return NextResponse.json({ ok: true, skipped: `wrong group: ${teamName}` });
-    }
-
-    const ticketId = ticket.id as number;
-    const ticketSubject = (ticket.subject as string) ?? "";
-
-    // Deduplication: don't post a second note if one already exists
-    const alreadyProcessed = await hasExistingDraftNote(ticketId).catch(() => false);
-    if (alreadyProcessed) {
-      return NextResponse.json({ ok: true, skipped: "note already posted" });
-    }
-
-    // For ticket-updated/created: no message in payload — fetch from Gorgias API
-    const messageText = message
-      ? ((message.body_text as string) ?? "")
-      : "";
-
-    if (!messageText.trim() || !ticketId) {
-      return NextResponse.json({ ok: true, skipped: "empty message" });
-    }
-
-    // 1. Detect delay inquiry — search in subject + ALL customer messages in thread
-    const allMsgs = await getTicketCustomerMessages(ticketId).catch(() => null);
-    const textToAnalyze = [ticketSubject, allMsgs?.allText ?? messageText].filter(Boolean).join("\n");
-    const detection = await detectDelayInquiry(textToAnalyze);
-
-    if (!detection.is_delay_inquiry || !detection.order_number) {
-      return NextResponse.json({ ok: true, skipped: "not a delay inquiry" });
-    }
-
-    // 2. Fetch order from Shopify
-    let order;
-    try {
-      order = await getOrderById(detection.order_number);
-    } catch {
-      await postInternalNote(
-        ticketId,
-        `🤖 AI Draft — À valider avant envoi\n\nCommande ${detection.order_number} introuvable dans Shopify. Vérifier le numéro de commande manuellement.`
-      );
-      return NextResponse.json({ ok: true });
-    }
-
-    // 3. Langue : le profil client Shopify fait foi ; Klaviyo seulement en repli.
-    if (!order.customer.localeFromProfile) {
-      const klaviyoLocale = await getKlaviyoProfileLocale(order.customer.email);
-      if (klaviyoLocale) order.customer.locale = klaviyoLocale;
-    }
-
-    // 4. Check backorder status for each product in the order
-    const backorderItems = (
-      await Promise.all(
-        order.lineItems.map(async (li) => {
-          let estimatedDelivery: string | null = null;
-          let leadTimeMin: number | null = null;
-          let leadTimeMax: number | null = null;
-
-          try {
-            const recipe = await getRecipeWithSuppliers(li.sku);
-            const materials = recipe?.ingredients ?? [];
-
-            if (materials.length) {
-              const variantIds = materials.map((m) => m.id);
-              const po = await getOpenPurchaseOrderForVariants(variantIds);
-              if (po?.estimatedDelivery && new Date(po.estimatedDelivery) > new Date()) {
-                estimatedDelivery = po.estimatedDelivery;
-              }
-
-              if (!estimatedDelivery) {
-                const supplierIds = materials
-                  .filter((m) => m.supplier !== null)
-                  .map((m) => m.supplier!.id);
-
-                if (supplierIds.length) {
-                  const { data: ltRows } = await supabaseAdmin
-                    .from("supplier_lead_times")
-                    .select("lead_time_min, lead_time_max")
-                    .in("supplier_id", supplierIds)
-                    .not("lead_time_min", "is", null)
-                    .limit(1);
-
-                  if (ltRows?.[0]) {
-                    leadTimeMin = ltRows[0].lead_time_min as number;
-                    leadTimeMax = ltRows[0].lead_time_max as number | null;
-                  }
-                }
-              }
-            }
-          } catch {
-            // Non-blocking — product without Katana recipe
-          }
-
-          return {
-            productTitle: li.title,
-            estimatedDelivery,
-            leadTimeMin,
-            leadTimeMax,
-            isBackorder: !!(estimatedDelivery || leadTimeMin),
-          };
-        })
-      )
-    ).filter((i) => i.isBackorder);
-
-    // 5. Generate draft response
-    const draftText = await generateGorgiasResponse({
-      orderName: order.name,
-      customerFirstName: order.customer.firstName,
-      customerMessage: messageText,
-      backorderItems,
-    });
-
-    // 6. Post as internal note with header
-    const noteLines = [
-      "🤖 AI Draft — À valider avant envoi",
-      "",
-      draftText,
-      "",
-      "---",
-      `Commande: ${order.name} | Client: ${order.customer.firstName} ${order.customer.lastName}`,
-      backorderItems.length
-        ? `Produits en attente: ${backorderItems.map((i) => i.productTitle).join(", ")}`
-        : "Aucun retard détecté — commande en cours normale.",
-    ];
-
-    await postInternalNote(ticketId, noteLines.join("\n"));
-
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("Gorgias webhook error:", error);
-    // Always return 200 — Gorgias retries on non-2xx
-    return NextResponse.json({ ok: true });
-  }
+  // 2) faits Shopify + brouillon
+  const cust = (t.customer ?? {}) as Record<string, unknown>;
+  const email = String(cust.email ?? (dernier.sender as Record<string, unknown>)?.email ?? "");
+  const faits = await faitsCommande(det.order_number, email);
+  const prenom = faits.prenom || String(cust.firstname ?? "");
+  const messageClient = String(dernier.stripped_text ?? dernier.body_text ?? "");
+  const brouillon = await redigerBrouillon({ faits, messageClient, prenom });
+  const src = (dernier.source ?? {}) as Record<string, unknown>;
+  const to = ((src.to ?? []) as Record<string, unknown>[])[0];
+  await enregistrer({
+    ticketId, messageId: Number(dernier.id), recuLe: String(dernier.created_datetime ?? new Date().toISOString()),
+    client: String(cust.name ?? prenom ?? email), email, sujet: String(t.subject ?? ""), message: messageClient.slice(0, 4000),
+    faits, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
+  });
 }

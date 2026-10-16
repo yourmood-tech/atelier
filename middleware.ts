@@ -137,6 +137,13 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // /delais (assistant des délais) → Philippe uniquement
+  if (pathname.startsWith("/delais") || pathname.startsWith("/api/delais")) {
+    if ((req.auth.user?.email ?? "") !== "philippe@yourmood.net") {
+      return new NextResponse("Accès non autorisé", { status: 403 });
+    }
+  }
+
   // /wineur (page) → restreint aux 4 utilisateurs autorisés
   // /api/wineur/* → exclu du middleware (appels internes depuis generate)
   //   mais la page /wineur qui les déclenche est elle protégée
