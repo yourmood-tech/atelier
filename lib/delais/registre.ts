@@ -1,11 +1,13 @@
 // Registre des brouillons de l'assistant des délais (mémoire de l'outil d'atelier).
 import { kv } from "@vercel/kv";
 import type { Faits } from "./faits";
+import type { FaitsTaille } from "./taille";
 
 export type Brouillon = {
   ticketId: number; messageId: number; recuLe: string;
   client: string; email: string; sujet: string; message: string;
-  faits: Faits; brouillon: string;
+  type?: "delai" | "taille";             // absent = délai (brouillons d'avant le 16.10)
+  faits: Faits | null; taille?: FaitsTaille | null; brouillon: string;
   depuis: string;                       // adresse du support à laquelle la cliente a écrit
   etat: "a_valider" | "envoye" | "ecarte";
   envoyeLe?: string; texteEnvoye?: string; retouche?: boolean;

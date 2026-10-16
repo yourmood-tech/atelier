@@ -15,9 +15,16 @@ type Faits = {
   boites?: string[];
   estimation?: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
 };
+type Taille = {
+  commande: string | null; passeeLe: string | null; langue: string; partie: boolean; envoyeeLe: string | null;
+  joursDepuisEnvoi: number | null; dansLes15Jours: boolean | null; pays: string | null; suisse: boolean;
+  articles: { titre: string; taille: string | null; aExpedier: boolean }[];
+  tailleVoulue: string | null; tailleImpaire: boolean; proposition: string | null; aFaire: string | null;
+};
 type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
-  faits: Faits; brouillon: string; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
+  type?: "delai" | "taille"; taille?: Taille | null;
+  faits: Faits | null; brouillon: string; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
 };
 
 const STATUT: Record<string, { txt: string; couleur: string }> = {
@@ -76,7 +83,7 @@ export default function Delais() {
 
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
-      <h1 className="text-2xl font-semibold">Demandes de délai</h1>
+      <h1 className="text-2xl font-semibold">Demandes clientes — délais et tailles</h1>
       <p className="mt-1 text-sm text-neutral-500">Chaque demande arrive sur ton compte Gorgias avec un brouillon écrit à partir de Shopify et des étiquettes d&apos;atelier. Rien ne part sans ton clic.</p>
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -99,14 +106,15 @@ export default function Delais() {
 
       <div className="mt-4 space-y-4">
         {affiches.map((b) => {
-          const s = STATUT[b.faits.statut] ?? STATUT.rien;
+          const s = b.type === "taille" ? { txt: "Changement de taille", couleur: "bg-fuchsia-100 text-fuchsia-800" } : (STATUT[b.faits?.statut ?? "rien"] ?? STATUT.rien);
+          const tl = b.taille;
           return (
             <section key={b.ticketId} className="rounded-xl border border-neutral-200 p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{b.client}</span>
                 <span className="text-sm text-neutral-500">{b.email}</span>
                 <span className={`rounded-full px-2 py-0.5 text-xs ${s.couleur}`}>{s.txt}</span>
-                <span className="text-xs text-neutral-400">{new Date(b.recuLe).toLocaleString("fr-CH")} · langue {b.faits.langue}</span>
+                <span className="text-xs text-neutral-400">{new Date(b.recuLe).toLocaleString("fr-CH")} · langue {b.faits?.langue ?? tl?.langue ?? "?"}</span>
                 <a href={GORGIAS(b.ticketId)} target="_blank" rel="noreferrer" className="ml-auto text-xs text-sky-700 underline">ouvrir dans Gorgias</a>
               </div>
 
@@ -115,6 +123,21 @@ export default function Delais() {
                   <div className="text-xs font-medium uppercase text-neutral-400">La cliente</div>
                   <div className="mt-1 text-sm font-medium">{b.sujet}</div>
                   <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-neutral-50 p-2 text-sm">{b.message}</pre>
+                  {b.type === "taille" && (
+                    <>
+                      <div className="mt-3 text-xs font-medium uppercase text-neutral-400">Ce que Shopify sait</div>
+                      {!tl ? <p className="mt-1 text-sm text-rose-700">Commande introuvable — le brouillon demande le numéro.</p> : (
+                        <ul className="mt-1 space-y-0.5 text-sm">
+                          <li>Commande {tl.commande} du {tl.passeeLe} · livraison {tl.suisse ? "Suisse" : `hors de Suisse (${tl.pays ?? "?"}) → étiquette retour du colis`}</li>
+                          <li>{tl.partie ? `📦 envoyée le ${tl.envoyeeLe} (il y a ${tl.joursDepuisEnvoi} j) — ${tl.dansLes15Jours ? "dans les 15 jours : échange sans condition" : "plus de 15 jours : gratuit si non portée et comme neuve"}` : "⏳ pas encore partie : taille à modifier dans la commande"}</li>
+                          {tl.articles.map((a, k) => <li key={k}>• {a.titre}{a.taille ? ` — taille ${a.taille}` : ""}</li>)}
+                          <li>Taille voulue : {tl.tailleVoulue ?? "non précisée (le brouillon la demande)"}{tl.tailleImpaire ? ` — impaire, proposer ${tl.proposition}` : ""}</li>
+                        </ul>
+                      )}
+                      {tl?.aFaire && <div className="mt-2 rounded bg-yellow-50 p-2 text-sm text-yellow-900">👉 À faire avant d&apos;envoyer : {tl.aFaire}</div>}
+                    </>
+                  )}
+                  {b.faits && <>
                   <div className="mt-3 text-xs font-medium uppercase text-neutral-400">Ce que Shopify sait</div>
                   <ul className="mt-1 space-y-0.5 text-sm">
                     <li>Commande {b.faits.commande ?? "—"} du {b.faits.passeeLe ?? "—"}</li>
@@ -128,6 +151,7 @@ export default function Delais() {
                     {b.faits.estimation && <li>{b.faits.estimation.depassee ? "🔴" : "🗓️"} {b.faits.estimation.fournisseur} : {b.faits.estimation.delaiMin}–{b.faits.estimation.delaiMax} j après la commande → entre le {b.faits.estimation.du} et le {b.faits.estimation.au}{b.faits.estimation.depassee ? " — DÉLAI DÉPASSÉ, aucune date donnée à la cliente" : ""}</li>}
                   </ul>
                   {b.faits.etiquettesUtilisees.length > 0 && <div className="mt-1 text-xs text-neutral-400">étiquettes : {b.faits.etiquettesUtilisees.join(" · ")}</div>}
+                  </>}
                 </div>
                 <div>
                   <div className="text-xs font-medium uppercase text-neutral-400">{b.etat === "a_valider" ? "Brouillon (modifiable)" : b.etat === "envoye" ? `Envoyé le ${new Date(b.envoyeLe!).toLocaleString("fr-CH")}${b.retouche ? " · retouché" : " · tel quel"}` : "Écarté"}</div>
