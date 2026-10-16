@@ -12,6 +12,7 @@ type Faits = {
   articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   etape: { nom: string; entree: boolean; date: string } | null; rupture: string | null; etiquettesUtilisees: string[];
+  boites?: string[];
   estimation?: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
 };
 type Brouillon = {
@@ -26,6 +27,7 @@ const STATUT: Record<string, { txt: string; couleur: string }> = {
   attente_icelea: { txt: "Attente pièce Icelea (date connue)", couleur: "bg-sky-50 text-sky-700" },
   etape: { txt: "Étape d'atelier connue", couleur: "bg-amber-100 text-amber-800" },
   estimation_fournisseur: { txt: "Estimation d'après le fournisseur", couleur: "bg-violet-100 text-violet-800" },
+  boite: { txt: "Boîte de rangement — date à compléter", couleur: "bg-teal-100 text-teal-800" },
   rien: { txt: "Rien de précis — à compléter", couleur: "bg-rose-100 text-rose-800" },
   introuvable: { txt: "Commande introuvable", couleur: "bg-rose-100 text-rose-800" },
   annulee: { txt: "Commande annulée", couleur: "bg-neutral-200 text-neutral-700" },
@@ -54,6 +56,7 @@ export default function Delais() {
 
   async function envoyer(b: Brouillon) {
     const t = (texte[b.ticketId] ?? b.brouillon).trim();
+    if (t.includes("[DATE À COMPLÉTER]")) { alert("Il reste « [DATE À COMPLÉTER] » dans le texte : remplace-le par la date de livraison avant d'envoyer."); return; }
     if (!confirm(`Envoyer cette réponse à ${b.client} (${b.email}) ?`)) return;
     setBusy(b.ticketId);
     try {
@@ -121,6 +124,7 @@ export default function Delais() {
                     {b.faits.iceleaLivraison && <li>🚚 pièce Icelea attendue le {b.faits.iceleaLivraison}</li>}
                     {b.faits.etape && <li>🔧 {b.faits.etape.entree ? "entrée" : "sortie"} « {b.faits.etape.nom} » le {b.faits.etape.date}</li>}
                     {b.faits.rupture && <li>⚠️ rupture signalée le {b.faits.rupture}</li>}
+                    {(b.faits.boites ?? []).length > 0 && <li>🎁 attend la boîte : {b.faits.boites!.join(", ")} → <b>date à compléter</b></li>}
                     {b.faits.estimation && <li>{b.faits.estimation.depassee ? "🔴" : "🗓️"} {b.faits.estimation.fournisseur} : {b.faits.estimation.delaiMin}–{b.faits.estimation.delaiMax} j après la commande → entre le {b.faits.estimation.du} et le {b.faits.estimation.au}{b.faits.estimation.depassee ? " — DÉLAI DÉPASSÉ, aucune date donnée à la cliente" : ""}</li>}
                   </ul>
                   {b.faits.etiquettesUtilisees.length > 0 && <div className="mt-1 text-xs text-neutral-400">étiquettes : {b.faits.etiquettesUtilisees.join(" · ")}</div>}

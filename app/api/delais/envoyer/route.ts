@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     if (b.etat === "envoye") return NextResponse.json({ error: "déjà envoyé" }, { status: 409 });
     const t = (texte ?? "").trim();
     if (!t) return NextResponse.json({ error: "texte vide" }, { status: 400 });
+    if (t.includes("[DATE À COMPLÉTER]")) return NextResponse.json({ error: "il reste « [DATE À COMPLÉTER] » dans le texte" }, { status: 400 });
     await sendEmailReply({
       ticketId: b.ticketId, agentId: PHILIPPE, fromAddress: b.depuis || "contact@yourmood.net", fromName: "Support mood collection",
       toAddress: b.email, toName: b.client, subject: b.sujet ? (b.sujet.match(/^(re:|votre commande)/i) ? b.sujet : `Re: ${b.sujet}`) : "Votre commande", text: t,

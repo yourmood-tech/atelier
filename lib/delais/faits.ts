@@ -14,6 +14,7 @@ export type Statut =
   | "piece_arrivee"       // pièce Icelea arrivée à l'atelier (Icelea-recu / Icelea-partiel)
   | "etape"               // étape d'atelier connue
   | "estimation_fournisseur" // rien de précis, mais délai estimé d'après le fournisseur des pièces
+  | "boite"               // la commande attend une boîte de rangement mood : date laissée en blanc pour Philippe
   | "rien"                // juste « en production » : à traiter par Philippe
   | "introuvable"         // aucune commande trouvée
   | "annulee";
@@ -31,10 +32,15 @@ export type Faits = {
   iceleaArrivee: { date: string; complet: boolean } | null;
   etape: { nom: string; entree: boolean; date: string; delaiMin: number | null; delaiMax: number | null; unite: string | null } | null;
   rupture: string | null;               // date de l'étiquette « Rupture »
+  boites: string[];                     // boîtes de rangement mood encore à expédier (noire, turquoise, OO N°1/N°2)
   // estimation d'après le contenu : fournisseur des pièces (recette Katana) et son délai habituel
   estimation: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
   etiquettesUtilisees: string[];        // pour la page de validation (preuve)
 };
+
+// boîtes de rangement : OO N°1 / N°2, « On n'en a jamais trop » (turquoise), « Black Obsession » (noire)
+export const BOITE = /BOITEDERANGEMENT|^BOX-JAMAISTROP|^BOX-NUIT-NOIR/i;
+export const BLANC_DATE = "[DATE À COMPLÉTER]";
 
 const d6 = (s: string) => `${s.slice(0, 2)}.${s.slice(2, 4)}.20${s.slice(4, 6)}`;
 const toDate = (jjmmaaaa: string) => { const [j, m, a] = jjmmaaaa.split("."); return new Date(Number(a), Number(m) - 1, Number(j)); };
@@ -55,7 +61,7 @@ async function trouverCommande(numero: string | null, email: string): Promise<Re
 
 export async function faitsCommande(numero: string | null, email: string): Promise<Faits> {
   const vide: Faits = { statut: "introuvable", commande: null, commandeId: null, passeeLe: null, prenom: "", langue: "fr",
-    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, etape: null, rupture: null, estimation: null, etiquettesUtilisees: [] };
+    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, etape: null, rupture: null, estimation: null, boites: [], etiquettesUtilisees: [] };
   const o = await trouverCommande(numero, email);
   if (!o) return vide;
   const cust = (o.customer ?? {}) as Record<string, unknown>;
@@ -75,6 +81,9 @@ export async function faitsCommande(numero: string | null, email: string): Promi
     lien: (x.tracking_url as string) ?? null,
     articles: ((x.line_items ?? []) as Record<string, unknown>[]).map((l) => String(l.title)),
   }));
+
+  // boîtes de rangement mood (leur date d'arrivée n'est connue que de Philippe → laissée en blanc)
+  f.boites = lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0 && BOITE.test(String(l.sku ?? ""))).map((l) => String(l.title));
 
   // étiquettes d'atelier
   const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -119,6 +128,7 @@ export async function faitsCommande(numero: string | null, email: string): Promi
     try { f.estimation = await estimationFournisseur(lignes, f.passeeLe!); } catch (e) { console.error("[délais] estimation", e); }
     if (f.statut === "rien" && f.estimation && !f.estimation.depassee) f.statut = "estimation_fournisseur";
   }
+  if (f.boites.length && f.statut !== "expediee") f.statut = "boite";
   if (f.envois.length && f.articlesEnAttente.length && f.statut !== "expediee") {
     f.etiquettesUtilisees.push("envoi partiel");
     if (f.statut === "rien") f.statut = "expediee_partiel";

@@ -1,7 +1,7 @@
 // Assistant des délais — rédige le brouillon de réponse à partir des SEULS faits Shopify.
 // Ton calqué sur les réponses du support (vouvoiement par e-mail, « Merci pour votre commande
 // et patience », « Excellente journée. Cordialement, Philippe »). Aucune date inventée.
-import type { Faits } from "./faits";
+import { BLANC_DATE, type Faits } from "./faits";
 import { BRAND_INTRO } from "@/lib/email";
 
 const MODELE = "claude-sonnet-5-5";
@@ -19,8 +19,9 @@ function faitsEnClair(f: Faits): string {
     const dl = f.etape.delaiMin != null ? ` Typical duration of this step: ${f.etape.delaiMin}${f.etape.delaiMax && f.etape.delaiMax !== f.etape.delaiMin ? `–${f.etape.delaiMax}` : ""} ${f.etape.unite ?? "days"}.` : "";
     L.push(`Workshop step: ${f.etape.entree ? "entered" : "finished"} the step "${f.etape.nom}" on ${f.etape.date}.${dl}`);
   }
-  if (f.estimation && !f.estimation.depassee) L.push(`Based on the content of the order, it needs components from a partner workshop whose usual lead time is ${f.estimation.delaiMin}–${f.estimation.delaiMax} days after the order: estimated delivery window between ${f.estimation.du} and ${f.estimation.au} (estimate, never a promise — phrase it like "entre fin octobre et mi-novembre"). Never name the supplier.`);
+  if (f.estimation && !f.estimation.depassee && !f.boites.length) L.push(`Based on the content of the order, it needs components from a partner workshop whose usual lead time is ${f.estimation.delaiMin}–${f.estimation.delaiMax} days after the order: estimated delivery window between ${f.estimation.du} and ${f.estimation.au} (estimate, never a promise — phrase it like "entre fin octobre et mi-novembre"). Never name the supplier.`);
   if (f.estimation?.depassee) L.push(`The usual lead time for this order is already exceeded: do NOT give any date; say the piece is in its final production steps and that we will come back with a precise date very soon.`);
+  if (f.boites.length) L.push(`IMPORTANT — the order contains a mood storage box that has not arrived yet: ${f.boites.join(" | ")}. Its delivery date is NOT known. Write one sentence saying the order will be shipped complete together with this box, and put the exact placeholder ${BLANC_DATE} where the approximate delivery date goes (e.g. "… prévue aux alentours du ${BLANC_DATE}"). Do NOT give any other date or estimate in the e-mail.`);
   if (f.rupture) L.push(`A component was marked as temporarily unavailable on ${f.rupture} (do not say "out of stock").`);
   return L.join("\n");
 }
@@ -78,6 +79,10 @@ function brouillonDeSecours(f: Faits, prenom: string): string {
     statut = de ? `Ihre Bestellung ${f.commande} wurde am ${e.date} versandt${e.numero ? ` (Sendungsnummer ${e.numero})` : ""}.`
       : en ? `Your order ${f.commande} was shipped on ${e.date}${e.numero ? ` (tracking number ${e.numero})` : ""}.`
       : `Votre commande ${f.commande} est partie le ${e.date}${e.numero ? ` (numéro de suivi ${e.numero})` : ""}.`;
+  else if (f.boites.length)
+    statut = de ? `Ihre Bestellung ${f.commande} wird vollständig mit der Aufbewahrungsbox versandt, die Lieferung ist um den ${BLANC_DATE} vorgesehen.`
+      : en ? `Your order ${f.commande} will be shipped complete together with the storage box, delivery expected around ${BLANC_DATE}.`
+      : `Votre commande ${f.commande} partira complète avec la boîte de rangement, la livraison est prévue aux alentours du ${BLANC_DATE}.`;
   else if (f.estimation && !f.estimation.depassee)
     statut = de ? `Ihre Bestellung ${f.commande} ist in Produktion, die Lieferung ist zwischen dem ${f.estimation.du} und dem ${f.estimation.au} vorgesehen (Schätzung).`
       : en ? `Your order ${f.commande} is in production; delivery is expected between ${f.estimation.du} and ${f.estimation.au} (estimate).`
