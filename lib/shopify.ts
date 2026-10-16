@@ -251,6 +251,11 @@ export async function setIceleaTags(orderId: number, poNumber: string, deliveryF
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
+// Écritures brutes (outil SAV : étiquettes, notes, commande d'échange).
+export async function shopifyWrite(method: "POST" | "PUT", path: string, body: unknown): Promise<Record<string, unknown>> {
+  return method === "POST" ? shopifyPost(path, body) : shopifyPut(path, body);
+}
+
 // Lecture brute (assistant des délais : commande + envois + étiquettes).
 export async function shopifyGet(path: string): Promise<Record<string, unknown>> {
   return shopifyFetch(path);

@@ -18,13 +18,13 @@ type Faits = {
 type Taille = {
   commande: string | null; passeeLe: string | null; langue: string; partie: boolean; envoyeeLe: string | null;
   joursDepuisEnvoi: number | null; dansLes15Jours: boolean | null; pays: string | null; suisse: boolean;
-  articles: { titre: string; taille: string | null; aExpedier: boolean }[];
+  articles: { lineItemId: number; titre: string; taille: string | null; aExpedier: boolean }[];
   tailleVoulue: string | null; tailleImpaire: boolean; proposition: string | null; aFaire: string | null;
 };
 type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
   type?: "delai" | "taille"; taille?: Taille | null;
-  faits: Faits | null; brouillon: string; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
+  faits: Faits | null; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
 };
 
 const STATUT: Record<string, { txt: string; couleur: string }> = {
@@ -46,6 +46,20 @@ export default function Delais() {
   const [texte, setTexte] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const [vue, setVue] = useState<"a_valider" | "traites">("a_valider");
+  const [choix, setChoix] = useState<Record<string, string>>({});   // `${ticketId}:${lineItemId}` → nouvelle taille ("" = pas échangé)
+
+  async function creerEchange(b: Brouillon) {
+    const lignes = (b.taille?.articles ?? []).map((a) => ({ lineItemId: a.lineItemId, taille: choix[`${b.ticketId}:${a.lineItemId}`] ?? "" })).filter((x) => x.taille);
+    if (!lignes.length) { alert("Indique la nouvelle taille d'au moins un article."); return; }
+    if (!confirm(`Créer la commande d'échange (0 CHF, production immédiate) pour ${lignes.length} article(s) ?`)) return;
+    setBusy(b.ticketId);
+    try {
+      const r = await fetch("/api/delais/echange", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: b.ticketId, lignes }) });
+      const j = await r.json();
+      alert(r.ok ? `Commande d'échange ${j.commande} créée.` : `Pas créée : ${j.error ?? r.status}`);
+      await charger();
+    } finally { setBusy(null); }
+  }
 
   async function charger() {
     const r = await fetch("/api/delais", { cache: "no-store" });
@@ -135,6 +149,26 @@ export default function Delais() {
                         </ul>
                       )}
                       {tl?.aFaire && <div className="mt-2 rounded bg-yellow-50 p-2 text-sm text-yellow-900">👉 À faire avant d&apos;envoyer : {tl.aFaire}</div>}
+                      {tl?.partie && (
+                        <div className="mt-3 rounded-lg border border-fuchsia-200 p-2">
+                          <div className="text-xs font-medium uppercase text-fuchsia-700">Commande d&apos;échange (0 CHF, production immédiate)</div>
+                          {b.echange ? <p className="mt-1 text-sm">✅ {b.echange.commande} créée le {new Date(b.echange.creeLe).toLocaleDateString("fr-CH")} — étiquette ECHANGE-{(tl.commande ?? "").replace("#", "")}</p> : (
+                            <>
+                              {tl.articles.filter((a) => a.taille).map((a) => {
+                                const k = `${b.ticketId}:${a.lineItemId}`;
+                                return (
+                                  <label key={k} className="mt-1 flex items-center gap-2 text-sm">
+                                    <span className="flex-1">{a.titre} <span className="text-neutral-400">({a.taille})</span></span>
+                                    → <input value={choix[k] ?? ""} onChange={(e) => setChoix((x) => ({ ...x, [k]: e.target.value.replace(/\D/g, "").slice(0, 2) }))}
+                                      placeholder={tl.tailleVoulue && !tl.tailleImpaire ? tl.tailleVoulue : "taille"} className="w-16 rounded border border-neutral-300 p-1 text-center" />
+                                  </label>
+                                );
+                              })}
+                              <button disabled={busy === b.ticketId} onClick={() => creerEchange(b)} className="mt-2 rounded-lg bg-fuchsia-700 px-3 py-1.5 text-sm text-white disabled:opacity-50">Créer la commande d&apos;échange</button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                   {b.faits && <>

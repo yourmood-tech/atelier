@@ -6,6 +6,7 @@ import {
   addOrderTag,
 } from "@/lib/shopify";
 import { sendFulfillmentNotification } from "@/lib/email";
+import { controleExpedition } from "@/lib/sav";
 import { auth } from "@/auth";
 
 const TAG_ERROR = "ATTENTION-ERREUR-FULFILL-POS-A-REIMPRIMER";
@@ -95,6 +96,7 @@ export async function POST(req: NextRequest) {
       }
 
       await createShopifyFulfillment(orderId, lineItemId, quantity);
+      const ctrl = await controleExpedition(orderId).catch(() => ({ orpheline: false as boolean, original: undefined as string | undefined }));
 
       // Send notification (non-blocking)
       sendFulfillmentNotification({
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
         performedBy,
       }).catch(() => null);
 
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true, orpheline: ctrl.orpheline, original: ctrl.original });
     }
 
     return NextResponse.json({ ok: false, error: `Action inconnue: ${action}` }, { status: 400 });

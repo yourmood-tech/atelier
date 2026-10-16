@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderFulfillmentData, createBulkFulfillment } from "@/lib/shopify";
+import { controleExpedition } from "@/lib/sav";
 
 // GET /api/fulfillment?order=394907
 export async function GET(req: NextRequest) {
@@ -30,7 +31,9 @@ export async function POST(req: NextRequest) {
     }
 
     await createBulkFulfillment(orderId, lineItemIds ?? [], trackingNumber || undefined);
-    return NextResponse.json({ ok: true });
+    // commande d'échange de taille : l'original est-il revenu ? sinon → orpheline (outil SAV)
+    const ctrl = await controleExpedition(orderId).catch(() => ({ orpheline: false as boolean, original: undefined as string | undefined }));
+    return NextResponse.json({ ok: true, orpheline: ctrl.orpheline, original: ctrl.original });
   } catch (err) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : "Erreur" }, { status: 500 });
   }

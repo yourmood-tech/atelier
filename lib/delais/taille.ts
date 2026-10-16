@@ -14,7 +14,7 @@ export type FaitsTaille = {
   commande: string | null; commandeId: number | null; passeeLe: string | null; prenom: string; langue: string;
   partie: boolean; envoyeeLe: string | null; joursDepuisEnvoi: number | null; dansLes15Jours: boolean | null;
   pays: string | null; suisse: boolean;
-  articles: { titre: string; taille: string | null; aExpedier: boolean }[];
+  articles: { lineItemId: number; titre: string; taille: string | null; aExpedier: boolean }[];
   tailleVoulue: string | null; tailleImpaire: boolean; proposition: string | null;
   aFaire: string | null;                 // action manuelle pour Philippe (affichée sur sa page)
 };
@@ -57,7 +57,7 @@ export async function faitsTaille(numero: string | null, email: string, tailleVo
   const articles = lignes.map((l) => {
     const v = String(l.variant_title ?? "");
     const m = v.match(/\b(\d{2})\b/) ?? String(l.sku ?? "").match(/-(\d{2})$/);
-    return { titre: String(l.title), taille: m ? m[1] : null, aExpedier: Number(l.fulfillable_quantity ?? 0) > 0 };
+    return { lineItemId: Number(l.id), titre: String(l.title), taille: m ? m[1] : null, aExpedier: Number(l.fulfillable_quantity ?? 0) > 0 };
   });
   const partie = articles.every((a) => !a.aExpedier) && envois.length > 0;
   const n = tailleVoulue ? Number(tailleVoulue.replace(/\D/g, "")) : NaN;
@@ -84,8 +84,8 @@ export async function redigerTaille(f: FaitsTaille, messageClient: string): Prom
   const retour = !f.partie
     ? ""
     : f.suisse
-      ? `How to send it back: by post, registered ("recommandé") or A+, well protected, with her name, the order number ${f.commande} and the wanted size, to:\nMood Collection SA\nSAV\nLes Ducats 40B\n1350 Orbe\nWe produce the new size when we receive it (there may be a short production time).`
-      : `How to send it back: with the prepaid return label that is included in her parcel, well protected, with her name, the order number ${f.commande} and the wanted size, to Mood Collection SA, SAV, Les Ducats 40B, 1350 Orbe (Switzerland). We produce the new size when we receive it.`;
+      ? `How to send it back: by post, registered ("recommandé") or A+, well protected, with her name, the order number ${f.commande} and the wanted size, to:\nMood Collection SA\nSAV\nLes Ducats 40B\n1350 Orbe\nWe start producing the new size right away, without waiting for her parcel; she only needs to send the original piece back.`
+      : `How to send it back: with the prepaid return label that is included in her parcel, well protected, with her name, the order number ${f.commande} and the wanted size, to Mood Collection SA, SAV, Les Ducats 40B, 1350 Orbe (Switzerland). We start producing the new size right away, without waiting for her parcel; she only needs to send the original piece back.`;
   const taille = f.tailleImpaire ? `The wanted size ${f.tailleVoulue} does not exist (odd sizes are not produced): ask her to choose between ${f.proposition}.`
     : f.tailleVoulue ? `Wanted size: ${f.tailleVoulue}.` : `The wanted size is not stated: ask her which size she needs, and give the link https://www.yourmood.net/pages/comment-connaitre-ma-taille-de-bague to measure it.`;
   const prompt = `${BRAND_INTRO}

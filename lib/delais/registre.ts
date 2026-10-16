@@ -11,6 +11,7 @@ export type Brouillon = {
   depuis: string;                       // adresse du support à laquelle la cliente a écrit
   etat: "a_valider" | "envoye" | "ecarte";
   envoyeLe?: string; texteEnvoye?: string; retouche?: boolean;
+  echange?: { commande: string; orderId: number; creeLe: string };   // commande d'échange de taille créée
 };
 
 const CLE = (id: number) => `delais:brouillon:${id}`;

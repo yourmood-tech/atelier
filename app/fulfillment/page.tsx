@@ -99,8 +99,9 @@ export default function FulfillmentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: order.orderId, lineItemIds, trackingNumber: tracking || undefined }),
       });
-      const json = await res.json() as { ok: boolean; error?: string };
+      const json = await res.json() as { ok: boolean; error?: string; orpheline?: boolean; original?: string };
       if (!json.ok) throw new Error(json.error ?? "Erreur Shopify");
+      if (json.orpheline) alert(`⚠️ ${order.orderName} est un échange de taille : la bague d'origine ${json.original ?? ""} n'est pas encore revenue.\nElle apparaît comme « orpheline » dans l'outil SAV.`);
 
       const itemCount = lineItemIds.length === 0 ? totalUnfulfilled : lineItemIds.length;
       const entry: HistoryEntry = {

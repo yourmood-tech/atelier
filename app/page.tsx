@@ -38,6 +38,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Fulfillment rapide par scanner : articles expédiés, numéro de suivi Swiss Post, validation en quelques secondes.",
       },
       {
+        href: "/sav",
+        emoji: "↩️",
+        title: "SAV — retours",
+        description: "Retour client reçu : n° de commande + type (échange de taille, qualité, annulation). Liste des retours à traiter et des échanges orphelins.",
+      },
+      {
         href: "/icelea-po",
         emoji: "🛒",
         title: "Commande Icelea",
