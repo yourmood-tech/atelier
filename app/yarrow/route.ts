@@ -49,6 +49,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 .p .ombre{position:absolute;inset:0;background:linear-gradient(rgba(10,10,9,0) 48%,rgba(10,10,9,.88));
   opacity:.92;transition:opacity .5s ease}
 .p:hover .ombre{opacity:1}
+.p.clair .ombre{background:linear-gradient(rgba(10,10,9,0) 38%,rgba(10,10,9,.62) 62%,rgba(10,10,9,.95))}
 .p .leg{position:absolute;left:0;right:0;bottom:0;padding:clamp(14px,2vw,24px);text-align:left}
 .p .nom{display:block;font-family:var(--titre);font-size:clamp(20px,2.3vw,30px);line-height:1.1}
 .p .mot{display:block;font-size:12px;color:var(--doux);margin-top:5px;line-height:1.5;
@@ -191,7 +192,7 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   var m=document.getElementById('mosaique');
   P.forEach(function(p,k){
     var b=document.createElement('button');
-    b.className='p p'+k; b.dataset.k=k;
+    b.className='p p'+k+(p.i.charAt(0)==='/'?' clair':''); b.dataset.k=k;
     b.innerHTML='<img loading="lazy" src="'+u(p.i,1000)+'" alt="'+p.t+'">'+
       '<span class="ombre"></span><span class="leg">'+
       '<span class="nom">'+p.t+'</span>'+
