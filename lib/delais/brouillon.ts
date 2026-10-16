@@ -26,7 +26,12 @@ function faitsEnClair(f: Faits): string {
   return L.join("\n");
 }
 
-export async function redigerBrouillon(p: { faits: Faits; messageClient: string; prenom: string }): Promise<string> {
+export const TON_WHATSAPP = `- This is a WhatsApp message, not an e-mail: informal "tu" (French) / "du" (German) / first name in English, 2 to 5 short lines, warm and direct, like our shop team writes on WhatsApp.
+- Start with "Coucou {first name} 🌸" or "Hello {first name} 🌸" (translated naturally), no "Madame", no "Cordialement".
+- One or two emojis maximum, ONLY from: 🌸 🫶🏼 💎 ✨ 🤍 💙. Tracking numbers or links on their own line.
+- End with a short warm line and "Philippe" (no "Cordialement", no "Excellente journée").`;
+
+export async function redigerBrouillon(p: { faits: Faits; messageClient: string; prenom: string; canal?: "email" | "whatsapp" }): Promise<string> {
   const f = p.faits;
   const langue = NOMS_LANGUE[f.langue] ?? "the same language as the customer's message";
   const prompt = `${BRAND_INTRO}
@@ -40,7 +45,7 @@ Customer message:
 ${JSON.stringify(p.messageClient.slice(0, 2500))}
 
 How to write:
-- Language: ${langue}. Formal address ("vous" / "Sie" / "you").
+- Language: ${langue}.${p.canal === "whatsapp" ? "\n" + TON_WHATSAPP + "\n- The status rules below still apply, but ignore the e-mail structure (greeting/closing lines)." : ' Formal address ("vous" / "Sie" / "you").'}
 - Structure, like our support team does:
   "Bonjour${p.prenom ? " " + p.prenom : ""}," (or the equivalent greeting in the language) /
   one line acknowledging the request /

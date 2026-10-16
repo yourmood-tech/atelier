@@ -24,6 +24,7 @@ type Taille = {
 type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
   type?: "delai" | "taille"; taille?: Taille | null;
+  canal?: "email" | "whatsapp";
   faits: Faits | null; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; ticketFerme?: boolean; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
 };
 
@@ -130,6 +131,7 @@ export default function Delais() {
                 <span className="font-medium">{b.client}</span>
                 <span className="text-sm text-neutral-500">{b.email}</span>
                 <span className={`rounded-full px-2 py-0.5 text-xs ${s.couleur}`}>{s.txt}</span>
+                {b.canal === "whatsapp" && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">WhatsApp</span>}
                 <span className="text-xs text-neutral-400">{new Date(b.recuLe).toLocaleString("fr-CH")} · langue {b.faits?.langue ?? tl?.langue ?? "?"}</span>
                 <a href={GORGIAS(b.ticketId)} target="_blank" rel="noreferrer" className="ml-auto text-xs text-sky-700 underline">ouvrir dans Gorgias</a>
               </div>
@@ -200,7 +202,7 @@ export default function Delais() {
                   {b.etat === "a_valider" && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button disabled={busy === b.ticketId} onClick={() => envoyer(b)} className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50">
-                        {busy === b.ticketId ? "Envoi…" : "✓ Envoyer à la cliente"}
+                        {busy === b.ticketId ? "Envoi…" : b.canal === "whatsapp" ? "✓ Envoyer sur WhatsApp" : "✓ Envoyer à la cliente"}
                       </button>
                       <button disabled={busy === b.ticketId} onClick={() => ecarter(b)} className="rounded-lg bg-neutral-100 px-4 py-2 text-sm">
                         Je réponds moi-même dans Gorgias

@@ -9,6 +9,8 @@ export type Brouillon = {
   type?: "delai" | "taille";             // absent = délai (brouillons d'avant le 16.10)
   faits: Faits | null; taille?: FaitsTaille | null; brouillon: string;
   depuis: string;                       // adresse du support à laquelle la cliente a écrit
+  canal?: "email" | "whatsapp";         // WhatsApp : la réponse part sur son téléphone via Gorgias
+  adresseReponse?: string;              // WhatsApp : adresse-relais de la conversation (…@gorgias.konvoai.com)
   etat: "a_valider" | "envoye" | "ecarte";
   envoyeLe?: string; texteEnvoye?: string; retouche?: boolean;
   echange?: { commande: string; orderId: number; creeLe: string };   // commande d'échange de taille créée

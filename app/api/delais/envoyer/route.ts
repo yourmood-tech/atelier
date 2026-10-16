@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
     if (t.includes("[DATE À COMPLÉTER]")) return NextResponse.json({ error: "il reste « [DATE À COMPLÉTER] » dans le texte" }, { status: 400 });
     await sendEmailReply({
       ticketId: b.ticketId, agentId: PHILIPPE, fromAddress: b.depuis || "contact@yourmood.net", fromName: "Support mood collection",
-      toAddress: b.email, toName: b.client, subject: b.sujet ? (b.sujet.match(/^(re:|votre commande)/i) ? b.sujet : `Re: ${b.sujet}`) : "Votre commande", text: t,
+      // WhatsApp : on écrit à l'adresse-relais de la conversation, le relais l'envoie sur son téléphone
+      toAddress: b.canal === "whatsapp" && b.adresseReponse ? b.adresseReponse : b.email, toName: b.client, subject: b.sujet ? (b.sujet.match(/^(re:|votre commande)/i) ? b.sujet : `Re: ${b.sujet}`) : "Votre commande", text: t,
     });
     b.etat = "envoye"; b.envoyeLe = new Date().toISOString(); b.texteEnvoye = t;
     b.retouche = t.replace(/\s+/g, " ") !== b.brouillon.trim().replace(/\s+/g, " ");

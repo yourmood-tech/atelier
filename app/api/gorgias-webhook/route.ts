@@ -33,15 +33,16 @@ export async function POST(req: NextRequest) {
 
 async function traiter(ticketId: number) {
   const t = await getTicket(ticketId);
-  // e-mail uniquement : une demande arrivée par WhatsApp se répond sur WhatsApp, pas par e-mail ;
-  // et jamais les robots (notifications Shopify « mentioned on order », PayPal, no-reply…)
-  if (t.channel !== "email" || t.via === "whatsapp" || t.spam) return;
+  // e-mail et WhatsApp (la réponse WhatsApp part depuis le ticket Gorgias, sur son téléphone) ;
+  // jamais les robots (notifications Shopify « mentioned on order », PayPal, no-reply…)
+  if (t.channel !== "email" || t.spam) return;
+  const whatsapp = t.via === "whatsapp";   // WhatsApp (relais Konvo) : on répond aussi depuis Gorgias
   const emailClient = String(((t.customer ?? {}) as Record<string, unknown>).email ?? "").toLowerCase();
   // notification interne Shopify (« X mentioned you on order #… ») : on la prend si elle parle
   // de délai, et la réponse part directement à la cliente de cette commande (décision Philippe)
   const mention = emailClient === "mailer@shopify.com" ? String(t.subject ?? "").match(/mentioned (?:you )?on order #?(\d+)/i) : null;
   if (mention) return traiterMention(ticketId, t, mention[1]);
-  if (!emailClient || /shopify\.com|konvoai|paypal|no-?reply|mailer|notification|facebookmail|pinterest|instagram/.test(emailClient)) return;
+  if (!emailClient || (!whatsapp && /konvoai/.test(emailClient)) || /shopify\.com|paypal|no-?reply|mailer|notification|facebookmail|pinterest|instagram/.test(emailClient)) return;
   const msgs = await getTicketMessages(ticketId);
   const clientes = msgs.filter((m) => m.from_agent === false && m.public !== false);
   const dernier = clientes[clientes.length - 1];
@@ -56,7 +57,7 @@ async function traiter(ticketId: number) {
   const texte = [String(t.subject ?? ""), ...clientes.map((m) => String(m.stripped_text ?? m.body_text ?? ""))].join("\n---\n");
   // changement de taille d'abord (un message « trop petite, commande #… » parle aussi de la commande)
   const tai = await detecterTaille(texte).catch(() => ({ oui: false, commande: null, taille: null }));
-  if (tai.oui) return traiterTaille(ticketId, t, dernier, tai);
+  if (tai.oui) return traiterTaille(ticketId, t, dernier, tai, whatsapp);
   const det = await detectDelayInquiry(texte.slice(-6000));
   if (!(equipe === EQUIPE_DELAIS || chezPhilippe || det.is_delay_inquiry)) return;
 
@@ -70,24 +71,26 @@ async function traiter(ticketId: number) {
   const prenom = faits.prenom || String(cust.firstname ?? "");
   const messageClient = String(dernier.stripped_text ?? dernier.body_text ?? "");
   faits.langue = langueDuMessage(messageClient) ?? faits.langue;
-  const brouillon = await redigerBrouillon({ faits, messageClient, prenom });
+  const brouillon = await redigerBrouillon({ faits, messageClient, prenom, canal: whatsapp ? "whatsapp" : "email" });
   const src = (dernier.source ?? {}) as Record<string, unknown>;
   const to = ((src.to ?? []) as Record<string, unknown>[])[0];
+  const relais = whatsapp ? String(((src.from ?? {}) as Record<string, unknown>).address ?? "") : "";
   await enregistrer({
     ticketId, messageId: Number(dernier.id), recuLe: String(dernier.created_datetime ?? new Date().toISOString()),
     client: String(cust.name ?? prenom ?? email), email, sujet: String(t.subject ?? ""), message: messageClient.slice(0, 4000),
     type: "delai", faits, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
+    canal: whatsapp ? "whatsapp" : "email", adresseReponse: relais || undefined,
   });
 }
 
-async function traiterTaille(ticketId: number, t: Record<string, unknown>, dernier: Record<string, unknown>, tai: { commande: string | null; taille: string | null }) {
+async function traiterTaille(ticketId: number, t: Record<string, unknown>, dernier: Record<string, unknown>, tai: { commande: string | null; taille: string | null }, whatsapp = false) {
   if (Number((t.assignee_user as Record<string, unknown> | null)?.id ?? 0) !== PHILIPPE) await assignTicket(ticketId, PHILIPPE);
   const cust = (t.customer ?? {}) as Record<string, unknown>;
   const email = String(cust.email ?? (dernier.sender as Record<string, unknown>)?.email ?? "");
   const f = await faitsTaille(tai.commande, email, tai.taille);
   const messageClient = String(dernier.stripped_text ?? dernier.body_text ?? "");
   if (f) f.langue = langueDuMessage(messageClient) ?? f.langue;
-  const brouillon = f ? await redigerTaille(f, messageClient)
+  const brouillon = f ? await redigerTaille(f, messageClient, whatsapp ? "whatsapp" : "email")
     : "Bonjour,\n\nNous avons bien reçu votre demande de changement de taille. Pourriez-vous nous indiquer votre numéro de commande ?\n\nExcellente journée.\n\nCordialement,\nPhilippe";
   const src = (dernier.source ?? {}) as Record<string, unknown>;
   const to = ((src.to ?? []) as Record<string, unknown>[])[0];
@@ -95,6 +98,8 @@ async function traiterTaille(ticketId: number, t: Record<string, unknown>, derni
     ticketId, messageId: Number(dernier.id), recuLe: String(dernier.created_datetime ?? new Date().toISOString()),
     client: String(cust.name ?? email), email, sujet: String(t.subject ?? ""), message: messageClient.slice(0, 4000),
     type: "taille", faits: null, taille: f, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
+    canal: whatsapp ? "whatsapp" : "email",
+    adresseReponse: whatsapp ? String(((src.from ?? {}) as Record<string, unknown>).address ?? "") || undefined : undefined,
   });
 }
 

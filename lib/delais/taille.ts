@@ -9,6 +9,7 @@
 //  • tailles impaires impossibles (69 → 68 ou 70).
 import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale, BRAND_INTRO } from "@/lib/email";
+import { TON_WHATSAPP } from "./brouillon";
 
 export type FaitsTaille = {
   commande: string | null; commandeId: number | null; passeeLe: string | null; prenom: string; langue: string;
@@ -74,7 +75,7 @@ export async function faitsTaille(numero: string | null, email: string, tailleVo
   return f;
 }
 
-export async function redigerTaille(f: FaitsTaille, messageClient: string): Promise<string> {
+export async function redigerTaille(f: FaitsTaille, messageClient: string, canal: "email" | "whatsapp" = "email"): Promise<string> {
   const NOMS: Record<string, string> = { fr: "French", de: "German", en: "English", it: "Italian", es: "Spanish" };
   const cas = !f.partie
     ? `The order is NOT shipped yet. Say we change the size directly in the order, at no cost${f.tailleVoulue && !f.tailleImpaire ? ` (new size ${f.tailleVoulue})` : ""}. Nothing to send back.`
@@ -99,7 +100,7 @@ ${taille}
 
 Customer message: ${JSON.stringify(messageClient.slice(0, 2500))}
 
-Write in ${NOMS[f.langue] ?? "the customer's language"}, formal address. Structure: greeting "Bonjour${f.prenom ? " " + f.prenom : ""}," (translated) / we received the request / what we do / how to send back (if any, keep the address lines exactly) / "Merci pour votre commande." / "Excellente journée." / "Cordialement," / "Philippe" (translated, each on its own line). Short, warm, no excessive apologies. Never state anything not in the facts. Plain text only.`;
+Write in ${NOMS[f.langue] ?? "the customer's language"}.${canal === "whatsapp" ? "\n" + TON_WHATSAPP + "\nKeep the return address lines exactly. Ignore the e-mail structure below." : " Formal address."} Structure: greeting "Bonjour${f.prenom ? " " + f.prenom : ""}," (translated) / we received the request / what we do / how to send back (if any, keep the address lines exactly) / "Merci pour votre commande." / "Excellente journée." / "Cordialement," / "Philippe" (translated, each on its own line). Short, warm, no excessive apologies. Never state anything not in the facts. Plain text only.`;
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   for (const modele of ["claude-sonnet-5-5", "claude-haiku-4-5-20251001"]) {
