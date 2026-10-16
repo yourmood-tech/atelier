@@ -600,7 +600,8 @@ body{
 
   // sommaire : une pastille par chapitre
   var titres=[].slice.call(book.querySelectorAll(".pg")).map(function(p){
-    var h=p.querySelector("h2"); return h?h.textContent:(p.classList.contains("couv")?"Couverture":null);
+    var h=p.querySelector("h2"); if(!h) return p.classList.contains("couv")?"Couverture":null;
+    return (h.innerHTML||"").replace(/<br\s*\/?>/gi," ").replace(/<[^>]*>/g,"").replace(/\s+/g," ").trim();
   });
   var som=document.getElementById("som"), boutons=[];
   titres.forEach(function(t,idx){
