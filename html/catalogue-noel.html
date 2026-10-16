@@ -806,7 +806,13 @@ body{
   });
   function versMobile(i){ var c=piste.children[i]; if(c) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }
 
-  rendu();
+  // ouvrir directement sur un chapitre : #p=3
+  function depuisAdresse(){
+    var m=(location.hash||"").match(/p=(\d+)/);
+    if(m){ var pg=Math.max(0,Math.min(N*2-1,+m[1])); va(pg%2===0?pg/2:(pg+1)/2); if(window.innerWidth<=900) versMobile(pg); }
+  }
+  window.addEventListener("hashchange",depuisAdresse);
+  rendu(); depuisAdresse();
 })();
 </script>
 </body></html>
