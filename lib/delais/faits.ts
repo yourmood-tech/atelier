@@ -39,7 +39,11 @@ export type Faits = {
 };
 
 // boîtes de rangement : OO N°1 / N°2, « On n'en a jamais trop » (turquoise), « Black Obsession » (noire)
-export const BOITE = /BOITEDERANGEMENT|^BOX-JAMAISTROP|^BOX-NUIT-NOIR/i;
+export const BOITE = /BOITEDERANGEMENT|^BOX-JAMAISTROP|^BOX-NUIT-NOIR|^COFFRET-ESCAPADE/i;
+// délais fixes donnés par Philippe pour des articles sans fournisseur dans l'atelier (jours depuis la commande)
+const DELAIS_FIXES: { rx: RegExp; nom: string; min: number; max: number }[] = [
+  { rx: /^CO-PLUMIER/i, nom: "Boîte des écoliers romands", min: 15, max: 20 },
+];
 export const BLANC_DATE = "[DATE À COMPLÉTER]";
 
 const d6 = (s: string) => `${s.slice(0, 2)}.${s.slice(2, 4)}.20${s.slice(4, 6)}`;
@@ -146,11 +150,13 @@ async function estimationFournisseur(lignes: Record<string, unknown>[], passeeLe
     const r = await recetteSouple(sku);
     (r?.ingredients ?? []).forEach((i) => { if (i.supplier) fournisseurs.set(i.supplier.id, i.supplier.name); });
   }
-  if (!fournisseurs.size) return null;
-  const { data } = await supabaseAdmin.from("supplier_lead_times")
-    .select("supplier_id,supplier_name,lead_time_min,lead_time_max").in("supplier_id", [...fournisseurs.keys()]);
+  const { data } = fournisseurs.size ? await supabaseAdmin.from("supplier_lead_times")
+    .select("supplier_id,supplier_name,lead_time_min,lead_time_max").in("supplier_id", [...fournisseurs.keys()]) : { data: [] };
   const rows = ((data ?? []) as { supplier_id: number; supplier_name: string; lead_time_min: number | null; lead_time_max: number | null }[])
     .filter((x) => x.lead_time_min != null);
+  DELAIS_FIXES.filter((d) => skus.some((k) => d.rx.test(k))).forEach((d, i) => {
+    rows.push({ supplier_id: -1 - i, supplier_name: d.nom, lead_time_min: d.min, lead_time_max: d.max });
+  });
   if (!rows.length) return null;
   const pire = rows.sort((a, b) => (b.lead_time_max ?? b.lead_time_min!) - (a.lead_time_max ?? a.lead_time_min!))[0];
   const min = pire.lead_time_min!, max = pire.lead_time_max ?? pire.lead_time_min!;
