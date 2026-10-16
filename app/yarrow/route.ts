@@ -42,21 +42,21 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 /* la mosaïque, bord à bord */
 .mosaique{display:flex;flex-direction:column;gap:3px;
   margin-top:clamp(28px,4vw,52px)}
-.p{display:grid;grid-template-columns:1fr;gap:clamp(16px,2.4vw,30px);align-items:center;
+.p{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;align-items:center;
   background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;
   cursor:pointer;width:100%}
 @media(min-width:900px){
-  .p{grid-template-columns:1.15fr .85fr;gap:clamp(30px,4.5vw,70px)}
+  .p{grid-template-columns:1fr 1fr 1.3fr 1fr}
 }
-.media{display:grid;gap:3px;min-width:0;grid-template-columns:repeat(3,1fr)}
 .vis{position:relative;overflow:hidden;background:#f2efe9;aspect-ratio:1/1;min-width:0}
-.vis.film{grid-column:3}
+.vis.film{grid-column:auto}
 .vis img{width:100%;height:100%;object-fit:cover;transition:transform 1.8s cubic-bezier(.2,.7,.2,1);display:block}
 .p:hover .vis img{transform:scale(1.04)}
 .vis video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 
 .p .ombre{display:none}
-.p .leg{padding:0 clamp(2px,1vw,14px);min-width:0}
+.p .leg{padding:clamp(18px,2.5vw,34px) clamp(18px,2.4vw,34px);min-width:0;grid-column:1/-1}
+@media(min-width:900px){.p .leg{grid-column:auto}}
 .p .nom{display:block;font-family:var(--titre);font-size:clamp(26px,3.4vw,46px);line-height:1.05}
 .p .mot{display:block;font-size:14px;color:var(--doux);margin-top:12px;line-height:1.7;max-width:26em}
 .p .px{display:block;font-size:11px;letter-spacing:.26em;color:var(--or);margin-top:18px;
@@ -201,15 +201,15 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
     b.className='p p'+k+(p.i.charAt(0)==='/'?' clair':''); b.dataset.k=k;
     var vis=[];
     var photos=(p.g&&p.g.length?p.g:[p.i]);
-    var maxPhotos=p.v?2:3;
-    for(var q=0;q<photos.length && vis.length<maxPhotos;q++){
+    for(var q=0;q<photos.length && vis.length<2;q++){
       vis.push('<span class="vis"><img loading="lazy" src="'+u(photos[q],900)+'" alt="'+p.t+'"></span>');
     }
-    if(p.v) vis.push('<span class="vis film"><video src="'+p.v+'" autoplay muted loop playsinline preload="metadata"></video></span>');
-    b.innerHTML='<span class="media n'+vis.length+'">'+vis.join('')+'</span><span class="leg">'+
+    while(vis.length<2) vis.push('<span class="vis"></span>');
+    var film=p.v?'<span class="vis film"><video src="'+p.v+'" autoplay muted loop playsinline preload="metadata"></video></span>':'<span class="vis"></span>';
+    b.innerHTML=vis.join('')+'<span class="leg">'+
       '<span class="nom">'+p.t+'</span>'+
       '<span class="mot">'+p.m+'</span>'+
-      '<span class="px">'+(p.p?p.p.replace('.00','')+'.–':'nouveau')+'</span></span>';
+      '<span class="px">'+(p.p?p.p.replace('.00','')+'.–':'nouveau')+'</span></span>'+film;
     m.appendChild(b);
   });
 
