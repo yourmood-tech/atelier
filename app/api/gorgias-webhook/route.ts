@@ -36,9 +36,10 @@ async function traiter(ticketId: number) {
   const clientes = msgs.filter((m) => m.from_agent === false && m.public !== false);
   const dernier = clientes[clientes.length - 1];
   if (!dernier) return;
-  // ce message-là a déjà son brouillon → rien à refaire (Gorgias peut prévenir deux fois)
+  // ce message-là a déjà été traité (envoyé ou écarté) → rien à refaire
   const deja = await lire(ticketId);
-  if (deja && deja.messageId === Number(dernier.id)) return;
+  // (un brouillon encore « à valider » peut être refait : on le recalcule avec les infos du jour)
+  if (deja && deja.messageId === Number(dernier.id) && deja.etat !== "a_valider") return;
 
   const equipe = Number((t.assignee_team as Record<string, unknown> | null)?.id ?? 0);
   const chezPhilippe = Number((t.assignee_user as Record<string, unknown> | null)?.id ?? 0) === PHILIPPE && !!deja;

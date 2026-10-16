@@ -133,7 +133,7 @@ async function estimationFournisseur(lignes: Record<string, unknown>[], passeeLe
   if (!skus.length) return null;
   const fournisseurs = new Map<number, string>();
   for (const sku of skus.slice(0, 6)) {
-    const r = await getRecipeWithSuppliers(sku).catch(() => null);
+    const r = await recetteSouple(sku);
     (r?.ingredients ?? []).forEach((i) => { if (i.supplier) fournisseurs.set(i.supplier.id, i.supplier.name); });
   }
   if (!fournisseurs.size) return null;
@@ -150,4 +150,25 @@ async function estimationFournisseur(lignes: Record<string, unknown>[], passeeLe
   const auj = new Date(); auj.setHours(0, 0, 0, 0);
   return { fournisseur: fournisseurs.get(pire.supplier_id) ?? pire.supplier_name, delaiMin: min, delaiMax: max,
     du: fmt(plus(min)), au: fmt(plus(max)), depassee: plus(max) < auj };
+}
+
+// Le SKU Shopify et celui de l'atelier ne s'écrivent pas toujours pareil : une variante Shopify
+// « …COMPAGNONAURAPEARL58-62 » (plage de tailles) correspond dans Katana à « …COMPAGNONAURAPEARL-58 ».
+// On essaie le SKU exact, puis la même famille avec chaque taille de la plage (le fournisseur ne
+// change pas d'une taille à l'autre).
+async function recetteSouple(sku: string) {
+  const exact = await getRecipeWithSuppliers(sku).catch(() => null);
+  if (exact?.ingredients?.length) return exact;
+  const m = sku.match(/^(.*?)-?(\d{2})(?:-(\d{2}))?$/);
+  if (!m) return null;
+  const famille = m[1].replace(/-$/, "");
+  const tailles = [m[2], m[3]].filter(Boolean) as string[];
+  for (const t of tailles) {
+    for (const essai of [`${famille}-${t}`, `${famille}${t}`]) {
+      if (essai === sku) continue;
+      const r = await getRecipeWithSuppliers(essai).catch(() => null);
+      if (r?.ingredients?.length) return r;
+    }
+  }
+  return null;
 }
