@@ -40,8 +40,8 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   text-transform:uppercase;color:var(--or)}
 
 /* la mosaïque, bord à bord */
-.mosaique{display:flex;flex-direction:column;gap:clamp(46px,7vw,104px);
-  margin-top:clamp(40px,6vw,76px)}
+.mosaique{display:flex;flex-direction:column;gap:3px;
+  margin-top:clamp(28px,4vw,52px)}
 .p{display:grid;grid-template-columns:1fr;gap:clamp(16px,2.4vw,30px);align-items:center;
   background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;
   cursor:pointer;width:100%}
