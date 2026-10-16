@@ -75,17 +75,17 @@ body{
 .pr{font-size:10px;color:var(--or);font-weight:500;letter-spacing:.02em;margin-top:-2px}
 
 /* ---------- couverture ---------- */
-.couv,.dos,.av{background:linear-gradient(168deg,#6E96B6 0%,#3E5E7E 46%,#223748 100%);color:#F6F2E9;
+.couv,.dos,.av{background:#BFD6E6 url("/catalogue/couverture.jpg") center/cover no-repeat;color:#2E4F6D;
   justify-content:space-between;align-items:center;text-align:center}
-.couv h1,.dos h1{font-family:Playfair Display,serif;font-weight:400;font-size:52px;line-height:1.08;margin:14px 0 0}
-.couv h1 em{font-style:italic;color:#E6CB92}
-.cv-top{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:#BBD2E2}
+.couv h1,.dos h1{font-family:Playfair Display,serif;font-weight:400;font-size:52px;line-height:1.08;margin:14px 0 0;color:#2B4D6B}
+.couv h1 em,.dos h1 em{font-style:italic;color:#A8863A}
+.cv-top{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:#6A8CA8}
 .cv-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;position:relative;z-index:2}
-.cv-an{font-size:11px;letter-spacing:.36em;text-transform:uppercase;color:#E6CB92}
-.couv p,.dos p{font-size:13px;font-weight:300;color:#DCE8F1;margin:18px 0 0;max-width:34ch;line-height:1.7}
-.cv-bas{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#A8C2D4}
-.dos-web{font-family:Playfair Display,serif;font-size:19px;color:#E6CB92;letter-spacing:.05em}
-.dos-pt{font-size:11px;color:#9FBACD;line-height:1.8}
+.cv-an{font-size:11px;letter-spacing:.36em;text-transform:uppercase;color:#A8863A}
+.couv p,.dos p{font-size:13px;font-weight:300;color:#52728C;margin:18px 0 0;max-width:34ch;line-height:1.7}
+.cv-bas{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#6A8CA8}
+.dos-web{font-family:Playfair Display,serif;font-size:19px;color:#A8863A;letter-spacing:.05em}
+.dos-pt{font-size:11px;color:#6A8CA8;line-height:1.8}
 .av .ch{text-align:center;align-self:center}
 .av .ch h2{color:#F6F2E9}
 .av .ch p{color:#AEC8DA}
@@ -102,14 +102,14 @@ body{
 
 
 /* couverture : logo + paillettes dorées */
-.cv-logo{width:min(54%,230px);height:auto;display:block;margin:0 auto 26px;filter:drop-shadow(0 2px 12px rgba(0,0,0,.25))}
+.cv-logo{width:min(48%,205px);height:auto;display:block;margin:0 auto 24px}
 .cv-logo.petit{width:min(36%,150px);margin-bottom:18px}
-.givre{position:absolute;inset:0;z-index:0;pointer-events:none;
+.givre{display:none;position:absolute;inset:0;z-index:0;pointer-events:none;
   background:
    radial-gradient(130% 80% at 50% 108%, rgba(230,203,146,.62) 0%, rgba(230,203,146,.26) 26%, rgba(230,203,146,0) 56%),
    radial-gradient(90% 60% at 12% 4%, rgba(255,255,255,.30) 0%, transparent 58%)}
 .couv .cv-mid,.dos .cv-mid,.av .ch,.av-txt{position:relative;z-index:2}
-.couv::after,.dos::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.85;
+.couv-off::after,.dos-off::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.85;
   background-image:
    radial-gradient(2.4px 2.4px at 14% 74%,#F0D9A4,transparent),radial-gradient(1.8px 1.8px at 72% 86%,#EFD7A0,transparent),
    radial-gradient(2.2px 2.2px at 34% 92%,#F3E2BC,transparent),radial-gradient(1.6px 1.6px at 88% 70%,#E8CB90,transparent),
@@ -173,7 +173,7 @@ body{
 <div class="leaf" data-i="0"><div class="face recto"><div class="pg couv">
  <div class="givre" aria-hidden="true"></div><div class="flocons" aria-hidden="true"></div>
  <div class="cv-mid">
-   <img class="cv-logo" src="/catalogue/logo-mood-blanc.png" alt="mood">
+   <img class="cv-logo" src="/logo-mood.png" alt="mood">
    <div class="cv-an">Noël 2026</div>
    <h1>Le livret<br><em>des cadeaux</em></h1>
    <p>Nos pièces les plus aimées, choisies par celles qui les portent.</p>
@@ -191,7 +191,7 @@ body{
  <p class="av-gr">Également en deux demi-calendriers :<br>les jours impairs, ou les jours pairs.</p>
  <p class="av-pt">Dans les boutiques et sur yourmood.net dès novembre.</p></div></div></div></div>
 <div class="leaf" data-i="8"><div class="face recto"><div class="pg dos"><div class="givre" aria-hidden="true"></div>
- <div class="cv-mid"><img class="cv-logo petit" src="/catalogue/logo-mood-blanc.png" alt="mood"><h1>Joyeux Noël</h1>
+ <div class="cv-mid"><img class="cv-logo petit" src="/logo-mood.png" alt="mood"><h1>Joyeux Noël</h1>
  <p>Orbe · Fribourg · Zermatt · Zurich · Carouge · Martigny</p><p class="dos-web">yourmood.net</p>
  <p class="dos-pt">Système breveté d'anneaux interchangeables. Garantie à vie.<br>Fabriqué en Suisse depuis 2004.</p></div></div></div><div class="face verso"><div class="pg vide"></div></div></div>
 </div>
