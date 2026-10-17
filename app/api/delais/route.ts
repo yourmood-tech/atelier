@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   // « refaire » : relire la commande (étiquettes, notes de l'équipe…) et réécrire le brouillon encore à valider
   if (action === "refaire") {
     if (b.etat !== "a_valider") return NextResponse.json({ error: "déjà traité" }, { status: 409 });
-    await traiter(b.ticketId);
+    await traiter(b.ticketId, true);
     return NextResponse.json({ ok: true });
   }
   if (action !== "ecarter" && action !== "fermer") return NextResponse.json({ error: "action inconnue" }, { status: 400 });

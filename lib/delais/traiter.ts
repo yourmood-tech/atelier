@@ -11,7 +11,10 @@ import { enregistrer, lire, reprendre, type Brouillon } from "@/lib/delais/regis
 const PHILIPPE = 15486626;            // compte Gorgias de Philippe
 const EQUIPE_DELAIS = 4403;           // groupe « Délais de livraison »
 
-export async function traiter(ticketId: number) {
+/** forcer = « Relire la commande » depuis la page : on refait le brouillon même si ce message
+ *  a déjà été vu. Sinon (appel de Gorgias : nouveau message, ticket rangé ou attribué) on ne
+ *  refait rien pour un message déjà traité, et rien quand le dernier message vient de l'équipe. */
+export async function traiter(ticketId: number, forcer = false) {
   const t = await getTicket(ticketId);
   // e-mail et WhatsApp (la réponse WhatsApp part depuis le ticket Gorgias, sur son téléphone) ;
   // jamais les robots (notifications Shopify « mentioned on order », PayPal, no-reply…)
@@ -21,16 +24,17 @@ export async function traiter(ticketId: number) {
   // notification interne Shopify (« X mentioned you on order #… ») : on la prend si elle parle
   // de délai, et la réponse part directement à la cliente de cette commande (décision Philippe)
   const mention = emailClient === "mailer@shopify.com" ? String(t.subject ?? "").match(/mentioned (?:you )?on order #?(\d+)/i) : null;
-  if (mention) return traiterMention(ticketId, t, mention[1]);
+  if (mention) return traiterMention(ticketId, t, mention[1], forcer);
   if (!emailClient || (!whatsapp && /konvoai/.test(emailClient)) || /shopify\.com|paypal|no-?reply|mailer|notification|facebookmail|pinterest|instagram/.test(emailClient)) return;
   const msgs = await getTicketMessages(ticketId);
+  if (!forcer && msgs[msgs.length - 1]?.from_agent === true) return;   // l'équipe a répondu en dernier
   const clientes = msgs.filter((m) => m.from_agent === false && m.public !== false);
   const dernier = clientes[clientes.length - 1];
   if (!dernier) return;
   // ce message-là a déjà été traité (envoyé ou écarté) → rien à refaire
   const deja = await lire(ticketId);
-  // (un brouillon encore « à valider » peut être refait : on le recalcule avec les infos du jour)
-  if (deja && deja.messageId === Number(dernier.id) && deja.etat !== "a_valider") return;
+  // un brouillon encore « à valider » n'est refait que sur demande (bouton « Relire la commande »)
+  if (deja && deja.messageId === Number(dernier.id) && (deja.etat !== "a_valider" || !forcer)) return;
 
   const equipe = Number((t.assignee_team as Record<string, unknown> | null)?.id ?? 0);
   const chezPhilippe = Number((t.assignee_user as Record<string, unknown> | null)?.id ?? 0) === PHILIPPE && !!deja;
@@ -85,12 +89,12 @@ async function traiterTaille(ticketId: number, t: Record<string, unknown>, derni
 
 // Commentaire laissé sur une commande dans Shopify par l'équipe (boutique, atelier) et relayé
 // par e-mail : on lit le commentaire, et si c'est une question de délai, brouillon pour la cliente.
-async function traiterMention(ticketId: number, t: Record<string, unknown>, numero: string) {
+async function traiterMention(ticketId: number, t: Record<string, unknown>, numero: string, forcer: boolean) {
   const msgs = await getTicketMessages(ticketId);
   const m = msgs.filter((x) => x.from_agent === false).pop();
   if (!m) return;
   const deja = await lire(ticketId);
-  if (deja && deja.messageId === Number(m.id) && deja.etat !== "a_valider") return;
+  if (deja && deja.messageId === Number(m.id) && (deja.etat !== "a_valider" || !forcer)) return;
   const brut = String(m.body_text ?? "");
   // le commentaire est le texte entre « mentioned you on order #… » et la fin, sans les liens
   const commentaire = brut.replace(/\(https?:\/\/[^)]*\)/g, " ").replace(/https?:\/\/\S+/g, " ")
