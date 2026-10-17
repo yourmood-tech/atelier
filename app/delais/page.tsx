@@ -25,6 +25,7 @@ type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
   type?: "delai" | "taille"; taille?: Taille | null;
   canal?: "email" | "whatsapp";
+  historique?: { recuLe: string; message: string; etat: "envoye" | "ecarte"; envoyeLe?: string; texteEnvoye?: string; retouche?: boolean; ferme?: boolean }[];
   faits: Faits | null; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; ticketFerme?: boolean; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
 };
 
@@ -71,9 +72,11 @@ export default function Delais() {
 
   const stats = useMemo(() => {
     const l = list ?? [];
-    const env = l.filter((b) => b.etat === "envoye");
+    // chaque tour compte (un ticket où la cliente a répondu après coup a plusieurs tours)
+    const tours = [...l.filter((b) => b.etat !== "a_valider"), ...l.flatMap((b) => b.historique ?? [])];
+    const env = tours.filter((b) => b.etat === "envoye");
     return { attente: l.filter((b) => b.etat === "a_valider").length, envoyes: env.length,
-      tels: env.filter((b) => !b.retouche).length, retouches: env.filter((b) => b.retouche).length, ecartes: l.filter((b) => b.etat === "ecarte").length };
+      tels: env.filter((b) => !b.retouche).length, retouches: env.filter((b) => b.retouche).length, ecartes: tours.filter((b) => b.etat === "ecarte").length };
   }, [list]);
 
   async function envoyer(b: Brouillon) {
@@ -90,10 +93,16 @@ export default function Delais() {
       await charger();
     } finally { setBusy(null); }
   }
-  async function ecarter(b: Brouillon) {
+  // « ecarter » : Philippe répond lui-même dans Gorgias (ticket laissé ouvert) ; « fermer » : rien à répondre, ticket clos
+  async function ecarter(b: Brouillon, action: "ecarter" | "fermer") {
     setBusy(b.ticketId);
-    try { await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: b.ticketId, action: "ecarter" }) }); await charger(); }
-    finally { setBusy(null); }
+    try {
+      const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: b.ticketId, action }) });
+      const j = await r.json();
+      if (!r.ok) alert(`Pas fait : ${j.error ?? r.status}`);
+      else if (j.erreurFermeture) alert(`Le ticket n'a pas pu être fermé : ${j.erreurFermeture}`);
+      await charger();
+    } finally { setBusy(null); }
   }
 
   const affiches = (list ?? []).filter((b) => (vue === "a_valider" ? b.etat === "a_valider" : b.etat !== "a_valider"));
@@ -138,7 +147,26 @@ export default function Delais() {
 
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="text-xs font-medium uppercase text-neutral-400">La cliente</div>
+                  {(b.historique ?? []).length > 0 && (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-2">
+                      <div className="text-xs font-medium uppercase text-amber-800">Déjà échangé sur ce ticket — la cliente a répondu</div>
+                      {b.historique!.map((h, k) => (
+                        <details key={k} className="mt-1 text-sm">
+                          <summary className="cursor-pointer">
+                            {new Date(h.recuLe).toLocaleDateString("fr-CH")} · {h.etat === "envoye" ? `réponse envoyée le ${new Date(h.envoyeLe!).toLocaleString("fr-CH")}` : "pas de réponse depuis la page (écarté)"}
+                          </summary>
+                          <div className="mt-1 text-xs text-neutral-500">Elle avait écrit :</div>
+                          <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded bg-white p-2 text-xs">{h.message}</pre>
+                          {h.texteEnvoye && <><div className="mt-1 text-xs text-neutral-500">On lui a répondu :</div>
+                          <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded bg-white p-2 text-xs">{h.texteEnvoye}</pre></>}
+                        </details>
+                      ))}
+                    </div>
+                  )}
+                  {b.echange && !(b.type === "taille" && tl?.partie) && (
+                    <div className="mb-3 rounded bg-fuchsia-50 p-2 text-sm text-fuchsia-900">✅ Commande d&apos;échange déjà créée : {b.echange.commande} (le {new Date(b.echange.creeLe).toLocaleDateString("fr-CH")})</div>
+                  )}
+                  <div className="text-xs font-medium uppercase text-neutral-400">{(b.historique ?? []).length > 0 ? "Sa nouvelle réponse" : "La cliente"}</div>
                   <div className="mt-1 text-sm font-medium">{b.sujet}</div>
                   <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded bg-neutral-50 p-2 text-sm">{b.message}</pre>
                   {b.type === "taille" && (
@@ -192,7 +220,7 @@ export default function Delais() {
                   </>}
                 </div>
                 <div>
-                  <div className="text-xs font-medium uppercase text-neutral-400">{b.etat === "a_valider" ? "Brouillon (modifiable)" : b.etat === "envoye" ? `Envoyé le ${new Date(b.envoyeLe!).toLocaleString("fr-CH")}${b.retouche ? " · retouché" : " · tel quel"}${b.ticketFerme ? " · ticket fermé" : " · ticket encore ouvert"}` : "Écarté"}</div>
+                  <div className="text-xs font-medium uppercase text-neutral-400">{b.etat === "a_valider" ? "Brouillon (modifiable)" : b.etat === "envoye" ? `Envoyé le ${new Date(b.envoyeLe!).toLocaleString("fr-CH")}${b.retouche ? " · retouché" : " · tel quel"}${b.ticketFerme ? " · ticket fermé" : " · ticket encore ouvert"}` : b.ticketFerme ? "Écarté · ticket fermé" : "Écarté · à traiter dans Gorgias"}</div>
                   <textarea
                     className="mt-1 h-72 w-full rounded border border-neutral-300 p-2 text-sm"
                     value={texte[b.ticketId] ?? b.brouillon}
@@ -204,8 +232,11 @@ export default function Delais() {
                       <button disabled={busy === b.ticketId} onClick={() => envoyer(b)} className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50">
                         {busy === b.ticketId ? "Envoi…" : b.canal === "whatsapp" ? "✓ Envoyer sur WhatsApp" : "✓ Envoyer à la cliente"}
                       </button>
-                      <button disabled={busy === b.ticketId} onClick={() => ecarter(b)} className="rounded-lg bg-neutral-100 px-4 py-2 text-sm">
+                      <button disabled={busy === b.ticketId} onClick={() => ecarter(b, "ecarter")} className="rounded-lg bg-neutral-100 px-4 py-2 text-sm">
                         Je réponds moi-même dans Gorgias
+                      </button>
+                      <button disabled={busy === b.ticketId} onClick={() => { if (confirm("Rien à répondre : on ferme le ticket dans Gorgias ?")) ecarter(b, "fermer"); }} className="rounded-lg bg-neutral-100 px-4 py-2 text-sm">
+                        Rien à répondre — fermer le ticket
                       </button>
                     </div>
                   )}

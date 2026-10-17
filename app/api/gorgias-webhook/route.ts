@@ -5,7 +5,7 @@ import { faitsCommande } from "@/lib/delais/faits";
 import { redigerBrouillon } from "@/lib/delais/brouillon";
 import { langueDuMessage } from "@/lib/delais/langue";
 import { detecterTaille, faitsTaille, redigerTaille } from "@/lib/delais/taille";
-import { enregistrer, lire } from "@/lib/delais/registre";
+import { enregistrer, lire, reprendre, type Brouillon } from "@/lib/delais/registre";
 
 export const maxDuration = 120;
 
@@ -57,7 +57,7 @@ async function traiter(ticketId: number) {
   const texte = [String(t.subject ?? ""), ...clientes.map((m) => String(m.stripped_text ?? m.body_text ?? ""))].join("\n---\n");
   // changement de taille d'abord (un message « trop petite, commande #… » parle aussi de la commande)
   const tai = await detecterTaille(texte).catch(() => ({ oui: false, commande: null, taille: null }));
-  if (tai.oui) return traiterTaille(ticketId, t, dernier, tai, whatsapp);
+  if (tai.oui) return traiterTaille(ticketId, t, dernier, tai, whatsapp, deja);
   const det = await detectDelayInquiry(texte.slice(-6000));
   if (!(equipe === EQUIPE_DELAIS || chezPhilippe || det.is_delay_inquiry)) return;
 
@@ -75,15 +75,15 @@ async function traiter(ticketId: number) {
   const src = (dernier.source ?? {}) as Record<string, unknown>;
   const to = ((src.to ?? []) as Record<string, unknown>[])[0];
   const relais = whatsapp ? String(((src.from ?? {}) as Record<string, unknown>).address ?? "") : "";
-  await enregistrer({
+  await enregistrer(reprendre(deja, {
     ticketId, messageId: Number(dernier.id), recuLe: String(dernier.created_datetime ?? new Date().toISOString()),
     client: String(cust.name ?? prenom ?? email), email, sujet: String(t.subject ?? ""), message: messageClient.slice(0, 4000),
     type: "delai", faits, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
     canal: whatsapp ? "whatsapp" : "email", adresseReponse: relais || undefined,
-  });
+  }));
 }
 
-async function traiterTaille(ticketId: number, t: Record<string, unknown>, dernier: Record<string, unknown>, tai: { commande: string | null; taille: string | null }, whatsapp = false) {
+async function traiterTaille(ticketId: number, t: Record<string, unknown>, dernier: Record<string, unknown>, tai: { commande: string | null; taille: string | null }, whatsapp: boolean, deja: Brouillon | null) {
   if (Number((t.assignee_user as Record<string, unknown> | null)?.id ?? 0) !== PHILIPPE) await assignTicket(ticketId, PHILIPPE);
   const cust = (t.customer ?? {}) as Record<string, unknown>;
   const email = String(cust.email ?? (dernier.sender as Record<string, unknown>)?.email ?? "");
@@ -94,13 +94,13 @@ async function traiterTaille(ticketId: number, t: Record<string, unknown>, derni
     : "Bonjour,\n\nNous avons bien reçu votre demande de changement de taille. Pourriez-vous nous indiquer votre numéro de commande ?\n\nExcellente journée.\n\nCordialement,\nPhilippe";
   const src = (dernier.source ?? {}) as Record<string, unknown>;
   const to = ((src.to ?? []) as Record<string, unknown>[])[0];
-  await enregistrer({
+  await enregistrer(reprendre(deja, {
     ticketId, messageId: Number(dernier.id), recuLe: String(dernier.created_datetime ?? new Date().toISOString()),
     client: String(cust.name ?? email), email, sujet: String(t.subject ?? ""), message: messageClient.slice(0, 4000),
     type: "taille", faits: null, taille: f, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
     canal: whatsapp ? "whatsapp" : "email",
     adresseReponse: whatsapp ? String(((src.from ?? {}) as Record<string, unknown>).address ?? "") || undefined : undefined,
-  });
+  }));
 }
 
 // Commentaire laissé sur une commande dans Shopify par l'équipe (boutique, atelier) et relayé
@@ -130,10 +130,10 @@ async function traiterMention(ticketId: number, t: Record<string, unknown>, nume
     faits, prenom: faits.prenom,
     messageClient: `(No message from the customer: our team left this internal note on the order — never quote it, write a spontaneous update to the customer about her order.) ${commentaire}`,
   });
-  await enregistrer({
+  await enregistrer(reprendre(deja, {
     ticketId, messageId: Number(m.id), recuLe: String(m.created_datetime ?? new Date().toISOString()),
     client: nom, email, sujet: `Votre commande ${faits.commande ?? "#" + numero}`,
     message: `Note interne Shopify sur ${faits.commande ?? "#" + numero} : ${commentaire}`,
     type: "delai", faits, brouillon, depuis: "contact@yourmood.net", etat: "a_valider",
-  });
+  }));
 }

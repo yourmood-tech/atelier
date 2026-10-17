@@ -15,7 +15,26 @@ export type Brouillon = {
   envoyeLe?: string; texteEnvoye?: string; retouche?: boolean;
   echange?: { commande: string; orderId: number; creeLe: string };   // commande d'échange de taille créée
   ticketFerme?: boolean;                // ticket Gorgias clos par l'outil
+  historique?: Tour[];                  // tours précédents du même ticket (la cliente a répondu après coup)
 };
+export type Tour = {
+  messageId: number; recuLe: string; message: string; etat: "envoye" | "ecarte";
+  envoyeLe?: string; texteEnvoye?: string; retouche?: boolean; ferme?: boolean;
+};
+
+/** La cliente a écrit à nouveau sur un ticket déjà traité : le nouveau brouillon garde la trace
+ *  des tours précédents et la commande d'échange déjà créée (sinon un 2e clic en créerait une autre). */
+export function reprendre(deja: Brouillon | null, nouveau: Brouillon): Brouillon {
+  if (!deja) return nouveau;
+  const historique = [...(deja.historique ?? [])];
+  if (deja.etat !== "a_valider" && deja.messageId !== nouveau.messageId) {
+    historique.push({
+      messageId: deja.messageId, recuLe: deja.recuLe, message: deja.message, etat: deja.etat,
+      envoyeLe: deja.envoyeLe, texteEnvoye: deja.texteEnvoye, retouche: deja.retouche, ferme: deja.ticketFerme,
+    });
+  }
+  return { ...nouveau, historique: historique.length ? historique : undefined, echange: nouveau.echange ?? deja.echange };
+}
 
 const CLE = (id: number) => `delais:brouillon:${id}`;
 const INDEX = "delais:index";
