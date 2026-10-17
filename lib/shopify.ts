@@ -261,6 +261,18 @@ export async function shopifyGet(path: string): Promise<Record<string, unknown>>
   return shopifyFetch(path);
 }
 
+// Lecture en GraphQL (assistant des délais : commentaires de l'équipe dans l'historique de la commande).
+export async function shopifyGraphql<T = Record<string, unknown>>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+  const res = await fetch(`https://${STORE}/admin/api/${API_VERSION}/graphql.json`, {
+    method: "POST", headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!res.ok) throw new Error(`Shopify GraphQL ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const j = await res.json() as { data?: T; errors?: { message: string }[] };
+  if (j.errors?.length && !j.data) throw new Error(`Shopify GraphQL : ${j.errors[0].message}`);
+  return j.data as T;
+}
+
 // Lecture groupée légère (jusqu'à 250 commandes par appel) : lignes avec SKU et reste à expédier.
 export type OrderLite = {
   id: number; name: string; created_at: string; cancelled_at: string | null;

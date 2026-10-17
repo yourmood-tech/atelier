@@ -10,6 +10,7 @@
 import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale, BRAND_INTRO } from "@/lib/email";
 import { TON_WHATSAPP } from "./brouillon";
+import { notesEquipe, notesPourRedaction, type NoteEquipe } from "./notes";
 
 export type FaitsTaille = {
   commande: string | null; commandeId: number | null; passeeLe: string | null; prenom: string; langue: string;
@@ -18,6 +19,7 @@ export type FaitsTaille = {
   articles: { lineItemId: number; titre: string; taille: string | null; aExpedier: boolean }[];
   tailleVoulue: string | null; tailleImpaire: boolean; proposition: string | null;
   aFaire: string | null;                 // action manuelle pour Philippe (affichée sur sa page)
+  notes?: NoteEquipe[];                  // note de la commande + commentaires de l'équipe dans son historique
 };
 
 export async function detecterTaille(texte: string): Promise<{ oui: boolean; commande: string | null; taille: string | null }> {
@@ -70,6 +72,7 @@ export async function faitsTaille(numero: string | null, email: string, tailleVo
     prenom: String(cust.first_name ?? ""), langue, partie, envoyeeLe, joursDepuisEnvoi: jours, dansLes15Jours: dans15,
     pays, suisse: pays === "CH" || pays === "LI", articles, tailleVoulue: tailleVoulue ?? null, tailleImpaire: impaire,
     proposition: impaire ? `${n - 1} ou ${n + 1}` : null, aFaire: null,
+    notes: await notesEquipe(Number(o.id), o.note),
   };
   if (!partie) f.aFaire = `Modifier la taille dans la commande ${f.commande}${tailleVoulue ? ` → ${impaire ? f.proposition : tailleVoulue}` : " (taille voulue à confirmer)"}`;
   return f;
@@ -97,6 +100,7 @@ Facts: order ${f.commande} placed on ${f.passeeLe}. Items: ${f.articles.map((a) 
 ${cas}
 ${retour}
 ${taille}
+${notesPourRedaction(f.notes ?? [])}
 
 Customer message: ${JSON.stringify(messageClient.slice(0, 2500))}
 

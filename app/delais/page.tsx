@@ -13,6 +13,7 @@ type Faits = {
   iceleaArrivee: { date: string; complet: boolean } | null;
   etape: { nom: string; entree: boolean; date: string } | null; rupture: string | null; etiquettesUtilisees: string[];
   boites?: string[];
+  notes?: Note[];
   estimation?: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
 };
 type Taille = {
@@ -20,7 +21,9 @@ type Taille = {
   joursDepuisEnvoi: number | null; dansLes15Jours: boolean | null; pays: string | null; suisse: boolean;
   articles: { lineItemId: number; titre: string; taille: string | null; aExpedier: boolean }[];
   tailleVoulue: string | null; tailleImpaire: boolean; proposition: string | null; aFaire: string | null;
+  notes?: Note[];
 };
+type Note = { date: string | null; texte: string; source: "note" | "commentaire" };
 type Brouillon = {
   ticketId: number; recuLe: string; client: string; email: string; sujet: string; message: string;
   type?: "delai" | "taille"; taille?: Taille | null;
@@ -180,6 +183,7 @@ export default function Delais() {
                           <li>Taille voulue : {tl.tailleVoulue ?? "non précisée (le brouillon la demande)"}{tl.tailleImpaire ? ` — impaire, proposer ${tl.proposition}` : ""}</li>
                         </ul>
                       )}
+                      <Notes notes={tl?.notes} />
                       {tl?.aFaire && <div className="mt-2 rounded bg-yellow-50 p-2 text-sm text-yellow-900">👉 À faire avant d&apos;envoyer : {tl.aFaire}</div>}
                       {tl?.partie && (
                         <div className="mt-3 rounded-lg border border-fuchsia-200 p-2">
@@ -216,6 +220,7 @@ export default function Delais() {
                     {(b.faits.boites ?? []).length > 0 && <li>🎁 attend la boîte : {b.faits.boites!.join(", ")} → <b>date à compléter</b></li>}
                     {b.faits.estimation && <li>{b.faits.estimation.depassee ? "🔴" : "🗓️"} {b.faits.estimation.fournisseur} : {b.faits.estimation.delaiMin}–{b.faits.estimation.delaiMax} j après la commande → entre le {b.faits.estimation.du} et le {b.faits.estimation.au}{b.faits.estimation.depassee ? " — DÉLAI DÉPASSÉ, aucune date donnée à la cliente" : ""}</li>}
                   </ul>
+                  <Notes notes={b.faits.notes} />
                   {b.faits.etiquettesUtilisees.length > 0 && <div className="mt-1 text-xs text-neutral-400">étiquettes : {b.faits.etiquettesUtilisees.join(" · ")}</div>}
                   </>}
                 </div>
@@ -247,6 +252,19 @@ export default function Delais() {
         })}
       </div>
     </main>
+  );
+}
+
+// note de la commande + commentaires de l'équipe dans son historique Shopify (lus par le brouillon)
+function Notes({ notes }: { notes?: Note[] }) {
+  if (!notes?.length) return null;
+  return (
+    <div className="mt-2 rounded bg-sky-50 p-2 text-sm">
+      <div className="text-xs font-medium uppercase text-sky-800">Notes de l&apos;équipe sur la commande</div>
+      <ul className="mt-1 space-y-0.5">
+        {notes.map((n, k) => <li key={k}>📝 {n.date ? `${n.date} — ` : "note de la commande — "}{n.texte}</li>)}
+      </ul>
+    </div>
   );
 }
 

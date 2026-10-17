@@ -6,6 +6,7 @@ import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getRecipeWithSuppliers } from "@/lib/katana";
+import { notesEquipe, type NoteEquipe } from "./notes";
 
 export type Statut =
   | "expediee"            // tout est parti : suivi colis
@@ -36,6 +37,7 @@ export type Faits = {
   // estimation d'après le contenu : fournisseur des pièces (recette Katana) et son délai habituel
   estimation: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
   etiquettesUtilisees: string[];        // pour la page de validation (preuve)
+  notes?: NoteEquipe[];                 // note de la commande + commentaires de l'équipe dans son historique
 };
 
 // boîtes de rangement : OO N°1 / N°2, « On n'en a jamais trop » (turquoise), « Black Obsession » (noire)
@@ -75,6 +77,7 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   const tags = String(o.tags ?? "").split(",").map((t) => t.trim()).filter(Boolean);
   const f: Faits = { ...vide, commande: String(o.name), commandeId: Number(o.id), passeeLe: String(o.created_at).slice(0, 10),
     prenom: String(cust.first_name ?? ""), langue, statut: "rien" };
+  f.notes = await notesEquipe(Number(o.id), o.note);
   if (o.cancelled_at) { f.statut = "annulee"; return f; }
 
   f.articlesEnAttente = lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0).map((l) => String(l.title));

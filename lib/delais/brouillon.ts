@@ -3,6 +3,7 @@
 // et patience », « Excellente journée. Cordialement, Philippe »). Aucune date inventée.
 import { BLANC_DATE, type Faits } from "./faits";
 import { BRAND_INTRO } from "@/lib/email";
+import { notesPourRedaction } from "./notes";
 
 const MODELE = "claude-sonnet-5-5";
 
@@ -40,6 +41,7 @@ You draft an e-mail reply to a customer asking about the delivery / delay of an 
 
 FACTS FROM OUR SHOP SYSTEM (the ONLY things you may state):
 ${faitsEnClair(f)}
+${notesPourRedaction(f.notes ?? [])}
 
 Customer message:
 ${JSON.stringify(p.messageClient.slice(0, 2500))}
