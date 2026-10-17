@@ -97,6 +97,18 @@ export default function Delais() {
     } finally { setBusy(null); }
   }
   // « ecarter » : Philippe répond lui-même dans Gorgias (ticket laissé ouvert) ; « fermer » : rien à répondre, ticket clos
+  // relire la commande et refaire le brouillon (une carte, ou toutes celles à valider l'une après l'autre)
+  async function refaire(bs: Brouillon[]) {
+    for (const b of bs) {
+      setBusy(b.ticketId);
+      try {
+        const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: b.ticketId, action: "refaire" }) });
+        if (!r.ok) alert(`${b.client} : pas refait (${(await r.json().catch(() => ({}))).error ?? r.status})`);
+        setTexte((x) => { const y = { ...x }; delete y[b.ticketId]; return y; });
+      } finally { setBusy(null); }
+    }
+    await charger();
+  }
   async function ecarter(b: Brouillon, action: "ecarter" | "fermer") {
     setBusy(b.ticketId);
     try {
@@ -128,6 +140,12 @@ export default function Delais() {
             {v === "a_valider" ? `À valider (${stats.attente})` : "Déjà traités"}
           </button>
         ))}
+        {vue === "a_valider" && stats.attente > 0 && (
+          <button disabled={busy !== null} onClick={() => { if (confirm(`Relire les ${stats.attente} commandes et refaire tous les brouillons à valider ? (tes retouches non envoyées seront perdues)`)) refaire((list ?? []).filter((b) => b.etat === "a_valider")); }}
+            className="ml-auto rounded-full bg-sky-100 px-4 py-1.5 text-sm text-sky-900 disabled:opacity-50">
+            {busy !== null ? "Relecture en cours…" : "↻ Tout relire"}
+          </button>
+        )}
       </div>
 
       {list === null && <p className="mt-6 text-neutral-500">Chargement…</p>}
@@ -236,6 +254,9 @@ export default function Delais() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button disabled={busy === b.ticketId} onClick={() => envoyer(b)} className="rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-50">
                         {busy === b.ticketId ? "Envoi…" : b.canal === "whatsapp" ? "✓ Envoyer sur WhatsApp" : "✓ Envoyer à la cliente"}
+                      </button>
+                      <button disabled={busy === b.ticketId} onClick={() => refaire([b])} className="rounded-lg bg-sky-100 px-4 py-2 text-sm text-sky-900">
+                        ↻ Relire la commande
                       </button>
                       <button disabled={busy === b.ticketId} onClick={() => ecarter(b, "ecarter")} className="rounded-lg bg-neutral-100 px-4 py-2 text-sm">
                         Je réponds moi-même dans Gorgias
