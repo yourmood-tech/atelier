@@ -79,7 +79,11 @@ export async function GET(req: NextRequest) {
   //  T1501 / T1105 — paires internes PayPal qui se neutralisent
   //  T0700 — recharge du solde PayPal par la carte Visa PF : désormais portée
   //          en entier par l'import Visa (écriture unique 100401 / 220001), pas ici.
-  const IGNORE_CODES = new Set(["T1501", "T1105", "T0700"]);
+  //  T0400-T0403 — retrait du solde PayPal vers PostFinance : le virement est
+  //          enregistré par l'import du relevé PostFinance (100401 / 100101).
+  //          Avant le 18.10.2026 il tombait en dépense fournisseur « PayPal: PayPal »
+  //          (650080 + TVA auto-liquidée), ex. 3'000.00 le 14.09.2026.
+  const IGNORE_CODES = new Set(["T1501", "T1105", "T0700", "T0400", "T0401", "T0402", "T0403"]);
 
   for (const tx of txs) {
     const info  = tx.transaction_info as Record<string, unknown>;
