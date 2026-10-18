@@ -144,6 +144,9 @@ export const SUMUP_COMPTES: Record<string, { lieu: string; compte: string }> = {
   // 6 encaissements, 9'443.95 CHF de fevrier a juillet 2026, jamais reprise.
   "stephanie@yourmood.net": { lieu: "Online",      compte: "320001" },
   "fabienne@yourmood.net":  { lieu: "Online",      compte: "320001" },
+  // Meme cas depuis le compte de Philippe : liens payes par Aurelie Lietta
+  // (2'500.00 le 27.08 et 2'300.00 le 01.10.2026), absents jusqu'au 18.10.2026.
+  "philippe@yourmood.net":  { lieu: "Online",      compte: "320001" },
 };
 
 export const PAYPAL_COMPTES: Record<string, string> = {
