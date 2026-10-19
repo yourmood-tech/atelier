@@ -103,6 +103,20 @@ export async function getTicket(ticketId: number): Promise<Record<string, unknow
   return gorgiasGet(`/tickets/${ticketId}`) as Promise<Record<string, unknown>>;
 }
 
+/** Tickets d'une vue Gorgias (toutes les pages). La vue « Inbox » (1408971) = tickets ouverts
+ *  attribués à l'utilisateur de la clé, ici philippe@yourmood.net = son inbox exacte. */
+export async function ticketsDeLaVue(viewId: number): Promise<number[]> {
+  const ids: number[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const d = await gorgiasGet(`/views/${viewId}/items?limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`) as { data?: { id: number }[]; meta?: { next_cursor?: string | null } };
+    ids.push(...(d.data ?? []).map((t) => Number(t.id)));
+    cursor = d.meta?.next_cursor ?? null;
+    if (!cursor) break;
+  }
+  return ids;
+}
+
 /** Messages du ticket, du plus ancien au plus récent. */
 export async function getTicketMessages(ticketId: number): Promise<Record<string, unknown>[]> {
   const d = await gorgiasGet(`/tickets/${ticketId}/messages?limit=50&order_by=created_datetime:asc`) as { data?: Record<string, unknown>[] };
