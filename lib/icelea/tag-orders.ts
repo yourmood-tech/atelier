@@ -45,7 +45,8 @@ async function usageOf(materialVariantId: number): Promise<Usage> {
   const usage: Usage = {};
   const ids = [...per.keys()];
   for (let i = 0; i < ids.length; i += 50) {
-    const vs = ((await kget(`/v1/variants?ids=${ids.slice(i, i + 50).join(",")}&limit=50`)).data ?? []) as Record<string, unknown>[];
+    // Katana veut « ids=1&ids=2 » (une liste « 1,2 » est refusée : erreur 400)
+    const vs = ((await kget(`/v1/variants?${ids.slice(i, i + 50).map((id) => `ids=${id}`).join("&")}&limit=50`)).data ?? []) as Record<string, unknown>[];
     vs.forEach((v) => { if (v.sku) usage[String(v.sku)] = per.get(Number(v.id)) ?? 1; });
   }
   try { await kv.set(key, usage, { ex: 7 * 24 * 3600 }); } catch { /* noop */ }
