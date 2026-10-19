@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 
 type Envoi = { date: string; transporteur: string | null; numero: string | null; lien: string | null; articles: string[] };
 type Faits = {
-  statut: string; commande: string | null; passeeLe: string | null; langue: string;
+  statut: string; commande: string | null; commandeId?: number | null; passeeLe: string | null; langue: string;
   articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   etape: { nom: string; entree: boolean; date: string } | null; rupture: string | null; etiquettesUtilisees: string[];
@@ -17,7 +17,7 @@ type Faits = {
   estimation?: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
 };
 type Taille = {
-  commande: string | null; passeeLe: string | null; langue: string; partie: boolean; envoyeeLe: string | null;
+  commande: string | null; commandeId?: number | null; passeeLe: string | null; langue: string; partie: boolean; envoyeeLe: string | null;
   joursDepuisEnvoi: number | null; dansLes15Jours: boolean | null; pays: string | null; suisse: boolean;
   articles: { lineItemId: number; titre: string; taille: string | null; aExpedier: boolean }[];
   tailleVoulue: string | null; tailleImpaire: boolean; proposition: string | null; aFaire: string | null;
@@ -45,6 +45,7 @@ const STATUT: Record<string, { txt: string; couleur: string }> = {
   annulee: { txt: "Commande annulée", couleur: "bg-neutral-200 text-neutral-700" },
 };
 const GORGIAS = (id: number) => `https://yourmood.gorgias.com/app/ticket/${id}`;
+const SHOPIFY = (id: number) => `https://admin.shopify.com/store/yourmood/orders/${id}`;
 
 export default function Delais() {
   const [list, setList] = useState<Brouillon[] | null>(null);
@@ -165,7 +166,10 @@ export default function Delais() {
                 <span className={`rounded-full px-2 py-0.5 text-xs ${s.couleur}`}>{s.txt}</span>
                 {b.canal === "whatsapp" && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">WhatsApp</span>}
                 <span className="text-xs text-neutral-400">{new Date(b.recuLe).toLocaleString("fr-CH")} · langue {b.faits?.langue ?? tl?.langue ?? "?"}</span>
-                <a href={GORGIAS(b.ticketId)} target="_blank" rel="noreferrer" className="ml-auto text-xs text-sky-700 underline">ouvrir dans Gorgias</a>
+                {(b.faits?.commandeId ?? tl?.commandeId) ? (
+                  <a href={SHOPIFY((b.faits?.commandeId ?? tl?.commandeId)!)} target="_blank" rel="noreferrer" className="ml-auto text-xs text-emerald-700 underline">ouvrir la commande {b.faits?.commande ?? tl?.commande ?? ""} dans Shopify</a>
+                ) : <span className="ml-auto text-xs text-neutral-400">commande non trouvée</span>}
+                <a href={GORGIAS(b.ticketId)} target="_blank" rel="noreferrer" className="text-xs text-sky-700 underline">ouvrir dans Gorgias</a>
               </div>
 
               <div className="mt-3 grid gap-4 md:grid-cols-2">
