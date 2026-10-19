@@ -5,7 +5,7 @@
 import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getRecipeWithSuppliers } from "@/lib/katana";
+import { getRecipeWithSuppliers, getPurchaseOrderByNo } from "@/lib/katana";
 import { notesEquipe, type NoteEquipe } from "./notes";
 
 export type Statut =
@@ -31,6 +31,9 @@ export type Faits = {
   envois: { date: string; transporteur: string | null; numero: string | null; lien: string | null; articles: string[] }[];
   iceleaLivraison: string | null;       // jj.mm.aaaa (à venir)
   iceleaArrivee: { date: string; complet: boolean } | null;
+  // pièces commandées chez Icelea (étiquette « Icelea-PO:… ») : bon de commande, sa date, l'arrivée prévue dans Katana
+  // (jj.mm.aaaa, seulement si encore à venir) ; présent tant que la pièce n'est pas arrivée
+  iceleaPO?: { po: string; commandeLe: string | null; arriveePrevue: string | null } | null;
   etape: { nom: string; entree: boolean; date: string; delaiMin: number | null; delaiMax: number | null; unite: string | null } | null;
   rupture: string | null;               // date de l'étiquette « Rupture »
   boites: string[];                     // boîtes de rangement mood encore à expédier (noire, turquoise, OO N°1/N°2)
@@ -67,7 +70,7 @@ async function trouverCommande(numero: string | null, email: string): Promise<Re
 
 export async function faitsCommande(numero: string | null, email: string): Promise<Faits> {
   const vide: Faits = { statut: "introuvable", commande: null, commandeId: null, passeeLe: null, prenom: "", langue: "fr",
-    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, etape: null, rupture: null, estimation: null, boites: [], etiquettesUtilisees: [] };
+    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, iceleaPO: null, etape: null, rupture: null, estimation: null, boites: [], etiquettesUtilisees: [] };
   const o = await trouverCommande(numero, email);
   if (!o) return vide;
   const cust = (o.customer ?? {}) as Record<string, unknown>;
@@ -99,9 +102,27 @@ export async function faitsCommande(numero: string | null, email: string): Promi
     if (m && toDate(m[1]) >= now) { f.iceleaLivraison = m[1]; f.etiquettesUtilisees.push(t); }
     m = t.match(/^Icelea-(recu|partiel):(\d\d\.\d\d\.\d{4})$/);
     if (m) { f.iceleaArrivee = { date: m[2], complet: m[1] === "recu" }; f.etiquettesUtilisees.push(t); }
+    m = t.match(/^Icelea-PO:(\S+)$/);
+    if (m) { f.iceleaPO = { po: m[1], commandeLe: null, arriveePrevue: null }; f.etiquettesUtilisees.push(t); }
     m = t.match(/^Rupture.*-(\d{6})-\d\dh\d\d$/);
     if (m) { f.rupture = d6(m[1]); f.etiquettesUtilisees.push(t); }
   }
+  // pièce commandée chez Icelea et pas encore arrivée : date du bon et arrivée prévue lues dans Katana
+  // (l'étiquette « Icelea-livraison » dépassée ne dit plus rien ; une arrivée prévue dépassée non plus)
+  if (f.iceleaPO && f.iceleaArrivee) f.iceleaPO = null;
+  if (f.iceleaPO) {
+    try {
+      const po = await getPurchaseOrderByNo(f.iceleaPO.po);
+      const jj = (iso: string) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
+      if (po?.status === "RECEIVED") f.iceleaPO = null;   // bon entièrement reçu : la pièce est arrivée
+      else if (po) {
+        f.iceleaPO.commandeLe = po.creeLe ? jj(po.creeLe) : null;
+        if (po.arriveePrevue && toDate(jj(po.arriveePrevue)) >= now) f.iceleaPO.arriveePrevue = jj(po.arriveePrevue);
+      }
+    } catch (e) { console.error("[délais] bon Icelea", e); }
+  }
+  if (f.iceleaPO && !f.iceleaLivraison && f.iceleaPO.arriveePrevue) f.iceleaLivraison = f.iceleaPO.arriveePrevue;
+
   // dernière étape d'atelier (étiquettes « étape-in/out-jjmmaa-HHhMM »)
   const etapes = tags.map((t) => t.match(/^(.+)-(in|out)-(\d{6})-(\d\d)h(\d\d)$/)).filter((m): m is RegExpMatchArray => !!m && !m[1].startsWith("Rupture"))
     .map((m) => ({ key: m[1], entree: m[2] === "in", date: d6(m[3]), tri: `20${m[3].slice(4, 6)}${m[3].slice(2, 4)}${m[3].slice(0, 2)}${m[4]}${m[5]}`, tag: m[0] }))
@@ -120,14 +141,15 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   // une rupture déjà suivie d'une étape d'atelier ou d'une arrivée de pièce n'est plus d'actualité
   if (f.rupture) {
     const r = toDate(f.rupture).getTime();
-    const apres = (f.etape && toDate(f.etape.date).getTime() >= r) || (f.iceleaArrivee && toDate(f.iceleaArrivee.date).getTime() >= r);
+    const apres = (f.etape && toDate(f.etape.date).getTime() >= r) || (f.iceleaArrivee && toDate(f.iceleaArrivee.date).getTime() >= r)
+      || (f.iceleaPO?.commandeLe && toDate(f.iceleaPO.commandeLe).getTime() >= r);
     if (apres) { f.etiquettesUtilisees = f.etiquettesUtilisees.filter((t) => !t.startsWith("Rupture")); f.rupture = null; }
   }
 
   // statut principal (du plus sûr au moins sûr)
   if (f.articlesEnAttente.length === 0 && f.envois.length) f.statut = "expediee";
   else if (f.iceleaArrivee) f.statut = "piece_arrivee";
-  else if (f.iceleaLivraison) f.statut = "attente_icelea";
+  else if (f.iceleaLivraison || f.iceleaPO) f.statut = "attente_icelea";
   else if (f.etape) f.statut = "etape";
   else f.statut = "rien";
   // contenu encore à expédier → fournisseur des pièces → délai habituel compté depuis la commande

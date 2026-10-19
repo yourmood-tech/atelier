@@ -15,6 +15,7 @@ function faitsEnClair(f: Faits): string {
   if (f.articlesEnAttente.length) L.push(`Items still to ship (exact names): ${f.articlesEnAttente.join(" | ")}`);
   f.envois.forEach((e) => L.push(`Shipped on ${e.date}${e.transporteur ? ` with ${e.transporteur}` : ""}${e.numero ? `, tracking number ${e.numero}` : ""}${e.lien ? `, tracking link ${e.lien}` : ""} — items: ${e.articles.join(" | ")}`));
   if (f.iceleaArrivee) L.push(`A component the order was waiting for arrived at our workshop on ${f.iceleaArrivee.date}${f.iceleaArrivee.complet ? " (all awaited components are now there)" : " (some components are still awaited)"}. The piece is now being finished in the workshop.`);
+  if (f.iceleaPO && !f.iceleaLivraison) L.push(`The missing component has already been ordered from our partner workshop${f.iceleaPO.commandeLe ? ` (order placed on ${f.iceleaPO.commandeLe})` : ""} and has not arrived at our workshop yet. No reliable arrival date is known: do NOT give any date; say the component is ordered and on its way, that the piece will be finished and shipped as soon as it arrives, and that we will come back with a precise date. Never name the supplier.`);
   if (f.iceleaLivraison) L.push(`A component is ordered from our partner workshop, expected delivery to our workshop around ${f.iceleaLivraison} (estimate). After that, finishing and shipping usually take a few days.`);
   if (f.etape) {
     const dl = f.etape.delaiMin != null ? ` Typical duration of this step: ${f.etape.delaiMin}${f.etape.delaiMax && f.etape.delaiMax !== f.etape.delaiMin ? `–${f.etape.delaiMax}` : ""} ${f.etape.unite ?? "days"}.` : "";
@@ -90,6 +91,10 @@ function brouillonDeSecours(f: Faits, prenom: string): string {
     statut = de ? `Ihre Bestellung ${f.commande} wird vollständig mit der Aufbewahrungsbox versandt, die Lieferung ist um den ${BLANC_DATE} vorgesehen.`
       : en ? `Your order ${f.commande} will be shipped complete together with the storage box, delivery expected around ${BLANC_DATE}.`
       : `Votre commande ${f.commande} partira complète avec la boîte de rangement, la livraison est prévue aux alentours du ${BLANC_DATE}.`;
+  else if (f.statut === "attente_icelea")
+    statut = de ? `Für Ihre Bestellung ${f.commande} ist ein Bauteil bereits bestellt${f.iceleaLivraison ? `, es wird um den ${f.iceleaLivraison} in unserem Atelier erwartet (Schätzung)` : ""}. Sobald es eintrifft, wird Ihr Schmuckstück fertiggestellt und versandt.`
+      : en ? `A component for your order ${f.commande} has already been ordered${f.iceleaLivraison ? ` and is expected at our workshop around ${f.iceleaLivraison} (estimate)` : ""}. As soon as it arrives, your piece will be finished and shipped.`
+      : `Une pièce de votre commande ${f.commande} est déjà commandée${f.iceleaLivraison ? `, elle est attendue à notre atelier aux alentours du ${f.iceleaLivraison} (estimation)` : ""}. Dès son arrivée, votre bijou sera terminé et expédié.`;
   else if (f.estimation && !f.estimation.depassee)
     statut = de ? `Ihre Bestellung ${f.commande} ist in Produktion, die Lieferung ist zwischen dem ${f.estimation.du} und dem ${f.estimation.au} vorgesehen (Schätzung).`
       : en ? `Your order ${f.commande} is in production; delivery is expected between ${f.estimation.du} and ${f.estimation.au} (estimate).`

@@ -400,6 +400,18 @@ function buildPoResult(
   };
 }
 
+/** Un bon de commande par son numéro (ex. « ICE-20260905-013V ») : statut, date, arrivée prévue. */
+export async function getPurchaseOrderByNo(orderNo: string): Promise<{ status: string; creeLe: string | null; arriveePrevue: string | null } | null> {
+  const j = await katanaFetch(`/v1/purchase_orders?order_no=${encodeURIComponent(orderNo)}&limit=1`, { method: "GET" }) as { data?: Record<string, unknown>[] };
+  const po = (j?.data ?? [])[0];
+  if (!po) return null;
+  return {
+    status: String(po.status ?? ""),
+    creeLe: po.order_created_date ? String(po.order_created_date).slice(0, 10) : null,
+    arriveePrevue: po.expected_arrival_date ? String(po.expected_arrival_date).slice(0, 10) : null,
+  };
+}
+
 async function fetchAllOpenPos(): Promise<Record<string, unknown>[]> {
   if (openPosCache && Date.now() < openPosCache.expiresAt) {
     return openPosCache.value;
