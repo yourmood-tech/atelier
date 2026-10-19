@@ -3,10 +3,11 @@ import { traiter } from "@/lib/delais/traiter";
 
 export const maxDuration = 120;
 
-// Assistant des délais (16.10.2026) — chaque nouveau message cliente par e-mail :
-//  1. est-ce une demande de délai ? (groupe « Délais de livraison » ou détection du texte)
-//  2. si oui : le ticket est attribué à Philippe, et un brouillon est préparé à partir des seuls
-//     faits Shopify (commande, envois, étiquettes d'atelier) ;
+// Assistant des délais (16.10.2026) — chaque nouveau message cliente, ticket rangé ou attribué :
+//  1. le ticket est-il au nom de Philippe ? sinon sa carte est masquée (depuis le 19.10 l'outil
+//     ne s'attribue plus rien lui-même) ; puis : est-ce une demande de délai ou de taille ?
+//  2. si oui : un brouillon est préparé à partir des seuls faits Shopify (commande, envois,
+//     étiquettes d'atelier) ;
 //  3. le brouillon attend la validation de Philippe sur la page /delais (rien n'est envoyé seul).
 
 export async function POST(req: NextRequest) {

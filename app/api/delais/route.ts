@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { tous, lire, enregistrer } from "@/lib/delais/registre";
-import { closeTicket } from "@/lib/gorgias";
-import { traiter } from "@/lib/delais/traiter";
+import { tous, lire, enregistrer, majCarte } from "@/lib/delais/registre";
+import { closeTicket, getTicket } from "@/lib/gorgias";
+import { traiter, attribueA, PHILIPPE } from "@/lib/delais/traiter";
 
 export const maxDuration = 120;
 
-// GET → tous les brouillons (les plus récents d'abord) ; POST { ticketId, action: "ecarter" | "fermer" }
+// GET → les brouillons des tickets au nom de Philippe (le plus ancien d'abord) ; POST { ticketId, action: "ecarter" | "fermer" }
 // « ecarter » = Philippe répond lui-même dans Gorgias (ticket laissé ouvert) ; « fermer » = rien à répondre (ex. un merci), ticket clos
 export async function GET() {
-  const list = (await tous()).sort((a, b) => b.recuLe.localeCompare(a.recuLe));
-  return NextResponse.json({ ok: true, brouillons: list });
+  const list = await tous();
+  // cartes à valider d'avant le 19.10 : on ne sait pas encore à qui est le ticket → vérifié une fois dans Gorgias
+  const inconnues = list.filter((b) => b.etat === "a_valider" && b.chezPhilippe === undefined);
+  for (let i = 0; i < inconnues.length; i += 4) {
+    await Promise.all(inconnues.slice(i, i + 4).map(async (b) => {
+      try { b.chezPhilippe = attribueA(await getTicket(b.ticketId)) === PHILIPPE; await majCarte(b); } catch { /* revérifié au prochain affichage */ }
+    }));
+  }
+  const visibles = list.filter((b) => !(b.etat === "a_valider" && b.chezPhilippe === false))
+    .sort((a, b) => a.recuLe.localeCompare(b.recuLe));
+  return NextResponse.json({ ok: true, brouillons: visibles });
 }
 export async function POST(req: NextRequest) {
   const { ticketId, action } = (await req.json()) as { ticketId?: number; action?: string };

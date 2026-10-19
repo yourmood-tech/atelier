@@ -120,7 +120,9 @@ export default function Delais() {
     } finally { setBusy(null); }
   }
 
+  // à valider : le plus ancien en haut (ordre reçu) ; déjà traités : le plus récent en haut
   const affiches = (list ?? []).filter((b) => (vue === "a_valider" ? b.etat === "a_valider" : b.etat !== "a_valider"));
+  if (vue !== "a_valider") affiches.reverse();
 
   return (
     <main className="mx-auto max-w-5xl p-4 sm:p-6">

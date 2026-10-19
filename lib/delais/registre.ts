@@ -16,6 +16,7 @@ export type Brouillon = {
   echange?: { commande: string; orderId: number; creeLe: string };   // commande d'échange de taille créée
   ticketFerme?: boolean;                // ticket Gorgias clos par l'outil
   historique?: Tour[];                  // tours précédents du même ticket (la cliente a répondu après coup)
+  chezPhilippe?: boolean;               // ticket attribué à Philippe dans Gorgias ; false = carte masquée (absent = cartes d'avant le 19.10, vérifié à l'affichage)
 };
 export type Tour = {
   messageId: number; recuLe: string; message: string; etat: "envoye" | "ecarte";
@@ -43,6 +44,10 @@ export async function enregistrer(b: Brouillon): Promise<void> {
   await kv.set(CLE(b.ticketId), b, { ex: 120 * 24 * 3600 });
   const idx = ((await kv.get<number[]>(INDEX)) ?? []).filter((x) => x !== b.ticketId);
   await kv.set(INDEX, [b.ticketId, ...idx].slice(0, 600));
+}
+/** Met à jour une carte déjà dans le registre sans toucher à l'index (sûr en parallèle). */
+export async function majCarte(b: Brouillon): Promise<void> {
+  await kv.set(CLE(b.ticketId), b, { ex: 120 * 24 * 3600 });
 }
 export async function lire(ticketId: number): Promise<Brouillon | null> {
   return (await kv.get<Brouillon>(CLE(ticketId))) ?? null;
