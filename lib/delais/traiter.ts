@@ -2,7 +2,7 @@
 // et à la demande depuis la page /delais (« relire la commande et refaire le brouillon »).
 import { detectDelayInquiry } from "@/lib/email";
 import { getTicket, getTicketMessages } from "@/lib/gorgias";
-import { faitsCommande } from "@/lib/delais/faits";
+import { faitsCommande, type Faits } from "@/lib/delais/faits";
 import { redigerBrouillon } from "@/lib/delais/brouillon";
 import { langueDuMessage } from "@/lib/delais/langue";
 import { detecterTaille, faitsTaille, redigerTaille } from "@/lib/delais/taille";
@@ -63,19 +63,37 @@ export async function traiter(ticketId: number, forcer = false) {
   const cust = (t.customer ?? {}) as Record<string, unknown>;
   const email = String(cust.email ?? (dernier.sender as Record<string, unknown>)?.email ?? "");
   const faits = await faitsCommande(det.order_number, email);
+  const autres = await autresCommandes(texte, faits.commande, email);
   const prenom = faits.prenom || String(cust.firstname ?? "");
   const messageClient = String(dernier.stripped_text ?? dernier.body_text ?? "");
   faits.langue = langueDuMessage(messageClient) ?? faits.langue;
-  const brouillon = await redigerBrouillon({ faits, messageClient, prenom, canal: whatsapp ? "whatsapp" : "email" });
+  const brouillon = await redigerBrouillon({ faits, autres, messageClient, prenom, canal: whatsapp ? "whatsapp" : "email" });
   const src = (dernier.source ?? {}) as Record<string, unknown>;
   const to = ((src.to ?? []) as Record<string, unknown>[])[0];
   const relais = whatsapp ? String(((src.from ?? {}) as Record<string, unknown>).address ?? "") : "";
   await enregistrer(reprendre(deja, {
     ticketId, messageId: Number(dernier.id), recuLe: String(dernier.created_datetime ?? new Date().toISOString()),
     client: String(cust.name ?? prenom ?? email), email, sujet: String(t.subject ?? ""), message: messageClient.slice(0, 4000),
-    type: "delai", faits, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
+    type: "delai", faits, autres: autres.length ? autres : undefined, brouillon, depuis: String(to?.address ?? "contact@yourmood.net"), etat: "a_valider",
     canal: whatsapp ? "whatsapp" : "email", adresseReponse: relais || undefined, chezPhilippe: true,
   }));
+}
+
+/** Les autres numéros de commande cités dans le message (6 chiffres, 39xxxx-40xxxx…), jusqu'à 5.
+ *  Seulement les commandes de la même adresse que le ticket : on ne parle jamais de la commande de quelqu'un d'autre. */
+async function autresCommandes(texte: string, principale: string | null, email: string): Promise<Faits[]> {
+  const deja = new Set([String(principale ?? "").replace(/\D/g, "")]);
+  const nums = [...texte.matchAll(/(?<![\d.,'’])#?\s?([34]\d{5})(?![\d.,'’]\d)/g)].map((m) => m[1]).filter((n) => !deja.has(n) && (deja.add(n), true)).slice(0, 5);
+  if (!nums.length || !email) return [];
+  const { shopifyGet } = await import("@/lib/shopify");
+  const out: Faits[] = [];
+  for (const n of nums) {
+    const o = ((await shopifyGet(`/orders.json?name=%23${n}&status=any&limit=1&fields=email`)).orders as Record<string, unknown>[] ?? [])[0];
+    if (!o || String(o.email ?? "").toLowerCase() !== email.toLowerCase()) continue;
+    const f = await faitsCommande(n, "");
+    if (f.statut !== "introuvable") out.push(f);
+  }
+  return out;
 }
 
 async function traiterTaille(ticketId: number, t: Record<string, unknown>, dernier: Record<string, unknown>, tai: { commande: string | null; taille: string | null }, whatsapp: boolean, deja: Brouillon | null) {

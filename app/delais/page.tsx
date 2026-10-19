@@ -31,7 +31,7 @@ type Brouillon = {
   type?: "delai" | "taille"; taille?: Taille | null;
   canal?: "email" | "whatsapp";
   historique?: { recuLe: string; message: string; etat: "envoye" | "ecarte"; envoyeLe?: string; texteEnvoye?: string; retouche?: boolean; ferme?: boolean }[];
-  faits: Faits | null; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; ticketFerme?: boolean; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
+  faits: Faits | null; autres?: Faits[]; brouillon: string; echange?: { commande: string; orderId: number; creeLe: string }; ticketFerme?: boolean; etat: "a_valider" | "envoye" | "ecarte"; envoyeLe?: string; retouche?: boolean;
 };
 
 const STATUT: Record<string, { txt: string; couleur: string }> = {
@@ -260,24 +260,7 @@ export default function Delais() {
                       )}
                     </>
                   )}
-                  {b.faits && <>
-                  <div className="mt-3 text-xs font-medium uppercase text-neutral-400">Ce que Shopify sait</div>
-                  <ul className="mt-1 space-y-0.5 text-sm">
-                    <li>Commande {b.faits.commande ?? "—"} du {b.faits.passeeLe ?? "—"}</li>
-                    {b.faits.envois.map((e, k) => <li key={k}>📦 envoyé le {e.date}{e.transporteur ? ` · ${e.transporteur}` : ""}{e.numero ? ` · ${e.numero}` : ""}</li>)}
-                    {b.faits.articlesEnAttente.length > 0 && <li>⏳ encore à expédier : {b.faits.articlesEnAttente.join(", ")}</li>}
-                    {b.faits.iceleaArrivee && <li>✅ pièce Icelea arrivée le {b.faits.iceleaArrivee.date}{b.faits.iceleaArrivee.complet ? " (tout reçu)" : " (en partie)"}</li>}
-                    {b.faits.iceleaEnRoute && <li>🚚 colis Icelea en route{b.faits.iceleaEnRoute.complet ? "" : " (une partie des pièces)"} · arrivée prévue le {b.faits.iceleaEnRoute.date}{b.faits.iceleaEnRoute.depassee ? " — date passée, pas encore arrivé (pas de date donnée)" : ""}</li>}
-                    {b.faits.iceleaPO && <li>🧾 pièce commandée chez Icelea · bon {b.faits.iceleaPO.po}{b.faits.iceleaPO.commandeLe ? ` du ${b.faits.iceleaPO.commandeLe}` : ""}{b.faits.iceleaPO.arriveePrevue ? "" : " · aucune date d'arrivée à venir (pas de date donnée à la cliente)"}</li>}
-                    {b.faits.iceleaLivraison && !b.faits.iceleaEnRoute && <li>🚚 pièce Icelea attendue le {b.faits.iceleaLivraison}</li>}
-                    {b.faits.etape && <li>🔧 {b.faits.etape.entree ? "entrée" : "sortie"} « {b.faits.etape.nom} » le {b.faits.etape.date}</li>}
-                    {b.faits.rupture && <li>⚠️ rupture signalée le {b.faits.rupture}</li>}
-                    {(b.faits.boites ?? []).length > 0 && <li>🎁 attend la boîte : {b.faits.boites!.join(", ")} → <b>date à compléter</b></li>}
-                    {b.faits.estimation && <li>{b.faits.estimation.depassee ? "🔴" : "🗓️"} {b.faits.estimation.fournisseur} : {b.faits.estimation.delaiMin}–{b.faits.estimation.delaiMax} j après la commande → entre le {b.faits.estimation.du} et le {b.faits.estimation.au}{b.faits.estimation.depassee ? " — DÉLAI DÉPASSÉ, aucune date donnée à la cliente" : ""}</li>}
-                  </ul>
-                  <Notes notes={b.faits.notes} />
-                  {b.faits.etiquettesUtilisees.length > 0 && <div className="mt-1 text-xs text-neutral-400">étiquettes : {b.faits.etiquettesUtilisees.join(" · ")}</div>}
-                  </>}
+                  {[b.faits, ...(b.autres ?? [])].filter((f): f is Faits => !!f).map((f, k) => <FaitsCommande key={k} f={f} autre={k > 0} />)}
                 </div>
                 <div>
                   <div className="text-xs font-medium uppercase text-neutral-400">{b.etat === "a_valider" ? "Brouillon (modifiable)" : b.etat === "envoye" ? `Envoyé le ${new Date(b.envoyeLe!).toLocaleString("fr-CH")}${b.retouche ? " · retouché" : " · tel quel"}${b.ticketFerme ? " · ticket fermé" : " · ticket encore ouvert"}` : b.ticketFerme ? "Écarté · ticket fermé" : "Écarté · à traiter dans Gorgias"}</div>
@@ -310,6 +293,30 @@ export default function Delais() {
         })}
       </div>
     </main>
+  );
+}
+
+// faits Shopify d'une commande (la principale, puis chaque autre commande citée dans le message)
+function FaitsCommande({ f, autre }: { f: Faits; autre: boolean }) {
+  return (
+    <>
+                  <div className="mt-3 text-xs font-medium uppercase text-neutral-400">{autre ? <>Autre commande citée : {f.commande}{f.commandeId ? <> · <a href={SHOPIFY(f.commandeId)} target="_blank" rel="noreferrer" className="normal-case text-emerald-700 underline">ouvrir dans Shopify</a></> : null}</> : "Ce que Shopify sait"}</div>
+                  <ul className="mt-1 space-y-0.5 text-sm">
+                    <li>Commande {f.commande ?? "—"} du {f.passeeLe ?? "—"}</li>
+                    {f.envois.map((e, k) => <li key={k}>📦 envoyé le {e.date}{e.transporteur ? ` · ${e.transporteur}` : ""}{e.numero ? ` · ${e.numero}` : ""}</li>)}
+                    {f.articlesEnAttente.length > 0 && <li>⏳ encore à expédier : {f.articlesEnAttente.join(", ")}</li>}
+                    {f.iceleaArrivee && <li>✅ pièce Icelea arrivée le {f.iceleaArrivee.date}{f.iceleaArrivee.complet ? " (tout reçu)" : " (en partie)"}</li>}
+                    {f.iceleaEnRoute && <li>🚚 colis Icelea en route{f.iceleaEnRoute.complet ? "" : " (une partie des pièces)"} · arrivée prévue le {f.iceleaEnRoute.date}{f.iceleaEnRoute.depassee ? " — date passée, pas encore arrivé (pas de date donnée)" : ""}</li>}
+                    {f.iceleaPO && <li>🧾 pièce commandée chez Icelea · bon {f.iceleaPO.po}{f.iceleaPO.commandeLe ? ` du ${f.iceleaPO.commandeLe}` : ""}{f.iceleaPO.arriveePrevue ? "" : " · aucune date d'arrivée à venir (pas de date donnée à la cliente)"}</li>}
+                    {f.iceleaLivraison && !f.iceleaEnRoute && <li>🚚 pièce Icelea attendue le {f.iceleaLivraison}</li>}
+                    {f.etape && <li>🔧 {f.etape.entree ? "entrée" : "sortie"} « {f.etape.nom} » le {f.etape.date}</li>}
+                    {f.rupture && <li>⚠️ rupture signalée le {f.rupture}</li>}
+                    {(f.boites ?? []).length > 0 && <li>🎁 attend la boîte : {f.boites!.join(", ")} → <b>date à compléter</b></li>}
+                    {f.estimation && <li>{f.estimation.depassee ? "🔴" : "🗓️"} {f.estimation.fournisseur} : {f.estimation.delaiMin}–{f.estimation.delaiMax} j après la commande → entre le {f.estimation.du} et le {f.estimation.au}{f.estimation.depassee ? " — DÉLAI DÉPASSÉ, aucune date donnée à la cliente" : ""}</li>}
+                  </ul>
+                  <Notes notes={f.notes} />
+                  {f.etiquettesUtilisees.length > 0 && <div className="mt-1 text-xs text-neutral-400">étiquettes : {f.etiquettesUtilisees.join(" · ")}</div>}
+    </>
   );
 }
 

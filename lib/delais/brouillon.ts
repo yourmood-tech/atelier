@@ -36,16 +36,21 @@ export const TON_WHATSAPP = `- This is a WhatsApp message, not an e-mail: inform
 - One or two emojis maximum, ONLY from: 🌸 🫶🏼 💎 ✨ 🤍 💙. Tracking numbers or links on their own line.
 - End with a short warm line and "Philippe" (no "Cordialement", no "Excellente journée").`;
 
-export async function redigerBrouillon(p: { faits: Faits; messageClient: string; prenom: string; canal?: "email" | "whatsapp" }): Promise<string> {
+export async function redigerBrouillon(p: { faits: Faits; autres?: Faits[]; messageClient: string; prenom: string; canal?: "email" | "whatsapp" }): Promise<string> {
   const f = p.faits;
+  const autres = p.autres ?? [];
+  // plusieurs commandes citées : les faits de chacune, séparés, et une consigne pour répondre sur toutes
+  const faitsTous = autres.length
+    ? [f, ...autres].map((x) => `=== ${x.commande ?? "?"} ===\n${faitsEnClair(x)}\n${notesPourRedaction(x.notes ?? [])}`).join("\n\n")
+      + `\n\nThe customer asks about ${autres.length + 1} orders: give the status of EACH order (${[f, ...autres].map((x) => x.commande).join(", ")}), one short paragraph per order, in this order, each starting with its order number. The status rules below apply to each order separately.`
+    : `${faitsEnClair(f)}\n${notesPourRedaction(f.notes ?? [])}`;
   const langue = NOMS_LANGUE[f.langue] ?? "the same language as the customer's message";
   const prompt = `${BRAND_INTRO}
 
 You draft an e-mail reply to a customer asking about the delivery / delay of an order. A human (Philippe) will review it before sending.
 
 FACTS FROM OUR SHOP SYSTEM (the ONLY things you may state):
-${faitsEnClair(f)}
-${notesPourRedaction(f.notes ?? [])}
+${faitsTous}
 
 Customer message:
 ${JSON.stringify(p.messageClient.slice(0, 2500))}
@@ -79,13 +84,20 @@ How to write:
       console.error(`[délais] brouillon ${t ? "coupé" : "vide"} (${modele}), arrêt : ${arret}`);
     } catch (e) { console.error(`[délais] rédaction ${modele} :`, e); }
   }
-  return brouillonDeSecours(f, p.prenom);
+  return brouillonDeSecours(f, p.prenom, autres);
 }
 
 // Dernier recours si la rédaction échoue : un texte simple tiré des faits (Philippe le complète).
-function brouillonDeSecours(f: Faits, prenom: string): string {
-  const de = f.langue === "de", en = f.langue === "en";
+function brouillonDeSecours(f0: Faits, prenom: string, autres: Faits[] = []): string {
+  const de = f0.langue === "de", en = f0.langue === "en";
   const salut = de ? `Guten Tag${prenom ? " " + prenom : ""},` : en ? `Hello${prenom ? " " + prenom : ""},` : `Bonjour${prenom ? " " + prenom : ""},`;
+  const statuts = [f0, ...autres].map((f) => statutDeSecours(f, de, en)).join("\n\n");
+  const fin = de ? "Vielen Dank für Ihre Bestellung und Ihre Geduld.\n\nEinen schönen Tag.\n\nFreundliche Grüsse,\nPhilippe"
+    : en ? "Thank you for your order and your patience.\n\nHave a lovely day.\n\nKind regards,\nPhilippe"
+    : "Merci pour votre commande et patience.\n\nExcellente journée.\n\nCordialement,\nPhilippe";
+  return `${salut}\n\n${statuts}\n\n${fin}`;
+}
+function statutDeSecours(f: Faits, de: boolean, en: boolean): string {
   const e = f.envois[f.envois.length - 1];
   let statut: string;
   if ((f.statut === "expediee" || f.statut === "expediee_partiel") && e)
@@ -107,8 +119,5 @@ function brouillonDeSecours(f: Faits, prenom: string): string {
   else statut = de ? `Ihre Bestellung ${f.commande ?? ""} ist in unserem Atelier in Produktion. Wir melden uns sehr bald mit einem genauen Datum.`
       : en ? `Your order ${f.commande ?? ""} is in production in our workshop. We will come back to you very soon with a precise date.`
       : `Votre commande ${f.commande ?? ""} est en cours de production dans notre atelier. Nous revenons vers vous très vite avec une date précise.`;
-  const fin = de ? "Vielen Dank für Ihre Bestellung und Ihre Geduld.\n\nEinen schönen Tag.\n\nFreundliche Grüsse,\nPhilippe"
-    : en ? "Thank you for your order and your patience.\n\nHave a lovely day.\n\nKind regards,\nPhilippe"
-    : "Merci pour votre commande et patience.\n\nExcellente journée.\n\nCordialement,\nPhilippe";
-  return `${salut}\n\n${statut}\n\n${fin}`;
+  return statut;
 }

@@ -8,6 +8,7 @@ export type Brouillon = {
   client: string; email: string; sujet: string; message: string;
   type?: "delai" | "taille";             // absent = délai (brouillons d'avant le 16.10)
   faits: Faits | null; taille?: FaitsTaille | null; brouillon: string;
+  autres?: Faits[];                     // autres commandes citées dans le message (même cliente), au-delà de la première
   depuis: string;                       // adresse du support à laquelle la cliente a écrit
   canal?: "email" | "whatsapp";         // WhatsApp : la réponse part sur son téléphone via Gorgias
   adresseReponse?: string;              // WhatsApp : adresse-relais de la conversation (…@gorgias.konvoai.com)
