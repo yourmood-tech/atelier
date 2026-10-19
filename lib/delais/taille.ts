@@ -109,9 +109,11 @@ Write in ${NOMS[f.langue] ?? "the customer's language"}.${canal === "whatsapp" ?
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   for (const modele of ["claude-sonnet-5-5", "claude-haiku-4-5-20251001"]) {
     try {
-      const r = await client.messages.create({ model: modele, max_tokens: 900, messages: [{ role: "user", content: prompt }] });
+      // la réflexion du modèle compte dans la longueur permise : une limite trop courte coupait le brouillon
+      const r = await client.messages.create({ model: modele, max_tokens: 4000, messages: [{ role: "user", content: prompt }] });
       const t = r.content.filter((c) => c.type === "text").map((c) => (c as { text: string }).text).join("\n").trim();
-      if (t) return t;
+      if (t && r.stop_reason !== "max_tokens") return t;
+      console.error(`[taille] brouillon ${t ? "coupé" : "vide"} (${modele}), arrêt : ${r.stop_reason}`);
     } catch (e) { console.error(`[taille] rédaction ${modele} :`, e); }
   }
   return `Bonjour${f.prenom ? " " + f.prenom : ""},\n\nNous avons bien reçu votre demande de changement de taille pour la commande ${f.commande}.\n\n${retour || "Nous modifions la taille directement dans votre commande, sans frais."}\n\nMerci pour votre commande.\n\nExcellente journée.\n\nCordialement,\nPhilippe`;

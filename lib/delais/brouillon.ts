@@ -71,10 +71,12 @@ How to write:
     r.content.filter((c) => c.type === "text").map((c) => c.text ?? "").join("\n").trim();
   for (const modele of [MODELE, "claude-haiku-4-5-20251001"]) {
     try {
-      const r = await client.messages.create({ model: modele, max_tokens: 900, messages: [{ role: "user", content: prompt }] });
+      // la réflexion du modèle compte dans la longueur permise : une limite trop courte coupait le brouillon en pleine phrase
+      const r = await client.messages.create({ model: modele, max_tokens: 4000, messages: [{ role: "user", content: prompt }] });
       const t = texte(r as unknown as { content: { type: string; text?: string }[] });
-      if (t) return t;
-      console.error(`[délais] brouillon vide (${modele}), arrêt : ${(r as { stop_reason?: string }).stop_reason}`);
+      const arret = (r as { stop_reason?: string }).stop_reason;
+      if (t && arret !== "max_tokens") return t;
+      console.error(`[délais] brouillon ${t ? "coupé" : "vide"} (${modele}), arrêt : ${arret}`);
     } catch (e) { console.error(`[délais] rédaction ${modele} :`, e); }
   }
   return brouillonDeSecours(f, p.prenom);
