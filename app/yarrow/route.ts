@@ -232,7 +232,12 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
     p.g.forEach(function(x,i){ var t=document.createElement('button');
       t.innerHTML='<img src="'+u(x,200)+'" alt="">'; t.onclick=function(){montre(p,i);}; vb.appendChild(t); });
     montre(p,0); vue.classList.add('on'); document.body.style.overflow='hidden'; }
-  m.addEventListener('click',function(e){ var b=e.target.closest('.p'); if(b) ouvre(+b.dataset.k); });
+  m.addEventListener('click',function(e){
+    var b=e.target.closest('.p'); if(!b) return;
+    var p=P[+b.dataset.k];
+    if(p && p.h){ window.open(p.h.indexOf('http')===0?p.h:B+p.h,'_blank','noopener'); }
+    else { ouvre(+b.dataset.k); }
+  });
   function ferme(){ vue.classList.remove('on'); document.body.style.overflow=''; }
   document.getElementById('vfermer').onclick=ferme;
   vue.addEventListener('click',function(e){ if(e.target===vue) ferme(); });
