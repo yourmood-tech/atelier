@@ -21,6 +21,18 @@ export async function GET() {
 }
 export async function POST(req: NextRequest) {
   const { ticketId, action } = (await req.json()) as { ticketId?: number; action?: string };
+  // « chercher » : tickets de l'inbox sans brouillon à valider (avis Gorgias manqué) → la page les fait traiter un par un
+  if (action === "chercher") {
+    const [inbox, list] = await Promise.all([ticketsDeLaVue(INBOX_PHILIPPE), tous()]);
+    const prets = new Set(list.filter((b) => b.etat === "a_valider").map((b) => b.ticketId));
+    return NextResponse.json({ ok: true, tickets: inbox.filter((id) => !prets.has(id)) });
+  }
+  // « traiter » : un ticket de l'inbox → brouillon s'il parle de délai ou de taille (sinon rien)
+  if (action === "traiter" && ticketId) {
+    await traiter(ticketId);
+    const b = await lire(ticketId);
+    return NextResponse.json({ ok: true, carte: b?.etat === "a_valider" });
+  }
   const b = ticketId ? await lire(ticketId) : null;
   if (!b) return NextResponse.json({ error: "brouillon introuvable" }, { status: 404 });
   // « refaire » : relire la commande (étiquettes, notes de l'équipe…) et réécrire le brouillon encore à valider

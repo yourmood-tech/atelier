@@ -100,6 +100,26 @@ export default function Delais() {
     } finally { setBusy(null); }
   }
   // « ecarter » : Philippe répond lui-même dans Gorgias (ticket laissé ouvert) ; « fermer » : rien à répondre, ticket clos
+  // tickets de l'inbox Gorgias sans carte (avis manqué) : traités un par un, brouillon seulement si délai ou taille
+  const [recherche, setRecherche] = useState<string | null>(null);
+  async function chercher() {
+    setRecherche("Lecture de ton inbox…");
+    try {
+      const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "chercher" }) });
+      const j = await r.json();
+      if (!r.ok) { setRecherche(null); alert(`Inbox illisible : ${j.error ?? r.status}`); return; }
+      const ids = (j.tickets ?? []) as number[];
+      let cartes = 0;
+      for (let k = 0; k < ids.length; k++) {
+        setRecherche(`Ticket ${k + 1}/${ids.length}… ${cartes} nouvelle(s) demande(s)`);
+        const t = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "traiter", ticketId: ids[k] }) });
+        const tj = await t.json().catch(() => ({}));
+        if (t.ok && tj.carte) cartes++;
+      }
+      await charger();
+      setRecherche(`${ids.length} ticket(s) de ton inbox sans carte relus : ${cartes} nouvelle(s) demande(s) de délai ou de taille. Les autres ne parlent pas de délai, ou la dernière réponse vient de l'équipe.`);
+    } catch (e) { setRecherche(null); alert(e instanceof Error ? e.message : String(e)); }
+  }
   // relire la commande et refaire le brouillon (une carte, ou toutes celles à valider l'une après l'autre)
   async function refaire(bs: Brouillon[]) {
     for (const b of bs) {
@@ -139,12 +159,19 @@ export default function Delais() {
         <Case titre="Écartés" val={stats.ecartes} />
       </div>
 
-      <div className="mt-5 flex gap-2">
+      {recherche && !recherche.includes("…") && <p className="mt-3 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-900">{recherche}</p>}
+      <div className="mt-5 flex flex-wrap gap-2">
         {(["a_valider", "traites"] as const).map((v) => (
           <button key={v} onClick={() => setVue(v)} className={`rounded-full px-4 py-1.5 text-sm ${vue === v ? "bg-neutral-900 text-white" : "bg-neutral-100"}`}>
             {v === "a_valider" ? `À valider (${stats.attente})` : "Déjà traités"}
           </button>
         ))}
+        {vue === "a_valider" && (
+          <button disabled={busy !== null || !!recherche?.includes("…")} onClick={chercher}
+            className="rounded-full bg-emerald-100 px-4 py-1.5 text-sm text-emerald-900 disabled:opacity-50">
+            {recherche?.includes("…") ? recherche : "↻ Chercher les demandes de mon inbox"}
+          </button>
+        )}
         {vue === "a_valider" && stats.attente > 0 && (
           <button disabled={busy !== null} onClick={() => { if (confirm(`Relire les ${stats.attente} commandes et refaire tous les brouillons à valider ? (tes retouches non envoyées seront perdues)`)) refaire((list ?? []).filter((b) => b.etat === "a_valider")); }}
             className="ml-auto rounded-full bg-sky-100 px-4 py-1.5 text-sm text-sky-900 disabled:opacity-50">
