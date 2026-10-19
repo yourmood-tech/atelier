@@ -244,7 +244,20 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
   addEventListener('keydown',function(e){ if(e.key==='Escape') ferme(); });
 })();
 </script>
-</body></html>`;
+<script>
+/* quand la page est affichée dans un cadre sur yourmood.net, on annonce sa hauteur */
+(function(){
+  if(window.parent===window) return;
+  function envoie(){
+    var h=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);
+    try{ window.parent.postMessage({hauteurYarrow:h},"*"); }catch(e){}
+  }
+  window.addEventListener("load",envoie);
+  window.addEventListener("resize",envoie);
+  setInterval(envoie,1200);
+  setTimeout(envoie,400); setTimeout(envoie,1500); setTimeout(envoie,3500);
+})();
+</script></body></html>`;
 
 export async function GET() {
   return new Response(PAGE, {
