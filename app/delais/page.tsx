@@ -12,6 +12,7 @@ type Faits = {
   articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   iceleaPO?: { po: string; commandeLe: string | null; arriveePrevue: string | null } | null;
+  iceleaEnRoute?: { date: string; complet: boolean; depassee: boolean } | null;
   etape: { nom: string; entree: boolean; date: string } | null; rupture: string | null; etiquettesUtilisees: string[];
   boites?: string[];
   notes?: Note[];
@@ -239,8 +240,9 @@ export default function Delais() {
                     {b.faits.envois.map((e, k) => <li key={k}>📦 envoyé le {e.date}{e.transporteur ? ` · ${e.transporteur}` : ""}{e.numero ? ` · ${e.numero}` : ""}</li>)}
                     {b.faits.articlesEnAttente.length > 0 && <li>⏳ encore à expédier : {b.faits.articlesEnAttente.join(", ")}</li>}
                     {b.faits.iceleaArrivee && <li>✅ pièce Icelea arrivée le {b.faits.iceleaArrivee.date}{b.faits.iceleaArrivee.complet ? " (tout reçu)" : " (en partie)"}</li>}
+                    {b.faits.iceleaEnRoute && <li>🚚 colis Icelea en route{b.faits.iceleaEnRoute.complet ? "" : " (une partie des pièces)"} · arrivée prévue le {b.faits.iceleaEnRoute.date}{b.faits.iceleaEnRoute.depassee ? " — date passée, pas encore arrivé (pas de date donnée)" : ""}</li>}
                     {b.faits.iceleaPO && <li>🧾 pièce commandée chez Icelea · bon {b.faits.iceleaPO.po}{b.faits.iceleaPO.commandeLe ? ` du ${b.faits.iceleaPO.commandeLe}` : ""}{b.faits.iceleaPO.arriveePrevue ? "" : " · aucune date d'arrivée à venir (pas de date donnée à la cliente)"}</li>}
-                    {b.faits.iceleaLivraison && <li>🚚 pièce Icelea attendue le {b.faits.iceleaLivraison}</li>}
+                    {b.faits.iceleaLivraison && !b.faits.iceleaEnRoute && <li>🚚 pièce Icelea attendue le {b.faits.iceleaLivraison}</li>}
                     {b.faits.etape && <li>🔧 {b.faits.etape.entree ? "entrée" : "sortie"} « {b.faits.etape.nom} » le {b.faits.etape.date}</li>}
                     {b.faits.rupture && <li>⚠️ rupture signalée le {b.faits.rupture}</li>}
                     {(b.faits.boites ?? []).length > 0 && <li>🎁 attend la boîte : {b.faits.boites!.join(", ")} → <b>date à compléter</b></li>}

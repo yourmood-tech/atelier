@@ -10,8 +10,13 @@
 //   4. étiquette « Icelea-recu:jj.mm.aaaa » si toutes ses pièces de cette commande fournisseur
 //      sont arrivées, sinon « Icelea-partiel:jj.mm.aaaa ».
 //  Ce qui a déjà été servi est mémorisé (une pièce n'est jamais attribuée deux fois).
+//
+//  Mode « colis en route » (19.10.2026) : même répartition, AVANT l'arrivée (facture d'envoi
+//  d'Icelea, rien n'entre en stock) → étiquette « Icelea-enroute:<arrivée prévue> » (toutes ses
+//  pièces de ce bon en route ou déjà arrivées) ou « Icelea-enroute-partiel:<arrivée prévue> ».
+//  Mémoire séparée (icelea_enroute:PO) : l'arrivée réelle refait sa propre répartition.
 import { kv } from "@vercel/kv";
-import { getOrdersLite, setIceleaReceptionTag, type OrderLite } from "@/lib/shopify";
+import { getOrdersLite, setIceleaReceptionTag, setIceleaEnrouteTag, type OrderLite } from "@/lib/shopify";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 const BASE = process.env.KATANA_BASE_URL!;
@@ -50,13 +55,15 @@ async function usageOf(materialVariantId: number): Promise<Usage> {
 // mémoire de ce qui a déjà été servi : po → variant → { commandeId: pièces attribuées }
 type Served = Record<string, Record<string, number>>;
 const KV_SERVED = (po: string) => `icelea_servi:${po}`;
+const KV_ENROUTE = (po: string) => `icelea_enroute:${po}`;
 
 export type ReceptionLine = { po: string; variantId: number; qty: number };
 export type TagReport = { po: string; recu: string[]; partiel: string[]; restant: number; erreurs: string[] };
 
-export async function tagOrdersAfterArrival(lines: ReceptionLine[]): Promise<TagReport[]> {
+/** enroute = date d'arrivée prévue (jj.mm.aaaa) → mode « colis en route » ; absent = arrivée réelle. */
+export async function tagOrdersAfterArrival(lines: ReceptionLine[], enroute?: string): Promise<TagReport[]> {
   const now = new Date(); const pad = (n: number) => String(n).padStart(2, "0");
-  const date = `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
+  const date = enroute ?? `${pad(now.getDate())}.${pad(now.getMonth() + 1)}.${now.getFullYear()}`;
   const byPo = new Map<string, Map<number, number>>();
   for (const l of lines) {
     if (!l.po || !l.variantId || !(l.qty > 0)) continue;
@@ -83,33 +90,37 @@ export async function tagOrdersAfterArrival(lines: ReceptionLine[]): Promise<Tag
       const need = (o: OrderLite, v: number) => o.line_items.reduce((s, li) =>
         s + (li.sku && usage.get(v)![li.sku] ? (li.fulfillable_quantity ?? li.quantity) * usage.get(v)![li.sku] : 0), 0);
 
-      const served: Served = (await kv.get<Served>(KV_SERVED(po)).catch(() => null)) ?? {};
+      // en route : on répartit dans sa propre mémoire, mais une cliente « complète » compte aussi ce qui est déjà arrivé
+      const arrived: Served = (await kv.get<Served>(KV_SERVED(po)).catch(() => null)) ?? {};
+      const served: Served = enroute ? ((await kv.get<Served>(KV_ENROUTE(po)).catch(() => null)) ?? {}) : arrived;
+      const dejaArrive = (v: number, o: OrderLite) => (enroute ? (arrived[v]?.[o.id] ?? 0) : 0);
       // répartition par ancienneté, pièce par pièce
       for (const [v, qty] of received) {
         let left = qty; const sv = (served[v] ??= {});
         for (const o of orders) {
           if (left <= 0) break;
-          const missing = need(o, v) - (sv[o.id] ?? 0);
+          const missing = need(o, v) - (sv[o.id] ?? 0) - dejaArrive(v, o);
           if (missing <= 0) continue;
           const give = Math.min(missing, left);
           sv[o.id] = (sv[o.id] ?? 0) + give; left -= give;
         }
         rep.restant += left;
       }
-      await kv.set(KV_SERVED(po), served, { ex: 180 * 24 * 3600 });
+      await kv.set(enroute ? KV_ENROUTE(po) : KV_SERVED(po), served, { ex: 180 * 24 * 3600 });
 
       // étiquette : seulement les commandes qui ont reçu quelque chose dans CET arrivage
       const touched = orders.filter((o) => [...received.keys()].some((v) => (served[v]?.[o.id] ?? 0) > 0 && need(o, v) > 0));
       for (const o of touched) {
-        const toutRecu = poVariants.every((v) => need(o, v) <= (served[v]?.[o.id] ?? 0));
-        const tag = toutRecu ? `Icelea-recu:${date}` : `Icelea-partiel:${date}`;
-        try { await setIceleaReceptionTag(o.id, tag); (toutRecu ? rep.recu : rep.partiel).push(o.name); }
+        const toutRecu = poVariants.every((v) => need(o, v) <= (served[v]?.[o.id] ?? 0) + dejaArrive(v, o));
+        const tag = enroute ? (toutRecu ? `Icelea-enroute:${date}` : `Icelea-enroute-partiel:${date}`)
+          : toutRecu ? `Icelea-recu:${date}` : `Icelea-partiel:${date}`;
+        try { await (enroute ? setIceleaEnrouteTag(o.id, tag) : setIceleaReceptionTag(o.id, tag)); (toutRecu ? rep.recu : rep.partiel).push(o.name); }
         catch (e) { rep.erreurs.push(`${o.name} : ${e instanceof Error ? e.message : String(e)}`); }
       }
     } catch (e) { rep.erreurs.push(e instanceof Error ? e.message : String(e)); }
     reports.push(rep);
   }
-  try { await kv.set(`icelea_marquage:${date}`, reports, { ex: 60 * 24 * 3600 }); } catch { /* noop */ }
-  console.log("[icelea tag-orders]", JSON.stringify(reports.map((r) => ({ po: r.po, recu: r.recu.length, partiel: r.partiel.length, restant: r.restant, erreurs: r.erreurs.length }))));
+  try { await kv.set(`${enroute ? "icelea_enroute_rapport" : "icelea_marquage"}:${date}`, reports, { ex: 60 * 24 * 3600 }); } catch { /* noop */ }
+  console.log(enroute ? "[icelea en route]" : "[icelea tag-orders]", JSON.stringify(reports.map((r) => ({ po: r.po, recu: r.recu.length, partiel: r.partiel.length, restant: r.restant, erreurs: r.erreurs.length }))));
   return reports;
 }

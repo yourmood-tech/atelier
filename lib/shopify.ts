@@ -295,7 +295,18 @@ export async function setIceleaReceptionTag(orderId: number, tag: string): Promi
   const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
   const existing: string[] = (current.order.tags as string).split(",").map((t: string) => t.trim()).filter(Boolean);
   if (existing.includes(tag)) return;
-  const filtered = existing.filter(t => !t.startsWith("Icelea-recu:") && !t.startsWith("Icelea-partiel:"));
+  // tout est arrivé → l'étiquette « en route » n'a plus lieu d'être ; arrivée partielle → elle reste (le reste est peut-être en route)
+  const filtered = existing.filter(t => !t.startsWith("Icelea-recu:") && !t.startsWith("Icelea-partiel:")
+    && !(tag.startsWith("Icelea-recu:") && t.startsWith("Icelea-enroute")));
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: [...filtered, tag].join(", ") } });
+}
+
+// Colis Icelea en route : « Icelea-enroute:jj.mm.aaaa » ou « Icelea-enroute-partiel:jj.mm.aaaa » (une seule à la fois)
+export async function setIceleaEnrouteTag(orderId: number, tag: string): Promise<void> {
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string).split(",").map((t: string) => t.trim()).filter(Boolean);
+  if (existing.includes(tag)) return;
+  const filtered = existing.filter(t => !t.startsWith("Icelea-enroute"));
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: [...filtered, tag].join(", ") } });
 }
 

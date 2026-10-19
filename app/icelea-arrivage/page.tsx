@@ -182,6 +182,45 @@ export default function IceleaArrivagePage() {
       }
     }
   }
+  // colis encore en route (facture d'envoi d'Icelea) : rien n'entre en stock ; les commandes clientes
+  // qui attendaient ces pièces reçoivent « Icelea-enroute:<arrivée prévue> » → délais plus précis.
+  // Seules les lignes sûres partent (pas « à vérifier » / « SKU à confirmer ») ; pièces réparties
+  // sur les PO ouverts du plus ancien au plus récent, comme le fera la réception.
+  const [enrouteMsg, setEnrouteMsg] = useState<string | null>(null);
+  async function declareEnRoute() {
+    if (!rows) return;
+    const d = new Date(); d.setDate(d.getDate() + 4);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const date = window.prompt("Arrivée prévue du colis à l'atelier (jj.mm.aaaa) :", `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`)?.trim();
+    if (!date) return;
+    if (!/^\d\d\.\d\d\.\d{4}$/.test(date)) { alert("Date au format jj.mm.aaaa, par exemple 23.10.2026."); return; }
+    const pris = new Map<number, number>();   // ligne de PO → pièces déjà attribuées (même article sur 2 lignes de facture)
+    const lines: { po: string; variantId: number; qty: number }[] = [];
+    let ignorees = 0;
+    rows.forEach((r) => {
+      if (!r.variantId || r.match === "approx" || r.match === "manuel" || r.match === "aucun") { ignorees += r.invoiceQty; return; }
+      let left = r.invoiceQty;
+      for (const p of r.pos) {
+        if (left <= 0) break;
+        const give = Math.min(left, p.qty - (pris.get(p.rowId) ?? 0));
+        if (give <= 0) continue;
+        pris.set(p.rowId, (pris.get(p.rowId) ?? 0) + give); left -= give;
+        lines.push({ po: p.po, variantId: r.variantId, qty: give });
+      }
+    });
+    const pieces = lines.reduce((s, l) => s + l.qty, 0);
+    if (!pieces) { alert("Aucune pièce sûre à déclarer en route."); return; }
+    if (!confirm(`Déclarer ${pieces} pièce(s) en route, arrivée prévue le ${date} ?\nRien n'entre en stock. ${ignorees ? `${ignorees} pièce(s) à vérifier ou sans association sont laissées de côté.` : ""}`)) return;
+    try {
+      const t = await fetch("/api/icelea-arrivage/tag-orders", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lines, enroute: date }),
+      });
+      const tj = await readJson(t);
+      if (!t.ok) { alert(`Pas fait : ${(tj.error as string) || t.status}`); return; }
+      setEnrouteMsg(`${pieces} pièce(s) déclarées en route (arrivée prévue le ${date}) : les commandes clientes concernées sont marquées en arrière-plan, quelques minutes.${ignorees ? ` ${ignorees} pièce(s) laissées de côté (à vérifier ou sans association).` : ""}`);
+    } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
+  }
   // fin d'arrivage → construit le rapport (jamais scanné · écarts · reste à livrer)
   async function buildReport() {
     if (!rows) return;
@@ -278,12 +317,18 @@ export default function IceleaArrivagePage() {
                 {bulk ? `Réception… ${bulk.done}/${bulk.total}` : "✓ Valider tout l'arrivage"}</button>
             )}
             {rows && !report && (
+              <button onClick={declareEnRoute} disabled={!!bulk}
+                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50">
+                🚚 Colis en route…</button>
+            )}
+            {rows && !report && (
               <button onClick={buildReport} disabled={reportBusy}
                 className="rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-50">
                 {reportBusy ? "…" : "Terminer l'arrivage → rapport"}</button>
             )}
           </div>
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          {enrouteMsg && <div className="rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-800">🚚 {enrouteMsg}</div>}
           {summary && invoiceNo && (
             <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-700">
               Facture <span className="font-mono font-medium">{invoiceNo}</span>
