@@ -171,17 +171,28 @@ export default function IceleaArrivagePage() {
       // même après un arrêt : les commandes clientes dont une pièce vient d'arriver sont marquées
       // « Icelea-recu » (tout reçu) ou « Icelea-partiel » (en arrière-plan) → réponse aux demandes de délai
       if (recues.length) {
-        try {
-          const t = await fetch("/api/icelea-arrivage/tag-orders", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lines: recues }),
-          });
-          const tj = await readJson(t);
-          if (!t.ok) alert(`Réception faite, mais les commandes clientes n'ont pas été marquées « reçu » : ${(tj.error as string) || t.status}`);
-        } catch (e) { alert(`Réception faite, mais les commandes clientes n'ont pas été marquées « reçu » : ${e instanceof Error ? e.message : String(e)}`); }
+        try { await marquer(recues); }
+        catch (e) { setMarquage(null); alert(`Réception faite, mais les commandes clientes n'ont pas toutes été marquées « reçu » : ${e instanceof Error ? e.message : String(e)}`); }
       }
     }
   }
+  // marquage des commandes clientes, tranche après tranche (Katana est lent : plusieurs minutes pour un gros colis)
+  const [marquage, setMarquage] = useState<string | null>(null);
+  async function marquer(lines: { po: string; variantId: number; qty: number }[], enroute?: string): Promise<{ commandes: number; erreurs: number }> {
+    let body: Record<string, unknown> = { lines, enroute };
+    for (let tour = 0; tour < 40; tour++) {
+      const t = await fetch("/api/icelea-arrivage/tag-orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const tj = await readJson(t);
+      if (!t.ok) throw new Error((tj.error as string) || String(t.status));
+      const reps = (tj.reports as { recu: string[]; partiel: string[]; erreurs: string[] }[]) ?? [];
+      const commandes = reps.reduce((n, r) => n + r.recu.length + r.partiel.length, 0);
+      setMarquage(`Marquage des commandes clientes… ${tj.faits}/${tj.total} bon(s) Icelea traités, ${commandes} commande(s) marquée(s)`);
+      if (tj.finished) { setMarquage(null); return { commandes, erreurs: reps.reduce((n, r) => n + r.erreurs.length, 0) }; }
+      body = { jobId: tj.jobId };
+    }
+    throw new Error("marquage trop long : relance le bouton, ce qui est déjà fait est gardé");
+  }
+
   // colis encore en route (facture d'envoi d'Icelea) : rien n'entre en stock ; les commandes clientes
   // qui attendaient ces pièces reçoivent « Icelea-enroute:<arrivée prévue> » → délais plus précis.
   // Seules les lignes sûres partent (pas « à vérifier » / « SKU à confirmer ») ; pièces réparties
@@ -212,14 +223,10 @@ export default function IceleaArrivagePage() {
     if (!pieces) { alert("Aucune pièce sûre à déclarer en route."); return; }
     if (!confirm(`Déclarer ${pieces} pièce(s) en route, arrivée prévue le ${date} ?\nRien n'entre en stock. ${ignorees ? `${ignorees} pièce(s) à vérifier ou sans association sont laissées de côté.` : ""}`)) return;
     try {
-      const t = await fetch("/api/icelea-arrivage/tag-orders", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lines, enroute: date }),
-      });
-      const tj = await readJson(t);
-      if (!t.ok) { alert(`Pas fait : ${(tj.error as string) || t.status}`); return; }
-      setEnrouteMsg(`${pieces} pièce(s) déclarées en route (arrivée prévue le ${date}) : les commandes clientes concernées sont marquées en arrière-plan, quelques minutes.${ignorees ? ` ${ignorees} pièce(s) laissées de côté (à vérifier ou sans association).` : ""}`);
-    } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
+      setEnrouteMsg(null);
+      const r = await marquer(lines, date);
+      setEnrouteMsg(`${pieces} pièce(s) déclarées en route (arrivée prévue le ${date}) : ${r.commandes} commande(s) cliente(s) marquée(s).${r.erreurs ? ` ${r.erreurs} erreur(s), voir le journal.` : ""}${ignorees ? ` ${ignorees} pièce(s) laissées de côté (à vérifier ou sans association).` : ""}`);
+    } catch (e) { setMarquage(null); alert(`Pas fini : ${e instanceof Error ? e.message : String(e)}`); }
   }
   // fin d'arrivage → construit le rapport (jamais scanné · écarts · reste à livrer)
   async function buildReport() {
@@ -328,6 +335,7 @@ export default function IceleaArrivagePage() {
             )}
           </div>
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+          {marquage && <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">⏳ {marquage} — laisse la page ouverte.</div>}
           {enrouteMsg && <div className="rounded-xl border border-sky-300 bg-sky-50 p-3 text-sm text-sky-800">🚚 {enrouteMsg}</div>}
           {summary && invoiceNo && (
             <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-700">
