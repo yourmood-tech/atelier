@@ -17,11 +17,12 @@ header{text-align:center;padding:26px 18px 4px}
 h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(26px,3.4vw,40px);margin:9px 0 0;line-height:1.1;color:#2B4D6B}
 h1 em{font-style:italic;color:#A8863A}
 .sous{max-width:52ch;margin:10px auto 0;font-size:12px;line-height:1.7;color:#52728C}
-.maison{position:relative;margin:34px auto 0;max-width:900px}
-.maison img{width:100%;height:auto;display:block}
+.maison{position:relative;margin:0 auto}
+.maison img{width:100%;height:auto;display:block;max-height:calc(100vh - 215px);object-fit:contain;margin:0 auto}
 
 .duo{display:grid;grid-template-columns:1.38fr .62fr;gap:28px;align-items:start;margin-top:22px}
 @media(max-width:900px){.duo{grid-template-columns:1fr;gap:26px}}
+@media(min-width:901px){.liste{max-height:calc(100vh - 215px);overflow:auto}}
 .liste{background:#fff;border:1px solid rgba(46,83,117,.10);border-radius:14px;padding:16px 18px;box-shadow:0 14px 40px rgba(46,83,117,.08);columns:2;column-gap:20px}
 @media(max-width:900px){.liste{columns:2}}@media(max-width:560px){.liste{columns:1}}
 .lg{column-span:all;display:flex;gap:14px;flex-wrap:wrap;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#8DA3B5;
