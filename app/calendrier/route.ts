@@ -115,7 +115,16 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .rd.vide{border:1.5px dashed rgba(46,83,117,.3);background:transparent;cursor:default}
 .rd.vide:hover{transform:none}
 .barre{position:sticky;bottom:0;margin-top:10px;background:rgba(255,255,255,.94);border-top:1px solid rgba(46,83,117,.12);
-  padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;border-radius:12px 12px 0 0}
+  padding:10px 18px 12px;display:flex;flex-direction:column;align-items:center;gap:9px;border-radius:12px 12px 0 0}
+.ligne{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;width:100%}
+.tailles{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap}
+.tailles .lt{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8DA3B5;margin-right:3px}
+.tb{appearance:none;border:1px solid rgba(46,83,117,.22);background:#fff;color:#43637E;font-family:Poppins;font-size:11.5px;
+  min-width:34px;padding:5px 8px;border-radius:999px;cursor:pointer;transition:.14s}
+.tb:hover{border-color:rgba(184,145,47,.6)}
+.tb[aria-pressed="true"]{background:#B8912F;border-color:#B8912F;color:#fff}
+.tb.inconnue{font-size:10.5px;letter-spacing:.02em;padding:5px 12px;color:#8DA3B5}
+.tailles.manque .tb{border-color:rgba(184,145,47,.55)}
 .cpt{font-family:Playfair Display,serif;font-size:17px;color:#2B4D6B}
 .cpt b{color:#A8863A;font-weight:400}
 .mini{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8DA3B5}
@@ -184,18 +193,21 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <aside class="liste" id="liste"></aside>
   </div>
   <div class="barre" id="barre">
+    <div class="tailles" id="tailles"><span class="lt">Ma taille</span></div>
+    <div class="ligne">
     <div class="choix"><img class="bte" src="/calendrier/boite-mood.png" alt="La boîte du calendrier mood"><div class="ronds" id="ronds"></div></div>
     <span class="cpt"><b id="n">0</b> case<span id="s"></span> choisie<span id="s2"></span></span>
     <span class="mini">4 au minimum</span>
     <span class="cpt tot">Total <b id="total">—</b></span>
-    <span class="mini">boîte et envoi 50.– compris</span>
-    <button class="bt" id="valider" disabled>Ajouter à mon calendrier</button>
+    <button class="bt" id="valider" disabled>Ajouter au panier</button>
+    </div>
   </div>
   <div class="panier" id="panier"></div>
   <p class="pied">Maquette — les pièces ne sont pas encore définitives</p>
 </div>
 <script>
 var CASES=[{"n":1,"t":"Les douceurs","m":"Acier découpé","z":[7.91,47.02,17.96,59.95],"d":"Acier découpé deux tiers","p":60},{"n":2,"t":"Rencontrent le givre","m":"Polymère","z":[17.96,47.02,28.5,59.95],"d":"Polymère, 6 mediums","p":55},{"n":3,"t":"Le rouge apparaît","m":"Aluminium","z":[28.5,47.02,38.63,59.95],"d":"Aluminium deux tiers","p":30},{"n":4,"t":"Avec la neige","m":"Polymère","z":[38.63,47.02,48.54,59.95],"d":"Polymère deux tiers","p":10},{"n":5,"t":"Noël s'éveille","m":"Polymère","z":[7.91,60.77,17.96,73.69],"d":"Polymère deux tiers","p":10},{"n":6,"t":"Vêtu de bleu","m":"Clip & Drop","z":[17.96,60.77,28.5,73.69],"d":"Clip","p":35},{"n":7,"t":"Une lueur","m":"Nacre","z":[28.5,60.77,38.63,73.69],"d":"Nacre deux tiers","p":70},{"n":8,"t":"Brille doucement","m":"Acier découpé","z":[38.63,60.77,48.54,73.69],"d":"Acier découpé deux tiers","p":60},{"n":9,"t":"Le ciel s'embrase","m":"Polymère","z":[7.91,74.52,17.96,88.18],"d":"Polymère, 6 mediums","p":55},{"n":10,"t":"Sur les Alpes","m":"Polymère","z":[17.96,74.52,28.5,88.18],"d":"Polymère deux tiers","p":10},{"n":11,"t":"Une lumière","m":"Clip & Drop","z":[28.5,74.52,38.63,88.18],"d":"Drop","p":60},{"n":12,"t":"Perce la nuit","m":"Aluminium","z":[38.63,74.52,48.54,88.18],"d":"Aluminium deux tiers","p":30},{"n":13,"t":"Sous le sapin","m":"Polymère","z":[51.94,47.02,61.86,59.95],"d":"Polymère deux tiers","p":10},{"n":14,"t":"La glace scintille","m":"Aura","z":[61.86,47.02,71.98,59.95],"d":"Aura medium","p":85},{"n":15,"t":"Les cerfs avancent","m":"Aluminium","z":[71.98,47.02,82.39,59.95],"d":"Aluminium deux tiers","p":30},{"n":16,"t":"Sous les étoiles","m":"Aluminium","z":[82.39,47.02,92.93,59.95],"d":"Aluminium deux tiers","p":30},{"n":17,"t":"Un éclat","m":"Clip & Drop","z":[51.94,60.77,61.86,73.69],"d":"Clip","p":35},{"n":18,"t":"Traverse la forêt","m":"Acier","z":[61.86,60.77,71.98,73.69],"d":"Acier deux tiers","p":50},{"n":19,"t":"Les flocons dansent","m":"Aluminium serti","z":[71.98,60.77,82.39,73.69],"d":"Aluminium deux tiers serti 4 diamants 1 mm","p":50},{"n":20,"t":"Dans le bleu","m":"Nacre","z":[82.39,60.77,92.93,73.69],"d":"Nacre deux tiers","p":70},{"n":21,"t":"Noël scintille","m":"Acier","z":[51.94,74.52,61.86,88.18],"d":"Acier deux tiers","p":50},{"n":22,"t":"Une dernière fois","m":"Clip & Drop","z":[61.86,74.52,71.98,88.18],"d":"Drop","p":60},{"n":23,"t":"La magie commence","m":"Aura","z":[71.98,74.52,82.39,88.18],"d":"Aura medium","p":85},{"n":24,"t":"À minuit","m":"Aluminium serti","z":[82.39,74.52,92.93,88.18],"d":"Aluminium deux tiers serti 4 diamants 1 mm","p":50}], IMG={1:"/calendrier/cases/01.jpg",2:"/calendrier/cases/02.jpg",3:"/calendrier/cases/03.jpg",4:"/calendrier/cases/04.jpg",5:"/calendrier/cases/05.jpg",6:"/calendrier/cases/06.jpg",7:"/calendrier/cases/07.jpg",8:"/calendrier/cases/08.jpg",9:"/calendrier/cases/09.jpg",10:"/calendrier/cases/10.jpg",11:"/calendrier/cases/11.jpg",12:"/calendrier/cases/12.jpg",13:"/calendrier/cases/13.jpg",14:"/calendrier/cases/14.jpg",15:"/calendrier/cases/15.jpg",16:"/calendrier/cases/16.jpg",17:"/calendrier/cases/17.jpg",18:"/calendrier/cases/18.jpg",19:"/calendrier/cases/19.jpg",20:"/calendrier/cases/20.jpg",21:"/calendrier/cases/21.jpg",22:"/calendrier/cases/22.jpg",23:"/calendrier/cases/23.jpg",24:"/calendrier/cases/24.jpg"}, ORDRE=["Acier découpé", "Polymère", "Aluminium", "Aluminium serti", "Aura", "Clip & Drop", "Nacre", "Acier"], pris={};
+var TAILLES=["taille inconnue","50","52","54","56","58","60","62","64","66","68","70","72"], taille=null;
 var zones=document.getElementById("zones"), liste=document.getElementById("liste");
 liste.innerHTML='<div class="lg"><span><i class="p or"></i>impairs · doré</span><span><i class="p glace"></i>pairs · bleu glacé</span></div>';
 ORDRE.forEach(function(m){
@@ -229,7 +241,8 @@ function maj(){
   document.getElementById("s").textContent=l.length>1?"s":"";
   document.getElementById("s2").textContent=l.length>1?"s":"";
   document.getElementById("total").textContent=l.length?(somme+50)+".–":"—";
-  document.getElementById("valider").disabled=l.length<4;
+  document.getElementById("valider").disabled = l.length<4 || !taille;
+  var zt=document.getElementById("tailles"); if(zt) zt.classList.toggle("manque", l.length>=4 && !taille);
   var r=document.getElementById("ronds"), h="";
   l.forEach(function(n){
     var c=CASES.find(function(y){return y.n===n;}), src=IMG[n];
@@ -260,7 +273,7 @@ document.getElementById("ronds").addEventListener("click",function(e){
 });
 document.getElementById("valider").onclick=function(){
   var r=maj(), p=document.getElementById("panier");
-  p.innerHTML='<b>Mon calendrier</b> · '+r.l.length+' cases<table class="rec">'
+  p.innerHTML='<b>Mon calendrier</b> · '+r.l.length+' cases · taille '+(taille==="taille inconnue"?"à définir ensemble":taille)+'<table class="rec">'
     +r.l.map(function(n){ var c=CASES.find(function(x){return x.n===n;});
       return '<tr><td>'+(n<10?"0":"")+n+'</td><td>'+c.t+'</td><td class="g">'+c.d+'</td><td class="px">'+c.p+'.–</td></tr>'; }).join('')
     +'<tr class="fr"><td></td><td colspan="2">Boîte et envoi</td><td class="px">50.–</td></tr>'
@@ -269,6 +282,20 @@ document.getElementById("valider").onclick=function(){
 }
 
 
+(function(){
+  var zt=document.getElementById("tailles");
+  TAILLES.forEach(function(t){
+    var b=document.createElement("button"); b.className="tb"; b.dataset.t=t; b.setAttribute("aria-pressed","false");
+    if(t==="taille inconnue"){ b.textContent="je ne la connais pas"; b.classList.add("inconnue"); } else b.textContent=t;
+    zt.appendChild(b);
+  });
+  zt.addEventListener("click",function(e){
+    var b=e.target.closest(".tb"); if(!b) return;
+    taille = (taille===b.dataset.t) ? null : b.dataset.t;
+    zt.querySelectorAll(".tb").forEach(function(x){ x.setAttribute("aria-pressed",(x.dataset.t===taille)?"true":"false"); });
+    maj();
+  });
+})();
 if(location.hash.indexOf("reperes")>=0) document.body.classList.add("reperes");
 maj();
 </script>
