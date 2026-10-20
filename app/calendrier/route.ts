@@ -24,11 +24,14 @@ h1 em{font-style:italic;color:#A8863A}
 .intro.pret{opacity:1}
 .intro.tourne{transform:translateY(-101%);transition:transform 1.35s cubic-bezier(.72,.02,.3,1)}
 .intro.parti{pointer-events:none}
-.bienvenue{margin:0;text-align:center;font-family:Playfair Display,serif;font-weight:400;
-  font-size:clamp(19px,3vw,34px);line-height:1.45;color:#1E3F60;
-  text-shadow:0 2px 16px rgba(255,255,255,.85),0 1px 3px rgba(255,255,255,.95);
-  opacity:0;transform:translateY(12px);transition:opacity 1.1s ease .5s,transform 1.1s ease .5s}
-.bienvenue em{font-style:italic;color:#B8912F}
+.bienvenue{margin:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;
+  background:rgba(255,255,255,.80);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  border:1px solid rgba(255,255,255,.9);border-radius:20px;padding:26px 44px 28px;
+  box-shadow:0 18px 50px rgba(22,48,76,.22);
+  opacity:0;transform:translateY(14px);transition:opacity 1.1s ease .45s,transform 1.1s ease .45s}
+.bienvenue span{font-family:Playfair Display,serif;font-weight:400;
+  font-size:clamp(20px,3.1vw,36px);line-height:1.35;color:#1B3A58;letter-spacing:.005em}
+.bienvenue img{width:clamp(130px,17vw,210px);height:auto;display:block}
 .intro.pret .bienvenue{opacity:1;transform:none}
 .intro.tourne .bienvenue{opacity:1}
 .maison{position:relative;margin:0 auto;width:min(100%,calc((100vh - 255px) * 1442 / 1091));aspect-ratio:1442/1091}
@@ -121,7 +124,10 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </style></head><body>
 
 <div class="intro" id="intro">
-  <p class="bienvenue">Bienvenue dans l'univers de Noël de <em>mood</em>…</p>
+  <div class="bienvenue">
+    <span>Bienvenue dans l'univers de Noël de</span>
+    <img src="/logo-mood.png" alt="mood">
+  </div>
 </div>
 <script>
 (function(){
