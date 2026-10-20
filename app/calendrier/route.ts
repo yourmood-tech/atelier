@@ -200,7 +200,7 @@ document.getElementById("valider").onclick=function(){
     +'<tr class="to"><td></td><td colspan="2">Total</td><td class="px">'+(r.somme+50)+'.–</td></tr></table>';
   p.style.display="block";
 }
-(function(){
+;(function(){
   var intro=document.getElementById("intro"); if(!intro) return;
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ intro.classList.add("pret"); }); });
   var parti=false;
