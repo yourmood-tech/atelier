@@ -33,23 +33,23 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(28px,4.6vw,54px);lin
 .colonne{min-width:0}
 .ctitre{text-align:center;font-family:var(--titre);font-size:clamp(20px,2.6vw,30px);margin:0 0 4px}
 .cnb{text-align:center;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--or);margin:0 0 10px}
-.piste{position:relative;height:clamp(300px,46vh,430px);overflow-y:auto;overflow-x:hidden;
+.piste{position:relative;height:clamp(360px,54vh,520px);overflow-y:auto;overflow-x:hidden;
   border:1px solid var(--ligne);border-radius:4px;background:rgba(0,0,0,.14);
-  scrollbar-width:thin;scroll-snap-type:y proximity}
+  display:grid;grid-template-columns:repeat(2,1fr);gap:4px;padding:4px;align-content:start;
+  scrollbar-width:thin}
+@media(min-width:1040px){.piste{grid-template-columns:repeat(3,1fr)}}
 .piste::-webkit-scrollbar{width:5px}
 .piste::-webkit-scrollbar-thumb{background:rgba(201,160,121,.4);border-radius:4px}
-.carte{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:center;width:100%;
-  background:none;border:0;border-bottom:1px solid rgba(243,236,229,.07);padding:10px 12px;
-  color:inherit;font:inherit;text-align:left;cursor:pointer;scroll-snap-align:start}
+.carte{display:block;width:100%;background:rgba(0,0,0,.18);border:1px solid transparent;
+  border-radius:3px;padding:0 0 9px;color:inherit;font:inherit;text-align:center;cursor:pointer}
 .carte:hover{background:rgba(201,160,121,.09)}
-.carte.on{background:rgba(201,160,121,.17)}
-.carte .ph{width:76px;height:76px;border-radius:3px;overflow:hidden;background:#fff}
+.carte.on{background:rgba(201,160,121,.2);border-color:var(--or)}
+.carte .ph{display:block;width:100%;aspect-ratio:1/1;border-radius:2px;overflow:hidden;background:#fff}
 .carte .ph img{width:100%;height:100%;object-fit:contain}
-.carte .n{display:block;font-size:13px;line-height:1.35}
-.carte>span:last-child{min-width:0}
+.carte .n{display:block;font-size:12.5px;line-height:1.3;padding:9px 8px 0}
 .carte .px{display:block;font-size:11px;color:var(--or);letter-spacing:.1em;margin-top:4px}
 .carte.on .n{color:#fff}
-.coche{display:inline-block;width:14px;height:14px;margin-right:7px;vertical-align:-2px;
+.coche{display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:-1px;
   border:1px solid var(--ligne);border-radius:50%}
 .carte.on .coche{background:var(--or);border-color:var(--or)}
 
@@ -133,8 +133,8 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(28px,4.6vw,54px);lin
       b.className='carte'; b.dataset.k=k; b.dataset.q=quel;
       var src=p.i+(p.i.indexOf('?')>-1?'&':'?')+'width=220';
       b.innerHTML='<span class="ph"><img loading="lazy" src="'+src+'" alt=""></span>'+
-        '<span><span class="n"><span class="coche"></span>'+p.t+'</span>'+
-        '<span class="px">'+Math.round(p.p)+'.–</span></span>';
+        '<span class="n"><span class="coche"></span>'+p.t+'</span>'+
+        '<span class="px">'+Math.round(p.p)+'.–</span>';
       el.appendChild(b);
     });
     el.addEventListener('click',function(e){
