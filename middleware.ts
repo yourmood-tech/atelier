@@ -67,6 +67,11 @@ export default auth((req) => {
     return;
   }
 
+  // /mix (offre 1 mini + 1 aura, -52%)
+  if (pathname === "/mix" || pathname.startsWith("/mix/")) {
+    return;
+  }
+
   // /yarrow (page joaillerie Yarrow)
   if (pathname === "/yarrow" || pathname.startsWith("/yarrow/")) {
     return;
