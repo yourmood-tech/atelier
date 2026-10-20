@@ -148,7 +148,6 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(40px,7vw,88px);line-
 
 <section class="bande">
   <img id="bandeimg" alt="">
-  <div class="mot2"><p>Aucune Yarrow ne ressemble tout à fait à une autre.</p></div>
 </section>
 
 <section class="detail">
