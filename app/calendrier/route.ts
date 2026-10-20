@@ -62,6 +62,20 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .bt[disabled]{opacity:.32;cursor:default}
 .panier{display:none;margin-top:10px;background:#fff;border:1px solid rgba(184,145,47,.35);border-radius:12px;padding:14px 18px;font-size:12px;line-height:1.8;color:#43637E}
 .panier b{font-family:Playfair Display,serif;font-weight:400;color:#2B4D6B}
+
+.tiroir{position:fixed;inset:0;background:rgba(20,38,56,.72);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
+.tiroir.on{display:flex}
+.boite{position:relative;background:#FAF8F4;border-radius:18px;max-width:520px;width:100%;padding:28px;text-align:center;
+  box-shadow:0 30px 80px rgba(16,34,52,.4)}
+.boite .jour{font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:#B8912F}
+.boite h3{font-family:Playfair Display,serif;font-weight:400;font-size:27px;margin:8px 0 0;color:#2B4D6B}
+.t-mat{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8DA3B5;margin-top:7px}
+.t-img{margin:20px auto 0;width:min(100%,320px);aspect-ratio:1/1;border-radius:12px;overflow:hidden;
+  background:#EEF3F7;display:flex;align-items:center;justify-content:center;color:#9DB0BF;font-size:11px;letter-spacing:.1em}
+.t-img img{width:100%;height:100%;object-fit:cover;display:block}
+.t-bt{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.bt.creux{background:none;color:#8DA3B5;border-color:rgba(46,83,117,.22)}
+.fermer{position:absolute;right:14px;top:8px;border:0;background:none;font-size:27px;color:#9DB0BF;cursor:pointer;line-height:1}
 .pied{text-align:center;padding:14px 18px 24px;font-size:10px;letter-spacing:.14em;color:#8DA3B5}
 </style></head><body>
 
@@ -82,6 +96,17 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <button class="bt" id="valider" disabled>Ajouter à mon calendrier</button>
   </div>
   <div class="panier" id="panier"></div>
+  <div class="tiroir" id="tiroir"><div class="boite">
+    <button class="fermer" id="fermer">×</button>
+    <div class="jour" id="t-jour"></div>
+    <h3 id="t-titre"></h3>
+    <div class="t-mat" id="t-mat"></div>
+    <div class="t-img" id="t-img"></div>
+    <div class="t-bt">
+      <button class="bt" id="t-prendre">Mettre dans mon panier de Noël</button>
+      <button class="bt creux" id="t-non">Non merci</button>
+    </div>
+  </div></div>
   <p class="pied">Maquette — les pièces ne sont pas encore définitives</p>
 </div>
 <script>
@@ -105,21 +130,34 @@ CASES.forEach(function(c){
   z.innerHTML='<span class="v">✓</span>';
   zones.appendChild(z);
 });
-function bascule(n){
-  if(pris[n]) delete pris[n]; else pris[n]=true;
+var ouverte=null;
+var tiroir=document.getElementById("tiroir");
+function ouvre(n){
+  var c=CASES.find(function(x){return x.n===n;}); if(!c) return;
+  ouverte=n;
+  document.getElementById("t-jour").textContent=n+" décembre";
+  document.getElementById("t-titre").textContent=c.t;
+  document.getElementById("t-mat").textContent=c.m;
+  var z=document.getElementById("t-img");
+  z.innerHTML = c.img ? '<img src="'+c.img+'" alt="">' : "photo à venir";
+  document.getElementById("t-prendre").textContent = pris[n] ? "Retirer de mon panier" : "Mettre dans mon panier de Noël";
+  tiroir.classList.add("on");
+}
+function marque(n){
   var z=zones.querySelector('[data-n="'+n+'"]'); if(z) z.classList.toggle("on",!!pris[n]);
   var li=liste.querySelector('li[data-n="'+n+'"]'); if(li) li.classList.toggle("on",!!pris[n]);
-  maj();
 }
-zones.addEventListener("click",function(e){ var z=e.target.closest(".z"); if(z) bascule(+z.dataset.n); });
-liste.addEventListener("click",function(e){ var li=e.target.closest("li[data-n]"); if(li) bascule(+li.dataset.n); });
-function maj(){
-  var n=Object.keys(pris).length;
-  document.getElementById("n").textContent=n;
-  document.getElementById("s").textContent=n>1?"s":"";
-  document.getElementById("s2").textContent=n>1?"s":"";
-  document.getElementById("valider").disabled = n<4;
-}
+document.getElementById("t-prendre").onclick=function(){
+  if(ouverte==null) return;
+  if(pris[ouverte]) delete pris[ouverte]; else pris[ouverte]=true;
+  marque(ouverte); maj(); tiroir.classList.remove("on");
+};
+document.getElementById("t-non").onclick=function(){ tiroir.classList.remove("on"); };
+document.getElementById("fermer").onclick=function(){ tiroir.classList.remove("on"); };
+tiroir.onclick=function(e){ if(e.target===tiroir) tiroir.classList.remove("on"); };
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") tiroir.classList.remove("on"); });
+zones.addEventListener("click",function(e){ var z=e.target.closest(".z"); if(z) ouvre(+z.dataset.n); });
+liste.addEventListener("click",function(e){ var li=e.target.closest("li[data-n]"); if(li) ouvre(+li.dataset.n); });
 document.getElementById("valider").onclick=function(){
   var l=Object.keys(pris).map(Number).sort(function(a,b){return a-b;});
   var p=document.getElementById("panier");
