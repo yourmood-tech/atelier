@@ -51,7 +51,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .z.ouvert .ph{opacity:1;transform:none}
 .z.pris .ph{box-shadow:inset 0 0 0 2.5px #E7C56A, inset 0 0 16px rgba(0,0,0,.5)}
 .z .porte{position:absolute;inset:0;border-radius:3px;background-repeat:no-repeat;
-  transform-origin:left center;
+  transform-origin:left center;backface-visibility:hidden;
   transition:transform .62s cubic-bezier(.34,.82,.36,1),box-shadow .62s}
 .z:hover .porte{filter:brightness(1.14)}
 .z.ouvert .porte{transform:rotateY(-104deg);box-shadow:7px 0 20px rgba(0,0,0,.4)}
