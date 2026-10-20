@@ -91,6 +91,18 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .grp li:hover{background:rgba(184,145,47,.10)}
 .grp li.on{background:rgba(184,145,47,.18);color:#2B4D6B}
 .grp li.on .t{font-weight:500}
+.choix{display:flex;align-items:center;gap:12px;min-width:0}
+.choix .bte{height:70px;width:auto;display:block;flex:none;filter:drop-shadow(0 6px 14px rgba(20,45,70,.18))}
+.ronds{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.rd{width:46px;height:46px;border-radius:50%;overflow:hidden;position:relative;flex:none;
+  background:#EDF2F7;border:2px solid rgba(184,145,47,.75);cursor:pointer;transition:transform .14s}
+.rd:hover{transform:translateY(-2px)}
+.rd img{width:100%;height:100%;object-fit:cover;display:block}
+.rd .j{position:absolute;left:0;right:0;bottom:0;background:rgba(20,38,56,.6);color:#fff;
+  font-size:8.5px;text-align:center;line-height:13px}
+.rd.att{display:flex;align-items:center;justify-content:center;font-size:9px;color:#9DB0BF;letter-spacing:.04em}
+.rd.vide{border:1.5px dashed rgba(46,83,117,.3);background:transparent;cursor:default}
+.rd.vide:hover{transform:none}
 .barre{position:sticky;bottom:0;margin-top:10px;background:rgba(255,255,255,.94);border-top:1px solid rgba(46,83,117,.12);
   padding:12px 18px;display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;border-radius:12px 12px 0 0}
 .cpt{font-family:Playfair Display,serif;font-size:17px;color:#2B4D6B}
@@ -146,6 +158,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <aside class="liste" id="liste"></aside>
   </div>
   <div class="barre" id="barre">
+    <div class="choix"><img class="bte" src="/calendrier/boite-mood.png" alt="La boîte du calendrier mood"><div class="ronds" id="ronds"></div></div>
     <span class="cpt"><b id="n">0</b> case<span id="s"></span> choisie<span id="s2"></span></span>
     <span class="mini">4 au minimum</span>
     <span class="cpt tot">Total <b id="total">—</b></span>
@@ -191,6 +204,15 @@ function maj(){
   document.getElementById("s2").textContent=l.length>1?"s":"";
   document.getElementById("total").textContent=l.length?(somme+50)+".–":"—";
   document.getElementById("valider").disabled=l.length<4;
+  var r=document.getElementById("ronds"), h="";
+  l.forEach(function(n){
+    var c=CASES.find(function(y){return y.n===n;}), src=IMG[n];
+    h+='<div class="rd'+(src?"":" att")+'" data-n="'+n+'" title="'+n+' décembre · '+c.t+'">'
+      +(src?'<img src="'+src+'" alt="">':(n<10?"0":"")+n)
+      +'<span class="j">'+(n<10?"0":"")+n+'</span></div>';
+  });
+  for(var k=l.length;k<4;k++) h+='<div class="rd vide"></div>';
+  r.innerHTML=h;
   return {l:l,somme:somme};
 }
 function marque(n){
@@ -206,6 +228,10 @@ function clic(n,deLaListe){
 }
 zones.addEventListener("click",function(e){ var z=e.target.closest(".z"); if(z) clic(+z.dataset.n,false); });
 liste.addEventListener("click",function(e){ var li=e.target.closest("li[data-n]"); if(li) clic(+li.dataset.n,true); });
+document.getElementById("ronds").addEventListener("click",function(e){
+  var r=e.target.closest(".rd[data-n]"); if(!r) return;
+  var n=+r.dataset.n; delete pris[n]; marque(n); maj();
+});
 document.getElementById("valider").onclick=function(){
   var r=maj(), p=document.getElementById("panier");
   p.innerHTML='<b>Mon calendrier</b> · '+r.l.length+' cases<table class="rec">'
