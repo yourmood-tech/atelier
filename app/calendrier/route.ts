@@ -56,9 +56,19 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .z:hover .porte{filter:brightness(1.14)}
 .z.ouvert .porte{transform:rotateY(-104deg);box-shadow:7px 0 20px rgba(0,0,0,.4)}
 .z.ouvert{z-index:5}
+.z .att{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:3px;
+  font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.z .pr{position:absolute;left:0;right:0;bottom:0;padding:9px 0 3px;text-align:center;
+  font-size:9px;letter-spacing:.05em;color:#fff;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.62))}
 .z .v{position:absolute;right:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#E7C56A;color:#2B4D6B;
   font-size:10px;display:none;align-items:center;justify-content:center;z-index:3}
 .z.pris .v{display:flex}
+.grp li{display:flex;align-items:baseline;gap:7px}
+.grp li .t{flex:1}
+.grp li .px{font-size:10.5px;color:#9DB0BF;white-space:nowrap}
+.grp li.on .px{color:#A8863A}
+.tot{margin-left:2px}
+.tot b{font-family:Playfair Display,serif;color:#A8863A;font-weight:400}
 .grp li{cursor:pointer;border-radius:6px;padding:2.5px 6px;margin-left:-6px;transition:.14s}
 .grp li:hover{background:rgba(184,145,47,.10)}
 .grp li.on{background:rgba(184,145,47,.18);color:#2B4D6B}
@@ -73,6 +83,13 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .bt[disabled]{opacity:.32;cursor:default}
 .panier{display:none;margin-top:10px;background:#fff;border:1px solid rgba(184,145,47,.35);border-radius:12px;padding:14px 18px;font-size:12px;line-height:1.8;color:#43637E}
 .panier b{font-family:Playfair Display,serif;font-weight:400;color:#2B4D6B}
+.rec{width:100%;border-collapse:collapse;margin-top:9px;font-size:11.5px}
+.rec td{padding:4px 6px;border-bottom:1px solid rgba(46,83,117,.08);vertical-align:baseline}
+.rec td.g{color:#9DB0BF;font-size:10.5px}
+.rec td.px{text-align:right;white-space:nowrap;color:#43637E}
+.rec tr.fr td{color:#8DA3B5}
+.rec tr.to td{font-family:Playfair Display,serif;font-size:14px;color:#2B4D6B;border-bottom:0;padding-top:8px}
+.rec tr.to td.px{color:#A8863A}
 
 .pied{text-align:center;padding:14px 18px 24px;font-size:10px;letter-spacing:.14em;color:#8DA3B5}
 </style></head><body>
@@ -91,13 +108,15 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   <div class="barre" id="barre">
     <span class="cpt"><b id="n">0</b> case<span id="s"></span> choisie<span id="s2"></span></span>
     <span class="mini">4 au minimum</span>
+    <span class="cpt tot">Total <b id="total">—</b></span>
+    <span class="mini">boîte et envoi 50.– compris</span>
     <button class="bt" id="valider" disabled>Ajouter à mon calendrier</button>
   </div>
   <div class="panier" id="panier"></div>
   <p class="pied">Maquette — les pièces ne sont pas encore définitives</p>
 </div>
 <script>
-var CASES=[{"n": 1, "t": "Les douceurs", "m": "Acier découpé", "z": [22.8, 21.5, 37.8, 31.8]}, {"n": 2, "t": "Rencontrent le givre", "m": "Polymère", "z": [38.3, 21.5, 53.3, 31.8]}, {"n": 3, "t": "Le rouge apparaît", "m": "Aluminium", "z": [53.8, 21.5, 69.8, 31.8]}, {"n": 4, "t": "Avec la neige", "m": "Polymère", "z": [70.3, 21.5, 86.4, 31.8]}, {"n": 5, "t": "Noël s'éveille", "m": "Polymère", "z": [13.5, 32.5, 34.6, 42.8]}, {"n": 6, "t": "Vêtu de bleu", "m": "Clip & Drop", "z": [35.1, 32.5, 46.6, 42.8]}, {"n": 7, "t": "Une lueur", "m": "Nacre", "z": [47.0, 32.5, 65.4, 42.8]}, {"n": 8, "t": "Brille doucement", "m": "Acier découpé", "z": [65.9, 32.5, 86.4, 42.8]}, {"n": 9, "t": "Le ciel s'embrase", "m": "Polymère", "z": [13.5, 43.8, 27.0, 58.2]}, {"n": 10, "t": "Sur les Alpes", "m": "Polymère", "z": [27.5, 43.8, 47.4, 54.3]}, {"n": 11, "t": "Une lumière", "m": "Clip & Drop", "z": [47.9, 43.8, 68.1, 54.3]}, {"n": 12, "t": "Perce la nuit", "m": "Aluminium", "z": [68.5, 43.8, 86.4, 54.3]}, {"n": 13, "t": "Sous le sapin", "m": "Polymère", "z": [13.5, 59.5, 27.2, 66.5]}, {"n": 14, "t": "La glace scintille", "m": "Aura", "z": [27.6, 55.3, 49.8, 66.3]}, {"n": 15, "t": "Les cerfs avancent", "m": "Aluminium", "z": [50.2, 55.3, 65.2, 66.3]}, {"n": 16, "t": "Sous les étoiles", "m": "Aluminium", "z": [65.6, 55.3, 86.4, 66.3]}, {"n": 17, "t": "Un éclat", "m": "Clip & Drop", "z": [13.5, 67.5, 38.3, 77.3]}, {"n": 18, "t": "Traverse la forêt", "m": "Acier", "z": [38.7, 67.5, 50.0, 77.3]}, {"n": 19, "t": "Les flocons dansent", "m": "Aluminium serti", "z": [50.4, 67.5, 64.4, 77.3]}, {"n": 20, "t": "Dans le bleu", "m": "Nacre", "z": [64.8, 67.5, 86.4, 77.3]}, {"n": 21, "t": "Noël scintille", "m": "Acier", "z": [13.5, 78.2, 30.3, 88.3]}, {"n": 22, "t": "Une dernière fois", "m": "Clip & Drop", "z": [30.7, 78.2, 49.8, 88.3]}, {"n": 23, "t": "La magie commence", "m": "Aura", "z": [50.2, 78.2, 65.5, 88.3]}, {"n": 24, "t": "À minuit", "m": "Aluminium serti", "z": [65.9, 78.2, 86.4, 88.3]}], IMG={1:"/calendrier/cases/01.jpg",2:"/calendrier/cases/02.jpg",16:"/calendrier/cases/16.jpg",18:"/calendrier/cases/18.jpg",20:"/calendrier/cases/20.jpg",24:"/calendrier/cases/24.jpg"}, ORDRE=["Acier découpé", "Polymère", "Aluminium", "Aluminium serti", "Aura", "Clip & Drop", "Nacre", "Acier"], pris={};
+var CASES=[{"n":1,"t":"Les douceurs","m":"Acier découpé","z":[22.8,21.5,37.8,31.8],"d":"Acier découpé deux tiers","p":60},{"n":2,"t":"Rencontrent le givre","m":"Polymère","z":[38.3,21.5,53.3,31.8],"d":"Polymère, 6 mediums","p":55},{"n":3,"t":"Le rouge apparaît","m":"Aluminium","z":[53.8,21.5,69.8,31.8],"d":"Aluminium deux tiers","p":30},{"n":4,"t":"Avec la neige","m":"Polymère","z":[70.3,21.5,86.4,31.8],"d":"Polymère deux tiers","p":10},{"n":5,"t":"Noël s'éveille","m":"Polymère","z":[13.5,32.5,34.6,42.8],"d":"Polymère deux tiers","p":10},{"n":6,"t":"Vêtu de bleu","m":"Clip & Drop","z":[35.1,32.5,46.6,42.8],"d":"Clip","p":35},{"n":7,"t":"Une lueur","m":"Nacre","z":[47,32.5,65.4,42.8],"d":"Nacre deux tiers","p":70},{"n":8,"t":"Brille doucement","m":"Acier découpé","z":[65.9,32.5,86.4,42.8],"d":"Acier découpé deux tiers","p":60},{"n":9,"t":"Le ciel s'embrase","m":"Polymère","z":[13.5,43.8,27,58.2],"d":"Polymère, 6 mediums","p":55},{"n":10,"t":"Sur les Alpes","m":"Polymère","z":[27.5,43.8,47.4,54.3],"d":"Polymère deux tiers","p":10},{"n":11,"t":"Une lumière","m":"Clip & Drop","z":[47.9,43.8,68.1,54.3],"d":"Drop","p":60},{"n":12,"t":"Perce la nuit","m":"Aluminium","z":[68.5,43.8,86.4,54.3],"d":"Aluminium deux tiers","p":30},{"n":13,"t":"Sous le sapin","m":"Polymère","z":[13.5,59.5,27.2,66.5],"d":"Polymère deux tiers","p":10},{"n":14,"t":"La glace scintille","m":"Aura","z":[27.6,55.3,49.8,66.3],"d":"Aura medium","p":85},{"n":15,"t":"Les cerfs avancent","m":"Aluminium","z":[50.2,55.3,65.2,66.3],"d":"Aluminium deux tiers","p":30},{"n":16,"t":"Sous les étoiles","m":"Aluminium","z":[65.6,55.3,86.4,66.3],"d":"Aluminium deux tiers","p":30},{"n":17,"t":"Un éclat","m":"Clip & Drop","z":[13.5,67.5,38.3,77.3],"d":"Clip","p":35},{"n":18,"t":"Traverse la forêt","m":"Acier","z":[38.7,67.5,50,77.3],"d":"Acier deux tiers","p":50},{"n":19,"t":"Les flocons dansent","m":"Aluminium serti","z":[50.4,67.5,64.4,77.3],"d":"Aluminium deux tiers serti 4 diamants 1 mm","p":50},{"n":20,"t":"Dans le bleu","m":"Nacre","z":[64.8,67.5,86.4,77.3],"d":"Nacre deux tiers","p":70},{"n":21,"t":"Noël scintille","m":"Acier","z":[13.5,78.2,30.3,88.3],"d":"Acier deux tiers","p":50},{"n":22,"t":"Une dernière fois","m":"Clip & Drop","z":[30.7,78.2,49.8,88.3],"d":"Drop","p":60},{"n":23,"t":"La magie commence","m":"Aura","z":[50.2,78.2,65.5,88.3],"d":"Aura medium","p":85},{"n":24,"t":"À minuit","m":"Aluminium serti","z":[65.9,78.2,86.4,88.3],"d":"Aluminium deux tiers serti 4 diamants 1 mm","p":50}], IMG={1:"/calendrier/cases/01.jpg",2:"/calendrier/cases/02.jpg",16:"/calendrier/cases/16.jpg",18:"/calendrier/cases/18.jpg",20:"/calendrier/cases/20.jpg",24:"/calendrier/cases/24.jpg"}, ORDRE=["Acier découpé", "Polymère", "Aluminium", "Aluminium serti", "Aura", "Clip & Drop", "Nacre", "Acier"], pris={};
 var zones=document.getElementById("zones"), liste=document.getElementById("liste");
 liste.innerHTML='<div class="lg"><span><i class="p or"></i>impairs · doré</span><span><i class="p glace"></i>pairs · bleu glacé</span></div>';
 ORDRE.forEach(function(m){
@@ -105,7 +124,7 @@ ORDRE.forEach(function(m){
   if(!l.length) return;
   var sec=document.createElement("section"); sec.className="grp";
   sec.innerHTML='<h3>'+m+'</h3><ul>'+l.map(function(c){
-    return '<li data-n="'+c.n+'"><span class="n '+(c.n%2?'or':'glace')+'">'+(c.n<10?'0':'')+c.n+'</span><span class="t">'+c.t+'</span></li>';
+    return '<li data-n="'+c.n+'"><span class="n '+(c.n%2?"or":"glace")+'">'+(c.n<10?"0":"")+c.n+'</span><span class="t">'+c.t+'</span><span class="px">'+c.p+'.–</span></li>';
   }).join('')+'</ul>';
   liste.appendChild(sec);
 });
@@ -118,11 +137,21 @@ CASES.forEach(function(c){
   var bp=(c.z[0]/(100-w)*100).toFixed(2)+"% "+(c.z[1]/(100-h)*100).toFixed(2)+"%";
   var src=IMG[c.n];
   var ph='<div class="ph"'+(src?' style="background-image:url('+src+')"':"")+'>'
-    +(src?"":"photo à venir")+'<span class="v">✓</span></div>';
-  var porte='<div class="porte" style="background-image:url(/calendrier/maison.jpg);background-size:'+bs+';background-position:'+bp+'"></div>';
+    +(src?"":'<span class="att">photo à venir</span>')
+    +'<span class="pr">'+c.p+'.–</span><span class="v">✓</span></div>';
   z.innerHTML=ph+porte;
   zones.appendChild(z);
 });
+function maj(){
+  var l=Object.keys(pris).map(Number).sort(function(a,b){return a-b;});
+  var somme=l.reduce(function(t,x){ var c=CASES.find(function(y){return y.n===x;}); return t+(c?c.p:0); },0);
+  document.getElementById("n").textContent=l.length;
+  document.getElementById("s").textContent=l.length>1?"s":"";
+  document.getElementById("s2").textContent=l.length>1?"s":"";
+  document.getElementById("total").textContent=l.length?(somme+50)+".–":"—";
+  document.getElementById("valider").disabled=l.length<4;
+  return {l:l,somme:somme};
+}
 function marque(n){
   var z=zones.querySelector('[data-n="'+n+'"]'); if(z) z.classList.toggle("pris",!!pris[n]);
   var li=liste.querySelector('li[data-n="'+n+'"]'); if(li) li.classList.toggle("on",!!pris[n]);
@@ -137,10 +166,12 @@ function clic(n,deLaListe){
 zones.addEventListener("click",function(e){ var z=e.target.closest(".z"); if(z) clic(+z.dataset.n,false); });
 liste.addEventListener("click",function(e){ var li=e.target.closest("li[data-n]"); if(li) clic(+li.dataset.n,true); });
 document.getElementById("valider").onclick=function(){
-  var l=Object.keys(pris).map(Number).sort(function(a,b){return a-b;});
-  var p=document.getElementById("panier");
-  p.innerHTML='<b>Mon calendrier</b> · '+l.length+' cases : '+l.map(function(n){
-    var c=CASES.find(function(x){return x.n===n;}); return n+" "+c.t; }).join(" · ");
+  var r=maj(), p=document.getElementById("panier");
+  p.innerHTML='<b>Mon calendrier</b> · '+r.l.length+' cases<table class="rec">'
+    +r.l.map(function(n){ var c=CASES.find(function(x){return x.n===n;});
+      return '<tr><td>'+(n<10?"0":"")+n+'</td><td>'+c.t+'</td><td class="g">'+c.d+'</td><td class="px">'+c.p+'.–</td></tr>'; }).join('')
+    +'<tr class="fr"><td></td><td colspan="2">Boîte et envoi</td><td class="px">50.–</td></tr>'
+    +'<tr class="to"><td></td><td colspan="2">Total</td><td class="px">'+(r.somme+50)+'.–</td></tr></table>';
   p.style.display="block";
 }
 if(location.hash.indexOf("reperes")>=0) document.body.classList.add("reperes");
