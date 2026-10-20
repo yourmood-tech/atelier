@@ -21,7 +21,7 @@ h1 em{font-style:italic;color:#A8863A}
   background:radial-gradient(120% 90% at 50% 40%,#2F5B85 0%,#1B3A58 55%,#12273D 100%);
   perspective:1700px;transition:opacity .55s ease}
 .intro.parti{opacity:0;pointer-events:none}
-.carte{position:relative;width:min(46vh,310px);aspect-ratio:760/992;transform-style:preserve-3d;transform-origin:left center;
+.carte{position:relative;width:min(62vh,420px);aspect-ratio:760/992;transform-style:preserve-3d;transform-origin:left center;
   opacity:0;transform:translateY(20px) scale(.955);transition:opacity .95s ease,transform .95s cubic-bezier(.2,.7,.3,1)}
 .intro.pret .carte{opacity:1;transform:none}
 .intro.tourne .carte{transition:transform 1.2s cubic-bezier(.55,.03,.3,1);transform:rotateY(-132deg)}
