@@ -41,13 +41,24 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 
 .maison{position:relative}
 .zones{position:absolute;inset:0}
-.z{position:absolute;border:2.5px solid transparent;border-radius:4px;cursor:pointer;transition:.14s;background:transparent}
-.reperes .z{border-color:rgba(255,0,0,.95)}
-.z:hover{border-color:rgba(184,145,47,.75);background:rgba(255,255,255,.14)}
-.z.on{border-color:#B8912F;background:rgba(184,145,47,.26);box-shadow:0 0 0 2px rgba(255,255,255,.55) inset}
-.z .v{position:absolute;right:4px;top:4px;width:17px;height:17px;border-radius:50%;background:#B8912F;color:#fff;
-  font-size:11px;display:none;align-items:center;justify-content:center}
-.z.on .v{display:flex}
+.z{position:absolute;cursor:pointer;perspective:700px}
+.reperes .z{outline:1.5px solid rgba(255,0,0,.9)}
+.z .ph{position:absolute;inset:0;border-radius:3px;background-size:cover;background-position:center;background-color:#16293B;
+  opacity:0;transform:scale(.86);transition:opacity .3s .26s,transform .45s .26s;
+  box-shadow:inset 0 0 16px rgba(0,0,0,.5);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:3px}
+.z.ouvert .ph{opacity:1;transform:none}
+.z.pris .ph{box-shadow:inset 0 0 0 2.5px #E7C56A, inset 0 0 16px rgba(0,0,0,.5)}
+.z .porte{position:absolute;inset:0;border-radius:3px;background-repeat:no-repeat;
+  transform-origin:left center;
+  transition:transform .62s cubic-bezier(.34,.82,.36,1),box-shadow .62s}
+.z:hover .porte{filter:brightness(1.14)}
+.z.ouvert .porte{transform:rotateY(-104deg);box-shadow:7px 0 20px rgba(0,0,0,.4)}
+.z.ouvert{z-index:5}
+.z .v{position:absolute;right:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#E7C56A;color:#2B4D6B;
+  font-size:10px;display:none;align-items:center;justify-content:center;z-index:3}
+.z.pris .v{display:flex}
 .grp li{cursor:pointer;border-radius:6px;padding:2.5px 6px;margin-left:-6px;transition:.14s}
 .grp li:hover{background:rgba(184,145,47,.10)}
 .grp li.on{background:rgba(184,145,47,.18);color:#2B4D6B}
@@ -63,20 +74,6 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .panier{display:none;margin-top:10px;background:#fff;border:1px solid rgba(184,145,47,.35);border-radius:12px;padding:14px 18px;font-size:12px;line-height:1.8;color:#43637E}
 .panier b{font-family:Playfair Display,serif;font-weight:400;color:#2B4D6B}
 
-.tiroir{position:fixed;inset:0;background:rgba(20,38,56,.72);display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
-.tiroir.on{display:flex}
-.boite{position:relative;background:#FAF8F4;border-radius:18px;max-width:520px;width:100%;padding:28px;text-align:center;
-  box-shadow:0 30px 80px rgba(16,34,52,.4)}
-.boite .jour{font-size:9.5px;letter-spacing:.34em;text-transform:uppercase;color:#B8912F}
-.boite h3{font-family:Playfair Display,serif;font-weight:400;font-size:27px;margin:8px 0 0;color:#2B4D6B}
-.t-mat{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8DA3B5;margin-top:7px}
-.t-img{margin:20px auto 0;width:min(100%,360px);aspect-ratio:3/2;border-radius:12px;overflow:hidden;
-  background:#EEF3F7;display:flex;align-items:center;justify-content:center;color:#9DB0BF;font-size:11px;letter-spacing:.1em}
-.t-img img{width:100%;height:100%;object-fit:cover;display:block}
-.t-img.vide{background:#EEF3F7}
-.t-bt{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
-.bt.creux{background:none;color:#8DA3B5;border-color:rgba(46,83,117,.22)}
-.fermer{position:absolute;right:14px;top:8px;border:0;background:none;font-size:27px;color:#9DB0BF;cursor:pointer;line-height:1}
 .pied{text-align:center;padding:14px 18px 24px;font-size:10px;letter-spacing:.14em;color:#8DA3B5}
 </style></head><body>
 
@@ -97,17 +94,6 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <button class="bt" id="valider" disabled>Ajouter à mon calendrier</button>
   </div>
   <div class="panier" id="panier"></div>
-  <div class="tiroir" id="tiroir"><div class="boite">
-    <button class="fermer" id="fermer">×</button>
-    <div class="jour" id="t-jour"></div>
-    <h3 id="t-titre"></h3>
-    <div class="t-mat" id="t-mat"></div>
-    <div class="t-img" id="t-img"></div>
-    <div class="t-bt">
-      <button class="bt" id="t-prendre">Mettre dans mon panier de Noël</button>
-      <button class="bt creux" id="t-non">Non merci</button>
-    </div>
-  </div></div>
   <p class="pied">Maquette — les pièces ne sont pas encore définitives</p>
 </div>
 <script>
@@ -124,43 +110,32 @@ ORDRE.forEach(function(m){
   liste.appendChild(sec);
 });
 CASES.forEach(function(c){
+  var w=c.z[2]-c.z[0], h=c.z[3]-c.z[1];
   var z=document.createElement("div"); z.className="z"; z.dataset.n=c.n;
-  z.style.left=c.z[0]+"%"; z.style.top=c.z[1]+"%";
-  z.style.width=(c.z[2]-c.z[0])+"%"; z.style.height=(c.z[3]-c.z[1])+"%";
+  z.style.left=c.z[0]+"%"; z.style.top=c.z[1]+"%"; z.style.width=w+"%"; z.style.height=h+"%";
   z.title=c.n+" · "+c.t;
-  z.innerHTML='<span class="v">✓</span>';
+  var bs=(10000/w).toFixed(1)+"% "+(10000/h).toFixed(1)+"%";
+  var bp=(c.z[0]/(100-w)*100).toFixed(2)+"% "+(c.z[1]/(100-h)*100).toFixed(2)+"%";
+  var src=IMG[c.n];
+  var ph='<div class="ph"'+(src?' style="background-image:url('+src+')"':"")+'>'
+    +(src?"":"photo à venir")+'<span class="v">✓</span></div>';
+  var porte='<div class="porte" style="background-image:url(/calendrier/maison.jpg);background-size:'+bs+';background-position:'+bp+'"></div>';
+  z.innerHTML=ph+porte;
   zones.appendChild(z);
 });
-var ouverte=null;
-var tiroir=document.getElementById("tiroir");
-function ouvre(n){
-  var c=CASES.find(function(x){return x.n===n;}); if(!c) return;
-  ouverte=n;
-  document.getElementById("t-jour").textContent=n+" décembre";
-  document.getElementById("t-titre").textContent=c.t;
-  document.getElementById("t-mat").textContent=c.m;
-  var z=document.getElementById("t-img");
-  var src=IMG[n];
-  z.className="t-img"+(src?"":" vide");
-  z.innerHTML = src ? '<img src="'+src+'" alt="">' : "photo à venir";
-  document.getElementById("t-prendre").textContent = pris[n] ? "Retirer de mon panier" : "Mettre dans mon panier de Noël";
-  tiroir.classList.add("on");
-}
 function marque(n){
-  var z=zones.querySelector('[data-n="'+n+'"]'); if(z) z.classList.toggle("on",!!pris[n]);
+  var z=zones.querySelector('[data-n="'+n+'"]'); if(z) z.classList.toggle("pris",!!pris[n]);
   var li=liste.querySelector('li[data-n="'+n+'"]'); if(li) li.classList.toggle("on",!!pris[n]);
 }
-document.getElementById("t-prendre").onclick=function(){
-  if(ouverte==null) return;
-  if(pris[ouverte]) delete pris[ouverte]; else pris[ouverte]=true;
-  marque(ouverte); maj(); tiroir.classList.remove("on");
-};
-document.getElementById("t-non").onclick=function(){ tiroir.classList.remove("on"); };
-document.getElementById("fermer").onclick=function(){ tiroir.classList.remove("on"); };
-tiroir.onclick=function(e){ if(e.target===tiroir) tiroir.classList.remove("on"); };
-document.addEventListener("keydown",function(e){ if(e.key==="Escape") tiroir.classList.remove("on"); });
-zones.addEventListener("click",function(e){ var z=e.target.closest(".z"); if(z) ouvre(+z.dataset.n); });
-liste.addEventListener("click",function(e){ var li=e.target.closest("li[data-n]"); if(li) ouvre(+li.dataset.n); });
+function clic(n,deLaListe){
+  var z=zones.querySelector('[data-n="'+n+'"]'); if(!z) return;
+  if(deLaListe) z.scrollIntoView({behavior:"smooth",block:"center"});
+  if(!z.classList.contains("ouvert")){ z.classList.add("ouvert"); return; }
+  if(pris[n]) delete pris[n]; else pris[n]=true;
+  marque(n); maj();
+}
+zones.addEventListener("click",function(e){ var z=e.target.closest(".z"); if(z) clic(+z.dataset.n,false); });
+liste.addEventListener("click",function(e){ var li=e.target.closest("li[data-n]"); if(li) clic(+li.dataset.n,true); });
 document.getElementById("valider").onclick=function(){
   var l=Object.keys(pris).map(Number).sort(function(a,b){return a-b;});
   var p=document.getElementById("panier");
