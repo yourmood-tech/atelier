@@ -17,23 +17,19 @@ header{text-align:center;padding:26px 18px 4px}
 h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(26px,3.4vw,40px);margin:9px 0 0;line-height:1.1;color:#2B4D6B}
 h1 em{font-style:italic;color:#A8863A}
 .sous{max-width:52ch;margin:10px auto 0;font-size:12px;line-height:1.7;color:#52728C}
-.intro{position:fixed;inset:0;z-index:100;will-change:transform;box-shadow:0 26px 60px rgba(8,22,38,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;
-  background:radial-gradient(120% 90% at 50% 40%,#2F5B85 0%,#1B3A58 55%,#12273D 100%);
-  perspective:1700px;transition:opacity .55s ease}
+.intro{position:fixed;inset:0;z-index:100;will-change:transform;box-shadow:0 26px 60px rgba(8,22,38,.55);
+  display:flex;align-items:flex-end;justify-content:center;padding:0 24px 7vh;
+  background:#DCE7F0 url(/calendrier/cerf-plein.jpg) center/cover no-repeat;
+  opacity:0;transition:opacity .8s ease}
+.intro.pret{opacity:1}
 .intro.tourne{transform:translateY(-101%);transition:transform 1.35s cubic-bezier(.72,.02,.3,1)}
 .intro.parti{pointer-events:none}
-.carte{position:relative;width:min(62vh,420px);aspect-ratio:760/992;transform-style:preserve-3d;transform-origin:left center;
-  opacity:0;transform:translateY(20px) scale(.955);transition:opacity .95s ease,transform .95s cubic-bezier(.2,.7,.3,1)}
-.intro.pret .carte{opacity:1;transform:none}
-.carte .f{position:absolute;inset:0;border-radius:5px;overflow:hidden;backface-visibility:hidden;
-  box-shadow:0 34px 78px rgba(6,20,36,.6)}
-.carte .f img{width:100%;height:100%;display:block}
-.carte .dos{transform:rotateY(180deg);background:#F3EBDB;
-  background-image:linear-gradient(135deg,rgba(184,145,47,.10) 0%,rgba(184,145,47,0) 55%)}
-.bienvenue{margin:0;text-align:center;padding:0 22px;font-family:Playfair Display,serif;font-weight:400;
-  font-size:clamp(17px,2.5vw,27px);line-height:1.5;color:#F4EADA;opacity:0;transition:opacity 1s ease .55s}
-.bienvenue em{font-style:italic;color:#E7C56A}
-.intro.pret .bienvenue{opacity:1}
+.bienvenue{margin:0;text-align:center;font-family:Playfair Display,serif;font-weight:400;
+  font-size:clamp(19px,3vw,34px);line-height:1.45;color:#1E3F60;
+  text-shadow:0 2px 16px rgba(255,255,255,.85),0 1px 3px rgba(255,255,255,.95);
+  opacity:0;transform:translateY(12px);transition:opacity 1.1s ease .5s,transform 1.1s ease .5s}
+.bienvenue em{font-style:italic;color:#B8912F}
+.intro.pret .bienvenue{opacity:1;transform:none}
 .intro.tourne .bienvenue{opacity:1}
 .maison{position:relative;margin:0 auto;width:min(100%,calc((100vh - 255px) * 1442 / 1091));aspect-ratio:1442/1091}
 .maison img{width:100%;height:100%;display:block;object-fit:fill}
@@ -125,9 +121,6 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </style></head><body>
 
 <div class="intro" id="intro">
-  <div class="carte" id="carte">
-    <div class="f"><img src="/calendrier/carte-cerf.jpg" alt="Carte de Noël mood"></div>
-  </div>
   <p class="bienvenue">Bienvenue dans l'univers de Noël de <em>mood</em>…</p>
 </div>
 <script>
