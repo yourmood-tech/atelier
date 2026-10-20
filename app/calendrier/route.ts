@@ -17,6 +17,16 @@ header{text-align:center;padding:26px 18px 4px}
 h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(26px,3.4vw,40px);margin:9px 0 0;line-height:1.1;color:#2B4D6B}
 h1 em{font-style:italic;color:#A8863A}
 .sous{max-width:52ch;margin:10px auto 0;font-size:12px;line-height:1.7;color:#52728C}
+.magie{position:fixed;inset:0;z-index:101;pointer-events:none;overflow:hidden}
+.pa{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF6DC 0%,#F0D38A 45%,#C9A33F 100%);
+  box-shadow:0 0 7px rgba(235,200,120,.95),0 0 16px rgba(220,180,90,.55);
+  opacity:0;animation:etincelle var(--d) cubic-bezier(.25,.6,.35,1) var(--r) forwards}
+@keyframes etincelle{
+  0%{opacity:0;transform:translate3d(0,0,0) scale(.3)}
+  12%{opacity:1;transform:translate3d(0,-6vh,0) scale(1)}
+  70%{opacity:.95}
+  100%{opacity:0;transform:translate3d(var(--dx),var(--dy),0) scale(.35)}
+}
 .intro{position:fixed;inset:0;z-index:100;will-change:transform;box-shadow:0 26px 60px rgba(8,22,38,.55);
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6vh 24px 8vh;
   background:#DCE7F0 url(/calendrier/cerf-plein.jpg) center/cover no-repeat;
@@ -138,8 +148,25 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   function tourner(){
     if(parti) return; parti=true;
     intro.classList.add("tourne");
+    paillettes();
     setTimeout(function(){ intro.classList.add("parti"); },1350);
     setTimeout(function(){ if(intro.parentNode) intro.parentNode.removeChild(intro); },1600);
+  }
+  function paillettes(){
+    var l=document.createElement("div"); l.className="magie"; document.body.appendChild(l);
+    var n=window.innerWidth<700?55:95, h="";
+    for(var i=0;i<n;i++){
+      var t=2.5+Math.random()*7;                       // taille
+      h+='<i class="pa" style="left:'+(Math.random()*100).toFixed(1)+'%;'
+        +'top:'+(45+Math.random()*58).toFixed(1)+'%;'
+        +'width:'+t.toFixed(1)+'px;height:'+t.toFixed(1)+'px;'
+        +'--dx:'+(Math.random()*40-20).toFixed(0)+'px;'
+        +'--dy:-'+(55+Math.random()*70).toFixed(0)+'vh;'
+        +'--d:'+(1.3+Math.random()*1.4).toFixed(2)+'s;'
+        +'--r:'+(Math.random()*.75).toFixed(2)+'s"></i>';
+    }
+    l.innerHTML=h;
+    setTimeout(function(){ if(l.parentNode) l.parentNode.removeChild(l); },3400);
   }
   var minuteur=setTimeout(tourner,3000);
   intro.addEventListener("click",function(){ clearTimeout(minuteur); tourner(); });
