@@ -201,8 +201,8 @@ function maj(){
   l.forEach(function(n){
     var c=CASES.find(function(y){return y.n===n;}), src=IMG[n];
     h+='<div class="rd'+(src?"":" att")+'" data-n="'+n+'" title="'+n+' décembre · '+c.t+'">'
-      +(src?'<img src="'+src+'" alt="">':(n<10?"0":"")+n)
-      +'<span class="j">'+(n<10?"0":"")+n+'</span></div>';
+      +(src?'<img src="'+src+'" alt=""><span class="j">'+(n<10?"0":"")+n+'</span>':(n<10?"0":"")+n)
+      +'</div>';
   });
   for(var k=l.length;k<4;k++) h+='<div class="rd vide"></div>';
   r.innerHTML=h;
