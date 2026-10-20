@@ -19,6 +19,24 @@ h1 em{font-style:italic;color:#A8863A}
 .sous{max-width:44ch;margin:16px auto 0;font-size:13.5px;line-height:1.9;color:#52728C}
 .maison{position:relative;margin:34px auto 0;max-width:900px}
 .maison img{width:100%;height:auto;display:block}
+
+.duo{display:grid;grid-template-columns:1.15fr .85fr;gap:38px;align-items:start;margin-top:30px}
+@media(max-width:900px){.duo{grid-template-columns:1fr;gap:26px}}
+.liste{background:#fff;border:1px solid rgba(46,83,117,.10);border-radius:14px;padding:22px 24px;box-shadow:0 14px 40px rgba(46,83,117,.08)}
+.lg{display:flex;gap:18px;flex-wrap:wrap;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#8DA3B5;
+  padding-bottom:14px;border-bottom:1px solid rgba(46,83,117,.10);margin-bottom:6px}
+.lg span{display:flex;align-items:center;gap:7px}
+i.p{width:9px;height:9px;border-radius:50%;display:inline-block}
+i.or,.n.or{background:linear-gradient(145deg,#E6CB92,#B8912F)}
+i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
+.grp{margin-top:16px}
+.grp h3{font-family:Playfair Display,serif;font-weight:400;font-size:15px;color:#2B4D6B;margin:0 0 8px;
+  letter-spacing:.01em}
+.grp ul{list-style:none;margin:0;padding:0}
+.grp li{display:flex;align-items:center;gap:11px;padding:5px 0;font-size:12.5px;color:#43637E}
+.n{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:Playfair Display,serif;font-size:11.5px;color:#2B4D6B;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+.n.or{color:#4A3A10}
 .pied{text-align:center;padding:28px 18px 70px;font-size:11px;letter-spacing:.14em;color:#8DA3B5}
 </style></head><body>
 
@@ -29,8 +47,21 @@ h1 em{font-style:italic;color:#A8863A}
 </header>
 
 <div class="wrap">
-  <div class="maison"><img src="/calendrier/maison.jpg" alt="Le calendrier mood, maison de 24 tiroirs"></div>
-  <p class="pied">Maquette — la maison seule pour l'instant</p>
+  <div class="duo">
+    <div class="maison"><img src="/calendrier/maison.jpg" alt="Le calendrier mood, maison de 24 tiroirs"></div>
+    <aside class="liste">
+      <div class="lg"><span><i class="p or"></i>impairs · doré</span><span><i class="p glace"></i>pairs · bleu glacé</span></div>
+      <section class="grp"><h3>Acier découpé</h3><ul><li><span class="n or">01</span><span class="t">Les douceurs</span></li><li><span class="n glace">08</span><span class="t">Brille doucement</span></li></ul></section>
+<section class="grp"><h3>Polymère</h3><ul><li><span class="n glace">02</span><span class="t">Rencontrent le givre</span></li><li><span class="n glace">04</span><span class="t">Avec la neige</span></li><li><span class="n or">05</span><span class="t">Noël s'éveille</span></li><li><span class="n or">09</span><span class="t">Le ciel s'embrase</span></li><li><span class="n glace">10</span><span class="t">Sur les Alpes</span></li><li><span class="n or">13</span><span class="t">Sous le sapin</span></li></ul></section>
+<section class="grp"><h3>Aluminium</h3><ul><li><span class="n or">03</span><span class="t">Le rouge apparaît</span></li><li><span class="n glace">12</span><span class="t">Perce la nuit</span></li><li><span class="n or">15</span><span class="t">Les cerfs avancent</span></li><li><span class="n glace">16</span><span class="t">Sous les étoiles</span></li></ul></section>
+<section class="grp"><h3>Aluminium serti</h3><ul><li><span class="n or">19</span><span class="t">Les flocons dansent</span></li><li><span class="n glace">24</span><span class="t">À minuit</span></li></ul></section>
+<section class="grp"><h3>Aura</h3><ul><li><span class="n glace">14</span><span class="t">La glace scintille</span></li><li><span class="n or">23</span><span class="t">La magie commence</span></li></ul></section>
+<section class="grp"><h3>Clip & Drop</h3><ul><li><span class="n glace">06</span><span class="t">Vêtu de bleu</span></li><li><span class="n or">11</span><span class="t">Une lumière</span></li><li><span class="n or">17</span><span class="t">Un éclat</span></li><li><span class="n glace">22</span><span class="t">Une dernière fois</span></li></ul></section>
+<section class="grp"><h3>Nacre</h3><ul><li><span class="n or">07</span><span class="t">Une lueur</span></li><li><span class="n glace">20</span><span class="t">Dans le bleu</span></li></ul></section>
+<section class="grp"><h3>Acier</h3><ul><li><span class="n glace">18</span><span class="t">Traverse la forêt</span></li><li><span class="n or">21</span><span class="t">Noël scintille</span></li></ul></section>
+    </aside>
+  </div>
+  <p class="pied">Maquette — les pièces ne sont pas encore définitives</p>
 </div>
 </body></html>`;
 
