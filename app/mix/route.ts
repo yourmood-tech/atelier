@@ -131,7 +131,8 @@ h1{font-family:var(--titre);font-weight:300;font-size:clamp(28px,4.6vw,54px);lin
     arr.forEach(function(p,k){
       var b=document.createElement('button');
       b.className='carte'; b.dataset.k=k; b.dataset.q=quel;
-      b.innerHTML='<span class="ph"><img loading="lazy" src="'+p.i+'&width=200" alt=""></span>'+
+      var src=p.i+(p.i.indexOf('?')>-1?'&':'?')+'width=220';
+      b.innerHTML='<span class="ph"><img loading="lazy" src="'+src+'" alt=""></span>'+
         '<span><span class="n"><span class="coche"></span>'+p.t+'</span>'+
         '<span class="px">'+Math.round(p.p)+'.–</span></span>';
       el.appendChild(b);
