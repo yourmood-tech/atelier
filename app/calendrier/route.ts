@@ -59,6 +59,8 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .bt{appearance:none;border:1px solid #B8912F;background:#B8912F;color:#fff;font-family:Poppins;font-size:12.5px;
   letter-spacing:.06em;padding:11px 24px;border-radius:999px;cursor:pointer}
 .bt[disabled]{opacity:.32;cursor:default}
+.panier{display:none;margin-top:10px;background:#fff;border:1px solid rgba(184,145,47,.35);border-radius:12px;padding:14px 18px;font-size:12px;line-height:1.8;color:#43637E}
+.panier b{font-family:Playfair Display,serif;font-weight:400;color:#2B4D6B}
 .pied{text-align:center;padding:14px 18px 24px;font-size:10px;letter-spacing:.14em;color:#8DA3B5}
 </style></head><body>
 
@@ -78,6 +80,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <span class="mini">4 au minimum</span>
     <button class="bt" id="valider" disabled>Ajouter à mon calendrier</button>
   </div>
+  <div class="panier" id="panier"></div>
   <p class="pied">Maquette — les pièces ne sont pas encore définitives</p>
 </div>
 <script>
@@ -118,8 +121,11 @@ function maj(){
 }
 document.getElementById("valider").onclick=function(){
   var l=Object.keys(pris).map(Number).sort(function(a,b){return a-b;});
-  alert("Mon calendrier — "+l.length+" cases : "+l.join(", ")+"\n\n(le panier sera branché ensuite)");
-};
+  var p=document.getElementById("panier");
+  p.innerHTML='<b>Mon calendrier</b> · '+l.length+' cases : '+l.map(function(n){
+    var c=CASES.find(function(x){return x.n===n;}); return n+" "+c.t; }).join(" · ");
+  p.style.display="block";
+}
 maj();
 </script>
 </body></html>`;
