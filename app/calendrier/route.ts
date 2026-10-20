@@ -34,8 +34,7 @@ h1 em{font-style:italic;color:#A8863A}
 .intro.pret{opacity:1}
 .intro.tourne{transform:translateY(-101%);transition:transform 1.35s cubic-bezier(.72,.02,.3,1)}
 .intro.parti{pointer-events:none}
-.logo-noel{width:clamp(155px,21vw,280px);height:auto;display:block;
-  filter:drop-shadow(0 3px 14px rgba(10,28,48,.45));
+.logo-noel{width:clamp(165px,22vw,300px);height:auto;display:block;
   opacity:0;transform:translateY(-10px);transition:opacity 1s ease .2s,transform 1s ease .2s}
 .intro.pret .logo-noel{opacity:1;transform:none}
 .bienvenue{margin:0;text-align:center;
@@ -137,7 +136,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </style></head><body>
 
 <div class="intro" id="intro">
-  <img class="logo-noel" src="/calendrier/logo-mood-bleu.png" alt="mood">
+  <img class="logo-noel" src="/logo-mood.png" alt="mood">
   <p class="bienvenue">Bienvenue dans l'univers de Noël…</p>
 </div>
 <script>
@@ -154,13 +153,13 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   }
   function paillettes(){
     var l=document.createElement("div"); l.className="magie"; document.body.appendChild(l);
-    var n=window.innerWidth<700?55:95, h="";
+    var n=window.innerWidth<700?130:240, h="";
     for(var i=0;i<n;i++){
-      var t=2.5+Math.random()*7;                       // taille
+      var t=3+Math.random()*11;                       // taille
       h+='<i class="pa" style="left:'+(Math.random()*100).toFixed(1)+'%;'
         +'top:'+(45+Math.random()*58).toFixed(1)+'%;'
         +'width:'+t.toFixed(1)+'px;height:'+t.toFixed(1)+'px;'
-        +'--dx:'+(Math.random()*40-20).toFixed(0)+'px;'
+        +'--dx:'+(Math.random()*70-35).toFixed(0)+'px;'
         +'--dy:-'+(55+Math.random()*70).toFixed(0)+'vh;'
         +'--d:'+(1.3+Math.random()*1.4).toFixed(2)+'s;'
         +'--r:'+(Math.random()*.75).toFixed(2)+'s"></i>';
