@@ -299,7 +299,7 @@ document.getElementById("valider").onclick=function(){
 }
 
 
-(function(){
+;(function(){
   var zt=document.getElementById("tailles");
   TAILLES.forEach(function(t){
     var b=document.createElement("button"); b.className="tb"; b.dataset.t=t; b.setAttribute("aria-pressed","false");
