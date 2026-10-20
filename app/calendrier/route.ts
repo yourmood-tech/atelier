@@ -119,6 +119,22 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   </div>
   <p class="bienvenue">Bienvenue dans l'univers de Noël de <em>mood</em>…</p>
 </div>
+<script>
+(function(){
+  var intro=document.getElementById("intro"); if(!intro) return;
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){ intro.classList.add("pret"); }); });
+  var parti=false;
+  function tourner(){
+    if(parti) return; parti=true;
+    intro.classList.add("tourne");
+    setTimeout(function(){ intro.classList.add("parti"); },1150);
+    setTimeout(function(){ if(intro.parentNode) intro.parentNode.removeChild(intro); },1750);
+  }
+  var minuteur=setTimeout(tourner,3000);
+  intro.addEventListener("click",function(){ clearTimeout(minuteur); tourner(); });
+})();
+</script>
+
 <header>
   <div class="kick">décembre 2026</div>
   <h1>Le calendrier<br><em>mood</em></h1>
@@ -200,19 +216,7 @@ document.getElementById("valider").onclick=function(){
     +'<tr class="to"><td></td><td colspan="2">Total</td><td class="px">'+(r.somme+50)+'.–</td></tr></table>';
   p.style.display="block";
 }
-;(function(){
-  var intro=document.getElementById("intro"); if(!intro) return;
-  requestAnimationFrame(function(){ requestAnimationFrame(function(){ intro.classList.add("pret"); }); });
-  var parti=false;
-  function tourner(){
-    if(parti) return; parti=true;
-    intro.classList.add("tourne");
-    setTimeout(function(){ intro.classList.add("parti"); },1150);
-    setTimeout(function(){ if(intro.parentNode) intro.parentNode.removeChild(intro); },1750);
-  }
-  var minuteur=setTimeout(tourner,3000);
-  intro.addEventListener("click",function(){ clearTimeout(minuteur); tourner(); });
-})();
+
 
 if(location.hash.indexOf("reperes")>=0) document.body.classList.add("reperes");
 maj();
