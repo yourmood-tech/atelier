@@ -139,6 +139,7 @@ CASES.forEach(function(c){
   var ph='<div class="ph"'+(src?' style="background-image:url('+src+')"':"")+'>'
     +(src?"":'<span class="att">photo à venir</span>')
     +'<span class="pr">'+c.p+'.–</span><span class="v">✓</span></div>';
+  var porte='<div class="porte" style="background-image:url(/calendrier/maison.jpg);background-size:'+bs+';background-position:'+bp+'"></div>';
   z.innerHTML=ph+porte;
   zones.appendChild(z);
 });
