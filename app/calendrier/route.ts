@@ -18,20 +18,23 @@ h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(26px,3.4vw
 h1 em{font-style:italic;color:#A8863A}
 .sous{max-width:52ch;margin:10px auto 0;font-size:12px;line-height:1.7;color:#52728C}
 .intro{position:fixed;inset:0;z-index:100;will-change:transform;box-shadow:0 26px 60px rgba(8,22,38,.55);
-  display:flex;align-items:flex-end;justify-content:center;padding:0 24px 7vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6vh 24px 8vh;
   background:#DCE7F0 url(/calendrier/cerf-plein.jpg) center/cover no-repeat;
   opacity:0;transition:opacity .8s ease}
 .intro.pret{opacity:1}
 .intro.tourne{transform:translateY(-101%);transition:transform 1.35s cubic-bezier(.72,.02,.3,1)}
 .intro.parti{pointer-events:none}
-.bienvenue{margin:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;
-  background:rgba(255,255,255,.80);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
-  border:1px solid rgba(255,255,255,.9);border-radius:20px;padding:26px 44px 28px;
+.logo-noel{width:clamp(155px,21vw,280px);height:auto;display:block;
+  filter:drop-shadow(0 3px 14px rgba(10,28,48,.45));
+  opacity:0;transform:translateY(-10px);transition:opacity 1s ease .2s,transform 1s ease .2s}
+.intro.pret .logo-noel{opacity:1;transform:none}
+.bienvenue{margin:0;text-align:center;
+  background:rgba(255,255,255,.82);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  border:1px solid rgba(255,255,255,.9);border-radius:20px;padding:22px 44px 24px;
   box-shadow:0 18px 50px rgba(22,48,76,.22);
-  opacity:0;transform:translateY(14px);transition:opacity 1.1s ease .45s,transform 1.1s ease .45s}
-.bienvenue span{font-family:Playfair Display,serif;font-weight:400;
-  font-size:clamp(20px,3.1vw,36px);line-height:1.35;color:#1B3A58;letter-spacing:.005em}
-.bienvenue img{width:clamp(130px,17vw,210px);height:auto;display:block}
+  font-family:Playfair Display,serif;font-weight:400;
+  font-size:clamp(20px,3.1vw,36px);line-height:1.35;color:#1B3A58;
+  opacity:0;transform:translateY(14px);transition:opacity 1.1s ease .55s,transform 1.1s ease .55s}
 .intro.pret .bienvenue{opacity:1;transform:none}
 .intro.tourne .bienvenue{opacity:1}
 .maison{position:relative;margin:0 auto;width:min(100%,calc((100vh - 255px) * 1442 / 1091));aspect-ratio:1442/1091}
@@ -124,10 +127,8 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </style></head><body>
 
 <div class="intro" id="intro">
-  <div class="bienvenue">
-    <span>Bienvenue dans l'univers de Noël de</span>
-    <img src="/logo-mood.png" alt="mood">
-  </div>
+  <img class="logo-noel" src="/calendrier/logo-mood-bleu.png" alt="mood">
+  <p class="bienvenue">Bienvenue dans l'univers de Noël…</p>
 </div>
 <script>
 (function(){
