@@ -159,7 +159,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .pied{text-align:center;padding:14px 18px 24px;font-size:10px;letter-spacing:.14em;color:#8DA3B5}
 
 @media(max-width:760px){
-  .barre{padding:9px 10px 10px;gap:7px;background:#fff}
+  .barre{position:static;padding:12px 10px 14px;gap:8px;background:#fff;border-radius:12px;margin-top:14px;border:1px solid rgba(46,83,117,.12)}
   .tailles{flex-wrap:nowrap!important;overflow-x:auto;justify-content:flex-start;width:100%;padding-bottom:3px}
   .tailles::-webkit-scrollbar{height:0}
   .tailles .lt{display:none}
