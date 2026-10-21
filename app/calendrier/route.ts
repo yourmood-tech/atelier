@@ -41,7 +41,7 @@ h1 em{font-style:italic;color:#A8863A}
 
 .duo{display:grid;grid-template-columns:1.38fr .62fr;gap:28px;align-items:start;margin-top:22px}
 @media(max-width:900px){.duo{grid-template-columns:1fr;gap:26px}}
-@media(min-width:901px){.liste{overflow:auto}}
+@media(min-width:901px){.liste{overflow:hidden}}
 .liste{background:#fff;border:1px solid rgba(46,83,117,.10);border-radius:14px;padding:16px 18px;box-shadow:0 14px 40px rgba(46,83,117,.08);columns:2;column-gap:20px}
 @media(max-width:900px){.liste{columns:2}}@media(max-width:560px){.liste{columns:1}}
 .lg{column-span:all;display:flex;gap:14px;flex-wrap:wrap;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#8DA3B5;
@@ -50,7 +50,7 @@ h1 em{font-style:italic;color:#A8863A}
 i.p{width:9px;height:9px;border-radius:50%;display:inline-block}
 i.or,.n.or{background:linear-gradient(145deg,#E6CB92,#B8912F)}
 i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
-.grp{margin-top:10px;break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid}
+.grp{margin-top:7px;break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid}
 .grp h3{font-family:Playfair Display,serif;font-weight:400;font-size:14px;color:#2B4D6B;margin:0 0 4px}
 .grp ul{list-style:none;margin:0;padding:0}
 .grp li{display:flex;align-items:center;gap:8px;padding:2.5px 0;font-size:12.5px;line-height:1.3;color:#43637E}
