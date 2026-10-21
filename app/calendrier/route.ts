@@ -185,10 +185,10 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </script>
 
 <header>
-  <h1>Le calendrier <img class="logo-i" src="/calendrier/mood-mot.png" alt="mood"> <span class="sep">·</span> Notre poésie de Noël ✨</h1>
+  <h1>Le calendrier <img class="logo-i" src="/calendrier/mood-mot.png" alt="mood"> <span class="sep">·</span> Notre poésie de Noël</h1>
   <p class="kick2">24 cases, 24 surprises.</p>
   <p class="sous">Des créations exclusives à prix magiques, avec parfois plus de 50&nbsp;% de réduction&nbsp;! Des prix qui ne reviendront pas.<br>
-  Choisissez 4 addons minimum, nos lutins complètent les cases restantes avec de délicieux chocolats. 🎄</p>
+  Choisissez 4 addons minimum, nos lutins complètent les cases restantes avec de délicieux chocolats.</p>
 </header>
 
 <div class="wrap">
@@ -197,7 +197,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <aside class="liste" id="liste"></aside>
   </div>
   <section class="fiche">
-    <h2>Un écrin féerique pour votre Noël ✨</h2>
+    <h2>Un écrin féerique pour votre Noël</h2>
     <p>Un calendrier de l'Avent, 24 petits tiroirs et un village de Noël illuminé par de douces lumières LED.</p>
     <p class="spec">39,4 × 30 × 5 cm · 8 LED avec minuterie de 6 h · 2 piles AAA (non incluses)</p>
     <p class="note">Visuels d'illustration : le calendrier livré peut présenter quelques différences avec les images présentées.</p>
