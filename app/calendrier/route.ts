@@ -31,9 +31,10 @@ h1 em{font-style:italic;color:#A8863A}
 }
 .intro{position:fixed;inset:0;z-index:100;will-change:transform;box-shadow:0 26px 60px rgba(8,22,38,.55);
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6vh 24px 8vh;
-  background:#17345A url(/calendrier/accueil.gif) center/cover no-repeat;
+  background:#17345A;
   opacity:0;transition:opacity .8s ease}
 .intro.pret{opacity:1}
+.intro .fond{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .intro.tourne{transform:translateY(-101%);transition:transform 1.35s cubic-bezier(.72,.02,.3,1)}
 .intro.parti{pointer-events:none}
 .maison{position:relative;margin:0 auto;width:min(100%,calc((100vh - 290px) * 1441 / 1092));aspect-ratio:1441/1092}
@@ -158,6 +159,10 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </style></head><body>
 
 <div class="intro" id="intro">
+  <video class="fond" id="fondNoel" autoplay muted playsinline preload="auto">
+    <source src="/calendrier/accueil.webm" type="video/webm">
+    <source src="/calendrier/accueil.mp4" type="video/mp4">
+  </video>
 
 </div>
 <script>
@@ -188,7 +193,9 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     l.innerHTML=h;
     setTimeout(function(){ if(l.parentNode) l.parentNode.removeChild(l); },3400);
   }
-  var minuteur=setTimeout(tourner,6600);
+  var v=document.getElementById("fondNoel");
+  if(v){ v.addEventListener("ended",function(){ tourner(); }); }
+  var minuteur=setTimeout(tourner,7000);
   intro.addEventListener("click",function(){ clearTimeout(minuteur); tourner(); });
 })();
 </script>
