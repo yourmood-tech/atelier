@@ -197,9 +197,14 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .etape1 .tb{font-size:13.5px;min-width:42px;padding:8px 12px;background:#fff}
 .etape1 .tb.inconnue{font-size:12px;padding:8px 16px}
 .maison.bloque{opacity:.4;filter:grayscale(.35);pointer-events:none;transition:.4s}
-@media(max-width:760px){.etape1{margin-top:12px;padding:13px 12px 14px;gap:9px}.etape1 .vs{display:none}
-  .etape1 .tailles{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;width:100%}
-  .etape1 .tb{font-size:12.5px;min-width:36px;padding:7px 10px}}
+@media(max-width:760px){
+  .etape1{margin-top:12px;padding:14px 13px 15px;gap:10px}
+  .etape1 .vs{display:none}
+  .etape1 .tailles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;overflow:visible}
+  .etape1 .tb{width:100%;min-width:0;font-size:13px;padding:9px 4px}
+  .etape1 .tb.inconnue{grid-column:1 / -1;font-size:12px;padding:9px 10px}
+  .intro .fond{object-fit:contain}
+}
 .chg{appearance:none;border:1px solid rgba(184,145,47,.4);background:rgba(184,145,47,.1);color:#8A6D22;
   font-family:Poppins;font-size:11px;letter-spacing:.04em;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .chg b{font-weight:600}
