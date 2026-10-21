@@ -14,9 +14,10 @@ body{min-height:100vh;color:#2B4D6B;font-family:Poppins,system-ui,sans-serif;fon
 .wrap{width:min(1320px,100%);margin:0 auto;padding:0 18px}
 header{text-align:center;padding:26px 18px 4px}
 .kick{font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--or)}
-h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(26px,3.4vw,40px);margin:9px 0 0;line-height:1.1;color:#2B4D6B}
+.logo-h{display:block;margin:0 auto;width:clamp(100px,11vw,148px);height:auto}
+h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(21px,2.7vw,32px);margin:12px 0 0;line-height:1.2;color:#2B4D6B}
 h1 em{font-style:italic;color:#A8863A}
-.sous{max-width:52ch;margin:10px auto 0;font-size:12px;line-height:1.7;color:#52728C}
+.sous{max-width:62ch;margin:10px auto 0;font-size:12.5px;line-height:1.75;color:#52728C}
 .magie{position:fixed;inset:0;z-index:101;pointer-events:none;overflow:hidden}
 .pa{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF6DC 0%,#F0D38A 45%,#C9A33F 100%);
   box-shadow:0 0 7px rgba(235,200,120,.95),0 0 16px rgba(220,180,90,.55);
@@ -177,9 +178,10 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </script>
 
 <header>
-  <div class="kick">décembre 2026</div>
-  <h1>Le calendrier<br><em>mood</em></h1>
-  <p class="sous">Vingt-quatre cases. Derrière chacune, une surprise — un polymère, un aluminium, un serti.</p>
+  <img class="logo-h" src="/logo-mood.png" alt="mood">
+  <h1>24 cases, 24 surprises, une poésie à découvrir.</h1>
+  <p class="sous">Des créations exclusives à prix magiques, avec parfois plus de 50&nbsp;% de réduction&nbsp;! Des prix qui ne reviendront pas.<br>
+  Choisissez 4 addons minimum, nos lutins complètent les cases restantes avec de délicieux chocolats. 🎄</p>
 </header>
 
 <div class="wrap">
