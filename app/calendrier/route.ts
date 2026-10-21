@@ -55,7 +55,7 @@ h1 em{font-style:italic;color:#A8863A}
   font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#A8863A}
 i.p{width:8px;height:8px;border-radius:50%;display:inline-block}
 .fam{margin:13px 0 3px;display:flex;align-items:baseline;gap:7px}
-.fam:first-of-type{margin-top:2px}
+.fam:first-of-type{margin-top:0}
 .fam h3{margin:0;font-family:Playfair Display,serif;font-weight:400;font-style:italic;
   font-size:13px;color:#8A6D22;white-space:nowrap}
 .fam span{flex:1;border-bottom:1px dotted rgba(184,145,47,.45);transform:translateY(-3px)}
@@ -253,7 +253,7 @@ function ligne(c){
     +'<span class="px"><span class="av">'+c.b+'.–</span>'+c.p+'.–</span></li>';
 }
 function colonne(cible,titre,pastille,lot){
-  var h='<div class="lg"><i class="p '+pastille+'"></i>'+titre+'</div>';
+  var h="";
   FAMILLES.forEach(function(f){
     var l=lot.filter(function(c){return c.g===f;});
     if(!l.length) return;
@@ -262,8 +262,8 @@ function colonne(cible,titre,pastille,lot){
   cible.innerHTML=h;
 }
 var tri=CASES.slice().sort(function(a,b){return a.n-b.n;});
-colonne(listeG,"impairs · doré","or",tri.filter(function(c){return c.n%2===1;}));
-colonne(listeD,"pairs · bleu glacé","glace",tri.filter(function(c){return c.n%2===0;}));
+colonne(listeG,"","or",tri.filter(function(c){return c.n%2===1;}));
+colonne(listeD,"","glace",tri.filter(function(c){return c.n%2===0;}));
 CASES.forEach(function(c){
   var w=c.z[2]-c.z[0], h=c.z[3]-c.z[1];
   var z=document.createElement("div"); z.className="z"; z.dataset.n=c.n;
