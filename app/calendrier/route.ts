@@ -182,14 +182,24 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   background:rgba(184,145,47,.1);border:1px solid rgba(184,145,47,.28);border-radius:999px;padding:6px 16px;display:inline-block}
 .mode b{font-weight:500}
 @media(max-width:760px){.mode{font-size:10.5px;padding:6px 12px;border-radius:12px}}
-.verrou{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:13px;padding:20px;text-align:center;background:rgba(247,251,255,.9);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:5px}
-.verrou.parti{display:none}
-.verrou .vt{margin:0;font-family:Playfair Display,serif;font-size:clamp(18px,2.4vw,27px);color:#1F3F5E}
-.verrou .vs{margin:0;font-size:11px;letter-spacing:.04em;color:#8DA3B5}
-.verrou .tailles{max-width:460px;justify-content:center}
-.verrou .tb{font-size:13px;min-width:40px;padding:7px 11px;background:#fff}
-.verrou .tb.inconnue{font-size:12px;padding:7px 15px}
+.etape1{margin:18px auto 0;max-width:720px;padding:17px 20px 18px;text-align:center;border-radius:14px;
+  background:linear-gradient(180deg,#FFFDF8,#FBF4E6);border:1.5px solid rgba(184,145,47,.5);
+  box-shadow:0 12px 34px rgba(184,145,47,.18);display:flex;flex-direction:column;align-items:center;gap:12px}
+.etape1.parti{max-width:360px;padding:9px 16px;gap:8px;background:#fff;border-color:rgba(46,83,117,.12);box-shadow:none}
+.etape1.parti .tailles,.etape1.parti .vs{display:none}
+.etape1.parti .vt{font-size:12px;color:#8A6D22}
+.etape1 .vt{margin:0;display:flex;align-items:center;gap:9px;font-family:Playfair Display,serif;
+  font-size:clamp(17px,2.2vw,24px);color:#1F3F5E}
+.etape1 .num{width:26px;height:26px;border-radius:50%;background:#B8912F;color:#fff;font-family:Poppins;
+  font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.etape1 .vs{margin:0;font-size:11px;letter-spacing:.04em;color:#9DAEBC}
+.etape1 .tailles{max-width:560px;justify-content:center}
+.etape1 .tb{font-size:13.5px;min-width:42px;padding:8px 12px;background:#fff}
+.etape1 .tb.inconnue{font-size:12px;padding:8px 16px}
+.maison.bloque{opacity:.4;filter:grayscale(.35);pointer-events:none;transition:.4s}
+@media(max-width:760px){.etape1{margin-top:12px;padding:13px 12px 14px;gap:9px}.etape1 .vs{display:none}
+  .etape1 .tailles{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;width:100%}
+  .etape1 .tb{font-size:12.5px;min-width:36px;padding:7px 10px}}
 .chg{appearance:none;border:1px solid rgba(184,145,47,.4);background:rgba(184,145,47,.1);color:#8A6D22;
   font-family:Poppins;font-size:11px;letter-spacing:.04em;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .chg b{font-weight:600}
@@ -249,17 +259,18 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   <p class="kick2">24 cases, 24 surprises.</p>
   <p class="sous">Des créations exclusives, à des prix qui ne reviendront pas.<br>
   Choisissez entre 4 et 24 addons — nos lutins remplissent les cases restantes de surprises gourmandes.</p>
-  <p class="mode">D&rsquo;abord votre taille, puis cliquez <b>deux fois</b> sur une case&nbsp;: la première l&rsquo;ouvre, la seconde l&rsquo;ajoute.</p>
+  <p class="mode">Cliquez <b>deux fois</b> sur une case&nbsp;: la première l&rsquo;ouvre, la seconde l&rsquo;ajoute.</p>
 </header>
 
 <div class="wrap">
+  <section class="etape1" id="verrou">
+    <p class="vt"><span class="num">1</span> Choisissez votre taille</p>
+    <div class="tailles" id="tailles"></div>
+    <p class="vs">Les 24 tiroirs s&rsquo;ouvriront juste après.</p>
+  </section>
   <div class="duo">
-    <div class="maison"><img src="/calendrier/boite-anim.gif" alt="Le calendrier mood, 24 tiroirs"><div class="zones" id="zones"></div>
-      <div class="verrou" id="verrou">
-        <p class="vt">Pour commencer, votre taille</p>
-        <div class="tailles" id="tailles"></div>
-        <p class="vs">Les 24 tiroirs s&rsquo;ouvriront juste après.</p>
-      </div></div>
+    <div class="maison bloque"><img src="/calendrier/boite-anim.gif" alt="Le calendrier mood, 24 tiroirs"><div class="zones" id="zones"></div>
+</div>
     <aside class="liste" id="liste"></aside>
   </div>
   <section class="fiche">
@@ -417,6 +428,7 @@ document.getElementById("valider").onclick=function(){
     taille = b.dataset.t;
     zt.querySelectorAll(".tb").forEach(function(x){ x.setAttribute("aria-pressed",(x.dataset.t===taille)?"true":"false"); });
     document.getElementById("verrou").classList.add("parti");
+    document.querySelector(".maison").classList.remove("bloque");
     document.getElementById("maTaille").textContent = (taille==="taille inconnue") ? "à définir" : taille;
     maj();
   });
@@ -428,7 +440,10 @@ function hauteurs(){
 }
 window.addEventListener("resize",hauteurs);
 setTimeout(hauteurs,150); setTimeout(hauteurs,900);
-document.getElementById("chg").onclick=function(){ document.getElementById("verrou").classList.remove("parti"); };
+document.getElementById("chg").onclick=function(){
+  var v=document.getElementById("verrou"); v.classList.remove("parti");
+  v.scrollIntoView({behavior:"smooth",block:"center"});
+};
 if(location.hash.indexOf("reperes")>=0) document.body.classList.add("reperes");
 maj();
 </script>
