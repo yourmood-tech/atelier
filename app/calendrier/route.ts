@@ -182,6 +182,18 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   background:rgba(184,145,47,.1);border:1px solid rgba(184,145,47,.28);border-radius:999px;padding:6px 16px;display:inline-block}
 .mode b{font-weight:500}
 @media(max-width:760px){.mode{font-size:10.5px;padding:6px 12px;border-radius:12px}}
+.verrou{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:13px;padding:20px;text-align:center;background:rgba(247,251,255,.9);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:5px}
+.verrou.parti{display:none}
+.verrou .vt{margin:0;font-family:Playfair Display,serif;font-size:clamp(18px,2.4vw,27px);color:#1F3F5E}
+.verrou .vs{margin:0;font-size:11px;letter-spacing:.04em;color:#8DA3B5}
+.verrou .tailles{max-width:460px;justify-content:center}
+.verrou .tb{font-size:13px;min-width:40px;padding:7px 11px;background:#fff}
+.verrou .tb.inconnue{font-size:12px;padding:7px 15px}
+.chg{appearance:none;border:1px solid rgba(184,145,47,.4);background:rgba(184,145,47,.1);color:#8A6D22;
+  font-family:Poppins;font-size:11px;letter-spacing:.04em;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.chg b{font-weight:600}
+@media(max-width:760px){.verrou{gap:9px;padding:14px}.verrou .vs{display:none}.verrou .tb{font-size:12px;min-width:34px;padding:6px 9px}}
 </style></head><body>
 
 <div class="intro" id="intro">
@@ -242,7 +254,12 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 
 <div class="wrap">
   <div class="duo">
-    <div class="maison"><img src="/calendrier/boite-anim.gif" alt="Le calendrier mood, 24 tiroirs"><div class="zones" id="zones"></div></div>
+    <div class="maison"><img src="/calendrier/boite-anim.gif" alt="Le calendrier mood, 24 tiroirs"><div class="zones" id="zones"></div>
+      <div class="verrou" id="verrou">
+        <p class="vt">Pour commencer, votre taille</p>
+        <div class="tailles" id="tailles"></div>
+        <p class="vs">Les 24 tiroirs s&rsquo;ouvriront juste après.</p>
+      </div></div>
     <aside class="liste" id="liste"></aside>
   </div>
   <section class="fiche">
@@ -252,8 +269,8 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <p class="note">Visuels d'illustration : le calendrier livré peut présenter quelques différences avec les images présentées.</p>
   </section>
   <div class="barre" id="barre">
-    <div class="tailles" id="tailles"><span class="lt">Ma taille</span></div>
     <div class="ligne">
+    <button class="chg" id="chg" type="button">Taille <b id="maTaille">—</b> · changer</button>
     <div class="choix"><img class="bte" src="/calendrier/coffret.gif" alt="La boîte du calendrier mood"><div class="ronds" id="ronds"></div></div>
     <span class="cpt"><b id="n">0</b> case<span id="s"></span> choisie<span id="s2"></span></span>
     <span class="mini">4 au minimum</span>
@@ -307,7 +324,7 @@ function maj(){
   var eco=document.getElementById("eco"), diff=boutique-(somme+50);
   if(l.length && diff>0){ eco.style.display=""; eco.textContent="tu économises "+diff+".–"; } else eco.style.display="none";
   document.getElementById("valider").disabled = l.length<4 || !taille;
-  var zt=document.getElementById("tailles"); if(zt) zt.classList.toggle("manque", l.length>=4 && !taille);
+
   var r=document.getElementById("ronds"), h="";
   l.forEach(function(n){
     var c=CASES.find(function(y){return y.n===n;}), src=IMG[n];
@@ -397,8 +414,10 @@ document.getElementById("valider").onclick=function(){
   });
   zt.addEventListener("click",function(e){
     var b=e.target.closest(".tb"); if(!b) return;
-    taille = (taille===b.dataset.t) ? null : b.dataset.t;
+    taille = b.dataset.t;
     zt.querySelectorAll(".tb").forEach(function(x){ x.setAttribute("aria-pressed",(x.dataset.t===taille)?"true":"false"); });
+    document.getElementById("verrou").classList.add("parti");
+    document.getElementById("maTaille").textContent = (taille==="taille inconnue") ? "à définir" : taille;
     maj();
   });
 })();
@@ -409,6 +428,7 @@ function hauteurs(){
 }
 window.addEventListener("resize",hauteurs);
 setTimeout(hauteurs,150); setTimeout(hauteurs,900);
+document.getElementById("chg").onclick=function(){ document.getElementById("verrou").classList.remove("parti"); };
 if(location.hash.indexOf("reperes")>=0) document.body.classList.add("reperes");
 maj();
 </script>
