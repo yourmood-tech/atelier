@@ -159,7 +159,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </style></head><body>
 
 <div class="intro" id="intro">
-  <video class="fond" id="fondNoel" autoplay muted playsinline preload="auto">
+  <video class="fond" id="fondNoel" autoplay muted playsinline preload="auto" poster="/calendrier/accueil-debut.jpg">
     <source src="/calendrier/accueil.webm" type="video/webm">
     <source src="/calendrier/accueil.mp4" type="video/mp4">
   </video>
@@ -193,9 +193,15 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     l.innerHTML=h;
     setTimeout(function(){ if(l.parentNode) l.parentNode.removeChild(l); },3400);
   }
-  var v=document.getElementById("fondNoel");
-  if(v){ v.addEventListener("ended",function(){ tourner(); }); }
-  var minuteur=setTimeout(tourner,7000);
+  var v=document.getElementById("fondNoel"), minuteur=setTimeout(tourner,9000);
+  if(v){
+    v.addEventListener("ended",function(){ clearTimeout(minuteur); tourner(); });
+    v.addEventListener("playing",function(){
+      clearTimeout(minuteur);
+      var reste=(isFinite(v.duration)?v.duration:4.3)-v.currentTime;
+      minuteur=setTimeout(tourner,(reste+0.3)*1000);
+    });
+  }
   intro.addEventListener("click",function(){ clearTimeout(minuteur); tourner(); });
 })();
 </script>
