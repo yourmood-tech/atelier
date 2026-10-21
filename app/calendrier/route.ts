@@ -34,7 +34,6 @@ h1 em{font-style:italic;color:#A8863A}
 .intro.pret{opacity:1}
 .intro.tourne{transform:translateY(-101%);transition:transform 1.35s cubic-bezier(.72,.02,.3,1)}
 .intro.parti{pointer-events:none}
-.intro.tourne .bienvenue{opacity:1}
 .maison{position:relative;margin:0 auto;width:min(100%,calc((100vh - 290px) * 1441 / 1092));aspect-ratio:1441/1092}
 .maison img{width:100%;height:100%;display:block;object-fit:fill}
 
