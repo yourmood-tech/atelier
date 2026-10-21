@@ -197,7 +197,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   <h1>Le calendrier <img class="logo-i" src="/calendrier/mood-mot.png" alt="mood"> <span class="sep">·</span> Notre poésie de Noël</h1>
   <p class="kick2">24 cases, 24 surprises.</p>
   <p class="sous">Des créations exclusives à prix magiques, avec parfois plus de 50&nbsp;% de réduction&nbsp;! Des prix qui ne reviendront pas.<br>
-  Choisissez 4 addons minimum, nos lutins complètent les cases restantes avec de délicieux chocolats.</p>
+  Choisissez 4 addons minimum, nos lutins complètent les cases restantes avec des surprises gourmandes.</p>
 </header>
 
 <div class="wrap">
