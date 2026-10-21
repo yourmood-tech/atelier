@@ -97,7 +97,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .grp li.on{background:rgba(184,145,47,.18);color:#2B4D6B}
 .grp li.on .t{font-weight:500}
 .choix{display:flex;align-items:center;gap:12px;min-width:0}
-.choix .bte{height:70px;width:auto;display:block;flex:none;filter:drop-shadow(0 6px 14px rgba(20,45,70,.18))}
+.choix .bte{height:78px;width:auto;display:block;flex:none;filter:drop-shadow(0 6px 14px rgba(20,45,70,.18))}
 .ronds{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .rd{width:46px;height:46px;border-radius:50%;overflow:hidden;position:relative;flex:none;
   background:#EDF2F7;border:2px solid rgba(184,145,47,.75);cursor:pointer;transition:transform .14s}
@@ -190,7 +190,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   <div class="barre" id="barre">
     <div class="tailles" id="tailles"><span class="lt">Ma taille</span></div>
     <div class="ligne">
-    <div class="choix"><img class="bte" src="/calendrier/boite-mood.png" alt="La boîte du calendrier mood"><div class="ronds" id="ronds"></div></div>
+    <div class="choix"><img class="bte" src="/calendrier/coffret.gif" alt="La boîte du calendrier mood"><div class="ronds" id="ronds"></div></div>
     <span class="cpt"><b id="n">0</b> case<span id="s"></span> choisie<span id="s2"></span></span>
     <span class="mini">4 au minimum</span>
     <span class="cpt tot">Total <span class="av" id="avant"></span><b id="total">—</b></span>
