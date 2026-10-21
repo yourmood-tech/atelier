@@ -42,6 +42,11 @@ export default auth((req) => {
     return;
   }
 
+  // le réveil automatique du calendrier (protégé par une clé dans la route)
+  if (pathname === "/api/calendrier-reveil") {
+    return;
+  }
+
   // décompte public des box restantes
   if (pathname === "/api/box-reste") {
     return;
