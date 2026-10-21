@@ -42,26 +42,7 @@ h1 em{font-style:italic;color:#A8863A}
 
 .duo{display:grid;grid-template-columns:minmax(0,1fr) 492px;gap:24px;align-items:start;margin-top:22px}
 @media(max-width:1200px){.duo{grid-template-columns:1fr;gap:26px}}
-@media(max-width:760px){
-  .barre{padding:8px 10px 10px;gap:7px}
-  .tailles{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;width:100%;padding-bottom:3px;-webkit-overflow-scrolling:touch}
-  .tailles::-webkit-scrollbar{height:0}
-  .tailles .lt{display:none}
-  .tb{flex:none}
-  .ligne{gap:10px;row-gap:8px}
-  .choix{gap:8px}
-  .choix .bte{height:44px}
-  .rd{width:34px;height:34px}
-  .rd .j{font-size:7.5px;line-height:11px}
-  .cpt{font-size:14px}
-  .cpt.tot{font-size:15px}
-  .mini{font-size:8.5px}
-  .eco{font-size:9px;padding:3px 8px}
-  .bt{padding:10px 18px;font-size:12px}
-  .maison{width:100%}
-  .liste{padding:12px 13px}
-  .fiche{margin-top:14px;padding:12px 16px 14px}
-}
+
 @media(min-width:1201px){.liste{overflow:hidden}}
 .liste{background:#fff;border:1px solid rgba(46,83,117,.10);border-radius:14px;padding:16px 18px;box-shadow:0 14px 40px rgba(46,83,117,.08);columns:2;column-gap:20px}
 @media(max-width:900px){.liste{columns:2}}@media(max-width:560px){.liste{columns:1}}
@@ -176,6 +157,26 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .gain b{font-family:Playfair Display,serif;font-size:15px;color:#A8863A;font-weight:400}
 
 .pied{text-align:center;padding:14px 18px 24px;font-size:10px;letter-spacing:.14em;color:#8DA3B5}
+
+@media(max-width:760px){
+  .barre{padding:9px 10px 10px;gap:7px;background:#fff}
+  .tailles{flex-wrap:nowrap!important;overflow-x:auto;justify-content:flex-start;width:100%;padding-bottom:3px}
+  .tailles::-webkit-scrollbar{height:0}
+  .tailles .lt{display:none}
+  .tb{flex:none}
+  .ligne{gap:10px;row-gap:7px}
+  .choix{gap:8px}
+  .choix .bte{height:42px}
+  .rd{width:33px;height:33px}
+  .rd .j{font-size:7.5px;line-height:11px}
+  .cpt{font-size:13.5px}
+  .mini{display:none}
+  .eco{font-size:9px;padding:3px 8px}
+  .bt{padding:10px 18px;font-size:12.5px;width:100%}
+  .maison{width:100%}
+  .liste{padding:12px 13px}
+  .fiche{margin-top:14px;padding:12px 16px 14px}
+}
 </style></head><body>
 
 <div class="intro" id="intro">
