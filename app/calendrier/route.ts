@@ -39,9 +39,9 @@ h1 em{font-style:italic;color:#A8863A}
 .maison{position:relative;margin:0 auto;width:min(100%,calc((100vh - 290px) * 1441 / 1092));aspect-ratio:1441/1092}
 .maison img{width:100%;height:100%;display:block;object-fit:fill}
 
-.duo{display:grid;grid-template-columns:1.38fr .62fr;gap:28px;align-items:start;margin-top:22px}
-@media(max-width:900px){.duo{grid-template-columns:1fr;gap:26px}}
-@media(min-width:901px){.liste{overflow:hidden}}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) 492px;gap:24px;align-items:start;margin-top:22px}
+@media(max-width:1200px){.duo{grid-template-columns:1fr;gap:26px}}
+@media(min-width:1201px){.liste{overflow:hidden}}
 .liste{background:#fff;border:1px solid rgba(46,83,117,.10);border-radius:14px;padding:16px 18px;box-shadow:0 14px 40px rgba(46,83,117,.08);columns:2;column-gap:20px}
 @media(max-width:900px){.liste{columns:2}}@media(max-width:560px){.liste{columns:1}}
 .lg{column-span:all;display:flex;gap:14px;flex-wrap:wrap;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#8DA3B5;
@@ -91,7 +91,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   font-size:10px;display:none;align-items:center;justify-content:center;z-index:3}
 .z.pris .v{display:flex}
 .grp li{display:flex;align-items:baseline;gap:7px}
-.grp li .t{flex:1;display:flex;flex-direction:column;min-width:0}
+.grp li .t{flex:1;display:flex;flex-direction:column;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grp li .t em{font-style:normal;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:#A9BAC7;margin-top:1px}
 .grp li .px{font-size:12px;color:#43637E;white-space:nowrap}
 .grp li .av{font-size:9.5px;color:#C2CFDA;text-decoration:line-through;margin-right:3px}
@@ -364,7 +364,7 @@ document.getElementById("valider").onclick=function(){
 })();
 function hauteurs(){
   var m=document.querySelector(".maison"), l=document.getElementById("liste"); if(!m||!l) return;
-  var large=window.matchMedia("(min-width:901px)").matches;
+  var large=window.matchMedia("(min-width:1201px)").matches;
   l.style.height = large ? Math.round(m.getBoundingClientRect().height)+"px" : "";
 }
 window.addEventListener("resize",hauteurs);
