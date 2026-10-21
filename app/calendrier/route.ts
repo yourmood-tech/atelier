@@ -51,6 +51,18 @@ i.p{width:9px;height:9px;border-radius:50%;display:inline-block}
 i.or,.n.or{background:linear-gradient(145deg,#E6CB92,#B8912F)}
 i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .grp{margin-top:10px;break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid}
+.jours{list-style:none;margin:0;padding:0}
+.jours li{display:flex;align-items:center;gap:9px;padding:5px 7px;margin:0 -7px;border-radius:7px;
+  break-inside:avoid;cursor:pointer;transition:.14s;line-height:1.25}
+.jours li:hover{background:rgba(184,145,47,.10)}
+.jours li.on{background:rgba(184,145,47,.18)}
+.jours li .t{flex:1;display:flex;flex-direction:column;min-width:0}
+.jours li .t b{font-weight:400;font-size:11.5px;color:#2B4D6B}
+.jours li.on .t b{font-weight:500}
+.jours li .t i{font-style:normal;font-size:9px;letter-spacing:.02em;color:#9DB0BF;margin-top:1px}
+.jours li .px{flex:none;font-size:11px;color:#43637E;white-space:nowrap;text-align:right}
+.jours li .av{display:block;font-size:9px;color:#C9D5DF;text-decoration:line-through}
+.jours li.on .px{color:#A8863A}
 .grp h3{font-family:Playfair Display,serif;font-weight:400;font-size:12.5px;color:#2B4D6B;margin:0 0 4px}
 .grp ul{list-style:none;margin:0;padding:0}
 .grp li{display:flex;align-items:center;gap:8px;padding:2.5px 0;font-size:10.8px;line-height:1.3;color:#43637E}
@@ -222,15 +234,13 @@ var REF={"1":{"50":"64948019233145","52":"64948019265913","54":"64948019298681",
 var TAILLES=["taille inconnue","50","52","54","56","58","60","62","64","66","68","70","72"], taille=null;
 var zones=document.getElementById("zones"), liste=document.getElementById("liste");
 liste.innerHTML='<div class="lg"><span><i class="p or"></i>impairs · doré</span><span><i class="p glace"></i>pairs · bleu glacé</span></div>';
-ORDRE.forEach(function(m){
-  var l=CASES.filter(function(c){return c.m===m;}).sort(function(a,b){return a.n-b.n;});
-  if(!l.length) return;
-  var sec=document.createElement("section"); sec.className="grp";
-  sec.innerHTML='<h3>'+m+'</h3><ul>'+l.map(function(c){
-    return '<li data-n="'+c.n+'"><span class="n '+(c.n%2?"or":"glace")+'">'+(c.n<10?"0":"")+c.n+'</span><span class="t">'+c.t+'</span><span class="px"><span class="av">'+c.b+'.–</span>'+c.p+'.–</span></li>';
-  }).join('')+'</ul>';
-  liste.appendChild(sec);
-});
+var ul=document.createElement("ul"); ul.className="jours";
+ul.innerHTML=CASES.slice().sort(function(a,b){return a.n-b.n;}).map(function(c){
+  return '<li data-n="'+c.n+'"><span class="n '+(c.n%2?"or":"glace")+'">'+(c.n<10?"0":"")+c.n+'</span>'
+    +'<span class="t"><b>'+c.t+'</b><i>'+c.d+'</i></span>'
+    +'<span class="px"><span class="av">'+c.b+'.–</span>'+c.p+'.–</span></li>';
+}).join("");
+liste.appendChild(ul);
 CASES.forEach(function(c){
   var w=c.z[2]-c.z[0], h=c.z[3]-c.z[1];
   var z=document.createElement("div"); z.className="z"; z.dataset.n=c.n;
