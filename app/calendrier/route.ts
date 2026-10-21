@@ -13,9 +13,10 @@ body{min-height:100vh;color:#2B4D6B;font-family:Poppins,system-ui,sans-serif;fon
   background:linear-gradient(180deg,#DCE8F1 0%,#EFF4F8 46%,#F7F5F0 100%)}
 .wrap{width:min(1320px,100%);margin:0 auto;padding:0 18px}
 header{text-align:center;padding:26px 18px 4px}
-.kick{font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--or)}
-.logo-h{display:block;margin:0 auto;width:clamp(100px,11vw,148px);height:auto}
-h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(21px,2.7vw,32px);margin:12px 0 0;line-height:1.2;color:#2B4D6B}
+.kick2{margin:7px 0 0;font-family:Playfair Display,serif;font-size:clamp(14px,1.7vw,19px);color:#A8863A}
+.logo-i{height:.86em;width:auto;vertical-align:-.04em;margin:0 .06em}
+.sep{color:#C6D3DE;margin:0 .1em}
+h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(20px,2.6vw,31px);margin:0;line-height:1.3;color:#2B4D6B}
 h1 em{font-style:italic;color:#A8863A}
 .sous{max-width:min(96%,108ch);margin:9px auto 0;font-size:12px;line-height:1.7;color:#52728C}
 .magie{position:fixed;inset:0;z-index:101;pointer-events:none;overflow:hidden}
@@ -184,8 +185,8 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 </script>
 
 <header>
-  <img class="logo-h" src="/logo-mood.png" alt="mood">
-  <h1>24 cases, 24 surprises, une poésie à découvrir.</h1>
+  <h1>Le calendrier <img class="logo-i" src="/logo-mood.png" alt="mood"> <span class="sep">·</span> Notre poésie de Noël ✨</h1>
+  <p class="kick2">24 cases, 24 surprises.</p>
   <p class="sous">Des créations exclusives à prix magiques, avec parfois plus de 50&nbsp;% de réduction&nbsp;! Des prix qui ne reviendront pas.<br>
   Choisissez 4 addons minimum, nos lutins complètent les cases restantes avec de délicieux chocolats. 🎄</p>
 </header>
