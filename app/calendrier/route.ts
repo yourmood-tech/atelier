@@ -17,7 +17,7 @@ header{text-align:center;padding:26px 18px 4px}
 .logo-h{display:block;margin:0 auto;width:clamp(100px,11vw,148px);height:auto}
 h1{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(21px,2.7vw,32px);margin:12px 0 0;line-height:1.2;color:#2B4D6B}
 h1 em{font-style:italic;color:#A8863A}
-.sous{max-width:62ch;margin:10px auto 0;font-size:12.5px;line-height:1.75;color:#52728C}
+.sous{max-width:min(96%,108ch);margin:9px auto 0;font-size:12px;line-height:1.7;color:#52728C}
 .magie{position:fixed;inset:0;z-index:101;pointer-events:none;overflow:hidden}
 .pa{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FFF6DC 0%,#F0D38A 45%,#C9A33F 100%);
   box-shadow:0 0 7px rgba(235,200,120,.95),0 0 16px rgba(220,180,90,.55);
