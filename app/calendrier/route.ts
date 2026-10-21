@@ -406,7 +406,19 @@ function versPanier(){
     document.getElementById("panier").innerHTML="<b>Pas encore commandable</b> · cases "+manque.join(", ");
     return; }
   ids.push(COFFRET+":1");
-  window.location.href="https://www.yourmood.net/cart/"+ids.join(",")+"?storefront=true";
+  var bt=document.getElementById("valider"); if(bt){ bt.disabled=true; bt.textContent="Préparation du panier…"; }
+  fetch("https://mood-tools.yourmood.net/api/calendrier-panier",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ids:ids.map(function(x){return x.split(":")[0];})})})
+  .then(function(r){return r.json();})
+  .then(function(j){
+    if(j && j.lien){ window.location.href=j.lien; return; }
+    throw new Error((j&&j.error)||"erreur");
+  })
+  .catch(function(){
+    if(bt){ bt.disabled=false; bt.textContent="Ajouter au panier"; }
+    var p=document.getElementById("panier"); p.style.display="block";
+    p.innerHTML+="<p class=\"gain\">Le panier n'a pas pu être préparé, merci de réessayer dans un instant.</p>";
+  });
 }
 document.getElementById("valider").onclick=function(){
   var r=maj(), p=document.getElementById("panier");

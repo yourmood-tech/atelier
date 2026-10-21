@@ -62,6 +62,11 @@ export default auth((req) => {
     return;
   }
 
+  // le service qui prépare le panier du calendrier (prix calendrier appliqués par une remise)
+  if (pathname === "/api/calendrier-panier") {
+    return;
+  }
+
   // le service qui prépare le panier de la Grande Valise
   if (pathname === "/api/valise-panier") {
     return;
