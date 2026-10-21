@@ -42,6 +42,26 @@ h1 em{font-style:italic;color:#A8863A}
 
 .duo{display:grid;grid-template-columns:minmax(0,1fr) 492px;gap:24px;align-items:start;margin-top:22px}
 @media(max-width:1200px){.duo{grid-template-columns:1fr;gap:26px}}
+@media(max-width:760px){
+  .barre{padding:8px 10px 10px;gap:7px}
+  .tailles{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;width:100%;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+  .tailles::-webkit-scrollbar{height:0}
+  .tailles .lt{display:none}
+  .tb{flex:none}
+  .ligne{gap:10px;row-gap:8px}
+  .choix{gap:8px}
+  .choix .bte{height:44px}
+  .rd{width:34px;height:34px}
+  .rd .j{font-size:7.5px;line-height:11px}
+  .cpt{font-size:14px}
+  .cpt.tot{font-size:15px}
+  .mini{font-size:8.5px}
+  .eco{font-size:9px;padding:3px 8px}
+  .bt{padding:10px 18px;font-size:12px}
+  .maison{width:100%}
+  .liste{padding:12px 13px}
+  .fiche{margin-top:14px;padding:12px 16px 14px}
+}
 @media(min-width:1201px){.liste{overflow:hidden}}
 .liste{background:#fff;border:1px solid rgba(46,83,117,.10);border-radius:14px;padding:16px 18px;box-shadow:0 14px 40px rgba(46,83,117,.08);columns:2;column-gap:20px}
 @media(max-width:900px){.liste{columns:2}}@media(max-width:560px){.liste{columns:1}}
