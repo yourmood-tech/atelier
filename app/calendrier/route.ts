@@ -109,17 +109,12 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .rd.att{display:flex;align-items:center;justify-content:center;font-size:9px;color:#9DB0BF;letter-spacing:.04em}
 .rd.vide{border:1.5px dashed rgba(46,83,117,.3);background:transparent;cursor:default}
 .rd.vide:hover{transform:none}
-.fiche{max-width:640px;margin:22px auto 0;text-align:center;padding:22px 24px 24px;
-  background:rgba(255,255,255,.72);border:1px solid rgba(46,83,117,.1);border-radius:14px}
-.fiche h2{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(18px,2.2vw,24px);
-  margin:0 0 10px;color:#2B4D6B}
-.fiche p{margin:0;font-size:12.5px;line-height:1.75;color:#52728C}
-.fiche ul{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
-.fiche li{display:flex;justify-content:center;gap:10px;font-size:12px;color:#43637E}
-.fiche li span{min-width:104px;text-align:right;font-size:9.5px;letter-spacing:.16em;
-  text-transform:uppercase;color:#A8863A;align-self:center}
-.fiche .note{margin-top:16px;font-size:10.5px;line-height:1.6;color:#9DB0BF;font-style:italic}
-@media(max-width:560px){ .fiche li{flex-direction:column;gap:1px} .fiche li span{min-width:0;text-align:center} }
+.fiche{max-width:720px;margin:16px auto 0;text-align:center;padding:14px 22px 15px;
+  background:rgba(255,255,255,.7);border:1px solid rgba(46,83,117,.1);border-radius:12px}
+.fiche h2{font-family:Playfair Display,serif;font-weight:400;font-size:clamp(16px,1.9vw,21px);margin:0 0 5px;color:#2B4D6B}
+.fiche p{margin:0;font-size:12px;line-height:1.6;color:#52728C}
+.fiche .spec{margin-top:5px;font-size:10.5px;letter-spacing:.03em;color:#A8863A}
+.fiche .note{margin-top:5px;font-size:9.5px;line-height:1.5;color:#A8B8C6;font-style:italic}
 .barre{position:sticky;bottom:0;margin-top:10px;background:rgba(255,255,255,.94);border-top:1px solid rgba(46,83,117,.12);
   padding:10px 18px 12px;display:flex;flex-direction:column;align-items:center;gap:9px;border-radius:12px 12px 0 0}
 .ligne{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;width:100%}
@@ -202,12 +197,8 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   </div>
   <section class="fiche">
     <h2>Un écrin féerique pour votre Noël ✨</h2>
-    <p>Un calendrier de l'Avent en bois blanc et doré, composé de 24 petits tiroirs et d'un village de Noël illuminé par de douces lumières LED.</p>
-    <ul>
-      <li><span>Dimensions</span>39,4 × 30 × 5 cm</li>
-      <li><span>Éclairage</span>8 LED avec minuterie de 6 h</li>
-      <li><span>Alimentation</span>2 piles AAA (non incluses)</li>
-    </ul>
+    <p>Un calendrier de l'Avent en bois blanc et doré, 24 petits tiroirs et un village de Noël illuminé par de douces lumières LED.</p>
+    <p class="spec">39,4 × 30 × 5 cm · 8 LED avec minuterie de 6 h · 2 piles AAA (non incluses)</p>
     <p class="note">Visuels d'illustration : le calendrier livré peut présenter quelques différences avec les images présentées.</p>
   </section>
   <div class="barre" id="barre">
