@@ -177,6 +177,11 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   .liste{padding:12px 13px}
   .fiche{margin-top:14px;padding:12px 16px 14px}
 }
+
+.mode{margin:9px auto 0;max-width:min(96%,70ch);font-size:11px;letter-spacing:.01em;color:#8A6D22;
+  background:rgba(184,145,47,.1);border:1px solid rgba(184,145,47,.28);border-radius:999px;padding:6px 16px;display:inline-block}
+.mode b{font-weight:500}
+@media(max-width:760px){.mode{font-size:10.5px;padding:6px 12px;border-radius:12px}}
 </style></head><body>
 
 <div class="intro" id="intro">
@@ -232,6 +237,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   <p class="kick2">24 cases, 24 surprises.</p>
   <p class="sous">Des créations exclusives, à des prix qui ne reviendront pas.<br>
   Choisissez entre 4 et 24 addons — nos lutins remplissent les cases restantes de surprises gourmandes.</p>
+  <p class="mode">D&rsquo;abord votre taille, puis cliquez <b>deux fois</b> sur une case&nbsp;: la première l&rsquo;ouvre, la seconde l&rsquo;ajoute.</p>
 </header>
 
 <div class="wrap">
