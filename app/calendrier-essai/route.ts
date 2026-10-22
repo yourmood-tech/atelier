@@ -243,7 +243,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .z.entrouvert .porte{transform:rotateY(-38deg);box-shadow:5px 0 14px rgba(0,0,0,.3)}
 .z.entrouvert .ph{opacity:1;transform:none}
 .z .porte{transition:transform .7s cubic-bezier(.34,.82,.36,1),box-shadow .7s}
-.carte{position:absolute;z-index:20;width:230px;background:#fff;border-radius:14px;padding:10px 10px 12px;
+.carte{position:absolute;z-index:200;width:230px;background:#fff;border-radius:14px;padding:10px 10px 12px;
   box-shadow:0 18px 44px rgba(20,41,63,.32);text-align:center;opacity:0;transform:translateY(8px) scale(.96);
   transition:opacity .28s,transform .32s cubic-bezier(.3,1.3,.5,1);pointer-events:none;font-family:Poppins,sans-serif}
 .carte.on{opacity:1;transform:none;pointer-events:auto}
@@ -274,7 +274,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   .barre .choix,.barre .mini,.barre .tot,.barre .eco{display:none!important}
   .barre .ligne{flex-wrap:nowrap!important;justify-content:space-between!important}
   .barre .bt{width:auto!important;flex:1;max-width:60%}
-  .carte{position:fixed!important;left:12px!important;right:12px;bottom:84px;top:auto!important;width:auto;display:flex;gap:10px;align-items:center;text-align:left}
+  .carte{position:fixed!important;z-index:2147483000!important;left:12px!important;right:12px;bottom:84px;top:auto!important;width:auto;display:flex;gap:10px;align-items:center;text-align:left}
   .carte .im{width:96px;flex:none}
   .carte .info{flex:1}
   .recap{grid-template-columns:repeat(8,1fr)}
@@ -516,6 +516,15 @@ function ouvrir(n){
     +'<div class="info"><p class="nm">'+c.t+'</p><p class="ty">'+c.f+'</p><p class="pz"><s>'+c.b+'.–</s>'+c.p+'.–</p>'
     +'<button class="add'+(pris[n]?' retire':'')+'">'+(pris[n]?'Retirer de mon calendrier':'Ajouter à mon calendrier')+'</button></div>';
   carte.classList.add("on"); placer(z);
+  // la carte passe toujours devant la barre du bas et les bulles du site
+  var ba=document.getElementById("barre");
+  if(window.matchMedia("(max-width:760px)").matches){
+    carte.style.bottom=((ba?ba.getBoundingClientRect().height:70)+12)+"px";
+  } else {
+    var cb=carte.getBoundingClientRect(), bt=ba?ba.getBoundingClientRect().top:innerHeight;
+    var lim=Math.min(bt,innerHeight)-12;
+    if(cb.bottom>lim) window.scrollBy({top:cb.bottom-lim,behavior:"smooth"});
+  }
 }
 function clic(n,deLaListe){
   var z=zones.querySelector('[data-n="'+n+'"]'); if(!z) return;
