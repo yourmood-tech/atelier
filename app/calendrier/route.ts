@@ -447,7 +447,7 @@ function versPanier(){
   .catch(function(){
     if(bt){ bt.disabled=false; bt.textContent="Ajouter au panier"; }
     var p=document.getElementById("panier"); p.style.display="block";
-    p.innerHTML+="<p class=\"gain\">Le panier n'a pas pu être préparé, merci de réessayer dans un instant.</p>";
+    p.innerHTML+="<p class='gain'>Le panier n'a pas pu être préparé, merci de réessayer dans un instant.</p>";
   });
 }
 document.getElementById("valider").onclick=function(){
