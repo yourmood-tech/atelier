@@ -220,6 +220,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   display:flex;align-items:center;justify-content:center;margin-top:-3px}
 .cm-p{margin:14px 0 0;padding-top:11px;border-top:1px solid rgba(46,83,117,.10);font-size:13px;font-weight:400;color:#52728C}
 .cm-p b{font-weight:500;color:#1F3F5E}
+.cm-f{font-style:normal;font-size:12.5px;color:#8DA3B5;display:block;margin-top:2px}
 .etape1 .vt{font-family:Poppins,sans-serif!important;font-weight:500}
 /* une seule écriture partout, sauf le grand titre */
 .grp h3,.n,.tot b,.cpt,.cpt b,.fiche h2,.panier b,.rec tr.to td,.gain b,.etape1 .vt{font-family:Poppins,sans-serif!important}
@@ -283,7 +284,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <p class="cm-t">Comment ça marche&nbsp;?</p>
     <ol class="cm-l">
       <li><span>1</span>Sélectionne ta taille.</li>
-      <li><span>2</span>Choisis 4 à 24 addons.</li>
+      <li><span>2</span>Choisis 4 à 24 addons <em class="cm-f">(les photos sont floutées exprès, pour garder la surprise)</em>.</li>
       <li><span>3</span>Double-clique sur une case pour l&rsquo;ajouter à ton panier.</li>
       <li><span>4</span>Nos lutins rempliront les cases restantes avec des gourmandises.</li>
     </ol>
