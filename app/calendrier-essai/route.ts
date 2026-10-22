@@ -274,7 +274,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   .barre .choix,.barre .mini,.barre .tot,.barre .eco{display:none!important}
   .barre .ligne{flex-wrap:nowrap!important;justify-content:space-between!important}
   .barre .bt{width:auto!important;flex:1;max-width:60%}
-  .carte{position:fixed!important;z-index:2147483000!important;left:12px!important;right:12px;bottom:84px;top:auto!important;width:auto;display:flex;gap:10px;align-items:center;text-align:left}
+  .carte{position:fixed!important;z-index:2147483000!important;left:12px!important;right:12px;top:84px!important;bottom:auto!important;width:auto;display:flex;gap:10px;align-items:center;text-align:left}
   .carte .im{width:96px;flex:none}
   .carte .info{flex:1}
   .recap{grid-template-columns:repeat(8,1fr)}
@@ -521,7 +521,7 @@ function ouvrir(n){
     +'<button class="add'+(pris[n]?' retire':'')+'">'+(pris[n]?'Retirer de mon calendrier':'Ajouter à mon calendrier')+'</button></div>';
   carte.classList.add("on"); placer(z);
   var ba=document.getElementById("barre");
-  if(window.matchMedia("(max-width:760px)").matches) carte.style.bottom=((ba?ba.getBoundingClientRect().height:70)+12)+"px";
+  if(window.matchMedia("(max-width:760px)").matches){ carte.style.bottom="auto"; carte.style.top="84px"; }
 }
 function clic(n,deLaListe){
   var z=zones.querySelector('[data-n="'+n+'"]'); if(!z) return;
