@@ -280,6 +280,15 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   .recap{grid-template-columns:repeat(8,1fr)}
 }
 @media(prefers-reduced-motion:reduce){.z .porte,.carte,.z .et{transition:none}.bt.pret{animation:none}}
+
+/* ===== ESSAI : film de la lutine avant de commencer ===== */
+.lut{position:fixed;inset:0;z-index:99;background:rgba(10,24,40,.82);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .5s}
+.lut.on{opacity:1}.lut.out{opacity:0;pointer-events:none}
+.lut .cad{position:relative;height:min(88vh,calc((100vw - 32px)*16/9));aspect-ratio:9/16;border-radius:18px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.5);background:#000}
+.lut video{width:100%;height:100%;object-fit:cover;display:block}
+.lut .ferme{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#1F3F5E;font-size:22px;line-height:38px;cursor:pointer;padding:0;z-index:2}
+.lut .son{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);border:0;border-radius:999px;background:#B8912F;color:#fff;font-family:Poppins;font-size:14px;font-weight:500;padding:12px 22px;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.35);z-index:2;white-space:nowrap}
+.lut .passer{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);border:1px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(0,0,0,.25);color:#fff;font-family:Poppins;font-size:12.5px;padding:8px 16px;cursor:pointer;display:none;z-index:2}
 </style></head><body>
 
 <div class="intro" id="intro">
@@ -327,6 +336,32 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     });
   }
   intro.addEventListener("click",function(){ clearTimeout(minuteur); tourner(); });
+})();
+</script>
+
+<div class="lut" id="lut">
+  <div class="cad">
+    <video id="lutv" playsinline muted preload="auto" poster="/calendrier/lutine.jpg"><source src="/calendrier/lutine.mp4" type="video/mp4"></video>
+    <button class="ferme" id="lutx" aria-label="Fermer l'animation">×</button>
+    <button class="son" id="luts">🔊 Écouter la lutine</button>
+    <button class="passer" id="lutp">Passer</button>
+  </div>
+</div>
+<script>
+(function(){
+  var L=document.getElementById("lut"),v=document.getElementById("lutv"),s=document.getElementById("luts"),pa=document.getElementById("lutp");
+  var fini=false;
+  function fermer(){ if(fini) return; fini=true; try{v.pause();}catch(e){} L.classList.add("out"); setTimeout(function(){ if(L.parentNode) L.parentNode.removeChild(L); },600); }
+  function montrer(){ if(fini) return; L.classList.add("on"); var pr=v.play(); if(pr&&pr.catch) pr.catch(function(){}); }
+  document.getElementById("lutx").onclick=fermer;
+  L.addEventListener("click",function(e){ if(e.target===L) fermer(); });
+  s.onclick=function(){ v.muted=false; v.currentTime=0; v.play(); s.style.display="none"; pa.style.display="block"; };
+  pa.onclick=fermer;
+  v.addEventListener("ended",fermer);
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape") fermer(); });
+  // le film arrive juste après le rideau d'ouverture
+  var t=setInterval(function(){ if(!document.getElementById("intro")){ clearInterval(t); montrer(); } },250);
+  setTimeout(function(){ clearInterval(t); montrer(); },11000);
 })();
 </script>
 
