@@ -341,7 +341,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 
 <div class="lut" id="lut">
   <div class="cad">
-    <video id="lutv" playsinline muted preload="auto" poster="/calendrier/lutine.jpg?v=2"><source src="/calendrier/lutine.mp4?v=2" type="video/mp4"></video>
+    <video id="lutv" playsinline muted preload="auto" poster="/calendrier/lutine.jpg?v=3"><source src="/calendrier/lutine.mp4?v=3" type="video/mp4"></video>
     <button class="ferme" id="lutx" aria-label="Fermer l'animation">×</button>
     <button class="son" id="luts">🔊 Écouter la lutine</button>
     <button class="passer" id="lutp">Passer</button>
