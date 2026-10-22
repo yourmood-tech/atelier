@@ -209,6 +209,24 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
   font-family:Poppins;font-size:11px;letter-spacing:.04em;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .chg b{font-weight:600}
 @media(max-width:760px){.verrou{gap:9px;padding:14px}.verrou .vs{display:none}.verrou .tb{font-size:12px;min-width:34px;padding:6px 9px}}
+
+/* mode d'emploi : une seule écriture (Poppins), lisible d'un coup d'œil */
+.cm{margin:16px auto 0;max-width:1080px;background:#fff;border:1.5px solid rgba(184,145,47,.45);border-radius:16px;
+  padding:16px 20px 14px;box-shadow:0 12px 32px rgba(46,83,117,.10);font-family:Poppins,sans-serif}
+.cm-t{margin:0 0 12px;font-family:Poppins,sans-serif;font-weight:500;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#B8912F}
+.cm-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:left}
+.cm-l li{display:flex;align-items:flex-start;gap:10px;font-size:14.5px;line-height:1.45;font-weight:400;color:#1F3F5E}
+.cm-l li span{flex:none;width:30px;height:30px;border-radius:50%;background:#B8912F;color:#fff;font-weight:500;font-size:15px;
+  display:flex;align-items:center;justify-content:center;margin-top:-3px}
+.cm-p{margin:14px 0 0;padding-top:11px;border-top:1px solid rgba(46,83,117,.10);font-size:13px;font-weight:400;color:#52728C}
+.cm-p b{font-weight:500;color:#1F3F5E}
+.etape1 .vt{font-family:Poppins,sans-serif!important;font-weight:500}
+/* une seule écriture partout, sauf le grand titre */
+.grp h3,.n,.tot b,.cpt,.cpt b,.fiche h2,.panier b,.rec tr.to td,.gain b,.etape1 .vt{font-family:Poppins,sans-serif!important}
+.grp h3{font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#B8912F}
+.cpt{font-size:15px;font-weight:400}.fiche h2{font-weight:500;font-size:17px}
+@media(max-width:900px){.cm-l{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.cm{padding:14px 15px 12px}.cm-l{grid-template-columns:1fr;gap:10px}.cm-l li{font-size:14px}.cm-t{font-size:13px}}
 </style></head><body>
 
 <div class="intro" id="intro">
@@ -261,15 +279,21 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 
 <header>
   <h1>Le calendrier <img class="logo-i" src="/calendrier/mood-mot.png" alt="mood"> <span class="sep">·</span> Notre poésie de Noël</h1>
-  <p class="kick2">24 cases, 24 surprises.</p>
-  <p class="sous">Des créations exclusives, à des prix qui ne reviendront pas.<br>
-  Choisissez entre 4 et 24 addons — nos lutins remplissent les cases restantes de surprises gourmandes.</p>
-  <p class="mode">Cliquez <b>deux fois</b> sur une case&nbsp;: la première l&rsquo;ouvre, la seconde l&rsquo;ajoute.</p>
+  <section class="cm">
+    <p class="cm-t">Comment ça marche&nbsp;?</p>
+    <ol class="cm-l">
+      <li><span>1</span>Sélectionne ta taille.</li>
+      <li><span>2</span>Choisis 4 à 24 addons.</li>
+      <li><span>3</span>Double-clique sur une case pour l&rsquo;ajouter à ton panier.</li>
+      <li><span>4</span>Nos lutins rempliront les cases restantes avec des gourmandises.</li>
+    </ol>
+    <p class="cm-p"><b>Prix exclusifs</b>&nbsp;: c&rsquo;est le prix le plus avantageux pour profiter de nos créations de Noël.</p>
+  </section>
 </header>
 
 <div class="wrap">
   <section class="etape1" id="verrou">
-    <p class="vt"><span class="num">1</span> Choisissez votre taille</p>
+    <p class="vt"><span class="num">1</span> Sélectionne ta taille</p>
     <div class="tailles" id="tailles"></div>
     <p class="vs">Les 24 tiroirs s&rsquo;ouvriront juste après.</p>
   </section>
@@ -279,7 +303,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <aside class="liste" id="liste"></aside>
   </div>
   <section class="fiche">
-    <h2>Un écrin féerique pour votre Noël</h2>
+    <h2>Un écrin féerique pour ton Noël</h2>
     <p>Un calendrier de l'Avent, 24 petits tiroirs et un village de Noël illuminé par de douces lumières LED.</p>
     <p class="spec">39,4 × 30 × 5 cm · 8 LED avec minuterie de 6 h · 2 piles AAA (non incluses)</p>
     <p class="note">Visuels d'illustration : le calendrier livré peut présenter quelques différences avec les images présentées.</p>
