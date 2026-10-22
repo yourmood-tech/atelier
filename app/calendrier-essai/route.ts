@@ -243,7 +243,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .z.entrouvert .porte{transform:rotateY(-38deg);box-shadow:5px 0 14px rgba(0,0,0,.3)}
 .z.entrouvert .ph{opacity:1;transform:none}
 .z .porte{transition:transform .7s cubic-bezier(.34,.82,.36,1),box-shadow .7s}
-.carte{position:absolute;z-index:200;width:230px;background:#fff;border-radius:14px;padding:10px 10px 12px;
+.carte{position:fixed;z-index:2147483000;width:230px;background:#fff;border-radius:14px;padding:10px 10px 12px;
   box-shadow:0 18px 44px rgba(20,41,63,.32);text-align:center;opacity:0;transform:translateY(8px) scale(.96);
   transition:opacity .28s,transform .32s cubic-bezier(.3,1.3,.5,1);pointer-events:none;font-family:Poppins,sans-serif}
 .carte.on{opacity:1;transform:none;pointer-events:auto}
@@ -495,7 +495,7 @@ function refermePlusTard(n,z){
   clearTimeout(minuteurs[n]);
   minuteurs[n]=setTimeout(function(){ if(!pris[n]) z.classList.remove("ouvert"); },10000);
 }
-var carte=document.createElement("div"); carte.className="carte"; document.querySelector(".maison").appendChild(carte);
+var carte=document.createElement("div"); carte.className="carte"; (document.getElementById("moodcal")||document.body).appendChild(carte);
 var ouverte=null;
 function fermer(){
   if(ouverte===null) return;
@@ -503,11 +503,15 @@ function fermer(){
   carte.classList.remove("on"); ouverte=null;
 }
 function placer(z){
-  var m=document.querySelector(".maison").getBoundingClientRect(), b=z.getBoundingClientRect(), w=230;
-  var x=b.left-m.left+b.width/2-w/2; x=Math.max(6,Math.min(m.width-w-6,x));
-  var y=b.top-m.top-carte.offsetHeight-10; if(y<6) y=b.bottom-m.top+10;
+  if(window.matchMedia("(max-width:760px)").matches){ carte.style.left=""; carte.style.top=""; return; }
+  var b=z.getBoundingClientRect(), w=230, h=carte.offsetHeight||330;
+  var ba=document.getElementById("barre"), bas=Math.min(innerHeight,ba?ba.getBoundingClientRect().top:innerHeight)-10;
+  var x=b.left+b.width/2-w/2; x=Math.max(8,Math.min(innerWidth-w-8,x));
+  var y=b.top-h-10; if(y<8) y=b.bottom+10; if(y+h>bas) y=Math.max(8,bas-h);
   carte.style.left=x+"px"; carte.style.top=y+"px";
 }
+addEventListener("scroll",function(){ if(ouverte!==null){ var z=zones.querySelector('[data-n="'+ouverte+'"]'); if(z) placer(z); } },{passive:true});
+addEventListener("resize",function(){ if(ouverte!==null){ var z=zones.querySelector('[data-n="'+ouverte+'"]'); if(z) placer(z); } });
 function ouvrir(n){
   var z=zones.querySelector('[data-n="'+n+'"]'); if(!z) return;
   var c=CASES.find(function(x){return x.n===n;}), src=IMG[n];
@@ -516,15 +520,8 @@ function ouvrir(n){
     +'<div class="info"><p class="nm">'+c.t+'</p><p class="ty">'+c.f+'</p><p class="pz"><s>'+c.b+'.–</s>'+c.p+'.–</p>'
     +'<button class="add'+(pris[n]?' retire':'')+'">'+(pris[n]?'Retirer de mon calendrier':'Ajouter à mon calendrier')+'</button></div>';
   carte.classList.add("on"); placer(z);
-  // la carte passe toujours devant la barre du bas et les bulles du site
   var ba=document.getElementById("barre");
-  if(window.matchMedia("(max-width:760px)").matches){
-    carte.style.bottom=((ba?ba.getBoundingClientRect().height:70)+12)+"px";
-  } else {
-    var cb=carte.getBoundingClientRect(), bt=ba?ba.getBoundingClientRect().top:innerHeight;
-    var lim=Math.min(bt,innerHeight)-12;
-    if(cb.bottom>lim) window.scrollBy({top:cb.bottom-lim,behavior:"smooth"});
-  }
+  if(window.matchMedia("(max-width:760px)").matches) carte.style.bottom=((ba?ba.getBoundingClientRect().height:70)+12)+"px";
 }
 function clic(n,deLaListe){
   var z=zones.querySelector('[data-n="'+n+'"]'); if(!z) return;
