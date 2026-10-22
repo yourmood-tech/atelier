@@ -228,6 +228,11 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
 .cpt{font-size:15px;font-weight:400}.fiche h2{font-weight:500;font-size:17px}
 @media(max-width:900px){.cm-l{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.cm{padding:14px 15px 12px}.cm-l{grid-template-columns:1fr;gap:10px}.cm-l li{font-size:14px}.cm-t{font-size:13px}}
+.etape1{max-width:1080px!important;width:100%}
+.etape1 .tailles{max-width:none!important;width:100%;flex-wrap:nowrap!important;justify-content:space-between!important;gap:8px!important}
+.etape1 .tb{flex:1 1 0;min-width:0!important;padding:9px 4px!important}
+.etape1 .tb.inconnue{flex:2.2 1 0}
+@media(max-width:760px){.etape1{max-width:none!important}.etape1 .tailles{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:8px!important}.etape1 .tb.inconnue{grid-column:1 / -1}}
 </style></head><body>
 
 <div class="intro" id="intro">
@@ -284,7 +289,7 @@ i.glace,.n.glace{background:linear-gradient(145deg,#DCE9F3,#A9C4D8)}
     <p class="cm-t">Comment ça marche&nbsp;?</p>
     <ol class="cm-l">
       <li><span>1</span>Sélectionne ta taille.</li>
-      <li><span>2</span>Choisis 4 à 24 addons <em class="cm-f">(les photos sont floutées exprès, pour garder la surprise)</em>.</li>
+      <li><span>2</span><div>Choisis 4 à 24 addons.<em class="cm-f">(Les photos sont floutées exprès, pour garder la surprise.)</em></div></li>
       <li><span>3</span>Double-clique sur une case pour l&rsquo;ajouter à ton panier.</li>
       <li><span>4</span>Nos lutins rempliront les cases restantes avec des gourmandises.</li>
     </ol>
