@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { recordGeminiImages } from "@/lib/gemini-counter";
+import { kieImage, kieDisponible } from "@/lib/kie-image";
 
+export const maxDuration = 300;
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const MODEL = "gemini-3-pro-image-preview";
 
@@ -496,6 +498,11 @@ Apply the action above to ALL ${imageDataUrls.length} rings TOGETHER in a SINGLE
   if (note && note.trim()) prompt += `\n\n=== INSTRUCTIONS SUPPLÉMENTAIRES DE L'UTILISATEUR ===\n${note.trim()}`;
   const aspectRatio = (formatOverride && /^\d+:\d+$/.test(formatOverride)) ? formatOverride : (RATIOS[action] || "1:1");
 
+  if (kieDisponible()) {
+    const k = await kieImage(imageDataUrls, prompt, aspectRatio, qualite === "final" ? "2K" : "1K");
+    if (k.image) return k;
+    console.warn("[retouche] KIE en échec, repli Gemini :", k.error);
+  }
   const parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> = [];
   for (let i = 0; i < imageDataUrls.length; i++) {
     const m = imageDataUrls[i].match(/^data:([^;]+);base64,(.+)$/);
@@ -898,6 +905,14 @@ async function appelGemini(imageDataUrl: string, action: string, note?: string |
   // Ordre : bague source EN PREMIER (IMAGE 1 = identité préservée),
   // puis référence d'angle si présente (IMAGE 2 = angle uniquement)
   const refPart = loadActionReference(action);
+  if (kieDisponible()) {
+    const refs = [imageDataUrl];
+    const rp = refPart as { inlineData?: { mimeType: string; data: string } } | null;
+    if (rp?.inlineData) refs.push(`data:${rp.inlineData.mimeType};base64,${rp.inlineData.data}`);
+    const k = await kieImage(refs, prompt, aspectRatio, qualite === "final" ? "2K" : "1K");
+    if (k.image) return k;
+    console.warn("[retouche] KIE en échec, repli Gemini :", k.error);
+  }
   const parts = refPart
     ? [{ inlineData: { mimeType, data } }, refPart, { text: prompt }]
     : [{ inlineData: { mimeType, data } }, { text: prompt }];
