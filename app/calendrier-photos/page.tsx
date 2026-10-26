@@ -333,9 +333,9 @@ const CSS = `
 .cp .scene{position:relative;margin:0 auto;user-select:none;touch-action:none;overflow:hidden}
 .cp .scene img{display:block}
 .cp .cadre{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.55);outline:2px solid #fff;cursor:move}
-.cp .coin{position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;box-shadow:0 0 0 2px var(--gold)}
-.cp .coin.hg{left:-9px;top:-9px;cursor:nwse-resize} .cp .coin.bd{right:-9px;bottom:-9px;cursor:nwse-resize}
-.cp .coin.hd{right:-9px;top:-9px;cursor:nesw-resize} .cp .coin.bg{left:-9px;bottom:-9px;cursor:nesw-resize}
+.cp .coin{position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 0 0 2px var(--gold)}
+.cp .coin.hg{left:-3px;top:-3px;cursor:nwse-resize} .cp .coin.bd{right:-3px;bottom:-3px;cursor:nwse-resize}
+.cp .coin.hd{right:-3px;top:-3px;cursor:nesw-resize} .cp .coin.bg{left:-3px;bottom:-3px;cursor:nesw-resize}
 .cp .aide{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 6px}
 .cp .rec-pied{display:flex;justify-content:flex-end}
 .cp .rec-pied .ok{background:var(--gold);border-color:var(--gold);color:#fff}
