@@ -32,6 +32,7 @@ export async function POST(req: Request) {
   if (b.action === "poser" && SLOTS.includes(b.slot) && b.url) p[b.slot as (typeof SLOTS)[number]] = String(b.url);
   else if (b.action === "retirer" && SLOTS.includes(b.slot)) delete p[b.slot as (typeof SLOTS)[number]];
   else if (b.action === "ambiance" && b.url) p.ambiance = [...(p.ambiance || []), String(b.url)];
+  else if (b.action === "remplacerAmbiance" && b.url) p.ambiance = (p.ambiance || []).map((u) => (u === b.ancien ? String(b.url) : u));
   else if (b.action === "retirerAmbiance") p.ambiance = (p.ambiance || []).filter((u) => u !== b.url);
   else if (b.action !== "gif") return NextResponse.json({ error: "action inconnue" }, { status: 400 });
 
