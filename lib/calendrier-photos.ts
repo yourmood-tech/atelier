@@ -124,13 +124,13 @@ export async function faireGif(n: number, sansBase: string, avecBase: string): P
   return deposer(gif, `calendrier-2026-${String(n).padStart(2, "0")}-gif.gif`, "image/gif");
 }
 
-// pose les photos sur la fiche : sans base, avec base, gif, portée (l'image surprise est retirée)
+// pose les photos sur la fiche : gif, portée, sans base, avec base (l'image surprise est retirée)
 // + photos d'ambiance dans la description, juste après le premier paragraphe
 export async function publier(n: number, p: Photos, productId: string) {
   const avant = await gq(`query($id:ID!){product(id:$id){descriptionHtml media(first:50){nodes{id}}}}`, { id: productId });
   const anciens: string[] = avant.product.media.nodes.map((m: { id: string }) => m.id);
   const nom = CASES[n - 1].t;
-  const media = [p.sansBase, p.avecBase, p.gif, p.portee].filter(Boolean).map((u) => ({ originalSource: u, mediaContentType: "IMAGE", alt: nom }));
+  const media = [p.gif, p.portee, p.sansBase, p.avecBase].filter(Boolean).map((u) => ({ originalSource: u, mediaContentType: "IMAGE", alt: nom }));
   const cr = await gq(
     `mutation($id:ID!,$m:[CreateMediaInput!]!){productCreateMedia(productId:$id,media:$m){media{id} mediaUserErrors{message}}}`,
     { id: productId, m: media }
