@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { kv } from "@vercel/kv";
+import { jourSuisse, publierDuJour } from "@/lib/calendrier-photos";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const SHOP = "yourmood.myshopify.com";
 const TOKEN = process.env.SHOPIFY_API_TOKEN!;
@@ -38,6 +41,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ fait: false, raison: "pas encore le 1er décembre" });
   }
 
+  // les vrais noms ne sont remis qu'UNE fois (sinon chaque nuit effacerait les photos d'ambiance des descriptions)
+  const DEJA = "calendrier2026:reveil-fait";
+  if (!forcer && !essai && (await kv.get(DEJA))) {
+    const photos = await publierDuJour(jourSuisse());
+    return NextResponse.json({ fait: true, noms: "déjà remis", photos });
+  }
+
   const p = path.join(process.cwd(), "prive", "calendrier-2026-vrais-noms.json");
   const sv = JSON.parse(fs.readFileSync(p, "utf8")) as Record<string, any>;
   const ids = Object.keys(sv);
@@ -59,5 +69,8 @@ export async function GET(req: NextRequest) {
       rates.push(f.titre + " : " + String(err.message).slice(0, 120));
     }
   }
-  return NextResponse.json({ fait: true, remis: faits.length, rates });
+  if (!rates.length) await kv.set(DEJA, new Date().toISOString());
+  // puis les photos des cases dont le jour est arrivé
+  const photos = await publierDuJour(jourSuisse());
+  return NextResponse.json({ fait: true, remis: faits.length, rates, photos });
 }
