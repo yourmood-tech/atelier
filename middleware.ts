@@ -96,6 +96,11 @@ export default auth((req) => {
     return;
   }
 
+  // /premiere-bague (maquette du guide « Ma première bague » pour les nouvelles clientes)
+  if (pathname === "/premiere-bague" || pathname.startsWith("/premiere-bague/")) {
+    return;
+  }
+
   // /xsmax (maquette de lancement de la base mood XS MAX — lien à montrer à l'équipe)
   if (pathname === "/xsmax" || pathname.startsWith("/xsmax/")) {
     return;
