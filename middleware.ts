@@ -58,7 +58,7 @@ export default auth((req) => {
   }
 
   // /aura (page de la famille Aura — lien à montrer à l'équipe)
-  if (pathname === "/aura" || pathname === "/aura-xs" || pathname === "/dernier-jour" || pathname === "/les-oubliees" || pathname === "/les-discretes" || pathname === "/refonte" || pathname === "/api/refonte" || pathname === "/catalogue-noel" || pathname === "/calendrier" || pathname === "/calendrier-essai" || pathname.startsWith("/aura/")) {
+  if (pathname === "/aura" || pathname === "/aura-xs" || pathname === "/dernier-jour" || pathname === "/les-oubliees" || pathname === "/les-discretes" || pathname === "/refonte" || pathname === "/api/refonte" || pathname === "/catalogue-noel" || pathname === "/calendrier" || pathname === "/calendrier-essai" || pathname === "/avant-premiere" || pathname.startsWith("/aura/")) {
     return;
   }
 
