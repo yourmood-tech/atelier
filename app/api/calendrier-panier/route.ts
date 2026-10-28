@@ -19,8 +19,8 @@ const ETIQUETTE = "col-calendrier-avent-2026";
 
 // prix « calendrier » de chaque case : la fiche affiche le prix plein, le calendrier ce prix-ci
 const PRIX_CALENDRIER: Record<number, number> = {
-  1: 60, 2: 55, 3: 30, 4: 10, 5: 10, 6: 35, 7: 70, 8: 60, 9: 55, 10: 10, 11: 60, 12: 30,
-  13: 10, 14: 85, 15: 30, 16: 30, 17: 35, 18: 50, 19: 50, 20: 70, 21: 50, 22: 60, 23: 85, 24: 50,
+  1: 64, 2: 59, 3: 34, 4: 14, 5: 14, 6: 39, 7: 74, 8: 64, 9: 59, 10: 14, 11: 64, 12: 34,
+  13: 14, 14: 89, 15: 34, 16: 34, 17: 39, 18: 54, 19: 54, 20: 74, 21: 54, 22: 64, 23: 89, 24: 54,
 };
 
 async function gql(query: string, variables?: Record<string, unknown>) {
