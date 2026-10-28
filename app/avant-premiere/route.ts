@@ -6,7 +6,7 @@ const PAGE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta n
 <link href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}html{scroll-behavior:smooth}html,body{overflow-x:hidden}body{margin:0;font-family:Jost,'Helvetica Neue',sans-serif;color:#111;background:#F4F0E8;-webkit-font-smoothing:antialiased}
-a{color:inherit;text-decoration:none}.w{max-width:1240px;margin:0 auto;padding:0 32px}
+a{color:inherit;text-decoration:none}.w{max-width:1480px;margin:0 auto;padding:0 24px}
 :root{--or:#B39462;--creme:#F4F0E8;--nuit:#0E0E0F}
 .hero{background:var(--nuit);color:#F2EEE6;display:grid;grid-template-columns:1fr minmax(0,560px) 1fr;height:min(92vh,820px);overflow:hidden}
 .col{position:relative;overflow:hidden}.col:before,.col:after{content:"";position:absolute;left:0;right:0;height:160px;z-index:2}
@@ -25,8 +25,8 @@ h1{font-weight:200;font-size:clamp(46px,7vw,92px);line-height:.95;letter-spacing
 nav{position:sticky;top:0;z-index:20;background:rgba(244,240,232,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(17,17,17,.08);border-bottom:1px solid rgba(17,17,17,.08)}
 nav .w{display:flex;gap:34px;justify-content:center;overflow-x:auto;white-space:nowrap;padding:18px 24px;scrollbar-width:none}nav a{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#555;transition:.2s}nav a:hover{color:#111}
 .fam{padding:60px 0}.fam.blanc{background:#fff}.fam.creme{background:var(--creme)}.fam.nuit{background:var(--nuit);color:#F2EEE6}
-.g{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:70px;align-items:start}
-.txt{position:sticky;top:90px}.num{font-size:110px;font-weight:200;line-height:.8;letter-spacing:-.04em;color:var(--or)}
+.g{display:grid;grid-template-columns:minmax(0,290px) 1fr;gap:36px;align-items:start}
+.txt{position:sticky;top:90px}.num{font-size:96px;font-weight:200;line-height:.8;letter-spacing:-.04em;color:var(--or)}
 .txt .kick{margin-top:26px}h2{font-weight:200;font-size:clamp(34px,4vw,54px);letter-spacing:-.02em;margin:12px 0 0;line-height:1}
 .txt p{font-weight:300;font-size:16px;line-height:1.75;color:#4a4740;margin:22px 0 0}.nuit .txt p{color:#BDB6AA}
 .cards{display:grid;gap:18px;grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -42,9 +42,9 @@ nav .w{display:flex;gap:34px;justify-content:center;overflow-x:auto;white-space:
 .strip{display:none}
 @media(max-width:980px){.hero{grid-template-columns:1fr;height:auto}.col{display:none}.strip{display:block;overflow:hidden;background:var(--nuit);padding:0 0 40px}
 .strip .t{display:flex;gap:10px;width:max-content;animation:sl 45s linear infinite}.strip img{width:130px;height:130px;object-fit:cover;border-radius:2px;opacity:.85}@keyframes sl{to{transform:translateX(-50%)}}
-.g{grid-template-columns:1fr;gap:24px}.txt{position:static;text-align:center}.num{font-size:72px}.fam{padding:44px 0}
-.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.n1 .cards{grid-template-columns:calc(50% - 8px);justify-content:center}
-h1{font-size:44px}.cn{font-size:19px}.cl{font-size:13px}.cp{flex-direction:column;gap:6px}.w{padding:0 18px}nav .w{justify-content:flex-start;gap:26px}.massue{padding:64px 0}}
+.g{grid-template-columns:1fr;gap:24px}.txt{position:static;text-align:center;padding:0 8px}.num{font-size:72px}.fam{padding:44px 0}
+.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.n1 .cards{grid-template-columns:calc(50% - 8px);justify-content:center}
+h1{font-size:44px}.cn{font-size:19px}.cl{font-size:13px}.cp{flex-direction:column;gap:6px}.w{padding:0 10px}nav .w{justify-content:flex-start;gap:26px}.massue{padding:64px 0}}
 @media (prefers-reduced-motion:reduce){.pis,.strip .t{animation:none}.rv{opacity:1;transform:none}}
 </style></head><body>
 <header class="hero"><div class="col d"><div class="pis"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Anneaux_de_luxe_sur_fond_sombre.png?v=1793185837&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_de_luxe_en_diamant_et_nacre_blanche.png?v=1793185838&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/coffret_mood_ring_bague_interchangeable_coeur_ocean.jpg?v=1765316104&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/edelweiss-7-couleurs.webp?v=1792485888&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague_en_acier_noir_volcan_mood_avec_anneaux_interchangeables_4.jpg?v=1770112466&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/6_4.jpg?v=1770066724&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Anneaux_de_luxe_sur_fond_sombre.png?v=1793185837&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_de_luxe_en_diamant_et_nacre_blanche.png?v=1793185838&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/coffret_mood_ring_bague_interchangeable_coeur_ocean.jpg?v=1765316104&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/edelweiss-7-couleurs.webp?v=1792485888&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague_en_acier_noir_volcan_mood_avec_anneaux_interchangeables_4.jpg?v=1770112466&width=500" alt=""><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/6_4.jpg?v=1770066724&width=500" alt=""></div></div>
