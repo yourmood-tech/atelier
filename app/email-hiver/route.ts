@@ -19,8 +19,8 @@ h1{font-weight:500;font-size:clamp(48px,8vw,110px);line-height:.95;letter-spacin
 .re{margin-left:auto;background:none;border:1px solid #cfd6df;border-radius:30px;padding:6px 14px;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b6575;cursor:pointer}.re:hover{background:#1c2330;color:#fff}
 .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 .t{position:relative;margin:0;aspect-ratio:1/1;overflow:hidden;border-radius:4px;background:#e9edf2;cursor:pointer}.t img{width:100%;height:100%;object-fit:cover;display:block}
-.grid{position:relative}.t .drip{position:absolute;left:0;top:0;width:100%;height:auto;z-index:4;pointer-events:none;filter:drop-shadow(0 4px 6px rgba(0,0,0,.14))}
-.grid .t img:not(.drip){opacity:0}.t .drip{transition:none}.t:hover .drip{margin-top:6%;transition:margin-top .6s cubic-bezier(.3,1.4,.5,1)}.grid figcaption{opacity:0;transition:opacity .6s 1.6s}.grid.vu figcaption{opacity:1}
+.grid{position:relative}.t .drip{position:absolute;left:0;top:0;width:100%;z-index:4;pointer-events:none;will-change:transform,opacity}
+.grid .t img:not(.drip){opacity:0;transition:opacity .25s}.grid figcaption{opacity:0;transition:opacity .6s 1.6s}.grid.vu figcaption{opacity:1}
 .grid .t{background:#fff}
 .fin{text-align:center;padding:40px 18px;background:#fff}.fin p{font-size:26px;font-weight:200;margin:0}.fin b{font-weight:500}.fin img{width:120px;margin-top:20px}
 @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.grid .t:first-child{grid-column:1/-1}.packs .grid{grid-template-columns:1fr}h2{font-size:22px}.re{margin-left:0}}
@@ -33,30 +33,30 @@ h1{font-weight:500;font-size:clamp(48px,8vw,110px);line-height:.95;letter-spacin
 <div class="fin"><p>Le froid dehors. <b>L’éclat au doigt.</b></p><img src="/logo-mood.png" alt="mood"></div>
 <script>
 var ORDER=["RM-56","RB-319","RM-30","RK-05","RM-03","RM-57","RP-40","RK-72","RB-01","RB-279","RK-01"];
-function ease(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;}
-function pour(grid){
- if(grid._run)return;grid._run=1;grid.classList.add("vu");
- var tiles=[].slice.call(grid.querySelectorAll(".t"));var code=grid.dataset.code;
- tiles.forEach(function(t,i){
-  var c=code==="ALL"?null:code;
-  var d=t.querySelector(".drip");if(!d){d=document.createElement("img");d.className="drip";t.appendChild(d);}
-  if(code==="ALL"){d.src="/email-hiver/drip-"+ORDER[(i*3)%11]+".png";}else d.src="/email-hiver/drip-"+c+".png";
-  d.style.transform=(i%2?"scaleX(-1) ":"")+"translateY(-100%)";
-  var img=t.querySelector("img:not(.drip)");img.style.opacity=0;
- });
- var t0=performance.now(),dur=1900,stag=180;
- (function fr(now){var all=true;
-  tiles.forEach(function(t,i){var d=t.querySelector(".drip"),img=t.querySelector("img:not(.drip)");
-   var p=Math.min(1,Math.max(0,(now-t0-i*stag)/dur));if(p<1)all=false;var e=1-Math.pow(1-p,3);
-   var th=t.clientHeight,dh=d.clientHeight||th;var top=-dh+e*(dh*.55);
-   d.style.transform=(i%2?"scaleX(-1) ":"")+"translateY("+top+"px)";
-   img.style.clipPath="none";img.style.opacity=Math.min(1,p*1.6);});
-  if(!all)requestAnimationFrame(fr);else{grid._run=0;}})(t0);
-}
+var SOL={"RM-56": [0.0, 0.313], "RB-319": [0.0, 0.434], "RM-30": [0.0, 0.424], "RK-05": [0.0, 0.474], "RM-03": [0.0, 0.42], "RM-57": [0.0, 0.505], "RP-40": [0.0, 0.472], "RK-72": [0.0, 0.459], "RB-01": [0.0, 0.363], "RB-279": [0.0, 0.45], "RK-01": [0.0, 0.328]};var CACHE={};
+function build(code,cb){if(CACHE[code])return cb(CACHE[code]);var im=new Image();im.onload=function(){
+ var w=im.naturalWidth,h=im.naturalHeight,band=Math.max(20,Math.floor(SOL[code][1]*h)-4);
+ var need=Math.ceil(1.35*w/band);var c=document.createElement("canvas");c.width=w;c.height=h+need*band;var x=c.getContext("2d");
+ for(var k=0;k<need;k++){var y=(need-1-k)*band;x.save();if(k%2===0){x.translate(0,y+band);x.scale(1,-1);x.drawImage(im,0,0,w,band,0,0,w,band);}else{x.drawImage(im,0,0,w,band,0,y,w,band);}x.restore();}
+ x.drawImage(im,0,need*band);CACHE[code]={url:c.toDataURL("image/png"),solidEnd:(need*band+SOL[code][1]*h)/c.height,ratio:c.height/w};cb(CACHE[code]);};im.src="/email-hiver/coulee-"+code+".png";}
+function pourTile(t,code,delay,done){build(code,function(o){
+ var d=t.querySelector(".drip");if(!d){d=document.createElement("img");d.className="drip";t.appendChild(d);}
+ d.src=o.url;var img=t.querySelector("img:not(.drip)");var tw=t.clientWidth,th=t.clientHeight,dh=tw*o.ratio;
+ d.style.height=dh+"px";d.style.opacity=1;img.style.opacity=0;
+ var y0=-dh,y1=th-o.solidEnd*dh+th*.08;var t0=performance.now()+delay,T1=1500,HOLD=350,T2=900;
+ (function fr(now){var e=now-t0;if(e<0){d.style.transform="translateY("+y0+"px)";return requestAnimationFrame(fr);}
+  if(e<T1){var p=e/T1;p=1-Math.pow(1-p,3);d.style.transform="translateY("+(y0+(y1-y0)*p)+"px)";}
+  else if(e<T1+HOLD){img.style.opacity=1;d.style.transform="translateY("+y1+"px)";}
+  else if(e<T1+HOLD+T2){var q=(e-T1-HOLD)/T2;var qe=q*q;d.style.transform="translateY("+(y1+th*.35*qe)+"px) scale("+(1+.04*q)+")";d.style.opacity=1-qe;}
+  else{d.style.opacity=0;done&&done();return;}
+  requestAnimationFrame(fr);})(performance.now());});}
+function pour(grid){if(grid._run)return;grid._run=1;grid.classList.add("vu");var tiles=[].slice.call(grid.querySelectorAll(".t"));var n=tiles.length,left=n;
+ tiles.forEach(function(t,i){var code=grid.dataset.code==="ALL"?ORDER[(i*3)%11]:grid.dataset.code;pourTile(t,code,i*170,function(){if(--left===0)grid._run=0;});});}
 var io=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){pour(x.target);io.unobserve(x.target);}});},{threshold:.55});
 document.querySelectorAll(".grid[data-code]").forEach(function(g){io.observe(g);});
 document.querySelectorAll(".re").forEach(function(b){b.onclick=function(){pour(b.closest("section").querySelector(".grid"))}});
 document.querySelectorAll(".pp").forEach(function(p){p.onclick=function(){var s=document.getElementById(p.dataset.c);s.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){pour(s.querySelector(".grid"))},700)}});
+document.querySelectorAll(".t").forEach(function(t){t.addEventListener("click",function(){var g=t.closest(".grid");var i=[].indexOf.call(g.querySelectorAll(".t"),t);pourTile(t,g.dataset.code==="ALL"?ORDER[(i*3)%11]:g.dataset.code,0)})});
 </script></body></html>`;
 
 export async function GET() {
