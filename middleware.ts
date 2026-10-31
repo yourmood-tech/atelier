@@ -47,6 +47,11 @@ export default auth((req) => {
     return;
   }
 
+  // calcul de nuit « Prête à partir / Fabriquée pour vous » (protégé par une clé dans la route)
+  if (pathname === "/api/delai-fabrication") {
+    return;
+  }
+
   // décompte public des box restantes
   if (pathname === "/api/box-reste") {
     return;

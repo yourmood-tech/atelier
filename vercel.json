@@ -1,5 +1,36 @@
 {
   "crons": [
-    { "path": "/api/calendrier-reveil", "schedule": "1 23 * * *" }
+    {
+      "path": "/api/calendrier-reveil",
+      "schedule": "1 23 * * *"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=index&tranche=1",
+      "schedule": "0 17 * * 0"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=index&tranche=2",
+      "schedule": "0 18 * * 0"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=index&tranche=3",
+      "schedule": "0 19 * * 0"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=index&tranche=4",
+      "schedule": "0 20 * * 0"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=index&tranche=5",
+      "schedule": "0 21 * * 0"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=index&tranche=6",
+      "schedule": "0 22 * * 0"
+    },
+    {
+      "path": "/api/delai-fabrication?etape=stock",
+      "schedule": "0 2 * * *"
+    }
   ]
 }
