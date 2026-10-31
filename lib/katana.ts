@@ -220,6 +220,35 @@ async function createStockAdjustment(params: {
   });
 }
 
+// Scan rupture (décidé avec Philippe le 31.10.2026) : la matière cochée comme manquante
+// est remise à zéro dans le tiroir, pour que Katana (et le réassort) voie la rupture.
+// Le stock est relu juste avant : un stock négatif remonte aussi à zéro.
+export async function zeroMaterialStock(
+  variantIds: number[],
+  reason: string
+): Promise<{ variantId: number; before: number }[]> {
+  // seulement la ligne du tiroir (pas de repli sur un autre emplacement, contrairement à getVariantStock)
+  const before = await Promise.all(
+    variantIds.map(async (variantId) => {
+      const data = (await katanaFetch(`/v1/inventory?variant_id=${variantId}&location_id=${DEFAULT_LOCATION_ID}`, { method: "GET" })) as { data?: Record<string, unknown>[] };
+      const row = (data?.data ?? []).find((r) => Number(r.location_id) === DEFAULT_LOCATION_ID && Number(r.variant_id) === variantId);
+      return { variantId, before: Number(row?.quantity_in_stock ?? 0) };
+    })
+  );
+  const rows = before.filter((b) => b.before !== 0);
+  if (!rows.length) return before;
+  await katanaFetch("/v1/stock_adjustments", {
+    method: "POST",
+    body: JSON.stringify({
+      stock_adjustment_number: makeStockAdjustmentNumber().replace("SCN-", "RUPT-"),
+      location_id: DEFAULT_LOCATION_ID,
+      reason,
+      stock_adjustment_rows: rows.map((b) => ({ variant_id: b.variantId, quantity: -b.before })),
+    }),
+  });
+  return before;
+}
+
 async function getSupplierName(supplierId: number): Promise<string> {
   const cached = getCachedValue(supplierNameCache, supplierId);
   if (cached !== null) return cached;

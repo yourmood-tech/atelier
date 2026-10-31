@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrderById, lookupShopifyId, addOrderTag, makeOrderTag } from "@/lib/shopify";
-import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants } from "@/lib/katana";
+import { getRecipeWithSuppliers, getOpenPurchaseOrderForVariants, getVariantStock, zeroMaterialStock } from "@/lib/katana";
 import { generateBackorderEmail, generateFollowUpEmail, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { BackorderApiResponse, BackorderAnalysis } from "@/lib/types";
@@ -31,6 +31,10 @@ export async function GET(req: NextRequest) {
     // 3. Get recipe + materials + suppliers
     const recipe = variantSku ? await getRecipeWithSuppliers(variantSku) : null;
     const materials = recipe?.ingredients ?? [];
+    // stock du tiroir de chaque matière : sert à choisir celle(s) à remettre à zéro
+    await Promise.all(materials.map(async (m) => {
+      m.stock = await getVariantStock(m.id).then((s) => s.inStock).catch(() => null);
+    }));
 
     // 4. No ingredients found — tag only, no email
     if (!materials.length) {
@@ -142,6 +146,7 @@ export async function POST(req: NextRequest) {
       followupGreeting?: string | null;
       followupBody?: string | null;
       followupSignOff?: string | null;
+      zeroVariantIds?: number[];
     };
 
     if (!body.to) {
@@ -149,6 +154,12 @@ export async function POST(req: NextRequest) {
         { ok: false, error: "Champ to requis" },
         { status: 400 }
       );
+    }
+
+    // D'abord Katana : si la remise à zéro échoue, rien n'est parti (pas d'email en double au 2e essai)
+    let zeroed: { variantId: number; before: number }[] = [];
+    if (body.zeroVariantIds?.length) {
+      zeroed = await zeroMaterialStock(body.zeroVariantIds, `Rupture constatée au scan · ${body.orderId ?? ""} · ${body.productTitle ?? ""}`.slice(0, 250));
     }
 
     if (!body.tagOnly && body.subject && body.body) {
@@ -175,7 +186,7 @@ export async function POST(req: NextRequest) {
       await addOrderTag(body.orderNumericId, makeOrderTag(tagReason));
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, zeroed });
   } catch (error) {
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "Erreur envoi" },

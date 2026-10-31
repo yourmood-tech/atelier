@@ -15,6 +15,8 @@ type BatchItem = {
   status: "analyzing" | "ready" | "error" | "sent";
   result: BackorderAnalysis | null;
   error: string | null;
+  zeroIds: number[];      // matières cochées comme manquantes → remises à zéro dans Katana à l'envoi
+  zeroed?: number;        // combien ont été remises à zéro
 };
 
 type AppMode = "scan" | "recipe" | "backorder" | "suppliers" | "production";
@@ -258,7 +260,11 @@ export default function ScannerPage() {
       setBatchItems((prev) =>
         prev.map((item) =>
           item.localId === localId
-            ? { ...item, status: "ready", result: data.result ?? null }
+            ? {
+                ...item, status: "ready", result: data.result ?? null,
+                // une seule matière : c'est forcément elle qui manque
+                zeroIds: data.result?.materials.length === 1 ? [data.result.materials[0].id] : [],
+              }
             : item
         )
       );
@@ -285,7 +291,7 @@ export default function ScannerPage() {
 
     const localId = crypto.randomUUID();
     setBatchItems((prev) => [
-      { localId, orderId: backorderOrderId, productId: id, status: "analyzing", result: null, error: null },
+      { localId, orderId: backorderOrderId, productId: id, status: "analyzing", result: null, error: null, zeroIds: [] },
       ...prev,
     ]);
     setBackorderStep("order");
@@ -325,10 +331,14 @@ export default function ScannerPage() {
           followupGreeting: item.result.followUpEmailDraft?.greeting ?? null,
           followupBody: item.result.followUpEmailDraft?.body ?? null,
           followupSignOff: item.result.followUpEmailDraft?.sign_off ?? null,
+          zeroVariantIds: item.zeroIds,
         }),
       });
-      const data = await res.json() as { ok: boolean; error?: string };
+      const data = await res.json() as { ok: boolean; error?: string; zeroed?: { variantId: number; before: number }[] };
       if (!res.ok || !data.ok) throw new Error(data.error || "Erreur envoi");
+      setBatchItems((prev) =>
+        prev.map((i) => (i.localId === localId ? { ...i, zeroed: data.zeroed?.length ?? 0 } : i))
+      );
     } catch (error) {
       setBatchItems((prev) =>
         prev.map((i) =>
@@ -338,6 +348,16 @@ export default function ScannerPage() {
         )
       );
     }
+  }
+
+  function toggleZero(localId: string, variantId: number) {
+    setBatchItems((prev) =>
+      prev.map((i) =>
+        i.localId === localId
+          ? { ...i, zeroIds: i.zeroIds.includes(variantId) ? i.zeroIds.filter((v) => v !== variantId) : [...i.zeroIds, variantId] }
+          : i
+      )
+    );
   }
 
   async function sendAllReady() {
@@ -738,7 +758,10 @@ export default function ScannerPage() {
                           <span className="text-sm opacity-40">Délai fournisseur</span>
                         )}
                         {item.status === "sent" ? (
-                          <span className="text-sm text-blue-600">{item.result.tagOnly ? "Tagué ✓" : "Envoyé ✓"}</span>
+                          <span className="text-sm text-blue-600">
+                            {item.result.tagOnly ? "Tagué ✓" : "Envoyé ✓"}
+                            {!!item.zeroed && ` · ${item.zeroed} matière(s) à 0 dans Katana`}
+                          </span>
                         ) : (
                           <button
                             onClick={() => sendBatchEmail(item.localId)}
@@ -748,6 +771,28 @@ export default function ScannerPage() {
                           </button>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {item.status === "ready" && item.result && item.result.materials.length > 0 && (
+                    <div className="mt-2 border-t pt-2 text-sm">
+                      <div className="mb-1 text-xs opacity-50">
+                        {"Matière(s) manquante(s) — remises à 0 dans Katana à l’envoi"}
+                      </div>
+                      {item.result.materials.map((m) => (
+                        <label key={m.id} className="flex cursor-pointer items-center gap-2 py-0.5">
+                          <input
+                            type="checkbox"
+                            checked={item.zeroIds.includes(m.id)}
+                            onChange={() => toggleZero(item.localId, m.id)}
+                          />
+                          <span className="truncate">{m.name || m.sku}</span>
+                          <span className="font-mono text-xs opacity-40">{m.sku}</span>
+                          <span className="ml-auto shrink-0 text-xs opacity-60">
+                            tiroir : {m.stock ?? "?"}
+                          </span>
+                        </label>
+                      ))}
                     </div>
                   )}
                 </div>
