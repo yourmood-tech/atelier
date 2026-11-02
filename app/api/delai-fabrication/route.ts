@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { estCron } from "@/lib/est-cron";
 import { avancerIndex, mettreAJourStock, avecVerrou, lireRapport } from "@/lib/delai-fabrication";
 
 export const runtime = "nodejs";
@@ -9,9 +10,9 @@ export const maxDuration = 300;
 // Lancement à la main : même adresse avec ?cle=… (variable DELAI_FAB_CLE), &forcer=1 pour reconstruire l'index.
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
-  const estCron = req.headers.get("x-vercel-cron") !== null;
+  const estCronOk = estCron(req);
   const cle = process.env.DELAI_FAB_CLE;
-  if (!estCron && !(cle && p.get("cle") === cle)) {
+  if (!estCronOk && !(cle && p.get("cle") === cle)) {
     return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
   }
   const etape = p.get("etape");

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { estCron } from "@/lib/est-cron";
 import fs from "fs";
 import path from "path";
 import { kv } from "@vercel/kv";
@@ -30,8 +31,8 @@ const CLE = "mood-calendrier-2026-reveil";
 
 export async function GET(req: NextRequest) {
   const cle = req.nextUrl.searchParams.get("cle");
-  const estCron = req.headers.get("x-vercel-cron") !== null;
-  if (!estCron && cle !== CLE) {
+  const estCronOk = estCron(req);
+  if (!estCronOk && cle !== CLE) {
     return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
   }
   const forcer = req.nextUrl.searchParams.get("forcer") === "1";
