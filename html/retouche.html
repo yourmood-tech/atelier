@@ -139,6 +139,7 @@
     <span style="font-size:0.8rem;color:#5c4400;">Qualité :</span>
     <button type="button" id="btn-qualite-apercu" onclick="setQualite('apercu')" style="padding:0.35rem 0.9rem;border-radius:8px;border:2px solid #2c7a3a;background:#eaf3e9;color:#2c5530;font-size:0.82rem;font-weight:600;cursor:pointer;">🪶 Aperçu (économe)</button>
     <button type="button" id="btn-qualite-final" onclick="setQualite('final')" style="padding:0.35rem 0.9rem;border-radius:8px;border:1px solid #ddd;background:#fff;color:#666;font-size:0.82rem;font-weight:600;cursor:pointer;">💎 Finale (2K)</button>
+    <button type="button" onclick="ouvrirHistorique()" style="padding:0.35rem 0.9rem;border-radius:8px;border:1px solid #d4a017;background:#fff;color:#5c4400;font-size:0.82rem;font-weight:600;cursor:pointer;">🗂️ Mes retouches</button>
     <span id="qualite-hint" style="font-size:0.72rem;color:#888;width:100%;text-align:center;margin-top:0.2rem;">Tes essais en Aperçu coûtent ~2× moins. Passe en Finale juste pour l'image que tu gardes.</span>
   </div>
 </header>
@@ -783,6 +784,7 @@ const imagesCache = {};
 function cacheImage(dataUrl) {
   const id = 'img-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
   imagesCache[id] = dataUrl;
+  garderDansHistorique(dataUrl);
   return id;
 }
 function telechargerDataUrl(dataUrl, filename) {
@@ -861,6 +863,7 @@ async function corrigerImage(id, ratio) {
     if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
     if (!data.image) throw new Error("Pas d'image renvoyée");
     imagesCache[id] = data.image;
+    garderDansHistorique(data.image, 'corrigée');
     const imgEl = document.getElementById('img-' + id);
     if (imgEl) imgEl.src = data.image;
     noteEl.value = '';
@@ -1598,6 +1601,121 @@ async function lancerVideo360() {
   } finally {
     card.classList.remove('loading');
   }
+}
+</script>
+
+<!-- ============ MES RETOUCHES (toutes les photos gardées) ============ -->
+<div id="histo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:flex-start;justify-content:center;padding:1rem;overflow:auto;">
+  <div style="background:#fff;width:100%;max-width:1100px;border-radius:12px;margin:1rem auto;">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:700;font-size:1.1rem;">🗂️ Mes retouches</div>
+        <div id="histo-compte" style="font-size:0.8rem;color:#888;">Chaque photo créée ici est gardée automatiquement.</div>
+      </div>
+      <button onclick="fermerHistorique()" style="background:#fff;border:1px solid #ddd;border-radius:8px;padding:0.4rem 0.9rem;cursor:pointer;">Fermer ✕</button>
+    </div>
+    <div id="histo-grille" style="padding:1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;"></div>
+  </div>
+</div>
+<div id="histo-toast" style="display:none;position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#2c5530;color:#fff;padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem;z-index:10000;"></div>
+<script>
+function histoToast(t) {
+  const el = document.getElementById('histo-toast');
+  el.textContent = t; el.style.display = 'block';
+  clearTimeout(window._histoT); window._histoT = setTimeout(() => el.style.display = 'none', 2500);
+}
+// réduit la photo en JPEG très fin si elle est trop lourde pour l'envoi (limite ~4 Mo)
+function preparerPourEnvoi(dataUrl) {
+  if (dataUrl.length < 3800000) return Promise.resolve(dataUrl);
+  return new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      let q = 0.95, out = c.toDataURL('image/jpeg', q);
+      while (out.length > 3800000 && q > 0.7) { q -= 0.05; out = c.toDataURL('image/jpeg', q); }
+      ok(out);
+    };
+    img.onerror = () => ok(dataUrl);
+    img.src = dataUrl;
+  });
+}
+async function garderDansHistorique(dataUrl, label) {
+  try {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) return;
+    const image = await preparerPourEnvoi(dataUrl);
+    const r = await fetch('/api/retouche-historique', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'garder', image, label: label || '' }) });
+    const j = await r.json();
+    if (j.ok) histoToast('✓ Gardée dans « Mes retouches »');
+    else console.warn('[historique]', j.error);
+  } catch (e) { console.warn('[historique]', e); }
+}
+let histoPhotos = [];
+async function ouvrirHistorique() {
+  document.getElementById('histo-modal').style.display = 'flex';
+  const g = document.getElementById('histo-grille');
+  g.innerHTML = '<div style="color:#888;">Chargement…</div>';
+  try {
+    const r = await fetch('/api/retouche-historique', { cache: 'no-store' });
+    const j = await r.json();
+    histoPhotos = j.photos || [];
+    afficherHistorique();
+  } catch (e) { g.innerHTML = '<div style="color:#b00;">Impossible de charger la liste.</div>'; }
+}
+function fermerHistorique() { document.getElementById('histo-modal').style.display = 'none'; }
+function dateFr(iso) {
+  return new Date(iso).toLocaleString('fr-CH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function afficherHistorique() {
+  const g = document.getElementById('histo-grille');
+  document.getElementById('histo-compte').textContent = histoPhotos.length + ' photo' + (histoPhotos.length > 1 ? 's' : '') + ' gardée' + (histoPhotos.length > 1 ? 's' : '') + ' · la plus récente en premier';
+  if (!histoPhotos.length) { g.innerHTML = '<div style="color:#888;">Aucune photo pour l\'instant. Les prochaines retouches arriveront ici toutes seules.</div>'; return; }
+  const b = 'padding:0.35rem 0.6rem;border-radius:6px;font-size:0.78rem;font-weight:600;cursor:pointer;border:1px solid #ddd;background:#fff;';
+  g.innerHTML = histoPhotos.map(p => `
+    <div style="border:1px solid #eee;border-radius:10px;overflow:hidden;background:#fafafa;">
+      <a href="${p.hq || p.url}" target="_blank"><img src="${p.url + (p.url.includes('?') ? '&' : '?') + 'width=500'}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:contain;background:#f3f3f3;display:block;"></a>
+      <div style="padding:0.5rem;">
+        <div style="font-size:0.75rem;color:#666;">${dateFr(p.date)}${p.l ? ' · ' + p.l + '×' + p.h : ''}${p.label ? ' · ' + escapeHtml(p.label) : ''}</div>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.4rem;">
+          <button style="${b}" onclick="telechargerAdresse('${p.url}','retouche-${p.id}')">⬇️ Télécharger</button>
+          ${p.hq
+            ? `<button style="${b}border-color:#d4a017;background:#fff8e8;color:#5c4400;" onclick="telechargerAdresse('${p.hq}','retouche-${p.id}-haute-qualite')">💎 Haute qualité</button>`
+            : `<button id="hq-${p.id}" style="${b}border-color:#d4a017;color:#5c4400;" onclick="passerHQ('${p.id}')">💎 Passer en haute qualité</button>`}
+          <button style="${b}color:#999;" title="Retirer de la liste" onclick="retirerHisto('${p.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+async function telechargerAdresse(url, nom) {
+  try {
+    const r = await fetch(url); const bl = await r.blob();
+    const ext = (bl.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = nom + '.' + ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } catch (e) { window.open(url, '_blank'); }
+}
+async function passerHQ(id) {
+  const btn = document.getElementById('hq-' + id);
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Agrandissement… (1-2 min)'; }
+  try {
+    const r = await fetch('/api/retouche-historique', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'hq', id }) });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'échec');
+    const i = histoPhotos.findIndex(x => x.id === id);
+    if (i >= 0) histoPhotos[i] = j.photo;
+    afficherHistorique();
+    histoToast('💎 Haute qualité prête' + (j.taille ? ' (' + j.taille + ')' : ''));
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = '💎 Passer en haute qualité'; }
+    alert('Haute qualité impossible pour l\'instant : ' + e.message);
+  }
+}
+async function retirerHisto(id) {
+  if (!confirm('Retirer cette photo de la liste ?')) return;
+  await fetch('/api/retouche-historique', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'retirer', id }) });
+  histoPhotos = histoPhotos.filter(x => x.id !== id);
+  afficherHistorique();
 }
 </script>
 </body>
