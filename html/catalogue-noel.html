@@ -3,608 +3,123 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Le livret des cadeaux — mood collection</title>
-<meta name="description" content="Catalogue de Noël mood collection : les pièces les plus aimées, par famille.">
+<title>L'édition des fêtes — mood collection</title>
+<meta name="description" content="Le catalogue de Noël mood collection : idées cadeaux, coffrets et nouveautés de l'hiver.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{
-  --papier:#F7F5F0; --encre:#23313C; --doux:#6A7A86; --or:#B8912F; --orclair:#D9BE7E;
-  --bleu:#3E5E7E; --glace:#BFD8E8; --glaceclair:#E3EEF6; --nuit:#223748; --ombre:rgba(30,52,70,.20);
-}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  padding-bottom:104px;
-  background:
-    radial-gradient(1300px 760px at 50% -12%, #44688A 0%, transparent 62%),
-    linear-gradient(180deg,#2C465E 0%, #1B2C3B 100%);
-  color:var(--encre); font-family:Poppins,system-ui,sans-serif; min-height:100vh;
-  display:flex; flex-direction:column; align-items:center; padding:18px 16px 112px;
+  background:radial-gradient(1300px 760px at 50% -12%, #44688A 0%, transparent 62%),linear-gradient(180deg,#2C465E 0%, #1B2C3B 100%);
+  font-family:Poppins,system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px 16px 96px;
 }
-.topbar{width:100%;max-width:1180px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;color:#EAF2F8}
+.topbar{width:100%;max-width:1180px;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;color:#EAF2F8}
 .topbar .marque{font-family:Playfair Display,serif;font-size:19px;letter-spacing:.14em;text-transform:lowercase}
 .topbar .sous{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:#A9C3D6}
 
-/* ---------- le livre ---------- */
-.book{position:relative;width:min(1180px,100%,calc((100vh - 180px) * 1.4815));aspect-ratio:1200/810;perspective:2600px;margin:0 auto}
-.book .dos-centre{position:absolute;left:50%;top:0;bottom:0;width:26px;transform:translateX(-50%);
-  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.20) 42%,rgba(0,0,0,.28) 50%,rgba(0,0,0,.20) 58%,rgba(0,0,0,0) 100%);
-  z-index:999;pointer-events:none;border-radius:2px}
+/* le livre : une page = 986 x 1400 */
+.book{position:relative;filter:drop-shadow(0 18px 30px rgba(5,15,25,.35));width:min(1180px,100%,calc((100vh - 150px) * 1.4086));aspect-ratio:1972/1400;perspective:2800px;margin:0 auto}
+.book .dos-centre{position:absolute;left:50%;top:0;bottom:0;width:24px;transform:translateX(-50%);
+  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(0,0,0,.18) 42%,rgba(0,0,0,.26) 50%,rgba(0,0,0,.18) 58%,rgba(0,0,0,0) 100%);
+  z-index:999;pointer-events:none}
 .leaf{position:absolute;top:0;right:0;width:50%;height:100%;transform-origin:left center;transform-style:preserve-3d;
-  transition:transform .95s cubic-bezier(.3,.05,.2,1)}
+  transition:transform .95s cubic-bezier(.3,.05,.2,1);cursor:pointer}
 .leaf.flip{transform:rotateY(-180deg)}
-.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:var(--papier);
-  box-shadow:0 18px 50px var(--ombre)}
-.face.recto{border-radius:0 8px 8px 0}
-.face.verso{transform:rotateY(180deg);border-radius:8px 0 0 8px}
-.face.recto::before{content:"";position:absolute;left:0;top:0;bottom:0;width:34px;background:linear-gradient(90deg,rgba(0,0,0,.12),transparent);pointer-events:none}
-.face.verso::before{content:"";position:absolute;right:0;top:0;bottom:0;width:34px;background:linear-gradient(270deg,rgba(0,0,0,.12),transparent);pointer-events:none}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;background:#F7F5F0;
+  box-shadow:0 2px 6px rgba(10,20,30,.18)}
+.face.recto{border-radius:0 6px 6px 0}
+.face.verso{transform:rotateY(180deg);border-radius:6px 0 0 6px}
+.face img{display:block;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none}
+.face.recto::after{content:"";position:absolute;left:0;top:0;bottom:0;width:30px;background:linear-gradient(90deg,rgba(0,0,0,.10),transparent);pointer-events:none}
+.face.verso::after{content:"";position:absolute;right:0;top:0;bottom:0;width:30px;background:linear-gradient(270deg,rgba(0,0,0,.10),transparent);pointer-events:none}
 
-/* ---------- une page ---------- */
-.pg{position:absolute;top:0;left:0;width:600px;height:810px;transform-origin:0 0;padding:52px 52px 44px;
-  display:flex;flex-direction:column;overflow:hidden;
-  background:
-   radial-gradient(760px 520px at 86% -8%, #FFFFFF 0%, transparent 58%),
-   radial-gradient(620px 420px at -6% 106%, #EAF2F8 0%, transparent 62%),
-   #FAF8F4}
-.pg.vide,.pg.vide2{background:#FAF8F4}
-
-/* page d'ouverture de chapitre */
-.ouv,.av{padding:56px 54px 46px}
-.ov-haut{display:flex;align-items:center;gap:14px;margin-bottom:26px}
-.ov-num{font-family:Playfair Display,serif;font-size:13px;color:var(--or);letter-spacing:.06em}
-.ov-fil{flex:1;height:1px;background:linear-gradient(90deg,rgba(184,145,47,.55),rgba(184,145,47,0))}
-.ov-t{font-family:Playfair Display,serif;font-weight:400;font-size:40px;line-height:1.06;letter-spacing:-.015em;
-  color:var(--bleu);margin:0}
-.ov-s{margin:12px 0 0;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--doux);font-weight:300}
-.ov-img{flex:1;display:block;margin:30px 0 0;min-height:0;text-decoration:none}
-.ov-img img{width:100%;height:100%;object-fit:contain;display:block}
-.ov-leg{display:flex;flex-direction:column;gap:5px;margin-top:22px;text-decoration:none;color:inherit;align-items:center;text-align:center}
-.ov-k{font-size:8.4px;letter-spacing:.34em;text-transform:uppercase;color:var(--or)}
-.ov-n{font-family:Playfair Display,serif;font-size:17px;color:var(--bleu);line-height:1.3;max-width:30ch}
-.ov-p{font-size:11px;letter-spacing:.1em;color:var(--doux)}
-
-/* page des pièces */
-.ph2{display:flex;align-items:center;gap:14px;margin:0 0 30px}
-.ph-k{font-size:9px;letter-spacing:.36em;text-transform:uppercase;color:var(--doux)}
-.ph-f{flex:1;height:1px;background:linear-gradient(90deg,rgba(184,145,47,.4),rgba(184,145,47,0))}
-.pl{flex:1;display:grid;grid-template-columns:repeat(var(--col),1fr);gap:30px 26px;align-content:start;min-height:0}
-.pc{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;text-decoration:none;color:inherit;min-width:0}
-.pc-i{width:100%;aspect-ratio:1/1;display:block;position:relative}
-.pc-i img{width:100%;height:100%;object-fit:contain;display:block;
-  filter:drop-shadow(0 8px 14px rgba(43,77,107,.14))}
-.pc-n{font-size:8.6px;letter-spacing:.11em;text-transform:uppercase;color:#43637E;line-height:1.45;font-weight:300;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.pc-p{font-family:Playfair Display,serif;font-size:11.5px;color:var(--or);margin-top:-4px}
-.pl.dense{gap:17px 14px}
-.pl.dense .pc-n{font-size:7px;letter-spacing:.06em;-webkit-line-clamp:2}
-.pl.dense .pc-p{font-size:9px}
-.pl.dense .pc{gap:6px}
-
-/* couverture, garde, dos */
-.couv,.dos{background:#BFD6E6 url("/catalogue/couverture.jpg") center/cover no-repeat;color:#2E4F6D;
-  justify-content:space-between;align-items:center;text-align:center;padding:62px 52px 52px}
-.couv h1,.dos h1{font-family:Playfair Display,serif;font-weight:400;font-size:50px;line-height:1.08;margin:16px 0 0;color:#2B4D6B}
-.couv h1 em,.dos h1 em{font-style:italic;color:#A8863A}
-.cv-logo{width:min(46%,196px);height:auto;display:block;margin:0 auto 26px}
-.cv-logo.petit{width:min(32%,130px);margin-bottom:20px}
-.cv-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}
-.cv-an{font-size:10px;letter-spacing:.4em;text-transform:uppercase;color:#A8863A}
-.couv p,.dos p{font-size:12px;font-weight:300;color:#52728C;margin:20px 0 0;max-width:32ch;line-height:1.8;letter-spacing:.04em}
-.cv-bas{font-size:9.5px;letter-spacing:.26em;text-transform:uppercase;color:#6A8CA8}
-.dos-web{font-family:Playfair Display,serif;font-size:18px;color:#A8863A;letter-spacing:.06em}
-.dos-pt{font-size:10px;color:#6A8CA8;line-height:1.9}
-.garde{background:#FAF8F4;align-items:center;justify-content:center;text-align:center}
-.gd-h{font-family:Playfair Display,serif;font-size:25px;line-height:1.45;color:var(--bleu);margin:0;font-weight:400}
-.gd-pt{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--doux);margin-top:26px}
-.av .av-txt{margin-top:28px;display:flex;flex-direction:column;gap:18px;flex:1;justify-content:center}
-.av-txt p{font-size:12.5px;line-height:1.95;font-weight:300;color:#43637E;margin:0}
-.av-gr{font-family:Playfair Display,serif;font-size:17px!important;color:var(--bleu)!important;line-height:1.6!important}
-.av-pt{font-size:9px!important;letter-spacing:.24em;text-transform:uppercase;color:var(--doux)!important}
-
-
-/* sommaire */
-.somm .so{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
-.so li{display:flex;align-items:baseline;gap:14px;padding:11px 0;border-bottom:1px solid rgba(62,94,126,.10)}
-.so li:last-child{border-bottom:0}
-.so-n{font-family:Playfair Display,serif;font-size:11px;color:var(--or);width:22px;flex:none}
-.so-t{font-family:Playfair Display,serif;font-size:17px;color:var(--bleu)}
-.so-f{flex:1}
-/* page de texte (la boîte) */
-.mot{justify-content:center;align-items:flex-start}
-.mo-h{font-family:Playfair Display,serif;font-size:31px;line-height:1.35;color:var(--bleu);margin:0;font-weight:400}
-.mo-t{font-size:12.5px;line-height:2;color:#43637E;font-weight:300;margin:26px 0 0;max-width:30ch}
-.mo-pt{font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--or);margin-top:32px}
-
-/* ---------- commandes ---------- */
 .nav{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;gap:14px;
   padding:11px 16px;background:linear-gradient(180deg,rgba(27,44,59,0) 0%,rgba(27,44,59,.93) 45%);z-index:1000}
 .nav button{appearance:none;border:1px solid rgba(230,203,146,.5);background:rgba(255,255,255,.05);color:#F1EAD9;
   font-family:Poppins,sans-serif;font-size:12px;letter-spacing:.06em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:.18s}
 .nav button:hover:not(:disabled){background:rgba(230,203,146,.2)}
 .nav button:disabled{opacity:.3;cursor:default}
-.nav .pos{color:#CFC2A2;font-size:11.5px;letter-spacing:.14em;min-width:116px;text-align:center}
-.som{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:1180px;margin:12px auto 0;position:relative;z-index:1001}
-.som button{font-size:10.5px;letter-spacing:.04em;padding:6px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
-  background:rgba(255,255,255,.04);color:#BFD3E1;cursor:pointer}
-.som button.on{background:#E6CB92;color:#223748;border-color:#E6CB92}
+.nav .pos{color:#CFC2A2;font-size:11.5px;letter-spacing:.14em;min-width:110px;text-align:center}
 
-/* ---------- téléphone : une page à la fois ---------- */
+/* téléphone : une page à la fois, on fait glisser du doigt */
 .mob{display:none}
 @media (max-width:900px){
-  body{padding:14px 0 86px}
+  body{padding:14px 0 80px}
   .book,.topbar{display:none}
-  .mob{display:block;width:100%}
-  .mob .piste{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:14px;padding:0 14px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .mob .piste::-webkit-scrollbar{display:none}
-  .mob .carte{flex:0 0 calc(100% - 28px);scroll-snap-align:center;aspect-ratio:600/810;position:relative;border-radius:10px;overflow:hidden;
-    box-shadow:0 14px 40px rgba(0,0,0,.35);background:var(--papier)}
-  
-  .mob .grid{grid-template-columns:repeat(3,1fr);gap:9px}
-  .mob .hph{max-width:132px}
-  .mob .ph{width:100%;aspect-ratio:1/1;height:auto}
-  .mob .hnm{font-size:15px}
-  .mob .nm{-webkit-line-clamp:2}
-  .mob-tete{color:#E9E4DA;text-align:center;margin:0 0 14px;font-family:Playfair Display,serif;font-size:17px;letter-spacing:.1em}
+  .mob{display:block;width:100vw;max-width:100vw;overflow:hidden}
+  .mob-tete{color:#E9E4DA;text-align:center;margin:0 0 12px;font-family:Playfair Display,serif;font-size:17px;letter-spacing:.1em}
+  .piste{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding:0 14px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .piste::-webkit-scrollbar{display:none}
+  .carte{flex:0 0 calc(100vw - 40px);width:calc(100vw - 40px);scroll-snap-align:center;aspect-ratio:986/1400;border-radius:8px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.35);background:#F7F5F0}
+  .carte img{display:block;width:100%;height:100%;object-fit:cover}
+  .nav{gap:8px}.nav button{padding:9px 14px}.nav .lg{display:none}
 }
 </style>
 </head>
 <body>
-<div class="topbar"><span class="marque">mood collection</span><span class="sous">Le livret des cadeaux · Noël 2026</span></div>
-
-<div class="book" id="book">
-  <div class="dos-centre"></div>
-<div class="leaf" data-i="0"><div class="face recto"><div class="pg couv"><div class="cv-mid">
- <img class="cv-logo" src="/logo-mood.png" alt="mood"><div class="cv-an">Noël 2026</div>
- <h1>Le livret<br><em>des cadeaux</em></h1>
- <p>Nos pièces les plus aimées, choisies par celles qui les portent.</p></div>
- <div class="cv-bas">Tournez la page →</div></div></div><div class="face verso"><div class="pg garde"><div class="gd">
- <p class="gd-h">Un bijou qui change<br>avec celle qui le porte.</p>
- <p class="gd-pt">Orbe · Suisse · depuis 2004</p></div></div></div></div>
-<div class="leaf" data-i="1"><div class="face recto"><div class="pg somm"><header class="ph2"><span class="ph-k">Sommaire</span><span class="ph-f"></span></header>
- <ul class="so"><li><span class="so-n">01</span><span class="so-t">Les coffrets</span><span class="so-f"></span></li><li><span class="so-n">02</span><span class="so-t">Les bases</span><span class="so-f"></span></li><li><span class="so-n">03</span><span class="so-t">Les packs garde-mood</span><span class="so-f"></span></li><li><span class="so-n">04</span><span class="so-t">Aura</span><span class="so-f"></span></li><li><span class="so-n">05</span><span class="so-t">Willow</span><span class="so-f"></span></li><li><span class="so-n">06</span><span class="so-t">Les zircons</span><span class="so-f"></span></li><li><span class="so-n">07</span><span class="so-t">L&#x27;argent</span><span class="so-f"></span></li><li><span class="so-n">08</span><span class="so-t">L&#x27;acier</span><span class="so-f"></span></li><li><span class="so-n">09</span><span class="so-t">L&#x27;aluminium</span><span class="so-f"></span></li><li><span class="so-n">10</span><span class="so-t">Les digits</span><span class="so-f"></span></li><li><span class="so-n">11</span><span class="so-t">Clip &amp; Drop</span><span class="so-f"></span></li><li><span class="so-n">12</span><span class="so-t">La boîte</span><span class="so-f"></span></li><li><span class="so-n">13</span><span class="so-t">Le calendrier de l'Avent</span><span class="so-f"></span></li></ul></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">01</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Les coffrets</h2><p class="ov-s">Le cadeau déjà prêt, dans sa boîte</p>
- <a class="ov-img" href="https://www.yourmood.net/products/bague-mood-interchangeable-br-coffret-poya" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_alpine_en_trois_perspectives.png?v=1791291595&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/bague-mood-interchangeable-br-coffret-poya" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Bague mood interchangeable &quot;Poya&quot; avec motifs suisses et couleur interchangeable</span><span class="ov-p">214.–</span></a></div></div></div>
-<div class="leaf" data-i="2"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Les coffrets</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/bague-mood-interchangeable-acier-inoxydable-noir-volcan" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague_en_acier_noir_volcan_mood_avec_anneaux_interchangeables_4.jpg?v=1770112466&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood Volcan en acier inoxydable noir haut de gamme - noir | bague mood interchangeable pour homme et femme</span><span class="pc-p">307.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-argent-925-aura-shiny-love" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Collage_elegante_de_bague_diamantee_1.png?v=1791291339&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood en argent 925 et zircons &quot;Shiny Love</span><span class="pc-p">238.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-interchangeable-acier-coeurs-des-mood-lovers" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/coffret_bague_ring_bestseller_11.jpg?v=1750847979&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood complète coeurs des mood lovers</span><span class="pc-p">509.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-aura-authentique-en-argent-925-et-zircons-avec-3-anneaux-interchangeables" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague_mood_aura_en_acier_et_argent_avec_diamant_zircon_et_anneaux_blancs_pour_femme.jpg?v=1773046310&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood &quot;Aura&quot; avec 3 anneaux interchangeables</span><span class="pc-p">479.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-interchangeable-edelweiss-suisse" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague_mood_interchangeable_suisse_edelweiss_rouge.jpg?v=1758642715&amp;width=420" alt=""></span>
- <span class="pc-n">Bague complète Edelweiss</span><span class="pc-p">429.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-interchangeable-acier-noir-rose-magma" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/coffret_magma.jpg?v=1767020808&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood complète Magma en acier noir et rose haut de gamme</span><span class="pc-p">513.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-interchangeable-montagne-cervin" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bague_mood_acier_suisse_cervin_montagne_avec_couleur_interchangeable_couleur_orange_corail_pastel.jpg?v=1764670868&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood complète avec gravure de montagnes 3D et couleur à choix</span><span class="pc-p">419.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-elegance-diamants-femme" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/coffret_bague_ring_bestseller_14.jpg?v=1764839583&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood Élégance pour femme</span><span class="pc-p">580.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-zermatt-city-avec-anneau-interchangeable-grave-du-cervin" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1770065593280.png?v=1770066278&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood &quot;Zermatt City&quot; avec anneau interchangeable gravé du Cervin</span><span class="pc-p">129.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">02</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Les bases</h2><p class="ov-s">Le socle de la bague. Tout commence ici</p>
- <a class="ov-img" href="https://www.yourmood.net/products/bague-homme-femme-modulable-9mm-arrondie-polie" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/5_a2568555-f82a-4e68-88bd-2be742201eaa.jpg?v=1774281033&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/bague-homme-femme-modulable-9mm-arrondie-polie" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Base extra small en acier 316L arrondie (9mm), bijou avec anneau central</span><span class="ov-p">100.–</span></a></div></div></div>
-<div class="leaf" data-i="3"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Les bases</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/bague-mood-personnalisable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/arrondie-small-3-couleurs.gif?v=1791564086&amp;width=420" alt=""></span>
- <span class="pc-n">Base small en acier 316L arrondie et polie (11mm)</span><span class="pc-p">250.–</span></a><a class="pc" href="https://www.yourmood.net/products/base-small" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/carree-polie-small-3-couleurs.gif?v=1791564089&amp;width=420" alt=""></span>
- <span class="pc-n">Base small en acier 316L carrée et polie (11mm)</span><span class="pc-p">265.–</span></a><a class="pc" href="https://www.yourmood.net/products/base-extra-small-en-acier-inoxydable-polie-9-mm" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/carree-polie-xs-3-couleurs.gif?v=1791564088&amp;width=420" alt=""></span>
- <span class="pc-n">Base extra small en acier 316L carrée et polie (9mm)</span><span class="pc-p">265.–</span></a><a class="pc" href="https://www.yourmood.net/products/https-www-yourmood-net-products-base-small-arrondie-polie" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/base-large-3-couleurs.gif?v=1791563649&amp;width=420" alt=""></span>
- <span class="pc-n">Base large en acier 316L arrondie et polie (13mm)</span><span class="pc-p">250.–</span></a><a class="pc" href="https://www.yourmood.net/products/base-extra-small-en-acier-316l-arrondie-9mm-pour-bague-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/arrondie-xs-3-couleurs.gif?v=1791564084&amp;width=420" alt=""></span>
- <span class="pc-n">Base extra small en acier 316L arrondie et polie (9mm)</span><span class="pc-p">137.5 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/base-extra-small-en-acier-inoxydable-finition-froissee-11mm" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/froissee-xs-3-couleurs.gif?v=1791564095&amp;width=420" alt=""></span>
- <span class="pc-n">Base extra small en acier 316L froissée (9mm)</span><span class="pc-p">250.–</span></a><a class="pc" href="https://www.yourmood.net/products/base-rock-en-acier-inoxydable-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/rock-small-3-couleurs.gif?v=1791564101&amp;width=420" alt=""></span>
- <span class="pc-n">Base small « Rock » en acier 316L (11mm) interchangeable — édition collector</span><span class="pc-p">149.–</span></a><a class="pc" href="https://www.yourmood.net/products/base-small-en-acier-inoxydable-finition-froissee-11mm" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/froissee-small-3-couleurs.gif?v=1791564097&amp;width=420" alt=""></span>
- <span class="pc-n">Base small en acier 316L froissée (11mm)</span><span class="pc-p">250.–</span></a><a class="pc" href="https://www.yourmood.net/products/base-17-by-mood-base-xs-blanche-en-email" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/base-17-3-tailles.gif?v=1791564429&amp;width=420" alt=""></span>
- <span class="pc-n">BASE 17 BY MOOD — base en émail blanc (large, small ou extra small)</span><span class="pc-p">290.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">03</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Les packs garde-mood</h2><p class="ov-s">Plusieurs anneaux d&#x27;un coup</p>
- <a class="ov-img" href="https://www.yourmood.net/products/le-pack-palette-pour-ta-garde-mood" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1771870825980.png?v=1771871132&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/le-pack-palette-pour-ta-garde-mood" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Le pack mini Palette pour ta garde-mood</span><span class="ov-p">330.–</span></a></div></div></div>
-<div class="leaf" data-i="4"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Les packs garde-mood</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/pack-fondamental-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPTImage9fevr.2026a13_52_55.png?v=1770642049&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack indispensable pour ta garde-mood</span><span class="pc-p">41.25 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/le-pack-mini-palette-pastelle-pour-ta-garde-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1774001694838.png?v=1774001739&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack mini Palette - Pastel pour ta garde-mood</span><span class="pc-p">270.–</span></a><a class="pc" href="https://www.yourmood.net/products/le-pack-medium-palette-pour-ta-garde-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1773225958324.png?v=1773238356&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack medium Palette pour ta garde-mood</span><span class="pc-p">154.–</span></a><a class="pc" href="https://www.yourmood.net/products/le-pack-aura-palette-pour-ta-garde-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1773226134789.png?v=1773242368&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack Auras Palette pour ta garde-mood</span><span class="pc-p">3184.–</span></a><a class="pc" href="https://www.yourmood.net/products/basic-pastel-starter-pack-in-the-mood-for-basic-pastel" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1774381690497.png?v=1774382879&amp;width=420" alt=""></span>
- <span class="pc-n">BASIC PASTEL - Starter pack &quot;In the mood for...Basic Pastel</span><span class="pc-p">249.–</span></a><a class="pc" href="https://www.yourmood.net/products/le-pack-medium-palette-pastel-pour-ta-garde-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1774001783436.png?v=1774001854&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack medium Palette - Pastel pour ta garde-mood</span><span class="pc-p">252.–</span></a><a class="pc" href="https://www.yourmood.net/products/essential-starter-pack-in-the-mood-for-essential" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1774381204316.png?v=1774381536&amp;width=420" alt=""></span>
- <span class="pc-n">ESSENTIAL - Starter pack &quot;In the mood for...Essential</span><span class="pc-p">304.7 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/le-pack-minis-auras-palette-pour-ta-garde-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1775040725614.png?v=1775040759&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack minis Auras Palette pour ta garde-mood</span><span class="pc-p">900.–</span></a><a class="pc" href="https://www.yourmood.net/products/le-pack-essentiel-pour-ta-garde-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1771870596928.png?v=1771870613&amp;width=420" alt=""></span>
- <span class="pc-n">Le pack Essentiel pour ta garde-mood</span><span class="pc-p">75.35 CHF</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">04</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Aura</h2><p class="ov-s">Toute la famille, d&#x27;un seul regard</p>
- <a class="ov-img" href="https://www.yourmood.net/products/anneau-medium-full-zircons-pour-bague-mood" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPT_Image_25_juin_2026_09_19_27.png?v=1782372244&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/anneau-medium-full-zircons-pour-bague-mood" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Medium &quot;Aura Authentique</span><span class="ov-p">258.–</span></a></div></div></div>
-<div class="leaf" data-i="5"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Aura</span><span class="ph-f"></span></header>
- <div class="pl dense" style="--col:6"><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-celeste-en-argent-925-serti-de-zircons-bleus" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_6186.jpg?v=1783673481&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Céleste&quot; en argent 925 serti de zircons bleus</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-soraura-en-argent-925-serti-de-zircons-violet" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/28_1ffac315-6f68-4dd9-974a-a314416fd309.jpg?v=1772727305&amp;width=420" alt=""></span>
- <span class="pc-n">‍ Anneau (addon medium) &quot;SorAura&quot; en argent 925 serti de zircons violet</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-royal-en-argent-925-serti-de-zircons-bleus" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/4_37062787-1b27-41a4-9103-79d3f98f25e7.jpg?v=1769808276&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Royal&quot; en argent 925 serti de zircons bleus intense</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-deux-tiers-auraline-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Nouveaute_2.jpg?v=1774338716&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Auraline</span><span class="pc-p">259.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-floralis-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ai-product-photo-1764839407878.jpg?v=1764859094&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Floralis</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-mentalo-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_6199.jpg?v=1783673622&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Mentalo&quot; en argent 925 serti de zircons [édition limitée à 100 exemplaires]</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-rubis-en-argent-925-serti-de-zircons-rubis" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-9.jpg?v=1769808709&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Rubis&quot; en argent 925 serti de zircons rubis</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/08-anneau-addon-medium-aura-sacre-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/finserie.png?v=1779465938&amp;width=420" alt=""></span>
- <span class="pc-n">06 Anneau (addon medium) &quot;Aura sacré&quot; Aura Dark Bluish</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-coquelicot-en-argent-925-serti-de-zircons-rouges" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/5_12c85b4f-0393-4d5e-a226-243736caf26c.jpg?v=1769808325&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Coquelicot&quot; en argent 925 serti de zircons rouges</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-ange-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/15_f9b876fb-f5bc-452c-b487-3e7dbf94dc28.jpg?v=1766762972&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura ange&quot; Aura Light grey</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-kabricot-en-argent-925-serti-de-zircons-abricots" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/34_ea137eca-a0c5-44a0-a8c0-533559f42aab.jpg?v=1772729295&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Kabricot&quot; en argent 925 serti de zircons abricots</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-givre-aura-grey-en-argent-925-serti-de-zircons-gris" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/2_21201de7-7fe8-4cd7-97a7-d8da64e7e260.jpg?v=1769808359&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Givré&quot; Aura Grey en argent 925 serti de zircons gris</span><span class="pc-p">109.45 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-arc-en-ciel-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/aura_2.jpg?v=1755618195&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Arc-en-ciel</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-arc-en-ciel-pastel-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/aura_976357dc-f203-4d2d-a490-6fff228d1430.jpg?v=1755618160&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Arc-en-ciel pastel</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-dautomne-en-argent-925-serti-de-zircons-couleurs-dautomne" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/aura_automne.jpg?v=1757612715&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura d&#x27;automne&quot; en argent 925 serti de zircons couleurs d&#x27;automne</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-champagne-en-argent-925-serti-de-zircons-champagnes" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/7_00ac2717-f9c3-4d5d-ad1e-cc193730561a.jpg?v=1773389464&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Champagne&quot; en argent 925 serti de zircons champagnes</span><span class="pc-p">109.45 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-deux-tiers-auraline-celeste-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_eternite_en_topaze_bleue.png?v=1775375289&amp;width=420" alt=""></span>
- <span class="pc-n">Spécial Blue Monday Précommande : Anneau (addon deux tiers) &quot;Auraline Céleste</span><span class="pc-p">259.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-mini-aura-champagne-en-argent-925-serti-de-zircons-champagnes" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPT_Image_29_mai_2026_09_20_42.png?v=1780074989&amp;width=420" alt=""></span>
- <span class="pc-n">Mini &quot;Aura Champagne&quot; en argent 925 serti de zircons champagnes</span><span class="pc-p">66.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-mini-aura-fushia-en-argent-925-serti-de-zircons-fuchsia" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/2_6a23a834-fa22-434f-a155-22bb7c8aa290.jpg?v=1772732039&amp;width=420" alt=""></span>
- <span class="pc-n">Mini &quot;Aura Fushia&quot; en argent 925 serti de zircons fuchsia</span><span class="pc-p">120.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-black-white-signature-en-argent-925-serti-de-zircons-noirs-et-blanc" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-48.jpg?v=1777028344&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Black &amp; White Signature&quot; en argent 925 serti de zircons noirs et blanc</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aurora-en-argent-925-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/7_af142544-0fa7-40e4-8455-324960fcffc3.jpg?v=1766762549&amp;width=420" alt=""></span>
- <span class="pc-n">01 Anneau (addon medium) &quot;Aurora&quot; Aura pinkish</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-pure-en-argent-serti-de-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/aura_pur_24a2a913-1b21-406e-8b30-9d396ddc7d35.png?v=1784872629&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura no 2&quot; en argent serti de zircons</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-fushia-en-argent-925-serti-de-zircons-fuchsia" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_mood_interchangeable_addon_medium_aura_fushia_argent_02.jpg?v=1773129356&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Fushia&quot; en argent 925 serti de zircons fuchsia</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aurheart-en-argent-925-serti-de-zircons-blancs" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/image_1775375143494_hjaszo.png?v=1775375228&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aurheart&quot; en argent 925 serti de zircons blancs</span><span class="pc-p">142.45 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-auraline-automne-en-argent-925-serti-de-zircons-baguette-aux-tons-d-automne" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPTImage20aout2026a09_33_33_c89d6c81-b927-4b01-b7e8-4f4cf25fe415.png?v=1787593893&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers « Auraline Automne » en argent 925 serti de zircons baguette aux tons d’automne</span><span class="pc-p">259.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-mini-aura-kabricot-en-argent-925-serti-de-zircons-corail" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/35_1034b560-71e7-403b-b52f-14b9608c50d0.jpg?v=1772731092&amp;width=420" alt=""></span>
- <span class="pc-n">Mini &quot;Aura Kabricot&quot; en argent 925 serti de zircons corail</span><span class="pc-p">66.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-minis-aura-black-white-signature-en-argent-925-serti-de-zircons-noirs-et-blanc" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuelssite_3cases_-49.jpg?v=1777036975&amp;width=420" alt=""></span>
- <span class="pc-n">Anneau (addon mini(s)) &quot;Aura Black &amp; White Signature&quot; en argent 925 serti de zircons noirs et blanc</span><span class="pc-p">225.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-medium-aura-lagoon-argent-925-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_6167.jpg?v=1783673022&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Lagoon</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-medium-aura-caraibe-argent-925-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_6188.jpg?v=1783672944&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Caraïbe</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-aura-prism-en-argent-serti-de-zircons-mauve-rose" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPT_Image_23_aout_2026_09_50_34.png?v=1787471488&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Prisme&quot; en argent serti de zircons mauve-rosé</span><span class="pc-p">109.45 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/coffret-aura-authentique-bijoux-doreille-et-1-anneau" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/18_e861976f-8dc2-487e-8f4f-2148a098ff6b.png?v=1767621344&amp;width=420" alt=""></span>
- <span class="pc-n">Coffret Aura authentique (bijoux d&#x27;oreille et 1 anneau)</span><span class="pc-p">358.–</span></a><a class="pc" href="https://www.yourmood.net/products/coffret-aura-authentique-square-bijoux-doreille-et-1-anneau" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/16_f7704c51-80e1-40ff-af21-2e5174a3c03a.png?v=1762521448&amp;width=420" alt=""></span>
- <span class="pc-n">Coffret Aura authentique - square (bijoux d&#x27;oreille et 1 anneau)</span><span class="pc-p">358.–</span></a><a class="pc" href="https://www.yourmood.net/products/coffret-aura-murmure-bijoux-doreille-et-1-anneau" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/aura_plume.png?v=1777967500&amp;width=420" alt=""></span>
- <span class="pc-n">Coffret Aura Murmure (bijoux d&#x27;oreille et 1 anneau)</span><span class="pc-p">358.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-medium-aura-turquoise-argent-925-zircons" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_6217.jpg?v=1783673142&amp;width=420" alt=""></span>
- <span class="pc-n">Medium &quot;Aura Turquoise</span><span class="pc-p">199.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-deux-tiers-auraline-rose-en-argent-925-serti-de-zircons-rose-pastel" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bagueeterniteenpierresrosespales.png?v=1791288588&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers « Auraline Rose » en argent 925 serti de zircons rose pastel</span><span class="pc-p">259.–</span></a><a class="pc" href="https://www.yourmood.net/products/lumina-violet-soraura-anneau-interchangeable-en-argent-925-pour-bague-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Lumina-Medium1.jpg?v=1755931983&amp;width=420" alt=""></span>
- <span class="pc-n">LUMINA violet Soraura - anneau interchangeable en argent 925</span><span class="pc-p">259.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">05</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Willow</h2><p class="ov-s">La ligne de zircons sur l&#x27;argent pailleté</p>
- <a class="ov-img" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-en-argent-poli-serti-de-zircons-pour-bague-mood-interchangeable-copy" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Design_sans_titre_-_2025-05-07T083445.986.jpg?v=1772635795&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-en-argent-poli-serti-de-zircons-pour-bague-mood-interchangeable-copy" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Deux tiers &quot;Willow&quot; en argent glitter serti de zircons</span><span class="ov-p">295.–</span></a></div></div></div>
-<div class="leaf" data-i="6"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Willow</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-glace-en-argent-glitter-serti-de-zircons-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/AuthentischeAura.jpg?v=1775375460&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow glacé&quot; en argent poli serti de zircons</span><span class="pc-p">162.25 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-black-en-argent-glitter-noir-serti-de-zircons-noirs-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/willow_black.jpg?v=1760356978&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow Black&quot; en argent glitter noir serti de zircons noirs</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-white-en-argent-glitter-serti-de-zircons-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/willow_white.jpg?v=1756452004&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow White&quot; en argent glitter serti de zircons</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-pink-en-argent-glitter-serti-de-zircons-roses-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuel_d74d70e6-0b0f-4bcc-aa26-6d448b58611a.jpg?v=1758481615&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow Pink&quot; en argent glitter serti de zircons roses</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-purple-en-argent-glitter-serti-de-zircons-et-demail-pour-bague-mood-interchangeable-copy" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuel_site_-_willow.jpg?v=1756452043&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow Purple&quot; en argent 925 serti de zircons et d&#x27;émail</span><span class="pc-p">249.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willove-en-argent-glitter-serti-de-zircons-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_en_acier_inoxydable_et_saphirs.png?v=1775374803&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willove&quot; &quot; en argent glitter serti de zircons</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-sucre-d-orge-en-argent-glitter-serti-de-zircons-rouges-et-blancs-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_7422.jpg?v=1763022071&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow Sucre d’orge&quot; en argent glitter serti de zircons rouges et blancs</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-galaxie-en-argent-925-fuchsia-serti-de-zircons-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_6465.jpg?v=1759261714&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow Galaxie&quot; en argent 925 fuchsia serti de zircons</span><span class="pc-p">349.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-willow-dautomne-en-argent-glitter-serti-de-zircons-automnales-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_mood_interchangeable_addon_deux-tiers_willow_automne_argent_zircons_01.jpg?v=1761129044&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Willow d&#x27;automne&quot; en argent glitter serti de zircons automnales</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-oc-an-willow-argent-glitter-et-zircons-bleus-rois" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1778051671835-u6d92xf6x8h.png?v=1778073940&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Océan - Willow&quot; en argent glitter et zircons bleus rois</span><span class="pc-p">219.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-coco-willow-en-argent-glitter-et-zircons-bruns-chocolat-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/decor-L1-19-r1008-52.png?v=1782332078&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Coco - Willow&quot; en argent glitter et zircons bruns chocolat</span><span class="pc-p">142.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">06</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Les zircons</h2><p class="ov-s">Le luxe accessible, en argent 925</p>
- <a class="ov-img" href="https://www.yourmood.net/products/bijou-femme-love-first-bague" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Change_le_look_de_ta_bague_a_volonte_13.jpg?v=1722098143&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/bijou-femme-love-first-bague" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Addon First Love 2024 en argent et zircons</span><span class="ov-p">325.–</span></a></div></div></div>
-<div class="leaf" data-i="7"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Les zircons</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/bijou-bague-femme-argent-achat-enligne-firstlove" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Change_le_look_de_ta_bague_a_volonte_12.jpg?v=1748000586&amp;width=420" alt=""></span>
- <span class="pc-n">Addon First Love blanc</span><span class="pc-p">325.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-bijou-femme-online-nazare" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_54dd195a-bcf6-4d70-a157-f4754285bf17.jpg?v=1747999419&amp;width=420" alt=""></span>
- <span class="pc-n">Addon Middle &quot;Nazaré serti white</span><span class="pc-p">189.–</span></a><a class="pc" href="https://www.yourmood.net/products/lumina-bague-mood-interchangeable-en-argent-avec-cristaux-lumineux" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/aura_coffret.jpg?v=1755618760&amp;width=420" alt=""></span>
- <span class="pc-n">Coffret LUMINA – bague mood interchangeable en argent 925</span><span class="pc-p">259.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-first-love-rose-et-blanc-2024" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Change_le_look_de_ta_bague_a_volonte_2.jpg?v=1748000710&amp;width=420" alt=""></span>
- <span class="pc-n">Addon First Love rose et blanc 2024</span><span class="pc-p">325.–</span></a><a class="pc" href="https://www.yourmood.net/products/open-heart-blue-medium-3d-center-en-argent-glitter-925-avec-zircons-bleu-pour-bague-mood-intechangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/open_heart_bleu.jpg?v=1767019192&amp;width=420" alt=""></span>
- <span class="pc-n">Open Heart - blue Medium 3D center en argent glitter 925 avec zircon bleu</span><span class="pc-p">195.–</span></a><a class="pc" href="https://www.yourmood.net/products/bague-mood-complete-en-argent-coeurs-first-love-avec-zircons-bijou-en-argent-pour-femme" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/6_91045985-55bb-4996-9e96-60356939cab2.jpg?v=1750848398&amp;width=420" alt=""></span>
- <span class="pc-n">Bague mood complète en argent First Love avec zircons brillants - bijou en argent pour femme</span><span class="pc-p">575.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-en-argent-925-flying-diamon-finition-polie-avec-zircons-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/flying_diamons.jpg?v=1764859016&amp;width=420" alt=""></span>
- <span class="pc-n">Anneau en argent 925 &quot;Flying Diamond&quot; finition polie avec zircons</span><span class="pc-p">371.8 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-en-argent-summer-entierement-serti-de-zircons-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Vide_3_Panneaux_Bande_Dessinee_Image_produit.gif?v=1749845563&amp;width=420" alt=""></span>
- <span class="pc-n">Addon en argent Summer entièrement serti de zircons</span><span class="pc-p">349.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-3d-alliances-des-coeurs-en-argent-pour-bague-mood-pour-femme" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/email-2.jpg?v=1755764909&amp;width=420" alt=""></span>
- <span class="pc-n">Addon medium 3D blanc &quot;Alliances des coeurs&quot; en argent et Zircons</span><span class="pc-p">169.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">07</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">L&#x27;argent</h2><p class="ov-s">Argent 925, fait à Orbe</p>
- <a class="ov-img" href="https://www.yourmood.net/products/anneau-addon-deux-tiers-en-argent-925-neige-eternelle-pour-bague-mood-interchangeable-special-20-ans-copie" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Baguemetalliquetextureesurfondsombre.png?v=1792070216&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/anneau-addon-deux-tiers-en-argent-925-neige-eternelle-pour-bague-mood-interchangeable-special-20-ans-copie" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Deux tiers en argent 925 « Neige éternelle »</span><span class="ov-p">225.–</span></a></div></div></div>
-<div class="leaf" data-i="8"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">L&#x27;argent</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/anneau-addon-medium-en-argent-925-neige-eternelle-pour-bague-mood-interchangeable-special-20-ans" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Anneauargentetexturesurfondsombre.png?v=1792070592&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en argent 925 « Neige éternelle »</span><span class="pc-p">169.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-addon-en-argent-925-neige-eternelle-pour-bague-mood-interchangeable-special-20-ans" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_argentee_texturee_en_gros_plan.png?v=1792069449&amp;width=420" alt=""></span>
- <span class="pc-n">Addon en argent 925 « Neige éternelle »</span><span class="pc-p">295.–</span></a><a class="pc" href="https://www.yourmood.net/products/pack-de-2-anneauxaddon-mini-en-argent-925-oasis-finition-a-choix-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Bagues_argentees_perlees_sur_fond_anthracite.png?v=1792082383&amp;width=420" alt=""></span>
- <span class="pc-n">Pack de 2 minis en argent 925 « Oasis »</span><span class="pc-p">225.–</span></a><a class="pc" href="https://www.yourmood.net/products/pack-de-2-anneauxaddon-mini-en-argent-925-neige-eternelle-finition-glitter-pour-bague-mood-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/Deux_anneaux_argentes_textures.png?v=1792070935&amp;width=420" alt=""></span>
- <span class="pc-n">Pack de 2 minis en argent 925 « Neige éternelle »</span><span class="pc-p">225.–</span></a><a class="pc" href="https://www.yourmood.net/products/copy-of-addon-medium-argent-rock" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-argent-rock-medium-1.jpg?v=1759412041&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en argent 925 « Rock »</span><span class="pc-p">84.5 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/sahara" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-argent-sahara-1.jpg?v=1748003862&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en argent 925 « Sahara »</span><span class="pc-p">169.–</span></a><a class="pc" href="https://www.yourmood.net/products/medium-argent-paillettes" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-argent-medium-argent-paillettes-1.jpg?v=1748003399&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en argent 925 « Paillettes »</span><span class="pc-p">169.–</span></a><a class="pc" href="https://www.yourmood.net/products/medium-argent-froisse" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-argent-froisse-medium-argent-1.jpg?v=1759412075&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en argent 925 « Froissé »</span><span class="pc-p">169.–</span></a><a class="pc" href="https://www.yourmood.net/products/deux-tiers-argent-mantra-tibetain-white" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/MG_3765_modif_web.jpg?v=1683624200&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers en argent 925 « Mantra tibétain White »</span><span class="pc-p">325.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">08</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">L&#x27;acier</h2><p class="ov-s">Acier chirurgical 316L, garanti à vie</p>
- <a class="ov-img" href="https://www.yourmood.net/products/addon-cristal-de-givre-en-acier" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/addon-givre-acier-3-couleurs.gif?v=1791898899&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/addon-cristal-de-givre-en-acier" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Addon en acier Cristal de Givre</span><span class="ov-p">179.–</span></a></div></div></div>
-<div class="leaf" data-i="9"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">L&#x27;acier</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/medium-en-acier-froisse" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/medium-froisse-acier-3-couleurs.gif?v=1791898887&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en acier froissé</span><span class="pc-p">77.–</span></a><a class="pc" href="https://www.yourmood.net/products/pack-mini-en-acier-poli" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/minis-basique-acier-3-couleurs.gif?v=1791898878&amp;width=420" alt=""></span>
- <span class="pc-n">Pack de 2 minis en acier</span><span class="pc-p">120.–</span></a><a class="pc" href="https://www.yourmood.net/products/medium-serti-neige" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/calque_modif.jpg?v=1748000899&amp;width=420" alt=""></span>
- <span class="pc-n">Medium serti Neige</span><span class="pc-p">495.–</span></a><a class="pc" href="https://www.yourmood.net/products/medium-acier-diamants-1-6mm" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/diamantacier.web.jpg?v=1748002451&amp;width=420" alt=""></span>
- <span class="pc-n">Medium acier diamants 1.6mm</span><span class="pc-p">317.–</span></a><a class="pc" href="https://www.yourmood.net/products/deux-tiers-acier-froisse" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/deuxtiers-froisse-acier-3-couleurs.gif?v=1791898889&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers en acier froissé</span><span class="pc-p">109.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-deux-tiers-cristal-de-givre-en-acier" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/deuxtiers-givre-acier-3-couleurs.gif?v=1791898897&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers en acier Cristal de Givre</span><span class="pc-p">109.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-medium-en-acier-froisse-serti-de-3-diamants-rose-pur" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/MG_5152_modif_web.jpg?v=1748001255&amp;width=420" alt=""></span>
- <span class="pc-n">Addon medium en acier froissé serti de 3 diamants rose &quot;PUR</span><span class="pc-p">434.–</span></a><a class="pc" href="https://www.yourmood.net/products/mini-acier-froisse-rose-gold" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/minis-froisse-acier-3-couleurs.gif?v=1791898886&amp;width=420" alt=""></span>
- <span class="pc-n">Pack de 2 minis en acier froissé</span><span class="pc-p">120.–</span></a><a class="pc" href="https://www.yourmood.net/products/medium-acier-brillant-serti-de-diamants" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/MG_0816_modif_web.jpg?v=1748000882&amp;width=420" alt=""></span>
- <span class="pc-n">Medium acier brillant serti de diamants</span><span class="pc-p">167.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">09</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">L&#x27;aluminium</h2><p class="ov-s">La couleur, à changer tous les jours</p>
- <a class="ov-img" href="https://www.yourmood.net/products/pack-de-addons-medium-en-aluminium-anodise-couleurs-a-choix" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/Medium_aluminium_bague.jpg?v=1748003906&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/pack-de-addons-medium-en-aluminium-anodise-couleurs-a-choix" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Pack de 4 mediums en aluminium anodisé, couleurs à choix</span><span class="ov-p">112.–</span></a></div></div></div>
-<div class="leaf" data-i="10"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">L&#x27;aluminium</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/addon-medium-en-aluminium-anodise-anthracite" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-aluminium-medium-en-aluminium-noir-1.jpg?v=1748004299&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en aluminium noir</span><span class="pc-p">28.–</span></a><a class="pc" href="https://www.yourmood.net/products/deux-tiers-zermatt-city" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-aluminium-grave-deux-tiers-zermatt-city-1.jpg?v=1748002977&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers Zermatt City</span><span class="pc-p">75.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-medium-en-aluminium-anodise-rouge" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuel_rouge3.jpg?v=1770115442&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en aluminium rouge</span><span class="pc-p">28.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-medium-en-aluminium-anodise-turquoise" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/medium-aluminium-medium-en-aluminium-turquoise-1.jpg?v=1748004318&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en aluminium turquoise</span><span class="pc-p">28.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-medium-aluminium-bleu-marine" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/05062412-modif.jpg?v=1747999965&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en aluminium bleu marine</span><span class="pc-p">28.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-oc-anis-aluminium-couleurs-a-choix" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/bora_bora_-_oceanis_b04f5106-c866-41b1-99e8-967ec7674e3a.png?v=1780905905&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers Océanis en aluminium couleurs à choix</span><span class="pc-p">354.05 CHF</span></a><a class="pc" href="https://www.yourmood.net/products/addon-zermatt-city-1" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-aluminium-grave-addon-zermatt-city-5.jpg?v=1748002981&amp;width=420" alt=""></span>
- <span class="pc-n">Addon Zermatt City</span><span class="pc-p">85.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-medium-en-aluminium-anodise-lila-cashmere" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/9_06d78ec9-9f70-4164-a262-bda1bd3fd5a1.jpg?v=1773830306&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en aluminium Lilas Cashmere</span><span class="pc-p">28.–</span></a><a class="pc" href="https://www.yourmood.net/products/anneau-deux-tiers-hib-lis-aluminium" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPTImage1juin2026a20_41_09.png?v=1780426304&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers &quot;Hibélis&quot; en aluminium rose pastel</span><span class="pc-p">109.45 CHF</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">10</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Les digits</h2><p class="ov-s">Son empreinte, pour toujours</p>
- <a class="ov-img" href="https://www.yourmood.net/products/addon-2-3-argent-full-digit-pour-bague-personnalisable-mood" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-6.gif?v=1767811914&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/addon-2-3-argent-full-digit-pour-bague-personnalisable-mood" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Deux tiers argent full digit</span><span class="ov-p">380.–</span></a></div></div></div>
-<div class="leaf" data-i="11"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Les digits</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/medium-grave-full-digit" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/MG_1341_modif_web.jpg?v=1748000736&amp;width=420" alt=""></span>
- <span class="pc-n">Medium gravé full digit</span><span class="pc-p">180.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-argent-empreinte-digitale" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-8.gif?v=1767814605&amp;width=420" alt=""></span>
- <span class="pc-n">addon argent digit empreinte digitale</span><span class="pc-p">410.–</span></a><a class="pc" href="https://www.yourmood.net/products/deux-tiers-grave-full-digit" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases.gif?v=1767795738&amp;width=420" alt=""></span>
- <span class="pc-n">Deux tiers en acier gravé full digit</span><span class="pc-p">139.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-argent-full-digit-pour-bague-personnalisable-mood-1" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-7.gif?v=1767812796&amp;width=420" alt=""></span>
- <span class="pc-n">Addon argent full digit</span><span class="pc-p">450.–</span></a><a class="pc" href="https://www.yourmood.net/products/medium-acier-black-grave-full-digit" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-3.gif?v=1767797271&amp;width=420" alt=""></span>
- <span class="pc-n">Medium en acier gravé full digit</span><span class="pc-p">120.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-or-rose-digit-pour-bague-personnalisable-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-addon-or-rose-digit-pour-bague-personnalisable-mood-1.jpg?v=1748004315&amp;width=420" alt=""></span>
- <span class="pc-n">Addon or rose digit</span><span class="pc-p">1575.–</span></a><a class="pc" href="https://www.yourmood.net/products/coffret-gravure-personnalisee-dune-empreinte-digitale-pink-gold" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/MG_1347_modif_web.jpg?v=1748000720&amp;width=420" alt=""></span>
- <span class="pc-n">Coffret | Gravure personnalisée d&#x27;une empreinte digitale | Pink Gold</span><span class="pc-p">554.–</span></a><a class="pc" href="https://www.yourmood.net/products/coffret-2-bagues-mood-personnalisees" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/homme7.jpg?v=1755677604&amp;width=420" alt=""></span>
- <span class="pc-n">Duo de bagues de promesse, d&#x27;union, de fiançailles ou de mariage</span><span class="pc-p">954.–</span></a><a class="pc" href="https://www.yourmood.net/products/addon-en-titane-full-digit-pour-bague-personnalisable-mood" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/products/addon-titane-grave-addon-en-titane-full-digit-pour-bague-personnalisable-mood-1.jpg?v=1748004317&amp;width=420" alt=""></span>
- <span class="pc-n">Addon en titane full digit</span><span class="pc-p">319.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">11</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Clip &amp; Drop</h2><p class="ov-s">Les oreilles aussi</p>
- <a class="ov-img" href="https://www.yourmood.net/products/clip-drop-aura-authentique-mood-en-argent-925-serti-de-zircons-bijou-d-oreille" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/site_-_drop1003.jpg?v=1764671434&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/clip-drop-aura-authentique-mood-en-argent-925-serti-de-zircons-bijou-d-oreille" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">Clip &amp; Drop Aura authentique&quot; mood</span><span class="ov-p">159.–</span></a></div></div></div>
-<div class="leaf" data-i="12"><div class="face recto"><div class="pg"><header class="ph2"><span class="ph-k">Clip &amp; Drop</span><span class="ph-f"></span></header>
- <div class="pl" style="--col:3"><a class="pc" href="https://www.yourmood.net/products/clip-mood-en-argent-925-bijou-d-oreille" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_46ac392b-0c5d-4dc5-a9d1-6ef28a5b8d13.jpg?v=1755286710&amp;width=420" alt=""></span>
- <span class="pc-n">Clip</span><span class="pc-p">90.–</span></a><a class="pc" href="https://www.yourmood.net/products/drop-murmures-dautomne-mood-en-argent-925-bijou-doreille" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/VSIUEL.jpg?v=1763460842&amp;width=420" alt=""></span>
- <span class="pc-n">Drop Murmures d&#x27;automne</span><span class="pc-p">139.–</span></a><a class="pc" href="https://www.yourmood.net/products/clip-drop-heart-mood-en-argent-925-bijou-d-oreille-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_site_3_cases_-35.gif?v=1769091634&amp;width=420" alt=""></span>
- <span class="pc-n">Clip &amp; Drop Heart</span><span class="pc-p">159.–</span></a><a class="pc" href="https://www.yourmood.net/products/clip-drop-aura-authentique-gold-mood-en-argent-925-gold-serti-de-zircons-bijou-d-oreille" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/site_-_drop1002_c9008430-045c-4842-ad9d-d141ca6ba991.jpg?v=1755287012&amp;width=420" alt=""></span>
- <span class="pc-n">Clip &amp; Drop Aura authentique gold&quot; mood en argent 925 gold serti de zircons</span><span class="pc-p">159.–</span></a><a class="pc" href="https://www.yourmood.net/products/drop-aura-dautomne-mood-en-argent-925-serti-de-zircons-colores-bijou-doreille" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/clipautomne.jpg?v=1763460908&amp;width=420" alt=""></span>
- <span class="pc-n">Drop Aura d&#x27;automne &quot; mood en argent 925 serti de zircons colorés</span><span class="pc-p">135.–</span></a><a class="pc" href="https://www.yourmood.net/products/clip-square-mood-en-argent-925-neige-eternelle-bijou-doreille" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/MG_6108-modif.jpg?v=1761680669&amp;width=420" alt=""></span>
- <span class="pc-n">Clip Square&quot; mood en argent 925 neige éternelle</span><span class="pc-p">90.–</span></a><a class="pc" href="https://www.yourmood.net/products/clip-drop-pearl-mood-en-argent-925-accompagne-dune-perle-deau-bijou-d-oreille-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPT_Image_18_juin_2026_a_18_40_32.png?v=1781800881&amp;width=420" alt=""></span>
- <span class="pc-n">Clip &amp; Drop Pearl&quot; mood en argent 925 accompagné d&#x27;une perle d&#x27;eau</span><span class="pc-p">111.–</span></a><a class="pc" href="https://www.yourmood.net/products/drop-opale-shiny-mood-en-argent-925-bijou-d-oreille-interchangeable" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_617b7fac-59e1-45ce-98f1-4015f45c4cfc.jpg?v=1755284079&amp;width=420" alt=""></span>
- <span class="pc-n">Drop &quot;Opale Shiny</span><span class="pc-p">139.–</span></a><a class="pc" href="https://www.yourmood.net/products/drop-naga-mood-en-argent-925-bijou-d-oreille-copy" target="_blank" rel="noopener">
- <span class="pc-i"><img loading="lazy" src="https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_9a75662f-e64e-4f78-9b64-65ac4b61d87e.jpg?v=1755283222&amp;width=420" alt=""></span>
- <span class="pc-n">Drop &quot;Naga&quot; mood en argent 925 serti de diamants</span><span class="pc-p">1225.–</span></a></div></div></div><div class="face verso"><div class="pg ouv">
- <div class="ov-haut"><span class="ov-num">12</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">La boîte</h2><p class="ov-s">Tout ranger, tout emporter</p>
- <a class="ov-img" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise" target="_blank" rel="noopener"><img src="https://cdn.shopify.com/s/files/1/0798/2303/files/mood-amelioration-1790665605561.jpg?v=1790665926&amp;width=900" alt=""></a>
- <a class="ov-leg" href="https://www.yourmood.net/products/on-nen-a-jamais-trop-7-essentiels-mood-tout-neufs-dans-la-nouvelle-boite-turquoise" target="_blank" rel="noopener">
-   <span class="ov-k">la plus offerte</span><span class="ov-n">ON N&#x27;EN A JAMAIS TROP — 7 essentiels mood, tout neufs, dans la nouvelle boîte turquoise</span><span class="ov-p">281.6 CHF</span></a></div></div></div>
-<div class="leaf" data-i="13"><div class="face recto"><div class="pg mot"><div class="mo">
- <p class="mo-h">Sept essentiels,<br>dans une boîte<br>qui voyage.</p>
- <p class="mo-t">Celle qu'on glisse dans un sac, qu'on ouvre à l'hôtel, et qui rentre toujours avec un anneau de plus.</p>
- <p class="mo-pt">Édition turquoise</p></div></div></div><div class="face verso"><div class="pg av"><div class="ov-haut"><span class="ov-num">13</span><span class="ov-fil"></span></div>
- <h2 class="ov-t">Le calendrier<br>de l'Avent</h2><p class="ov-s">24 cases, 24 pièces, une par jour</p>
- <div class="av-txt"><p>Vingt-quatre matins, vingt-quatre bijoux. Du polymère aux pierres, de l'aluminium à l'argent nacré — une histoire qui se déroule du 1<sup>er</sup> au 24 décembre.</p>
- <p class="av-gr">Également en deux demi-calendriers :<br>les jours impairs, ou les jours pairs.</p>
- <p class="av-pt">Dans les boutiques et sur yourmood.net dès novembre.</p></div></div></div></div>
-<div class="leaf" data-i="14"><div class="face recto"><div class="pg dos"><div class="cv-mid"><img class="cv-logo petit" src="/logo-mood.png" alt="mood">
- <h1>Joyeux <em>Noël</em></h1><p>Orbe · Fribourg · Zermatt · Zurich · Carouge · Martigny</p>
- <p class="dos-web">yourmood.net</p>
- <p class="dos-pt">Système breveté d'anneaux interchangeables. Garantie à vie.<br>Fabriqué en Suisse depuis 2004.</p></div></div></div><div class="face verso"><div class="pg vide"></div></div></div>
-</div>
-
-<div class="mob"><div class="mob-tete">mood · Le livret des cadeaux</div><div class="piste" id="piste"></div></div>
-
-<div class="som" id="som"></div>
-
+<div class="topbar"><span class="marque">mood collection</span><span class="sous">L'édition des fêtes · Noël 2026</span></div>
+<div class="book" id="book"><div class="dos-centre"></div></div>
+<div class="mob"><div class="mob-tete">mood · L'édition des fêtes</div><div class="piste" id="piste"></div></div>
 <div class="nav">
-  <button id="prec">← Page précédente</button>
+  <button id="prec">←<span class="lg"> Page précédente</span></button>
   <span class="pos" id="pos"></span>
-  <button id="suiv">Page suivante →</button>
+  <button id="suiv"><span class="lg">Page suivante </span>→</button>
 </div>
-
 <script>
 (function(){
-  var book=document.getElementById("book");
-  var leaves=[].slice.call(book.querySelectorAll(".leaf"));
-  var N=leaves.length, cur=0; // cur = nombre de feuilles tournées
+  var NB=46, V="?v=20261103";
+  function src(i){ return "/catalogue/noel-2026/p"+String(i).padStart(2,"0")+".jpg"+V; }
+  var book=document.getElementById("book"), piste=document.getElementById("piste");
+  var NF=Math.ceil(NB/2), leaves=[];
+  for(var f=0; f<NF; f++){
+    var l=document.createElement("div"); l.className="leaf";
+    var r=2*f+1, v=2*f+2;
+    l.innerHTML='<div class="face recto"><img alt="Page '+r+'" data-src="'+src(r)+'"></div>'+
+      '<div class="face verso">'+(v<=NB?'<img alt="Page '+v+'" data-src="'+src(v)+'">':'')+'</div>';
+    book.appendChild(l); leaves.push(l);
+  }
+  for(var i=1;i<=NB;i++){
+    var c=document.createElement("div"); c.className="carte";
+    c.innerHTML='<img loading="lazy" alt="Page '+i+'" src="'+src(i)+'">'; piste.appendChild(c);
+  }
+  var cur=0;
+  // ne charger que les pages proches (le livre reste léger)
+  function charge(){
+    for(var f=Math.max(0,cur-2); f<=Math.min(NF-1,cur+2); f++){
+      leaves[f].querySelectorAll("img[data-src]").forEach(function(im){ im.src=im.dataset.src; im.removeAttribute("data-src"); });
+    }
+  }
   function rendu(){
     leaves.forEach(function(l,i){
       if(i<cur){ l.classList.add("flip"); l.style.zIndex=100+i; }
-      else { l.classList.remove("flip"); l.style.zIndex=100+(N-i); }
+      else { l.classList.remove("flip"); l.style.zIndex=100+(NF-i); }
     });
     document.getElementById("prec").disabled=(cur===0);
-    document.getElementById("suiv").disabled=(cur>=N);
-    document.getElementById("pos").textContent="Page "+Math.min(cur*2+1,N*2)+" / "+(N*2);
-    majSom();
+    document.getElementById("suiv").disabled=(cur>=NF);
+    var g=cur*2, d=cur*2+1;
+    document.getElementById("pos").textContent = cur===0 ? "Couverture" : (d<=NB ? "Pages "+g+"–"+d+" / "+NB : "Page "+g+" / "+NB);
+    charge();
   }
-  function va(n){ cur=Math.max(0,Math.min(N,n)); rendu(); }
-  document.getElementById("suiv").onclick=function(){va(cur+1)};
-  document.getElementById("prec").onclick=function(){va(cur-1)};
-  document.addEventListener("keydown",function(e){
-    if(e.key==="ArrowRight") va(cur+1);
-    if(e.key==="ArrowLeft") va(cur-1);
-  });
+  function va(n){ cur=Math.max(0,Math.min(NF,n)); rendu(); }
+  document.getElementById("suiv").onclick=function(){
+    if(window.innerWidth<=900){ piste.scrollBy({left:piste.clientWidth,behavior:"smooth"}); return; } va(cur+1); };
+  document.getElementById("prec").onclick=function(){
+    if(window.innerWidth<=900){ piste.scrollBy({left:-piste.clientWidth,behavior:"smooth"}); return; } va(cur-1); };
+  document.addEventListener("keydown",function(e){ if(e.key==="ArrowRight") va(cur+1); if(e.key==="ArrowLeft") va(cur-1); });
   book.addEventListener("click",function(e){
-    if(e.target.closest("a")) return;
     var r=book.getBoundingClientRect();
     if(e.clientX-r.left > r.width/2) va(cur+1); else va(cur-1);
   });
-
-  // sommaire : une pastille par chapitre
-  var titres=[].slice.call(book.querySelectorAll(".pg")).map(function(p){
-    var h=p.querySelector("h2"); if(!h) return p.classList.contains("couv")?"Couverture":null;
-    var d=document.createElement("div"); d.innerHTML=(h.innerHTML||"").replace(/<br\s*\/?>/gi," ");
-    return (d.textContent||"").replace(/\s+/g," ").trim();
-  });
-  var som=document.getElementById("som"), boutons=[];
-  titres.forEach(function(t,idx){
-    if(!t) return;
-    var b=document.createElement("button");
-    b.textContent=t; b.dataset.feuille=Math.floor(idx/2); // page idx -> on tourne idx/2 feuilles (recto) ou (idx-1)/2+1
-    b.dataset.page=idx;
-    b.onclick=function(){ var p=+b.dataset.page; va(p%2===0 ? p/2 : (p+1)/2); if(window.innerWidth<=900) versMobile(p); };
-    som.appendChild(b); boutons.push(b);
-  });
-  function majSom(){
-    boutons.forEach(function(b){
-      var p=+b.dataset.page, vu = (p%2===0) ? (cur===p/2) : (cur===(p+1)/2);
-      b.classList.toggle("on",vu);
-    });
-  }
-
-  // téléphone : les mêmes pages, une par une
-  var piste=document.getElementById("piste");
-  [].slice.call(book.querySelectorAll(".pg")).forEach(function(p){
-    if(p.classList.contains("vide")) return;
-    var c=document.createElement("div"); c.className="carte";
-    c.appendChild(p.cloneNode(true)); piste.appendChild(c);
-  });
-  function versMobile(i){ var c=piste.children[i]; if(c) c.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"}); }
-
-  // ouvrir directement sur un chapitre : #p=3
+  // ouvrir sur une page : #p=12
   function depuisAdresse(){
-    var m=(location.hash||"").match(/p=(\d+)/);
-    if(m){ var pg=Math.max(0,Math.min(N*2-1,+m[1])); va(pg%2===0?pg/2:(pg+1)/2); if(window.innerWidth<=900) versMobile(pg); }
+    var m=(location.hash||"").match(/p=(\d+)/); if(!m) return;
+    var p=Math.max(1,Math.min(NB,+m[1]));
+    va(p===1?0:Math.floor(p/2));
+    var c=piste.children[p-1]; if(c && window.innerWidth<=900) c.scrollIntoView({inline:"center",block:"nearest"});
   }
   window.addEventListener("hashchange",depuisAdresse);
-  // la feuille fait 600x810 : on la met à l'échelle de son cadre
-  function echelle(){
-    document.querySelectorAll(".face").forEach(function(f){
-      var pg=f.querySelector(".pg"); if(!pg) return;
-      pg.style.transform="scale("+(f.clientWidth/600)+")";
-    });
-    document.querySelectorAll(".mob .carte").forEach(function(c){
-      var pg=c.querySelector(".pg"); if(!pg) return;
-      pg.style.transform="scale("+(c.clientWidth/600)+")";
-    });
-  }
-  window.addEventListener("resize",echelle);
-  setTimeout(echelle,0); setTimeout(echelle,400);
-  rendu(); depuisAdresse(); echelle();
+  rendu(); depuisAdresse();
 })();
 </script>
 </body></html>
