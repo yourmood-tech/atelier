@@ -51,10 +51,11 @@ export type Faits = {
 
 // boîtes de rangement : OO N°1 / N°2, « On n'en a jamais trop » (turquoise), « Black Obsession » (noire)
 // Boîtes de rangement pas encore arrivées, une ligne par modèle dans le tableau blanc des délais.
-// Boîte noire (BOX-NUIT-NOIR) reçue le 03.11.2026 (Philippe) : retirée, elle part comme un article normal.
+// 03.11.2026 (Philippe) : boîte noire = OO N°2 (BOX-NUIT-NOIR et OON2-… sauf turquoise) REÇUE → part
+// comme un article normal ; OO N°2 turquoise = boîte turquoise ; OO N°1 n'est plus fabriquée.
 export const TYPES_BOITE: { rx: RegExp; nom: string }[] = [
-  { rx: /^BOX-JAMAISTROP/i, nom: "Boîte turquoise" },
-  { rx: /BOITEDERANGEMENT/i, nom: "Boîte OO N°1 / N°2" },
+  { rx: /^BOX-JAMAISTROP|BOITEDERANGEMENT-TURQUOISE/i, nom: "Boîte turquoise" },
+  { rx: /^OON1-BOITEDERANGEMENT/i, nom: "Boîte OO N°1 (plus fabriquée)" },
   { rx: /^COFFRET-ESCAPADE/i, nom: "Coffret Escapade (Pack du minimum vital)" },
 ];
 export const BOITE = new RegExp(TYPES_BOITE.map((t) => t.rx.source).join("|"), "i");
