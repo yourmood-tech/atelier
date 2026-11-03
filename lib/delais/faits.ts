@@ -41,7 +41,8 @@ export type Faits = {
   iceleaEnRoute?: { date: string; complet: boolean; depassee: boolean } | null;
   etape: { nom: string; entree: boolean; date: string; delaiMin: number | null; delaiMax: number | null; unite: string | null } | null;
   rupture: string | null;               // date de l'étiquette « Rupture »
-  boites: string[];                     // boîtes de rangement mood encore à expédier (noire, turquoise, OO N°1/N°2)
+  boites: string[];                     // boîtes de rangement mood encore à expédier (turquoise, OO N°1/N°2, Escapade)
+  boiteType?: string | null;            // modèle de la (première) boîte attendue, ligne du tableau blanc
   // estimation d'après le contenu : fournisseur des pièces (recette Katana) et son délai habituel
   estimation: { fournisseur: string; delaiMin: number; delaiMax: number; du: string; au: string; depassee: boolean } | null;
   etiquettesUtilisees: string[];        // pour la page de validation (preuve)
@@ -49,7 +50,14 @@ export type Faits = {
 };
 
 // boîtes de rangement : OO N°1 / N°2, « On n'en a jamais trop » (turquoise), « Black Obsession » (noire)
-export const BOITE = /BOITEDERANGEMENT|^BOX-JAMAISTROP|^BOX-NUIT-NOIR|^COFFRET-ESCAPADE/i;
+// Boîtes de rangement pas encore arrivées, une ligne par modèle dans le tableau blanc des délais.
+// Boîte noire (BOX-NUIT-NOIR) reçue le 03.11.2026 (Philippe) : retirée, elle part comme un article normal.
+export const TYPES_BOITE: { rx: RegExp; nom: string }[] = [
+  { rx: /^BOX-JAMAISTROP/i, nom: "Boîte turquoise" },
+  { rx: /BOITEDERANGEMENT/i, nom: "Boîte OO N°1 / N°2" },
+  { rx: /^COFFRET-ESCAPADE/i, nom: "Coffret Escapade (Pack du minimum vital)" },
+];
+export const BOITE = new RegExp(TYPES_BOITE.map((t) => t.rx.source).join("|"), "i");
 // délais fixes donnés par Philippe pour des articles sans fournisseur dans l'atelier (jours depuis la commande)
 const DELAIS_FIXES: { rx: RegExp; nom: string; min: number; max: number }[] = [
   { rx: /^CO-PLUMIER/i, nom: "Boîte des écoliers romands", min: 15, max: 20 },
@@ -98,7 +106,9 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   }));
 
   // boîtes de rangement mood (leur date d'arrivée n'est connue que de Philippe → laissée en blanc)
-  f.boites = lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0 && BOITE.test(String(l.sku ?? ""))).map((l) => String(l.title));
+  const lignesBoite = lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0 && BOITE.test(String(l.sku ?? "")));
+  f.boites = lignesBoite.map((l) => String(l.title));
+  f.boiteType = TYPES_BOITE.find((t) => lignesBoite.some((l) => t.rx.test(String(l.sku ?? ""))))?.nom ?? null;
 
   // étiquettes d'atelier
   const now = new Date(); now.setHours(0, 0, 0, 0);

@@ -197,7 +197,7 @@ export default function Delais() {
             <label key={nom} className="flex flex-wrap items-center gap-2 text-sm">
               <span className="w-56 shrink-0">{nom === INCONNU ? "Fournisseur inconnu (sans recette)" : nom}
                 <span className="ml-1 text-xs text-amber-700">{n.attente ? `· ${n.attente} à valider` : ""}{n.total ? ` · ${n.total} au total` : ""}</span></span>
-              <input className="min-w-0 flex-1 rounded border border-amber-300 bg-white p-1.5" placeholder={nom === BOITES ? "ex. fin novembre" : "ex. mi-novembre"}
+              <input className="min-w-0 flex-1 rounded border border-amber-300 bg-white p-1.5" placeholder={nom === BOITES || /^(Boîte|Coffret)/.test(nom) ? "ex. fin novembre" : "ex. mi-novembre"}
                 value={consignes?.parFournisseur[nom] ?? ""}
                 onChange={(e) => { setConsigneMsg(null); setConsignes((c) => ({ majLe: c?.majLe ?? null, parFournisseur: { ...(c?.parFournisseur ?? {}), [nom]: e.target.value } })); }} />
             </label>

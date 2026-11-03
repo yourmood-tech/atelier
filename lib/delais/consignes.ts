@@ -18,6 +18,9 @@ export async function lireConsignes(): Promise<Consignes> {
     const v = (await kv.get<Record<string, unknown>>(CLE)) ?? {};
     const par = { ...((v.parFournisseur as Record<string, string>) ?? {}) };
     if (typeof v.boites === "string" && v.boites && !par[BOITES]) par[BOITES] = v.boites;   // première version (une seule case boîtes)
+    // ancienne ligne unique « Boîtes de rangement » → boîte turquoise (seule boîte attendue au 03.11.2026)
+    if (par[BOITES] && !par["Boîte turquoise"]) par["Boîte turquoise"] = par[BOITES];
+    delete par[BOITES];
     return { parFournisseur: par, majLe: (v.majLe as string) ?? null };
   } catch { return { parFournisseur: {}, majLe: null }; }
 }
