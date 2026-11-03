@@ -82,7 +82,8 @@ export async function postInternalNote(ticketId: number, text: string): Promise<
     channel: "internal-note",
     body_html: html,
     body_text: text,
-    sender: { email: process.env.GORGIAS_API_EMAIL! },
+    // sans adresse dédiée, la note est posée au nom du compte de la clé (Philippe)
+    sender: process.env.GORGIAS_API_EMAIL ? { email: process.env.GORGIAS_API_EMAIL } : { id: 15486626 },
   });
 }
 

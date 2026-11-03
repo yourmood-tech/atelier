@@ -54,7 +54,17 @@ export default function Delais() {
   const [texte, setTexte] = useState<Record<number, string>>({});
   const [busy, setBusy] = useState<number | null>(null);
   const [vue, setVue] = useState<"a_valider" | "traites">("a_valider");
-  const [choix, setChoix] = useState<Record<string, string>>({});   // `${ticketId}:${lineItemId}` → nouvelle taille ("" = pas échangé)
+  const [choix, setChoix] = useState<Record<string, string>>({});
+  // tableau blanc des délais : repris dans chaque nouveau brouillon
+  const [consignes, setConsignes] = useState<{ delaiDefaut: string; boites: string; majLe: string | null } | null>(null);
+  const [consigneMsg, setConsigneMsg] = useState<string | null>(null);
+  async function enregistrerConsignes() {
+    if (!consignes) return;
+    const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consignes", ...consignes }) });
+    const j = await r.json();
+    if (r.ok) { setConsignes(j.consignes); setConsigneMsg("Enregistré — les prochains brouillons utilisent ces dates."); }
+    else setConsigneMsg(`Pas enregistré : ${j.error ?? r.status}`);
+  }   // `${ticketId}:${lineItemId}` → nouvelle taille ("" = pas échangé)
 
   async function creerEchange(b: Brouillon) {
     const lignes = (b.taille?.articles ?? []).map((a) => ({ lineItemId: a.lineItemId, taille: choix[`${b.ticketId}:${a.lineItemId}`] ?? "" })).filter((x) => x.taille);
@@ -73,6 +83,7 @@ export default function Delais() {
     const r = await fetch("/api/delais", { cache: "no-store" });
     const j = await r.json();
     setList(j.brouillons ?? []);
+    if (j.consignes) setConsignes((c) => c ?? j.consignes);
   }
   useEffect(() => { charger(); const t = setInterval(charger, 60000); return () => clearInterval(t); }, []);
 
@@ -157,6 +168,25 @@ export default function Delais() {
         <Case titre="Envoyés tels quels" val={stats.tels} sous={stats.envoyes ? `${Math.round((100 * stats.tels) / stats.envoyes)} % des envois` : "—"} />
         <Case titre="Envoyés retouchés" val={stats.retouches} />
         <Case titre="Écartés" val={stats.ecartes} />
+      </div>
+
+      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
+        <div className="text-sm font-medium text-amber-900">Tableau blanc des délais</div>
+        <p className="text-xs text-amber-800">Repris dans chaque nouveau brouillon. Écris comme tu le dirais à une cliente : « mi-novembre », « fin novembre », « entre fin novembre et début décembre ».</p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          <label className="text-sm">Délai du moment (commande sans date fiable)
+            <input className="mt-1 w-full rounded border border-amber-300 bg-white p-2" placeholder="ex. mi-novembre" value={consignes?.delaiDefaut ?? ""}
+              onChange={(e) => { setConsigneMsg(null); setConsignes((c) => ({ boites: "", majLe: null, ...c, delaiDefaut: e.target.value })); }} />
+          </label>
+          <label className="text-sm">Arrivée des boîtes de rangement (turquoise…)
+            <input className="mt-1 w-full rounded border border-amber-300 bg-white p-2" placeholder="ex. fin novembre" value={consignes?.boites ?? ""}
+              onChange={(e) => { setConsigneMsg(null); setConsignes((c) => ({ delaiDefaut: "", majLe: null, ...c, boites: e.target.value })); }} />
+          </label>
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <button onClick={enregistrerConsignes} className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm text-white">Enregistrer</button>
+          <span className="text-xs text-amber-800">{consigneMsg ?? (consignes?.majLe ? `Dernière mise à jour : ${new Date(consignes.majLe).toLocaleDateString("fr-CH")}` : "Vide : sans date, le brouillon ne donne aucune date.")}</span>
+        </div>
       </div>
 
       {recherche && !recherche.includes("…") && <p className="mt-3 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-900">{recherche}</p>}

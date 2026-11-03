@@ -4,6 +4,7 @@
 // La langue vient du profil client Shopify (pas de Klaviyo — décision Philippe 16.10.2026).
 import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale } from "@/lib/email";
+import { langueShopify } from "./langue";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getRecipeWithSuppliers, getPurchaseOrderByNo } from "@/lib/katana";
 import { notesEquipe, type NoteEquipe } from "./notes";
@@ -78,7 +79,7 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   if (!o) return vide;
   const cust = (o.customer ?? {}) as Record<string, unknown>;
   const langueProfil = await getShopifyProfileLocale(String(o.email ?? cust.email ?? email));
-  const langue = langueProfil ?? String(o.customer_locale ?? "fr").split("-")[0].toLowerCase();
+  const langue = langueShopify(langueProfil, o.customer_locale);
   const lignes = ((o.line_items ?? []) as Record<string, unknown>[]);
   const tags = String(o.tags ?? "").split(",").map((t) => t.trim()).filter(Boolean);
   const f: Faits = { ...vide, commande: String(o.name), commandeId: Number(o.id), passeeLe: String(o.created_at).slice(0, 10),

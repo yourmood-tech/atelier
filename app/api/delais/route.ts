@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { tous, lire, enregistrer } from "@/lib/delais/registre";
 import { closeTicket, ticketsDeLaVue } from "@/lib/gorgias";
 import { traiter } from "@/lib/delais/traiter";
+import { lireConsignes, ecrireConsignes } from "@/lib/delais/consignes";
 
 export const maxDuration = 120;
 
@@ -17,10 +18,13 @@ export async function GET() {
   const inbox = await ticketsDeLaVue(INBOX_PHILIPPE).then((ids) => new Set(ids)).catch(() => null);
   const visibles = list.filter((b) => b.etat !== "a_valider" || (inbox ? inbox.has(b.ticketId) : b.chezPhilippe !== false))
     .sort((a, b) => a.recuLe.localeCompare(b.recuLe));
-  return NextResponse.json({ ok: true, brouillons: visibles, inboxLue: !!inbox });
+  return NextResponse.json({ ok: true, brouillons: visibles, inboxLue: !!inbox, consignes: await lireConsignes() });
 }
 export async function POST(req: NextRequest) {
-  const { ticketId, action } = (await req.json()) as { ticketId?: number; action?: string };
+  const corps = (await req.json()) as { ticketId?: number; action?: string; delaiDefaut?: string; boites?: string };
+  const { ticketId, action } = corps;
+  // « consignes » : le tableau blanc des délais (délai du moment + date des boîtes), repris dans chaque brouillon
+  if (action === "consignes") return NextResponse.json({ ok: true, consignes: await ecrireConsignes(corps) });
   // « chercher » : tickets de l'inbox sans brouillon à valider (avis Gorgias manqué) → la page les fait traiter un par un
   if (action === "chercher") {
     const [inbox, list] = await Promise.all([ticketsDeLaVue(INBOX_PHILIPPE), tous()]);

@@ -7,6 +7,7 @@ import { redigerBrouillon } from "@/lib/delais/brouillon";
 import { langueDuMessage } from "@/lib/delais/langue";
 import { detecterTaille, faitsTaille, redigerTaille } from "@/lib/delais/taille";
 import { enregistrer, lire, majCarte, reprendre, type Brouillon } from "@/lib/delais/registre";
+import { traiterChat } from "@/lib/delais/chat";
 
 export const PHILIPPE = 15486626;     // compte Gorgias de Philippe
 const EQUIPE_DELAIS = 4403;           // groupe « Délais de livraison »
@@ -30,6 +31,8 @@ async function montrer(deja: Brouillon) {
  *  refait rien pour un message déjà traité, et rien quand le dernier message vient de l'équipe. */
 export async function traiter(ticketId: number, forcer = false) {
   const t = await getTicket(ticketId);
+  // chat du site : proposition en note interne dans Gorgias, quel que soit le nom attribué (Philippe 03.11.2026)
+  if (t.channel === "chat") return t.spam ? undefined : traiterChat(ticketId, t);
   if (attribueA(t) !== PHILIPPE) return masquer(await lire(ticketId));
   // e-mail et WhatsApp (la réponse WhatsApp part depuis le ticket Gorgias, sur son téléphone) ;
   // jamais les robots (notifications Shopify « mentioned on order », PayPal, no-reply…)

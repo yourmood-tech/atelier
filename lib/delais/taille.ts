@@ -9,6 +9,7 @@
 //  • tailles impaires impossibles (69 → 68 ou 70).
 import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale, BRAND_INTRO } from "@/lib/email";
+import { langueShopify } from "./langue";
 import { TON_WHATSAPP } from "./brouillon";
 import { notesEquipe, notesPourRedaction, type NoteEquipe } from "./notes";
 
@@ -50,7 +51,7 @@ export async function faitsTaille(numero: string | null, email: string, tailleVo
   }
   if (!o) return null;
   const cust = (o.customer ?? {}) as Record<string, unknown>;
-  const langue = (await getShopifyProfileLocale(String(o.email ?? cust.email ?? email))) ?? String(o.customer_locale ?? "fr").split("-")[0].toLowerCase();
+  const langue = langueShopify(await getShopifyProfileLocale(String(o.email ?? cust.email ?? email)), o.customer_locale);
   const envois = ((o.fulfillments ?? []) as Record<string, unknown>[]).filter((f) => f.status !== "cancelled");
   const envoyeeLe = envois.length ? String(envois[envois.length - 1].created_at).slice(0, 10) : null;
   const jours = envoyeeLe ? Math.floor((Date.now() - new Date(envoyeeLe).getTime()) / 86400000) : null;

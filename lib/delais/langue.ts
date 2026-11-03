@@ -8,9 +8,26 @@ const MOTS: Record<string, string[]> = {
   es: ["hola", "gracias", "pedido", "mi", "el", "los", "por", "con", "saludos"],
 };
 
+/** Le message sans la citation de l'e-mail précédent (« … schrieb am … », « Le … a écrit : », lignes « > »).
+ *  Cas réel (03.11.2026) : cliente qui écrit en allemand sous notre confirmation de commande en français → brouillon en français. */
+export function sansCitation(texte: string): string {
+  const coupe = (texte || "").search(/\n[^\n]*(schrieb am|a écrit\s*:|wrote\s*:)|\n\s*-{3,}\s*(Original|Message d'origine|Ursprüngliche)|\n\s*(De|Von|From)\s*:/i);
+  const t = coupe > 0 ? texte.slice(0, coupe) : texte;
+  return t.split("\n").filter((l) => !/^\s*>/.test(l)).join("\n");
+}
+
+/** Langue tirée de Shopify : le profil client, sauf quand il dit « en » alors que la commande a été
+ *  passée dans une autre langue — les profils créés en boutique sont en anglais par défaut
+ *  (3 brouillons anglais pour des clientes francophones de boutique, 03.11.2026). */
+export function langueShopify(profil: string | null, localeCommande: unknown): string {
+  const cmd = String(localeCommande ?? "").split("-")[0].toLowerCase() || null;
+  if (profil && !(profil === "en" && cmd && cmd !== "en")) return profil;
+  return cmd ?? "fr";
+}
+
 export function langueDuMessage(texte: string): string | null {
   // formulaire de contact Shopify : l'en-tête est toujours en français, seul le « Corps » compte
-  const corps = (texte || "").split(/Corps\s*:/i).pop() ?? "";
+  const corps = sansCitation((texte || "").split(/Corps\s*:/i).pop() ?? "");
   const mots = corps.toLowerCase().normalize("NFC").match(/[a-zàâäçéèêëîïôöùûüß]+/g) ?? [];
   if (mots.length < 3) return null;
   const score: Record<string, number> = {};
