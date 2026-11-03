@@ -176,6 +176,8 @@ export default function Delais() {
   if (vue !== "a_valider") affiches.reverse();
 
   return (
+    // page dessinée en clair : en mode sombre le texte devenait blanc sur fond blanc (Philippe 03.11.2026)
+    <div className="min-h-screen bg-white text-neutral-900" style={{ colorScheme: "light" }}>
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
       <h1 className="text-2xl font-semibold">Demandes clientes — délais et tailles</h1>
       <p className="mt-1 text-sm text-neutral-500">Chaque demande arrive sur ton compte Gorgias avec un brouillon écrit à partir de Shopify et des étiquettes d&apos;atelier. Rien ne part sans ton clic.</p>
@@ -344,6 +346,7 @@ export default function Delais() {
         })}
       </div>
     </main>
+    </div>
   );
 }
 
