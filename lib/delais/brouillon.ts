@@ -4,7 +4,8 @@
 import { BLANC_DATE, type Faits } from "./faits";
 import { BRAND_INTRO } from "@/lib/email";
 import { notesPourRedaction } from "./notes";
-import { lireConsignes, type Consignes } from "./consignes";
+import { lireConsignes, indication, type Consignes } from "./consignes";
+import { fournisseurBloquant, BOITES } from "./bloque";
 
 const MODELE = "claude-sonnet-5-5";
 
@@ -12,9 +13,10 @@ const NOMS_LANGUE: Record<string, string> = { fr: "French", de: "German", en: "E
 
 // Pas de date fiable dans Shopify : on donne le délai du moment écrit par Philippe sur sa page
 // (jamais « nous reviendrons vers vous avec une date » — 53 fois sur 60, Philippe le remplaçait).
-function sansDate(c: Consignes): string {
-  return c.delaiDefaut
-    ? `Give this delivery window, decided by our team for orders without a reliable date: "${c.delaiDefaut}" (translate it naturally, e.g. "La livraison est actuellement prévue ${c.delaiDefaut}."), as an estimate.`
+function sansDate(c: Consignes, f: Faits): string {
+  const d = indication(c, fournisseurBloquant(f));
+  return d
+    ? `Give this delivery window, decided by our team today: "${d}" (translate it naturally, e.g. "La livraison est actuellement prévue ${d}."), as an estimate.`
     : `Do NOT give any date; say the piece will be finished and shipped as soon as possible. Never promise to come back with a date.`;
 }
 
@@ -25,18 +27,18 @@ function faitsEnClair(f: Faits, c: Consignes): string {
   f.envois.forEach((e) => L.push(`Shipped on ${e.date}${e.transporteur ? ` with ${e.transporteur}` : ""}${e.numero ? `, tracking number ${e.numero}` : ""}${e.lien ? `, tracking link ${e.lien}` : ""} — items: ${e.articles.join(" | ")}`));
   if (f.iceleaArrivee) L.push(`A component the order was waiting for arrived at our workshop on ${f.iceleaArrivee.date}${f.iceleaArrivee.complet ? " (all awaited components are now there)" : " (some components are still awaited)"}. The piece is now being finished in the workshop.`);
   if (f.iceleaEnRoute) L.push(f.iceleaEnRoute.depassee
-    ? `The missing component${f.iceleaEnRoute.complet ? "s have" : " has"} already been shipped by our partner workshop and should reach our workshop in the coming days (the planned date has just passed). ${sansDate(c)} The wait is longer than planned: one short sincere apology.${f.iceleaEnRoute.complet ? "" : " Some other components of this order are still awaited."} Never name the supplier.`
+    ? `The missing component${f.iceleaEnRoute.complet ? "s have" : " has"} already been shipped by our partner workshop and should reach our workshop in the coming days (the planned date has just passed). ${sansDate(c, f)} The wait is longer than planned: one short sincere apology.${f.iceleaEnRoute.complet ? "" : " Some other components of this order are still awaited."} Never name the supplier.`
     : `The missing component${f.iceleaEnRoute.complet ? "s have" : " has"} already been shipped by our partner workshop and ${f.iceleaEnRoute.complet ? "are" : "is"} expected at our workshop around ${f.iceleaEnRoute.date} (estimate). After that, finishing and shipping usually take one to two days.${f.iceleaEnRoute.complet ? "" : " Some other components of this order are still awaited, so do not promise the whole order for that date."} Never name the supplier.`);
-  if (f.iceleaPO && !f.iceleaLivraison && !f.iceleaEnRoute) L.push(`The missing component has already been ordered from our partner workshop${f.iceleaPO.commandeLe ? ` (order placed on ${f.iceleaPO.commandeLe})` : ""} and has not arrived at our workshop yet. No reliable arrival date is known: say the component is ordered and has not arrived yet. ${sansDate(c)} Never name the supplier.`);
+  if (f.iceleaPO && !f.iceleaLivraison && !f.iceleaEnRoute) L.push(`The missing component has already been ordered from our partner workshop${f.iceleaPO.commandeLe ? ` (order placed on ${f.iceleaPO.commandeLe})` : ""} and has not arrived at our workshop yet. No reliable arrival date is known: say the component is ordered and has not arrived yet. ${sansDate(c, f)} Never name the supplier.`);
   if (f.iceleaLivraison && !f.iceleaEnRoute) L.push(`A component is ordered from our partner workshop, expected delivery to our workshop around ${f.iceleaLivraison} (estimate). After that, finishing and shipping usually take one to two days.`);
   if (f.etape) {
     const dl = f.etape.delaiMin != null ? ` Typical duration of this step: ${f.etape.delaiMin}${f.etape.delaiMax && f.etape.delaiMax !== f.etape.delaiMin ? `–${f.etape.delaiMax}` : ""} ${f.etape.unite ?? "days"}.` : "";
     L.push(`Workshop step: ${f.etape.entree ? "entered" : "finished"} the step "${f.etape.nom}" on ${f.etape.date}.${dl}`);
   }
   if (f.estimation && !f.estimation.depassee && !f.boites.length) L.push(`Based on the content of the order, it needs components from a partner workshop whose usual lead time is ${f.estimation.delaiMin}–${f.estimation.delaiMax} days after the order: estimated delivery window between ${f.estimation.du} and ${f.estimation.au} (estimate, never a promise — phrase it like "entre fin octobre et mi-novembre"). Never name the supplier.`);
-  if (f.estimation?.depassee) L.push(`The usual lead time for this order is already exceeded: say production took longer than planned, with one short sincere apology. ${sansDate(c)}`);
-  if (f.boites.length) L.push(`IMPORTANT — the order contains a mood storage box that has not arrived yet: ${f.boites.join(" | ")}. ${c.boites
-    ? `The box is currently being made; its delivery is planned "${c.boites}". Write that the order will be shipped complete together with this box, which is still being made, and that delivery is planned "${c.boites}" (translated naturally, e.g. "La livraison est prévue pour ${c.boites}."). Do NOT give any other date in the e-mail.`
+  if (f.estimation?.depassee) L.push(`The usual lead time for this order is already exceeded: say production took longer than planned, with one short sincere apology. ${sansDate(c, f)}`);
+  if (f.boites.length) L.push(`IMPORTANT — the order contains a mood storage box that has not arrived yet: ${f.boites.join(" | ")}. ${indication(c, BOITES)
+    ? `The box is currently being made; its delivery is planned "${indication(c, BOITES)}". Write that the order will be shipped complete together with this box, which is still being made, and that delivery is planned "${indication(c, BOITES)}" (translated naturally, e.g. "La livraison est prévue pour ${indication(c, BOITES)}."). Do NOT give any other date in the e-mail.`
     : `Its delivery date is NOT known. Write one sentence saying the order will be shipped complete together with this box, and put the exact placeholder ${BLANC_DATE} where the approximate delivery date goes (e.g. "… prévue aux alentours du ${BLANC_DATE}"). Do NOT give any other date or estimate in the e-mail.`}`);
   if (f.rupture) L.push(`A component was marked as temporarily unavailable on ${f.rupture} (do not say "out of stock").`);
   return L.join("\n");
@@ -88,7 +90,7 @@ How to write:
 - If shipped: give the shipping date, carrier and the tracking number / link exactly as given.
 - If waiting for a component with a date: say the piece is in production and give the expected delivery as a period estimate (component date + one to two days), never as a promise.
 - If a workshop step is known: say at which stage the piece is (use the step name naturally) and, if a typical duration is given, an approximate remaining time.
-- Never state a date, duration or fact that is not in the facts. If the facts say nothing precise, say the piece is in production at our workshop. ${sansDate(c)}
+- Never state a date, duration or fact that is not in the facts. If the facts say nothing precise, say the piece is in production at our workshop. ${sansDate(c, f)}
 - Never write that we will come back / write again / keep her informed with a date: the customer gets the automatic shipping e-mail.
 - Never say "rupture de stock" / "out of stock". At most one short apology, only when the wait is longer than planned. No marketing. No hashtags.
 - Return the e-mail body only, plain text.`;

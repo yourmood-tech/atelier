@@ -21,10 +21,10 @@ export async function GET() {
   return NextResponse.json({ ok: true, brouillons: visibles, inboxLue: !!inbox, consignes: await lireConsignes() });
 }
 export async function POST(req: NextRequest) {
-  const corps = (await req.json()) as { ticketId?: number; action?: string; delaiDefaut?: string; boites?: string };
+  const corps = (await req.json()) as { ticketId?: number; action?: string; parFournisseur?: Record<string, string> };
   const { ticketId, action } = corps;
   // « consignes » : le tableau blanc des délais (délai du moment + date des boîtes), repris dans chaque brouillon
-  if (action === "consignes") return NextResponse.json({ ok: true, consignes: await ecrireConsignes(corps) });
+  if (action === "consignes") return NextResponse.json({ ok: true, consignes: await ecrireConsignes(corps.parFournisseur ?? {}) });
   // « chercher » : tickets de l'inbox sans brouillon à valider (avis Gorgias manqué) → la page les fait traiter un par un
   if (action === "chercher") {
     const [inbox, list] = await Promise.all([ticketsDeLaVue(INBOX_PHILIPPE), tous()]);

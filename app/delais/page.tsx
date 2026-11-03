@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { fournisseurBloquant, BOITES, INCONNU } from "@/lib/delais/bloque";
 
 // Assistant des délais — page de validation de Philippe.
 // Chaque demande de délai arrive ici avec un brouillon écrit à partir des seuls faits Shopify.
@@ -55,16 +56,17 @@ export default function Delais() {
   const [busy, setBusy] = useState<number | null>(null);
   const [vue, setVue] = useState<"a_valider" | "traites">("a_valider");
   const [choix, setChoix] = useState<Record<string, string>>({});
-  // tableau blanc des délais : repris dans chaque nouveau brouillon
-  const [consignes, setConsignes] = useState<{ delaiDefaut: string; boites: string; majLe: string | null } | null>(null);
+  // tableau blanc des délais, une ligne par fournisseur : repris dans chaque nouveau brouillon
+  const [consignes, setConsignes] = useState<{ parFournisseur: Record<string, string>; majLe: string | null } | null>(null);
   const [consigneMsg, setConsigneMsg] = useState<string | null>(null);
   async function enregistrerConsignes() {
     if (!consignes) return;
-    const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consignes", ...consignes }) });
+    const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consignes", parFournisseur: consignes.parFournisseur }) });
     const j = await r.json();
-    if (r.ok) { setConsignes(j.consignes); setConsigneMsg("Enregistré — les prochains brouillons utilisent ces dates."); }
+    if (r.ok) { setConsignes(j.consignes); setConsigneMsg("Enregistré — les prochains brouillons utilisent ces dates. « ↻ Tout relire » refait ceux qui attendent."); }
     else setConsigneMsg(`Pas enregistré : ${j.error ?? r.status}`);
-  }   // `${ticketId}:${lineItemId}` → nouvelle taille ("" = pas échangé)
+  }
+  // `${ticketId}:${lineItemId}` → nouvelle taille ("" = pas échangé)
 
   async function creerEchange(b: Brouillon) {
     const lignes = (b.taille?.articles ?? []).map((a) => ({ lineItemId: a.lineItemId, taille: choix[`${b.ticketId}:${a.lineItemId}`] ?? "" })).filter((x) => x.taille);
@@ -86,6 +88,20 @@ export default function Delais() {
     if (j.consignes) setConsignes((c) => c ?? j.consignes);
   }
   useEffect(() => { charger(); const t = setInterval(charger, 60000); return () => clearInterval(t); }, []);
+
+  const lignesTableau = useMemo(() => {
+    const n = new Map<string, { attente: number; total: number }>();
+    for (const b of list ?? []) {
+      if (b.type === "taille") continue;
+      const k = fournisseurBloquant(b.faits);
+      if (!k) continue;
+      const x = n.get(k) ?? { attente: 0, total: 0 };
+      x.total++; if (b.etat === "a_valider") x.attente++;
+      n.set(k, x);
+    }
+    Object.keys(consignes?.parFournisseur ?? {}).forEach((k) => { if (!n.has(k)) n.set(k, { attente: 0, total: 0 }); });
+    return [...n.entries()].sort((a, b) => b[1].attente - a[1].attente || b[1].total - a[1].total || a[0].localeCompare(b[0]));
+  }, [list, consignes]);
 
   const stats = useMemo(() => {
     const l = list ?? [];
@@ -171,21 +187,23 @@ export default function Delais() {
       </div>
 
       <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3">
-        <div className="text-sm font-medium text-amber-900">Tableau blanc des délais</div>
-        <p className="text-xs text-amber-800">Repris dans chaque nouveau brouillon. Écris comme tu le dirais à une cliente : « mi-novembre », « fin novembre », « entre fin novembre et début décembre ».</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <label className="text-sm">Délai du moment (commande sans date fiable)
-            <input className="mt-1 w-full rounded border border-amber-300 bg-white p-2" placeholder="ex. mi-novembre" value={consignes?.delaiDefaut ?? ""}
-              onChange={(e) => { setConsigneMsg(null); setConsignes((c) => ({ boites: "", majLe: null, ...c, delaiDefaut: e.target.value })); }} />
-          </label>
-          <label className="text-sm">Arrivée des boîtes de rangement (turquoise…)
-            <input className="mt-1 w-full rounded border border-amber-300 bg-white p-2" placeholder="ex. fin novembre" value={consignes?.boites ?? ""}
-              onChange={(e) => { setConsigneMsg(null); setConsignes((c) => ({ delaiDefaut: "", majLe: null, ...c, boites: e.target.value })); }} />
-          </label>
+        <div className="text-sm font-medium text-amber-900">Tableau blanc des délais — quand je n&apos;ai pas de date fiable</div>
+        <p className="text-xs text-amber-800">Une ligne par fournisseur qui bloque une commande. Écris comme tu le dirais à une cliente : « mi-novembre », « fin novembre », « entre fin novembre et début décembre ». Ligne vide = aucune date donnée.</p>
+        <div className="mt-2 space-y-1.5">
+          {lignesTableau.map(([nom, n]) => (
+            <label key={nom} className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="w-56 shrink-0">{nom === INCONNU ? "Fournisseur inconnu (sans recette)" : nom}
+                <span className="ml-1 text-xs text-amber-700">{n.attente ? `· ${n.attente} à valider` : ""}{n.total ? ` · ${n.total} au total` : ""}</span></span>
+              <input className="min-w-0 flex-1 rounded border border-amber-300 bg-white p-1.5" placeholder={nom === BOITES ? "ex. fin novembre" : "ex. mi-novembre"}
+                value={consignes?.parFournisseur[nom] ?? ""}
+                onChange={(e) => { setConsigneMsg(null); setConsignes((c) => ({ majLe: c?.majLe ?? null, parFournisseur: { ...(c?.parFournisseur ?? {}), [nom]: e.target.value } })); }} />
+            </label>
+          ))}
+          {lignesTableau.length === 0 && <p className="text-xs text-amber-800">Aucune commande bloquée pour l&apos;instant.</p>}
         </div>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-2 flex flex-wrap items-center gap-3">
           <button onClick={enregistrerConsignes} className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm text-white">Enregistrer</button>
-          <span className="text-xs text-amber-800">{consigneMsg ?? (consignes?.majLe ? `Dernière mise à jour : ${new Date(consignes.majLe).toLocaleDateString("fr-CH")}` : "Vide : sans date, le brouillon ne donne aucune date.")}</span>
+          <span className="text-xs text-amber-800">{consigneMsg ?? (consignes?.majLe ? `Dernière mise à jour : ${new Date(consignes.majLe).toLocaleDateString("fr-CH")}` : "")}</span>
         </div>
       </div>
 
@@ -223,6 +241,8 @@ export default function Delais() {
                 <span className="font-medium">{b.client}</span>
                 <span className="text-sm text-neutral-500">{b.email}</span>
                 <span className={`rounded-full px-2 py-0.5 text-xs ${s.couleur}`}>{s.txt}</span>
+                {(() => { const k = b.type === "taille" ? null : fournisseurBloquant(b.faits); return k && !consignes?.parFournisseur[k] && b.etat === "a_valider"
+                  ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Date manquante : {k === INCONNU ? "fournisseur inconnu" : k}</span> : null; })()}
                 {b.canal === "whatsapp" && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">WhatsApp</span>}
                 <span className="text-xs text-neutral-400">{new Date(b.recuLe).toLocaleString("fr-CH")} · langue {b.faits?.langue ?? tl?.langue ?? "?"}</span>
                 {(b.faits?.commandeId ?? tl?.commandeId) ? (
