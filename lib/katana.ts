@@ -430,6 +430,29 @@ function buildPoResult(
 }
 
 /** Un bon de commande par son numéro (ex. « ICE-20260905-013V ») : statut, date, arrivée prévue. */
+/** Prochaine arrivée À VENIR de chaque pièce dans les bons Icelea ouverts (tous, reliquats compris).
+ *  Ligne pas encore reçue ; date de la ligne, sinon date prévue du bon ; une date passée ne compte pas.
+ *  Décision Philippe 03.11.2026 : l'étiquette de la commande peut pointer vers un vieux bon dont la
+ *  date est dépassée (8 bons au 03.11) alors que la pièce figure aussi sur un bon plus récent. */
+export async function prochainesArriveesIcelea(variantIds: number[]): Promise<Map<number, { date: string; po: string }>> {
+  const auj = new Date().toISOString().slice(0, 10);
+  const out = new Map<number, { date: string; po: string }>();
+  const voulu = new Set(variantIds);
+  for (const po of await fetchAllOpenPos()) {
+    const no = String(po.order_no ?? "");
+    if (!no.startsWith("ICE")) continue;
+    for (const r of (po.purchase_order_rows as Record<string, unknown>[]) ?? []) {
+      const v = Number(r.variant_id);
+      if (!voulu.has(v) || r.received_date) continue;
+      const d = String(r.arrival_date ?? po.expected_arrival_date ?? "").slice(0, 10);
+      if (!d || d < auj) continue;
+      const deja = out.get(v);
+      if (!deja || d < deja.date) out.set(v, { date: d, po: no });
+    }
+  }
+  return out;
+}
+
 export async function getPurchaseOrderByNo(orderNo: string): Promise<{ status: string; creeLe: string | null; arriveePrevue: string | null } | null> {
   const j = await katanaFetch(`/v1/purchase_orders?order_no=${encodeURIComponent(orderNo)}&limit=1`, { method: "GET" }) as { data?: Record<string, unknown>[] };
   const po = (j?.data ?? [])[0];

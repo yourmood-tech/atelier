@@ -13,6 +13,7 @@ type Faits = {
   articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   iceleaPO?: { po: string; commandeLe: string | null; arriveePrevue: string | null } | null;
+  iceleaAutresBons?: string[] | null;
   iceleaEnRoute?: { date: string; complet: boolean; depassee: boolean } | null;
   etape: { nom: string; entree: boolean; date: string } | null; rupture: string | null; etiquettesUtilisees: string[];
   boites?: string[];
@@ -358,7 +359,7 @@ function FaitsCommande({ f, autre }: { f: Faits; autre: boolean }) {
                     {f.iceleaArrivee && <li>✅ pièce Icelea arrivée le {f.iceleaArrivee.date}{f.iceleaArrivee.complet ? " (tout reçu)" : " (en partie)"}</li>}
                     {f.iceleaEnRoute && <li>🚚 colis Icelea en route{f.iceleaEnRoute.complet ? "" : " (une partie des pièces)"} · arrivée prévue le {f.iceleaEnRoute.date}{f.iceleaEnRoute.depassee ? " — date passée, pas encore arrivé (pas de date donnée)" : ""}</li>}
                     {f.iceleaPO && <li>🧾 pièce commandée chez Icelea · bon {f.iceleaPO.po}{f.iceleaPO.commandeLe ? ` du ${f.iceleaPO.commandeLe}` : ""}{f.iceleaPO.arriveePrevue ? "" : " · aucune date d'arrivée à venir (pas de date donnée à la cliente)"}</li>}
-                    {f.iceleaLivraison && !f.iceleaEnRoute && <li>🚚 pièce Icelea attendue le {f.iceleaLivraison}</li>}
+                    {f.iceleaLivraison && !f.iceleaEnRoute && <li>🚚 pièce Icelea attendue le {f.iceleaLivraison}{f.iceleaAutresBons?.length ? ` (date trouvée sur ${f.iceleaAutresBons.join(", ")})` : ""}</li>}
                     {f.etape && <li>🔧 {f.etape.entree ? "entrée" : "sortie"} « {f.etape.nom} » le {f.etape.date}</li>}
                     {f.rupture && <li>⚠️ rupture signalée le {f.rupture}</li>}
                     {(f.boites ?? []).length > 0 && <li>🎁 attend la boîte : {f.boites!.join(", ")} → <b>date à compléter</b></li>}

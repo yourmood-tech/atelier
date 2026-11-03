@@ -6,7 +6,7 @@ import { shopifyGet } from "@/lib/shopify";
 import { getShopifyProfileLocale } from "@/lib/email";
 import { langueShopify } from "./langue";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getRecipeWithSuppliers, getPurchaseOrderByNo } from "@/lib/katana";
+import { getRecipeWithSuppliers, getPurchaseOrderByNo, prochainesArriveesIcelea } from "@/lib/katana";
 import { notesEquipe, type NoteEquipe } from "./notes";
 
 export type Statut =
@@ -35,6 +35,7 @@ export type Faits = {
   // pièces commandées chez Icelea (étiquette « Icelea-PO:… ») : bon de commande, sa date, l'arrivée prévue dans Katana
   // (jj.mm.aaaa, seulement si encore à venir) ; présent tant que la pièce n'est pas arrivée
   iceleaPO?: { po: string; commandeLe: string | null; arriveePrevue: string | null } | null;
+  iceleaAutresBons?: string[] | null;   // date retrouvée sur un autre bon Icelea ouvert (reliquats, bon plus récent)
   // colis Icelea déclaré en route (étiquette « Icelea-enroute[-partiel]:jj.mm.aaaa ») : arrivée prévue
   // à l'atelier ; complet = toutes ses pièces de ce bon sont en route ou déjà là ; depassee = date passée sans arrivée
   iceleaEnRoute?: { date: string; complet: boolean; depassee: boolean } | null;
@@ -132,6 +133,9 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   if (f.iceleaPO && !f.iceleaLivraison && f.iceleaPO.arriveePrevue) f.iceleaLivraison = f.iceleaPO.arriveePrevue;
   // le colis en route est la date la plus précise : elle remplace les dates annoncées à la commande
   if (f.iceleaEnRoute) f.iceleaLivraison = f.iceleaEnRoute.depassee ? null : f.iceleaEnRoute.date;
+  // plus de date valable (bon d'origine dépassé, colis en route dépassé) : la pièce est peut-être
+  // aussi sur un autre bon Icelea ouvert avec une date à venir
+  if (!f.iceleaLivraison && !f.iceleaArrivee?.complet && (f.iceleaPO || f.iceleaEnRoute?.depassee)) await dateAutresBons(f, lignes);
 
   // dernière étape d'atelier (étiquettes « étape-in/out-jjmmaa-HHhMM »)
   const etapes = tags.map((t) => t.match(/^(.+)-(in|out)-(\d{6})-(\d\d)h(\d\d)$/)).filter((m): m is RegExpMatchArray => !!m && !m[1].startsWith("Rupture"))
@@ -166,6 +170,10 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   if (f.statut === "rien" || f.statut === "etape") {
     try { f.estimation = await estimationFournisseur(lignes, f.passeeLe!); } catch (e) { console.error("[délais] estimation", e); }
     if (f.statut === "rien" && f.estimation && !f.estimation.depassee) f.statut = "estimation_fournisseur";
+    if (f.estimation?.depassee && /icelea/i.test(f.estimation.fournisseur)) {
+      await dateAutresBons(f, lignes);
+      if (f.iceleaLivraison) { f.statut = "attente_icelea"; f.estimation = null; }
+    }
   }
   if (f.boites.length && f.statut !== "expediee") f.statut = "boite";
   if (f.envois.length && f.articlesEnAttente.length && f.statut !== "expediee") {
@@ -173,6 +181,26 @@ export async function faitsCommande(numero: string | null, email: string): Promi
     if (f.statut === "rien") f.statut = "expediee_partiel";
   }
   return f;
+}
+
+// Pièces Icelea des articles encore à expédier → prochaine arrivée à venir dans TOUS les bons Icelea
+// ouverts. Date donnée seulement si CHAQUE pièce Icelea en a une (on retient la plus tardive).
+async function dateAutresBons(f: Faits, lignes: Record<string, unknown>[]) {
+  try {
+    const skus = [...new Set(lignes.filter((l) => Number(l.fulfillable_quantity ?? 0) > 0).map((l) => String(l.sku ?? "")).filter(Boolean))].slice(0, 6);
+    const ids = new Set<number>();
+    for (const sku of skus) {
+      const r = await recetteSouple(sku);
+      (r?.ingredients ?? []).forEach((i) => { if (/icelea/i.test(i.supplier?.name ?? "")) ids.add(i.id); });
+    }
+    if (!ids.size) return;
+    const arr = await prochainesArriveesIcelea([...ids]);
+    if ([...ids].some((id) => !arr.has(id))) return;
+    const plusTard = [...arr.values()].sort((a, b) => b.date.localeCompare(a.date))[0];
+    f.iceleaLivraison = `${plusTard.date.slice(8, 10)}.${plusTard.date.slice(5, 7)}.${plusTard.date.slice(0, 4)}`;
+    f.iceleaAutresBons = [...new Set([...arr.values()].map((x) => x.po))];
+    f.iceleaEnRoute = null;   // l'ancien colis « en route » à date dépassée est remplacé par la date retrouvée
+  } catch (e) { console.error("[délais] autres bons Icelea", e); }
 }
 
 // Fournisseur au délai le plus long parmi les pièces achetées des articles encore à expédier
