@@ -68,7 +68,7 @@ export default auth((req) => {
   }
 
   // la fiche d'un bijou lue par le catalogue de Noël (lecture seule)
-  if (pathname === "/api/catalogue-produits") {
+  if (pathname === "/api/catalogue-produits" || pathname === "/api/catalogue-liste") {
     return;
   }
 
