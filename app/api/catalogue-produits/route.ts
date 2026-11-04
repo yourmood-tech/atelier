@@ -45,7 +45,7 @@ async function liste(cle: string) {
   const tous: Item[] = [];
   let after: string | null = null;
   for (let page = 0; page < 6; page++) {
-    const r = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
+    const r: Response = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
       method: "POST",
       headers: { "X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -54,7 +54,7 @@ async function liste(cle: string) {
       }),
       next: { revalidate: 600 },
     });
-    const j = await r.json();
+    const j: { data?: { products?: { nodes: Item[]; pageInfo: { hasNextPage: boolean; endCursor: string } } } } = await r.json();
     const d = j?.data?.products;
     if (!d) break;
     tous.push(...d.nodes);
