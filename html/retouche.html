@@ -669,6 +669,16 @@ document.getElementById('prompts-modal').addEventListener('click', (e) => {
 
 <!-- Actions -->
 <div class="actions-grid actions-disabled" id="actions">
+  <div class="action-card" onclick="lancerAction('retouche-fidele')" data-action="retouche-fidele">
+    <span class="emoji">💎</span>
+    <div class="titre">Retouche fidèle</div>
+    <div class="desc">Même photo, bague nettoyée, lumière studio · garde le cadrage, le décor et la bague exacts</div>
+  </div>
+  <div class="action-card" onclick="lancerAction('lumiere-douce')" data-action="lumiere-douce">
+    <span class="emoji">🕊️</span>
+    <div class="titre">Lumière douce</div>
+    <div class="desc">Même photo, lumière douce et diffuse, sans contraste en plus · bague nettoyée</div>
+  </div>
   <div class="action-card" onclick="lancerAction('fond-blanc')" data-action="fond-blanc">
     <span class="emoji">✂️</span>
     <div class="titre">Fond blanc</div>
@@ -748,6 +758,7 @@ function setQualite(q) {
   };
 })();
 
+let fichierActuel = null; let imageDuFichier = null;
 let imageActuelle = null;  // dataUrl base64 (mode single)
 let imagesMultiples = [];  // tableau de dataURL (mode produit-multiple — 2-6 bagues uploadées en même temps)
 let themeGlobalActif = '';  // '' = aucun thème ; sinon 'terre-dombre', etc.
@@ -1081,10 +1092,12 @@ async function chargerFichier(file) {
     <div class="hint">${sizeMB} Mo · compression en cours</div>`;
 
   try {
+    fichierActuel = file;
     imageActuelle = await compresserImage(file, 1280, 0.88);
     if (imageActuelle.length > 3_000_000) {
       imageActuelle = await compresserImage(file, 1024, 0.80);
     }
+    imageDuFichier = imageActuelle;
     imagesMultiples = []; // reset mode multi quand on charge une seule image
     document.getElementById('img-original').src = imageActuelle;
     emptyEl.style.display = 'none';
@@ -1342,12 +1355,20 @@ async function lancerAction(action) {
     const note = document.getElementById('indications')?.value?.trim() || null;
     const formatRadio = document.querySelector('input[name="theme-format"]:checked');
     const format = formatRadio?.value || '1:1';
+    // Retouche fidèle / lumière douce : on envoie la photo en grand (détails fins de la gravure)
+    let imageEnvoi = imageActuelle;
+    if (!isMulti && (action === 'retouche-fidele' || action === 'lumiere-douce') && fichierActuel && imageActuelle === imageDuFichier) {
+      try {
+        imageEnvoi = await compresserImage(fichierActuel, 2400, 0.9);
+        if (imageEnvoi.length > 3_500_000) imageEnvoi = await compresserImage(fichierActuel, 2000, 0.85);
+      } catch { imageEnvoi = imageActuelle; }
+    }
     const r = await fetch('/api/retouche-photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(isMulti
         ? { images: imagesMultiples, action, note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }
-        : { image: imageActuelle, action, note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }),
+        : { image: imageEnvoi, action, note, format, theme: themeGlobalActif || null, mode: modePortee, ...getModelProfile() }),
     });
     etape = `réponse reçue (HTTP ${r.status})`;
     const text = await r.text();

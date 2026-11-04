@@ -19,16 +19,20 @@ async function envoyer(dataUrl: string, i: number): Promise<string> {
   return u;
 }
 
-export async function kieImage(dataUrls: string[], prompt: string, aspectRatio: string, taille: "1K" | "2K"): Promise<{ image?: string; error?: string }> {
+export async function kieImage(dataUrls: string[], prompt: string, aspectRatio: string, taille: "1K" | "2K" | "4K", modele: "nano" | "gpt" = "nano"): Promise<{ image?: string; error?: string }> {
   if (!KIE_KEY) return { error: "KIE_API_KEY absente" };
   try {
     const urls: string[] = [];
     for (let i = 0; i < dataUrls.length; i++) urls.push(await envoyer(dataUrls[i], i));
-    const input = { prompt, image_input: urls, aspect_ratio: RATIOS_OK.has(aspectRatio) ? aspectRatio : "1:1", resolution: taille, output_format: "png" };
+    const ratio = RATIOS_OK.has(aspectRatio) ? aspectRatio : "1:1";
+    // gpt = GPT Image 2 (retouche fidèle : garde la scène, le cadrage et la bague) ; nano = nano-banana-pro
+    const input = modele === "gpt"
+      ? { prompt, input_urls: urls, aspect_ratio: ratio, resolution: taille, output_format: "png" }
+      : { prompt, image_input: urls, aspect_ratio: ratio, resolution: taille, output_format: "png" };
     const cr = await fetch(`${JOBS}/createTask`, {
       method: "POST",
       headers: { Authorization: `Bearer ${KIE_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "nano-banana-pro", input }),
+      body: JSON.stringify({ model: modele === "gpt" ? "gpt-image-2-image-to-image" : "nano-banana-pro", input }),
     });
     const cj = await cr.json().catch(() => null);
     const taskId = cj?.data?.taskId;
