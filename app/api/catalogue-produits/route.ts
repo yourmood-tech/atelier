@@ -39,6 +39,8 @@ const LISTES: Record<string, { q: string; garde: (t: string, prix: number) => bo
   "boite-voyage": { q: "title:*Boîte à Bijoux Voyage* AND status:active", garde: () => true },
   "email-hiver": { q: "title:*Émail d'Hiver* AND status:active", garde: () => true },
   "willow": { q: "title:*Willow* AND title:*deux tiers* AND status:active", garde: () => true },
+  "clip-drop": { q: "(title:Clip* OR title:*Drop*) AND status:active", garde: (t) => /oreille/i.test(t) && !/^\s*\d+\s*🎁/.test(t) },
+  "nacar": { q: "title:*Nácar* AND status:active", garde: (t) => !/set|pack/i.test(t) },
 };
 
 // Mood Joaillerie (autre boutique) : lu sur son site public — les Yarrow
