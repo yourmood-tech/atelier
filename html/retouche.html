@@ -672,12 +672,7 @@ document.getElementById('prompts-modal').addEventListener('click', (e) => {
   <div class="action-card" onclick="lancerAction('retouche-fidele')" data-action="retouche-fidele">
     <span class="emoji">💎</span>
     <div class="titre">Retouche fidèle</div>
-    <div class="desc">Même photo, bague nettoyée, lumière studio · garde le cadrage, le décor et la bague exacts</div>
-  </div>
-  <div class="action-card" onclick="lancerAction('lumiere-douce')" data-action="lumiere-douce">
-    <span class="emoji">🕊️</span>
-    <div class="titre">Lumière douce</div>
-    <div class="desc">Même photo, lumière douce et diffuse, sans contraste en plus · bague nettoyée</div>
+    <div class="desc">Même photo, bague nettoyée, lumière douce de studio · garde le cadrage, le décor, la bague et la couleur du métal exacts</div>
   </div>
   <div class="action-card" onclick="lancerAction('fond-blanc')" data-action="fond-blanc">
     <span class="emoji">✂️</span>
@@ -1357,7 +1352,7 @@ async function lancerAction(action) {
     const format = formatRadio?.value || '1:1';
     // Retouche fidèle / lumière douce : on envoie la photo en grand (détails fins de la gravure)
     let imageEnvoi = imageActuelle;
-    if (!isMulti && (action === 'retouche-fidele' || action === 'lumiere-douce') && fichierActuel && imageActuelle === imageDuFichier) {
+    if (!isMulti && action === 'retouche-fidele' && fichierActuel && imageActuelle === imageDuFichier) {
       try {
         imageEnvoi = await compresserImage(fichierActuel, 2400, 0.9);
         if (imageEnvoi.length > 3_500_000) imageEnvoi = await compresserImage(fichierActuel, 2000, 0.85);
