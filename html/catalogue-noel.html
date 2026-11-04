@@ -63,10 +63,86 @@ body{
   .carte{position:relative}
   .nav{gap:8px}.nav button{padding:9px 14px}.nav .lg{display:none}
 }
+
+/* --- interactif --- */
+#neige{position:fixed;inset:0;pointer-events:none;z-index:0}
+.topbar,.book,.mob{position:relative;z-index:1}
+.topbar .outils{display:flex;gap:8px;margin-left:auto}
+.topbar{flex-wrap:wrap}
+.pastille{appearance:none;border:1px solid rgba(230,203,146,.5);background:rgba(255,255,255,.06);color:#F1EAD9;font-family:Poppins,sans-serif;font-size:12px;letter-spacing:.05em;padding:7px 14px;border-radius:999px;cursor:pointer;transition:.18s}
+.pastille:hover{background:rgba(230,203,146,.2)}
+.pastille b{display:inline-block;min-width:18px;margin-left:4px;padding:1px 6px;border-radius:999px;background:rgba(230,203,146,.25);font-weight:500}
+.pastille.or{background:#B88A35;border-color:#D8B36A;color:#fff}
+.pastille.or:hover{background:#9A7024}
+.pastille.off{opacity:.55}
+.zone .alt{position:absolute;overflow:hidden;opacity:0;transition:opacity .45s ease;border-radius:2px;pointer-events:none}
+.zone .alt img{width:100%;height:100%;object-fit:cover;display:block}
+.zone:hover .alt{opacity:1}
+.zone .eclat{position:absolute;inset:0;pointer-events:none;opacity:0;background:
+ radial-gradient(circle at 18% 22%,rgba(255,240,200,.95) 0 1.5px,transparent 2.5px),radial-gradient(circle at 78% 30%,rgba(255,255,255,.95) 0 1.2px,transparent 2.2px),
+ radial-gradient(circle at 60% 75%,rgba(255,236,190,.9) 0 1.4px,transparent 2.4px),radial-gradient(circle at 30% 62%,rgba(255,255,255,.9) 0 1px,transparent 2px),
+ radial-gradient(circle at 88% 80%,rgba(255,240,200,.9) 0 1.2px,transparent 2.2px)}
+.zone:hover .eclat{animation:scintille 1.6s ease-in-out infinite}
+@keyframes scintille{0%,100%{opacity:0}50%{opacity:1}}
+.coeur{position:absolute;z-index:4;width:28px;height:28px;border-radius:50%;border:none;background:rgba(255,255,255,.85);color:#B88A35;font-size:16px;line-height:28px;padding:0;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);opacity:0;transition:opacity .2s,transform .2s}
+.zone:hover .coeur,.coeur.on{opacity:1}
+.coeur:hover{transform:scale(1.12)}
+.coeur.on{color:#C0392B}
+@media (max-width:900px){.coeur{opacity:1;width:26px;height:26px;line-height:26px;font-size:14px}.topbar{display:flex!important;padding:0 14px;margin-bottom:10px}.topbar .marque,.topbar .sous{display:none}.topbar .outils{margin:0 auto}}
+.voile{position:fixed;inset:0;z-index:2000;background:rgba(12,22,32,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:16px}
+.voile.vu{display:flex;animation:apparait .25s ease}
+@keyframes apparait{from{opacity:0}to{opacity:1}}
+.fiche{position:relative;background:#FBF9F5;border-radius:14px;max-width:880px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4);color:#2b2622}
+.fermer{position:absolute;right:10px;top:8px;z-index:2;border:none;background:none;font-size:28px;line-height:1;color:#6b6259;cursor:pointer;padding:6px 10px}
+.fiche-corps{display:grid;grid-template-columns:1.05fr 1fr;gap:26px;padding:26px}
+.charge{padding:40px;text-align:center;color:#8a8076;font-size:14px}
+.galerie .grande{aspect-ratio:1;background:#fff;border-radius:10px;overflow:hidden}
+.galerie .grande img{width:100%;height:100%;object-fit:cover}
+.vignettes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.vignettes img{width:58px;height:58px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:.6;border:1px solid transparent}
+.vignettes img.on{opacity:1;border-color:#B88A35}
+.infos h2{font-family:Playfair Display,serif;font-weight:400;font-size:22px;line-height:1.25;margin:4px 30px 8px 0}
+.prix{font-size:18px;color:#9A7024;margin-bottom:12px}.prix s{color:#9b938b;font-size:14px;margin-right:6px}
+.texte{font-size:13px;line-height:1.6;color:#5d554e;margin:0 0 14px}
+.opt{margin:12px 0}.opt-nom{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a8076;margin-bottom:6px}
+.choix{display:flex;flex-wrap:wrap;gap:6px}
+.choix button{border:1px solid #d9d0c3;background:#fff;border-radius:999px;padding:6px 12px;font-family:Poppins,sans-serif;font-size:12.5px;cursor:pointer;color:#2b2622}
+.choix button.on{background:#B88A35;border-color:#B88A35;color:#fff}
+.ajoute{display:block;width:100%;margin-top:16px;border:none;border-radius:999px;background:#2C465E;color:#fff;font-family:Poppins,sans-serif;font-size:14px;letter-spacing:.04em;padding:13px 18px;cursor:pointer;transition:.18s}
+.ajoute:hover:not(:disabled){background:#B88A35}
+.ajoute:disabled{background:#b9b2a8;cursor:default}
+.aime{display:block;width:100%;margin-top:8px;border:1px solid #d9c49a;background:#fff;border-radius:999px;padding:10px;font-family:Poppins,sans-serif;font-size:13px;color:#9A7024;cursor:pointer}
+.complete{display:block;margin-top:14px;font-size:12px;color:#6b6259;text-align:center}
+.voile#voileTiroir{justify-content:flex-end;padding:0}
+.tiroir{position:relative;background:#FBF9F5;width:min(420px,100%);height:100%;overflow:auto;padding:28px 22px 30px;color:#2b2622;animation:glisse .3s ease}
+@keyframes glisse{from{transform:translateX(40px);opacity:.4}to{transform:none;opacity:1}}
+.tiroir h3{font-family:Playfair Display,serif;font-weight:400;font-size:22px;margin:0 30px 14px 0}
+.ligne{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #ece5da}
+.ligne img{width:62px;height:62px;object-fit:cover;border-radius:8px;background:#fff}
+.l-txt{flex:1;min-width:0}.l-nom{font-size:13px;line-height:1.35}.l-var{font-size:12px;color:#8a8076}.l-prix{font-size:13px;color:#9A7024;margin-top:2px}
+.l-suppr{border:none;background:none;font-size:20px;color:#a39a90;cursor:pointer}
+.l-voir{border:1px solid #d9c49a;background:#fff;border-radius:999px;padding:5px 12px;font-size:12px;color:#9A7024;cursor:pointer}
+.total{display:flex;justify-content:space-between;font-size:15px;margin-top:14px}
+.note{font-size:12px;color:#8a8076;line-height:1.5}
+.vide{font-size:14px;color:#6b6259;line-height:1.6}
+.prenom{display:block;margin-top:16px;font-size:12px;color:#6b6259}.prenom input{display:block;width:100%;margin-top:6px;padding:9px 12px;border:1px solid #d9d0c3;border-radius:8px;font-family:Poppins,sans-serif;font-size:14px}
+.partage{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.partage .ajoute{flex:1}.partage .pastille,.tiroir .pastille{margin-top:16px;color:#2C465E;border-color:#cfc4b2;background:#fff}
+.toast{position:fixed;left:50%;bottom:78px;transform:translate(-50%,20px);background:#2C465E;color:#fff;font-size:13px;padding:10px 18px;border-radius:999px;opacity:0;transition:.3s;z-index:3000;pointer-events:none}
+.toast.vu{opacity:1;transform:translate(-50%,0)}
+.etincelle{position:fixed;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#fff6d8,#E6CB92 60%,transparent 70%);pointer-events:none;z-index:3001;animation:pf .9s ease-out forwards}
+@keyframes pf{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+@media (max-width:700px){.fiche-corps{grid-template-columns:1fr;padding:18px;gap:14px}.infos h2{font-size:19px}}
 </style>
 </head>
 <body>
-<div class="topbar"><span class="marque">mood collection</span><span class="sous">L'édition des fêtes · Noël 2026</span></div>
+<canvas id="neige" aria-hidden="true"></canvas>
+<div class="topbar"><span class="marque">mood collection</span><span class="sous">L'édition des fêtes · Noël 2026</span>
+  <span class="outils">
+    <button class="pastille" id="btnSon" title="Son des pages">♪ <span id="sonEtat">son</span></button>
+    <button class="pastille" id="btnListe">♡ Ma liste <b id="nbListe">0</b></button>
+    <button class="pastille or" id="btnPanier">Panier <b id="nbPanier">0</b></button>
+  </span>
+</div>
 <div class="book" id="book"><div class="dos-centre"></div></div>
 <div class="mob"><div class="mob-tete">mood · L'édition des fêtes</div><div class="piste" id="piste"></div></div>
 <div class="nav">
@@ -74,12 +150,54 @@ body{
   <span class="pos" id="pos"></span>
   <button id="suiv"><span class="lg">Page suivante </span>→</button>
 </div>
+
+<!-- la fiche d'un bijou, ouverte par-dessus le catalogue -->
+<div class="voile" id="voileFiche"><div class="fiche" role="dialog" aria-modal="true" aria-label="Fiche du bijou">
+  <button class="fermer" data-ferme>×</button>
+  <div class="fiche-corps" id="ficheCorps"></div>
+</div></div>
+
+<!-- le tiroir de droite : panier ou liste -->
+<div class="voile" id="voileTiroir"><aside class="tiroir" id="tiroir">
+  <button class="fermer" data-ferme>×</button>
+  <div id="tiroirCorps"></div>
+</aside></div>
+<div class="toast" id="toast"></div>
+
 <script>
 (function(){
-  var NB=48, V="?v=20261104";
+  var NB=48, V="?v=20261104b";
   var BASE="https://www.yourmood.net";
-  var ZONES={"4":[[0.083,0.249,0.25,0.244,"/products/pack-de-2-minis-en-aluminium-rose-pastel-pour-bague-mood-interchangeable","PACK 2 MINIS ALU"],[0.374,0.249,0.25,0.244,"/products/le-pack-soft-blue-pour-ta-garde-mood","PACK SOFT BLUE"],[0.667,0.249,0.25,0.244,"/products/deux-tiers-zermatt-city","ZERMATT CITY"],[0.083,0.488,0.25,0.244,"/products/le-pack-essentiel-pour-ta-garde-mood","PACK ESSENTIEL"],[0.374,0.488,0.25,0.244,"/products/le-pack-signature-pour-ta-garde-mood","PACK SIGNATURE"],[0.667,0.488,0.25,0.244,"/products/le-pack-skin-pour-ta-garde-mood","PACK SKIN"],[0.083,0.729,0.25,0.244,"/products/clip-square-mood-en-argent-925-neige-eternelle-bijou-doreille","CLIP SQUARE"],[0.374,0.729,0.25,0.244,"/products/clip-aura-mood-en-argent-925-serti-dun-zircon-blanc-bijou-d-oreille","CLIP AURA"],[0.667,0.729,0.25,0.244,"/products/clip-mood-en-argent-925-bijou-d-oreille","CLIP"]],"5":[[0,0,1,1,"/products/la-boite-a-bijoux-de-mood-collection-oo-n-2","PAGE"]],"7":[[0,0,1,1,"/collections/aluminium-1","PAGE"]],"8":[[0.06,0.23,0.28,0.24,"/products/addon-medium-colore-blanc","MEDIUM BLANC"],[0.36,0.23,0.28,0.24,"/products/addon-medium-en-argent-925-avec-un-revetement-en-email-rose-fuchsia-copy","PURPLE GLOW"],[0.66,0.23,0.28,0.24,"/products/medium-en-acier-froisse","ACIER ROSE"],[0.06,0.48,0.28,0.24,"/products/anneau-addon-hanami-en-aluminium-couleur-a-choix-couleurs-pastel","HANAMI"],[0.36,0.48,0.28,0.24,"/products/marbre-anneau-medium-en-argent-925-avec-un-revetement-en-email-marbre","MARBRE"],[0.66,0.48,0.28,0.24,"/products/anneau-deux-tiers-palm-lis-aluminium","PALMÉLIS"],[0.08,0.73,0.84,0.22,"/products/plumier-en-bois-pour-rangement-daddons","BOÎTE DE RANGEMENT EN BOIS"]],"9":[[0,0,1,1,"/search?q=Stellar","PAGE"]],"10":[[0.06,0.28,0.28,0.26,"/products/le-pack-blushy-pour-ta-garde-mood","PACK BLUSHY"],[0.37,0.28,0.28,0.26,"/products/anneau-deux-tiers-trilogy-argent-froisse-satine","TRILOGY"],[0.66,0.28,0.28,0.26,"/products/le-pack-rose-pour-ta-garde-mood","PACK ROSÉ"],[0.06,0.57,0.28,0.26,"/products/basic-starter-pack-in-the-mood-for-basic","PACK BASIC"],[0.37,0.57,0.28,0.26,"/products/bague-mood-zermatt-city-avec-anneau-interchangeable-grave-du-cervin","ZERMATT CITY"],[0.66,0.57,0.28,0.26,"/products/open-heart-blue-medium-3d-center-en-argent-glitter-925-avec-zircons-bleu-pour-bague-mood-intechangeable","OPEN HEART"]],"11":[[0.07,0.1,0.27,0.235,"/search?q=neige+%C3%A9ternelle","MINI NEIGE"],[0.37,0.1,0.27,0.235,"/products/pack-mini-en-argent-eau-feu-pour-bague-mood-interchangeable","EAU & FEU"],[0.66,0.1,0.27,0.235,"/products/pack-de-2-anneauxaddon-mini-en-argent-925-oasis-finition-a-choix-pour-bague-mood-interchangeable","OASIS"],[0.07,0.34,0.27,0.235,"/products/stellera-cut-mini-3d-center-en-argent-925-avec-zircons-pour-bague-mood-interchangeable","STELLAR CUT"],[0.37,0.34,0.27,0.235,"/products/anneau-addon-deux-tiers-amour-sincere-en-argent-925-serti-de-zircons","AMOUR SINCÈRE"],[0.66,0.34,0.27,0.235,"/products/anneau-addon-en-argent-925-et-zircons-shiny-thread-pour-bague-mood-interchangeable","SHINY THREAD"],[0.05,0.58,0.88,0.34,"/products/pack-de-minis-eclipse-en-argent-925-serti-de-zircons","ÉCLIPSE"]],"13":[[0,0,1,1,"/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet","PAGE"]],"15":[[0,0,1,1,"/collections/nos-auras","PAGE"]],"16":[[0,0,1,1,"/collections/clip-drop-boucles-doreilles","PAGE"]],"17":[[0.083,0.249,0.25,0.244,"/products/clip-drop-aura-sakura-mood-en-argent-925-rose-gold-serti-de-zircons-roses-bijou-d-oreille-interchangeable-copy","CLIP & DROP AURA"],[0.374,0.249,0.25,0.244,"/products/drop-brume-mood-en-argent-925-bijou-d-oreille","DROP BRUME"],[0.667,0.249,0.25,0.244,"/products/clip-mood-en-argent-925-bijou-d-oreille","CLIP"],[0.083,0.488,0.25,0.244,"/products/drop-opale-ondulee-mood-en-argent-925-bijou-d-oreille-interchangeable","DROP OPALE"],[0.374,0.488,0.25,0.244,"/products/drop-aztheque-mood-en-argent-925-et-revetement-en-email-bijou-doreille","DROP AZTÈQUE"],[0.667,0.488,0.25,0.244,"/products/drop-froisse-mood-en-argent-925-bijou-d-oreille-interchangeable","DROP FROISSÉ"],[0.083,0.729,0.25,0.244,"/products/drop-aura-authentique-mood-en-argent-925-serti-de-zircons-bijou-d-oreille","DROP AURA"],[0.374,0.729,0.25,0.244,"/products/clip-drop-aura-authentique-mood-en-argent-925-serti-de-zircons-bijou-d-oreille","CLIP & DROP AURA"],[0.667,0.729,0.25,0.244,"/products/drop-mariposa-mood-en-argent-925-bijou-doreille","DROP MARIPOSA"]],"18":[[0,0,1,1,"/products/anneau-addon-mini-mini-aura-authentique-en-argent-925-serti-de-zircons-pour-bague-mood-interchangeable","PAGE"]],"19":[[0.05,0.14,0.9,0.25,"/products/bague-mood-interchangeable-br-coffret-poya","COFFRET POYA"],[0.05,0.39,0.9,0.27,"/products/bague-mood-argent-925-aura-shiny-love","COFFRET SHINY"],[0.05,0.67,0.9,0.27,"/products/coffret-bague-interchangeable-white-summer-2024","COFFRET WHITE"]],"22":[[0,0,1,1,"/search?q=N%C3%A1car+Inlay","PAGE"]],"23":[[0,0,1,0.33,"/products/anneau-addon-bosco-nacar-inlay-en-argent-nacre","BOSCO"],[0,0.33,1,0.33,"/products/anneau-addon-pavone-nacar-inlay-en-argent-nacre","PAVONE"],[0,0.66,1,0.34,"/products/alba-n-car-inlay-argent-formats-a-choix","ALBA"]],"25":[[0,0,0.5,1,"/products/nuage-rose-anneau-addon-taille-dans-la-pierre","NUAGE ROSE"],[0.5,0,0.5,1,"/products/bleu-des-dieux-anneau-addon-taille-dans-le-lapis-lazuli","BLEU DES DIEUX"]],"27":[[0,0,1,1,"/collections/email-dhiver","PAGE"]],"28":[[0.083,0.249,0.25,0.244,"/products/addon-edelweiss-et-vache-2024","EDELWEISS &"],[0.374,0.249,0.25,0.244,"/products/pack-mini-aura-authentique-et-mini-acier-poli-3-anneaux-pour-bague-mood","AURA AUTHENTIQUE &"],[0.667,0.249,0.25,0.244,"/products/addon-3d-rose-depine","ROSE D’ÉPINE"],[0.083,0.488,0.25,0.244,"/products/addon-first-love-rose","FIRST LOVE ROSE"],[0.374,0.488,0.25,0.244,"/products/anneau-addon-deux-tiers-aurheart-titanic-en-argent-925-serti-de-zircons-bleus-royal","AURHEART TITANIC"],[0.667,0.488,0.25,0.244,"/products/bijou-bague-femme-argent-achat-enligne-firstlove","FIRST LOVE BLANC"],[0.083,0.729,0.25,0.244,"/products/addon-argent-cristal-de-givre","CRISTAL DE GIVRE"],[0.374,0.729,0.25,0.244,"/products/grown-diamond-addon-medium-en-acier-entierement-serti-de-diamants-de-laboratoire","LUMEN"],[0.667,0.729,0.25,0.244,"/products/addon-argent-grave-paillettes","PAILLETTES"]],"29":[[0,0,1,1,"/products/anneau-addon-deux-tiers-auraline-en-argent-925-serti-de-zircons","PAGE"]],"31":[[0.5,0,0.5,0.48,"/products/anneau-addon-en-argent-autumn-entierement-serti-de-zircons-pour-bague-mood-interchangeable","AUTUMN"],[0.5,0.48,0.5,0.52,"/products/anneau-addon-en-argent-summer-entierement-serti-de-zircons-pour-bague-mood-interchangeable","SUMMER"]],"32":[[0,0.15,1,0.25,"/products/bague-mood-interchangeable-acier-coeurs-des-mood-lovers","CŒURS DES MOOD"],[0,0.4,1,0.24,"/products/bague-mood-interchangeable-acier-inoxydable-noir-volcan","VOLCAN"],[0,0.64,1,0.25,"/products/coffret-mont-blanc","MONT-BLANC"]],"33":[[0,0.15,1,0.25,"/products/bague-mood-interchangeable-colors-xs-3-couleurs","COLORS XS"],[0,0.4,1,0.24,"/products/bague-mood-interchangeable-edelweiss-suisse","EDELWEISS"],[0,0.64,1,0.25,"/products/bague-mood-elegance-diamants-femme","ÉLÉGANCE"]],"35":[[0,0,1,1,"/products/anneau-addon-ou-deux-tiers-erable-de-kyoto-en-argent-925-entierement-pave-de-zircons","PAGE"]],"37":[[0,0,1,1,"/collections/willow","PAGE"]],"38":[[0.05,0.2,0.48,0.36,"/search?q=cire+perdue","CIRE PERDUE"],[0.53,0.2,0.42,0.36,"/search?q=entièrement+serti","SERTI DE DIAMANTS"],[0.05,0.57,0.45,0.35,"/products/medium-argent-star","STAR"],[0.5,0.57,0.45,0.35,"/products/deux-tiers-forever-white","FOREVER WHITE"]],"39":[[0,0,1,1,"/products/addon-argent-shiny","PAGE"]],"40":[[0,0.18,1,0.25,"/products/essential-starter-pack-in-the-mood-for-essential","ESSENTIAL"],[0,0.43,1,0.21,"/products/cozy-chic-starter-pack-in-the-mood-for-cozy-chic","COZY CHIC"],[0,0.64,1,0.26,"/products/pinstripe-starter-pack-in-the-mood-for-pinstrip","PINSTRIPE"]],"41":[[0,0.03,1,0.24,"/products/blush-romance-starter-pack-in-the-mood-for-biker","BIKER"],[0,0.27,1,0.25,"/products/blush-romance-starter-pack-in-the-mood-for-blush-romance","BLUSH"],[0,0.52,1,0.21,"/products/nature-starter-pack-in-the-mood-for-nature","NATURE"],[0,0.73,1,0.24,"/products/free-spirit-starter-pack-in-the-mood-for-free-spirit","FREE SPIRIT"]],"43":[[0.07,0.21,0.43,0.35,"/products/bague-rosee-de-printemps-argent-925-zircons-interchangeable","ROSÉE DE PRINTEMPS"],[0.5,0.21,0.43,0.35,"/products/bague-mood-interchangeable-avec-3-saphirs-br-coffret-pierres-precieuses","3 SAPHIRS"],[0.07,0.57,0.43,0.35,"/products/bague-mood-interchangeable-acier-noir-rose-magma","MAGMA"],[0.5,0.57,0.43,0.35,"/search?q=aura+estival","AURA ESTIVAL"]],"45":[[0,0,1,1,"https://moodjoaillerie.net/products/bagues-moodjoaillerie-luxe-pour-femme","PAGE"]]};
-  function zones(i){ var z=ZONES[i]; if(!z) return ""; return z.map(function(r){ var u=/^https?:/.test(r[4])?r[4]:BASE+r[4]; if(r[5]==="PAGE") return '<a class="zone-bouton" href="'+u+'" target="_blank" rel="noopener">Découvrir sur yourmood.net →</a>'; return '<a class="zone" href="'+u+'" target="_blank" rel="noopener" title="'+r[5]+'" style="left:'+(r[0]*100)+'%;top:'+(r[1]*100)+'%;width:'+(r[2]*100)+'%;height:'+(r[3]*100)+'%"></a>'; }).join(""); }
+  var ZONES={"4":[[0.083,0.249,0.25,0.244,"/products/pack-de-2-minis-en-aluminium-rose-pastel-pour-bague-mood-interchangeable","PACK 2 MINIS ALU","https://cdn.shopify.com/s/files/1/0798/2303/files/7_ce9e7c0b-fe00-497f-a4cb-a9173e86d43d.jpg?v=1773847425&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.249,0.25,0.244,"/products/le-pack-soft-blue-pour-ta-garde-mood","PACK SOFT BLUE","https://cdn.shopify.com/s/files/1/0798/2303/files/1776783481190-1lrq1hx63x5.png?v=1776783738&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.249,0.25,0.244,"/products/deux-tiers-zermatt-city","ZERMATT CITY","https://cdn.shopify.com/s/files/1/0798/2303/products/addon-aluminium-grave-deux-tiers-zermatt-city-2.jpg?v=1748002978&width=600",[0.0,0.0,1.0,0.7213]],[0.083,0.488,0.25,0.244,"/products/le-pack-essentiel-pour-ta-garde-mood","PACK ESSENTIEL","https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1771870596928.png?v=1771870613&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.488,0.25,0.244,"/products/le-pack-signature-pour-ta-garde-mood","PACK SIGNATURE","https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1771869921668.png?v=1771870063&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.488,0.25,0.244,"/products/le-pack-skin-pour-ta-garde-mood","PACK SKIN","https://cdn.shopify.com/s/files/1/0798/2303/files/premium-studio-1771871714561.png?v=1771871733&width=600",[0.0,0.0,1.0,0.7213]],[0.083,0.729,0.25,0.244,"/products/clip-square-mood-en-argent-925-neige-eternelle-bijou-doreille","CLIP SQUARE","https://cdn.shopify.com/s/files/1/0798/2303/files/Clip_drop_clipsquare_-Medium.jpg?v=1769598812&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.729,0.25,0.244,"/products/clip-aura-mood-en-argent-925-serti-dun-zircon-blanc-bijou-d-oreille","CLIP AURA","https://cdn.shopify.com/s/files/1/0798/2303/files/Clip_et_drop_clip_zircon_serti_d9d1aeca-71ba-42e1-859b-417bc9824960.jpg?v=1775826602&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.729,0.25,0.244,"/products/clip-mood-en-argent-925-bijou-d-oreille","CLIP","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_565952d1-fdf2-4480-b0d9-30436420e95a.jpg?v=1755286705&width=600",[0.0,0.0,1.0,0.7213]]],"5":[[0,0,1,1,"/products/la-boite-a-bijoux-de-mood-collection-oo-n-2","PAGE","",null]],"7":[[0,0,1,1,"/collections/aluminium-1","PAGE","",null]],"8":[[0.06,0.23,0.28,0.24,"/products/addon-medium-colore-blanc","MEDIUM BLANC","https://cdn.shopify.com/s/files/1/0798/2303/files/2_4de3f874-5c4b-4f64-bac4-7d9ee7ce2f1b.jpg?v=1748004430&width=600",[0.0,0.0,1.0,0.7917]],[0.36,0.23,0.28,0.24,"/products/addon-medium-en-argent-925-avec-un-revetement-en-email-rose-fuchsia-copy","PURPLE GLOW","https://cdn.shopify.com/s/files/1/0798/2303/files/7_d31664cc-7610-400b-9cd4-c494cf73d69a.jpg?v=1772722863&width=600",[0.0,0.0,1.0,0.7917]],[0.66,0.23,0.28,0.24,"/products/medium-en-acier-froisse","ACIER ROSE","https://cdn.shopify.com/s/files/1/0798/2303/files/mood-amelioration-1791578614186.jpg?v=1791661152&width=600",[0.0,0.0,1.0,0.7917]],[0.06,0.48,0.28,0.24,"/products/anneau-addon-hanami-en-aluminium-couleur-a-choix-couleurs-pastel","HANAMI","https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_1853.jpg?v=1777475376&width=600",[0.0,0.0,1.0,0.7917]],[0.36,0.48,0.28,0.24,"/products/marbre-anneau-medium-en-argent-925-avec-un-revetement-en-email-marbre","MARBRE","https://cdn.shopify.com/s/files/1/0798/2303/files/marbre_-_email_a3dd5a31-b0ce-456e-8df6-a54b6625f98c.jpg?v=1772115172&width=600",[0.0,0.0,1.0,0.7917]],[0.66,0.48,0.28,0.24,"/products/anneau-deux-tiers-palm-lis-aluminium","PALMÉLIS","https://cdn.shopify.com/s/files/1/0798/2303/files/bora_bora.png?v=1780669676&width=600",[0.0,0.0,1.0,0.7917]],[0.08,0.73,0.84,0.22,"/products/plumier-en-bois-pour-rangement-daddons","BOÎTE DE RANGEMENT EN BOIS","https://cdn.shopify.com/s/files/1/0798/2303/files/boiteecolier2.jpg?v=1748001034&width=600",[0.0,0.0364,1.0,0.75]]],"9":[[0,0,1,1,"/search?q=Stellar","PAGE","",null]],"10":[[0.06,0.28,0.28,0.26,"/products/le-pack-blushy-pour-ta-garde-mood","PACK BLUSHY","https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPTImage27aout2026a19_08_47.png?v=1787925289&width=600",[0.0,0.0,1.0,0.7585]],[0.37,0.28,0.28,0.26,"/products/anneau-deux-tiers-trilogy-argent-froisse-satine","TRILOGY","https://cdn.shopify.com/s/files/1/0798/2303/files/trilogy_bague_mood_interchangeable_1_ring.png?v=1779874524&width=600",[0.0,0.0,1.0,0.7585]],[0.66,0.28,0.28,0.26,"/products/le-pack-rose-pour-ta-garde-mood","PACK ROSÉ","https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPTImage27aout2026a18_42_26.png?v=1787925342&width=600",[0.0,0.0,1.0,0.7585]],[0.06,0.57,0.28,0.26,"/products/basic-starter-pack-in-the-mood-for-basic","PACK BASIC","https://cdn.shopify.com/s/files/1/0798/2303/files/Capture_d_ecran_2026-02-12_a_17.22.35_bb40e748-0c0f-4341-98f6-45f78bbcaffa.png?v=1770982414&width=600",[0.0,0.0,1.0,0.7585]],[0.37,0.57,0.28,0.26,"/products/bague-mood-zermatt-city-avec-anneau-interchangeable-grave-du-cervin","ZERMATT CITY","https://cdn.shopify.com/s/files/1/0798/2303/files/20250908_1353_Alpine_Sunset_Jewelry_Elegance_remix_01k4mjpkqqe9mb0kwrg7vsgh0v.png?v=1770066278&width=600",[0.0,0.0,1.0,0.7585]],[0.66,0.57,0.28,0.26,"/products/open-heart-blue-medium-3d-center-en-argent-glitter-925-avec-zircons-bleu-pour-bague-mood-intechangeable","OPEN HEART","https://cdn.shopify.com/s/files/1/0798/2303/files/site16.jpg?v=1767019192&width=600",[0.0,0.0,1.0,0.7585]]],"11":[[0.07,0.1,0.27,0.235,"/search?q=neige+%C3%A9ternelle","MINI NEIGE","",null],[0.37,0.1,0.27,0.235,"/products/pack-mini-en-argent-eau-feu-pour-bague-mood-interchangeable","EAU & FEU","https://cdn.shopify.com/s/files/1/0798/2303/files/Bague_mood_interchangeable_addon_mini_argent_oxyd__1.jpg?v=1750199901&width=600",[0.0,0.0,1.0,0.8089]],[0.66,0.1,0.27,0.235,"/products/pack-de-2-anneauxaddon-mini-en-argent-925-oasis-finition-a-choix-pour-bague-mood-interchangeable","OASIS","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_fd3b431a-79af-49bc-9210-ecd96e3831b1.jpg?v=1763461664&width=600",[0.0,0.0,1.0,0.8089]],[0.07,0.34,0.27,0.235,"/products/stellera-cut-mini-3d-center-en-argent-925-avec-zircons-pour-bague-mood-interchangeable","STELLAR CUT","https://cdn.shopify.com/s/files/1/0798/2303/files/stellar.jpg?v=1760975899&width=600",[0.0,0.0,1.0,0.8089]],[0.37,0.34,0.27,0.235,"/products/anneau-addon-deux-tiers-amour-sincere-en-argent-925-serti-de-zircons","AMOUR SINCÈRE","https://cdn.shopify.com/s/files/1/0798/2303/files/mood_saint_valentin_amour_sincere_bague_interchangeable_bijoux_ring7.jpg?v=1765463531&width=600",[0.0,0.0,1.0,0.8089]],[0.66,0.34,0.27,0.235,"/products/anneau-addon-en-argent-925-et-zircons-shiny-thread-pour-bague-mood-interchangeable","SHINY THREAD","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_88635611-a713-447e-8e11-761328413288.jpg?v=1763734688&width=600",[0.0,0.0,1.0,0.8089]],[0.05,0.58,0.88,0.34,"/products/pack-de-minis-eclipse-en-argent-925-serti-de-zircons","ÉCLIPSE","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_2cd26e9a-cf42-496a-ae55-6d340af2f693.jpg?v=1775376174&width=600",[0.0,0.0147,0.6477,0.7941]]],"13":[[0,0,1,1,"/products/bague-mood-chromaline-avec-anneaux-interchangeables-set-complet","PAGE","",null]],"15":[[0,0,1,1,"/collections/nos-auras","PAGE","",null]],"16":[[0,0,1,1,"/collections/clip-drop-boucles-doreilles","PAGE","",null]],"17":[[0.083,0.249,0.25,0.244,"/products/clip-drop-aura-sakura-mood-en-argent-925-rose-gold-serti-de-zircons-roses-bijou-d-oreille-interchangeable-copy","CLIP & DROP AURA","https://cdn.shopify.com/s/files/1/0798/2303/files/ChatGPT_Image_27_fevr._2026_a_16_30_39.png?v=1772207013&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.249,0.25,0.244,"/products/drop-brume-mood-en-argent-925-bijou-d-oreille","DROP BRUME","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_1cfe137e-2f5c-4e31-b99e-0a8b124e78fd.jpg?v=1755283021&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.249,0.25,0.244,"/products/clip-mood-en-argent-925-bijou-d-oreille","CLIP","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_565952d1-fdf2-4480-b0d9-30436420e95a.jpg?v=1755286705&width=600",[0.0,0.0,1.0,0.7213]],[0.083,0.488,0.25,0.244,"/products/drop-opale-ondulee-mood-en-argent-925-bijou-d-oreille-interchangeable","DROP OPALE","https://cdn.shopify.com/s/files/1/0798/2303/files/Drop-Medium1.jpg?v=1755283503&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.488,0.25,0.244,"/products/drop-aztheque-mood-en-argent-925-et-revetement-en-email-bijou-doreille","DROP AZTÈQUE","https://cdn.shopify.com/s/files/1/0798/2303/files/Drop_-_Square.jpg?v=1760711410&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.488,0.25,0.244,"/products/drop-froisse-mood-en-argent-925-bijou-d-oreille-interchangeable","DROP FROISSÉ","https://cdn.shopify.com/s/files/1/0798/2303/files/Clip_drop_dropgriffed_argent_-Medium.jpg?v=1769603711&width=600",[0.0,0.0,1.0,0.7213]],[0.083,0.729,0.25,0.244,"/products/drop-aura-authentique-mood-en-argent-925-serti-de-zircons-bijou-d-oreille","DROP AURA","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_c3069edf-b427-414e-8f73-bf55d78fea6a.jpg?v=1755287731&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.729,0.25,0.244,"/products/clip-drop-aura-authentique-mood-en-argent-925-serti-de-zircons-bijou-d-oreille","CLIP & DROP AURA","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_34d71f09-8fac-4d86-a6b8-e9e0da54a4a2.jpg?v=1764671434&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.729,0.25,0.244,"/products/drop-mariposa-mood-en-argent-925-bijou-doreille","DROP MARIPOSA","https://cdn.shopify.com/s/files/1/0798/2303/files/Drop_-_Butterfly.jpg?v=1760709696&width=600",[0.0,0.0,1.0,0.7213]]],"18":[[0,0,1,1,"/products/anneau-addon-mini-mini-aura-authentique-en-argent-925-serti-de-zircons-pour-bague-mood-interchangeable","PAGE","",null]],"19":[[0.05,0.14,0.9,0.25,"/products/bague-mood-interchangeable-br-coffret-poya","COFFRET POYA","https://cdn.shopify.com/s/files/1/0798/2303/files/bague-7-couleurs.webp?v=1792485091&width=600",[0.0389,0.02,0.3,0.7604]],[0.05,0.39,0.9,0.27,"/products/bague-mood-argent-925-aura-shiny-love","COFFRET SHINY","https://cdn.shopify.com/s/files/1/0798/2303/files/shiny-love-couleurs_5fc2eab7-e5cf-4c88-bb30-08a7255c09a0.gif?v=1792420453&width=600",[0.0389,0.0185,0.3,0.7041]],[0.05,0.67,0.9,0.27,"/products/coffret-bague-interchangeable-white-summer-2024","COFFRET WHITE","https://cdn.shopify.com/s/files/1/0798/2303/files/7_c5a53f06-9672-42ae-abd4-58cf90849b05.jpg?v=1748000021&width=600",[0.0389,0.0185,0.3,0.7041]]],"22":[[0,0,1,1,"/search?q=N%C3%A1car+Inlay","PAGE","",null]],"23":[[0,0,1,0.33,"/products/anneau-addon-bosco-nacar-inlay-en-argent-nacre","BOSCO","",null],[0,0.33,1,0.33,"/products/anneau-addon-pavone-nacar-inlay-en-argent-nacre","PAVONE","",null],[0,0.66,1,0.34,"/products/alba-n-car-inlay-argent-formats-a-choix","ALBA","",null]],"25":[[0,0,0.5,1,"/products/nuage-rose-anneau-addon-taille-dans-la-pierre","NUAGE ROSE","",null],[0.5,0,0.5,1,"/products/bleu-des-dieux-anneau-addon-taille-dans-le-lapis-lazuli","BLEU DES DIEUX","",null]],"27":[[0,0,1,1,"/collections/email-dhiver","PAGE","",null]],"28":[[0.083,0.249,0.25,0.244,"/products/addon-edelweiss-et-vache-2024","EDELWEISS &","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_9197_modif-Medium.jpg?v=1748000415&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.249,0.25,0.244,"/products/pack-mini-aura-authentique-et-mini-acier-poli-3-anneaux-pour-bague-mood","AURA AUTHENTIQUE &","https://cdn.shopify.com/s/files/1/0798/2303/files/3_4d9ee49f-6950-496e-9297-b4e72db0276a.png?v=1764859266&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.249,0.25,0.244,"/products/addon-3d-rose-depine","ROSE D’ÉPINE","https://cdn.shopify.com/s/files/1/0798/2303/files/1180790738_d6d51478-fcc3-4814-ba8e-16fcc01a8e8b.jpg?v=1765378354&width=600",[0.0,0.0,1.0,0.7213]],[0.083,0.488,0.25,0.244,"/products/addon-first-love-rose","FIRST LOVE ROSE","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_2060_modif-Medium.jpg?v=1716975420&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.488,0.25,0.244,"/products/anneau-addon-deux-tiers-aurheart-titanic-en-argent-925-serti-de-zircons-bleus-royal","AURHEART TITANIC","https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_0527.jpg?v=1776192561&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.488,0.25,0.244,"/products/bijou-bague-femme-argent-achat-enligne-firstlove","FIRST LOVE BLANC","https://cdn.shopify.com/s/files/1/0798/2303/files/MG_2336_modif_web.jpg?v=1748000587&width=600",[0.0,0.0,1.0,0.7213]],[0.083,0.729,0.25,0.244,"/products/addon-argent-cristal-de-givre","CRISTAL DE GIVRE","https://cdn.shopify.com/s/files/1/0798/2303/files/mood-lumiere-contraste-1792071646450.jpg?v=1792071690&width=600",[0.0,0.0,1.0,0.7213]],[0.374,0.729,0.25,0.244,"/products/grown-diamond-addon-medium-en-acier-entierement-serti-de-diamants-de-laboratoire","LUMEN","https://cdn.shopify.com/s/files/1/0798/2303/files/IMG_5447.jpg?v=1768697923&width=600",[0.0,0.0,1.0,0.7213]],[0.667,0.729,0.25,0.244,"/products/addon-argent-grave-paillettes","PAILLETTES","https://cdn.shopify.com/s/files/1/0798/2303/files/mood-amelioration-1791979566567.jpg?v=1791979589&width=600",[0.0,0.0,1.0,0.7213]]],"29":[[0,0,1,1,"/products/anneau-addon-deux-tiers-auraline-en-argent-925-serti-de-zircons","PAGE","",null]],"31":[[0.5,0,0.5,0.48,"/products/anneau-addon-en-argent-autumn-entierement-serti-de-zircons-pour-bague-mood-interchangeable","AUTUMN","",null],[0.5,0.48,0.5,0.52,"/products/anneau-addon-en-argent-summer-entierement-serti-de-zircons-pour-bague-mood-interchangeable","SUMMER","",null]],"32":[[0,0.15,1,0.25,"/products/bague-mood-interchangeable-acier-coeurs-des-mood-lovers","CŒURS DES MOOD","https://cdn.shopify.com/s/files/1/0798/2303/files/bijou_acier_femme_l_gant_avec_coeurs_et_couleurs_bague_interchangeable_mood.jpg?v=1750847979&width=600",[0.085,0.02,0.27,0.7604]],[0,0.4,1,0.24,"/products/bague-mood-interchangeable-acier-inoxydable-noir-volcan","VOLCAN","https://cdn.shopify.com/s/files/1/0798/2303/files/visuels_sites_20258.jpg?v=1773045989&width=600",[0.085,0.0208,0.27,0.7921]],[0,0.64,1,0.25,"/products/coffret-mont-blanc","MONT-BLANC","https://cdn.shopify.com/s/files/1/0798/2303/files/Capture_d_ecran_2024-07-29_a_20.42.06.png?v=1770066724&width=600",[0.085,0.02,0.27,0.7604]]],"33":[[0,0.15,1,0.25,"/products/bague-mood-interchangeable-colors-xs-3-couleurs","COLORS XS","https://cdn.shopify.com/s/files/1/0798/2303/files/printemps_bague_mood_interchangeable_112_ring.jpg?v=1792418552&width=600",[0.085,0.02,0.27,0.7604]],[0,0.4,1,0.24,"/products/bague-mood-interchangeable-edelweiss-suisse","EDELWEISS","https://cdn.shopify.com/s/files/1/0798/2303/files/bague_interchangeable_en_acier_inoxydable_mood_edelweiss_avec_anneau_aluminium_noir_sur_une_main_homme_avec_une_chevre_suisse.jpg?v=1758642715&width=600",[0.085,0.0208,0.27,0.7921]],[0,0.64,1,0.25,"/products/bague-mood-elegance-diamants-femme","ÉLÉGANCE","https://cdn.shopify.com/s/files/1/0798/2303/files/schema_de_la_bague_de_luxe_suisse_avec_diamants_mood_et_couleur_interchangeable.jpg?v=1764839583&width=600",[0.085,0.02,0.27,0.7604]]],"35":[[0,0,1,1,"/products/anneau-addon-ou-deux-tiers-erable-de-kyoto-en-argent-925-entierement-pave-de-zircons","PAGE","",null]],"37":[[0,0,1,1,"/collections/willow","PAGE","",null]],"38":[[0.05,0.2,0.48,0.36,"/search?q=cire+perdue","CIRE PERDUE","",null],[0.53,0.2,0.42,0.36,"/search?q=entièrement+serti","SERTI DE DIAMANTS","",null],[0.05,0.57,0.45,0.35,"/products/medium-argent-star","STAR","https://cdn.shopify.com/s/files/1/0798/2303/products/MG_1288_modif_web.jpg?v=1710688388&width=600",[0.1267,0.0143,0.8044,0.7371]],[0.5,0.57,0.45,0.35,"/products/deux-tiers-forever-white","FOREVER WHITE","https://cdn.shopify.com/s/files/1/0798/2303/products/infini4.web.jpg?v=1661334342&width=600",[0.0622,0.0143,0.8111,0.7371]]],"39":[[0,0,1,1,"/products/addon-argent-shiny","PAGE","",null]],"40":[[0,0.18,1,0.25,"/products/essential-starter-pack-in-the-mood-for-essential","ESSENTIAL","",null],[0,0.43,1,0.21,"/products/cozy-chic-starter-pack-in-the-mood-for-cozy-chic","COZY CHIC","",null],[0,0.64,1,0.26,"/products/pinstripe-starter-pack-in-the-mood-for-pinstrip","PINSTRIPE","",null]],"41":[[0,0.03,1,0.24,"/products/blush-romance-starter-pack-in-the-mood-for-biker","BIKER","",null],[0,0.27,1,0.25,"/products/blush-romance-starter-pack-in-the-mood-for-blush-romance","BLUSH","",null],[0,0.52,1,0.21,"/products/nature-starter-pack-in-the-mood-for-nature","NATURE","",null],[0,0.73,1,0.24,"/products/free-spirit-starter-pack-in-the-mood-for-free-spirit","FREE SPIRIT","",null]],"43":[[0.07,0.21,0.43,0.35,"/products/bague-rosee-de-printemps-argent-925-zircons-interchangeable","ROSÉE DE PRINTEMPS","https://cdn.shopify.com/s/files/1/0798/2303/files/brumedeprintemps46.png?v=1773755523&width=600",[0.0814,0.0571,0.8535,0.7314]],[0.5,0.21,0.43,0.35,"/products/bague-mood-interchangeable-avec-3-saphirs-br-coffret-pierres-precieuses","3 SAPHIRS","https://cdn.shopify.com/s/files/1/0798/2303/products/bague-mood-pour-femme-rubis.web.jpg?v=1748002114&width=600",[0.0791,0.0571,0.8535,0.7314]],[0.07,0.57,0.43,0.35,"/products/bague-mood-interchangeable-acier-noir-rose-magma","MAGMA","https://cdn.shopify.com/s/files/1/0798/2303/files/homme2_cbbe0f1e-66d8-4f15-ba5c-e2d04e6e8950.jpg?v=1767020808&width=600",[0.0814,0.0257,0.8535,0.7257]],[0.5,0.57,0.43,0.35,"/search?q=aura+estival","AURA ESTIVAL","",null]],"45":[[0,0,1,1,"https://moodjoaillerie.net/products/bagues-moodjoaillerie-luxe-pour-femme","PAGE","",null]]};
+  var API="/api/catalogue-produits?h=";
+  function handleDe(u){ var m=/^\/products\/([a-z0-9-]+)$/.exec(u); return m?m[1]:null; }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function prixTxt(vs){ var ps=vs.map(function(x){return x.prix;}), m=Math.min.apply(null,ps); return (ps.some(function(x){return x!==m;})?"dès ":"")+chf(m); }
+  function chf(n){ return "CHF "+(Math.round(n*100)%100===0 ? Math.round(n)+".-" : n.toFixed(2)); }
+
+  // ---------- mémoire du navigateur (liste + panier) ----------
+  function lit(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)); return v||d; }catch(e){ return d; } }
+  function ecrit(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  var liste=lit("moodNoelListe",[]);   // [{h,t,img,p}]
+  var panier=lit("moodNoelPanier",[]); // [{id,h,t,v,img,p,q}]
+
+  function zones(i){
+    var z=ZONES[i]; if(!z) return "";
+    return z.map(function(r){
+      var u=/^https?:/.test(r[4])?r[4]:BASE+r[4], h=handleDe(r[4]);
+      if(r[5]==="PAGE") return '<a class="zone-bouton" href="'+u+'" target="_blank" rel="noopener"'+(h?' data-h="'+h+'"':'')+'>'+(h?'Voir le bijou':'Découvrir sur yourmood.net')+' →</a>';
+      var alt="", coeur="";
+      if(r[6] && r[7]){
+        var p=r[7];
+        alt='<span class="alt" style="left:'+(p[0]*100)+'%;top:'+(p[1]*100)+'%;width:'+(p[2]*100)+'%;height:'+(p[3]*100)+'%"><img alt="" loading="lazy" data-alt="'+r[6]+'"></span>';
+      }
+      if(h){
+        var cp=r[7]||[0,0,1,.7];
+        coeur='<button class="coeur" data-h="'+h+'" title="Ajouter à ma liste" style="left:calc('+((cp[0]+cp[2])*100)+'% - 34px);top:calc('+(cp[1]*100)+'% + 6px)">♡</button>';
+      }
+      return '<a class="zone" href="'+u+'" target="_blank" rel="noopener"'+(h?' data-h="'+h+'"':'')+' title="'+esc(r[5])+'" style="left:'+(r[0]*100)+'%;top:'+(r[1]*100)+'%;width:'+(r[2]*100)+'%;height:'+(r[3]*100)+'%">'+alt+'<span class="eclat"></span>'+coeur+'</a>';
+    }).join("");
+  }
   function src(i){ return "/catalogue/noel-2026/p"+String(i).padStart(2,"0")+".jpg"+V; }
   var book=document.getElementById("book"), piste=document.getElementById("piste");
   var NF=Math.ceil(NB/2), leaves=[];
@@ -94,8 +212,12 @@ body{
     var c=document.createElement("div"); c.className="carte";
     c.innerHTML='<img loading="lazy" alt="Page '+i+'" src="'+src(i)+'">'+zones(i); piste.appendChild(c);
   }
+  // photo de survol : chargée seulement quand le curseur approche
+  document.addEventListener("mouseover",function(e){
+    var a=e.target.closest && e.target.closest("a.zone"); if(!a) return;
+    var im=a.querySelector("img[data-alt]"); if(im){ im.src=im.dataset.alt; im.removeAttribute("data-alt"); }
+  });
   var cur=0;
-  // ne charger que les pages proches (le livre reste léger)
   function charge(){
     for(var f=Math.max(0,cur-2); f<=Math.min(NF-1,cur+2); f++){
       leaves[f].querySelectorAll("img[data-src]").forEach(function(im){ im.src=im.dataset.src; im.removeAttribute("data-src"); });
@@ -112,17 +234,215 @@ body{
     document.getElementById("pos").textContent = cur===0 ? "Couverture" : (d<=NB ? "Pages "+g+"–"+d+" / "+NB : "Page "+g+" / "+NB);
     charge();
   }
-  function va(n){ cur=Math.max(0,Math.min(NF,n)); rendu(); }
+  function va(n){ var avant=cur; cur=Math.max(0,Math.min(NF,n)); if(cur!==avant) bruitPage(); rendu(); }
   document.getElementById("suiv").onclick=function(){
     if(window.innerWidth<=900){ piste.scrollBy({left:piste.clientWidth,behavior:"smooth"}); return; } va(cur+1); };
   document.getElementById("prec").onclick=function(){
     if(window.innerWidth<=900){ piste.scrollBy({left:-piste.clientWidth,behavior:"smooth"}); return; } va(cur-1); };
-  document.addEventListener("keydown",function(e){ if(e.key==="ArrowRight") va(cur+1); if(e.key==="ArrowLeft") va(cur-1); });
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape"){ fermeTout(); return; }
+    if(document.body.classList.contains("ouvert")) return;
+    if(e.key==="ArrowRight") va(cur+1); if(e.key==="ArrowLeft") va(cur-1); });
   book.addEventListener("click",function(e){
-    if(e.target.closest && e.target.closest("a.zone,a.zone-bouton")) return;
+    if(e.target.closest && e.target.closest("a.zone,a.zone-bouton,button.coeur")) return;
     var r=book.getBoundingClientRect();
     if(e.clientX-r.left > r.width/2) va(cur+1); else va(cur-1);
   });
+
+  // ---------- appui sur un bijou : la fiche s'ouvre par-dessus ----------
+  document.addEventListener("click",function(e){
+    var coeur=e.target.closest && e.target.closest("button.coeur");
+    if(coeur){ e.preventDefault(); e.stopPropagation(); basculeListe(coeur.dataset.h); return; }
+    var a=e.target.closest && e.target.closest("a[data-h]");
+    if(a && !e.metaKey && !e.ctrlKey){ e.preventDefault(); ouvreFiche(a.dataset.h, a.href); }
+  },true);
+
+  var cache={};
+  function produit(h){
+    if(cache[h]) return Promise.resolve(cache[h]);
+    return fetch(API+encodeURIComponent(h)).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){ cache[h]=d; return d; });
+  }
+  var voileFiche=document.getElementById("voileFiche"), ficheCorps=document.getElementById("ficheCorps");
+  function ouvreFiche(h, lien){
+    ficheCorps.innerHTML='<div class="charge">Un instant…</div>';
+    voileFiche.classList.add("vu"); document.body.classList.add("ouvert");
+    produit(h).then(function(p){ dessineFiche(p); }).catch(function(){ fermeTout(); window.open(lien,"_blank","noopener"); });
+  }
+  function dessineFiche(p){
+    var opts=p.options||[], sel=[];
+    var premier=p.variants.filter(function(v){return v.dispo;})[0]||p.variants[0];
+    opts.forEach(function(o,i){ sel[i]= opts.length && o.values.length===1 ? o.values[0] : null; });
+    if(!opts.length) sel=[];
+    var h='<div class="galerie"><div class="grande"><img id="fImg" src="'+(p.images[0]||"")+'" alt=""></div><div class="vignettes">'+
+      p.images.map(function(u,i){return '<img data-i="'+i+'" src="'+u.replace("width=900","width=160")+'" alt=""'+(i===0?' class="on"':'')+'>';}).join("")+'</div></div>'+
+      '<div class="infos"><h2>'+esc(p.titre)+'</h2><div class="prix" id="fPrix"></div>'+
+      (p.texte?'<p class="texte">'+esc(p.texte)+'</p>':'')+
+      opts.map(function(o,i){
+        return '<div class="opt"><div class="opt-nom">'+esc(o.name)+'</div><div class="choix">'+
+          o.values.map(function(v){return '<button data-o="'+i+'" data-v="'+esc(v)+'"'+(sel[i]===v?' class="on"':'')+'>'+esc(v)+'</button>';}).join("")+'</div></div>';
+      }).join("")+
+      '<button class="ajoute" id="fAjoute">Ajouter au panier</button>'+
+      '<button class="aime" id="fAime"></button>'+
+      '<a class="complete" href="'+p.url+'" target="_blank" rel="noopener">Voir la fiche complète sur yourmood.net →</a></div>';
+    ficheCorps.innerHTML=h;
+    function variante(){
+      if(!opts.length) return p.variants[0];
+      if(sel.some(function(s){return s===null;})) return null;
+      return p.variants.filter(function(v){ return sel.every(function(s,i){return v.options[i]===s;}); })[0]||null;
+    }
+    function maj(){
+      var v=variante(), b=document.getElementById("fAjoute"), pr=document.getElementById("fPrix");
+      var ref=v||premier;
+      var prix=v?v.prix:Math.min.apply(null,p.variants.map(function(x){return x.prix;}));
+      pr.innerHTML=(!v && p.variants.some(function(x){return x.prix!==prix;})?"dès ":"")+(ref.prixAvant&&v?'<s>'+chf(ref.prixAvant)+'</s> ':'')+chf(prix);
+      if(!v){ b.disabled=true; b.textContent= opts.length? "Choisis "+opts.filter(function(o,i){return sel[i]===null;}).map(function(o){return o.name.toLowerCase();}).join(" et ") : "Indisponible"; }
+      else if(!v.dispo){ b.disabled=true; b.textContent="Épuisé dans ce choix"; }
+      else { b.disabled=false; b.textContent="Ajouter au panier · "+chf(v.prix); }
+      var aime=liste.some(function(x){return x.h===p.handle;});
+      document.getElementById("fAime").innerHTML= aime ? "♥ Dans ma liste de cadeaux" : "♡ Ajouter à ma liste de cadeaux";
+    }
+    ficheCorps.querySelectorAll(".choix button").forEach(function(b){ b.onclick=function(){
+      var i=+b.dataset.o; sel[i]=b.dataset.v;
+      b.parentNode.querySelectorAll("button").forEach(function(x){x.classList.toggle("on",x===b);}); maj(); }; });
+    ficheCorps.querySelectorAll(".vignettes img").forEach(function(t){ t.onclick=function(){
+      document.getElementById("fImg").src=p.images[+t.dataset.i];
+      ficheCorps.querySelectorAll(".vignettes img").forEach(function(x){x.classList.toggle("on",x===t);}); }; });
+    document.getElementById("fAjoute").onclick=function(){
+      var v=variante(); if(!v||!v.dispo) return;
+      var ex=panier.filter(function(x){return x.id===v.id;})[0];
+      if(ex) ex.q++; else panier.push({id:v.id,h:p.handle,t:p.titre,v:(opts.length?v.titre:""),img:(p.images[0]||"").replace("width=900","width=200"),p:v.prix,q:1});
+      ecrit("moodNoelPanier",panier); compteurs(); etincelles(document.getElementById("fAjoute"));
+      toast("Ajouté au panier ✓"); setTimeout(fermeTout,650);
+    };
+    document.getElementById("fAime").onclick=function(){ basculeListe(p.handle,p); maj(); };
+    maj();
+  }
+
+  // ---------- la liste de cadeaux ----------
+  function basculeListe(h,p){
+    var i=liste.map(function(x){return x.h;}).indexOf(h);
+    if(i>=0){ liste.splice(i,1); ecrit("moodNoelListe",liste); compteurs(); toast("Retiré de ta liste"); return; }
+    var ajoute=function(d){
+      liste.push({h:h,t:d.titre,img:(d.images[0]||"").replace("width=900","width=200"),p:Math.min.apply(null,d.variants.map(function(x){return x.prix;})),des:d.variants.some(function(x){return x.prix!==d.variants[0].prix;})});
+      ecrit("moodNoelListe",liste); compteurs(); toast("♥ Ajouté à ta liste de cadeaux");
+    };
+    if(p) ajoute(p); else produit(h).then(ajoute).catch(function(){ toast("Ce bijou n'est pas disponible en ligne"); });
+  }
+  function compteurs(){
+    document.getElementById("nbListe").textContent=liste.length;
+    document.getElementById("nbPanier").textContent=panier.reduce(function(s,x){return s+x.q;},0);
+    var hs={}; liste.forEach(function(x){hs[x.h]=1;});
+    document.querySelectorAll("button.coeur").forEach(function(b){ var on=!!hs[b.dataset.h]; b.classList.toggle("on",on); b.textContent=on?"♥":"♡"; });
+  }
+
+  // ---------- le tiroir (panier ou liste) ----------
+  var voileTiroir=document.getElementById("voileTiroir"), tiroirCorps=document.getElementById("tiroirCorps");
+  function ouvreTiroir(quoi){ dessineTiroir(quoi); voileTiroir.classList.add("vu"); document.body.classList.add("ouvert"); }
+  function ligne(x,quoi,i){
+    return '<div class="ligne"><img src="'+x.img+'" alt=""><div class="l-txt"><div class="l-nom">'+esc(x.t)+'</div>'+
+      (x.v?'<div class="l-var">'+esc(x.v)+'</div>':'')+'<div class="l-prix">'+(quoi==="liste"&&x.des?"dès ":"")+chf(x.p)+(x.q>1?' × '+x.q:'')+'</div></div>'+
+      (quoi==="liste"?'<button class="l-voir" data-voir="'+x.h+'">Voir</button>':'')+
+      '<button class="l-suppr" data-'+quoi+'="'+i+'" title="Retirer">×</button></div>';
+  }
+  function dessineTiroir(quoi){
+    var h;
+    if(quoi==="panier"){
+      var tot=panier.reduce(function(s,x){return s+x.p*x.q;},0);
+      h='<h3>Ton panier</h3>'+(panier.length? panier.map(function(x,i){return ligne(x,"panier",i);}).join("")+
+        '<div class="total">Total <b>'+chf(tot)+'</b></div><button class="ajoute" id="commande">Commander sur yourmood.net →</button><p class="note">Tu finalises ta commande en toute sécurité sur yourmood.net.</p>'
+        : '<p class="vide">Ton panier est vide. Appuie sur un bijou du catalogue pour le découvrir.</p>');
+    } else {
+      h='<h3>Ma liste de cadeaux</h3>'+(liste.length? '<p class="note">Glisse ta liste à ceux qui cherchent quoi t\'offrir 🎁</p>'+liste.map(function(x,i){return ligne(x,"liste",i);}).join("")+
+        '<label class="prenom">Ton prénom <input id="prenom" maxlength="30" placeholder="ex. Léa"></label>'+
+        '<div class="partage"><button class="ajoute" id="wa">Envoyer par WhatsApp</button><button class="pastille" id="copie">Copier le lien</button></div>'
+        : '<p class="vide">Ta liste est vide. Appuie sur le ♡ d\'un bijou pour l\'ajouter.</p>');
+    }
+    tiroirCorps.innerHTML=h;
+    tiroirCorps.querySelectorAll("[data-panier]").forEach(function(b){ b.onclick=function(){ panier.splice(+b.dataset.panier,1); ecrit("moodNoelPanier",panier); compteurs(); dessineTiroir("panier"); }; });
+    tiroirCorps.querySelectorAll("[data-liste]").forEach(function(b){ b.onclick=function(){ liste.splice(+b.dataset.liste,1); ecrit("moodNoelListe",liste); compteurs(); dessineTiroir("liste"); }; });
+    tiroirCorps.querySelectorAll("[data-voir]").forEach(function(b){ b.onclick=function(){ fermeTout(); ouvreFiche(b.dataset.voir, BASE+"/products/"+b.dataset.voir); }; });
+    var cmd=document.getElementById("commande");
+    if(cmd) cmd.onclick=function(){ window.open(BASE+"/cart/"+panier.map(function(x){return x.id+":"+x.q;}).join(","),"_blank","noopener"); };
+    var pn=document.getElementById("prenom");
+    if(pn){ pn.value=lit("moodNoelPrenom",""); pn.oninput=function(){ ecrit("moodNoelPrenom",pn.value); }; }
+    function lienListe(){ return location.origin+location.pathname+"#liste="+liste.map(function(x){return x.h;}).join(",")+(pn&&pn.value?"&de="+encodeURIComponent(pn.value.trim()):""); }
+    var wa=document.getElementById("wa");
+    if(wa) wa.onclick=function(){
+      var txt="🎁 Ma liste de cadeaux mood pour Noël"+(pn&&pn.value?" ("+pn.value.trim()+")":"")+" : "+lienListe();
+      if(navigator.share && /Mobi|Android/i.test(navigator.userAgent)){ navigator.share({title:"Ma liste de cadeaux mood",text:txt}).catch(function(){}); }
+      else window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank","noopener");
+    };
+    var cp=document.getElementById("copie");
+    if(cp) cp.onclick=function(){ var u=lienListe(); (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(function(){toast("Lien copié ✓");},function(){ prompt("Copie ce lien :",u); }); };
+  }
+  // quelqu'un ouvre la liste qu'on lui a envoyée
+  function listeRecue(){
+    var m=(location.hash||"").match(/liste=([a-z0-9,-]+)/); if(!m) return;
+    var de=(location.hash.match(/de=([^&]+)/)||[])[1]; de=de?decodeURIComponent(de):"";
+    var hs=m[1].split(",").filter(Boolean).slice(0,30);
+    tiroirCorps.innerHTML='<h3>'+(de?"La liste de cadeaux de "+esc(de):"Une liste de cadeaux pour toi")+'</h3><div class="charge">Un instant…</div>';
+    voileTiroir.classList.add("vu"); document.body.classList.add("ouvert");
+    Promise.all(hs.map(function(h){ return produit(h).then(function(d){return d;},function(){return null;}); })).then(function(ps){
+      ps=ps.filter(Boolean);
+      tiroirCorps.innerHTML='<h3>'+(de?"La liste de cadeaux de "+esc(de):"Une liste de cadeaux pour toi")+' 🎁</h3><p class="note">Appuie sur un bijou pour le voir, choisir la taille et l\'ajouter au panier.</p>'+
+        ps.map(function(p){ return '<div class="ligne"><img src="'+(p.images[0]||"").replace("width=900","width=200")+'" alt=""><div class="l-txt"><div class="l-nom">'+esc(p.titre)+'</div><div class="l-prix">'+prixTxt(p.variants)+'</div></div><button class="l-voir" data-voir="'+p.handle+'">Voir</button></div>'; }).join("")+
+        '<button class="pastille" id="feuillette" style="margin-top:14px">Feuilleter le catalogue</button>';
+      tiroirCorps.querySelectorAll("[data-voir]").forEach(function(b){ b.onclick=function(){ voileTiroir.classList.remove("vu"); ouvreFiche(b.dataset.voir, BASE+"/products/"+b.dataset.voir); }; });
+      document.getElementById("feuillette").onclick=fermeTout;
+    });
+  }
+
+  function fermeTout(){ voileFiche.classList.remove("vu"); voileTiroir.classList.remove("vu"); document.body.classList.remove("ouvert"); }
+  [voileFiche,voileTiroir].forEach(function(vl){ vl.addEventListener("click",function(e){ if(e.target===vl || (e.target.closest && e.target.closest("[data-ferme]"))) fermeTout(); }); });
+  document.getElementById("btnPanier").onclick=function(){ ouvreTiroir("panier"); };
+  document.getElementById("btnListe").onclick=function(){ ouvreTiroir("liste"); };
+  var toastT;
+  function toast(t){ var el=document.getElementById("toast"); el.textContent=t; el.classList.add("vu"); clearTimeout(toastT); toastT=setTimeout(function(){el.classList.remove("vu");},1800); }
+
+  // ---------- la magie : neige, étincelles, bruit de page ----------
+  var son=lit("moodNoelSon",true), ac=null;
+  function majSon(){ document.getElementById("sonEtat").textContent=son?"son":"muet"; document.getElementById("btnSon").classList.toggle("off",!son); }
+  document.getElementById("btnSon").onclick=function(){ son=!son; ecrit("moodNoelSon",son); majSon(); };
+  majSon();
+  function bruitPage(){
+    if(!son) return;
+    try{
+      ac=ac||new (window.AudioContext||window.webkitAudioContext)();
+      var d=0.45, n=Math.floor(ac.sampleRate*d), buf=ac.createBuffer(1,n,ac.sampleRate), x=buf.getChannelData(0);
+      for(var i=0;i<n;i++){ var t=i/n; x[i]=(Math.random()*2-1)*Math.pow(Math.sin(Math.PI*Math.min(1,t*1.4)),2)*(1-t); }
+      var s=ac.createBufferSource(); s.buffer=buf;
+      var f=ac.createBiquadFilter(); f.type="bandpass"; f.frequency.setValueAtTime(1800,ac.currentTime); f.frequency.linearRampToValueAtTime(700,ac.currentTime+d); f.Q.value=0.7;
+      var g=ac.createGain(); g.gain.value=0.16;
+      s.connect(f); f.connect(g); g.connect(ac.destination); s.start();
+    }catch(e){}
+  }
+  function etincelles(el){
+    var r=el.getBoundingClientRect();
+    for(var i=0;i<18;i++){
+      var s=document.createElement("span"); s.className="etincelle";
+      s.style.left=(r.left+r.width/2)+"px"; s.style.top=(r.top+r.height/2)+"px";
+      var a=Math.random()*Math.PI*2, dist=40+Math.random()*70;
+      s.style.setProperty("--dx",Math.cos(a)*dist+"px"); s.style.setProperty("--dy",Math.sin(a)*dist+"px");
+      document.body.appendChild(s); setTimeout(function(x){return function(){x.remove();};}(s),900);
+    }
+  }
+  (function neige(){
+    var cv=document.getElementById("neige"), cx=cv.getContext("2d"), fl=[], W, H;
+    var calme=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function taille(){ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; }
+    taille(); window.addEventListener("resize",taille);
+    var nb=calme?0:(W<900?45:90);
+    for(var i=0;i<nb;i++) fl.push({x:Math.random()*W,y:Math.random()*H,r:0.8+Math.random()*2.2,v:0.25+Math.random()*0.7,o:Math.random()*Math.PI*2,a:0.35+Math.random()*0.5});
+    function tour(){
+      cx.clearRect(0,0,W,H);
+      for(var i=0;i<fl.length;i++){ var p=fl[i]; p.y+=p.v; p.o+=0.01; p.x+=Math.sin(p.o)*0.35;
+        if(p.y>H+5){ p.y=-5; p.x=Math.random()*W; }
+        cx.beginPath(); cx.arc(p.x,p.y,p.r,0,6.283); cx.fillStyle="rgba(255,255,255,"+p.a+")"; cx.fill(); }
+      requestAnimationFrame(tour);
+    }
+    if(nb) tour();
+  })();
+
   // ouvrir sur une page : #p=12
   function depuisAdresse(){
     var m=(location.hash||"").match(/p=(\d+)/); if(!m) return;
@@ -130,8 +450,8 @@ body{
     va(p===1?0:Math.floor(p/2));
     var c=piste.children[p-1]; if(c && window.innerWidth<=900) c.scrollIntoView({inline:"center",block:"nearest"});
   }
-  window.addEventListener("hashchange",depuisAdresse);
-  rendu(); depuisAdresse();
+  window.addEventListener("hashchange",function(){ depuisAdresse(); listeRecue(); });
+  var sonInit=son; son=false; rendu(); depuisAdresse(); son=sonInit; compteurs(); listeRecue();
 })();
 </script>
 </body></html>

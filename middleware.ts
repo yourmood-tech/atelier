@@ -67,6 +67,11 @@ export default auth((req) => {
     return;
   }
 
+  // la fiche d'un bijou lue par le catalogue de Noël (lecture seule)
+  if (pathname === "/api/catalogue-produits") {
+    return;
+  }
+
   // le service qui prépare le panier du calendrier (prix calendrier appliqués par une remise)
   if (pathname === "/api/calendrier-panier") {
     return;
