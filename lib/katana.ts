@@ -319,13 +319,27 @@ export async function getRecipeWithSuppliers(shopifyVariantSku: string): Promise
   if (!productId) return null;
 
   // 2. Fetch product name + all recipe rows for this product
-  const [productRes, recipeRes] = await Promise.all([
+  // Katana renvoie au plus 250 lignes par page : une fiche à beaucoup de variantes
+  // (Exoplanète : 16 couleurs × 12 tailles × 2 lignes = 384) doit être lue page par page.
+  const fetchAllRecipeRows = async (): Promise<Record<string, unknown>[]> => {
+    const rows: Record<string, unknown>[] = [];
+    for (let page = 1; page <= 20; page++) {
+      const res = (await katanaFetch(
+        `/v1/recipes?product_id=${productId}&limit=250&page=${page}`,
+        { method: "GET" }
+      )) as { data?: Record<string, unknown>[] };
+      const batch = res?.data ?? [];
+      rows.push(...batch);
+      if (batch.length < 250) break;
+    }
+    return rows;
+  };
+  const [productRes, allRows] = await Promise.all([
     katanaFetch(`/v1/products/${productId}`, { method: "GET" }) as Promise<Record<string, unknown>>,
-    katanaFetch(`/v1/recipes?product_id=${productId}&limit=500`, { method: "GET" }) as Promise<{ data?: Record<string, unknown>[] }>,
+    fetchAllRecipeRows(),
   ]);
 
   const productName = ((productRes as Record<string, unknown>).name as string) ?? "";
-  const allRows = (recipeRes as { data?: Record<string, unknown>[] }).data ?? [];
 
   // 3. Keep only rows for our specific variant
   const variantRows = allRows.filter(

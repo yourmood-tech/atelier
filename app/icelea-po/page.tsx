@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { buildLabels, printLabels } from "@/lib/icelea/labels";
 
 type Supplier = { id: number; name: string };
 
@@ -562,6 +563,22 @@ export default function IceleaPOPage() {
   const hasPending = items.some((i) => i.status === "selecting_size" || i.status === "resolving");
   const inProductMode = currentOrderId !== null;
 
+  // Étiquettes : une par pièce du bon de commande (article scanné × quantité × pièce Icelea)
+  const orderNames = new Map([...linkedOrders, ...closedLinkedOrders].map((o) => [o.id, o.name]));
+  const labels = buildLabels(
+    items
+      .filter((i) => i.status === "ok")
+      .map((i) => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        orderName: i.linkedOrderId !== null ? orderNames.get(i.linkedOrderId) ?? null : null,
+        ingredients: i.icelea
+          .filter((x) => !i.excludedVariantIds.includes(x.variantId))
+          .map((x) => ({ name: x.name, sku: x.sku })),
+      })),
+    closedPONumber
+  );
+
   // ── CLOSED ────────────────────────────────────────────────────────────────
   if (phase === "closed") {
     return (
@@ -592,6 +609,22 @@ export default function IceleaPOPage() {
               </div>
             </div>
           )}
+          {labels.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <button
+                style={{ ...s.btn, background: "#1565c0" }}
+                onClick={() => {
+                  if (!printLabels(labels)) alert("La fenêtre d'impression a été bloquée : autorisez les fenêtres pour ce site, puis recommencez.");
+                }}
+              >
+                🏷️ Imprimer les étiquettes ({labels.length})
+              </button>
+              <p style={{ color: "#888", fontSize: 12, margin: "6px 0 0" }}>
+                Imprimante Brother QL-820NWB, rouleau 38 mm · format 38 × 29 mm
+              </p>
+            </div>
+          )}
+
           <p style={{ color: "#888", fontSize: 13, marginTop: 12 }}>Email envoyé à philippe@yourmood.net</p>
           {!sendEmails && (
             <p style={{ color: "#b26a00", fontSize: 13, marginTop: 8 }}>
