@@ -277,8 +277,13 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
   });
   const byCodeSize = new Map<string, Rec[]>();
   const bySize = new Map<string, Rec[]>();
+  // Articles sans taille (boucles d'oreilles MD-EA, en paires) : rangés par code seul.
+  const byCodeNoSize = new Map<string, Rec[]>();
   for (const rec of recs) {
-    if (!rec.size) continue;
+    if (!rec.size) {
+      if (rec.code) (byCodeNoSize.get(rec.code) || byCodeNoSize.set(rec.code, []).get(rec.code)!).push(rec);
+      continue;
+    }
     if (rec.code) (byCodeSize.get(`${rec.code}|${rec.size}`) || byCodeSize.set(`${rec.code}|${rec.size}`, []).get(`${rec.code}|${rec.size}`)!).push(rec);
     (bySize.get(rec.size) || bySize.set(rec.size, []).get(rec.size)!).push(rec);
   }
@@ -291,7 +296,10 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
     const entries = Object.keys(it.sizes).length ? Object.entries(it.sizes) : [["", it.qty] as [string, number]];
     for (const [size, q] of entries) {
       // AVEC code MD-RI → uniquement ce code+taille ; SANS code → repli par taille (couleurs mot).
-      const pool = it.code && size ? (byCodeSize.get(`${it.code}|${size}`) || []) : size ? (bySize.get(size) || []) : [];
+      // Sans taille (boucles d'oreilles) → même code, variants sans taille.
+      const pool = it.code && size ? (byCodeSize.get(`${it.code}|${size}`) || [])
+        : size ? (bySize.get(size) || [])
+        : it.code ? (byCodeNoSize.get(it.code) || []) : [];
       const scoreOf = (c: Rec) => {
         let s = 0;
         if (itEmail.length && itEmail.some((code) => c.cmp.includes(code))) s += 100;
@@ -317,6 +325,9 @@ export function matchToOpenPOs(items: ParsedItem[], index: VariantIndex): Recept
           accept = top >= 1;
           approx = accept && topSkus.size > 1;                                    // égalité → proposé mais à vérifier
         }
+        // Sans taille, les libellés facture et Katana diffèrent (« Shiny Clip » / « Clip-Silver-Glitter ») :
+        // toujours proposé « à vérifier », jamais reçu d'office. La confirmation est mémorisée (applyOverrides).
+        if (!size && accept) approx = true;
       }
       const via: ReceptionRow["match"] = approx ? "approx" : it.code ? "code" : "nom";
       const chosen = accept ? best : null;
@@ -349,7 +360,7 @@ export function familyOf(sku: string): string {
 export function applyOverrides(rows: ReceptionRow[], overrides: Record<string, string>, catalog: CatalogEntry[]): ReceptionRow[] {
   if (!overrides || Object.keys(overrides).length === 0) return rows;
   const byFamSize = new Map<string, CatalogEntry>();
-  for (const e of catalog) if (e.size) byFamSize.set(`${familyOf(e.sku)}|${e.size}`, e);
+  for (const e of catalog) byFamSize.set(`${familyOf(e.sku)}|${e.size ?? ""}`, e); // sans taille (boucles d'oreilles) → clé « famille| »
   return rows.map((r) => {
     const fam = overrides[overrideKey(r.label)];
     if (!fam) return r;
@@ -357,8 +368,7 @@ export function applyOverrides(rows: ReceptionRow[], overrides: Record<string, s
       // correction mémorisée = "pas d'association Katana"
       return { ...r, sku: null, name: null, variantId: null, barcode: null, pos: [], openQty: 0, match: "aucun" as const };
     }
-    if (!r.size) return r;
-    const e = byFamSize.get(`${fam}|${r.size}`);
+    const e = byFamSize.get(`${fam}|${r.size ?? ""}`);
     if (!e) return r;
     return {
       ...r, sku: e.sku, name: e.name, variantId: e.vid, barcode: e.barcode,
