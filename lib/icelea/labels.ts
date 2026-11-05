@@ -13,6 +13,21 @@ export type LabelItem = {
 };
 export type Label = { line1: string; line2: string; line3: string };
 
+/** Pièce envoyée chez Icelea pour un traitement (émail, glitter, PVD) — pas un achat. */
+export function isTreatmentSku(sku: string | null | undefined): boolean {
+  return /^MTRL-(BASE-(ENAMEL|GLITTER|PVD)|PVD)-/i.test(sku ?? "");
+}
+
+// Adresse d'expédition (facture Icelea INV0021-10-2026)
+export const ICELEA_ADDRESS = [
+  "Icelea Ltd.",
+  "25 Soi Ramkamheang 26/1",
+  "Huamark, Bangkapi",
+  "Bangkok 10240",
+  "THAILAND",
+];
+export const ICELEA_PHONE = "Tel. +66 65 665 3566";
+
 const WIDTH: Record<string, string> = { L: "large", S: "small", XS: "extra small" };
 const FORMAT: Record<string, string> = { ADDON: "Addon", DEUXTIERS: "Deux tiers", MEDIUM: "Medium" };
 const PVD_BASE: Record<string, string> = { GUNMETAL: "Anthracite : Gun Metal PVD", RAINBOW: "Rainbow : Rainbow PVD" };
@@ -97,16 +112,42 @@ body { font-family: Helvetica, Arial, sans-serif; color: #000; }
 </style></head><body>${body}</body></html>`;
 }
 
-/** Ouvre la page d'étiquettes dans une nouvelle fenêtre et lance la fenêtre d'impression. */
-export function printLabels(labels: Label[]): boolean {
+/** Étiquette d'adresse Icelea, en paysage 69 × 38 mm sur le rouleau de 38 mm :
+ *  la page fait 38 mm de large et 69 mm de long, le texte est tourné d'un quart de tour. */
+export function addressHtml(poNumber: string | null): string {
+  const lines = ICELEA_ADDRESS.map((l, i) => `<div class="${i === 0 ? "a0" : "a"}">${esc(l)}</div>`).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Adresse Icelea</title><style>
+@page { size: 38mm 69mm; margin: 0; }
+html, body { margin: 0; padding: 0; }
+body { font-family: Helvetica, Arial, sans-serif; color: #000; }
+.page { width: 38mm; height: 69mm; position: relative; overflow: hidden; }
+.rot { position: absolute; top: 0; left: 38mm; width: 69mm; height: 38mm; transform-origin: 0 0; transform: rotate(90deg);
+  box-sizing: border-box; padding: 2.5mm 3.5mm; display: flex; flex-direction: column; justify-content: center; }
+.a0 { font-size: 12pt; font-weight: 700; line-height: 1.15; margin-bottom: 0.8mm; }
+.a { font-size: 10pt; line-height: 1.15; }
+.small { font-size: 6.5pt; margin-top: 1.2mm; color: #000; white-space: nowrap; overflow: hidden; }
+@media screen { body { background: #eee; padding: 8px; } .page { background: #fff; margin: 0 auto; outline: 1px dashed #999; } }
+</style></head><body><div class="page"><div class="rot">${lines}<div class="small">${esc(ICELEA_PHONE)}${poNumber ? " · " + esc(poNumber) : ""}</div></div></div></body></html>`;
+}
+
+/** Imprime d'abord l'étiquette d'adresse (38 × 69), puis les étiquettes des pièces (38 × 29) :
+ *  deux fenêtres d'impression à la suite, dans la même fenêtre du navigateur. */
+export function printLabels(labels: Label[], poNumber: string | null = null): boolean {
   const w = window.open("", "_blank", "width=420,height=600");
   if (!w) return false;
-  w.document.open();
-  w.document.write(labelsHtml(labels));
-  w.document.close();
-  // Une seule fenêtre d'impression, que onload se déclenche ou non après document.write
+  const show = (html: string) => { w.document.open(); w.document.write(html); w.document.close(); };
   let done = false;
-  const go = () => { if (done) return; done = true; try { w.focus(); w.print(); } catch {} };
+  const go = () => {
+    if (done) return;
+    done = true;
+    try {
+      w.focus();
+      w.print(); // 1. adresse — la fenêtre d'impression bloque jusqu'à sa fermeture
+      show(labelsHtml(labels));
+      setTimeout(() => { try { w.focus(); w.print(); } catch {} }, 400); // 2. pièces
+    } catch {}
+  };
+  show(addressHtml(poNumber));
   w.onload = go;
   setTimeout(go, 600);
   return true;

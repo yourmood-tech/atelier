@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { createKatanaPOWithRows, mergeRowsIntoPO } from "@/lib/katana";
+import { isTreatmentSku } from "@/lib/icelea/labels";
 import { setIceleaTags, getOrderById } from "@/lib/shopify";
 import { getKlaviyoProfileLocale, generateBackorderEmailMulti, generateFollowUpEmailMulti, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -65,9 +66,13 @@ export async function POST(req: NextRequest) {
     //   - targetPoId fourni → fusionner les articles scannés dans un bon de commande
     //     existant (réassort) : quantité additionnée si déjà présent, sinon nouvelle ligne.
     //   - sinon → créer un nouveau bon de commande.
+    // Bon de TRAITEMENT : pièces envoyées chez Icelea pour émail, PVD ou glitter.
+    // Il porte son propre nom (ICE-TRAITEMENT-…) et n'est jamais fusionné dans un bon de réassort.
+    const isTreatment = items.some((i) => isTreatmentSku(i.variantSku));
+
     let po: { id: number; number: string; deliveryDate: string | null };
     let mergeSummary: { increased: number; added: number } | null = null;
-    if (targetPoId) {
+    if (targetPoId && !isTreatment) {
       const m = await mergeRowsIntoPO(
         targetPoId,
         items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit }))
@@ -78,7 +83,8 @@ export async function POST(req: NextRequest) {
       po = await createKatanaPOWithRows(
         supplierId,
         items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit })),
-        expectedArrival
+        expectedArrival,
+        isTreatment ? "ICE-TRAITEMENT" : "ICE"
       );
     }
 

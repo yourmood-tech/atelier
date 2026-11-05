@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { buildLabels, printLabels } from "@/lib/icelea/labels";
+import { buildLabels, isTreatmentSku, printLabels } from "@/lib/icelea/labels";
 
 type Supplier = { id: number; name: string };
 
@@ -561,6 +561,8 @@ export default function IceleaPOPage() {
   const totalCost = poItems.reduce((s, i) => s + i.quantity * i.pricePerUnit, 0);
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
   const hasPending = items.some((i) => i.status === "selecting_size" || i.status === "resolving");
+  // Bon de traitement (émail, PVD, glitter) : nommé ICE-TRAITEMENT-…, jamais fusionné dans un réassort
+  const isTreatmentPo = poItems.some((i) => isTreatmentSku(i.variantSku));
   const inProductMode = currentOrderId !== null;
 
   // Étiquettes : une par pièce du bon de commande (article scanné × quantité × pièce Icelea)
@@ -614,13 +616,13 @@ export default function IceleaPOPage() {
               <button
                 style={{ ...s.btn, background: "#1565c0" }}
                 onClick={() => {
-                  if (!printLabels(labels)) alert("La fenêtre d'impression a été bloquée : autorisez les fenêtres pour ce site, puis recommencez.");
+                  if (!printLabels(labels, closedPONumber)) alert("La fenêtre d'impression a été bloquée : autorisez les fenêtres pour ce site, puis recommencez.");
                 }}
               >
-                🏷️ Imprimer les étiquettes ({labels.length})
+                🏷️ Imprimer les étiquettes ({labels.length} + adresse Icelea)
               </button>
               <p style={{ color: "#888", fontSize: 12, margin: "6px 0 0" }}>
-                Imprimante Brother QL-820NWB, rouleau 38 mm · format 38 × 29 mm
+                Brother QL-820NWB · 1ʳᵉ impression : adresse Icelea (format 38 × 69 mm) · 2ᵉ : pièces (38 × 29 mm)
               </p>
             </div>
           )}
@@ -691,7 +693,7 @@ export default function IceleaPOPage() {
             disabled={!poItems.length || hasPending || submitting}
             onClick={closePO}
           >
-            {submitting ? "En cours…" : targetPoId !== "" ? "Ajouter au PO de réassort" : "Clore le PO"}
+            {submitting ? "En cours…" : isTreatmentPo ? "Clore le PO TRAITEMENT" : targetPoId !== "" ? "Ajouter au PO de réassort" : "Clore le PO"}
           </button>
         </div>
 
