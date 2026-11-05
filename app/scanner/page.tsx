@@ -91,6 +91,33 @@ export default function ScannerPage() {
   const [zeroLines, setZeroLines] = useState<ZeroLine[]>([]);
   const [zeroConfirm, setZeroConfirm] = useState(false);
   const [zeroSending, setZeroSending] = useState(false);
+  const zeroRestoredRef = useRef(false);
+
+  // Sauvegarde continue de la tournée « Mise à zéro » sur cet appareil :
+  // une page rechargée ou fermée ne perd pas les positions déjà scannées.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("scanner_zero_lines");
+      if (raw) {
+        const saved = (JSON.parse(raw) as ZeroLine[]).filter((l) => l.status !== "loading");
+        if (saved.length) {
+          setZeroLines(saved);
+          const open = saved.filter((l) => l.status === "ready").length;
+          if (open) setStatus(`Tournée reprise : ${open} position(s) en attente de validation`);
+        }
+      }
+    } catch {}
+    zeroRestoredRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!zeroRestoredRef.current) return;
+    try {
+      const keep = zeroLines.filter((l) => l.status !== "loading");
+      if (keep.length) localStorage.setItem("scanner_zero_lines", JSON.stringify(keep));
+      else localStorage.removeItem("scanner_zero_lines");
+    } catch {}
+  }, [zeroLines]);
 
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
   const submitScanRef = useRef<(raw: string) => Promise<void>>(async () => {});
@@ -1214,6 +1241,7 @@ export default function ScannerPage() {
             <h2 className="mb-1 text-xl font-semibold">Mise à zéro des positions vides</h2>
             <p className="mb-4 text-sm opacity-70">
               Scannez chaque tiroir vide. Rien ne change dans Katana tant que vous n'avez pas confirmé.
+              La liste est sauvegardée à chaque scan sur cet appareil : vous pouvez fermer la page et reprendre plus tard.
             </p>
             {zeroLines.length === 0 ? (
               <p className="opacity-60">Aucune position scannée</p>
