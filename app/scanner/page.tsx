@@ -19,7 +19,19 @@ type BatchItem = {
   zeroed?: number;        // combien ont été remises à zéro
 };
 
-type AppMode = "scan" | "recipe" | "backorder" | "suppliers" | "production";
+type AppMode = "scan" | "recipe" | "backorder" | "suppliers" | "production" | "zero";
+
+// Mise à zéro d'une position : tiroir vide constaté au scan
+type ZeroLine = {
+  code: string;
+  variantId: number | null;
+  sku: string;
+  name: string;
+  inStock: number | null;
+  status: "loading" | "ready" | "error" | "done";
+  error?: string;
+  before?: number;
+};
 type BackorderStep = "order" | "product";
 
 type ProductionBatchItem = {
@@ -76,6 +88,9 @@ export default function ScannerPage() {
   const [editingMin, setEditingMin] = useState<string>("");
   const [editingMax, setEditingMax] = useState<string>("");
   const [manualInput, setManualInput] = useState("");
+  const [zeroLines, setZeroLines] = useState<ZeroLine[]>([]);
+  const [zeroConfirm, setZeroConfirm] = useState(false);
+  const [zeroSending, setZeroSending] = useState(false);
 
   const lastAcceptedRef = useRef<{ sku: string; ts: number } | null>(null);
   const submitScanRef = useRef<(raw: string) => Promise<void>>(async () => {});
@@ -191,6 +206,11 @@ export default function ScannerPage() {
       return;
     }
 
+    if (mode === "zero") {
+      await submitZeroScan(sku);
+      return;
+    }
+
     setStatus(`Envoi ${sku}...`);
 
     try {
@@ -224,6 +244,58 @@ export default function ScannerPage() {
       playBeep();
     } catch (error) {
       setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
+    }
+  }
+
+  async function submitZeroScan(code: string) {
+    if (zeroLines.some((l) => l.code === code && l.status !== "done")) {
+      setStatus(`${code} déjà dans la liste`);
+      return;
+    }
+    setZeroConfirm(false);
+    setZeroLines((prev) => [{ code, variantId: null, sku: code, name: "…", inStock: null, status: "loading" }, ...prev]);
+    try {
+      const res = await fetch(`/api/zero-stock?code=${encodeURIComponent(code)}`);
+      const data = (await res.json()) as { ok: boolean; error?: string; variantId?: number; sku?: string; name?: string; inStock?: number };
+      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur");
+      setZeroLines((prev) => {
+        const dup = prev.some((l) => l.code !== code && l.variantId === data.variantId && l.status !== "done");
+        if (dup) return prev.filter((l) => l.code !== code || l.status === "done");
+        return prev.map((l) => (l.code === code && l.status === "loading"
+          ? { ...l, variantId: data.variantId ?? null, sku: data.sku ?? code, name: data.name ?? code, inStock: data.inStock ?? 0, status: "ready" }
+          : l));
+      });
+      setStatus(`${data.sku ?? code} · Katana dit ${data.inStock ?? 0}`);
+      playBeep();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erreur";
+      setZeroLines((prev) => prev.map((l) => (l.code === code && l.status === "loading" ? { ...l, status: "error", error: msg } : l)));
+      setStatus(`Erreur · ${msg}`);
+    }
+  }
+
+  async function sendZero() {
+    const ids = zeroLines.filter((l) => l.status === "ready" && l.variantId && l.inStock !== 0).map((l) => l.variantId as number);
+    if (!ids.length) return;
+    setZeroSending(true);
+    try {
+      const res = await fetch("/api/zero-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantIds: ids }),
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string; results?: { variantId: number; before: number }[] };
+      if (!res.ok || !data.ok) throw new Error(data.error || "Erreur");
+      const before = new Map((data.results ?? []).map((r) => [r.variantId, r.before]));
+      setZeroLines((prev) => prev.map((l) => (l.variantId && before.has(l.variantId) && l.status === "ready"
+        ? { ...l, status: "done", before: before.get(l.variantId), inStock: 0 }
+        : l)));
+      setStatus(`${ids.length} position(s) remise(s) à zéro dans Katana`);
+    } catch (error) {
+      setStatus(`Erreur · ${error instanceof Error ? error.message : "inconnue"}`);
+    } finally {
+      setZeroSending(false);
+      setZeroConfirm(false);
     }
   }
 
@@ -578,6 +650,12 @@ export default function ScannerPage() {
           }}
         >
           Production
+        </button>
+        <button
+          className={`rounded-xl border px-5 py-3 ${mode === "zero" ? "font-bold ring-2" : ""}`}
+          onClick={() => { setMode("zero"); setZeroConfirm(false); setStatus("Scannez une position vide"); }}
+        >
+          Mise à zéro
         </button>
         <button className="rounded-xl border px-5 py-3" onClick={undoLastLocal}>
           Annuler local
@@ -1128,6 +1206,84 @@ export default function ScannerPage() {
           )}
         </section>
       )}
+
+      {mode === "zero" && (() => {
+        const toZero = zeroLines.filter((l) => l.status === "ready" && l.variantId && l.inStock !== 0);
+        return (
+          <section className="mb-6 rounded-2xl border p-4">
+            <h2 className="mb-1 text-xl font-semibold">Mise à zéro des positions vides</h2>
+            <p className="mb-4 text-sm opacity-70">
+              Scannez chaque tiroir vide. Rien ne change dans Katana tant que vous n'avez pas confirmé.
+            </p>
+            {zeroLines.length === 0 ? (
+              <p className="opacity-60">Aucune position scannée</p>
+            ) : (
+              <table className="mb-4 w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left opacity-60">
+                    <th className="py-1 pr-4">Position</th>
+                    <th className="py-1 pr-4">Katana dit</th>
+                    <th className="py-1 pr-4">État</th>
+                    <th className="py-1"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {zeroLines.map((l) => (
+                    <tr key={l.code + (l.before ?? "")} className="border-b last:border-0">
+                      <td className="py-2 pr-4">
+                        <div className="font-mono text-xs">{l.sku}</div>
+                        {l.name !== l.sku && <div className="opacity-70">{l.name}</div>}
+                      </td>
+                      <td className="py-2 pr-4 font-semibold">{l.status === "done" ? l.before : l.inStock ?? "…"}</td>
+                      <td className="py-2 pr-4">
+                        {l.status === "loading" && "Lecture…"}
+                        {l.status === "error" && <span className="text-red-600">{l.error}</span>}
+                        {l.status === "ready" && (l.inStock === 0 ? <span className="opacity-60">Déjà à zéro</span> : "À remettre à zéro")}
+                        {l.status === "done" && <span className="text-green-700">✓ remis à zéro</span>}
+                      </td>
+                      <td className="py-2 text-right">
+                        {l.status !== "done" && (
+                          <button className="text-xs underline opacity-60" onClick={() => { setZeroConfirm(false); setZeroLines((prev) => prev.filter((x) => x !== l)); }}>
+                            retirer
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              {!zeroConfirm ? (
+                <button
+                  disabled={!toZero.length || zeroSending}
+                  onClick={() => setZeroConfirm(true)}
+                  className="rounded-xl bg-black px-5 py-2 font-semibold text-white disabled:opacity-30"
+                >
+                  Mettre à zéro ({toZero.length})
+                </button>
+              ) : (
+                <>
+                  <span className="font-semibold">
+                    Remettre {toZero.length} position(s) à zéro dans Katana ({toZero.reduce((s, l) => s + (l.inStock ?? 0), 0)} pièce(s) en moins) ?
+                  </span>
+                  <button disabled={zeroSending} onClick={() => void sendZero()} className="rounded-xl bg-red-600 px-5 py-2 font-semibold text-white">
+                    {zeroSending ? "Envoi…" : "Oui, mettre à zéro"}
+                  </button>
+                  <button disabled={zeroSending} onClick={() => setZeroConfirm(false)} className="rounded-xl border px-5 py-2">
+                    Annuler
+                  </button>
+                </>
+              )}
+              {zeroLines.some((l) => l.status === "done") && (
+                <button className="text-sm underline opacity-60" onClick={() => setZeroLines((prev) => prev.filter((l) => l.status !== "done"))}>
+                  Vider les lignes faites
+                </button>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {mode === "recipe" && (
         <section className="rounded-2xl border p-4">
