@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { createKatanaPOWithRows, mergeRowsIntoPO } from "@/lib/katana";
-import { isTreatmentSku } from "@/lib/icelea/labels";
+import { customsNote, isTreatmentSku } from "@/lib/icelea/labels";
 import { setIceleaTags, getOrderById } from "@/lib/shopify";
 import { getKlaviyoProfileLocale, generateBackorderEmailMulti, generateFollowUpEmailMulti, sendViaKlaviyo } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase-admin";
@@ -84,7 +84,8 @@ export async function POST(req: NextRequest) {
         supplierId,
         items.map((i) => ({ variantId: i.variantId, quantity: i.quantity, pricePerUnit: i.pricePerUnit })),
         expectedArrival,
-        isTreatment ? "ICE-TRAITEMENT" : "ICE"
+        isTreatment ? "ICE-TRAITEMENT" : "ICE",
+        isTreatment ? customsNote(items) : null
       );
     }
 
@@ -113,6 +114,7 @@ export async function POST(req: NextRequest) {
             Fournisseur : <strong>${supplierName}</strong> &nbsp;—&nbsp;
             PO n° <strong>${po.number}</strong>
           </p>
+          ${isTreatment ? `<p style="margin:8px 0 0;padding:8px 10px;background:#fff8e1;border:1px solid #ffe082">${customsNote(items)}</p>` : ""}
           <table style="border-collapse:collapse;width:100%;margin-top:16px">
             <thead>
               <tr style="border-bottom:2px solid #111">
@@ -304,6 +306,7 @@ export async function POST(req: NextRequest) {
       ok: true,
       poId: po.id,
       poNumber: po.number,
+      customsNote: isTreatment ? customsNote(items) : null,
       deliveryDate: po.deliveryDate,
       emailsQueued: sendEmails ? pairsSnapshot.length : 0,
       merged: mergeSummary,

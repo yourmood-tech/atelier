@@ -18,6 +18,26 @@ export function isTreatmentSku(sku: string | null | undefined): boolean {
   return /^MTRL-(BASE-(ENAMEL|GLITTER|PVD)|PVD)-/i.test(sku ?? "");
 }
 
+/** Matière de la pièce envoyée en traitement : les bases (MTRL-BASE-…) sont en acier,
+ *  les anneaux traités PVD (MTRL-PVD-…) sont en argent. */
+export function treatmentMetal(sku: string | null | undefined): "acier" | "argent" | null {
+  const s = (sku ?? "").toUpperCase();
+  if (/^MTRL-BASE-(ENAMEL|GLITTER|PVD)-/.test(s)) return "acier";
+  if (/^MTRL-PVD-/.test(s)) return "argent";
+  return null;
+}
+
+/** Note douane du bon de traitement : nombre total de pièces en argent et en acier. */
+export function customsNote(items: { variantSku: string | null; quantity: number }[]): string {
+  let argent = 0, acier = 0;
+  for (const i of items) {
+    const m = treatmentMetal(i.variantSku);
+    if (m === "argent") argent += i.quantity;
+    else if (m === "acier") acier += i.quantity;
+  }
+  return `TRAITEMENT — pièces envoyées pour traitement : ${argent} pièce(s) en argent 925, ${acier} pièce(s) en acier inoxydable (total ${argent + acier}).`;
+}
+
 // Adresse d'expédition (facture Icelea INV0021-10-2026)
 export const ICELEA_ADDRESS = [
   "Icelea Ltd.",

@@ -658,7 +658,8 @@ export async function createKatanaPOWithRows(
   supplierId: number,
   rows: { variantId: number; quantity: number; pricePerUnit: number }[],
   expectedArrival?: string | null,
-  orderPrefix = "ICE"
+  orderPrefix = "ICE",
+  note?: string | null
 ): Promise<{ id: number; number: string; deliveryDate: string | null }> {
   // Find 0% tax rate (imports) — fallback to default, then first available
   const taxData = (await katanaFetch("/v1/tax_rates?limit=50", { method: "GET" })) as {
@@ -678,6 +679,7 @@ export async function createKatanaPOWithRows(
     order_no: `${orderPrefix}-${ts}-${rand}`,
     location_id: DEFAULT_LOCATION_ID,
     ...(expectedArrival ? { expected_arrival_date: expectedArrival } : {}),
+    ...(note ? { additional_info: note } : {}),
     purchase_order_rows: rows.map((r) => ({
       variant_id: r.variantId,
       quantity: r.quantity,

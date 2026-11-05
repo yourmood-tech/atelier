@@ -100,6 +100,7 @@ export default function IceleaPOPage() {
   const [linkedOrders, setLinkedOrders] = useState<LinkedOrder[]>([]);
   const [closedLinkedOrders, setClosedLinkedOrders] = useState<LinkedOrder[]>([]);
   const [closedMerged, setClosedMerged] = useState<{ increased: number; added: number } | null>(null);
+  const [closedNote, setClosedNote] = useState<string | null>(null);
 
   // Refs for event handlers (avoid stale closures)
   const currentOrderRef = useRef<LinkedOrder | null>(null);
@@ -414,11 +415,12 @@ export default function IceleaPOPage() {
           sendEmails,
         }),
       });
-      const data = await res.json() as { ok?: boolean; poNumber?: string; deliveryDate?: string | null; error?: string; merged?: { increased: number; added: number } | null };
+      const data = await res.json() as { ok?: boolean; poNumber?: string; deliveryDate?: string | null; error?: string; merged?: { increased: number; added: number } | null; customsNote?: string | null };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur création PO");
       setClosedPONumber(data.poNumber ?? "—");
       setClosedDeliveryDate(data.deliveryDate ?? null);
       setClosedMerged(data.merged ?? null);
+      setClosedNote(data.customsNote ?? null);
       setResendDone(null);
       setClosedLinkedOrders(linkedOrders);
       setPhase("closed");
@@ -594,6 +596,11 @@ export default function IceleaPOPage() {
           <p style={{ color: "#555", fontSize: 13, marginTop: 4 }}>
             {poItems.length} référence(s) · {totalQty} pièce(s) · CHF {totalCost.toFixed(2)}
           </p>
+          {closedNote && (
+            <p style={{ fontSize: 13, margin: "10px auto 0", padding: "8px 10px", background: "#fff8e1", border: "1px solid #ffe082", maxWidth: 520 }}>
+              {closedNote}
+            </p>
+          )}
           {closedMerged && (
             <p style={{ color: "#2e7d32", fontSize: 13, marginTop: 4 }}>
               {closedMerged.added} nouvelle(s) ligne(s) · {closedMerged.increased} quantité(s) augmentée(s)
