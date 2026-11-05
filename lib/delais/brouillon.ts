@@ -31,6 +31,7 @@ function faitsEnClair(f: Faits, c: Consignes): string {
     : `The missing component${f.iceleaEnRoute.complet ? "s have" : " has"} already been shipped by our partner workshop and ${f.iceleaEnRoute.complet ? "are" : "is"} expected at our workshop around ${f.iceleaEnRoute.date} (estimate). After that, finishing and shipping usually take one to two days.${f.iceleaEnRoute.complet ? "" : " Some other components of this order are still awaited, so do not promise the whole order for that date."} Never name the supplier.`);
   if (f.iceleaPO && !f.iceleaLivraison && !f.iceleaEnRoute) L.push(`The missing component has already been ordered from our partner workshop${f.iceleaPO.commandeLe ? ` (order placed on ${f.iceleaPO.commandeLe})` : ""} and has not arrived at our workshop yet. No reliable arrival date is known: say the component is ordered and has not arrived yet. ${sansDate(c, f)} Never name the supplier.`);
   if (f.iceleaLivraison && !f.iceleaEnRoute) L.push(`A component is ordered from our partner workshop, expected delivery to our workshop around ${f.iceleaLivraison} (estimate). After that, finishing and shipping usually take one to two days.`);
+  if (f.coloralLivraison) L.push(`An aluminium ring for this order is ordered from a partner workshop, expected delivery to our workshop around ${f.coloralLivraison} (estimate). After that, finishing and shipping usually take one to two days.${f.iceleaLivraison || f.iceleaEnRoute || f.iceleaPO ? " The order also waits for another component (see above): the whole order can only be finished after the LATER of the two dates." : ""} Never name the supplier.`);
   if (f.etape) {
     const dl = f.etape.delaiMin != null ? ` Typical duration of this step: ${f.etape.delaiMin}${f.etape.delaiMax && f.etape.delaiMax !== f.etape.delaiMin ? `–${f.etape.delaiMax}` : ""} ${f.etape.unite ?? "days"}.` : "";
     L.push(`Workshop step: ${f.etape.entree ? "entered" : "finished"} the step "${f.etape.nom}" on ${f.etape.date}.${dl}`);
@@ -122,6 +123,14 @@ function brouillonDeSecours(f0: Faits, prenom: string, autres: Faits[] = []): st
     : "Merci pour votre patience.\n\nExcellente journée.\n\nCordialement,\nPhilippe\nMood";
   return `${salut}\n\n${statuts}\n\n${fin}`;
 }
+// jj.mm.aaaa : la plus tardive des deux dates connues (une commande n'est complète qu'à la dernière pièce)
+function dateLaPlusTardive(a?: string | null, b?: string | null): string | null {
+  const k = (x: string) => x.split(".").reverse().join("");
+  if (!a) return b ?? null;
+  if (!b) return a;
+  return k(b) > k(a) ? b : a;
+}
+
 function statutDeSecours(f: Faits, de: boolean, en: boolean): string {
   const e = f.envois[f.envois.length - 1];
   let statut: string;
@@ -133,10 +142,12 @@ function statutDeSecours(f: Faits, de: boolean, en: boolean): string {
     statut = de ? `Ihre Bestellung ${f.commande} wird vollständig mit der Aufbewahrungsbox versandt, die Lieferung ist um den ${BLANC_DATE} vorgesehen.`
       : en ? `Your order ${f.commande} will be shipped complete together with the storage box, delivery expected around ${BLANC_DATE}.`
       : `Votre commande ${f.commande} partira complète avec la boîte de rangement, la livraison est prévue aux alentours du ${BLANC_DATE}.`;
-  else if (f.statut === "attente_icelea")
-    statut = de ? `Für Ihre Bestellung ${f.commande} ist ein Bauteil bereits bestellt${f.iceleaLivraison ? `, es wird um den ${f.iceleaLivraison} in unserem Atelier erwartet (Schätzung)` : ""}. Sobald es eintrifft, wird Ihr Schmuckstück fertiggestellt und versandt.`
-      : en ? `A component for your order ${f.commande} has already been ordered${f.iceleaLivraison ? ` and is expected at our workshop around ${f.iceleaLivraison} (estimate)` : ""}. As soon as it arrives, your piece will be finished and shipped.`
-      : `Une pièce de votre commande ${f.commande} est déjà commandée${f.iceleaLivraison ? `, elle est attendue à notre atelier aux alentours du ${f.iceleaLivraison} (estimation)` : ""}. Dès son arrivée, votre bijou sera terminé et expédié.`;
+  else if (f.statut === "attente_icelea" || f.statut === "attente_coloral") {
+    const d = dateLaPlusTardive(f.iceleaLivraison, f.coloralLivraison);
+    statut = de ? `Für Ihre Bestellung ${f.commande} ist ein Bauteil bereits bestellt${d ? `, es wird um den ${d} in unserem Atelier erwartet (Schätzung)` : ""}. Sobald es eintrifft, wird Ihr Schmuckstück fertiggestellt und versandt.`
+      : en ? `A component for your order ${f.commande} has already been ordered${d ? ` and is expected at our workshop around ${d} (estimate)` : ""}. As soon as it arrives, your piece will be finished and shipped.`
+      : `Une pièce de votre commande ${f.commande} est déjà commandée${d ? `, elle est attendue à notre atelier aux alentours du ${d} (estimation)` : ""}. Dès son arrivée, votre bijou sera terminé et expédié.`;
+  }
   else if (f.estimation && !f.estimation.depassee)
     statut = de ? `Ihre Bestellung ${f.commande} ist in Produktion, die Lieferung ist zwischen dem ${f.estimation.du} und dem ${f.estimation.au} vorgesehen (Schätzung).`
       : en ? `Your order ${f.commande} is in production; delivery is expected between ${f.estimation.du} and ${f.estimation.au} (estimate).`

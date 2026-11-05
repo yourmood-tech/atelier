@@ -6,7 +6,7 @@ export const INCONNU = "Fournisseur inconnu";
 
 type F = {
   statut: string; boites?: string[]; boiteType?: string | null;
-  iceleaArrivee?: unknown; iceleaLivraison?: string | null;
+  iceleaArrivee?: unknown; iceleaLivraison?: string | null; coloralLivraison?: string | null;
   iceleaPO?: unknown; iceleaEnRoute?: { depassee: boolean } | null;
   estimation?: { fournisseur: string; depassee: boolean } | null;
 };
@@ -25,7 +25,7 @@ export function fournisseurBloquant(f: F | null | undefined): string | null {
   if (f.iceleaArrivee) return null;
   if (f.iceleaEnRoute?.depassee) return "Icelea";
   if (f.iceleaPO && !f.iceleaLivraison && !f.iceleaEnRoute) return "Icelea";
-  if (f.iceleaLivraison) return null;
+  if (f.iceleaLivraison || f.coloralLivraison) return null;
   if (f.estimation) return f.estimation.depassee ? f.estimation.fournisseur : null;
   return INCONNU;
 }

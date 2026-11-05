@@ -13,6 +13,7 @@ export type Statut =
   | "expediee"            // tout est parti : suivi colis
   | "expediee_partiel"    // une partie est partie, le reste est encore à l'atelier
   | "attente_icelea"      // pièce commandée chez Icelea, date de livraison à venir
+  | "attente_coloral"     // anneau aluminium commandé chez Coloral, date de livraison à venir (étiquette Coloral-livraison)
   | "piece_arrivee"       // pièce Icelea arrivée à l'atelier (Icelea-recu / Icelea-partiel)
   | "etape"               // étape d'atelier connue
   | "estimation_fournisseur" // rien de précis, mais délai estimé d'après le fournisseur des pièces
@@ -31,6 +32,9 @@ export type Faits = {
   articlesEnAttente: string[];          // titres encore à expédier
   envois: { date: string; transporteur: string | null; numero: string | null; lien: string | null; articles: string[] }[];
   iceleaLivraison: string | null;       // jj.mm.aaaa (à venir)
+  // anneaux aluminium commandés chez Coloral : étiquette « Coloral-livraison:jj.mm.aaaa » posée à la main
+  // (date de départ d'usine confirmée + 3 jours, règle Philippe 05.11.2026), seulement si encore à venir
+  coloralLivraison?: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   // pièces commandées chez Icelea (étiquette « Icelea-PO:… ») : bon de commande, sa date, l'arrivée prévue dans Katana
   // (jj.mm.aaaa, seulement si encore à venir) ; présent tant que la pièce n'est pas arrivée
@@ -84,7 +88,7 @@ async function trouverCommande(numero: string | null, email: string): Promise<Re
 
 export async function faitsCommande(numero: string | null, email: string): Promise<Faits> {
   const vide: Faits = { statut: "introuvable", commande: null, commandeId: null, passeeLe: null, prenom: "", langue: "fr",
-    articlesEnAttente: [], envois: [], iceleaLivraison: null, iceleaArrivee: null, iceleaPO: null, iceleaEnRoute: null, etape: null, rupture: null, estimation: null, boites: [], etiquettesUtilisees: [] };
+    articlesEnAttente: [], envois: [], iceleaLivraison: null, coloralLivraison: null, iceleaArrivee: null, iceleaPO: null, iceleaEnRoute: null, etape: null, rupture: null, estimation: null, boites: [], etiquettesUtilisees: [] };
   const o = await trouverCommande(numero, email);
   if (!o) return vide;
   const cust = (o.customer ?? {}) as Record<string, unknown>;
@@ -120,6 +124,8 @@ export async function faitsCommande(numero: string | null, email: string): Promi
     if (m) { f.iceleaArrivee = { date: m[2], complet: m[1] === "recu" }; f.etiquettesUtilisees.push(t); }
     m = t.match(/^Icelea-enroute(-partiel)?:(\d\d\.\d\d\.\d{4})$/);
     if (m) { f.iceleaEnRoute = { date: m[2], complet: !m[1], depassee: toDate(m[2]) < now }; f.etiquettesUtilisees.push(t); }
+    m = t.match(/^Coloral-livraison:(\d\d\.\d\d\.\d{4})$/);
+    if (m && toDate(m[1]) >= now) { f.coloralLivraison = m[1]; f.etiquettesUtilisees.push(t); }
     m = t.match(/^Icelea-PO:(\S+)$/);
     if (m) { f.iceleaPO = { po: m[1], commandeLe: null, arriveePrevue: null }; f.etiquettesUtilisees.push(t); }
     m = t.match(/^Rupture.*-(\d{6})-\d\dh\d\d$/);
@@ -167,7 +173,7 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   if (f.rupture) {
     const r = toDate(f.rupture).getTime();
     const apres = (f.etape && toDate(f.etape.date).getTime() >= r) || (f.iceleaArrivee && toDate(f.iceleaArrivee.date).getTime() >= r)
-      || (f.iceleaPO?.commandeLe && toDate(f.iceleaPO.commandeLe).getTime() >= r) || !!f.iceleaEnRoute;
+      || (f.iceleaPO?.commandeLe && toDate(f.iceleaPO.commandeLe).getTime() >= r) || !!f.iceleaEnRoute || !!f.coloralLivraison;
     if (apres) { f.etiquettesUtilisees = f.etiquettesUtilisees.filter((t) => !t.startsWith("Rupture")); f.rupture = null; }
   }
 
@@ -175,6 +181,7 @@ export async function faitsCommande(numero: string | null, email: string): Promi
   if (f.articlesEnAttente.length === 0 && f.envois.length) f.statut = "expediee";
   else if (f.iceleaArrivee) f.statut = "piece_arrivee";
   else if (f.iceleaLivraison || f.iceleaPO || f.iceleaEnRoute) f.statut = "attente_icelea";
+  else if (f.coloralLivraison) f.statut = "attente_coloral";
   else if (f.etape) f.statut = "etape";
   else f.statut = "rien";
   // contenu encore à expédier → fournisseur des pièces → délai habituel compté depuis la commande

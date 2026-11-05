@@ -10,7 +10,7 @@ import { fournisseurBloquant, BOITES, INCONNU } from "@/lib/delais/bloque";
 type Envoi = { date: string; transporteur: string | null; numero: string | null; lien: string | null; articles: string[] };
 type Faits = {
   statut: string; commande: string | null; commandeId?: number | null; passeeLe: string | null; langue: string;
-  articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null;
+  articlesEnAttente: string[]; envois: Envoi[]; iceleaLivraison: string | null; coloralLivraison?: string | null;
   iceleaArrivee: { date: string; complet: boolean } | null;
   iceleaPO?: { po: string; commandeLe: string | null; arriveePrevue: string | null } | null;
   iceleaAutresBons?: string[] | null;
@@ -41,6 +41,7 @@ const STATUT: Record<string, { txt: string; couleur: string }> = {
   expediee_partiel: { txt: "En partie expédiée", couleur: "bg-emerald-50 text-emerald-700" },
   piece_arrivee: { txt: "Pièce arrivée à l'atelier", couleur: "bg-sky-100 text-sky-800" },
   attente_icelea: { txt: "Attente pièce Icelea (date connue)", couleur: "bg-sky-50 text-sky-700" },
+  attente_coloral: { txt: "Attente anneau Coloral (date connue)", couleur: "bg-sky-50 text-sky-700" },
   etape: { txt: "Étape d'atelier connue", couleur: "bg-amber-100 text-amber-800" },
   estimation_fournisseur: { txt: "Estimation d'après le fournisseur", couleur: "bg-violet-100 text-violet-800" },
   boite: { txt: "Boîte de rangement — date à compléter", couleur: "bg-teal-100 text-teal-800" },
@@ -363,6 +364,7 @@ function FaitsCommande({ f, autre }: { f: Faits; autre: boolean }) {
                     {f.iceleaEnRoute && <li>🚚 colis Icelea en route{f.iceleaEnRoute.complet ? "" : " (une partie des pièces)"} · arrivée prévue le {f.iceleaEnRoute.date}{f.iceleaEnRoute.depassee ? " — date passée, pas encore arrivé (pas de date donnée)" : ""}</li>}
                     {f.iceleaPO && <li>🧾 pièce commandée chez Icelea · bon {f.iceleaPO.po}{f.iceleaPO.commandeLe ? ` du ${f.iceleaPO.commandeLe}` : ""}{f.iceleaPO.arriveePrevue ? "" : " · aucune date d'arrivée à venir (pas de date donnée à la cliente)"}</li>}
                     {f.iceleaLivraison && !f.iceleaEnRoute && <li>🚚 pièce Icelea attendue le {f.iceleaLivraison}{f.iceleaAutresBons?.length ? ` (date trouvée sur ${f.iceleaAutresBons.join(", ")})` : ""}</li>}
+                    {f.coloralLivraison && <li>🚚 anneau Coloral attendu le {f.coloralLivraison}</li>}
                     {f.etape && <li>🔧 {f.etape.entree ? "entrée" : "sortie"} « {f.etape.nom} » le {f.etape.date}</li>}
                     {f.rupture && <li>⚠️ rupture signalée le {f.rupture}</li>}
                     {(f.boites ?? []).length > 0 && <li>🎁 attend la boîte : {f.boites!.join(", ")} → <b>date à compléter</b></li>}
