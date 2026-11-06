@@ -710,6 +710,8 @@
   .tab-sem thead th:first-child{text-align:left;font-size:1.25rem;}
   .tab-sem .c-obj{background:#e6f6fa;text-align:right;width:105px;}
   .tab-sem .c-fait{background:#ecf8e8;text-align:right;width:105px;}
+  .tab-sem tbody td.c-fait{font-weight:800;color:#1f5130;font-size:1.02em;}
+  .tab-sem thead th.c-gobj{background:#cdeef6;color:#2b6a7d;} .tab-sem thead th.c-gfait{background:#d7f1cf;color:#2d6b3c;}
   .tab-sem .c-reste{background:#fcebf1;text-align:right;width:105px;}
   .tab-sem .c-ok{width:40px;text-align:center;background:#fff;}
   .tab-sem thead .c-obj{background:#cdeef6;} .tab-sem thead .c-fait{background:#d7f1cf;} .tab-sem thead .c-reste{background:#f7d6e2;}
@@ -1582,12 +1584,12 @@ function tableauSemaine(annee, m, debut, numSem){
     const inQ = opts.editQ ? `<input class="obj-in" type="number" value="${v.oq || ''}" placeholder="pièces" onclick="event.stopPropagation()" onchange="${opts.editQ}">` : (v.oq ? n(v.oq) : '—');
     const inC = opts.editC ? `<input class="obj-in" type="number" value="${v.oc || ''}" placeholder="CHF" onclick="event.stopPropagation()" onchange="${opts.editC}">` : (v.oc ? n(v.oc) : '—');
     return `<tr class="ligne"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
-      <td class="c-obj c-q">${inQ}</td><td class="c-fait c-q${okq ? ' atteint' : ''}">${charge ? n(v.fq) : '…'}</td>
-      <td class="c-obj">${inC}</td><td class="c-fait${ok ? ' atteint' : ''}">${charge ? n(v.fc) : '…'}</td>
+      <td class="c-obj c-q">${inQ}</td><td class="c-obj">${inC}</td>
+      <td class="c-fait c-q${okq ? ' atteint' : ''}">${charge ? n(v.fq) : '…'}</td><td class="c-fait${ok ? ' atteint' : ''}">${charge ? n(v.fc) : '…'}</td>
       <td class="c-reste${v.oc && charge && r < 0 ? ' neg' : ''}">${v.oc && charge ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok || okq ? ' on' : ''}">${ok || okq ? '✓' : ''}</span></td>
       ${cellsPrev(v.pq, v.pc, opts.prevOk)}</tr>`;
   };
-  const totLigne = (lab, t, cls) => `<tr class="${cls}"><td>${lab}</td><td class="c-obj c-q">${n(t.oq)}</td><td class="c-fait c-q">${charge ? n(t.fq) : '…'}</td><td class="c-obj">${n(t.oc)}</td><td class="c-fait">${charge ? n(t.fc) : '…'}</td><td class="c-reste">${charge ? n(t.oc - t.fc) : '—'}</td><td class="c-ok"></td>${cellsPrev(t.pq, t.pc, chargePrev)}</tr>`;
+  const totLigne = (lab, t, cls) => `<tr class="${cls}"><td>${lab}</td><td class="c-obj c-q">${n(t.oq)}</td><td class="c-obj">${n(t.oc)}</td><td class="c-fait c-q">${charge ? n(t.fq) : '…'}</td><td class="c-fait">${charge ? n(t.fc) : '…'}</td><td class="c-reste">${charge ? n(t.oc - t.fc) : '—'}</td><td class="c-ok"></td>${cellsPrev(t.pq, t.pc, chargePrev)}</tr>`;
   const sect = t => `<tr class="sect"><td colspan="9">${t}</td></tr>`;
   // --- Game changer : ta liste + ce qui est sorti tout seul ---
   const gc = sum(); let rowsGC = '';
@@ -1623,8 +1625,8 @@ function tableauSemaine(annee, m, debut, numSem){
   const etatBloc = F ? `<div class="bloque">🔒 Chiffres bloqués et enregistrés le ${new Date(F.figeLe).toLocaleString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</div>`
     : (d7 > new Date() ? `<div class="encours-b">🟢 Semaine en cours — les chiffres seront bloqués mercredi soir à minuit</div>` : '');
   return `<div class="tab-sem"><div class="tab-actions"><button class="btn-imprimer" onclick="imprimerSemaine('${titre.replace(/'/g, '')}', ${numSem})">🖨️ Imprimer / PDF</button></div>${etatBloc}<table>
-    <thead><tr><th rowspan="2">${titre}</th><th colspan="2" class="c-groupe">Pièces</th><th colspan="3" class="c-groupe">CHF</th><th rowspan="2" class="c-ok"></th><th colspan="2" class="c-groupe c-prevh">Semaine passée</th></tr>
-    <tr><th class="c-obj">Objectif</th><th class="c-fait">Vendues</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th><th class="c-prev">Pièces</th><th class="c-prev">CHF</th></tr></thead>
+    <thead><tr><th rowspan="2">${titre}</th><th colspan="2" class="c-groupe c-gobj">Objectif</th><th colspan="2" class="c-groupe c-gfait">Fait</th><th rowspan="2" class="c-reste">Reste<br><small>CHF</small></th><th rowspan="2" class="c-ok"></th><th colspan="2" class="c-groupe c-prevh">Semaine passée</th></tr>
+    <tr><th class="c-obj">Pièces</th><th class="c-obj">CHF</th><th class="c-fait">Pièces</th><th class="c-fait">CHF</th><th class="c-prev">Pièces</th><th class="c-prev">CHF</th></tr></thead>
     <tbody>${totLigne(`SEMAINE ${numSem} · nouveautés de la semaine`, total, 'tot')}
       ${sect('💎 Game changer')}${rowsGC}${totLigne('Game changer', gc, 'sous-tot')}
       ${sect('📌 Toujours là')}${rowsTL}${totLigne('Toujours là', tl, 'sous-tot')}
