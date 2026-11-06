@@ -1,14 +1,14 @@
 "use client";
 
-// Commande Vacor : scanner les commandes clientes → les articles → un bon Katana par couleur
-// (Black, Pink Gold) avec les traitements Vacor de leurs recettes. Même geste que « Commande Icelea ».
+// Commande traitements (Vacor + Positive Coating) : scanner les commandes clientes → les articles →
+// un bon Katana par fournisseur et par couleur (Vacor Black / Pink Gold, Positive Coating bleus / chocolat)
+// avec les traitements de leurs recettes. Même geste que « Commande Icelea ».
 import { useEffect, useRef, useState } from "react";
 
-type Colour = "BLACK" | "PINKGOLD" | "YELLOWGOLD" | "AUTRE";
-const COLOUR_LABEL: Record<Colour, string> = { BLACK: "Black", PINKGOLD: "Pink Gold", YELLOWGOLD: "Yellow Gold", AUTRE: "Autre" };
-const COLOUR_BG: Record<Colour, string> = { BLACK: "#111", PINKGOLD: "#b76e79", YELLOWGOLD: "#b8860b", AUTRE: "#666" };
-
-type VacorIng = { variantId: number; name: string; sku: string | null; perUnit: number; purchasePrice: number; colour: Colour };
+type VacorIng = {
+  variantId: number; name: string; sku: string | null; perUnit: number; purchasePrice: number;
+  supplierId: number; group: string; groupLabel: string; bg: string; order: number;
+};
 type ScannedVariant = { title: string; sku: string };
 type LinkedOrder = { id: number; name: string };
 
@@ -26,8 +26,11 @@ type Item = {
   selectedSize?: string;
 };
 
-type PoLine = { variantId: number; variantName: string; variantSku: string | null; quantity: number; pricePerUnit: number; colour: Colour; orderIds: number[] };
-type CreatedPo = { colour: Colour; label: string; poNumber: string; qty: number; total: number; orderNames: string[] };
+type PoLine = {
+  variantId: number; variantName: string; variantSku: string | null; quantity: number; pricePerUnit: number;
+  supplierId: number; group: string; groupLabel: string; bg: string; order: number; orderIds: number[];
+};
+type CreatedPo = { key: string; label: string; bg: string; poNumber: string; qty: number; total: number; orderNames: string[] };
 
 const SIZES = [50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72];
 const variantsForSize = (vs: ScannedVariant[], size: number) =>
@@ -45,14 +48,14 @@ function buildLines(items: Item[]): PoLine[] {
         cur.quantity += q;
         if (it.orderId !== null && !cur.orderIds.includes(it.orderId)) cur.orderIds.push(it.orderId);
       } else {
-        map.set(ing.variantId, { variantId: ing.variantId, variantName: ing.name, variantSku: ing.sku, quantity: q, pricePerUnit: ing.purchasePrice, colour: ing.colour, orderIds: it.orderId !== null ? [it.orderId] : [] });
+        map.set(ing.variantId, { variantId: ing.variantId, variantName: ing.name, variantSku: ing.sku, quantity: q, pricePerUnit: ing.purchasePrice, supplierId: ing.supplierId, group: ing.group, groupLabel: ing.groupLabel, bg: ing.bg, order: ing.order, orderIds: it.orderId !== null ? [it.orderId] : [] });
       }
     }
   }
-  return [...map.values()].sort((a, b) => a.colour.localeCompare(b.colour) || (a.variantSku ?? "").localeCompare(b.variantSku ?? ""));
+  return [...map.values()].sort((a, b) => a.order - b.order || (a.variantSku ?? "").localeCompare(b.variantSku ?? ""));
 }
 
-export default function VacorPOPage() {
+export default function TraitementsPOPage() {
   const [phase, setPhase] = useState<"setup" | "scanning" | "closed">("setup");
   const [items, setItems] = useState<Item[]>([]);
   const [buffer, setBuffer] = useState("");
@@ -140,7 +143,7 @@ export default function VacorPOPage() {
           const o = { id: data.orderId!, name: data.orderName! };
           setCurrentOrder(o);
           setOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [...prev, o]));
-          setStatus(`✓ ${o.name} — scannez les articles noirs / rose gold`);
+          setStatus(`✓ ${o.name} — scannez les articles colorés`);
           beep();
         } catch (err) {
           setStatus(`✗ ${err instanceof Error ? err.message : "Commande introuvable"}`);
@@ -188,7 +191,7 @@ export default function VacorPOPage() {
   }, [phase]);
 
   const lines = buildLines(items);
-  const colours = [...new Set(lines.map((l) => l.colour))];
+  const groups = [...new Map(lines.map((l) => [l.group, l])).values()];
   const totalQty = lines.reduce((s, l) => s + l.quantity, 0);
   const pending = items.some((i) => i.status === "loading" || i.status === "selecting_size" || i.status === "resolving");
 
@@ -229,17 +232,17 @@ export default function VacorPOPage() {
       <div style={s.container}>
         <div style={{ textAlign: "center", padding: "40px 0" }}>
           <div style={{ fontSize: 48 }}>✓</div>
-          <h2 style={{ margin: "8px 0 16px" }}>{created.length > 1 ? `${created.length} bons Vacor créés` : "Bon Vacor créé"}</h2>
+          <h2 style={{ margin: "8px 0 16px" }}>{created.length > 1 ? `${created.length} bons de traitement créés` : "Bon de traitement créé"}</h2>
           {created.map((c) => (
-            <div key={c.poNumber} style={{ border: "1px solid #eee", borderLeft: `6px solid ${COLOUR_BG[c.colour]}`, borderRadius: 6, padding: "10px 14px", margin: "0 auto 10px", maxWidth: 420, textAlign: "left" }}>
+            <div key={c.poNumber} style={{ border: "1px solid #eee", borderLeft: `6px solid ${c.bg}`, borderRadius: 6, padding: "10px 14px", margin: "0 auto 10px", maxWidth: 420, textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{c.label} — {c.poNumber}</div>
               <div style={{ color: "#555", fontSize: 13 }}>{c.qty} pièce(s) · CHF {c.total.toFixed(2)}</div>
               {c.orderNames.length > 0 && <div style={{ color: "#888", fontSize: 12, marginTop: 4 }}>{c.orderNames.join(", ")}</div>}
             </div>
           ))}
-          {taggedOrders > 0 && <p style={{ color: "#2e7d32", fontSize: 13 }}>✓ Étiquette « Vacor-PO » ajoutée sur {taggedOrders} commande(s)</p>}
+          {taggedOrders > 0 && <p style={{ color: "#2e7d32", fontSize: 13 }}>✓ N° de bon ajouté en étiquette sur {taggedOrders} commande(s)</p>}
           <p style={{ color: "#888", fontSize: 13 }}>Récapitulatif envoyé à philippe@yourmood.net</p>
-          <button style={{ ...s.btn, marginTop: 16 }} onClick={reset}>Nouvelle commande Vacor</button>
+          <button style={{ ...s.btn, marginTop: 16 }} onClick={reset}>Nouvelle commande</button>
         </div>
       </div>
     );
@@ -251,9 +254,9 @@ export default function VacorPOPage() {
       <div style={s.container}>
         <div style={s.header}>
           <div>
-            <div style={s.title}>🎨 Commande Vacor</div>
+            <div style={s.title}>🎨 Commande Vacor · Positive Coating</div>
             <div style={{ color: "#555", fontSize: 13 }}>
-              {totalQty} pièce(s) · {colours.length ? colours.map((c) => COLOUR_LABEL[c]).join(" + ") : "aucun traitement"}
+              {totalQty} pièce(s) · {groups.length ? `${groups.length} bon(s)` : "aucun traitement"}
             </div>
           </div>
           <button
@@ -261,7 +264,7 @@ export default function VacorPOPage() {
             disabled={!lines.length || pending || submitting}
             onClick={close}
           >
-            {submitting ? "En cours…" : colours.length > 1 ? `Créer les ${colours.length} bons` : "Créer le bon"}
+            {submitting ? "En cours…" : groups.length > 1 ? `Créer les ${groups.length} bons` : "Créer le bon"}
           </button>
         </div>
 
@@ -297,11 +300,11 @@ export default function VacorPOPage() {
         {error && <div style={s.errorBox}>{error}</div>}
 
         {/* Récapitulatif par bon */}
-        {colours.map((c) => {
-          const ls = lines.filter((l) => l.colour === c);
+        {groups.map((g) => {
+          const ls = lines.filter((l) => l.group === g.group);
           return (
-            <div key={c} style={{ border: "1px solid #eee", borderLeft: `6px solid ${COLOUR_BG[c]}`, borderRadius: 6, padding: "8px 12px", marginBottom: 10 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Bon {COLOUR_LABEL[c]} · {ls.reduce((s2, l) => s2 + l.quantity, 0)} pièce(s)</div>
+            <div key={g.group} style={{ border: "1px solid #eee", borderLeft: `6px solid ${g.bg}`, borderRadius: 6, padding: "8px 12px", marginBottom: 10 }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Bon {g.groupLabel} · {ls.reduce((s2, l) => s2 + l.quantity, 0)} pièce(s)</div>
               {ls.map((l) => (
                 <div key={l.variantId} style={{ display: "flex", fontSize: 13, color: "#333", padding: "2px 0" }}>
                   <span style={{ flex: 1 }}>{l.variantName} <span style={{ color: "#999" }}>{l.variantSku}</span></span>
@@ -312,7 +315,7 @@ export default function VacorPOPage() {
           );
         })}
 
-        {items.length === 0 && <div style={s.empty}>Scannez une commande client puis ses articles noirs ou rose gold</div>}
+        {items.length === 0 && <div style={s.empty}>Scannez une commande client puis ses articles colorés (black, pink gold, bleus, chocolat)</div>}
 
         {items.map((item) => (
           <div key={item.localId} style={s.itemRow}>
@@ -360,7 +363,7 @@ export default function VacorPOPage() {
                           key={ing.variantId}
                           title="Cliquer pour retirer / remettre cette pièce"
                           onClick={() => patch(item.localId, { excluded: off ? item.excluded.filter((x) => x !== ing.variantId) : [...item.excluded, ing.variantId] })}
-                          style={{ padding: "5px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1px solid ${off ? "#ddd" : COLOUR_BG[ing.colour]}`, background: off ? "#f5f5f5" : COLOUR_BG[ing.colour], color: off ? "#bbb" : "#fff", textDecoration: off ? "line-through" : "none" }}
+                          style={{ padding: "5px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1px solid ${off ? "#ddd" : ing.bg}`, background: off ? "#f5f5f5" : ing.bg, color: off ? "#bbb" : "#fff", textDecoration: off ? "line-through" : "none" }}
                         >
                           {ing.perUnit > 1 ? `${ing.perUnit} × ` : ""}{ing.name}
                         </button>
@@ -387,10 +390,11 @@ export default function VacorPOPage() {
   // ── DÉPART ──
   return (
     <div style={s.container}>
-      <div style={s.title}>🎨 Commande Vacor</div>
+      <div style={s.title}>🎨 Commande Vacor · Positive Coating</div>
       <p style={{ color: "#555", fontSize: 14, lineHeight: 1.5 }}>
-        Traitement de surface des pièces Black et Pink Gold. Scannez les commandes clientes et leurs articles :
-        l&apos;écran prépare un bon par couleur avec les pièces à traiter.
+        Traitement de surface des pièces colorées : Black et Pink Gold chez Vacor, bleus et chocolat chez
+        Positive Coating. Scannez les commandes clientes et leurs articles : l&apos;écran prépare un bon par
+        fournisseur et par couleur avec les pièces à traiter.
       </p>
       <div style={{ marginTop: 24 }}>
         <label style={s.label}>Date de retour estimée (optionnel)</label>

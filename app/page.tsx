@@ -52,8 +52,8 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
       {
         href: "/vacor-po",
         emoji: "🎨",
-        title: "Commande Vacor",
-        description: "Bons de traitement Black / Pink Gold chez Vacor : scan des commandes clientes, un bon par couleur avec les pièces à traiter.",
+        title: "Commande Vacor · Positive Coating",
+        description: "Bons de traitement des pièces colorées (Vacor : black, pink gold · Positive Coating : bleus, chocolat) : scan des commandes clientes, un bon par fournisseur et par couleur.",
       },
       {
         href: "/icelea-prix",
