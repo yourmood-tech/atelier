@@ -742,10 +742,12 @@
   .gs-grille{stroke:#cfcfd8;stroke-width:.8;} .gs-cadre{fill:none;stroke:#333;stroke-width:1.2;}
   .gs-haut{stroke:#111;stroke-width:4;stroke-linecap:round;} .gs-bas{stroke:#c0281f;stroke-width:4;stroke-linecap:round;} .gs-encours{stroke-dasharray:7 5;}
   .gs-val{fill:#2626b8;font-size:11px;paint-order:stroke;stroke:#f5f5fc;stroke-width:3px;} .gs-auto{font-style:italic;}
-  .gs-obj{stroke:#2d8a4e;stroke-width:3;stroke-dasharray:5 3;} .gs-objt{fill:#2d8a4e;font-size:11px;font-weight:700;font-family:Poppins,sans-serif;}
+  .gs-obj{stroke:#2d8a4e;stroke-width:3;stroke-dasharray:5 3;} .gs-objt{fill:#2d8a4e;font-size:11px;font-weight:700;font-family:Poppins,sans-serif;paint-order:stroke;stroke:#f5f5fc;stroke-width:4px;}
   .gs-ok{fill:#2d8a4e;stroke:#fff;stroke-width:1.5;} .gs-clic{fill:transparent;cursor:pointer;} .gs-clic:hover{fill:rgba(42,47,136,.06);}
   .gs-leg{display:flex;flex-wrap:wrap;gap:12px;font:600 .68rem Poppins,sans-serif;color:#6b6b8a;padding:4px 10px 0;}
   .gs-leg i{display:inline-block;width:16px;height:0;border-top:3px dashed #2d8a4e;vertical-align:middle;margin-right:5px;} .gs-leg i.lg-ok{width:9px;height:9px;border:0;border-radius:50%;background:#2d8a4e;}
+  .tab-actions{display:flex;justify-content:flex-end;padding:8px 10px 0;background:#fff;}
+  .btn-imprimer{font:600 .78rem Poppins,sans-serif;border:1px solid #d9cfc4;background:#fff;color:#3a2f27;border-radius:999px;padding:6px 14px;cursor:pointer;} .btn-imprimer:hover{background:#f4eee7;}
   .tab-sem .pill-btn{font:inherit;font-size:.66rem;font-weight:600;border:1px dashed #b9d9c2;background:#fff;color:#2d8a4e;border-radius:999px;padding:1px 8px;cursor:pointer;margin-left:4px;} .tab-sem .pill-btn:hover{background:#dff2e4;}
   .tab-sem .pill.vert{background:#dff2e4;color:#2d8a4e;} .tab-sem .pill.bleu{background:#e2eefb;color:#2b5e9e;}
   .tab-sem input.obj-in{width:78px;text-align:right;border:1.5px solid #a9dcea;background:#fff;font:inherit;font-weight:600;padding:4px 6px;border-radius:8px;}
@@ -1620,7 +1622,7 @@ function tableauSemaine(annee, m, debut, numSem){
   figerSiTerminee(debut, tous);
   const etatBloc = F ? `<div class="bloque">🔒 Chiffres bloqués et enregistrés le ${new Date(F.figeLe).toLocaleString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</div>`
     : (d7 > new Date() ? `<div class="encours-b">🟢 Semaine en cours — les chiffres seront bloqués mercredi soir à minuit</div>` : '');
-  return `<div class="tab-sem">${etatBloc}<table>
+  return `<div class="tab-sem"><div class="tab-actions"><button class="btn-imprimer" onclick="imprimerSemaine('${titre.replace(/'/g, '')}', ${numSem})">🖨️ Imprimer / PDF</button></div>${etatBloc}<table>
     <thead><tr><th rowspan="2">${titre}</th><th colspan="2" class="c-groupe">Pièces</th><th colspan="3" class="c-groupe">CHF</th><th rowspan="2" class="c-ok"></th><th colspan="2" class="c-groupe c-prevh">Semaine passée</th></tr>
     <tr><th class="c-obj">Objectif</th><th class="c-fait">Vendues</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th><th class="c-prev">Pièces</th><th class="c-prev">CHF</th></tr></thead>
     <tbody>${totLigne(`SEMAINE ${numSem} · nouveautés de la semaine`, total, 'tot')}
@@ -1632,6 +1634,24 @@ function tableauSemaine(annee, m, debut, numSem){
 }
 
 let semaineFocus = null;
+// Imprimer (ou enregistrer en PDF) le tableau de la semaine + les 2 courbes, propre, sur une page A4 en largeur.
+function imprimerSemaine(titre, num){
+  const src = document.querySelector('.tab-sem-wrap .sem-duo'); if (!src) return;
+  const c = src.cloneNode(true);
+  c.querySelectorAll('input.obj-in').forEach(i => { const sp = document.createElement('span'); sp.textContent = i.value ? Number(i.value).toLocaleString('fr-CH') : '—'; i.replaceWith(sp); });
+  c.querySelectorAll('tr.ajout, .pill-btn, .gs-clic, .tab-actions, .note a, .ok-box:not(.on)').forEach(e => e.remove());
+  c.querySelectorAll('.gs-leg span:last-child').forEach(e => e.remove());
+  const styles = [...document.querySelectorAll('style, link[rel="stylesheet"]')].map(e => e.outerHTML).join('');
+  const w = window.open('', '_blank'); if (!w) { alert('Autorise les fenêtres pour imprimer'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Semaine ${num} — ${titre} — R&D Amila</title>${styles}
+    <style>@page{size:A4 landscape;margin:7mm;} html,body{background:#fff !important;margin:0;} body{padding:0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .imp-tete{font:700 15px Poppins,sans-serif;color:#3a2f27;margin:0 0 6px;display:flex;justify-content:space-between;} .imp-tete small{font-weight:500;color:#8a7d70;}
+    .sem-duo{flex-wrap:nowrap !important;gap:10px !important;zoom:.72;} .sem-duo>.tab-sem{flex:1 1 60% !important;max-width:none !important;box-shadow:none !important;border:1px solid #e8e0d6;}
+    .graphes{flex:0 0 38% !important;max-width:none !important;} .graphe-stat{box-shadow:none !important;break-inside:avoid;} tr{break-inside:avoid;}</style></head>
+    <body><div class="imp-tete"><span>R&D — Semaine ${num} · ${titre}</span><small>Amila Pousaz · imprimé le ${new Date().toLocaleDateString('fr-CH')}</small></div>${c.outerHTML}</body></html>`);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 700);
+}
 // ---- Les 2 courbes de stats (à droite du tableau) : Game Changer + Nouvelles collections de la semaine ----
 // Historique repris des graphiques d'Amila (semaine finissant le mercredi → clé = jeudi de début).
 const totauxSemaine = {};
@@ -1677,7 +1697,7 @@ function grapheStat(cle, titre, debutCourant){
   sem.forEach((d, i) => { const fin = new Date(decalerISO(d, 6) + 'T00:00:00'); g += `<line x1="${x(i)}" x2="${x(i)}" y1="${Y0}" y2="${Y1}" class="gs-grille"/><text transform="translate(${x(i) + 4},${Y1 + 12}) rotate(-55)" text-anchor="end" class="gs-axe${d === debutCourant ? ' gs-cour' : ''}">${String(fin.getDate()).padStart(2, '0')} ${MOIS[fin.getMonth()]}</text>`; });
   let lignes = '', marques = '', obj = '';
   pts.forEach((p, i) => {
-    if (p.obj) obj += `<line x1="${x(i) - 13}" x2="${x(i) + 13}" y1="${y(p.obj)}" y2="${y(p.obj)}" class="gs-obj"/>` + (p.d === debutCourant ? `<text x="${x(i) - 16}" y="${y(p.obj) + 4}" text-anchor="end" class="gs-objt">objectif ${fmt(p.obj)}</text>` : '');
+    if (p.obj) obj += `<line x1="${x(i) - 13}" x2="${x(i) + 13}" y1="${y(p.obj)}" y2="${y(p.obj)}" class="gs-obj"/>` + (p.d === debutCourant ? `<text x="${x(i) + 13}" y="${y(p.obj) - 7}" text-anchor="end" class="gs-objt">objectif ${fmt(p.obj)}</text>` : '');
     if (!p.val) return;
     const prev = i > 0 ? pts[i - 1].val : null;
     if (prev) lignes += `<line x1="${x(i - 1)}" y1="${y(prev.v)}" x2="${x(i)}" y2="${y(p.val.v)}" class="${p.val.v < prev.v ? 'gs-bas' : 'gs-haut'}${p.d === debutCourant ? ' gs-encours' : ''}"/>`;
