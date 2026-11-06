@@ -4,7 +4,7 @@
 //    Joaillerie (pièces vendues plus de 600.- sur yourmood.net + tout le site Mood Joaillerie)
 import { NextResponse } from "next/server";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 const DOMAIN = process.env.MOOD_SHOPIFY_DOMAIN || process.env.SHOPIFY_STORE;
@@ -72,6 +72,13 @@ async function gql(query: string, variables: Record<string, unknown>) {
   return null;
 }
 
+// minuit à Zurich pour un jour donné (gère l'heure d'été)
+function minuitZurich(iso: string): Date {
+  const g = new Date(iso + "T00:00:00Z");
+  const z = new Date(g.toLocaleString("en-US", { timeZone: "Europe/Zurich" }));
+  const u = new Date(g.toLocaleString("en-US", { timeZone: "UTC" }));
+  return new Date(g.getTime() - (z.getTime() - u.getTime()));
+}
 const montant = (l: Ligne) => parseFloat(l.price) * l.quantity - (l.discount_allocations || []).reduce((s, d) => s + parseFloat(d.amount), 0);
 
 export async function GET(request: Request) {
@@ -79,9 +86,10 @@ export async function GET(request: Request) {
   const u = new URL(request.url);
   const debutStr = u.searchParams.get("debut");
   if (!debutStr || !/^\d{4}-\d{2}-\d{2}$/.test(debutStr)) return NextResponse.json({ error: "debut=YYYY-MM-DD requis" }, { status: 400 });
-  // semaine commerciale : jeudi 00:00 → mercredi 23:59 (heure suisse ≈ UTC+1)
-  const debut = new Date(debutStr + "T00:00:00+01:00");
-  const fin = new Date(debut.getTime() + 7 * 86400000 - 1);
+  // semaine commerciale : jeudi 00:00 → mercredi 23:59:59 (vraie heure suisse, été comme hiver)
+  const debut = minuitZurich(debutStr);
+  const jeudiSuivant = new Date(Date.UTC(+debutStr.slice(0, 4), +debutStr.slice(5, 7) - 1, +debutStr.slice(8, 10) + 7)).toISOString().slice(0, 10);
+  const fin = new Date(minuitZurich(jeudiSuivant).getTime() - 1);
   const enCours = Date.now() < fin.getTime();
   const ck = `mood:rd-semaine:v4:${debutStr}`;
   // semaine terminée et déjà bloquée : chiffres définitifs, on ne recalcule plus jamais

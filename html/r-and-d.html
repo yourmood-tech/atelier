@@ -750,6 +750,7 @@
   .gs-leg i{display:inline-block;width:16px;height:0;border-top:3px dashed #2d8a4e;vertical-align:middle;margin-right:5px;} .gs-leg i.lg-ok{width:9px;height:9px;border:0;border-radius:50%;background:#2d8a4e;}
   .tab-actions{display:flex;justify-content:flex-end;padding:8px 10px 0;background:#fff;}
   .btn-imprimer{font:600 .78rem Poppins,sans-serif;border:1px solid #d9cfc4;background:#fff;color:#3a2f27;border-radius:999px;padding:6px 14px;cursor:pointer;} .btn-imprimer:hover{background:#f4eee7;}
+  .tab-sem tr.ligne-ok>td{background:#d6f0d9 !important;} .tab-sem tr.ligne-ok>td:first-child{box-shadow:inset 4px 0 0 #2d8a4e;} .tab-sem tr.ligne-ok .obj-in{background:#f3fbf4;}
   .tab-sem .pill-btn{font:inherit;font-size:.66rem;font-weight:600;border:1px dashed #b9d9c2;background:#fff;color:#2d8a4e;border-radius:999px;padding:1px 8px;cursor:pointer;margin-left:4px;} .tab-sem .pill-btn:hover{background:#dff2e4;}
   .tab-sem .pill.vert{background:#dff2e4;color:#2d8a4e;} .tab-sem .pill.bleu{background:#e2eefb;color:#2b5e9e;}
   .tab-sem input.obj-in{width:78px;text-align:right;border:1.5px solid #a9dcea;background:#fff;font:inherit;font-weight:600;padding:4px 6px;border-radius:8px;}
@@ -1510,6 +1511,7 @@ async function verifierDejaSortis(debut){
 
 function ventesSemaineProduit(p, debut){
   const D = semaineData[debut];
+  if (D && D.source === 'bloque' && D.ventesParProduit && (p.shopifyIds || []).length) { let qty = 0, total = 0; p.shopifyIds.forEach(id => { const v = D.ventesParProduit[id]; if (v) { qty += v.qty; total += v.total; } }); return { qty, total, sur: true }; }
   const parTag = !!((p.tag && p.tag.trim() && !/^https?:/i.test(p.tag.trim())) || (p.shopifySearch && p.shopifySearch.trim()));
   if (parTag && semaineAnalyseeISO() === debut) { let r = null; try { r = ventesReelles[p.id]; } catch(e) {} if (r) return { qty: Number(r.qty) || 0, total: Number(r.total) || 0, sur: true }; }
   if (D && D.ventesParProduit && (p.shopifyIds || []).length) {
@@ -1583,7 +1585,7 @@ function tableauSemaine(annee, m, debut, numSem){
     const ok = v.oc > 0 && v.fc >= v.oc, okq = v.oq > 0 && v.fq >= v.oq, r = v.oc - v.fc;
     const inQ = opts.editQ ? `<input class="obj-in" type="number" value="${v.oq || ''}" placeholder="pièces" onclick="event.stopPropagation()" onchange="${opts.editQ}">` : (v.oq ? n(v.oq) : '—');
     const inC = opts.editC ? `<input class="obj-in" type="number" value="${v.oc || ''}" placeholder="CHF" onclick="event.stopPropagation()" onchange="${opts.editC}">` : (v.oc ? n(v.oc) : '—');
-    return `<tr class="ligne"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
+    return `<tr class="ligne${ok || okq ? ' ligne-ok' : ''}"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
       <td class="c-obj c-q">${inQ}</td><td class="c-obj">${inC}</td>
       <td class="c-fait c-q${okq ? ' atteint' : ''}">${charge ? n(v.fq) : '…'}</td><td class="c-fait${ok ? ' atteint' : ''}">${charge ? n(v.fc) : '…'}</td>
       <td class="c-reste${v.oc && charge && r < 0 ? ' neg' : ''}">${v.oc && charge ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok || okq ? ' on' : ''}">${ok || okq ? '✓' : ''}</span></td>
