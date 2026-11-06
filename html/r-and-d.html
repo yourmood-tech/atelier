@@ -1439,7 +1439,11 @@ function reconcilierSemaine(debut){
   let change = false;
   D.sorties.forEach(sx => {
     const sid = String(sx.id);
-    if ((donnees.produits || []).some(p => (p.shopifyIds || []).includes(sid))) return; // déjà rangée
+    const lie = (donnees.produits || []).find(p => (p.shopifyIds || []).includes(sid));
+    if (lie) { // déjà rangée — si elle attendait d'être mise en ligne, on note son jour de sortie
+      if (!lie.dateSortie && !lie.auto) { const j = jourSuisse(sx.publishedAt); lie.dateSortie = j; if (j >= debut) { lie.date = j; lie.extraSemaine = false; } delete lie.pasEnLigne; lie.etape = Math.max(lie.etape || 1, 8); change = true; }
+      return;
+    }
     const jour = jourSuisse(sx.publishedAt); const titreMots = new Set(motsCles(sx.title)); const tagsS = (sx.tags || []).map(t => t.toLowerCase());
     const prevu = (donnees.produits || []).find(p => {
       if (p.auto || !p.date) return false;
@@ -1593,6 +1597,7 @@ function tableauSemaine(annee, m, debut, numSem){
     const v = { oq: +p.objectifQty || 0, fq: v0.qty, oc: +p.objectifCA || 0, fc: v0.total, pq: prevOk ? vp.qty : 0, pc: prevOk ? vp.total : 0 }; add(gc, v);
     const dejaAvant = p.dateSortie && p.dateSortie < debut;
     const etat = p.auto ? `<span class="pill bleu">🤖 ajouté auto · sorti ${jourDe(p.date)}</span>`
+      : ((p.shopifyIds || []).length && !p.dateSortie) ? `<span class="pill bleu">🔗 reliée au site · pas encore en ligne</span>`
       : (p.shopifyIds || []).length ? (dejaAvant ? `<span class="pill vert">✅ déjà sortie le ${new Date(p.dateSortie + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}</span>` : `<span class="pill vert">✅ sorti ${jourDe(p.dateSortie || p.date)}</span>`)
       : p.dejaSortie ? `<span class="pill vert">✅ déjà sortie</span> <button class="pill-btn" onclick="event.stopPropagation();basculerDejaSortie('${p.id}')" title="Annuler">↩︎</button>`
       : (p.extraSemaine ? `<span class="pill">📝 prévue cette semaine</span>` : `<span class="pill">prévu ${jourDe(p.date)}</span>`) + ` <button class="pill-btn" onclick="event.stopPropagation();basculerDejaSortie('${p.id}')">✅ déjà sortie</button>`;
