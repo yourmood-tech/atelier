@@ -1670,8 +1670,18 @@ function objectifsDeSemaine(debut){
 function valeurStat(cle, debut){
   const man = ((donnees.statsGraph || {})[cle] || {})[debut]; if (man != null && man !== '') return { v: +man, src: 'main' };
   if (STATS_HISTO[cle][debut] != null) return { v: STATS_HISTO[cle][debut], src: 'histo' };
-  const t = totauxSemaine[debut]; if (t && t.charge) return { v: Math.round(t[cle]), src: 'auto' };
+  const t = totauxCalcules(debut); if (t) return { v: Math.round(t[cle]), src: 'auto' };
+  // semaine pas encore chargée : on va chercher ses chiffres enregistrés (la courbe se redessine toute seule)
+  if (new Date(debut + 'T00:00:00') <= new Date() && !semaineData[debut] && !semaineChargement[debut]) setTimeout(() => chargerSemaineData(debut), 0);
   return null;
+}
+// Total Game changer / total de la semaine, à partir des chiffres enregistrés (sans avoir besoin d'ouvrir la semaine)
+function totauxCalcules(debut){
+  const F = figee(debut), D = semaineData[debut]; if (!F && !(D && D.ventesParProduit)) return null;
+  const d0 = new Date(debut + 'T00:00:00'), d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
+  let gc = 0; (donnees.produits || []).forEach(p => { if (!p.date || FIXE_RX.test(p.nom || '')) return; const d = new Date(p.date + 'T00:00:00'); if (d >= d0 && d < d7) gc += venteAffichee(p, debut).total || 0; });
+  let tl = 0; ['starter', 'garde', 'joaillerie', 'coffret'].forEach(k => { const f = fixeAffiche(debut, k); tl += f ? (f.total || 0) : 0; });
+  return { gc, nc: gc + tl };
 }
 function corrigerStat(cle, debut){
   const act = valeurStat(cle, debut);
