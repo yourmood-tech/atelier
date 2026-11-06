@@ -251,6 +251,15 @@ export async function setIceleaTags(orderId: number, poNumber: string, deliveryF
   await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: newTags } });
 }
 
+// Bons Vacor (traitement Black / Pink Gold) : une étiquette « Vacor-PO:<n°> » par bon, sans toucher aux étiquettes Icelea.
+export async function setVacorTags(orderId: number, poNumbers: string[]): Promise<void> {
+  const current = await shopifyFetch(`/orders/${orderId}.json?fields=id,tags`);
+  const existing: string[] = (current.order.tags as string).split(",").map((t: string) => t.trim()).filter(Boolean);
+  const add = poNumbers.map((n) => `Vacor-PO:${n}`).filter((t) => !existing.includes(t));
+  if (!add.length) return;
+  await shopifyPut(`/orders/${orderId}.json`, { order: { id: orderId, tags: [...existing, ...add].join(", ") } });
+}
+
 // Écritures brutes (outil SAV : étiquettes, notes, commande d'échange).
 export async function shopifyWrite(method: "POST" | "PUT", path: string, body: unknown): Promise<Record<string, unknown>> {
   return method === "POST" ? shopifyPost(path, body) : shopifyPut(path, body);

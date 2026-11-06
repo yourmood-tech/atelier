@@ -50,6 +50,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Créez un ordre d'achat Icelea depuis Katana : scan produit, choix taille, confirmation ingrédients.",
       },
       {
+        href: "/vacor-po",
+        emoji: "🎨",
+        title: "Commande Vacor",
+        description: "Bons de traitement Black / Pink Gold chez Vacor : scan des commandes clientes, un bon par couleur avec les pièces à traiter.",
+      },
+      {
         href: "/icelea-prix",
         emoji: "💲",
         title: "Prix Icelea",
