@@ -703,6 +703,30 @@
   .sem-tuile .st-photos{display:flex;gap:4px;margin:8px 0 6px;min-height:36px;flex-wrap:wrap;}
   .sem-tuile .st-photos img{width:36px;height:36px;border-radius:9px;object-fit:cover;border:2px solid rgba(255,255,255,.75);background:#fff;}
   .sem-tuile .chip{background:rgba(255,255,255,.9);color:#222;border-radius:999px;padding:3px 9px;font-size:.7rem;font-weight:700;display:inline-block;margin:2px 3px 0 0;}
+  .tab-sem{max-width:760px;margin:0 0 16px;border-radius:16px;overflow:hidden;box-shadow:0 6px 20px rgba(60,40,20,.08);background:#fff;font-variant-numeric:tabular-nums;}
+  .tab-sem table{width:100%;border-collapse:collapse;}
+  .tab-sem th,.tab-sem td{padding:9px 12px;font-size:.92rem;}
+  .tab-sem thead th{background:#f1ece5;font-family:'Playfair Display',serif;font-size:1.15rem;text-align:right;color:#26221f;}
+  .tab-sem thead th:first-child{text-align:left;font-size:1.25rem;}
+  .tab-sem .c-obj{background:#e6f6fa;text-align:right;width:105px;}
+  .tab-sem .c-fait{background:#ecf8e8;text-align:right;width:105px;}
+  .tab-sem .c-reste{background:#fcebf1;text-align:right;width:105px;}
+  .tab-sem .c-ok{width:40px;text-align:center;background:#fff;}
+  .tab-sem thead .c-obj{background:#cdeef6;} .tab-sem thead .c-fait{background:#d7f1cf;} .tab-sem thead .c-reste{background:#f7d6e2;}
+  .tab-sem tr.tot td{background:#4a4440 !important;color:#fff;font-weight:700;}
+  .tab-sem tr.tot td.c-reste{color:#ffb3cf;}
+  .tab-sem tr.ligne{cursor:pointer;}
+  .tab-sem tr.ligne:hover td:first-child{color:#b8892f;}
+  .tab-sem tr.ligne td:first-child{font-weight:600;}
+  .tab-sem td.atteint{background:#c4ecb6 !important;font-weight:700;}
+  .tab-sem .neg{color:#2d8a4e;font-weight:700;}
+  .tab-sem .vide td{color:#a99f94;font-style:italic;text-align:left;}
+  .tab-sem .ok-box{display:inline-block;width:20px;height:20px;border-radius:6px;border:2px solid #cfc6ba;line-height:16px;font-size:13px;color:#2d8a4e;}
+  .tab-sem .ok-box.on{border-color:#7cc58f;background:#e3f4e8;}
+  .tab-sem input.obj-glob{width:90px;text-align:right;border:1px solid transparent;background:transparent;color:#fff;font-weight:700;font-size:.92rem;font-family:inherit;padding:0;}
+  .tab-sem input.obj-glob:hover,.tab-sem input.obj-glob:focus{border-color:#cdeef6;background:#5a534e;}
+  .tab-sem .note{font-size:.72rem;color:#8a7f73;padding:8px 12px;background:#faf7f2;}
+  .voir-jours{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px 8px;}
   .sem-retour{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px;}
 
 </style>
@@ -1341,9 +1365,49 @@ function rendreMosaique(){
   }
   el.innerHTML = html;
 }
+
+function semaineAnalyseeISO(){ const ref = semaineRef ? new Date(semaineRef + 'T12:00:00Z') : new Date(); return semaineCommercialeFront(ref).debut.toISOString().slice(0,10); }
+function faitProduit(p){ let r = null; try { r = ventesReelles[p.id]; } catch(e) {} return (p.ventesForce && +p.ventes > 0) ? +p.ventes : (r ? (Number(r.total) || 0) : (+p.ventes || 0)); }
+let joursVisibles = false;
+function basculerJours(){ joursVisibles = !joursVisibles; appliquerVueMois(false); }
+function setObjectifGlobal(debut, val){ donnees.objectifsSemaine = donnees.objectifsSemaine || {}; donnees.objectifsSemaine[debut] = +val || 0; sauverDonnees(); appliquerVueMois(false); }
+function tableauSemaine(annee, m, debut, numSem){
+  const d0 = new Date(debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7); const fin = new Date(d0); fin.setDate(fin.getDate() + 6);
+  const fmtJ = d => d.getDate(); const moisNom = NOMS_MOIS[fin.getMonth()].toUpperCase();
+  const titre = d0.getMonth() === fin.getMonth() ? `Du ${fmtJ(d0)} au ${fmtJ(fin)} ${moisNom}` : `Du ${fmtJ(d0)} ${NOMS_MOIS[d0.getMonth()].toUpperCase()} au ${fmtJ(fin)} ${moisNom}`;
+  const ventesOK = semaineAnalyseeISO() === debut;
+  const enDate = p => { if (!p.date) return null; return new Date(p.date + 'T00:00:00'); };
+  const prods = (donnees.produits || []).filter(p => { const d = enDate(p); return d && d >= d0 && d < d7; }).sort((a, b) => a.date.localeCompare(b.date));
+  const n = v => Math.round(v).toLocaleString('fr-CH');
+  let to = 0, tf = 0, rows = '';
+  prods.forEach(p => {
+    const o = +p.objectifCA || 0, f = ventesOK ? faitProduit(p) : 0, r = o - f; to += o; tf += f; const ok = o > 0 && f >= o;
+    rows += `<tr class="ligne" onclick="ouvrirModalEdit('${p.id}')" title="Ouvrir la fiche">
+      <td>${escapeHtml(p.nom || '(sans nom)')}</td><td class="c-obj">${o ? n(o) : '—'}</td><td class="c-fait${ok ? ' atteint' : ''}">${ventesOK ? n(f) : '…'}</td>
+      <td class="c-reste${o && ventesOK && r < 0 ? ' neg' : ''}">${o && ventesOK ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok ? ' on' : ''}">${ok ? '✓' : ''}</span></td></tr>`;
+  });
+  if (!prods.length) rows = '<tr class="vide"><td colspan="5">Aucune nouveauté prévue cette semaine.</td></tr>';
+  // toutes les nouveautés du mois sorties jusqu'ici : ce qu'elles ont vendu cette semaine
+  const mois0 = new Date(annee, m, 1);
+  const tousMois = (donnees.produits || []).filter(p => { const d = enDate(p); return d && d >= mois0 && d < d7; });
+  const fg = ventesOK ? tousMois.reduce((s, p) => s + faitProduit(p), 0) : 0;
+  const og = (donnees.objectifsSemaine || {})[debut] || 0;
+  return `<div class="tab-sem"><table>
+    <thead><tr><th>${titre}</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th><th class="c-ok"></th></tr></thead>
+    <tbody>
+      <tr class="tot"><td>SEMAINE ${numSem} · nouveautés de la semaine</td><td class="c-obj">${n(to)}</td><td class="c-fait">${ventesOK ? n(tf) : '…'}</td><td class="c-reste">${ventesOK ? n(to - tf) : '—'}</td><td class="c-ok"></td></tr>
+      ${rows}
+      <tr class="tot"><td>SEMAINE ${numSem} · toutes les nouveautés de ${NOMS_MOIS[m].toLowerCase()}</td>
+        <td class="c-obj"><input class="obj-glob" value="${og || ''}" placeholder="objectif" onclick="event.stopPropagation()" onchange="setObjectifGlobal('${debut}', this.value)"></td>
+        <td class="c-fait">${ventesOK ? n(fg) : '…'}</td><td class="c-reste">${og && ventesOK ? n(og - fg) : '—'}</td><td class="c-ok"></td></tr>
+    </tbody></table>
+    ${ventesOK ? '<div class="note">Fait = vraies ventes de la semaine (du jeudi au mercredi), site et boutiques, taxes comprises.</div>' : '<div class="note">⏳ Chargement des ventes de cette semaine…</div>'}
+  </div>`;
+}
+
 let semaineFocus = null;
 function ouvrirFocusMois(annee, m){ moisFocus = `${annee}-${m}`; semaineFocus = null; majFocusStockage(); appliquerVueMois(true); }
-function ouvrirSemaine(debut){ semaineFocus = debut; appliquerVueMois(true); }
+function ouvrirSemaine(debut){ semaineFocus = debut; joursVisibles = false; if (semaineAnalyseeISO() !== debut) { semaineRef = debut; majLabelSemaine(); chargerVentesReelles(); } appliquerVueMois(true); }
 function fermerSemaine(){ semaineFocus = null; appliquerVueMois(true); }
 function rendreSemainesTuiles(moisEl, annee, m){
   const th = THEMES_MOIS[`${annee}-${m}`];
@@ -1356,7 +1420,7 @@ function rendreSemainesTuiles(moisEl, annee, m){
   sems.forEach((sem, i) => {
     const d0 = new Date(sem.debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
     const prods = (donnees.produits || []).filter(p => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= d0 && d < d7; });
-    let real = 0, obj = 0; prods.forEach(p => { obj += (+p.objectifCA || 0); let r = null; try { r = ventesReelles[p.id]; } catch(e) {} real += r ? (Number(r.total) || 0) : (+p.ventes || 0); });
+    let real = 0, obj = 0; const vOK = semaineAnalyseeISO() === sem.debut; prods.forEach(p => { obj += (+p.objectifCA || 0); if (vOK) real += faitProduit(p); });
     const evs = []; for (let k = 0; k < 7; k++) { const dd = new Date(d0); dd.setDate(dd.getDate() + k); getEventsForDate(dateISOLocal(dd)).forEach(e => { if (!evs.includes(e.nom)) evs.push(e.nom); }); }
     const fin = new Date(d0); fin.setDate(fin.getDate() + 6);
     const passee = fin < today, encours = d0 <= today && today <= fin;
@@ -1404,9 +1468,15 @@ function appliquerVueMois(scrollTop){
         if (!back) { back = document.createElement('button'); back.className = 'sem-retour'; back.textContent = '← Toutes les semaines du mois'; back.onclick = fermerSemaine; weeks.parentNode.insertBefore(back, weeks); }
         if (tog) tog.style.display = 'none';
         x.classList.toggle('focus-semaine', !!semaineFocus);
-        if (!semaineFocus) { box.style.display = ''; weeks.style.display = 'none'; back.style.display = 'none'; }
+        if (!semaineFocus) { box.style.display = ''; weeks.style.display = 'none'; back.style.display = 'none'; const tw = x.querySelector('.tab-sem-wrap'); if (tw) tw.style.display = 'none'; }
         else {
-          box.style.display = 'none'; weeks.style.display = ''; back.style.display = '';
+          box.style.display = 'none'; back.style.display = '';
+          const sems = calculerSemainesMois(annee, m); const num = sems.findIndex(z => z.debut === semaineFocus) + 1;
+          let tab = x.querySelector('.tab-sem-wrap');
+          if (!tab) { tab = document.createElement('div'); tab.className = 'tab-sem-wrap'; weeks.parentNode.insertBefore(tab, weeks); }
+          tab.style.display = '';
+          tab.innerHTML = tableauSemaine(annee, m, semaineFocus, num || 1) + `<button class="voir-jours" onclick="basculerJours()">${joursVisibles ? '▲ Cacher les jours' : '📅 Voir les jours (pour ajouter ou déplacer)'}</button>`;
+          weeks.style.display = joursVisibles ? '' : 'none';
           x.querySelectorAll('.week').forEach(w => { const sel = w.dataset.debut === semaineFocus; w.style.display = sel ? '' : 'none'; if (sel) { w.classList.add('show'); w.style.opacity = '1'; } });
         }
       }
