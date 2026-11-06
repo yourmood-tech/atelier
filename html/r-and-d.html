@@ -733,6 +733,19 @@
   .tab-sem tr.sect td{background:#faf6f0;font-weight:800;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:#8a7f73;padding:10px 12px 6px;}
   .tab-sem .l-nom{font-weight:600;} .tab-sem .l-sous{margin-top:3px;} .tab-sem .l-petit{font-size:.72rem;color:#8a7f73;}
   .tab-sem .pill{display:inline-block;font-size:.68rem;font-weight:700;border-radius:999px;padding:2px 8px;background:#efe9e1;color:#6f655b;}
+  .sem-duo{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;} .sem-duo>.tab-sem{flex:1 1 640px;min-width:0;}
+  .graphes{flex:1 1 380px;max-width:620px;display:flex;flex-direction:column;gap:14px;}
+  .graphe-stat{background:#f5f5fc;border-radius:16px;padding:8px 8px 10px;box-shadow:0 6px 20px rgba(40,40,90,.08);}
+  .graphe-stat svg{width:100%;height:auto;display:block;font-family:'Times New Roman',Times,serif;}
+  .gs-t1{fill:#2a2f88;font-size:15px;} .gs-t2{fill:#2a2f88;font-size:20px;} .gs-t3{fill:#2a2f88;font-size:13px;}
+  .gs-axe{fill:#2a2f88;font-size:11px;} .gs-cour{font-weight:700;fill:#2d8a4e;}
+  .gs-grille{stroke:#cfcfd8;stroke-width:.8;} .gs-cadre{fill:none;stroke:#333;stroke-width:1.2;}
+  .gs-haut{stroke:#111;stroke-width:4;stroke-linecap:round;} .gs-bas{stroke:#c0281f;stroke-width:4;stroke-linecap:round;} .gs-encours{stroke-dasharray:7 5;}
+  .gs-val{fill:#2626b8;font-size:11px;paint-order:stroke;stroke:#f5f5fc;stroke-width:3px;} .gs-auto{font-style:italic;}
+  .gs-obj{stroke:#2d8a4e;stroke-width:3;stroke-dasharray:5 3;} .gs-objt{fill:#2d8a4e;font-size:11px;font-weight:700;font-family:Poppins,sans-serif;}
+  .gs-ok{fill:#2d8a4e;stroke:#fff;stroke-width:1.5;} .gs-clic{fill:transparent;cursor:pointer;} .gs-clic:hover{fill:rgba(42,47,136,.06);}
+  .gs-leg{display:flex;flex-wrap:wrap;gap:12px;font:600 .68rem Poppins,sans-serif;color:#6b6b8a;padding:4px 10px 0;}
+  .gs-leg i{display:inline-block;width:16px;height:0;border-top:3px dashed #2d8a4e;vertical-align:middle;margin-right:5px;} .gs-leg i.lg-ok{width:9px;height:9px;border:0;border-radius:50%;background:#2d8a4e;}
   .tab-sem .pill-btn{font:inherit;font-size:.66rem;font-weight:600;border:1px dashed #b9d9c2;background:#fff;color:#2d8a4e;border-radius:999px;padding:1px 8px;cursor:pointer;margin-left:4px;} .tab-sem .pill-btn:hover{background:#dff2e4;}
   .tab-sem .pill.vert{background:#dff2e4;color:#2d8a4e;} .tab-sem .pill.bleu{background:#e2eefb;color:#2b5e9e;}
   .tab-sem input.obj-in{width:78px;text-align:right;border:1.5px solid #a9dcea;background:#fff;font:inherit;font-weight:600;padding:4px 6px;border-radius:8px;}
@@ -1598,6 +1611,7 @@ function tableauSemaine(annee, m, debut, numSem){
     rowsTL += ligne(lab, sous ? `<span class="l-petit">${sous}</span>` : '', v, { editQ: `setObjectifFixe('${debut}','${k}','qty',this.value)`, editC: `setObjectifFixe('${debut}','${k}','ca',this.value)`, prevOk: !!fp });
   });
   const total = sum(); add(total, gc); add(total, tl);
+  totauxSemaine[debut] = { charge, gc: gc.fc, nc: total.fc };
   figerSiTerminee(debut, tous);
   const etatBloc = F ? `<div class="bloque">🔒 Chiffres bloqués et enregistrés le ${new Date(F.figeLe).toLocaleString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</div>`
     : (d7 > new Date() ? `<div class="encours-b">🟢 Semaine en cours — les chiffres seront bloqués mercredi soir à minuit</div>` : '');
@@ -1613,6 +1627,68 @@ function tableauSemaine(annee, m, debut, numSem){
 }
 
 let semaineFocus = null;
+// ---- Les 2 courbes de stats (à droite du tableau) : Game Changer + Nouvelles collections de la semaine ----
+// Historique repris des graphiques d'Amila (semaine finissant le mercredi → clé = jeudi de début).
+const totauxSemaine = {};
+const STATS_HISTO = (() => {
+  const fins = ['2026-08-12','2026-08-19','2026-08-26','2026-09-02','2026-09-09','2026-09-16','2026-09-23','2026-09-30','2026-10-07','2026-10-14','2026-10-21','2026-10-28','2026-11-04'];
+  const gc = [21414,14705,12151,8161,13518,5584,10335,20252,13849,7295,14963,27012,15036];
+  const nc = [31078,19871,19097,25009,21279,12691,18461,27342,21125,16909,22520,30268,26126];
+  const o = { gc: {}, nc: {} }; fins.forEach((f, i) => { const d = decalerISO(f, -6); o.gc[d] = gc[i]; o.nc[d] = nc[i]; }); return o;
+})();
+function objectifsDeSemaine(debut){
+  const d0 = new Date(debut + 'T00:00:00'), d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
+  let gc = 0; (donnees.produits || []).forEach(p => { if (!p.date || FIXE_RX.test(p.nom || '')) return; const d = new Date(p.date + 'T00:00:00'); if (d >= d0 && d < d7) gc += +p.objectifCA || 0; });
+  let tl = 0; ['starter', 'garde', 'joaillerie', 'coffret'].forEach(k => { tl += +(objectifFixe(debut, k).ca) || 0; });
+  return { gc, nc: gc + tl };
+}
+function valeurStat(cle, debut){
+  const man = ((donnees.statsGraph || {})[cle] || {})[debut]; if (man != null && man !== '') return { v: +man, src: 'main' };
+  if (STATS_HISTO[cle][debut] != null) return { v: STATS_HISTO[cle][debut], src: 'histo' };
+  const t = totauxSemaine[debut]; if (t && t.charge) return { v: Math.round(t[cle]), src: 'auto' };
+  return null;
+}
+function corrigerStat(cle, debut){
+  const act = valeurStat(cle, debut);
+  const r = prompt(`Chiffre de la semaine (CHF) — laisse vide pour reprendre le calcul automatique`, act ? act.v : '');
+  if (r === null) return;
+  donnees.statsGraph = donnees.statsGraph || { gc: {}, nc: {} }; donnees.statsGraph[cle] = donnees.statsGraph[cle] || {};
+  const v = r.replace(/[^\d.]/g, ''); if (v) donnees.statsGraph[cle][debut] = +v; else delete donnees.statsGraph[cle][debut];
+  sauverDonnees(); setTimeout(() => appliquerVueMois(false), 0);
+}
+function grapheStat(cle, titre, debutCourant){
+  const sem = [...Array(13)].map((_, i) => decalerISO(debutCourant, (i - 12) * 7));
+  const pts = sem.map(d => ({ d, val: valeurStat(cle, d), obj: objectifsDeSemaine(d)[cle] || 0 }));
+  const vals = pts.flatMap(p => [p.val ? p.val.v : null, p.obj || null]).filter(x => x != null);
+  if (!vals.length) vals.push(0, 10000);
+  let pas = [500, 1000, 2000, 2500, 5000, 10000].find(s => (Math.max(...vals) - Math.min(...vals)) / s <= 12) || 10000;
+  let lo = Math.floor(Math.min(...vals) / pas) * pas, hi = Math.ceil(Math.max(...vals) / pas) * pas; if (hi === lo) hi = lo + pas; if (lo < 0) lo = 0;
+  const W = 560, H = 400, X0 = 62, X1 = W - 18, Y0 = 78, Y1 = H - 58;
+  const x = i => X0 + (X1 - X0) * i / (sem.length - 1 + 0.6), y = v => Y1 - (Y1 - Y0) * (v - lo) / (hi - lo);
+  const fmt = v => Math.round(v).toLocaleString('fr-CH');
+  const MOIS = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  let g = '';
+  for (let v = lo; v <= hi + 1e-6; v += pas) g += `<line x1="${X0}" x2="${X1}" y1="${y(v)}" y2="${y(v)}" class="gs-grille"/><text x="${X0 - 6}" y="${y(v) + 4}" text-anchor="end" class="gs-axe">${fmt(v)}</text>`;
+  sem.forEach((d, i) => { const fin = new Date(decalerISO(d, 6) + 'T00:00:00'); g += `<line x1="${x(i)}" x2="${x(i)}" y1="${Y0}" y2="${Y1}" class="gs-grille"/><text transform="translate(${x(i) + 4},${Y1 + 12}) rotate(-55)" text-anchor="end" class="gs-axe${d === debutCourant ? ' gs-cour' : ''}">${String(fin.getDate()).padStart(2, '0')} ${MOIS[fin.getMonth()]}</text>`; });
+  let lignes = '', marques = '', obj = '';
+  pts.forEach((p, i) => {
+    if (p.obj) obj += `<line x1="${x(i) - 13}" x2="${x(i) + 13}" y1="${y(p.obj)}" y2="${y(p.obj)}" class="gs-obj"/>` + (p.d === debutCourant ? `<text x="${x(i) - 16}" y="${y(p.obj) + 4}" text-anchor="end" class="gs-objt">objectif ${fmt(p.obj)}</text>` : '');
+    if (!p.val) return;
+    const prev = i > 0 ? pts[i - 1].val : null;
+    if (prev) lignes += `<line x1="${x(i - 1)}" y1="${y(prev.v)}" x2="${x(i)}" y2="${y(p.val.v)}" class="${p.val.v < prev.v ? 'gs-bas' : 'gs-haut'}${p.d === debutCourant ? ' gs-encours' : ''}"/>`;
+    marques += `<text transform="translate(${x(i) - 3},${y(p.val.v) - 8}) rotate(-90)" class="gs-val${p.val.src === 'auto' ? ' gs-auto' : ''}">${fmt(p.val.v)}</text>`;
+    const atteint = p.obj && p.val.v >= p.obj;
+    if (atteint) marques += `<circle cx="${x(i)}" cy="${y(p.val.v)}" r="5" class="gs-ok"/>`;
+  });
+  const clics = pts.map((p, i) => `<rect x="${x(i) - 14}" y="${Y0}" width="28" height="${Y1 - Y0}" class="gs-clic" onclick="corrigerStat('${cle}','${p.d}')"><title>Corriger le chiffre de cette semaine</title></rect>`).join('');
+  return `<div class="graphe-stat"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <text x="${W / 2}" y="22" text-anchor="middle" class="gs-t1">Mood Collection</text>
+    <text x="${W / 2}" y="46" text-anchor="middle" class="gs-t2">Designer : ${titre}</text>
+    <text x="10" y="66" class="gs-t3">1 division = ${fmt(pas)}</text><text x="${W - 10}" y="66" text-anchor="end" class="gs-t3">Amila Pousaz</text>
+    ${g}<rect x="${X0}" y="${Y0}" width="${X1 - X0}" height="${Y1 - Y0}" class="gs-cadre"/>${obj}${lignes}${marques}${clics}</svg>
+    <div class="gs-leg"><span><i class="lg-obj"></i>objectif de la semaine</span><span><i class="lg-ok"></i>objectif atteint</span><span>clique sur une semaine pour corriger son chiffre</span></div></div>`;
+}
+
 function ouvrirFocusMois(annee, m){ moisFocus = `${annee}-${m}`; semaineFocus = null; majFocusStockage(); appliquerVueMois(true); }
 function ouvrirSemaine(debut){ semaineFocus = debut; joursVisibles = false; if (semaineAnalyseeISO() !== debut) { semaineRef = debut; majLabelSemaine(); chargerVentesReelles(); } appliquerVueMois(true); }
 function fermerSemaine(){ semaineFocus = null; appliquerVueMois(true); }
@@ -1682,7 +1758,7 @@ function appliquerVueMois(scrollTop){
           let tab = x.querySelector('.tab-sem-wrap');
           if (!tab) { tab = document.createElement('div'); tab.className = 'tab-sem-wrap'; weeks.parentNode.insertBefore(tab, weeks.nextSibling); }
           tab.style.display = '';
-          tab.innerHTML = tableauSemaine(annee, m, semaineFocus, num || 1);
+          tab.innerHTML = `<div class="sem-duo">${tableauSemaine(annee, m, semaineFocus, num || 1)}<div class="graphes">${grapheStat('gc', 'Game Changer', semaineFocus)}${grapheStat('nc', 'Nouvelles collections de la semaine', semaineFocus)}</div></div>`;
           weeks.style.display = '';
           x.querySelectorAll('.week').forEach(w => { const sel = w.dataset.debut === semaineFocus; w.style.display = sel ? '' : 'none'; if (sel) { w.classList.add('show'); w.style.opacity = '1'; } });
         }
