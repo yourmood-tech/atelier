@@ -322,14 +322,14 @@ export default function Home() {
           ))}
         </nav>
 
-        {/* Sections — 3 colonnes sur grand écran */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Sections — une bande pleine largeur par section, outils côte à côte */}
+        <div className="flex flex-col gap-10">
           {sections.map((section) => (
             <section key={section.id} id={section.id} className="scroll-mt-8">
               <h2 className="text-xs font-bold tracking-widest uppercase text-zinc-500 mb-3">
                 {section.title}
               </h2>
-              <div className="flex flex-col gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
                 {section.tools.map((tool) => (
                   <ToolCard key={tool.href + tool.title} tool={tool} />
                 ))}
