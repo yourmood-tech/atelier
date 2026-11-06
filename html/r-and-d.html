@@ -748,6 +748,25 @@
   .gs-ok{fill:#2d8a4e;stroke:#fff;stroke-width:1.5;} .gs-clic{fill:transparent;cursor:pointer;} .gs-clic:hover{fill:rgba(42,47,136,.06);}
   .gs-leg{display:flex;flex-wrap:wrap;gap:12px;font:600 .68rem Poppins,sans-serif;color:#6b6b8a;padding:4px 10px 0;}
   .gs-leg i{display:inline-block;width:16px;height:0;border-top:3px dashed #2d8a4e;vertical-align:middle;margin-right:5px;} .gs-leg i.lg-ok{width:9px;height:9px;border:0;border-radius:50%;background:#2d8a4e;}
+  .cal-a4-wrap{max-width:1180px;margin:18px auto 10px;}
+  .cal-a4{background:#fff;border-radius:18px;box-shadow:0 6px 20px rgba(60,40,20,.08);padding:16px 16px 18px;font-family:Poppins,sans-serif;}
+  .ca-tete{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .ca-titre{font:700 1.7rem 'Playfair Display',serif;color:#2a2a2a;text-transform:capitalize;} .ca-titre small{display:block;font:600 .72rem Poppins,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a0948a;margin-top:2px;}
+  .ca-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;} .ca-aide{font-size:.72rem;color:#8a7f73;}
+  .ca-grille{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(130px,auto);border-top:1px solid #ece4da;border-left:1px solid #ece4da;}
+  .ca-jn{grid-row:auto;min-height:0;padding:6px;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8a7f73;background:#faf6f1;border-right:1px solid #ece4da;border-bottom:1px solid #ece4da;text-align:center;}
+  .ca-grille>.ca-jn{height:auto;} .ca-grille{grid-template-rows:auto;}
+  .ca-jour{border-right:1px solid #ece4da;border-bottom:1px solid #ece4da;padding:5px;position:relative;transition:background .15s;min-width:0;}
+  .ca-jour.ca-vide{background:#fbf9f6;} .ca-jour.ca-jeudi{background:#fffaf2;} .ca-jour.ca-auj .ca-num{background:#2a2a2a;color:#fff;}
+  .ca-jour.drop-target{background:#eaf6ec;outline:2px dashed #2d8a4e;outline-offset:-3px;}
+  .ca-num{display:inline-block;min-width:22px;padding:1px 6px;border-radius:999px;font-weight:700;font-size:.8rem;color:#3a2f27;text-align:center;}
+  .ca-ev{font-size:.6rem;color:#b06a2c;font-weight:600;margin:2px 0;line-height:1.2;}
+  .ca-cartes{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+  .ca-carte{width:calc(50% - 2px);min-width:56px;flex:1 1 calc(50% - 2px);background:#fff;border:1px solid #eee3d7;border-radius:9px;overflow:hidden;cursor:grab;text-align:center;}
+  .ca-carte img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f6f1eb;} .ca-sansphoto{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#f6f1eb;font-size:1.3rem;}
+  .ca-carte span{display:block;font-size:.58rem;font-weight:600;line-height:1.15;padding:3px 3px 4px;color:#3a2f27;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .ca-carte.ca-sortie{border-color:#b9e0c3;cursor:pointer;} .ca-carte.ca-sortie span::before{content:'✅ ';}
+  .ca-carte:only-child{flex-basis:100%;max-width:100%;} .ca-carte img,.ca-sansphoto{max-height:92px;}
   .tab-actions{display:flex;justify-content:flex-end;padding:8px 10px 0;background:#fff;}
   .btn-imprimer{font:600 .78rem Poppins,sans-serif;border:1px solid #d9cfc4;background:#fff;color:#3a2f27;border-radius:999px;padding:6px 14px;cursor:pointer;} .btn-imprimer:hover{background:#f4eee7;}
   .tab-sem tr.ligne-ok>td{background:#d6f0d9 !important;} .tab-sem tr.ligne-ok>td:first-child{box-shadow:inset 4px 0 0 #2d8a4e;} .tab-sem tr.ligne-ok .obj-in{background:#f3fbf4;}
@@ -1638,6 +1657,45 @@ function tableauSemaine(annee, m, debut, numSem){
 }
 
 let semaineFocus = null;
+// ---- Calendrier A4 du mois : on glisse la photo d'un addon sur son jour de sortie ----
+function rendreCalA4(annee, m){
+  const premier = new Date(annee, m, 1), nbJours = new Date(annee, m + 1, 0).getDate();
+  const decal = (premier.getDay() + 6) % 7; // lundi en premier
+  const auj = dateISOLocal(new Date());
+  const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  // une ligne de ta liste reliée à des fiches remplace les lignes « auto » de ces mêmes fiches (pas de doublon)
+  const tous = donnees.produits || [];
+  const lies = new Set(tous.filter(p => !p.auto).flatMap(p => p.shopifyIds || []));
+  const photoDe = p => p.image || ((tous.find(q => q.auto && q.image && (q.shopifyIds || []).some(id => (p.shopifyIds || []).includes(id))) || {}).image) || '';
+  let cases = '';
+  for (let i = 0; i < decal; i++) cases += `<div class="ca-jour ca-vide"></div>`;
+  for (let d = 1; d <= nbJours; d++) {
+    const iso = `${annee}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    // jour réel de sortie s'il est connu, sinon le jour prévu
+    const prods = tous.filter(p => !FIXE_RX.test(p.nom || '') && !(p.auto && (p.shopifyIds || []).length && p.shopifyIds.every(id => lies.has(id))) && (p.dateSortie ? p.dateSortie === iso : (p.date === iso && !p.extraSemaine)));
+    const evs = getEventsForDate(iso).map(e => e.nom);
+    const cartes = prods.map(p => `<div class="ca-carte${p.dateSortie ? ' ca-sortie' : ''}" draggable="${p.dateSortie ? 'false' : 'true'}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="event.stopPropagation();ouvrirModalEdit('${p.id}')" title="${escapeHtml(p.nom || '')}">
+        ${photoDe(p) ? `<img src="${photoDe(p)}" alt="">` : `<div class="ca-sansphoto">💍</div>`}<span>${escapeHtml(nomCourt(p.nom))}</span></div>`).join('');
+    const jeudi = new Date(iso + 'T00:00:00').getDay() === 4;
+    cases += `<div class="ca-jour${iso === auj ? ' ca-auj' : ''}${jeudi ? ' ca-jeudi' : ''}" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${iso}')" ondblclick="ouvrirModalAjout('${iso}')">
+      <div class="ca-num">${d}</div>${evs.length ? `<div class="ca-ev">${evs.slice(0, 2).map(escapeHtml).join(' · ')}</div>` : ''}<div class="ca-cartes">${cartes}</div></div>`;
+  }
+  const reste = (7 - (decal + nbJours) % 7) % 7; for (let i = 0; i < reste; i++) cases += `<div class="ca-jour ca-vide"></div>`;
+  return `<div class="cal-a4"><div class="ca-tete"><div class="ca-titre">${NOMS_MOIS[m]} ${annee}<small>sorties des addons</small></div>
+      <div class="ca-actions"><span class="ca-aide">Glisse une photo sur un jour · double-clic pour ajouter · glisse une carte pour changer de jour</span><button class="btn-imprimer" onclick="imprimerCalA4('${NOMS_MOIS[m]} ${annee}')">🖨️ Imprimer / PDF</button></div></div>
+    <div class="ca-grille">${JOURS.map(j => `<div class="ca-jn">${j}</div>`).join('')}${cases}</div></div>`;
+}
+function nomCourt(n){ n = String(n || '(sans nom)').replace(/^[^\p{L}\d«"]+/u, ''); const m = n.match(/[«"]\s*([^»"]+?)\s*[»"]/); return (m ? m[1] : n).slice(0, 38); }
+function imprimerCalA4(titre){
+  const src = document.querySelector('.cal-a4-wrap .cal-a4'); if (!src) return;
+  const c = src.cloneNode(true); c.querySelectorAll('.ca-actions').forEach(e => e.remove());
+  const styles = [...document.querySelectorAll('style, link[rel="stylesheet"]')].map(e => e.outerHTML).join('');
+  const w = window.open('', '_blank'); if (!w) { alert('Autorise les fenêtres pour imprimer'); return; }
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Calendrier ${titre} — R&D Amila</title>${styles}
+    <style>@page{size:A4 landscape;margin:7mm;} html,body{background:#fff !important;margin:0;padding:0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .cal-a4{box-shadow:none !important;border:1px solid #e6ddd2;} .ca-grille{grid-auto-rows:minmax(118px,auto) !important;} .ca-jour{break-inside:avoid;}</style></head><body>${c.outerHTML}</body></html>`);
+  w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 900);
+}
 // Imprimer (ou enregistrer en PDF) la liste de la semaine (sans les courbes), sur une page A4 en hauteur.
 function imprimerSemaine(titre, num){
   const src = document.querySelector('.tab-sem-wrap .sem-duo'); if (!src) return;
@@ -1790,7 +1848,11 @@ function appliquerVueMois(scrollTop){
         if (!back) { back = document.createElement('button'); back.className = 'sem-retour'; back.textContent = '← Toutes les semaines du mois'; back.onclick = fermerSemaine; weeks.parentNode.insertBefore(back, weeks); }
         if (tog) tog.style.display = 'none';
         x.classList.toggle('focus-semaine', !!semaineFocus);
-        if (!semaineFocus) { box.style.display = ''; weeks.style.display = 'none'; back.style.display = 'none'; const tw = x.querySelector('.tab-sem-wrap'); if (tw) tw.style.display = 'none'; }
+        let cal = x.querySelector('.cal-a4-wrap');
+        if (!cal) { cal = document.createElement('div'); cal.className = 'cal-a4-wrap'; box.parentNode.insertBefore(cal, box.nextSibling); }
+        if (!semaineFocus) { box.style.display = ''; weeks.style.display = 'none'; back.style.display = 'none'; const tw = x.querySelector('.tab-sem-wrap'); if (tw) tw.style.display = 'none'; cal.style.display = ''; cal.innerHTML = rendreCalA4(annee, m); }
+        else cal.style.display = 'none';
+        if (!semaineFocus) {}
         else {
           box.style.display = 'none'; back.style.display = '';
           const sems = calculerSemainesMois(annee, m); const num = sems.findIndex(z => z.debut === semaineFocus) + 1;
