@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
     for (const { g, rows } of [...groups.values()].sort((a, b) => a.g.order - b.g.order)) {
       const orderIds = [...new Set(rows.flatMap((r) => r.orderIds))];
       const names = orderIds.map((id) => orderName.get(id)).filter(Boolean) as string[];
-      const note = `Traitement ${g.supplierName} ${g.colour}${names.length ? ` — commandes ${names.join(", ")}` : ""}`;
+      const what = g.colour ? `Traitement ${g.supplierName} ${g.colour}` : `Découpe ${g.supplierName}`;
+      const note = `${what}${names.length ? ` — commandes ${names.join(", ")}` : ""}`;
       const po = await createKatanaPOWithRows(
         g.supplierId,
         rows.map((r) => ({ variantId: r.variantId, quantity: r.quantity, pricePerUnit: r.pricePerUnit })),
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       );
       created.push({
         key: g.key,
-        label: `${g.supplierName} · ${g.colour}`,
+        label: g.colour ? `${g.supplierName} · ${g.colour}` : g.supplierName,
         bg: g.bg,
         poNumber: po.number,
         qty: rows.reduce((s, r) => s + r.quantity, 0),
@@ -83,8 +84,8 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           from: "katana@yourmood.net",
           to: "philippe@yourmood.net",
-          subject: `🎨 Bon(s) de traitement ${created.map((c) => c.poNumber).join(" + ")}`,
-          html: `<div style="font-family:sans-serif;max-width:600px;color:#111"><h2 style="margin-bottom:4px">🎨 Bon(s) de traitement créé(s)</h2>${blocks}</div>`,
+          subject: `🎨 Bon(s) fournisseurs ${created.map((c) => c.poNumber).join(" + ")}`,
+          html: `<div style="font-family:sans-serif;max-width:600px;color:#111"><h2 style="margin-bottom:4px">🎨 Bon(s) Technocut / Vacor / Positive Coating créé(s)</h2>${blocks}</div>`,
         }),
       }).catch(() => {});
     }

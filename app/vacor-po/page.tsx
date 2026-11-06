@@ -1,9 +1,10 @@
 "use client";
 
-// Commande traitements (Vacor + Positive Coating) : scanner les commandes clientes → les articles →
+// Commande Technocut (découpe 3D) + traitements (Vacor, Positive Coating) : scanner les commandes clientes → les articles →
 // un bon Katana par fournisseur et par couleur (Vacor Black / Pink Gold, Positive Coating bleus / chocolat)
 // avec les traitements de leurs recettes. Même geste que « Commande Icelea ».
 import { useEffect, useRef, useState } from "react";
+import { TREATMENT_SUPPLIERS } from "@/lib/vacor";
 
 type VacorIng = {
   variantId: number; name: string; sku: string | null; perUnit: number; purchasePrice: number;
@@ -61,6 +62,7 @@ export default function TraitementsPOPage() {
   const [buffer, setBuffer] = useState("");
   const [status, setStatus] = useState("Scannez une commande client");
   const [expectedArrival, setExpectedArrival] = useState("");
+  const [suppliers, setSuppliers] = useState<number[]>(TREATMENT_SUPPLIERS.map((x) => x.id));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedPo[]>([]);
@@ -99,7 +101,7 @@ export default function TraitementsPOPage() {
     patch(localId, { status: "resolving", productSku: sku });
     setStatus(`Lecture de la recette ${label}…`);
     try {
-      const res = await fetch("/api/vacor-po/resolve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sku }) });
+      const res = await fetch("/api/vacor-po/resolve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sku, suppliers }) });
       const data = (await res.json()) as { ok?: boolean; vacor?: VacorIng[]; error?: string };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Introuvable");
       patch(localId, { status: "ok", vacor: data.vacor ?? [], excluded: [] });
@@ -143,7 +145,7 @@ export default function TraitementsPOPage() {
           const o = { id: data.orderId!, name: data.orderName! };
           setCurrentOrder(o);
           setOrders((prev) => (prev.some((x) => x.id === o.id) ? prev : [...prev, o]));
-          setStatus(`✓ ${o.name} — scannez les articles colorés`);
+          setStatus(`✓ ${o.name} — scannez les articles`);
           beep();
         } catch (err) {
           setStatus(`✗ ${err instanceof Error ? err.message : "Commande introuvable"}`);
@@ -232,7 +234,7 @@ export default function TraitementsPOPage() {
       <div style={s.container}>
         <div style={{ textAlign: "center", padding: "40px 0" }}>
           <div style={{ fontSize: 48 }}>✓</div>
-          <h2 style={{ margin: "8px 0 16px" }}>{created.length > 1 ? `${created.length} bons de traitement créés` : "Bon de traitement créé"}</h2>
+          <h2 style={{ margin: "8px 0 16px" }}>{created.length > 1 ? `${created.length} bons créés` : "Bon créé"}</h2>
           {created.map((c) => (
             <div key={c.poNumber} style={{ border: "1px solid #eee", borderLeft: `6px solid ${c.bg}`, borderRadius: 6, padding: "10px 14px", margin: "0 auto 10px", maxWidth: 420, textAlign: "left" }}>
               <div style={{ fontWeight: 700 }}>{c.label} — {c.poNumber}</div>
@@ -254,7 +256,7 @@ export default function TraitementsPOPage() {
       <div style={s.container}>
         <div style={s.header}>
           <div>
-            <div style={s.title}>🎨 Commande Vacor · Positive Coating</div>
+            <div style={s.title}>🎨 Commande {TREATMENT_SUPPLIERS.filter((x) => suppliers.includes(x.id)).map((x) => x.name).join(" · ")}</div>
             <div style={{ color: "#555", fontSize: 13 }}>
               {totalQty} pièce(s) · {groups.length ? `${groups.length} bon(s)` : "aucun traitement"}
             </div>
@@ -315,7 +317,7 @@ export default function TraitementsPOPage() {
           );
         })}
 
-        {items.length === 0 && <div style={s.empty}>Scannez une commande client puis ses articles colorés (black, pink gold, bleus, chocolat)</div>}
+        {items.length === 0 && <div style={s.empty}>Scannez une commande client puis ses articles découpés ou colorés</div>}
 
         {items.map((item) => (
           <div key={item.localId} style={s.itemRow}>
@@ -390,13 +392,27 @@ export default function TraitementsPOPage() {
   // ── DÉPART ──
   return (
     <div style={s.container}>
-      <div style={s.title}>🎨 Commande Vacor · Positive Coating</div>
+      <div style={s.title}>🎨 Commande Technocut · Vacor · Positive Coating</div>
       <p style={{ color: "#555", fontSize: 14, lineHeight: 1.5 }}>
-        Traitement de surface des pièces colorées : Black et Pink Gold chez Vacor, bleus et chocolat chez
-        Positive Coating. Scannez les commandes clientes et leurs articles : l&apos;écran prépare un bon par
-        fournisseur et par couleur avec les pièces à traiter.
+        Pièces à faire découper (Technocut) ou à faire traiter (Vacor : black, pink gold · Positive Coating :
+        bleus, chocolat). Scannez les commandes clientes et leurs articles : l&apos;écran prépare un bon par
+        fournisseur, et par couleur pour les traitements.
       </p>
-      <div style={{ marginTop: 24 }}>
+      <div style={{ marginTop: 20 }}>
+        <label style={s.label}>Fournisseurs à commander</label>
+        {TREATMENT_SUPPLIERS.map((sup) => (
+          <label key={sup.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, padding: "4px 0", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              style={{ width: 18, height: 18 }}
+              checked={suppliers.includes(sup.id)}
+              onChange={(e) => setSuppliers((prev) => (e.target.checked ? [...prev, sup.id] : prev.filter((x) => x !== sup.id)))}
+            />
+            {sup.name} <span style={{ color: "#888", fontSize: 13 }}>— {sup.detail}</span>
+          </label>
+        ))}
+      </div>
+      <div style={{ marginTop: 20 }}>
         <label style={s.label}>Date de retour estimée (optionnel)</label>
         <input type="date" style={{ ...s.select, width: "auto", minWidth: 160 }} value={expectedArrival} onChange={(e) => setExpectedArrival(e.target.value)} />
       </div>
@@ -404,7 +420,8 @@ export default function TraitementsPOPage() {
         Flux : scanner la commande client → scanner les articles → Tab pour la commande suivante → Créer le(s) bon(s)
       </div>
       <button
-        style={{ ...s.btn, marginTop: 16, width: "100%", fontSize: 17, padding: "14px 0" }}
+        style={{ ...s.btn, marginTop: 16, width: "100%", fontSize: 17, padding: "14px 0", background: suppliers.length ? "#111" : "#ccc" }}
+        disabled={!suppliers.length}
         onClick={() => { setItems([]); setOrders([]); setCurrentOrder(null); setStatus("Scannez une commande client"); setPhase("scanning"); }}
       >
         Commencer à scanner

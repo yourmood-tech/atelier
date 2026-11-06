@@ -52,8 +52,8 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
       {
         href: "/vacor-po",
         emoji: "🎨",
-        title: "Commande Vacor · Positive Coating",
-        description: "Bons de traitement des pièces colorées (Vacor : black, pink gold · Positive Coating : bleus, chocolat) : scan des commandes clientes, un bon par fournisseur et par couleur.",
+        title: "Commande Technocut · Vacor · Positive Coating",
+        description: "Pièces à faire découper (Technocut, anneaux 3D) ou traiter (Vacor : black, pink gold · Positive Coating : bleus, chocolat) : scan des commandes clientes, un bon par fournisseur et par couleur.",
       },
       {
         href: "/icelea-prix",

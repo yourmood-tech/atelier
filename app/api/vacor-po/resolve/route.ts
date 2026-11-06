@@ -6,15 +6,16 @@ import { TREATMENT_SUPPLIER_IDS, treatmentGroup } from "@/lib/vacor";
 // de la recette (Black Chrome = 3 mediums noirs, Electric Blue = 4 minis + 1 medium bleu électrique…).
 export async function POST(req: NextRequest) {
   try {
-    const { sku } = (await req.json()) as { sku?: string };
+    const { sku, suppliers } = (await req.json()) as { sku?: string; suppliers?: number[] };
+    const wanted = suppliers?.length ? TREATMENT_SUPPLIER_IDS.filter((id) => suppliers.includes(id)) : TREATMENT_SUPPLIER_IDS;
     if (!sku?.trim()) return NextResponse.json({ error: "sku requis" }, { status: 400 });
 
     const recipe = await getRecipeWithSuppliers(sku.trim());
     if (!recipe) return NextResponse.json({ error: `Recette Katana introuvable pour ${sku}` }, { status: 404 });
 
-    const lines = recipe.ingredients.filter((i) => i.supplier && TREATMENT_SUPPLIER_IDS.includes(i.supplier.id));
+    const lines = recipe.ingredients.filter((i) => i.supplier && wanted.includes(i.supplier.id));
     if (!lines.length) {
-      return NextResponse.json({ error: `Aucun traitement Vacor ou Positive Coating dans la recette de « ${recipe.name} »` }, { status: 404 });
+      return NextResponse.json({ error: `Aucune pièce Technocut / Vacor / Positive Coating dans la recette de « ${recipe.name} »` }, { status: 404 });
     }
     return NextResponse.json({
       ok: true,
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
           purchasePrice: i.purchasePrice ?? 0,
           supplierId: i.supplier!.id,
           group: g.key,
-          groupLabel: `${g.supplierName} · ${g.colour}`,
+          groupLabel: g.colour ? `${g.supplierName} · ${g.colour}` : g.supplierName,
           bg: g.bg,
           order: g.order,
         };
