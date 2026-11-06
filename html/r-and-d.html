@@ -593,7 +593,7 @@
   .day.has-event{box-shadow:none;}
   .product-card,.product-card-image{background:#fff;border:1px solid #ece4d8;border-radius:12px;padding:6px;min-height:0;color:#26221f !important;text-shadow:none !important;display:block;box-shadow:0 2px 6px rgba(60,40,20,.06);margin-bottom:6px;}
   .product-card:hover{border-color:#c9a96e;box-shadow:0 6px 14px rgba(60,40,20,.12);}
-  .pc-img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;margin-bottom:6px;background:#f3eee7;}
+  .pc-img{display:block;width:100%;height:78px;object-fit:cover;border-radius:9px;margin-bottom:6px;background:#f3eee7;}
   .pc-top{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
   .pc-top .product-stage{position:static;width:18px;height:18px;font-size:10px;flex:none;}
   .pc-etape{font-size:.66rem;font-weight:700;color:#8a7f73;text-transform:uppercase;letter-spacing:.04em;}
@@ -726,6 +726,22 @@
   .tab-sem input.obj-glob{width:90px;text-align:right;border:1px solid transparent;background:transparent;color:#fff;font-weight:700;font-size:.92rem;font-family:inherit;padding:0;}
   .tab-sem input.obj-glob:hover,.tab-sem input.obj-glob:focus{border-color:#cdeef6;background:#5a534e;}
   .tab-sem .note{font-size:.72rem;color:#8a7f73;padding:8px 12px;background:#faf7f2;}
+  .tab-sem{max-width:980px;}
+  .tab-sem thead th.c-groupe{text-align:center;font-size:.8rem;font-family:Poppins,sans-serif;letter-spacing:.1em;text-transform:uppercase;background:#f1ece5;color:#8a7f73;padding:5px;}
+  .tab-sem thead tr:nth-child(2) th{font-size:.95rem;}
+  .tab-sem .c-q{width:80px;}
+  .tab-sem tr.sect td{background:#faf6f0;font-weight:800;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:#8a7f73;padding:10px 12px 6px;}
+  .tab-sem .l-nom{font-weight:600;} .tab-sem .l-sous{margin-top:3px;} .tab-sem .l-petit{font-size:.72rem;color:#8a7f73;}
+  .tab-sem .pill{display:inline-block;font-size:.68rem;font-weight:700;border-radius:999px;padding:2px 8px;background:#efe9e1;color:#6f655b;}
+  .tab-sem .pill.vert{background:#dff2e4;color:#2d8a4e;} .tab-sem .pill.bleu{background:#e2eefb;color:#2b5e9e;}
+  .tab-sem input.obj-in{width:70px;text-align:right;border:1px solid transparent;background:transparent;font:inherit;padding:2px 4px;border-radius:6px;}
+  .tab-sem input.obj-in:hover,.tab-sem input.obj-in:focus{border-color:#9fd8e6;background:#fff;}
+  .tab-sem tr.ajout td{padding:8px 12px;background:#fff;}
+  .tab-sem tr.ajout input,.tab-sem tr.ajout select{border:1px solid #e3d9c6;border-radius:8px;padding:6px 8px;font:inherit;font-size:.85rem;margin-right:6px;}
+  .tab-sem tr.ajout #np-nom{width:42%;} .tab-sem tr.ajout #np-qty,.tab-sem tr.ajout #np-ca{width:90px;}
+  .tab-sem tr.ajout button{background:#4a4440;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;}
+  .tab-sem .note a{color:#b8892f;margin-left:6px;}
+  .month.focus-semaine .recap-hebdo{display:none;}
   .voir-jours{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px 8px;}
   .sem-retour{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px;}
 
@@ -1371,37 +1387,127 @@ function faitProduit(p){ let r = null; try { r = ventesReelles[p.id]; } catch(e)
 let joursVisibles = false;
 function basculerJours(){ joursVisibles = !joursVisibles; appliquerVueMois(false); }
 function setObjectifGlobal(debut, val){ donnees.objectifsSemaine = donnees.objectifsSemaine || {}; donnees.objectifsSemaine[debut] = +val || 0; sauverDonnees(); appliquerVueMois(false); }
+const semaineData = {};          // debut -> réponse « semaine » (sorties + lignes fixes + ventes par produit)
+const semaineChargement = {};
+const MOTS_VIDES = new Set(['anneau','addon','addons','deux','tiers','medium','mediums','mini','minis','pack','en','argent','aluminium','acier','pour','bague','mood','interchangeable','de','du','des','la','le','les','et','avec','serti','sertis','925','base','small','large','extra','format','formats','choix','au','à','a']);
+function motsCles(t){ return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' ').split(' ').filter(w => w.length > 2 && !MOTS_VIDES.has(w)); }
+function jourSuisse(iso){ return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' }); }
+function nomPropre(t){ return (t || '').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/pour bague mood interchangeable/i,'').replace(/\s+/g,' ').trim(); }
+async function chargerSemaineData(debut, frais){
+  if (semaineChargement[debut]) return; semaineChargement[debut] = true;
+  try {
+    const r = await fetch('/api/r-and-d/semaine?debut=' + debut + (frais ? '&frais=1' : ''));
+    if (r.ok) { semaineData[debut] = await r.json(); reconcilierSemaine(debut); }
+    else semaineData[debut] = { erreur: r.status };
+  } catch(e) { semaineData[debut] = { erreur: 'réseau' }; }
+  semaineChargement[debut] = false;
+  rendreCalendrier();
+}
+// Les nouveautés vraiment sorties : on range celles de ta liste sur leur jour de sortie, on ajoute les autres toutes seules.
+function reconcilierSemaine(debut){
+  const D = semaineData[debut]; if (!D || !D.sorties) return;
+  const d0 = new Date(debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
+  const mois0 = new Date(d0.getFullYear(), d0.getMonth(), 1);
+  let change = false;
+  D.sorties.forEach(sx => {
+    const sid = String(sx.id);
+    if ((donnees.produits || []).some(p => (p.shopifyIds || []).includes(sid))) return; // déjà rangée
+    const jour = jourSuisse(sx.publishedAt); const titreMots = new Set(motsCles(sx.title)); const tagsS = (sx.tags || []).map(t => t.toLowerCase());
+    const prevu = (donnees.produits || []).find(p => {
+      if (p.auto || !p.date) return false;
+      const d = new Date(p.date + 'T00:00:00'); if (d < mois0 || d >= d7) return false;
+      if (p.tag && tagsS.includes(p.tag.trim().toLowerCase())) return true;
+      if (p.shopifySearch && sx.title.toLowerCase().includes(p.shopifySearch.trim().toLowerCase())) return true;
+      const mots = motsCles(p.nom); return mots.length > 0 && mots.every(w => titreMots.has(w));
+    });
+    if (prevu) {
+      prevu.shopifyIds = [...new Set([...(prevu.shopifyIds || []), sid])];
+      if (!prevu.dateSortie) { prevu.dateSortie = jour; prevu.date = jour; }
+      prevu.etape = Math.max(prevu.etape || 1, 8); change = true;
+    } else if (!donnees.produits.some(p => p.id === 'auto-' + sid)) {
+      donnees.produits.push({ id: 'auto-' + sid, nom: nomPropre(sx.title), date: jour, dateSortie: jour, auto: true, shopifyIds: [sid], image: sx.image || '', etape: 8, objectifCA: 0, objectifQty: 0 });
+      change = true;
+    }
+  });
+  if (change) sauverDonnees();
+}
+function ventesSemaineProduit(p, debut){
+  const D = semaineData[debut];
+  const parTag = !!((p.tag && p.tag.trim()) || (p.shopifySearch && p.shopifySearch.trim()));
+  if (parTag && semaineAnalyseeISO() === debut) { let r = null; try { r = ventesReelles[p.id]; } catch(e) {} if (r) return { qty: Number(r.qty) || 0, total: Number(r.total) || 0, sur: true }; }
+  if (D && D.ventesParProduit && (p.shopifyIds || []).length) {
+    let qty = 0, total = 0; p.shopifyIds.forEach(id => { const v = D.ventesParProduit[id]; if (v) { qty += v.qty; total += v.total; } });
+    return { qty, total, sur: true };
+  }
+  if (semaineAnalyseeISO() === debut) { let r = null; try { r = ventesReelles[p.id]; } catch(e) {} if (r) return { qty: Number(r.qty) || 0, total: Number(r.total) || 0, sur: true }; }
+  return { qty: 0, total: 0, sur: !!(D && D.ventesParProduit) };
+}
+function setObjectifFixe(debut, cle, champ, val){
+  donnees.objectifsFixes = donnees.objectifsFixes || {}; donnees.objectifsFixes[debut] = donnees.objectifsFixes[debut] || {};
+  donnees.objectifsFixes[debut][cle] = donnees.objectifsFixes[debut][cle] || {}; donnees.objectifsFixes[debut][cle][champ] = +val || 0;
+  sauverDonnees(); appliquerVueMois(false);
+}
+function objectifFixe(debut, cle){
+  const all = donnees.objectifsFixes || {}; if (all[debut] && all[debut][cle]) return all[debut][cle];
+  const avant = Object.keys(all).filter(k => k < debut && all[k][cle]).sort().pop(); // reprend l'objectif de la semaine d'avant
+  return avant ? all[avant][cle] : {};
+}
+function setChampProduit(id, champ, val){ setProduitField(id, champ, +val || 0); appliquerVueMois(false); }
+function ajouterPrevu(debut){
+  const nom = (document.getElementById('np-nom').value || '').trim(); if (!nom) return;
+  const jour = document.getElementById('np-jour').value || debut;
+  donnees.produits.push({ id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), nom, date: jour, etape: 1,
+    objectifQty: +document.getElementById('np-qty').value || 0, objectifCA: +document.getElementById('np-ca').value || 0 });
+  sauverDonnees(); rendreCalendrier();
+}
 function tableauSemaine(annee, m, debut, numSem){
   const d0 = new Date(debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7); const fin = new Date(d0); fin.setDate(fin.getDate() + 6);
-  const fmtJ = d => d.getDate(); const moisNom = NOMS_MOIS[fin.getMonth()].toUpperCase();
-  const titre = d0.getMonth() === fin.getMonth() ? `Du ${fmtJ(d0)} au ${fmtJ(fin)} ${moisNom}` : `Du ${fmtJ(d0)} ${NOMS_MOIS[d0.getMonth()].toUpperCase()} au ${fmtJ(fin)} ${moisNom}`;
-  const ventesOK = semaineAnalyseeISO() === debut;
-  const enDate = p => { if (!p.date) return null; return new Date(p.date + 'T00:00:00'); };
-  const prods = (donnees.produits || []).filter(p => { const d = enDate(p); return d && d >= d0 && d < d7; }).sort((a, b) => a.date.localeCompare(b.date));
+  const moisNom = NOMS_MOIS[fin.getMonth()].toUpperCase();
+  const titre = d0.getMonth() === fin.getMonth() ? `Du ${d0.getDate()} au ${fin.getDate()} ${moisNom}` : `Du ${d0.getDate()} ${NOMS_MOIS[d0.getMonth()].toUpperCase()} au ${fin.getDate()} ${moisNom}`;
+  const D = semaineData[debut]; const charge = !!(D && D.ventesParProduit);
+  if (!D && !semaineChargement[debut] && d0 <= new Date()) setTimeout(() => chargerSemaineData(debut), 0);
   const n = v => Math.round(v).toLocaleString('fr-CH');
-  let to = 0, tf = 0, rows = '';
-  prods.forEach(p => {
-    const o = +p.objectifCA || 0, f = ventesOK ? faitProduit(p) : 0, r = o - f; to += o; tf += f; const ok = o > 0 && f >= o;
-    rows += `<tr class="ligne" onclick="ouvrirModalEdit('${p.id}')" title="Ouvrir la fiche">
-      <td>${escapeHtml(p.nom || '(sans nom)')}</td><td class="c-obj">${o ? n(o) : '—'}</td><td class="c-fait${ok ? ' atteint' : ''}">${ventesOK ? n(f) : '…'}</td>
-      <td class="c-reste${o && ventesOK && r < 0 ? ' neg' : ''}">${o && ventesOK ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok ? ' on' : ''}">${ok ? '✓' : ''}</span></td></tr>`;
+  const JOURS = ['dim','lun','mar','mer','jeu','ven','sam'];
+  const tot = { oq: 0, fq: 0, oc: 0, fc: 0 };
+  const ligne = (label, sous, oq, fq, oc, fc, opts = {}) => {
+    tot.oq += oq || 0; tot.fq += fq || 0; tot.oc += oc || 0; tot.fc += fc || 0;
+    const ok = oc > 0 && fc >= oc; const okq = oq > 0 && fq >= oq; const r = oc - fc;
+    const inQ = opts.editQ ? `<input class="obj-in" value="${oq || ''}" placeholder="—" onclick="event.stopPropagation()" onchange="${opts.editQ}">` : (oq ? n(oq) : '—');
+    const inC = opts.editC ? `<input class="obj-in" value="${oc || ''}" placeholder="—" onclick="event.stopPropagation()" onchange="${opts.editC}">` : (oc ? n(oc) : '—');
+    return `<tr class="ligne"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
+      <td class="c-obj c-q">${inQ}</td><td class="c-fait c-q${okq ? ' atteint' : ''}">${charge ? n(fq) : '…'}</td>
+      <td class="c-obj">${inC}</td><td class="c-fait${ok ? ' atteint' : ''}">${charge ? n(fc) : '…'}</td>
+      <td class="c-reste${oc && charge && r < 0 ? ' neg' : ''}">${oc && charge ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok || okq ? ' on' : ''}">${ok || okq ? '✓' : ''}</span></td></tr>`;
+  };
+  const sect = t => `<tr class="sect"><td colspan="7">${t}</td></tr>`;
+  const dansSemaine = p => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= d0 && d < d7; };
+  const FIXE_RX = /starter pack|garde.?mood|^\s*joaillerie\s*$/i;
+  const prevus = (donnees.produits || []).filter(p => dansSemaine(p) && !p.auto && !FIXE_RX.test(p.nom || '')).sort((a, b) => a.date.localeCompare(b.date));
+  const autos = (donnees.produits || []).filter(p => dansSemaine(p) && p.auto).sort((a, b) => a.date.localeCompare(b.date));
+  const jourDe = iso => { const d = new Date(iso + 'T00:00:00'); return `${JOURS[d.getDay()]} ${d.getDate()}`; };
+  let rows = sect('✍️ Prévu cette semaine — ta liste');
+  prevus.forEach(p => { const v = ventesSemaineProduit(p, debut);
+    const etat = (p.shopifyIds || []).length ? `<span class="pill vert">✅ sorti ${jourDe(p.dateSortie || p.date)}</span>` : `<span class="pill">prévu ${jourDe(p.date)}</span>`;
+    rows += ligne(escapeHtml(p.nom || '(sans nom)'), etat, +p.objectifQty || 0, v.qty, +p.objectifCA || 0, v.total, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)` }); });
+  const optsJours = [...Array(7)].map((_, k) => { const d = new Date(d0); d.setDate(d.getDate() + k); const iso = dateISOLocal(d); return `<option value="${iso}">${JOURS[d.getDay()]} ${d.getDate()}</option>`; }).join('');
+  rows += `<tr class="ajout"><td colspan="7"><input id="np-nom" placeholder="+ Nouveauté prévue (nom)" onkeydown="if(event.key==='Enter')ajouterPrevu('${debut}')"><select id="np-jour">${optsJours}</select><input id="np-qty" type="number" placeholder="pièces"><input id="np-ca" type="number" placeholder="CHF"><button onclick="ajouterPrevu('${debut}')">Ajouter</button></td></tr>`;
+  rows += sect('🚀 Sorti sur le site — ajouté automatiquement');
+  if (!charge) rows += `<tr class="vide"><td colspan="7">${D && D.erreur ? 'Ventes indisponibles pour le moment.' : (d0 > new Date() ? 'Semaine à venir.' : '⏳ Je regarde ce qui est sorti cette semaine…')}</td></tr>`;
+  else if (!autos.length) rows += `<tr class="vide"><td colspan="7">Rien d'autre n'est sorti cette semaine.</td></tr>`;
+  autos.forEach(p => { const v = ventesSemaineProduit(p, debut);
+    rows += ligne(escapeHtml(p.nom), `<span class="pill bleu">sorti ${jourDe(p.date)}</span>`, +p.objectifQty || 0, v.qty, +p.objectifCA || 0, v.total, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)` }); });
+  rows += sect('📌 Toujours là');
+  const F = (D && D.fixes) || {};
+  [['starter', 'Starter pack', ''], ['garde', 'Garde mood', ''], ['joaillerie', 'Joaillerie', F.joaillerie ? `pièces vendues plus de 600.– sur yourmood.net${F.joaillerie.siteJoaillerie ? ` · site Mood Joaillerie : ${n(F.joaillerie.siteJoaillerie.total)}.– (${F.joaillerie.siteJoaillerie.commandes} cde)` : ''}` : 'pièces vendues plus de 600.– + site Mood Joaillerie']].forEach(([k, lab, sous]) => {
+    const o = objectifFixe(debut, k); const f = F[k] || { qty: 0, total: 0 };
+    rows += ligne(lab, sous ? `<span class="l-petit">${sous}</span>` : '', o.qty || 0, f.qty || 0, o.ca || 0, f.total || 0, { editQ: `setObjectifFixe('${debut}','${k}','qty',this.value)`, editC: `setObjectifFixe('${debut}','${k}','ca',this.value)` });
   });
-  if (!prods.length) rows = '<tr class="vide"><td colspan="5">Aucune nouveauté prévue cette semaine.</td></tr>';
-  // toutes les nouveautés du mois sorties jusqu'ici : ce qu'elles ont vendu cette semaine
-  const mois0 = new Date(annee, m, 1);
-  const tousMois = (donnees.produits || []).filter(p => { const d = enDate(p); return d && d >= mois0 && d < d7; });
-  const fg = ventesOK ? tousMois.reduce((s, p) => s + faitProduit(p), 0) : 0;
-  const og = (donnees.objectifsSemaine || {})[debut] || 0;
+  const totLigne = `<tr class="tot"><td>SEMAINE ${numSem} · total</td><td class="c-obj c-q">${n(tot.oq)}</td><td class="c-fait c-q">${charge ? n(tot.fq) : '…'}</td><td class="c-obj">${n(tot.oc)}</td><td class="c-fait">${charge ? n(tot.fc) : '…'}</td><td class="c-reste">${charge ? n(tot.oc - tot.fc) : '—'}</td><td class="c-ok"></td></tr>`;
   return `<div class="tab-sem"><table>
-    <thead><tr><th>${titre}</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th><th class="c-ok"></th></tr></thead>
-    <tbody>
-      <tr class="tot"><td>SEMAINE ${numSem} · nouveautés de la semaine</td><td class="c-obj">${n(to)}</td><td class="c-fait">${ventesOK ? n(tf) : '…'}</td><td class="c-reste">${ventesOK ? n(to - tf) : '—'}</td><td class="c-ok"></td></tr>
-      ${rows}
-      <tr class="tot"><td>SEMAINE ${numSem} · toutes les nouveautés de ${NOMS_MOIS[m].toLowerCase()}</td>
-        <td class="c-obj"><input class="obj-glob" value="${og || ''}" placeholder="objectif" onclick="event.stopPropagation()" onchange="setObjectifGlobal('${debut}', this.value)"></td>
-        <td class="c-fait">${ventesOK ? n(fg) : '…'}</td><td class="c-reste">${og && ventesOK ? n(og - fg) : '—'}</td><td class="c-ok"></td></tr>
-    </tbody></table>
-    ${ventesOK ? '<div class="note">Fait = vraies ventes de la semaine (du jeudi au mercredi), site et boutiques, taxes comprises.</div>' : '<div class="note">⏳ Chargement des ventes de cette semaine…</div>'}
+    <thead><tr><th rowspan="2">${titre}</th><th colspan="2" class="c-groupe">Pièces</th><th colspan="3" class="c-groupe">CHF</th><th rowspan="2" class="c-ok"></th></tr>
+    <tr><th class="c-obj">Objectif</th><th class="c-fait">Vendues</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th></tr></thead>
+    <tbody>${totLigne}${rows}${totLigne}</tbody></table>
+    <div class="note">Vendues / Fait = vraies ventes de la semaine (du jeudi au mercredi), site et boutiques, taxes comprises. ${charge ? `<a href="#" onclick="event.preventDefault();delete semaineData['${debut}'];chargerSemaineData('${debut}',true)">↻ Actualiser</a>` : ''}</div>
   </div>`;
 }
 
@@ -1473,10 +1579,10 @@ function appliquerVueMois(scrollTop){
           box.style.display = 'none'; back.style.display = '';
           const sems = calculerSemainesMois(annee, m); const num = sems.findIndex(z => z.debut === semaineFocus) + 1;
           let tab = x.querySelector('.tab-sem-wrap');
-          if (!tab) { tab = document.createElement('div'); tab.className = 'tab-sem-wrap'; weeks.parentNode.insertBefore(tab, weeks); }
+          if (!tab) { tab = document.createElement('div'); tab.className = 'tab-sem-wrap'; weeks.parentNode.insertBefore(tab, weeks.nextSibling); }
           tab.style.display = '';
-          tab.innerHTML = tableauSemaine(annee, m, semaineFocus, num || 1) + `<button class="voir-jours" onclick="basculerJours()">${joursVisibles ? '▲ Cacher les jours' : '📅 Voir les jours (pour ajouter ou déplacer)'}</button>`;
-          weeks.style.display = joursVisibles ? '' : 'none';
+          tab.innerHTML = tableauSemaine(annee, m, semaineFocus, num || 1);
+          weeks.style.display = '';
           x.querySelectorAll('.week').forEach(w => { const sel = w.dataset.debut === semaineFocus; w.style.display = sel ? '' : 'none'; if (sel) { w.classList.add('show'); w.style.opacity = '1'; } });
         }
       }
@@ -1651,7 +1757,7 @@ function rendreCalendrier() {
             ventesSemaineHtml = `<div class="${cls}" title="Vraies ventes Shopify sur la semaine sélectionnée (jeu→mer, total avec taxes)">📊 ${qty} vendu${qty > 1 ? 's' : ''}${total > 0 ? ' · ' + Math.round(total).toLocaleString('fr-CH') + '.-' : ''}</div>`;
           }
           cardsHtml += `<div class="product-card${hasImage ? ' product-card-image' : ''}" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')" title="${(p.notes || '').replace(/"/g, '&quot;')}" ${cardStyle}>
-            ${hasImage ? `<img class="pc-img" src="${p.image}" alt="" loading="lazy">` : ''}
+            ${hasImage ? `<img class="pc-img" src="${p.image}" alt="" loading="lazy" onerror="this.remove()">` : ''}
             <div class="pc-top"><div class="product-stage stage-${p.etape || 1}">${p.etape || 1}</div><span class="pc-etape">${NOMS_ETAPES[(p.etape || 1) - 1] || ''}</span></div>
             <div class="product-name">${p.nom}${etapeJaugeHtml}${ventesJaugeHtml}${ventesSemaineHtml}</div>
           </div>`;
