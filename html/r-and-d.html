@@ -1636,19 +1636,19 @@ function tableauSemaine(annee, m, debut, numSem){
 }
 
 let semaineFocus = null;
-// Imprimer (ou enregistrer en PDF) le tableau de la semaine + les 2 courbes, propre, sur une page A4 en largeur.
+// Imprimer (ou enregistrer en PDF) la liste de la semaine (sans les courbes), sur une page A4 en hauteur.
 function imprimerSemaine(titre, num){
   const src = document.querySelector('.tab-sem-wrap .sem-duo'); if (!src) return;
   const c = src.cloneNode(true);
   c.querySelectorAll('input.obj-in').forEach(i => { const sp = document.createElement('span'); sp.textContent = i.value ? Number(i.value).toLocaleString('fr-CH') : '—'; i.replaceWith(sp); });
-  c.querySelectorAll('tr.ajout, .pill-btn, .gs-clic, .tab-actions, .note a, .ok-box:not(.on)').forEach(e => e.remove());
+  c.querySelectorAll('.graphes, tr.ajout, .pill-btn, .tab-actions, .note a, .ok-box:not(.on)').forEach(e => e.remove()); // juste la liste, sans les courbes
   c.querySelectorAll('.gs-leg span:last-child').forEach(e => e.remove());
   const styles = [...document.querySelectorAll('style, link[rel="stylesheet"]')].map(e => e.outerHTML).join('');
   const w = window.open('', '_blank'); if (!w) { alert('Autorise les fenêtres pour imprimer'); return; }
   w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Semaine ${num} — ${titre} — R&D Amila</title>${styles}
-    <style>@page{size:A4 landscape;margin:7mm;} html,body{background:#fff !important;margin:0;} body{padding:0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    <style>@page{size:A4 portrait;margin:8mm;} html,body{background:#fff !important;margin:0;} body{padding:0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     .imp-tete{font:700 15px Poppins,sans-serif;color:#3a2f27;margin:0 0 6px;display:flex;justify-content:space-between;} .imp-tete small{font-weight:500;color:#8a7d70;}
-    .sem-duo{flex-wrap:nowrap !important;gap:10px !important;zoom:.72;} .sem-duo>.tab-sem{flex:1 1 60% !important;max-width:none !important;box-shadow:none !important;border:1px solid #e8e0d6;}
+    .sem-duo{display:block !important;zoom:.7;} .sem-duo>.tab-sem{width:100% !important;max-width:none !important;box-shadow:none !important;border:1px solid #e8e0d6;}
     .graphes{flex:0 0 38% !important;max-width:none !important;} .graphe-stat{box-shadow:none !important;break-inside:avoid;} tr{break-inside:avoid;}</style></head>
     <body><div class="imp-tete"><span>R&D — Semaine ${num} · ${titre}</span><small>Amila Pousaz · imprimé le ${new Date().toLocaleDateString('fr-CH')}</small></div>${c.outerHTML}</body></html>`);
   w.document.close();
