@@ -31,6 +31,10 @@
     {
       "path": "/api/delai-fabrication?etape=stock",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/r-and-d/figer",
+      "schedule": "5 23 * * 3"
     }
   ]
 }

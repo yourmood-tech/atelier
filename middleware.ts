@@ -42,6 +42,11 @@ export default auth((req) => {
     return;
   }
 
+  // blocage automatique des chiffres R&D chaque mercredi à minuit (protégé dans la route)
+  if (pathname === "/api/r-and-d/figer") {
+    return;
+  }
+
   // le réveil automatique du calendrier (protégé par une clé dans la route)
   if (pathname === "/api/calendrier-reveil") {
     return;

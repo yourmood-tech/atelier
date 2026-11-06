@@ -28,6 +28,10 @@ async function redisGet(key: string): Promise<unknown> {
     return typeof j?.result === "string" ? JSON.parse(j.result) : j?.result;
   } catch { return null; }
 }
+async function redisSet(key: string, value: unknown) {
+  if (!REDIS_URL || !REDIS_TOKEN) return;
+  try { await fetch(`${REDIS_URL}/set/${encodeURIComponent(key)}`, { method: "POST", headers: { Authorization: `Bearer ${REDIS_TOKEN}` }, body: JSON.stringify(value) }); } catch { /* */ }
+}
 async function redisSetEx(key: string, value: unknown, ttl: number) {
   if (!REDIS_URL || !REDIS_TOKEN) return;
   try { await fetch(`${REDIS_URL}/setex/${encodeURIComponent(key)}/${ttl}`, { method: "POST", headers: { Authorization: `Bearer ${REDIS_TOKEN}` }, body: JSON.stringify(value) }); } catch { /* */ }
@@ -79,10 +83,14 @@ export async function GET(request: Request) {
   const debut = new Date(debutStr + "T00:00:00+01:00");
   const fin = new Date(debut.getTime() + 7 * 86400000 - 1);
   const enCours = Date.now() < fin.getTime();
-  const ck = `mood:rd-semaine:v2:${debutStr}`;
+  const ck = `mood:rd-semaine:v4:${debutStr}`;
+  // semaine terminée et déjà bloquée : chiffres définitifs, on ne recalcule plus jamais
+  const cleFige = `mood:rd-semaine-fige:${debutStr}`;
+  const fige = await redisGet(cleFige);
+  if (fige) return NextResponse.json({ ...(fige as object), source: "bloque" });
   if (!u.searchParams.get("frais")) {
     const c = await redisGet(ck);
-    if (c) return NextResponse.json({ ...(c as object), source: "cache" });
+    if (c && enCours) return NextResponse.json({ ...(c as object), source: "cache" });
   }
 
   try {
@@ -99,9 +107,10 @@ export async function GET(request: Request) {
     // 2) étiquettes des produits vendus (starter / garde-mood)
     const ids = Object.keys(parProduit);
     const tags: Record<string, string[]> = {};
+    const infos: Record<string, { type: string; cree: string }> = {};
     for (let i = 0; i < ids.length; i += 100) {
-      const j = await gql(`query($ids:[ID!]!){nodes(ids:$ids){... on Product{id tags}}}`, { ids: ids.slice(i, i + 100).map((x) => `gid://shopify/Product/${x}`) });
-      for (const n of j?.data?.nodes || []) if (n) tags[n.id.split("/").pop()] = (n.tags || []).map((t: string) => t.toLowerCase());
+      const j = await gql(`query($ids:[ID!]!){nodes(ids:$ids){... on Product{id tags productType createdAt}}}`, { ids: ids.slice(i, i + 100).map((x) => `gid://shopify/Product/${x}`) });
+      for (const n of j?.data?.nodes || []) if (n) { const k = n.id.split("/").pop(); tags[k] = (n.tags || []).map((t: string) => t.toLowerCase()); infos[k] = { type: n.productType || "", cree: n.createdAt || "" }; }
     }
     const fixe = (tagsOk: string[], titre: RegExp) => { let qty = 0, total = 0; for (const k of ids) if ((tags[k] || []).some((t) => tagsOk.includes(t)) || titre.test(titres[k] || "")) { qty += parProduit[k].qty; total += parProduit[k].total; } return { qty, total: Math.round(total) }; };
 
@@ -140,10 +149,19 @@ export async function GET(request: Request) {
       fixes: {
         starter: fixe(["starter", "starter pack", "starterpack"], /starter pack|in the mood for/i),
         garde: fixe(["garde-mood", "garde mood", "gardemood"], /garde-mood|garde mood/i),
+        coffret: (() => { // coffrets du mois : fiches « coffret » créées depuis ~2 semaines avant le début du mois de la semaine
+          const moisDebut = new Date(Date.UTC(fin.getUTCFullYear(), fin.getUTCMonth(), 1) - 15 * 86400000).toISOString();
+          let qty = 0, total = 0;
+          for (const k of ids) { const inf = infos[k]; const t = titres[k] || "";
+            const estCoffret = /coffret/i.test(inf?.type || "") || /^\W*coffret/i.test(t) || (tags[k] || []).includes("coffret du mois");
+            if (estCoffret && !/starter|garde/i.test(t) && (inf?.cree || "") >= moisDebut) { qty += parProduit[k].qty; total += parProduit[k].total; } }
+          return { qty, total: Math.round(total) };
+        })(),
         joaillerie: { qty: joaQty, total: Math.round(joaTotal + (joaStore?.total || 0)), yourmood: Math.round(joaTotal), siteJoaillerie: joaStore },
       },
     };
-    await redisSetEx(ck, out, enCours ? 900 : 86400 * 7);
+    if (enCours) await redisSetEx(ck, out, 900);
+    else await redisSet(cleFige, { ...out, bloqueLe: new Date().toISOString() }); // bloqué pour toujours
     return NextResponse.json(out);
   } catch (e) {
     return NextResponse.json({ error: String((e as Error)?.message || e) }, { status: 500 });

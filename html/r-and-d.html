@@ -734,14 +734,28 @@
   .tab-sem .l-nom{font-weight:600;} .tab-sem .l-sous{margin-top:3px;} .tab-sem .l-petit{font-size:.72rem;color:#8a7f73;}
   .tab-sem .pill{display:inline-block;font-size:.68rem;font-weight:700;border-radius:999px;padding:2px 8px;background:#efe9e1;color:#6f655b;}
   .tab-sem .pill.vert{background:#dff2e4;color:#2d8a4e;} .tab-sem .pill.bleu{background:#e2eefb;color:#2b5e9e;}
-  .tab-sem input.obj-in{width:70px;text-align:right;border:1px solid transparent;background:transparent;font:inherit;padding:2px 4px;border-radius:6px;}
-  .tab-sem input.obj-in:hover,.tab-sem input.obj-in:focus{border-color:#9fd8e6;background:#fff;}
+  .tab-sem input.obj-in{width:78px;text-align:right;border:1.5px solid #a9dcea;background:#fff;font:inherit;font-weight:600;padding:4px 6px;border-radius:8px;}
+  .tab-sem input.obj-in::placeholder{color:#9bb8c2;font-weight:500;}
+  .tab-sem input.obj-in:hover,.tab-sem input.obj-in:focus{border-color:#4aa9c4;outline:none;box-shadow:0 0 0 3px #d8f0f6;}
   .tab-sem tr.ajout td{padding:8px 12px;background:#fff;}
   .tab-sem tr.ajout input,.tab-sem tr.ajout select{border:1px solid #e3d9c6;border-radius:8px;padding:6px 8px;font:inherit;font-size:.85rem;margin-right:6px;}
   .tab-sem tr.ajout #np-nom{width:42%;} .tab-sem tr.ajout #np-qty,.tab-sem tr.ajout #np-ca{width:90px;}
   .tab-sem tr.ajout button{background:#4a4440;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;}
+  .tab-sem .c-prev{background:#f4f2ef;color:#7d746a;text-align:right;width:80px;font-size:.85rem;}
+  .tab-sem thead .c-prev,.tab-sem thead .c-prevh{background:#e9e5df;color:#6f655b;}
+  .tab-sem tr.tot td.c-prev{background:#5c554f !important;color:#e9e3db;}
+  .tab-sem tr.sous-tot td{background:#f3eee7;font-weight:700;font-size:.85rem;color:#4a4440;}
+  .tab-sem .bloque{background:#efe9f8;color:#5b4a8e;font-weight:700;font-size:.85rem;padding:9px 12px;}
+  .tab-sem .encours-b{background:#eaf6ee;color:#2d7a4a;font-weight:700;font-size:.85rem;padding:9px 12px;}
   .tab-sem .note a{color:#b8892f;margin-left:6px;}
   .month.focus-semaine .recap-hebdo{display:none;}
+  .day.day-extra{background:#f4f0fb !important;border:2px dashed #cbbde8 !important;}
+  .day.day-extra .day-header.prevues-h{justify-content:space-between;}
+  .day.day-extra .day-name{color:#6a55a8;font-size:.78rem;font-weight:800;text-transform:none;font-style:normal;}
+  .prevues-n{background:#6a55a8;color:#fff;border-radius:999px;font-size:.7rem;font-weight:800;padding:1px 8px;}
+  .prevue-card{border-color:#ddd2f2 !important;}
+  @media (min-width:901px){ .week-days{grid-template-columns:repeat(7,1fr) 1.35fr !important;} }
+  .prevue-obj{font-size:.7rem;font-weight:700;color:#6a55a8;margin-top:3px;}
   .voir-jours{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px 8px;}
   .sem-retour{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px;}
 
@@ -1397,7 +1411,7 @@ async function chargerSemaineData(debut, frais){
   if (semaineChargement[debut]) return; semaineChargement[debut] = true;
   try {
     const r = await fetch('/api/r-and-d/semaine?debut=' + debut + (frais ? '&frais=1' : ''));
-    if (r.ok) { semaineData[debut] = await r.json(); reconcilierSemaine(debut); }
+    if (r.ok) { semaineData[debut] = await r.json(); reconcilierSemaine(debut); setTimeout(() => verifierDejaSortis(debut), 0); }
     else semaineData[debut] = { erreur: r.status };
   } catch(e) { semaineData[debut] = { erreur: 'réseau' }; }
   semaineChargement[debut] = false;
@@ -1418,11 +1432,11 @@ function reconcilierSemaine(debut){
       const d = new Date(p.date + 'T00:00:00'); if (d < mois0 || d >= d7) return false;
       if (p.tag && tagsS.includes(p.tag.trim().toLowerCase())) return true;
       if (p.shopifySearch && sx.title.toLowerCase().includes(p.shopifySearch.trim().toLowerCase())) return true;
-      const mots = motsCles(p.nom); return mots.length > 0 && mots.every(w => titreMots.has(w));
+      return (p.nom || '').split(/\s*(?:&|\+|,|\bet\b)\s*/i).some(part => { const mots = motsCles(part); return mots.length > 0 && mots.every(w => titreMots.has(w)); });
     });
     if (prevu) {
       prevu.shopifyIds = [...new Set([...(prevu.shopifyIds || []), sid])];
-      if (!prevu.dateSortie) { prevu.dateSortie = jour; prevu.date = jour; }
+      if (!prevu.dateSortie) { prevu.dateSortie = jour; prevu.date = jour; prevu.extraSemaine = false; }
       prevu.etape = Math.max(prevu.etape || 1, 8); change = true;
     } else if (!donnees.produits.some(p => p.id === 'auto-' + sid)) {
       donnees.produits.push({ id: 'auto-' + sid, nom: nomPropre(sx.title), date: jour, dateSortie: jour, auto: true, shopifyIds: [sid], image: sx.image || '', etape: 8, objectifCA: 0, objectifQty: 0 });
@@ -1431,9 +1445,50 @@ function reconcilierSemaine(debut){
   });
   if (change) sauverDonnees();
 }
+
+// Ta liste : une nouveauté déjà sortie AVANT cette semaine est reconnue (« déjà sortie le … ») avec ses ventes de la semaine.
+const verifEnCours = {};
+async function verifierDejaSortis(debut){
+  if (verifEnCours[debut]) return; verifEnCours[debut] = true;
+  const d0 = new Date(debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
+  const finISO = dateISOLocal(new Date(d7.getTime() - 86400000));
+  const aVoir = (donnees.produits || []).filter(p => { if (!p.date || p.auto || (p.shopifyIds || []).length || FIXE_RX.test(p.nom || '') || p.verifie === debut) return false; const d = new Date(p.date + 'T00:00:00'); return d >= d0 && d < d7; });
+  let change = false;
+  for (const p of aVoir) {
+    // reprend l'étiquette d'une fiche plus ancienne au nom proche (ex. « calendrier de l'avent » → col-calendrier-avent-2026)
+    const tagUtile = t => t && !/^https?:|^code:/i.test(t.trim());
+    let tagRecherche = tagUtile(p.tag) ? p.tag : '';
+    if (!tagRecherche) {
+      const mp = motsCles(p.nom);
+      const ancien = mp.length && (donnees.produits || []).find(q => q !== p && q.tag && !/^https?:/i.test(q.tag) && (q.date || '') < p.date && mp.every(w => motsCles(q.nom).includes(w)));
+      if (ancien) { tagRecherche = ancien.tag; if (!p.tag) p.tag = ancien.tag; change = true; }
+    }
+    const parts = (p.nom || '').split(/\s*(?:&|\+|,|\bet\b)\s*/i).filter(x => motsCles(x).length);
+    const ids = new Set(); let premier = null;
+    const essais = tagRecherche ? [{ tag: tagRecherche, nom: '' }] : parts.map(x => ({ tag: '', nom: x }));
+    for (const e of essais) {
+      try {
+        const r = await fetch(`/api/r-and-d/trouver?nom=${encodeURIComponent(e.nom)}&tag=${encodeURIComponent(e.tag)}&avant=${finISO}`);
+        if (!r.ok) continue; const j = await r.json();
+        (j.produits || []).forEach(x => { ids.add(String(x.id)); if (!premier || x.createdAt < premier) premier = x.createdAt; if (!p.image && x.image) p.image = x.image + (x.image.includes('?') ? '&' : '?') + 'width=300'; });
+      } catch(e) {}
+    }
+    p.verifie = debut; change = true;
+    if (ids.size) {
+      p.shopifyIds = [...ids];
+      const jour = jourSuisse(premier);
+      p.dateSortie = jour;
+      if (jour >= dateISOLocal(d0)) { p.date = jour; p.extraSemaine = false; } // sortie cette semaine → sur son jour
+      p.etape = Math.max(p.etape || 1, 8);
+    }
+  }
+  verifEnCours[debut] = false;
+  if (change) { sauverDonnees(); rendreCalendrier(); }
+}
+
 function ventesSemaineProduit(p, debut){
   const D = semaineData[debut];
-  const parTag = !!((p.tag && p.tag.trim()) || (p.shopifySearch && p.shopifySearch.trim()));
+  const parTag = !!((p.tag && p.tag.trim() && !/^https?:/i.test(p.tag.trim())) || (p.shopifySearch && p.shopifySearch.trim()));
   if (parTag && semaineAnalyseeISO() === debut) { let r = null; try { r = ventesReelles[p.id]; } catch(e) {} if (r) return { qty: Number(r.qty) || 0, total: Number(r.total) || 0, sur: true }; }
   if (D && D.ventesParProduit && (p.shopifyIds || []).length) {
     let qty = 0, total = 0; p.shopifyIds.forEach(id => { const v = D.ventesParProduit[id]; if (v) { qty += v.qty; total += v.total; } });
@@ -1445,69 +1500,107 @@ function ventesSemaineProduit(p, debut){
 function setObjectifFixe(debut, cle, champ, val){
   donnees.objectifsFixes = donnees.objectifsFixes || {}; donnees.objectifsFixes[debut] = donnees.objectifsFixes[debut] || {};
   donnees.objectifsFixes[debut][cle] = donnees.objectifsFixes[debut][cle] || {}; donnees.objectifsFixes[debut][cle][champ] = +val || 0;
-  sauverDonnees(); appliquerVueMois(false);
+  sauverDonnees(); setTimeout(() => appliquerVueMois(false), 0);
 }
 function objectifFixe(debut, cle){
   const all = donnees.objectifsFixes || {}; if (all[debut] && all[debut][cle]) return all[debut][cle];
   const avant = Object.keys(all).filter(k => k < debut && all[k][cle]).sort().pop(); // reprend l'objectif de la semaine d'avant
   return avant ? all[avant][cle] : {};
 }
-function setChampProduit(id, champ, val){ setProduitField(id, champ, +val || 0); appliquerVueMois(false); }
+function setChampProduit(id, champ, val){ setProduitField(id, champ, +val || 0); setTimeout(() => appliquerVueMois(false), 0); }
 function ajouterPrevu(debut){
   const nom = (document.getElementById('np-nom').value || '').trim(); if (!nom) return;
-  const jour = document.getElementById('np-jour').value || debut;
-  donnees.produits.push({ id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), nom, date: jour, etape: 1,
+  const choix = document.getElementById('np-jour').value || 'prevues';
+  const d0 = new Date(debut + 'T00:00:00'); const jeudi = new Date(d0); jeudi.setDate(d0.getDate() + ((4 - d0.getDay() + 7) % 7));
+  const sansJour = choix === 'prevues'; const jour = sansJour ? dateISOLocal(jeudi) : choix;
+  donnees.produits.push({ id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), nom, date: jour, etape: 1, extraSemaine: sansJour,
     objectifQty: +document.getElementById('np-qty').value || 0, objectifCA: +document.getElementById('np-ca').value || 0 });
   sauverDonnees(); rendreCalendrier();
+}
+const FIXE_RX = /starter pack|garde.?mood|^\s*joaillerie\s*$|coffret du mois|coffret\s+(de|d['’])\s*(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre)/i;
+function decalerISO(iso, jours){ const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + jours); return dateISOLocal(d); }
+function figee(debut){ return (donnees.semainesFigees || {})[debut] || null; }
+function venteAffichee(p, debut){ const F = figee(debut); if (F && F.produits && F.produits[p.id]) return F.produits[p.id]; return ventesSemaineProduit(p, debut); }
+function fixeAffiche(debut, k){ const F = figee(debut); if (F && F.fixes && F.fixes[k]) return F.fixes[k]; const D = semaineData[debut]; return (D && D.fixes && D.fixes[k]) || null; }
+// Bloque les chiffres d'une semaine terminée (une seule fois) et les enregistre avec le planning.
+function figerSiTerminee(debut, prods){
+  if (figee(debut)) return;
+  const fin = new Date(debut + 'T00:00:00'); fin.setDate(fin.getDate() + 7);
+  if (new Date() < fin) return;
+  const D = semaineData[debut]; if (!D || !D.ventesParProduit) return;
+  const besoinTag = prods.some(p => (p.tag && !/^https?:/i.test(p.tag)) || p.shopifySearch);
+  if (besoinTag && semaineAnalyseeISO() !== debut) return; // attend les ventes par étiquette de cette semaine
+  const snap = { figeLe: new Date().toISOString(), produits: {}, fixes: D.fixes };
+  prods.forEach(p => { const v = ventesSemaineProduit(p, debut); snap.produits[p.id] = { qty: v.qty, total: Math.round(v.total) }; });
+  donnees.semainesFigees = donnees.semainesFigees || {}; donnees.semainesFigees[debut] = snap;
+  setTimeout(() => { sauverDonnees(); appliquerVueMois(false); }, 0);
 }
 function tableauSemaine(annee, m, debut, numSem){
   const d0 = new Date(debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7); const fin = new Date(d0); fin.setDate(fin.getDate() + 6);
   const moisNom = NOMS_MOIS[fin.getMonth()].toUpperCase();
   const titre = d0.getMonth() === fin.getMonth() ? `Du ${d0.getDate()} au ${fin.getDate()} ${moisNom}` : `Du ${d0.getDate()} ${NOMS_MOIS[d0.getMonth()].toUpperCase()} au ${fin.getDate()} ${moisNom}`;
-  const D = semaineData[debut]; const charge = !!(D && D.ventesParProduit);
-  if (!D && !semaineChargement[debut] && d0 <= new Date()) setTimeout(() => chargerSemaineData(debut), 0);
+  const prev = decalerISO(debut, -7);
+  const D = semaineData[debut]; const F = figee(debut); const charge = !!F || !!(D && D.ventesParProduit);
+  if (!D && !F && !semaineChargement[debut] && d0 <= new Date()) setTimeout(() => chargerSemaineData(debut), 0);
+  if (!semaineData[prev] && !figee(prev) && !semaineChargement[prev]) setTimeout(() => chargerSemaineData(prev), 50);
+  const chargePrev = !!figee(prev) || !!(semaineData[prev] && semaineData[prev].ventesParProduit);
   const n = v => Math.round(v).toLocaleString('fr-CH');
   const JOURS = ['dim','lun','mar','mer','jeu','ven','sam'];
-  const tot = { oq: 0, fq: 0, oc: 0, fc: 0 };
-  const ligne = (label, sous, oq, fq, oc, fc, opts = {}) => {
-    tot.oq += oq || 0; tot.fq += fq || 0; tot.oc += oc || 0; tot.fc += fc || 0;
-    const ok = oc > 0 && fc >= oc; const okq = oq > 0 && fq >= oq; const r = oc - fc;
-    const inQ = opts.editQ ? `<input class="obj-in" value="${oq || ''}" placeholder="—" onclick="event.stopPropagation()" onchange="${opts.editQ}">` : (oq ? n(oq) : '—');
-    const inC = opts.editC ? `<input class="obj-in" value="${oc || ''}" placeholder="—" onclick="event.stopPropagation()" onchange="${opts.editC}">` : (oc ? n(oc) : '—');
-    return `<tr class="ligne"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
-      <td class="c-obj c-q">${inQ}</td><td class="c-fait c-q${okq ? ' atteint' : ''}">${charge ? n(fq) : '…'}</td>
-      <td class="c-obj">${inC}</td><td class="c-fait${ok ? ' atteint' : ''}">${charge ? n(fc) : '…'}</td>
-      <td class="c-reste${oc && charge && r < 0 ? ' neg' : ''}">${oc && charge ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok || okq ? ' on' : ''}">${ok || okq ? '✓' : ''}</span></td></tr>`;
-  };
-  const sect = t => `<tr class="sect"><td colspan="7">${t}</td></tr>`;
-  const dansSemaine = p => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= d0 && d < d7; };
-  const FIXE_RX = /starter pack|garde.?mood|^\s*joaillerie\s*$/i;
-  const prevus = (donnees.produits || []).filter(p => dansSemaine(p) && !p.auto && !FIXE_RX.test(p.nom || '')).sort((a, b) => a.date.localeCompare(b.date));
-  const autos = (donnees.produits || []).filter(p => dansSemaine(p) && p.auto).sort((a, b) => a.date.localeCompare(b.date));
   const jourDe = iso => { const d = new Date(iso + 'T00:00:00'); return `${JOURS[d.getDay()]} ${d.getDate()}`; };
-  let rows = sect('✍️ Prévu cette semaine — ta liste');
-  prevus.forEach(p => { const v = ventesSemaineProduit(p, debut);
-    const etat = (p.shopifyIds || []).length ? `<span class="pill vert">✅ sorti ${jourDe(p.dateSortie || p.date)}</span>` : `<span class="pill">prévu ${jourDe(p.date)}</span>`;
-    rows += ligne(escapeHtml(p.nom || '(sans nom)'), etat, +p.objectifQty || 0, v.qty, +p.objectifCA || 0, v.total, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)` }); });
-  const optsJours = [...Array(7)].map((_, k) => { const d = new Date(d0); d.setDate(d.getDate() + k); const iso = dateISOLocal(d); return `<option value="${iso}">${JOURS[d.getDay()]} ${d.getDate()}</option>`; }).join('');
-  rows += `<tr class="ajout"><td colspan="7"><input id="np-nom" placeholder="+ Nouveauté prévue (nom)" onkeydown="if(event.key==='Enter')ajouterPrevu('${debut}')"><select id="np-jour">${optsJours}</select><input id="np-qty" type="number" placeholder="pièces"><input id="np-ca" type="number" placeholder="CHF"><button onclick="ajouterPrevu('${debut}')">Ajouter</button></td></tr>`;
-  rows += sect('🚀 Sorti sur le site — ajouté automatiquement');
-  if (!charge) rows += `<tr class="vide"><td colspan="7">${D && D.erreur ? 'Ventes indisponibles pour le moment.' : (d0 > new Date() ? 'Semaine à venir.' : '⏳ Je regarde ce qui est sorti cette semaine…')}</td></tr>`;
-  else if (!autos.length) rows += `<tr class="vide"><td colspan="7">Rien d'autre n'est sorti cette semaine.</td></tr>`;
-  autos.forEach(p => { const v = ventesSemaineProduit(p, debut);
-    rows += ligne(escapeHtml(p.nom), `<span class="pill bleu">sorti ${jourDe(p.date)}</span>`, +p.objectifQty || 0, v.qty, +p.objectifCA || 0, v.total, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)` }); });
-  rows += sect('📌 Toujours là');
-  const F = (D && D.fixes) || {};
-  [['starter', 'Starter pack', ''], ['garde', 'Garde mood', ''], ['joaillerie', 'Joaillerie', F.joaillerie ? `pièces vendues plus de 600.– sur yourmood.net${F.joaillerie.siteJoaillerie ? ` · site Mood Joaillerie : ${n(F.joaillerie.siteJoaillerie.total)}.– (${F.joaillerie.siteJoaillerie.commandes} cde)` : ''}` : 'pièces vendues plus de 600.– + site Mood Joaillerie']].forEach(([k, lab, sous]) => {
-    const o = objectifFixe(debut, k); const f = F[k] || { qty: 0, total: 0 };
-    rows += ligne(lab, sous ? `<span class="l-petit">${sous}</span>` : '', o.qty || 0, f.qty || 0, o.ca || 0, f.total || 0, { editQ: `setObjectifFixe('${debut}','${k}','qty',this.value)`, editC: `setObjectifFixe('${debut}','${k}','ca',this.value)` });
+  const dans = (p, a, b) => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= a && d < b; };
+  const sum = () => ({ oq: 0, fq: 0, oc: 0, fc: 0, pq: 0, pc: 0 });
+  const add = (t, x) => { for (const k in t) t[k] += x[k] || 0; };
+  const cellsPrev = (pq, pc, ok) => `<td class="c-prev c-q">${ok ? n(pq) : '—'}</td><td class="c-prev">${ok ? n(pc) : '—'}</td>`;
+  const ligne = (label, sous, v, opts = {}) => {
+    const ok = v.oc > 0 && v.fc >= v.oc, okq = v.oq > 0 && v.fq >= v.oq, r = v.oc - v.fc;
+    const inQ = opts.editQ ? `<input class="obj-in" type="number" value="${v.oq || ''}" placeholder="pièces" onclick="event.stopPropagation()" onchange="${opts.editQ}">` : (v.oq ? n(v.oq) : '—');
+    const inC = opts.editC ? `<input class="obj-in" type="number" value="${v.oc || ''}" placeholder="CHF" onclick="event.stopPropagation()" onchange="${opts.editC}">` : (v.oc ? n(v.oc) : '—');
+    return `<tr class="ligne"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
+      <td class="c-obj c-q">${inQ}</td><td class="c-fait c-q${okq ? ' atteint' : ''}">${charge ? n(v.fq) : '…'}</td>
+      <td class="c-obj">${inC}</td><td class="c-fait${ok ? ' atteint' : ''}">${charge ? n(v.fc) : '…'}</td>
+      <td class="c-reste${v.oc && charge && r < 0 ? ' neg' : ''}">${v.oc && charge ? n(r) : '—'}</td><td class="c-ok"><span class="ok-box${ok || okq ? ' on' : ''}">${ok || okq ? '✓' : ''}</span></td>
+      ${cellsPrev(v.pq, v.pc, opts.prevOk)}</tr>`;
+  };
+  const totLigne = (lab, t, cls) => `<tr class="${cls}"><td>${lab}</td><td class="c-obj c-q">${n(t.oq)}</td><td class="c-fait c-q">${charge ? n(t.fq) : '…'}</td><td class="c-obj">${n(t.oc)}</td><td class="c-fait">${charge ? n(t.fc) : '…'}</td><td class="c-reste">${charge ? n(t.oc - t.fc) : '—'}</td><td class="c-ok"></td>${cellsPrev(t.pq, t.pc, chargePrev)}</tr>`;
+  const sect = t => `<tr class="sect"><td colspan="9">${t}</td></tr>`;
+  // --- Game changer : ta liste + ce qui est sorti tout seul ---
+  const gc = sum(); let rowsGC = '';
+  const prevus = (donnees.produits || []).filter(p => dans(p, d0, d7) && !p.auto && !FIXE_RX.test(p.nom || '')).sort((a, b) => (a.extraSemaine ? 1 : 0) - (b.extraSemaine ? 1 : 0) || a.date.localeCompare(b.date));
+  const autos = (donnees.produits || []).filter(p => dans(p, d0, d7) && p.auto).sort((a, b) => a.date.localeCompare(b.date));
+  const tous = [...prevus, ...autos];
+  tous.forEach(p => {
+    const v0 = venteAffichee(p, debut); const vp = venteAffichee(p, prev); const prevOk = chargePrev && (p.shopifyIds || []).length > 0;
+    const v = { oq: +p.objectifQty || 0, fq: v0.qty, oc: +p.objectifCA || 0, fc: v0.total, pq: prevOk ? vp.qty : 0, pc: prevOk ? vp.total : 0 }; add(gc, v);
+    const dejaAvant = p.dateSortie && p.dateSortie < debut;
+    const etat = p.auto ? `<span class="pill bleu">🤖 ajouté auto · sorti ${jourDe(p.date)}</span>`
+      : (p.shopifyIds || []).length ? (dejaAvant ? `<span class="pill vert">✅ déjà sortie le ${new Date(p.dateSortie + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}</span>` : `<span class="pill vert">✅ sorti ${jourDe(p.dateSortie || p.date)}</span>`)
+      : (p.extraSemaine ? `<span class="pill">📝 prévue cette semaine</span>` : `<span class="pill">prévu ${jourDe(p.date)}</span>`);
+    rowsGC += ligne(escapeHtml(p.nom || '(sans nom)'), etat, v, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)`, prevOk });
   });
-  const totLigne = `<tr class="tot"><td>SEMAINE ${numSem} · total</td><td class="c-obj c-q">${n(tot.oq)}</td><td class="c-fait c-q">${charge ? n(tot.fq) : '…'}</td><td class="c-obj">${n(tot.oc)}</td><td class="c-fait">${charge ? n(tot.fc) : '…'}</td><td class="c-reste">${charge ? n(tot.oc - tot.fc) : '—'}</td><td class="c-ok"></td></tr>`;
-  return `<div class="tab-sem"><table>
-    <thead><tr><th rowspan="2">${titre}</th><th colspan="2" class="c-groupe">Pièces</th><th colspan="3" class="c-groupe">CHF</th><th rowspan="2" class="c-ok"></th></tr>
-    <tr><th class="c-obj">Objectif</th><th class="c-fait">Vendues</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th></tr></thead>
-    <tbody>${totLigne}${rows}${totLigne}</tbody></table>
-    <div class="note">Vendues / Fait = vraies ventes de la semaine (du jeudi au mercredi), site et boutiques, taxes comprises. ${charge ? `<a href="#" onclick="event.preventDefault();delete semaineData['${debut}'];chargerSemaineData('${debut}',true)">↻ Actualiser</a>` : ''}</div>
+  if (!tous.length) rowsGC += `<tr class="vide"><td colspan="9">Aucune nouveauté pour l'instant.</td></tr>`;
+  if (!charge) rowsGC += `<tr class="vide"><td colspan="9">${D && D.erreur ? 'Ventes indisponibles pour le moment.' : (d0 > new Date() ? 'Semaine à venir.' : '⏳ Je regarde ce qui est sorti cette semaine…')}</td></tr>`;
+  const optsJours = `<option value="prevues">📝 Prévues (sans jour)</option>` + [...Array(7)].map((_, k) => { const d = new Date(d0); d.setDate(d.getDate() + k); return `<option value="${dateISOLocal(d)}">${JOURS[d.getDay()]} ${d.getDate()}</option>`; }).join('');
+  rowsGC += `<tr class="ajout"><td colspan="9"><input id="np-nom" placeholder="+ Nouveauté prévue (nom)" onkeydown="if(event.key==='Enter')ajouterPrevu('${debut}')"><select id="np-jour">${optsJours}</select><input id="np-qty" type="number" placeholder="pièces"><input id="np-ca" type="number" placeholder="CHF"><button onclick="ajouterPrevu('${debut}')">Ajouter</button></td></tr>`;
+  // --- Toujours là ---
+  const tl = sum(); let rowsTL = '';
+  const fx = fixeAffiche(debut, 'joaillerie');
+  [['starter', 'Starter pack', ''], ['garde', 'Garde mood', ''], ['joaillerie', 'Joaillerie', fx ? `plus de 600.– sur yourmood.net${fx.siteJoaillerie ? ` · Mood Joaillerie : ${n(fx.siteJoaillerie.total)}.–` : ''}` : 'plus de 600.– sur yourmood.net + Mood Joaillerie'], ['coffret', 'Coffret du mois', 'coffrets créés pour le mois']].forEach(([k, lab, sous]) => {
+    const o = objectifFixe(debut, k); const f = fixeAffiche(debut, k) || { qty: 0, total: 0 }; const fp = fixeAffiche(prev, k);
+    const v = { oq: o.qty || 0, fq: f.qty || 0, oc: o.ca || 0, fc: f.total || 0, pq: fp ? fp.qty : 0, pc: fp ? fp.total : 0 }; add(tl, v);
+    rowsTL += ligne(lab, sous ? `<span class="l-petit">${sous}</span>` : '', v, { editQ: `setObjectifFixe('${debut}','${k}','qty',this.value)`, editC: `setObjectifFixe('${debut}','${k}','ca',this.value)`, prevOk: !!fp });
+  });
+  const total = sum(); add(total, gc); add(total, tl);
+  figerSiTerminee(debut, tous);
+  const etatBloc = F ? `<div class="bloque">🔒 Chiffres bloqués et enregistrés le ${new Date(F.figeLe).toLocaleString('fr-CH', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</div>`
+    : (d7 > new Date() ? `<div class="encours-b">🟢 Semaine en cours — les chiffres seront bloqués mercredi soir à minuit</div>` : '');
+  return `<div class="tab-sem">${etatBloc}<table>
+    <thead><tr><th rowspan="2">${titre}</th><th colspan="2" class="c-groupe">Pièces</th><th colspan="3" class="c-groupe">CHF</th><th rowspan="2" class="c-ok"></th><th colspan="2" class="c-groupe c-prevh">Semaine passée</th></tr>
+    <tr><th class="c-obj">Objectif</th><th class="c-fait">Vendues</th><th class="c-obj">Objectif</th><th class="c-fait">Fait</th><th class="c-reste">Reste</th><th class="c-prev">Pièces</th><th class="c-prev">CHF</th></tr></thead>
+    <tbody>${totLigne(`SEMAINE ${numSem} · nouveautés de la semaine`, total, 'tot')}
+      ${sect('💎 Game changer')}${rowsGC}${totLigne('Game changer', gc, 'sous-tot')}
+      ${sect('📌 Toujours là')}${rowsTL}${totLigne('Toujours là', tl, 'sous-tot')}
+      ${totLigne(`SEMAINE ${numSem} · nouveautés de la semaine`, total, 'tot')}</tbody></table>
+    <div class="note">Vendues / Fait = vraies ventes de la semaine (du jeudi au mercredi), site et boutiques, taxes comprises.${!F && charge ? ` <a href="#" onclick="event.preventDefault();delete semaineData['${debut}'];chargerSemaineData('${debut}',true)">↻ Actualiser</a>` : ''}</div>
   </div>`;
 }
 
@@ -1782,12 +1875,14 @@ function rendreCalendrier() {
       const produitsExtra = donnees.produits.filter(p => p.date === jeudiSemISO && p.extraSemaine);
       let extraCardsHtml = '';
       for (const p of produitsExtra) {
-        extraCardsHtml += `<div class="product-card" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')">
-          <div class="product-name">${p.nom || '(sans nom)'}</div>
+        const objTxt = [p.objectifQty ? `${p.objectifQty} pièces` : '', p.objectifCA ? `${(+p.objectifCA).toLocaleString('fr-CH')}.-` : ''].filter(Boolean).join(' · ');
+        extraCardsHtml += `<div class="product-card prevue-card" draggable="true" data-product-id="${p.id}" ondragstart="onDragStart(event,'${p.id}')" ondragend="onDragEnd(event)" onclick="ouvrirModalEdit('${p.id}')">
+          ${p.image ? `<img class="pc-img" src="${p.image}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+          <div class="product-name">${p.nom || '(sans nom)'}</div>${objTxt ? `<div class="prevue-obj">🎯 ${objTxt}</div>` : ''}
         </div>`;
       }
       joursHtml += `<div class="day day-extra" data-day="${jeudiSemISO}" data-extra="true" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropExtra(event,'${jeudiSemISO}')">
-        <div class="day-header"><span class="day-name">📦</span><span class="day-number" style="font-size:0.65rem;font-weight:600;">extra</span></div>
+        <div class="day-header prevues-h"><span class="day-name">📝 Prévues</span><span class="prevues-n">${produitsExtra.length || ''}</span></div>
         <div class="day-content">${extraCardsHtml}</div>
         <button class="add-product-btn" onclick="ouvrirModalAjoutExtra('${jeudiSemISO}')">+</button>
       </div>`;
