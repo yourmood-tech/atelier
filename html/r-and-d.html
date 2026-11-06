@@ -647,6 +647,20 @@
   .fb-nav{display:flex;align-items:center;gap:10px;}
   #fb-titre{font-weight:800;font-size:1.05rem;min-width:170px;text-align:center;}
   .mosaique-vide{grid-column:1/-1;text-align:center;color:#888;}
+  .sem-mosaique{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin:4px 0 14px;}
+  .sem-tuile{border-radius:18px;padding:14px;min-height:150px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;
+    background:linear-gradient(150deg,var(--c1),var(--c2));color:var(--tx);box-shadow:0 5px 14px rgba(0,0,0,.10);transition:transform .15s, box-shadow .15s;position:relative;overflow:hidden;}
+  .sem-tuile:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(0,0,0,.16);}
+  .sem-tuile.passee{opacity:.8;filter:saturate(.8);}
+  .sem-tuile.encours{outline:4px solid #f5c542;outline-offset:2px;}
+  .sem-tuile .st-num{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;opacity:.85;}
+  .sem-tuile .st-dates{font-size:1.15rem;font-weight:800;line-height:1.15;margin-top:2px;}
+  .sem-tuile .st-ev{font-size:.72rem;font-weight:600;margin-top:5px;line-height:1.3;opacity:.95;}
+  .sem-tuile .st-photos{display:flex;gap:4px;margin:8px 0 6px;min-height:36px;flex-wrap:wrap;}
+  .sem-tuile .st-photos img{width:36px;height:36px;border-radius:9px;object-fit:cover;border:2px solid rgba(255,255,255,.75);background:#fff;}
+  .sem-tuile .chip{background:rgba(255,255,255,.9);color:#222;border-radius:999px;padding:3px 9px;font-size:.7rem;font-weight:700;display:inline-block;margin:2px 3px 0 0;}
+  .sem-retour{border:1px solid #d9cdbf;background:#fff;color:#2a2a2a;font-weight:700;border-radius:999px;padding:7px 16px;cursor:pointer;font-size:.86rem;margin:0 0 10px;}
+
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap">
 <style>
@@ -1282,8 +1296,39 @@ function rendreMosaique(){
   }
   el.innerHTML = html;
 }
-function ouvrirFocusMois(annee, m){ moisFocus = `${annee}-${m}`; majFocusStockage(); appliquerVueMois(true); }
-function fermerFocusMois(){ moisFocus = null; majFocusStockage(); appliquerVueMois(true); }
+let semaineFocus = null;
+function ouvrirFocusMois(annee, m){ moisFocus = `${annee}-${m}`; semaineFocus = null; majFocusStockage(); appliquerVueMois(true); }
+function ouvrirSemaine(debut){ semaineFocus = debut; appliquerVueMois(true); }
+function fermerSemaine(){ semaineFocus = null; appliquerVueMois(true); }
+function rendreSemainesTuiles(moisEl, annee, m){
+  const th = THEMES_MOIS[`${annee}-${m}`];
+  const c1 = th ? th.couleur : COULEURS_DEFAUT[m][0], c2 = th ? th.fonce : COULEURS_DEFAUT[m][1];
+  const mix = '#' + [1,3,5].map(i => Math.round((parseInt(c1.substr(i,2),16) + parseInt(c2.substr(i,2),16)) / 2).toString(16).padStart(2,'0')).join('');
+  const tx = couleurTexteSurFond(mix);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const sems = calculerSemainesMois(annee, m);
+  let html = '';
+  sems.forEach((sem, i) => {
+    const d0 = new Date(sem.debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
+    const prods = (donnees.produits || []).filter(p => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= d0 && d < d7; });
+    let real = 0, obj = 0; prods.forEach(p => { obj += (+p.objectifCA || 0); let r = null; try { r = ventesReelles[p.id]; } catch(e) {} real += r ? (Number(r.total) || 0) : (+p.ventes || 0); });
+    const evs = []; for (let k = 0; k < 7; k++) { const dd = new Date(d0); dd.setDate(dd.getDate() + k); getEventsForDate(dateISOLocal(dd)).forEach(e => { if (!evs.includes(e.nom)) evs.push(e.nom); }); }
+    const fin = new Date(d0); fin.setDate(fin.getDate() + 6);
+    const passee = fin < today, encours = d0 <= today && today <= fin;
+    const photos = prods.filter(p => p.image).slice(0, 6).map(p => `<img src="${p.image}" alt="">`).join('');
+    html += `<div class="sem-tuile${passee ? ' passee' : ''}${encours ? ' encours' : ''}" style="--c1:${c1};--c2:${c2};--tx:${tx}" onclick="ouvrirSemaine('${sem.debut}')">
+      <div><div class="st-num">Semaine ${i + 1}${encours ? ' · en cours' : ''}</div><div class="st-dates">${sem.label}</div>
+      ${evs.length ? `<div class="st-ev">📅 ${evs.slice(0,2).map(escapeHtml).join(' · ')}</div>` : ''}</div>
+      <div><div class="st-photos">${photos}</div>
+      <span class="chip">✨ ${prods.length} sortie${prods.length > 1 ? 's' : ''}</span>${real > 0 ? `<span class="chip">💰 ${Math.round(real).toLocaleString('fr-CH')}.-</span>` : (obj > 0 ? `<span class="chip">🎯 ${obj.toLocaleString('fr-CH')}.-</span>` : '')}</div>
+    </div>`;
+  });
+  let box = moisEl.querySelector('.sem-mosaique');
+  if (!box) { box = document.createElement('div'); box.className = 'sem-mosaique'; const w = moisEl.querySelector('.weeks'); w.parentNode.insertBefore(box, w); }
+  box.innerHTML = html;
+  return box;
+}
+function fermerFocusMois(){ moisFocus = null; semaineFocus = null; majFocusStockage(); appliquerVueMois(true); }
 function decalerFocusMois(n){
   if (!moisFocus) return; let [a, m] = moisFocus.split('-').map(Number); m += n;
   if (m < 0 || m > 11) return; // reste dans l'année affichée
@@ -1308,9 +1353,16 @@ function appliquerVueMois(scrollTop){
         x.querySelectorAll('.mois-chevron, .theme-banner .theme-chevron').forEach(ch => ch.style.transform = 'rotate(90deg)');
       }
       if (ok) {
-        const now = new Date(); const passe = annee < now.getFullYear() || (annee === now.getFullYear() && m < now.getMonth());
-        const btn = x.querySelector('.toggle-passees');
-        if (passe && btn && btn.dataset.show !== 'true') togglePasseesDansMois(btn);
+        const box = rendreSemainesTuiles(x, annee, m);
+        const weeks = x.querySelector('.weeks'), tog = x.querySelector('.toggle-passees');
+        let back = x.querySelector('.sem-retour');
+        if (!back) { back = document.createElement('button'); back.className = 'sem-retour'; back.textContent = '← Toutes les semaines du mois'; back.onclick = fermerSemaine; weeks.parentNode.insertBefore(back, weeks); }
+        if (tog) tog.style.display = 'none';
+        if (!semaineFocus) { box.style.display = ''; weeks.style.display = 'none'; back.style.display = 'none'; }
+        else {
+          box.style.display = 'none'; weeks.style.display = ''; back.style.display = '';
+          x.querySelectorAll('.week').forEach(w => { const sel = w.dataset.debut === semaineFocus; w.style.display = sel ? '' : 'none'; if (sel) { w.classList.add('show'); w.style.opacity = '1'; } });
+        }
       }
     });
   }
@@ -1529,7 +1581,7 @@ function rendreCalendrier() {
       });
       const recapHebdoHtml = construireRecap(produitsDeSemaine, `Semaine ${sem.label}`);
 
-      html += `<div class="week${semainePassee ? ' passee' : ''}">
+      html += `<div class="week${semainePassee ? ' passee' : ''}" data-debut="${sem.debut}">
         <div class="week-header">${sem.label}${semainePassee ? ' <span style="font-size:0.65rem;color:var(--gris);">(passée)</span>' : ''}</div>
         <div class="week-days">${joursHtml}</div>
         ${recapHebdoHtml}
