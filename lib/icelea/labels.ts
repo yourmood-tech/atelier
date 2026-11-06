@@ -68,8 +68,8 @@ export function labelFor(ing: LabelIngredient, productName: string): Omit<Label,
   let m: RegExpMatchArray | null;
 
   // Émail sur base : MTRL-BASE-ENAMEL-RM01-L-54, nom « Base émail large ICE (RM01) »
-  if ((m = sku.match(/^MTRL-BASE-ENAMEL-([A-Z0-9]+)-(L|S|XS)-(\d\d)$/))) {
-    const n = ing.name.match(/^Base émail (?:large|small|extra small) (.+) \(([A-Z0-9]+)\)$/i);
+  if ((m = sku.match(/^MTRL-BASE-ENAMEL-([A-Z0-9-]+?)-(L|S|XS)-(\d\d)$/))) {
+    const n = ing.name.match(/^Base émail (?:large|small|extra small) (.+) \(([A-Z0-9-]+)\)$/i);
     // Le nom de collection prend trop de place sur 38 mm : on garde la couleur / le modèle
     const model = (n ? n[1] : "Émail").replace(/^(Émail d'Automne|Éternité Astrale|Néon)\s+/i, "");
     return { line1: cut(`${model} : ${m[1]}`, 44), line2: `Base ${WIDTH[m[2]]} · ${m[3]}` };
