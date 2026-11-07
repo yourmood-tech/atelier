@@ -61,6 +61,7 @@ export default function Delais() {
   // tableau blanc des délais, une ligne par fournisseur : repris dans chaque nouveau brouillon
   const [consignes, setConsignes] = useState<{ parFournisseur: Record<string, string>; majLe: string | null } | null>(null);
   const [consigneMsg, setConsigneMsg] = useState<string | null>(null);
+  const [inboxKo, setInboxKo] = useState<string | null>(null);   // inbox Gorgias illisible → aucune carte à valider affichée
   async function enregistrerConsignes() {
     if (!consignes) return;
     const r = await fetch("/api/delais", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consignes", parFournisseur: consignes.parFournisseur }) });
@@ -87,6 +88,7 @@ export default function Delais() {
     const r = await fetch("/api/delais", { cache: "no-store" });
     const j = await r.json();
     setList(j.brouillons ?? []);
+    setInboxKo(j.inboxLue === false ? (j.erreurInbox ?? "inconnue") : null);
     if (j.consignes) setConsignes((c) => c ?? j.consignes);
   }
   useEffect(() => { charger(); const t = setInterval(charger, 60000); return () => clearInterval(t); }, []);
@@ -182,6 +184,12 @@ export default function Delais() {
     <main className="mx-auto max-w-5xl p-4 sm:p-6">
       <h1 className="text-2xl font-semibold">Demandes clientes — délais et tailles</h1>
       <p className="mt-1 text-sm text-neutral-500">Chaque demande arrive sur ton compte Gorgias avec un brouillon écrit à partir de Shopify et des étiquettes d&apos;atelier. Rien ne part sans ton clic.</p>
+      {inboxKo && (
+        <div className="mt-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+          <b>Gorgias ne répond pas à l&apos;outil</b> — impossible de savoir quelles demandes sont encore ouvertes, donc aucune n&apos;est affichée. Les nouvelles demandes ne reçoivent pas de brouillon tant que ce n&apos;est pas réglé.
+          <div className="mt-1 text-xs text-red-600">Détail : {inboxKo}</div>
+        </div>
+      )}
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Case titre="À valider" val={stats.attente} />

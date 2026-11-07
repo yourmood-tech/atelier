@@ -14,11 +14,15 @@ const INBOX_PHILIPPE = 1408971;   // vue Gorgias « Inbox » : ouverts + attribu
 // « ecarter » = Philippe répond lui-même dans Gorgias (ticket laissé ouvert) ; « fermer » = rien à répondre (ex. un merci), ticket clos
 export async function GET() {
   const list = await tous();
-  // inbox illisible (Gorgias indisponible) → repli sur la marque posée à chaque traitement
-  const inbox = await ticketsDeLaVue(INBOX_PHILIPPE).then((ids) => new Set(ids)).catch(() => null);
-  const visibles = list.filter((b) => b.etat !== "a_valider" || (inbox ? inbox.has(b.ticketId) : b.chezPhilippe !== false))
+  // inbox illisible (Gorgias indisponible, clé refusée) → AUCUNE carte à valider : on ne peut pas savoir
+  // si le ticket est encore ouvert, et un ticket fermé ne doit jamais réapparaître (Philippe 07.11.2026).
+  // La page affiche alors une alerte rouge (inboxLue = false).
+  let erreurInbox: string | null = null;
+  const inbox = await ticketsDeLaVue(INBOX_PHILIPPE).then((ids) => new Set(ids))
+    .catch((e) => { erreurInbox = e instanceof Error ? e.message.slice(0, 160) : String(e); return null; });
+  const visibles = list.filter((b) => b.etat !== "a_valider" || (inbox ? inbox.has(b.ticketId) : false))
     .sort((a, b) => a.recuLe.localeCompare(b.recuLe));
-  return NextResponse.json({ ok: true, brouillons: visibles, inboxLue: !!inbox, consignes: await lireConsignes() });
+  return NextResponse.json({ ok: true, brouillons: visibles, inboxLue: !!inbox, erreurInbox, consignes: await lireConsignes() });
 }
 export async function POST(req: NextRequest) {
   const corps = (await req.json()) as { ticketId?: number; action?: string; parFournisseur?: Record<string, string> };
