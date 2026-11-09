@@ -47,10 +47,12 @@
 #calj .cj-case img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 #calj .cj-case .cj-num{position:absolute;top:8px;left:8px;min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.92);font:600 13px/30px Poppins,sans-serif;text-align:center;color:#26384A}
 #calj .cj-case .cj-nom{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 9px;font:500 12px/1.25 Poppins,sans-serif;color:#fff;background:linear-gradient(0deg,rgba(20,30,45,.7),rgba(20,30,45,0))}
-#calj .cj-case.fermee{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.7)}
-#calj .cj-case.fermee .cj-gros{font:400 clamp(30px,4vw,46px)/1 'Playfair Display',serif}
-#calj .cj-case.fermee .cj-quand{margin-top:8px;font:500 10px Poppins,sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
-#calj .cj-case.fermee::after{content:"";position:absolute;inset:7px;border:1px dashed currentColor;border-radius:11px;opacity:.28}
+/* cases fermées = les vrais tiroirs du calendrier */
+#calj .cj-case.fermee{background-size:cover !important;background-position:center !important;border:2px solid #F4EEDF}
+#calj .cj-case.fermee .cj-quand{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);white-space:nowrap;background:rgba(255,255,255,.92);border-radius:999px;padding:3px 10px;font:600 10px Poppins,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#26384A}
+/* le tiroir du jour s'ouvre à l'arrivée sur la page */
+#calj .cj-case .cj-tiroir{position:absolute;inset:0;background-size:cover;background-position:center;z-index:3;transition:transform 1.1s cubic-bezier(.55,.05,.35,1),opacity 1.1s;box-shadow:0 10px 18px rgba(0,0,0,.25)}
+#calj .cj-case .cj-tiroir.ouvert{transform:translateY(-104%) scale(.96);opacity:0}
 #calj .cj-case.aujourdhui{outline:3px solid #fff;box-shadow:0 0 0 6px rgba(184,138,53,.45),0 14px 28px rgba(30,50,80,.18)}
 #calj .cj-case.aujourdhui.pair{box-shadow:0 0 0 6px rgba(76,130,181,.45),0 14px 28px rgba(30,50,80,.18)}
 #calj .cj-avant{max-width:640px;margin:-26px auto 34px;position:relative;z-index:2;background:#fff;border-radius:20px;padding:26px 28px;text-align:center;box-shadow:0 18px 50px rgba(30,50,80,.14)}
@@ -82,6 +84,7 @@
   var API = (location.hostname === 'mood-tools.yourmood.net' || location.hostname === 'localhost' || location.hostname === 'katana-scanner-mvp.vercel.app') ? '/api/calendrier-jours' : 'https://mood-tools.yourmood.net/api/calendrier-jours';
   var q = new URLSearchParams(location.search); var jourApercu = q.get('jour');
   var MOIS = ' décembre';
+  var TIROIRS = 'https://mood-tools.yourmood.net/calendrier/tiroirs/';
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function pad(n){ return (n < 10 ? '0' : '') + n; }
   function cote(n){ return n % 2 ? 'impair' : 'pair'; }
@@ -120,12 +123,13 @@
     for (var n = 1; n <= 24; n++) {
       var x = par[n];
       if (x) {
-        g += '<a class="cj-case ' + cote(n) + (n === jour ? ' aujourdhui' : '') + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + '><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt="' + esc(x.nom) + '"><span class="cj-num">' + n + '</span><span class="cj-nom">' + esc(x.nom) + '</span></a>';
+        g += '<a class="cj-case ' + cote(n) + (n === jour ? ' aujourdhui' : '') + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + '><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt="' + esc(x.nom) + '"><span class="cj-num">' + n + '</span><span class="cj-nom">' + esc(x.nom) + '</span>' + (n === jour ? '<span class="cj-tiroir" style="background-image:url(' + TIROIRS + pad(n) + '.jpg)"></span>' : '') + '</a>';
       } else {
-        g += '<div class="cj-case fermee ' + cote(n) + '"><span class="cj-gros">' + n + '</span><span class="cj-quand">' + (n === jour + 1 ? 'demain' : 'décembre') + '</span></div>';
+        g += '<div class="cj-case fermee ' + cote(n) + '" style="background:url(' + TIROIRS + pad(n) + '.jpg)" aria-label="Case ' + n + '">' + (n === jour + 1 ? '<span class="cj-quand">demain</span>' : '') + '</div>';
       }
     }
     document.getElementById('cj-grille').innerHTML = g;
+    setTimeout(function(){ var t = document.querySelector('#calj .cj-tiroir'); if (t) t.classList.add('ouvert'); }, 900);
     document.getElementById('cj-sous2').textContent = jour >= 24 ? 'Toutes les pépites sont dévoilées. Clique sur une case pour la retrouver.' : (jour ? jour + ' case' + (jour > 1 ? 's' : '') + ' ouverte' + (jour > 1 ? 's' : '') + ' · une nouvelle chaque nuit à minuit.' : 'Une case s\'ouvre chaque nuit à minuit, du 1er au 24 décembre.');
     chrono(jourApercu !== null ? null : prochaineOuverture(jour)); // en aperçu, pas de compte à rebours
   }
