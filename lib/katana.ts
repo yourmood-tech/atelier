@@ -996,3 +996,52 @@ export async function sendStockMovementToKatana(input: KatanaMovementInput) {
     katana_response: stockAdjustment,
   };
 }
+// ── Recherche d'une pièce Technocut / Vacor / Positive Coating par nom ou code matière ──
+// Utilisée par l'écran « Commande Technocut · Vacor · Positive Coating » quand l'article scanné
+// n'est pas trouvé ou que sa recette ne contient pas la pièce : on choisit la pièce à la main.
+type TreatmentMaterialVariant = { variantId: number; name: string; sku: string | null; purchasePrice: number; supplierId: number };
+const treatmentMaterialsCache = new Map<number, CacheEntry<TreatmentMaterialVariant[]>>();
+
+async function materialsOfSupplier(supplierId: number): Promise<TreatmentMaterialVariant[]> {
+  const hit = treatmentMaterialsCache.get(supplierId);
+  if (hit && hit.expiresAt > Date.now()) return hit.value;
+  const out: TreatmentMaterialVariant[] = [];
+  for (let page = 1; page <= 20; page++) {
+    const data = (await katanaFetch(
+      `/v1/materials?default_supplier_id=${supplierId}&include_deleted=false&limit=250&page=${page}`,
+      { method: "GET" }
+    )) as { data?: Record<string, unknown>[] };
+    const mats = data?.data ?? [];
+    for (const m of mats) {
+      if (m.archived_at || m.deleted_at) continue;
+      for (const v of (m.variants as Record<string, unknown>[]) ?? []) {
+        const price = Number(v.purchase_price);
+        out.push({
+          variantId: v.id as number,
+          name: (m.name as string) ?? "",
+          sku: (v.sku as string | null) ?? null,
+          purchasePrice: isNaN(price) ? 0 : price,
+          supplierId,
+        });
+      }
+    }
+    if (mats.length < 250) break;
+  }
+  treatmentMaterialsCache.set(supplierId, { value: out, expiresAt: Date.now() + 10 * 60 * 1000 });
+  return out;
+}
+
+const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+export async function searchTreatmentMaterials(query: string, supplierIds: number[], limit = 40): Promise<TreatmentMaterialVariant[]> {
+  const words = norm(query).split(/[\s,]+/).filter(Boolean);
+  if (!words.length) return [];
+  const all = (await Promise.all(supplierIds.map(materialsOfSupplier))).flat();
+  return all
+    .filter((v) => {
+      const hay = norm(`${v.name} ${v.sku ?? ""}`);
+      return words.every((w) => hay.includes(w));
+    })
+    .sort((a, b) => (a.sku ?? "").localeCompare(b.sku ?? "", "fr", { numeric: true }))
+    .slice(0, limit);
+}

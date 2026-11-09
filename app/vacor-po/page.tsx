@@ -56,6 +56,59 @@ function buildLines(items: Item[]): PoLine[] {
   return [...map.values()].sort((a, b) => a.order - b.order || (a.variantSku ?? "").localeCompare(b.variantSku ?? ""));
 }
 
+// Quand l'article n'est pas trouvé (ou que sa recette n'a pas la pièce), on cherche la pièce
+// directement par son nom (« poya là-haut 56 ») ou son code matière (« MTRL-3DDECOUPE-CANDY2026 »).
+function ManualPieceSearch({ suppliers, onPick }: { suppliers: number[]; onPick: (ing: VacorIng) => void }) {
+  const [q, setQ] = useState("");
+  const [results, setResults] = useState<VacorIng[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  async function search() {
+    if (q.trim().length < 2) return;
+    setBusy(true); setMsg(null);
+    try {
+      const res = await fetch("/api/vacor-po/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q, suppliers }) });
+      const data = (await res.json()) as { ok?: boolean; results?: VacorIng[]; error?: string };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Erreur");
+      setResults(data.results ?? []);
+      if (!data.results?.length) setMsg("Aucune pièce trouvée — essayez un autre mot");
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : "Erreur");
+    } finally { setBusy(false); }
+  }
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ display: "flex", gap: 6 }}>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void search(); } }}
+          placeholder="Chercher la pièce : nom + taille, ou code MTRL-…"
+          style={{ flex: 1, padding: "6px 10px", fontSize: 13, border: "1px solid #ccc", borderRadius: 6 }}
+        />
+        <button onClick={() => void search()} disabled={busy} style={{ padding: "6px 12px", fontSize: 13, borderRadius: 6, border: "1px solid #999", background: "#f4f4f4", cursor: "pointer" }}>
+          {busy ? "…" : "Chercher"}
+        </button>
+      </div>
+      {msg && <div style={{ fontSize: 12, color: "#888", marginTop: 4 }}>{msg}</div>}
+      {results.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6, maxHeight: 260, overflowY: "auto" }}>
+          {results.map((r) => (
+            <button
+              key={r.variantId}
+              onClick={() => onPick(r)}
+              style={{ textAlign: "left", padding: "6px 10px", fontSize: 12, borderRadius: 6, border: "1px solid #ddd", background: "#fff", cursor: "pointer" }}
+            >
+              <span style={{ display: "inline-block", minWidth: 110, color: "#fff", background: r.bg, borderRadius: 4, padding: "1px 6px", marginRight: 8, fontSize: 11 }}>{r.groupLabel}</span>
+              <strong>{r.sku ?? "—"}</strong> · {r.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TraitementsPOPage() {
   const [phase, setPhase] = useState<"setup" | "scanning" | "closed">("setup");
   const [items, setItems] = useState<Item[]>([]);
@@ -325,7 +378,17 @@ export default function TraitementsPOPage() {
               {item.status === "loading" && <div style={{ color: "#888", fontSize: 14 }}>Recherche…</div>}
               {item.status === "resolving" && <div style={{ color: "#888", fontSize: 14 }}>{item.productName} — lecture de la recette…</div>}
               {item.status === "error" && (
-                <div style={{ color: "#c62828", fontSize: 13 }}><strong>{item.productName}</strong><br /><em>{item.error}</em></div>
+                <>
+                  <div style={{ color: "#c62828", fontSize: 13 }}><strong>{item.productName}</strong><br /><em>{item.error}</em></div>
+                  <ManualPieceSearch
+                    suppliers={suppliers}
+                    onPick={(ing) => {
+                      patch(item.localId, { status: "ok", vacor: [ing], excluded: [], error: undefined });
+                      setStatus(`✓ ${item.productName} → ${ing.name}${ing.sku ? ` (${ing.sku})` : ""} — choisi à la main`);
+                      beep();
+                    }}
+                  />
+                </>
               )}
               {item.status === "selecting_size" && (
                 <>
