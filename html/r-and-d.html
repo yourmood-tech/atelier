@@ -1602,8 +1602,8 @@ function tableauSemaine(annee, m, debut, numSem){
   const cellsPrev = (pq, pc, ok) => `<td class="c-prev c-q">${ok ? n(pq) : '—'}</td><td class="c-prev">${ok ? n(pc) : '—'}</td>`;
   const ligne = (label, sous, v, opts = {}) => {
     const ok = v.oc > 0 && v.fc >= v.oc, okq = v.oq > 0 && v.fq >= v.oq, r = v.oc - v.fc;
-    // ligne verte : l'objectif en CHF décide ; les pièces ne comptent que s'il n'y a pas d'objectif CHF
-    const ligneOk = charge && (v.oc > 0 ? ok : okq);
+    // ligne verte : uniquement si l'objectif de chiffre d'affaires (CHF) est atteint
+    const ligneOk = charge && ok;
     const inQ = opts.editQ ? `<input class="obj-in" type="number" value="${v.oq || ''}" placeholder="pièces" onclick="event.stopPropagation()" onchange="${opts.editQ}">` : (v.oq ? n(v.oq) : '—');
     const inC = opts.editC ? `<input class="obj-in" type="number" value="${v.oc || ''}" placeholder="CHF" onclick="event.stopPropagation()" onchange="${opts.editC}">` : (v.oc ? n(v.oc) : '—');
     return `<tr class="ligne${ligneOk ? ' ligne-ok' : ''}"${opts.click ? ` onclick="${opts.click}"` : ''}><td><div class="l-nom">${label}</div>${sous ? `<div class="l-sous">${sous}</div>` : ''}</td>
