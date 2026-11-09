@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le calendrier mood — une pépite chaque jour</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+#calj{--bleu:#2B4D6B;--or:#A8863A;--or2:#B88A35;--champ:#F4E8CC;--champ2:#E9D5A6;--glace:#E3EDF5;--glace2:#C9DCEB;--txor:#9A7024;--txbl:#2F5F8E;
+  font-family:Poppins,system-ui,sans-serif;font-weight:300;color:var(--bleu);background:linear-gradient(180deg,#DCE8F1 0%,#EFF4F8 40%,#F7F5F0 100%);min-height:100vh;overflow-x:clip}
+#calj *{box-sizing:border-box}
+#calj .cj-hero{position:relative;min-height:340px;display:flex;align-items:flex-end;justify-content:center;text-align:center;color:#fff;
+  background:url(https://mood-tools.yourmood.net/calendrier/accueil-debut.jpg) center 35%/cover;padding:40px 18px 34px}
+#calj .cj-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,30,52,.15) 0%,rgba(14,30,52,.55) 70%,rgba(14,30,52,.7) 100%)}
+#calj .cj-hero>div{position:relative;max-width:760px}
+#calj .cj-kick{font:500 12px Poppins,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:#F1DDA9;margin:0 0 10px}
+#calj h1{font:400 clamp(28px,4.4vw,48px)/1.15 'Playfair Display',serif;margin:0;color:#fff}
+#calj h1 em{font-style:italic;color:#F1DDA9}
+#calj .cj-logo{height:.8em;width:auto;vertical-align:baseline;margin:0 .12em;display:inline-block !important;filter:brightness(0) invert(1)}
+#calj .cj-sous{margin:14px auto 0;font-size:clamp(14px,1.6vw,16px);line-height:1.6;max-width:560px;color:#EEF3F8}
+#calj .cj-compte{display:inline-flex;gap:10px;align-items:center;margin-top:18px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);backdrop-filter:blur(6px);border-radius:999px;padding:8px 18px;font-size:13px;color:#fff}
+#calj .cj-compte[hidden]{display:none}
+#calj .cj-compte b{font:500 15px Poppins,sans-serif;letter-spacing:.06em;font-variant-numeric:tabular-nums;color:#F1DDA9}
+#calj .cj-wrap{width:min(1180px,100%);margin:0 auto;padding:0 16px 60px}
+/* la case du jour */
+#calj .cj-jour{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:0;margin:-30px auto 34px;max-width:980px;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 18px 50px rgba(30,50,80,.16);position:relative;z-index:2}
+#calj .cj-jour.impair{background:linear-gradient(135deg,#FBF4E4,#F4E8CC)} #calj .cj-jour.pair{background:linear-gradient(135deg,#F2F7FB,#E3EDF5)}
+#calj .cj-jour .cj-img{position:relative;aspect-ratio:1;background:#eee}
+#calj .cj-jour .cj-img img{width:100%;height:100%;object-fit:cover;display:block}
+#calj .cj-jour .cj-txt{padding:34px 34px 30px;display:flex;flex-direction:column;justify-content:center}
+#calj .cj-etiq{font:600 11px Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase}
+#calj .impair .cj-etiq{color:var(--txor)} #calj .pair .cj-etiq{color:var(--txbl)}
+#calj .cj-jour h2{font:400 clamp(28px,3.4vw,40px)/1.15 'Playfair Display',serif;margin:10px 0 6px;color:#26384A}
+#calj .cj-type{font-size:14px;color:#6A7A86;margin:0 0 18px}
+#calj .cj-prix{font:500 18px Poppins,sans-serif;margin:0 0 22px;color:#26384A}
+#calj .cj-btn{align-self:flex-start;display:inline-block;text-decoration:none;font:500 14px Poppins,sans-serif;letter-spacing:.04em;color:#fff;border-radius:999px;padding:13px 28px;transition:transform .2s,box-shadow .2s}
+#calj .impair .cj-btn{background:var(--or2)} #calj .pair .cj-btn{background:#4C82B5}
+#calj .cj-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.15)}
+#calj .cj-ruban{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.92);border-radius:999px;padding:6px 14px;font:600 12px Poppins,sans-serif;color:#26384A}
+/* la grille */
+#calj .cj-titre2{text-align:center;font:400 clamp(22px,2.6vw,30px) 'Playfair Display',serif;margin:8px 0 4px;color:#26384A}
+#calj .cj-titre2 + p{text-align:center;margin:0 0 22px;font-size:14px;color:#6A7A86}
+#calj .cj-grille{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+#calj .cj-case{position:relative;aspect-ratio:1;border-radius:16px;overflow:hidden;text-decoration:none;display:block;box-shadow:0 6px 18px rgba(30,50,80,.08);transition:transform .25s,box-shadow .25s}
+#calj .cj-case.impair{background:linear-gradient(145deg,#FBF1DA,#EBD7A8);color:var(--txor)} #calj .cj-case.pair{background:linear-gradient(145deg,#F1F6FA,#CFE0EE);color:var(--txbl)}
+#calj a.cj-case:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(30,50,80,.16)}
+#calj .cj-case img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#calj .cj-case .cj-num{position:absolute;top:8px;left:8px;min-width:30px;height:30px;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.92);font:600 13px/30px Poppins,sans-serif;text-align:center;color:#26384A}
+#calj .cj-case .cj-nom{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 9px;font:500 12px/1.25 Poppins,sans-serif;color:#fff;background:linear-gradient(0deg,rgba(20,30,45,.7),rgba(20,30,45,0))}
+#calj .cj-case.fermee{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.7)}
+#calj .cj-case.fermee .cj-gros{font:400 clamp(30px,4vw,46px)/1 'Playfair Display',serif}
+#calj .cj-case.fermee .cj-quand{margin-top:8px;font:500 10px Poppins,sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+#calj .cj-case.fermee::after{content:"";position:absolute;inset:7px;border:1px dashed currentColor;border-radius:11px;opacity:.28}
+#calj .cj-case.aujourdhui{outline:3px solid #fff;box-shadow:0 0 0 6px rgba(184,138,53,.45),0 14px 28px rgba(30,50,80,.18)}
+#calj .cj-case.aujourdhui.pair{box-shadow:0 0 0 6px rgba(76,130,181,.45),0 14px 28px rgba(30,50,80,.18)}
+#calj .cj-avant{max-width:640px;margin:-26px auto 34px;position:relative;z-index:2;background:#fff;border-radius:20px;padding:26px 28px;text-align:center;box-shadow:0 18px 50px rgba(30,50,80,.14)}
+#calj .cj-avant h2{font:400 26px 'Playfair Display',serif;margin:0 0 8px;color:#26384A}
+#calj .cj-avant p{margin:0;font-size:14px;line-height:1.6;color:#6A7A86}
+#calj .cj-pied{text-align:center;margin-top:34px;font-size:13px;color:#6A7A86}
+#calj .cj-pied a{color:var(--or2);font-weight:500}
+@media (max-width:860px){#calj .cj-grille{grid-template-columns:repeat(4,1fr);gap:10px} #calj .cj-jour{grid-template-columns:1fr} #calj .cj-jour .cj-txt{padding:24px 22px 26px}}
+@media (max-width:520px){#calj .cj-grille{grid-template-columns:repeat(3,1fr);gap:8px} #calj .cj-hero{min-height:360px;padding-top:64px} #calj .cj-case .cj-nom{font-size:10.5px;padding:18px 7px 7px}}
+</style></head>
+<body style="margin:0">
+<div id="calj">
+  <section class="cj-hero"><div>
+    <p class="cj-kick">Calendrier de l'Avent 2026</p>
+    <h1>Le calendrier <img class="cj-logo" src="https://mood-tools.yourmood.net/calendrier/mood-mot.png" alt="mood"> · <em>une pépite chaque jour</em></h1>
+    <p class="cj-sous">Chaque matin de décembre, une case s'ouvre… et une nouvelle pépite créative se dévoile, à clipser sur ta bague mood.</p>
+    <div class="cj-compte" id="cj-compte" hidden>Prochaine case dans <b id="cj-chrono">--:--:--</b></div>
+  </div></section>
+  <div class="cj-wrap">
+    <div id="cj-haut"></div>
+    <h2 class="cj-titre2">Les 24 cases</h2>
+    <p id="cj-sous2">Une case s'ouvre chaque nuit à minuit.</p>
+    <div class="cj-grille" id="cj-grille"></div>
+    <p class="cj-pied">Tu préfères tout recevoir d'un coup ? <a href="https://www.yourmood.net/pages/calendrier-mood">Compose ton calendrier</a></p>
+  </div>
+</div>
+<script>
+(function(){
+  var API = (location.hostname === 'mood-tools.yourmood.net' || location.hostname === 'localhost' || location.hostname === 'katana-scanner-mvp.vercel.app') ? '/api/calendrier-jours' : 'https://mood-tools.yourmood.net/api/calendrier-jours';
+  var q = new URLSearchParams(location.search); var jourApercu = q.get('jour');
+  var MOIS = ' décembre';
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function cote(n){ return n % 2 ? 'impair' : 'pair'; }
+  // prochaine ouverture = minuit suisse du jour suivant
+  function prochaineOuverture(jour){
+    if (jour >= 24) return null;
+    var cible = jour === 0 ? '2026-12-01' : '2026-12-' + pad(jour + 1);
+    return new Date(cible + 'T00:00:00+01:00');
+  }
+  function chrono(cible){
+    var el = document.getElementById('cj-compte'), t = document.getElementById('cj-chrono');
+    if (!cible) { el.hidden = true; return; }
+    el.hidden = false;
+    function tic(){
+      var s = Math.max(0, Math.floor((cible - new Date()) / 1000));
+      if (s <= 0 && !jourApercu) { location.reload(); return; }
+      var j = Math.floor(s / 86400); s %= 86400;
+      t.textContent = (j ? j + ' j ' : '') + pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60);
+    }
+    tic(); setInterval(tic, 1000);
+  }
+  function rendre(d){
+    var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; });
+    var haut = document.getElementById('cj-haut');
+    var auj = par[jour];
+    if (!jour) {
+      haut.innerHTML = '<div class="cj-avant"><h2>Rendez-vous le 1er décembre</h2><p>La première case s\'ouvrira à minuit. Chaque jour jusqu\'au 24, une pépite créative t\'attendra ici.</p></div>';
+    } else if (auj) {
+      var titre = jour >= 24 && !jourApercu ? 'Les 24 cases sont ouvertes' : 'Aujourd\'hui · ' + jour + MOIS;
+      haut.innerHTML = '<article class="cj-jour ' + cote(jour) + '"><div class="cj-img"><img src="' + esc(auj.image) + '" alt="' + esc(auj.nom) + '"><span class="cj-ruban">Case ' + pad(jour) + '</span></div>' +
+        '<div class="cj-txt"><span class="cj-etiq">' + esc(titre) + '</span><h2>' + esc(auj.nom) + '</h2><p class="cj-type">' + esc(auj.type) + '</p>' +
+        (auj.prix ? '<p class="cj-prix">' + auj.prix + '.–</p>' : '') +
+        (auj.url ? '<a class="cj-btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div></article>';
+    }
+    var g = '';
+    for (var n = 1; n <= 24; n++) {
+      var x = par[n];
+      if (x) {
+        g += '<a class="cj-case ' + cote(n) + (n === jour ? ' aujourdhui' : '') + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + '><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt="' + esc(x.nom) + '"><span class="cj-num">' + n + '</span><span class="cj-nom">' + esc(x.nom) + '</span></a>';
+      } else {
+        g += '<div class="cj-case fermee ' + cote(n) + '"><span class="cj-gros">' + n + '</span><span class="cj-quand">' + (n === jour + 1 ? 'demain' : 'décembre') + '</span></div>';
+      }
+    }
+    document.getElementById('cj-grille').innerHTML = g;
+    document.getElementById('cj-sous2').textContent = jour >= 24 ? 'Toutes les pépites sont dévoilées. Clique sur une case pour la retrouver.' : (jour ? jour + ' case' + (jour > 1 ? 's' : '') + ' ouverte' + (jour > 1 ? 's' : '') + ' · une nouvelle chaque nuit à minuit.' : 'Une case s\'ouvre chaque nuit à minuit, du 1er au 24 décembre.');
+    chrono(jourApercu !== null ? null : prochaineOuverture(jour)); // en aperçu, pas de compte à rebours
+  }
+  fetch(API + (jourApercu !== null ? '?jour=' + encodeURIComponent(jourApercu) : ''))
+    .then(function(r){ return r.json(); }).then(rendre)
+    .catch(function(){ rendre({ jour: 0, jours: [] }); });
+})();
+</script>
+</body></html>

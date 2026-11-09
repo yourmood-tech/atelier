@@ -68,7 +68,7 @@ export default auth((req) => {
   }
 
   // /aura (page de la famille Aura — lien à montrer à l'équipe)
-  if (pathname === "/aura" || pathname === "/aura-xs" || pathname === "/dernier-jour" || pathname === "/les-oubliees" || pathname === "/les-discretes" || pathname === "/refonte" || pathname === "/api/refonte" || pathname === "/catalogue-noel" || pathname === "/calendrier" || pathname === "/calendrier-essai" || pathname === "/avant-premiere" || pathname === "/email-hiver" || pathname.startsWith("/aura/")) {
+  if (pathname === "/aura" || pathname === "/aura-xs" || pathname === "/dernier-jour" || pathname === "/les-oubliees" || pathname === "/les-discretes" || pathname === "/refonte" || pathname === "/api/refonte" || pathname === "/catalogue-noel" || pathname === "/calendrier" || pathname === "/calendrier-essai" || pathname === "/calendrier-decembre" || pathname === "/avant-premiere" || pathname === "/email-hiver" || pathname.startsWith("/aura/")) {
     return;
   }
 
@@ -76,6 +76,9 @@ export default auth((req) => {
   if (pathname === "/api/catalogue-produits" || pathname === "/api/catalogue-liste") {
     return;
   }
+
+  // les cases déjà ouvertes du calendrier de décembre (public, lecture seule)
+  if (pathname === "/api/calendrier-jours") return;
 
   // le service qui prépare le panier du calendrier (prix calendrier appliqués par une remise)
   if (pathname === "/api/calendrier-panier") {
