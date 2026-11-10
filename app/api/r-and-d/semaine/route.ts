@@ -91,7 +91,7 @@ export async function GET(request: Request) {
   const jeudiSuivant = new Date(Date.UTC(+debutStr.slice(0, 4), +debutStr.slice(5, 7) - 1, +debutStr.slice(8, 10) + 7)).toISOString().slice(0, 10);
   const fin = new Date(minuitZurich(jeudiSuivant).getTime() - 1);
   const enCours = Date.now() < fin.getTime();
-  const ck = `mood:rd-semaine:v5:${debutStr}`;
+  const ck = `mood:rd-semaine:v6:${debutStr}`;
   // semaine terminée et déjà bloquée : chiffres définitifs, on ne recalcule plus jamais
   const cleFige = `mood:rd-semaine-fige:${debutStr}`;
   const fige = await redisGet(cleFige);
@@ -107,6 +107,7 @@ export async function GET(request: Request) {
     const parProduit: Record<string, { qty: number; total: number }> = {};
     const titres: Record<string, string> = {};
     let joaQty = 0, joaTotal = 0;
+    const joaDet: Record<string, { q: number; c: number }> = {};
     // lots Simple Bundles (coffrets…) : la commande ne garde que les pièces, avec le lot en propriété → on recompte le lot lui-même
     const lots: Record<string, { qty: number; total: number; groupes: Set<string> }> = {};
     for (const o of cmds) for (const l of o.line_items) {
@@ -119,7 +120,7 @@ export async function GET(request: Request) {
         L.total += t;
       }
       if (l.product_id) { const k = String(l.product_id); parProduit[k] = parProduit[k] || { qty: 0, total: 0 }; parProduit[k].qty += l.quantity; parProduit[k].total += t; titres[k] = l.title || ""; }
-      if (parseFloat(l.price) > SEUIL_JOAILLERIE && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; }
+      if (parseFloat(l.price) > SEUIL_JOAILLERIE && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; const jt = (l.title || "").trim(); joaDet[jt] = joaDet[jt] || { q: 0, c: 0 }; joaDet[jt].q += l.quantity; joaDet[jt].c += t; }
     }
     // lots → produit du lot (le coffret) ; ajouté à parProduit sous l'ID du coffret
     const vids = Object.keys(lots);
@@ -138,7 +139,10 @@ export async function GET(request: Request) {
       const j = await gql(`query($ids:[ID!]!){nodes(ids:$ids){... on Product{id tags productType createdAt}}}`, { ids: ids.slice(i, i + 100).map((x) => `gid://shopify/Product/${x}`) });
       for (const n of j?.data?.nodes || []) if (n) { const k = n.id.split("/").pop(); tags[k] = (n.tags || []).map((t: string) => t.toLowerCase()); infos[k] = { type: n.productType || "", cree: n.createdAt || "" }; }
     }
-    const fixe = (tagsOk: string[], titre: RegExp) => { let qty = 0, total = 0; for (const k of ids) if ((tags[k] || []).some((t) => tagsOk.includes(t)) || titre.test(titres[k] || "")) { qty += parProduit[k].qty; total += parProduit[k].total; } return { qty, total: Math.round(total) }; };
+    // détail d'une ligne fixe : ce qui a été vendu, du plus gros au plus petit
+    const det = (L: Array<{ t: string; q: number; c: number }>) => L.filter((x) => x.q > 0 || x.c > 0).sort((a, b) => b.c - a.c).slice(0, 60).map((x) => ({ t: x.t, q: x.q, c: Math.round(x.c) }));
+    const fixe = (tagsOk: string[], titre: RegExp) => { let qty = 0, total = 0; const L: Array<{ t: string; q: number; c: number }> = []; for (const k of ids) if ((tags[k] || []).some((t) => tagsOk.includes(t)) || titre.test(titres[k] || "")) { qty += parProduit[k].qty; total += parProduit[k].total; L.push({ t: titres[k] || "", q: parProduit[k].qty, c: parProduit[k].total }); } return { qty, total: Math.round(total), detail: det(L) }; };
+    const estCoffretDuMois = (type: string, titre: string) => (/coffret/i.test(type || "") || /^\W*coffret/i.test(titre || "")) && !/starter|garde/i.test(titre || "");
 
     // 3) nouveautés mises en ligne cette semaine (date de publication sur la boutique)
     const q = `created_at:>='${debut.toISOString()}' AND created_at:<='${fin.toISOString()}' AND status:active`;
@@ -150,6 +154,7 @@ export async function GET(request: Request) {
       if (!d) break;
       for (const n of d.nodes) {
         if (n.status !== "ACTIVE" || EXCLU.test(n.title)) continue;
+        if (estCoffretDuMois(n.productType, n.title)) continue; // les coffrets vont dans « Coffret du mois », pas dans les nouveautés
         const pid = n.id.split("/").pop();
         sorties.push({ id: pid, title: n.title, handle: n.handle, type: n.productType, tags: n.tags, publishedAt: (n.publishedAt && n.publishedAt >= n.createdAt ? n.publishedAt : n.createdAt),
           image: n.featuredImage?.url ? n.featuredImage.url + (n.featuredImage.url.includes("?") ? "&" : "?") + "width=300" : null,
@@ -177,13 +182,13 @@ export async function GET(request: Request) {
         garde: fixe(["garde-mood", "garde mood", "gardemood"], /garde-mood|garde mood/i),
         coffret: (() => { // coffrets du mois : fiches « coffret » créées depuis ~2 semaines avant le début du mois de la semaine
           const moisDebut = new Date(Date.UTC(fin.getUTCFullYear(), fin.getUTCMonth(), 1) - 15 * 86400000).toISOString();
-          let qty = 0, total = 0;
+          let qty = 0, total = 0; const L: Array<{ t: string; q: number; c: number }> = [];
           for (const k of ids) { const inf = infos[k]; const t = titres[k] || "";
             const estCoffret = /coffret/i.test(inf?.type || "") || /^\W*coffret/i.test(t) || (tags[k] || []).includes("coffret du mois");
-            if (estCoffret && !/starter|garde/i.test(t) && (inf?.cree || "") >= moisDebut) { qty += parProduit[k].qty; total += parProduit[k].total; } }
-          return { qty, total: Math.round(total) };
+            if (estCoffret && !/starter|garde/i.test(t) && (inf?.cree || "") >= moisDebut) { qty += parProduit[k].qty; total += parProduit[k].total; L.push({ t, q: parProduit[k].qty, c: parProduit[k].total }); } }
+          return { qty, total: Math.round(total), detail: det(L) };
         })(),
-        joaillerie: { qty: joaQty, total: Math.round(joaTotal + (joaStore?.total || 0)), yourmood: Math.round(joaTotal), siteJoaillerie: joaStore },
+        joaillerie: { qty: joaQty, total: Math.round(joaTotal + (joaStore?.total || 0)), yourmood: Math.round(joaTotal), siteJoaillerie: joaStore, detail: det(Object.entries(joaDet).map(([t, x]) => ({ t, q: x.q, c: x.c }))) },
       },
     };
     if (enCours) await redisSetEx(ck, out, 900);

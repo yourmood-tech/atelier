@@ -769,6 +769,7 @@
   .ca-carte:only-child{flex-basis:100%;max-width:100%;} .ca-carte img,.ca-sansphoto{max-height:92px;}
   .tab-actions{display:flex;justify-content:flex-end;padding:8px 10px 0;background:#fff;}
   .btn-imprimer{font:600 .78rem Poppins,sans-serif;border:1px solid #d9cfc4;background:#fff;color:#3a2f27;border-radius:999px;padding:6px 14px;cursor:pointer;} .btn-imprimer:hover{background:#f4eee7;}
+  .tab-sem tr.det-ligne>td{background:#fbf8f3;padding:6px 14px 10px 28px;} .tab-sem .det-tab{width:100%;border-collapse:collapse;font-size:.82rem;} .tab-sem .det-tab td{padding:3px 6px;border-top:1px dashed #e6ddd0;} .tab-sem .det-tab td.p{text-align:right;white-space:nowrap;width:90px;font-variant-numeric:tabular-nums;} .tab-sem .det-vide{font-size:.8rem;color:#8a7f74;padding:4px 0;} .tab-sem .det-fleche{color:#a0948a;} .tab-sem .det-lien{text-decoration:underline;cursor:pointer;}
   .tab-sem tr.ligne-ok>td{background:#d6f0d9 !important;} .tab-sem tr.ligne-ok>td:first-child{box-shadow:inset 4px 0 0 #2d8a4e;} .tab-sem tr.ligne-ok .obj-in{background:#f3fbf4;}
   .tab-sem .pill-btn{font:inherit;font-size:.66rem;font-weight:600;border:1px dashed #b9d9c2;background:#fff;color:#2d8a4e;border-radius:999px;padding:1px 8px;cursor:pointer;margin-left:4px;} .tab-sem .pill-btn:hover{background:#dff2e4;}
   .tab-sem .pill.vert{background:#dff2e4;color:#2d8a4e;} .tab-sem .pill.bleu{background:#e2eefb;color:#2b5e9e;}
@@ -1456,13 +1457,24 @@ async function chargerSemaineData(debut, frais){
   rendreCalendrier();
 }
 // Les nouveautés vraiment sorties : on range celles de ta liste sur leur jour de sortie, on ajoute les autres toutes seules.
+// coffret du mois (pas starter pack / garde-mood) : il va dans la ligne « Coffret du mois », pas dans les nouveautés
+const dans0 = (p, a, b) => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= a && d < b; };
+const estCoffretMois = (nom, type) => (/coffret/i.test(type || '') || /^\W*coffret/i.test(nom || '')) && !/starter|garde/i.test(nom || '');
+const detOuvert = {};
+function basculerDet(debut, k){ detOuvert[debut + ':' + k] = !detOuvert[debut + ':' + k]; rendreCalendrier(); }
 function reconcilierSemaine(debut){
   const D = semaineData[debut]; if (!D || !D.sorties) return;
   const d0 = new Date(debut + 'T00:00:00'); const d7 = new Date(d0); d7.setDate(d7.getDate() + 7);
   const mois0 = new Date(d0.getFullYear(), d0.getMonth(), 1);
   let change = false;
+  if (!figee(debut)) { // coffrets ajoutés tout seuls avant : on les retire des nouveautés (ils sont comptés dans « Coffret du mois »)
+    const avant = donnees.produits.length;
+    donnees.produits = donnees.produits.filter(p => !(p.auto && estCoffretMois(p.nom) && dans0(p, d0, d7)));
+    if (donnees.produits.length !== avant) change = true;
+  }
   D.sorties.forEach(sx => {
     const sid = String(sx.id);
+    if (estCoffretMois(sx.title, sx.type)) return;
     const lie = (donnees.produits || []).find(p => (p.shopifyIds || []).includes(sid));
     if (lie) { // déjà rangée — si elle attendait d'être mise en ligne, on note son jour de sortie
       if (!lie.dateSortie && !lie.auto) { const j = jourSuisse(sx.publishedAt); lie.dateSortie = j; if (j >= debut) { lie.date = j; lie.extraSemaine = false; } delete lie.pasEnLigne; lie.etape = Math.max(lie.etape || 1, 8); change = true; }
@@ -1640,7 +1652,18 @@ function tableauSemaine(annee, m, debut, numSem){
   [['starter', 'Starter pack', ''], ['garde', 'Garde mood', ''], ['joaillerie', 'Joaillerie', fx ? `plus de 600.– sur yourmood.net${fx.siteJoaillerie ? ` · Mood Joaillerie : ${n(fx.siteJoaillerie.total)}.–` : ''}` : 'plus de 600.– sur yourmood.net + Mood Joaillerie'], ['coffret', 'Coffret du mois', 'coffrets créés pour le mois']].forEach(([k, lab, sous]) => {
     const o = objectifFixe(debut, k); const f = fixeAffiche(debut, k) || { qty: 0, total: 0 }; const fp = fixeAffiche(prev, k);
     const v = { oq: o.qty || 0, fq: f.qty || 0, oc: o.ca || 0, fc: f.total || 0, pq: fp ? fp.qty : 0, pc: fp ? fp.total : 0 }; add(tl, v);
-    rowsTL += ligne(lab, sous ? `<span class="l-petit">${sous}</span>` : '', v, { editQ: `setObjectifFixe('${debut}','${k}','qty',this.value)`, editC: `setObjectifFixe('${debut}','${k}','ca',this.value)`, prevOk: !!fp });
+    const ouvert = !!detOuvert[debut + ':' + k];
+    const fleche = `<span class="det-fleche">${ouvert ? '▾' : '▸'}</span> `;
+    rowsTL += ligne(fleche + lab, (sous ? `<span class="l-petit">${sous}</span> ` : '') + `<span class="l-petit det-lien">${ouvert ? 'masquer le détail' : 'voir ce qui a été vendu'}</span>`, v, { click: `basculerDet('${debut}','${k}')`, editQ: `setObjectifFixe('${debut}','${k}','qty',this.value)`, editC: `setObjectifFixe('${debut}','${k}','ca',this.value)`, prevOk: !!fp });
+    if (ouvert) {
+      const L = f.detail;
+      let corps = !charge ? '<div class="det-vide">⏳ chargement…</div>'
+        : !L ? '<div class="det-vide">Détail pas disponible pour cette semaine (chiffres bloqués avant l’ajout du détail).</div>'
+        : !L.length ? '<div class="det-vide">Rien de vendu cette semaine.</div>'
+        : `<table class="det-tab">${L.map(x => `<tr><td>${escapeHtml(x.t)}</td><td class="p">${n(x.q)} pce${x.q > 1 ? 's' : ''}</td><td class="p">${n(x.c)}.–</td></tr>`).join('')}</table>`;
+      if (k === 'joaillerie' && f.siteJoaillerie) corps += `<div class="det-vide">+ site Mood Joaillerie : ${n(f.siteJoaillerie.total)}.–</div>`;
+      rowsTL += `<tr class="det-ligne"><td colspan="9">${corps}</td></tr>`;
+    }
   });
   const total = sum(); add(total, gc); add(total, tl);
   totauxSemaine[debut] = { charge, gc: gc.fc, nc: total.fc };
