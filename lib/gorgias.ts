@@ -118,6 +118,19 @@ export async function ticketsDeLaVue(viewId: number): Promise<number[]> {
   return ids;
 }
 
+/** Tickets d'une vue Gorgias avec leurs champs (client, dates, étiquettes), toutes les pages. */
+export async function ticketsCompletsDeLaVue(viewId: number): Promise<Record<string, unknown>[]> {
+  const out: Record<string, unknown>[] = [];
+  let cursor: string | null = null;
+  for (let i = 0; i < 20; i++) {
+    const d = await gorgiasGet(`/views/${viewId}/items?limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`) as { data?: Record<string, unknown>[]; meta?: { next_cursor?: string | null } };
+    out.push(...(d.data ?? []));
+    cursor = d.meta?.next_cursor ?? null;
+    if (!cursor) break;
+  }
+  return out;
+}
+
 /** Messages du ticket, du plus ancien au plus récent. */
 export async function getTicketMessages(ticketId: number): Promise<Record<string, unknown>[]> {
   const d = await gorgiasGet(`/tickets/${ticketId}/messages?limit=50&order_by=created_datetime:asc`) as { data?: Record<string, unknown>[] };

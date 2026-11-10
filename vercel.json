@@ -35,6 +35,10 @@
     {
       "path": "/api/r-and-d/figer",
       "schedule": "5 23 * * 3"
+    },
+    {
+      "path": "/api/sav/veille",
+      "schedule": "20 * * * *"
     }
   ]
 }

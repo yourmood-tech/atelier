@@ -52,6 +52,11 @@ export default auth((req) => {
     return;
   }
 
+  // poste SAV (faits d'une commande) et veilleur SAV des 24 h (protégés par une clé dans la route)
+  if (pathname === "/api/sav/faits" || pathname === "/api/sav/veille") {
+    return;
+  }
+
   // calcul de nuit « Prête à partir / Fabriquée pour vous » (protégé par une clé dans la route)
   if (pathname === "/api/delai-fabrication") {
     return;
