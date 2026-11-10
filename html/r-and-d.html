@@ -1459,7 +1459,7 @@ async function chargerSemaineData(debut, frais){
 // Les nouveautés vraiment sorties : on range celles de ta liste sur leur jour de sortie, on ajoute les autres toutes seules.
 // coffret du mois (pas starter pack / garde-mood) : il va dans la ligne « Coffret du mois », pas dans les nouveautés
 const dans0 = (p, a, b) => { if (!p.date) return false; const d = new Date(p.date + 'T00:00:00'); return d >= a && d < b; };
-const estCoffretMois = (nom, type) => (/coffret/i.test(type || '') || /^\W*coffret/i.test(nom || '')) && !/starter|garde/i.test(nom || '');
+const estCoffretMois = (nom, type) => (/coffret/i.test(type || '') || /^\W*coffret/i.test(nom || '')) && !/starter|garde|calendrier/i.test(nom || '');
 const detOuvert = {};
 function basculerDet(debut, k){ detOuvert[debut + ':' + k] = !detOuvert[debut + ':' + k]; rendreCalendrier(); }
 function reconcilierSemaine(debut){
