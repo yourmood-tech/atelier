@@ -17,7 +17,7 @@ const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_R
 const EXCLU = /devis|carte cadeau|bon cadeau|gift|seconde main|^\s*\d+\s+(novembre|décembre)|papier cadeau|service|réparation|rénovation|frais/i;
 const SEUIL_JOAILLERIE = 600;
 
-interface Ligne { product_id: number | null; quantity: number; price: string; title: string; discount_allocations?: Array<{ amount: string }> }
+interface Ligne { product_id: number | null; quantity: number; price: string; title: string; discount_allocations?: Array<{ amount: string }>; properties?: Array<{ name: string; value: string }> }
 interface Commande { id: number; cancelled_at: string | null; line_items: Ligne[]; total_price?: string }
 
 async function redisGet(key: string): Promise<unknown> {
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
   const jeudiSuivant = new Date(Date.UTC(+debutStr.slice(0, 4), +debutStr.slice(5, 7) - 1, +debutStr.slice(8, 10) + 7)).toISOString().slice(0, 10);
   const fin = new Date(minuitZurich(jeudiSuivant).getTime() - 1);
   const enCours = Date.now() < fin.getTime();
-  const ck = `mood:rd-semaine:v4:${debutStr}`;
+  const ck = `mood:rd-semaine:v5:${debutStr}`;
   // semaine terminée et déjà bloquée : chiffres définitifs, on ne recalcule plus jamais
   const cleFige = `mood:rd-semaine-fige:${debutStr}`;
   const fige = await redisGet(cleFige);
@@ -107,10 +107,28 @@ export async function GET(request: Request) {
     const parProduit: Record<string, { qty: number; total: number }> = {};
     const titres: Record<string, string> = {};
     let joaQty = 0, joaTotal = 0;
+    // lots Simple Bundles (coffrets…) : la commande ne garde que les pièces, avec le lot en propriété → on recompte le lot lui-même
+    const lots: Record<string, { qty: number; total: number; groupes: Set<string> }> = {};
     for (const o of cmds) for (const l of o.line_items) {
       const t = montant(l);
+      const pr = Object.fromEntries((l.properties || []).map((x) => [x.name, String(x.value ?? "")]));
+      if (pr._sb_bundle_variant_id_qty) {
+        const [vid, nb] = pr._sb_bundle_variant_id_qty.split(":"); const g = `${o.id}:${(pr._sb_bundle_group || "").split(" ")[0]}`;
+        const L = (lots[vid] = lots[vid] || { qty: 0, total: 0, groupes: new Set() });
+        if (!L.groupes.has(g)) { L.groupes.add(g); L.qty += parseInt(nb || "1", 10) || 1; }
+        L.total += t;
+      }
       if (l.product_id) { const k = String(l.product_id); parProduit[k] = parProduit[k] || { qty: 0, total: 0 }; parProduit[k].qty += l.quantity; parProduit[k].total += t; titres[k] = l.title || ""; }
       if (parseFloat(l.price) > SEUIL_JOAILLERIE && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; }
+    }
+    // lots → produit du lot (le coffret) ; ajouté à parProduit sous l'ID du coffret
+    const vids = Object.keys(lots);
+    for (let i = 0; i < vids.length; i += 100) {
+      const j = await gql(`query($ids:[ID!]!){nodes(ids:$ids){... on ProductVariant{id product{id title}}}}`, { ids: vids.slice(i, i + 100).map((x) => `gid://shopify/ProductVariant/${x}`) });
+      for (const n of j?.data?.nodes || []) if (n?.product) {
+        const vid = n.id.split("/").pop(); const k = n.product.id.split("/").pop(); const L = lots[vid];
+        parProduit[k] = parProduit[k] || { qty: 0, total: 0 }; parProduit[k].qty += L.qty; parProduit[k].total += L.total; titres[k] = titres[k] || n.product.title || "";
+      }
     }
     // 2) étiquettes des produits vendus (starter / garde-mood)
     const ids = Object.keys(parProduit);
