@@ -77,6 +77,11 @@ export default auth((req) => {
     return;
   }
 
+  // /guide (la mascotte qui guide les nouvelles clientes) + ses réponses
+  if (pathname === "/guide" || pathname === "/api/guide") {
+    return;
+  }
+
   // la fiche d'un bijou lue par le catalogue de Noël (lecture seule)
   if (pathname === "/api/catalogue-produits" || pathname === "/api/catalogue-liste") {
     return;
