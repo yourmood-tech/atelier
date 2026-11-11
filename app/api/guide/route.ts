@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { readFileSync } from "fs";
+import path from "path";
 
 // La mascotte-guide (mood-tools.yourmood.net/guide) : répond aux questions des nouvelles
 // clientes UNIQUEMENT avec ce qui est écrit ci-dessous (pages du site + conditions de vente
@@ -7,7 +9,11 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const KEY = process.env.ANTHROPIC_API_KEY || "";
-const MODEL = "claude-haiku-5-5";
+const MODEL = "claude-sonnet-5-5";
+const SHOP = "yourmood.myshopify.com";
+const SHOP_TOKEN = process.env.SHOPIFY_API_TOKEN || process.env.MOOD_SHOPIFY_ACCESS_TOKEN || "";
+let PAGES = "";
+try { PAGES = readFileSync(path.join(process.cwd(), "html/guide-savoir.txt"), "utf-8"); } catch {}
 const SITE = "https://www.yourmood.net";
 
 const SAVOIR = `
@@ -71,8 +77,7 @@ COMMANDE, PAIEMENT, LIVRAISON
 - Un défaut de fabrication est bien sûr pris en charge.
 - Ne jamais renvoyer un colis sans l'accord écrit du service client.
 
-BOUTIQUES (6 en Suisse : Orbe, Fribourg, Zermatt, Zurich, Carouge, Martigny)
-- Horaires et itinéraires : ${SITE}/pages/comment-se-rendre-dans-une-boutique-mood
+BOUTIQUES : 6 boutiques en Suisse (Orbe, Fribourg, Zermatt, Zurich, Carouge, Martigny) + un pop-up à Lausanne. Adresses, horaires et téléphone : voir les PAGES DES BOUTIQUES plus bas (elles font foi). Un seul numéro pour toutes les boutiques : 024 588 00 57.
 - En boutique on peut tout essayer, sentir le clic, et faire prendre sa taille.
 
 SERVICE CLIENT
@@ -83,9 +88,13 @@ SERVICE CLIENT
 
 const CONSIGNE = `Tu es la mascotte de mood : un petit anneau blanc tout doux qui accueille les nouvelles clientes sur le site et les guide vers leur première bague mood.
 
-TON : chaleureux, simple, court, tutoiement (sauf si la personne vouvoie). 2 à 4 phrases maximum. Un emoji de temps en temps seulement, parmi 🤍 ✨ 💙 🫶🏼. On dit « on », jamais « nous ». Jamais « N'hésitez pas ». Pas de vente agressive : tu aides, tu rassures, tu donnes UNE prochaine étape claire.
+TON : chaleureux, simple, clair, tutoiement (sauf si la personne vouvoie). Court : 2 à 5 phrases, ou une petite liste si on demande plusieurs infos (horaires…). Un emoji de temps en temps seulement, parmi 🤍 ✨ 💙 🫶🏼. On dit « on », jamais « nous ». Jamais « N'hésitez pas ». Pas de vente agressive : tu aides, tu rassures, tu donnes UNE prochaine étape claire.
 
-RÈGLE ABSOLUE : tu réponds UNIQUEMENT avec les informations du SAVOIR ci-dessous. Tu n'inventes JAMAIS un prix, un délai, une matière, un nom de produit, une règle. Si la réponse n'est pas dans le SAVOIR, ou si la question concerne une commande précise (suivi de colis, numéro de commande, réclamation), tu dis gentiment que tu préfères qu'une personne de l'équipe réponde, et tu donnes le service client (contact@yourmood.net ou WhatsApp).
+TU CONNAIS TOUT : le SAVOIR, les PAGES DU SITE plus bas (boutiques avec adresses et horaires exacts, questions fréquentes, Mood Care, tailles, bons cadeaux, parrainage, conditions de vente…) et l'outil chercher_produits, qui cherche EN DIRECT dans la boutique en ligne (noms exacts, prix actuels, disponibilité, lien). Dès qu'on te parle d'un bijou, d'une couleur, d'une matière, d'une collection ou d'un prix → utilise chercher_produits avant de répondre, et donne le nom exact, le prix et le lien. Sois PRÉCIS : une adresse, un horaire, un prix, un délai se donnent exactement comme écrits, jamais arrondis ni résumés de mémoire. Aujourd'hui nous sommes le {DATE} : tiens-en compte (jour de la semaine, boutique fermée pour la saison…).
+
+GUIDER : la personne est souvent nouvelle. Réponds à sa question, puis propose UNE prochaine étape claire. Termine TOUJOURS ta réponse par une dernière ligne qui commence par « BOUTONS: » suivie de 2 ou 3 suites courtes (3 à 6 mots) qu'elle pourrait vouloir cliquer, séparées par « | ». Exemple : BOUTONS: Voir les horaires d'Orbe | Trouver ma taille | Choisir ma base
+
+RÈGLE ABSOLUE : tu réponds UNIQUEMENT avec les informations du SAVOIR ci-dessous. Tu n'inventes JAMAIS un prix, un délai, une matière, un nom de produit, une règle, une promotion ou un code de réduction (n'annonce jamais une offre ou un concours trouvé dans une page : elles peuvent être finies). Si la réponse n'est pas dans le SAVOIR, ou si la question concerne une commande précise (suivi de colis, numéro de commande, réclamation), tu dis gentiment que tu préfères qu'une personne de l'équipe réponde, et tu donnes le service client (contact@yourmood.net ou WhatsApp).
 
 MOTS : « base » = la bague du dessous. Jamais « bijou fantaisie ». Jamais « base argent ». Écris « bague mood » en minuscules.
 
@@ -96,11 +105,39 @@ LANGUE : réponds dans la langue de la personne (français, allemand, anglais…
 SAVOIR :
 ${SAVOIR}`;
 
+const OUTILS = [{
+  name: "chercher_produits",
+  description: "Cherche en direct dans la boutique en ligne mood (yourmood.net) les bijoux en vente : nom exact, prix, disponibilité, lien. Utilise des mots simples en français (ex. « aura medium », « deux tiers aluminium rose », « base extra small », « bon cadeau », « starter pack »).",
+  input_schema: { type: "object", properties: { recherche: { type: "string", description: "les mots à chercher" } }, required: ["recherche"] },
+}];
+
+type Prod = { title: string; productType: string; onlineStoreUrl: string | null; totalInventory: number | null; priceRangeV2: { minVariantPrice: { amount: string }; maxVariantPrice: { amount: string } }; description: string; variants: { nodes: { availableForSale: boolean }[] } };
+async function chercherProduits(recherche: string) {
+  if (!SHOP_TOKEN) return "recherche indisponible";
+  const mots = String(recherche || "").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter((m) => m.length > 1).slice(0, 6);
+  if (!mots.length) return "aucun mot";
+  const q = "status:active AND " + mots.map((m) => `title:*${m}*`).join(" AND ");
+  const r = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
+    method: "POST",
+    headers: { "X-Shopify-Access-Token": SHOP_TOKEN, "Content-Type": "application/json" },
+    body: JSON.stringify({ query: `query($q:String!){ products(first:40, query:$q, sortKey:UPDATED_AT, reverse:true){ nodes{ title productType onlineStoreUrl totalInventory description(truncateAt:220) priceRangeV2{ minVariantPrice{amount} maxVariantPrice{amount} } variants(first:30){ nodes{ availableForSale } } } } }`, variables: { q } }),
+  });
+  const j: { data?: { products?: { nodes: Prod[] } } } = await r.json();
+  const prods = (j.data?.products?.nodes || []).filter((p) => p.onlineStoreUrl).slice(0, 10);
+  if (!prods.length) return `Aucun bijou en vente trouvé pour « ${recherche} ». Essaie d'autres mots, ou dis-le honnêtement.`;
+  return prods.map((p) => {
+    const a = parseFloat(p.priceRangeV2.minVariantPrice.amount), b = parseFloat(p.priceRangeV2.maxVariantPrice.amount);
+    const prix = a === b ? `${a}.–` : `de ${a}.– à ${b}.–`;
+    const dispo = p.variants.nodes.some((v) => v.availableForSale) ? "disponible" : "épuisé";
+    return `• ${p.title} — ${prix} — ${dispo} — ${p.onlineStoreUrl}\n  ${p.description.replace(/\s+/g, " ")}`;
+  }).join("\n");
+}
+
 type Msg = { role: "user" | "assistant"; content: string };
 
 export async function POST(req: Request) {
   if (!KEY) return NextResponse.json({ error: "indisponible" }, { status: 503 });
-  let body: { messages?: Msg[] };
+  let body: { messages?: Msg[]; contexte?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "illisible" }, { status: 400 }); }
   const messages = (Array.isArray(body.messages) ? body.messages : [])
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
@@ -109,13 +146,32 @@ export async function POST(req: Request) {
   while (messages.length && messages[0].role !== "user") messages.shift();
   if (!messages.length || messages[messages.length - 1].role !== "user") return NextResponse.json({ error: "question vide" }, { status: 400 });
 
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: CONSIGNE, messages }),
-  });
-  if (!r.ok) return NextResponse.json({ error: "réponse impossible" }, { status: 502 });
-  const j: { content?: { type: string; text?: string }[] } = await r.json();
-  const texte = (j.content || []).filter((c) => c.type === "text").map((c) => c.text || "").join("").trim();
-  return NextResponse.json({ texte: texte || "Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍" });
+  const date = new Date().toLocaleDateString("fr-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Zurich" });
+  const contexte = String((body as { contexte?: string }).contexte || "").slice(0, 300);
+  const system = [
+    { type: "text", text: CONSIGNE + "\n\nPAGES DU SITE (elles font foi) :\n" + PAGES, cache_control: { type: "ephemeral" } },
+    { type: "text", text: "Aujourd'hui : " + date + "." + (contexte ? "\nOù en est la personne dans le guide : " + contexte : "") },
+  ];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const conv: any[] = messages.map((m) => ({ role: m.role, content: m.content }));
+  let texte = "";
+  for (let tour = 0; tour < 4; tour++) {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: system.map((x, k) => k === 0 ? { ...x, text: x.text.replace("{DATE}", date) } : x), tools: OUTILS, messages: conv }),
+    });
+    if (!r.ok) return NextResponse.json({ error: "réponse impossible" }, { status: 502 });
+    const j: { stop_reason?: string; content?: { type: string; text?: string; id?: string; name?: string; input?: { recherche?: string } }[] } = await r.json();
+    const blocs = j.content || [];
+    texte = blocs.filter((c) => c.type === "text").map((c) => c.text || "").join("").trim();
+    if (j.stop_reason !== "tool_use") break;
+    conv.push({ role: "assistant", content: blocs });
+    const res = await Promise.all(blocs.filter((c) => c.type === "tool_use").map(async (c) => ({ type: "tool_result", tool_use_id: c.id, content: await chercherProduits(c.input?.recherche || "").catch(() => "recherche impossible") })));
+    conv.push({ role: "user", content: res });
+  }
+  let boutons: string[] = [];
+  const m = texte.match(/\n?\s*BOUTONS\s*:\s*(.+)\s*$/i);
+  if (m) { boutons = m[1].split("|").map((x) => x.trim()).filter(Boolean).slice(0, 3); texte = texte.slice(0, m.index).trim(); }
+  return NextResponse.json({ texte: texte || "Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍", boutons });
 }
