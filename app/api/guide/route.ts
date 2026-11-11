@@ -88,7 +88,7 @@ const CONSIGNE = `Tu es la mascotte de mood : un petit anneau blanc tout doux qu
 
 TON : chaleureux, simple, clair, tutoiement (sauf si la personne vouvoie). Court : 2 à 5 phrases, ou une petite liste si on demande plusieurs infos (horaires…). Un emoji de temps en temps seulement, parmi 🤍 ✨ 💙 🫶🏼. On dit « on », jamais « nous ». Jamais « N'hésitez pas ». Pas de vente agressive : tu aides, tu rassures, tu donnes UNE prochaine étape claire.
 
-TU CONNAIS TOUT : le SAVOIR, les PAGES DU SITE plus bas (boutiques avec adresses et horaires exacts, questions fréquentes, Mood Care, tailles, bons cadeaux, parrainage, conditions de vente…) et l'outil chercher_produits, qui cherche EN DIRECT dans la boutique en ligne (noms exacts, prix actuels, disponibilité, lien). Pour une idée de cadeau ou une bague complète, utilise chercher_coffrets (il connaît la largeur, pour elle/lui, brillant ou sobre, le budget) et mets en avant les coffrets à prix réduit. Dès qu'on te parle d'un bijou, d'une couleur, d'une matière, d'une collection ou d'un prix → utilise chercher_produits avant de répondre, et donne le nom exact, le prix et le lien. Sois PRÉCIS : une adresse, un horaire, un prix, un délai se donnent exactement comme écrits, jamais arrondis ni résumés de mémoire. Aujourd'hui nous sommes le {DATE} : tiens-en compte (jour de la semaine, boutique fermée pour la saison…).
+TU CONNAIS TOUT : le SAVOIR, les PAGES DU SITE plus bas (boutiques avec adresses et horaires exacts, questions fréquentes, Mood Care, tailles, bons cadeaux, parrainage, conditions de vente…) et l'outil chercher_produits, qui cherche EN DIRECT dans la boutique en ligne (noms exacts, prix actuels, disponibilité, lien). Les photos des bijoux et coffrets que tes outils trouvent s'affichent AUTOMATIQUEMENT sous ta réponse : cite les noms exacts, pas besoin d'aligner tous les liens. Si on te donne un budget, propose UNIQUEMENT des pièces dans ce budget. Pour recommander un bijou ou un coffret, prends-le TOUJOURS dans ce que tes outils viennent de trouver (jamais seulement dans les pages du site : elles peuvent être anciennes), et écris son nom exact. Pour une idée de cadeau ou une bague complète, utilise chercher_coffrets (il connaît la largeur, pour elle/lui, brillant ou sobre, le budget) et mets en avant les coffrets à prix réduit. Dès qu'on te parle d'un bijou, d'une couleur, d'une matière, d'une collection ou d'un prix → utilise chercher_produits avant de répondre, et donne le nom exact, le prix et le lien. Sois PRÉCIS : une adresse, un horaire, un prix, un délai se donnent exactement comme écrits, jamais arrondis ni résumés de mémoire. Aujourd'hui nous sommes le {DATE} : tiens-en compte (jour de la semaine, boutique fermée pour la saison…).
 
 GUIDER : la personne est souvent nouvelle. Réponds à sa question, puis propose UNE prochaine étape claire. Termine TOUJOURS ta réponse par une dernière ligne qui commence par « BOUTONS: » suivie de 2 ou 3 suites courtes (3 à 6 mots) qu'elle pourrait vouloir cliquer, séparées par « | ». Exemple : BOUTONS: Voir les horaires d'Orbe | Trouver ma taille | Choisir ma base
 
@@ -119,19 +119,21 @@ const OUTILS = [{
   input_schema: { type: "object", properties: { recherche: { type: "string", description: "les mots à chercher" } }, required: ["recherche"] },
 }];
 
-type Prod = { title: string; productType: string; onlineStoreUrl: string | null; totalInventory: number | null; priceRangeV2: { minVariantPrice: { amount: string }; maxVariantPrice: { amount: string } }; description: string; variants: { nodes: { availableForSale: boolean }[] } };
-async function chercherProduits(recherche: string) {
-  if (!SHOP_TOKEN) return "recherche indisponible";
+type Carte = { titre: string; url: string; image: string; prix: number; avant: number | null; reduit: number };
+type Resultat = { texte: string; cartes: Carte[] };
+type Prod = { title: string; productType: string; onlineStoreUrl: string | null; totalInventory: number | null; featuredImage: { url: string } | null; priceRangeV2: { minVariantPrice: { amount: string }; maxVariantPrice: { amount: string } }; description: string; variants: { nodes: { availableForSale: boolean; price: string; compareAtPrice: string | null }[] } };
+async function chercherProduits(recherche: string): Promise<Resultat> {
+  if (!SHOP_TOKEN) return { texte: "recherche indisponible", cartes: [] };
   const VIDES = new Set(["en", "de", "du", "des", "la", "le", "les", "un", "une", "pour", "avec", "et", "ou", "vous", "avez", "tu", "as", "bague", "bagues", "mood", "anneau", "anneaux", "interchangeable"]);
   const mots = String(recherche || "").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/)
     .filter((m) => m.length > 1 && !VIDES.has(m)).map((m) => (m.length > 4 && m.endsWith("s") ? m.slice(0, -1) : m)).slice(0, 6);
-  if (!mots.length) return "aucun mot";
+  if (!mots.length) return { texte: "aucun mot", cartes: [] };
   const cherche = async (liste: string[]) => {
     const q = "status:active AND " + liste.map((m) => `title:*${m}*`).join(" AND ");
     const r = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
       method: "POST",
       headers: { "X-Shopify-Access-Token": SHOP_TOKEN, "Content-Type": "application/json" },
-      body: JSON.stringify({ query: `query($q:String!){ products(first:40, query:$q, sortKey:UPDATED_AT, reverse:true){ nodes{ title productType onlineStoreUrl totalInventory description(truncateAt:220) priceRangeV2{ minVariantPrice{amount} maxVariantPrice{amount} } variants(first:30){ nodes{ availableForSale } } } } }`, variables: { q } }),
+      body: JSON.stringify({ query: `query($q:String!){ products(first:40, query:$q, sortKey:UPDATED_AT, reverse:true){ nodes{ title productType onlineStoreUrl totalInventory featuredImage{ url } description(truncateAt:220) priceRangeV2{ minVariantPrice{amount} maxVariantPrice{amount} } variants(first:30){ nodes{ availableForSale price compareAtPrice } } } } }`, variables: { q } }),
     });
     const j: { data?: { products?: { nodes: Prod[] } } } = await r.json();
     return (j.data?.products?.nodes || []).filter((p) => p.onlineStoreUrl);
@@ -145,13 +147,18 @@ async function chercherProduits(recherche: string) {
     if (trouves.length) note = `(rien avec tous les mots ; résultats pour « ${garde.join(" ")} » seulement)\n`;
   }
   const prods = trouves.slice(0, 10);
-  if (!prods.length) return `Aucun bijou en vente trouvé pour « ${recherche} ». Essaie d'autres mots, ou dis-le honnêtement.`;
-  return note + prods.map((p) => {
+  if (!prods.length) return { texte: `Aucun bijou en vente trouvé pour « ${recherche} ». Essaie d'autres mots, ou dis-le honnêtement.`, cartes: [] };
+  const cartes: Carte[] = prods.filter((p) => p.featuredImage && p.variants.nodes.some((v) => v.availableForSale)).map((p) => {
+    const v = p.variants.nodes.filter((x) => x.availableForSale).reduce((a, b) => (parseFloat(a.price) <= parseFloat(b.price) ? a : b));
+    const prix = parseFloat(v.price), ca = v.compareAtPrice ? parseFloat(v.compareAtPrice) : 0, avant = ca > prix ? ca : null;
+    return { titre: p.title, url: p.onlineStoreUrl!, image: p.featuredImage!.url + (p.featuredImage!.url.includes("?") ? "&" : "?") + "width=400", prix, avant, reduit: avant ? Math.round((1 - prix / avant) * 100) : 0 };
+  });
+  return { cartes, texte: note + prods.map((p) => {
     const a = parseFloat(p.priceRangeV2.minVariantPrice.amount), b = parseFloat(p.priceRangeV2.maxVariantPrice.amount);
     const prix = a === b ? `${a}.–` : `de ${a}.– à ${b}.–`;
     const dispo = p.variants.nodes.some((v) => v.availableForSale) ? "disponible" : "épuisé";
     return `• ${p.title} — ${prix} — ${dispo} — ${p.onlineStoreUrl}\n  ${p.description.replace(/\s+/g, " ")}`;
-  }).join("\n");
+  }).join("\n") };
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -200,10 +207,31 @@ async function filtrerCoffrets(f: Filtres) {
   r = r.sort((a, b) => b.reduit - a.reduit || a.prix - b.prix);
   return r;
 }
-async function texteCoffrets(f: Filtres) {
-  const r = await filtrerCoffrets(f || {});
-  if (!r.length) return "Aucun coffret ne correspond exactement. Propose d'élargir un critère (budget, largeur, brillant).";
-  return `${r.length} coffrets trouvés (les réduits d'abord) :\n` + r.slice(0, 10).map((c) => `• ${c.titre} — ${c.prix}.–${c.avant ? ` au lieu de ${c.avant}.– (-${c.reduit} %)` : ""} — ${c.url} — style : ${c.style}`).join("\n");
+// Pas assez de coffrets qui cochent tout → on assouplit dans cet ordre : brillant, largeur, pour qui, mots.
+// Le BUDGET est toujours respecté ; en tout dernier recours on l'élargit de 15 %.
+const NOMS: Record<string, string> = { brille: "brillant ou sobre", base: "la largeur", pour: "pour elle / pour lui", mots: "le style" };
+async function chercherCoffrets(f: Filtres) {
+  const g: Filtres = { ...f }; const enleve: string[] = [];
+  let r = await filtrerCoffrets(g);
+  for (const k of ["brille", "base", "pour", "mots"] as const) {
+    if (r.length >= 3) break;
+    if (!g[k] || g[k] === "tous") continue;
+    const essai = { ...g, [k]: undefined }; const r2 = await filtrerCoffrets(essai);
+    if (r2.length > r.length) { r = r2; Object.assign(g, essai); enleve.push(NOMS[k]); }
+  }
+  if (!r.length && (g.budget_min != null || g.budget_max != null)) {
+    const essai = { ...g, budget_min: g.budget_min != null ? Math.floor(g.budget_min * 0.85) : undefined, budget_max: g.budget_max != null ? Math.ceil(g.budget_max * 1.15) : undefined };
+    r = await filtrerCoffrets(essai); if (r.length) enleve.push("le budget, un tout petit peu");
+  }
+  // les coffrets qui cochent TOUT passent devant ceux trouvés en assouplissant
+  if (enleve.length) { const exacts = new Set((await filtrerCoffrets(f)).map((c) => c.url)); r = [...r.filter((c) => exacts.has(c.url)), ...r.filter((c) => !exacts.has(c.url))]; }
+  return { liste: r, enleve };
+}
+async function texteCoffrets(f: Filtres): Promise<Resultat> {
+  const { liste: r, enleve } = await chercherCoffrets(f || {});
+  const cartes = r.slice(0, 8).map(({ titre, url, image, prix, avant, reduit }) => ({ titre, url, image, prix, avant, reduit }));
+  if (!r.length) return { texte: "Aucun coffret dans ce budget, même en assouplissant les autres critères. Dis-le simplement et propose un autre budget ou un bon cadeau.", cartes };
+  return { cartes, texte: (enleve.length ? `(Rien ne cochait tout : j'ai assoupli ${enleve.join(", ")}. Le budget est respecté.)\n` : "") + `${r.length} coffrets trouvés (les réduits d'abord). Leurs photos s'affichent automatiquement sous ta réponse : inutile de recopier tous les liens, présente 2 ou 3 coups de cœur.\n` + r.slice(0, 10).map((c) => `• ${c.titre} — ${c.prix}.–${c.avant ? ` au lieu de ${c.avant}.– (-${c.reduit} %)` : ""} — ${c.url} — style : ${c.style}`).join("\n") };
 }
 
 export async function GET(req: Request) {
@@ -211,8 +239,8 @@ export async function GET(req: Request) {
   if (!u.get("coffrets")) return NextResponse.json({ error: "?" }, { status: 400 });
   const num = (k: string) => (u.get(k) ? Number(u.get(k)) : undefined);
   try {
-    const r = await filtrerCoffrets({ pour: u.get("pour") || undefined, base: u.get("base") || undefined, brille: u.get("brille") || undefined, budget_min: num("min"), budget_max: num("max") });
-    return NextResponse.json({ total: r.length, coffrets: r.slice(0, 40).map(({ titre, url, image, prix, avant, reduit }) => ({ titre, url, image, prix, avant, reduit })) });
+    const { liste: r, enleve } = await chercherCoffrets({ pour: u.get("pour") || undefined, base: u.get("base") || undefined, brille: u.get("brille") || undefined, budget_min: num("min"), budget_max: num("max") });
+    return NextResponse.json({ total: r.length, enleve, coffrets: r.slice(0, 40).map(({ titre, url, image, prix, avant, reduit }) => ({ titre, url, image, prix, avant, reduit })) });
   } catch { return NextResponse.json({ error: "indisponible" }, { status: 500 }); }
 }
 
@@ -236,6 +264,7 @@ export async function POST(req: Request) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const conv: any[] = messages.map((m) => ({ role: m.role, content: m.content }));
   let texte = "";
+  let cartes: Carte[] = [];
   for (let tour = 0; tour < 4; tour++) {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -248,11 +277,23 @@ export async function POST(req: Request) {
     texte = blocs.filter((c) => c.type === "text").map((c) => c.text || "").join("").trim();
     if (j.stop_reason !== "tool_use") break;
     conv.push({ role: "assistant", content: blocs });
-    const res = await Promise.all(blocs.filter((c) => c.type === "tool_use").map(async (c) => ({ type: "tool_result", tool_use_id: c.id, content: await (c.name === "chercher_coffrets" ? texteCoffrets(c.input as Filtres) : chercherProduits(c.input?.recherche || "")).catch(() => "recherche impossible") })));
+    const res = await Promise.all(blocs.filter((c) => c.type === "tool_use").map(async (c) => {
+      const out: Resultat = await (c.name === "chercher_coffrets" ? texteCoffrets(c.input as Filtres) : chercherProduits(c.input?.recherche || "")).catch(() => ({ texte: "recherche impossible", cartes: [] }));
+      cartes = cartes.concat(out.cartes);
+      return { type: "tool_result", tool_use_id: c.id, content: out.texte };
+    }));
     conv.push({ role: "user", content: res });
   }
   let boutons: string[] = [];
   const m = texte.match(/\n?\s*BOUTONS\s*:\s*(.+)\s*$/i);
   if (m) { boutons = m[1].split("|").map((x) => x.trim()).filter(Boolean).slice(0, 3); texte = texte.slice(0, m.index).trim(); }
-  return NextResponse.json({ texte: texte || "Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍", boutons });
+  // les photos : d'abord celles des bijoux cités dans la réponse, sinon les premiers trouvés
+  const vus = new Set<string>(); cartes = cartes.filter((c) => !vus.has(c.url) && vus.add(c.url));
+  const norm = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const nt = norm(texte);
+  const cle = (c: Carte) => { const m = norm(c.titre.replace(/\|.*$/, "")).split(" ").filter((x) => x.length > 3 && !["bague", "mood", "anneau", "anneaux", "pour", "interchangeable", "coffret", "argent", "pack", "addon"].includes(x)); return m; };
+  const score = (c: Carte) => (texte.includes(c.url) ? 99 : cle(c).filter((m) => nt.includes(m)).length / Math.max(1, Math.min(3, cle(c).length)));
+  const cites = cartes.filter((c) => score(c) >= 0.99);
+  const montre = [...cites, ...cartes.filter((c) => !cites.includes(c))].slice(0, Math.max(cites.length, 6)).slice(0, 8);
+  return NextResponse.json({ texte: texte || "Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍", boutons, cartes: montre });
 }

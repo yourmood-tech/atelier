@@ -281,23 +281,22 @@ function cBudget(){
   dit("Et ton budget ?");
   boutons([["Jusqu'à 150.–",function(){ CF.max=150; cMontre(); }],["150 à 250.–",function(){ CF.min=150; CF.max=250; cMontre(); }],["250 à 400.–",function(){ CF.min=250; CF.max=400; cMontre(); }],["Plus de 400.–",function(){ CF.min=400; cMontre(); }],["Peu importe",cMontre]]);
 }
-function cMontre(relache){
+function cMontre(){
   var q='coffrets=1&pour='+CF.pour+'&base='+CF.base+'&brille='+CF.brille+(CF.min?'&min='+CF.min:'')+(CF.max?'&max='+CF.max:'');
-  ensuite(function(){ parle(true); return fetch('/api/guide?'+q).then(function(r){return r.json();}).then(function(j){ parle(false); CF.res=j.coffrets||[]; CF.vu=0; }).catch(function(){ parle(false); CF.res=[]; }); });
+  ensuite(function(){ parle(true); return fetch('/api/guide?'+q).then(function(r){return r.json();}).then(function(j){ parle(false); CF.res=j.coffrets||[]; CF.enleve=j.enleve||[]; CF.vu=0; }).catch(function(){ parle(false); CF.res=[]; }); });
   ensuite(function(){
-    if(!CF.res.length){
-      if(CF.min||CF.max){ delete CF.min; delete CF.max; dit("Je n'ai rien trouvé dans ce budget… Je te montre ce qui existe avec tes autres choix :"); cMontre(1); return; }
-      dit("Je n'ai pas de coffret qui coche toutes les cases. Écris-moi ce que tu cherches, je regarde avec toi 🤍"); return;
-    }
+    if(!CF.res.length){ dit("Je n'ai aucun coffret dans ce budget, même en élargissant un peu… Essaie un autre budget, ou pense au bon cadeau : la personne compose elle-même 🤍"); boutons([["Changer mon budget",cBudget,1],["Les bons cadeaux",SITE+'/pages/bon-cadeau-bijou']]); return; }
+    if(CF.enleve.length) dit("Aucun coffret ne cochait toutes les cases, alors j'ai été un peu plus souple sur "+CF.enleve.join(' et ')+". Ton budget, lui, est respecté.");
     var red=CF.res.filter(function(c){return c.reduit;}).length;
-    dit((relache?'':"J'ai trouvé "+CF.res.length+" coffret"+(CF.res.length>1?'s':'')+" pour toi")+(red?(relache?'':' — ')+red+" à prix réduit, je te les montre en premier.":'.')); cPage();
+    dit("J'ai trouvé "+CF.res.length+" coffret"+(CF.res.length>1?'s':'')+" pour toi"+(red?" — "+red+" à prix réduit, je te les montre en premier.":'.')); cPage();
   });
 }
+function cartesHTML(l){ return l.map(function(c){ return '<a class="coff" href="'+c.url+'">'+(c.reduit?'<span class="rd">-'+c.reduit+' %</span>':'')+'<img src="'+c.image+'" alt="" loading="lazy"><div><b>'+esc(c.titre)+'</b><div class="px">'+c.prix+'.–'+(c.avant?'<s>'+c.avant+'.–</s>':'')+'</div></div></a>'; }).join(''); }
+function montreCartes(l){ var d=document.createElement('div'); d.className='coffs'; d.innerHTML=cartesHTML(l); d.querySelectorAll('a').forEach(function(a){ a.onclick=sauve; }); fil.appendChild(d); setTimeout(bas,60); }
 function cPage(){
   ensuite(function(){
     var l=CF.res.slice(CF.vu,CF.vu+8); CF.vu+=l.length;
-    var h=l.map(function(c){ return '<a class="coff" href="'+c.url+'">'+(c.reduit?'<span class="rd">-'+c.reduit+' %</span>':'')+'<img src="'+c.image+'" alt="" loading="lazy"><div><b>'+esc(c.titre)+'</b><div class="px">'+c.prix+'.–'+(c.avant?'<s>'+c.avant+'.–</s>':'')+'</div></div></a>'; }).join('');
-    var d=document.createElement('div'); d.className='coffs'; d.innerHTML=h; d.querySelectorAll('a').forEach(function(a){ a.onclick=sauve; }); fil.appendChild(d); setTimeout(bas,60);
+    montreCartes(l);
   });
   var suite=[]; if(CF.res.length>CF.vu+0) suite.push(["Voir d'autres coffrets",function(){ if(CF.vu<CF.res.length) cPage(); else dit("Tu les as tous vus 🤍"); }]);
   suite.push(["Changer mes critères",coffret]); suite.push(["Et ma taille ? →",taille,1]);
@@ -370,7 +369,7 @@ function libre(q,dejaAffiche){
   ensuite(function(){ w=document.createElement('div'); w.className='m g attente'; w.innerHTML='<span>●</span> <span>●</span> <span>●</span>'; fil.appendChild(w); bas(); parle(true);
     return fetch('/api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:histo,contexte:contexte()})})
       .then(function(r){return r.json();})
-      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); return tape(w,t).then(function(){ if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
+      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); return tape(w,t).then(function(){ if(j.cartes&&j.cartes.length) montreCartes(j.cartes); if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
       .catch(function(){ histo.pop(); w.classList.remove('attente'); return tape(w,"Oups, je n'ai pas réussi à répondre. Écris-nous à contact@yourmood.net, on te répond vite 🤍"); });
   });
 }
