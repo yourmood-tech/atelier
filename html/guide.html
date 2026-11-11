@@ -30,9 +30,22 @@ a{color:var(--acc)}
 
 @keyframes coucou{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg) translateY(-4px)}40%{transform:rotate(7deg)}60%{transform:rotate(-6deg) translateY(-3px)}80%{transform:rotate(4deg)}}
 .mascotte video{width:100%;height:100%;object-fit:contain;display:block}
-.bulle{position:fixed;right:146px;bottom:80px;z-index:50;background:#fff;border-radius:18px 18px 4px 18px;padding:11px 15px;font-size:14px;box-shadow:0 8px 28px rgba(40,30,20,.12);max-width:230px;opacity:0;transform:translateY(8px) scale(.96);transition:.35s;pointer-events:none}
-.bulle.on{opacity:1;transform:none;pointer-events:auto;cursor:pointer}
+.bulle{position:fixed;right:150px;bottom:40px;z-index:50;background:#fff;border-radius:20px 20px 4px 20px;padding:14px 14px 12px;font-size:14.5px;line-height:1.4;box-shadow:0 12px 40px rgba(40,30,20,.18);width:270px;max-width:calc(100vw - 170px);opacity:0;transform:translateY(10px) scale(.95);transform-origin:bottom right;transition:.4s cubic-bezier(.3,1.4,.5,1);pointer-events:none}
+.bulle.on{opacity:1;transform:none;pointer-events:auto}
+.bulle.rappel{animation:rappel .9s ease}
+@keyframes rappel{0%,100%{transform:none}25%{transform:translateY(-6px) rotate(-1.5deg)}55%{transform:translateY(0) rotate(1deg)}}
 .bulle b{font-weight:500}
+.bulle .x{position:absolute;top:-9px;left:-9px;width:24px;height:24px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:14px;line-height:24px;cursor:pointer;color:var(--mid);padding:0}
+.bulle .bb{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.bulle .bb button{font:inherit;font-size:13.5px;text-align:left;border:1px solid var(--acc);color:var(--acc);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer}
+.bulle .bb button.plein{background:var(--acc);color:#fff}
+.bulle .bq{display:flex;margin-top:8px;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.bulle .bq input{flex:1;border:0;font:inherit;font-size:13px;padding:8px 12px;outline:none;min-width:0}
+.bulle .bq button{border:0;background:var(--ink);color:#fff;width:34px;cursor:pointer}
+.pastille{position:fixed;right:24px;bottom:112px;z-index:51;width:24px;height:24px;border-radius:50%;background:#c2410c;color:#fff;font-size:13px;font-weight:500;line-height:24px;text-align:center;box-shadow:0 0 0 3px #fff;pointer-events:none;opacity:0;transition:.3s}
+.pastille.on{opacity:1;animation:pouls 1.8s ease-in-out infinite}
+@keyframes pouls{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 3px rgba(194,65,12,.5)}50%{box-shadow:0 0 0 3px #fff,0 0 0 11px rgba(194,65,12,0)}}
+@media (max-width:520px){.bulle{right:12px;bottom:140px;width:auto;left:12px;max-width:none}}
 
 /* le panneau-guide */
 .panneau{position:fixed;right:18px;bottom:18px;z-index:60;width:390px;max-width:calc(100vw - 24px);height:min(660px,calc(100vh - 36px));background:#fff;border-radius:22px;box-shadow:0 18px 60px rgba(40,30,20,.22);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(16px) scale(.97);transform-origin:bottom right;transition:.3s;pointer-events:none}
@@ -132,7 +145,16 @@ form button{border:0;background:var(--ink);color:#fff;border-radius:50%;width:42
   <div class="vers"><button id="ouvrir2">Ouvrir le guide</button></div>
 </div>
 
-<div class="bulle" id="bulle">Coucou&nbsp;! <b>Première fois chez mood&nbsp;?</b> Je te montre 🤍</div>
+<div class="bulle" id="bulle" role="dialog" aria-label="Ton guide mood">
+  <button class="x" id="bulleX" aria-label="Fermer">×</button>
+  Coucou&nbsp;! 🤍 <b>Première fois chez mood&nbsp;?</b><br>Je t'aide à trouver ta bague, ou je réponds à tes questions.
+  <div class="bb">
+    <button class="plein" data-a="guide">✨ Oui, guide-moi pas à pas</button>
+    <button data-a="coffret">🎁 Trouver un coffret</button>
+  </div>
+  <form class="bq" id="bulleQ"><input placeholder="Ou pose ta question ici…" maxlength="500"><button aria-label="Envoyer">↑</button></form>
+</div>
+<div class="pastille" id="pastille">1</div>
 <button class="mascotte" id="mascotte" aria-label="Ouvrir ton guide mood"><video id="flotteVid" src="/guide/films/coucou.mp4" poster="/guide/mascotte.png" autoplay muted loop playsinline></video></button>
 
 <section class="panneau" id="panneau" aria-label="Ton guide mood">
@@ -400,12 +422,18 @@ function reprend(){
 
 /* ——— ouvrir / fermer ——— */
 var lance=false;
-function ouvrir(){ panneau.classList.add('on'); bulle.classList.remove('on'); $('mascotte').style.display='none'; setTimeout(saute,120); if(!lance){ lance=true; accueil(); } setTimeout(function(){ if(window.innerWidth>520) $('q').focus({preventScroll:true}); },300); }
+function ouvrir(){ panneau.classList.add('on'); bulle.classList.remove('on'); $('pastille').classList.remove('on'); $('mascotte').style.display='none'; setTimeout(saute,120); if(!lance){ lance=true; accueil(); } setTimeout(function(){ if(window.innerWidth>520) $('q').focus({preventScroll:true}); },300); }
 function fermer(){ panneau.classList.remove('on'); $('mascotte').style.display=''; }
-$('mascotte').onclick=ouvrir; bulle.onclick=ouvrir; $('ouvrir2').onclick=ouvrir; $('fermer').onclick=fermer;
+$('mascotte').onclick=ouvrir; $('ouvrir2').onclick=ouvrir; $('fermer').onclick=fermer;
+/* la bulle : de vrais boutons, et une question tapée directement */
+bulle.querySelectorAll('.bb button').forEach(function(b){ b.onclick=function(){ var a=b.getAttribute('data-a'); var deja=lance; ouvrir(); if(a==='coffret'){ client('Trouver un coffret'); coffret(); } else if(deja){ principe(); } }; });
+$('bulleQ').onsubmit=function(e){ e.preventDefault(); var q=this.querySelector('input').value.trim(); if(!q) return; this.querySelector('input').value=''; lance=true; ouvrir(); dit("Coucou 🤍 Je regarde ça pour toi…"); libre(q); };
+$('bulleX').onclick=function(e){ e.stopPropagation(); bulle.classList.remove('on'); };
 /* la mascotte fait coucou de temps en temps */
 function coucou(){}
-setTimeout(function(){ if(!panneau.classList.contains('on')){ bulle.classList.add('on'); coucou(); } },1800);
+setTimeout(function(){ if(!panneau.classList.contains('on')){ bulle.classList.add('on'); $('pastille').classList.add('on'); } },1500);
+/* petit rappel toutes les 9 secondes tant qu'on ne l'a pas ouvert */
+setInterval(function(){ if(!panneau.classList.contains('on')&&bulle.classList.contains('on')){ bulle.classList.remove('rappel'); void bulle.offsetWidth; bulle.classList.add('rappel'); } },9000);
 chemin();
 reprend();
 })();
