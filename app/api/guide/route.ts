@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { readFileSync } from "fs";
-import path from "path";
+import { PAGES } from "./savoir";
 
 // La mascotte-guide (mood-tools.yourmood.net/guide) : répond aux questions des nouvelles
 // clientes UNIQUEMENT avec ce qui est écrit ci-dessous (pages du site + conditions de vente
@@ -12,8 +11,6 @@ const KEY = process.env.ANTHROPIC_API_KEY || "";
 const MODEL = "claude-sonnet-5-5";
 const SHOP = "yourmood.myshopify.com";
 const SHOP_TOKEN = process.env.SHOPIFY_API_TOKEN || process.env.MOOD_SHOPIFY_ACCESS_TOKEN || "";
-let PAGES = "";
-try { PAGES = readFileSync(path.join(process.cwd(), "html/guide-savoir.txt"), "utf-8"); } catch {}
 const SITE = "https://www.yourmood.net";
 
 const SAVOIR = `
