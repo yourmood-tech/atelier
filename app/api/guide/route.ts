@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PAGES } from "./savoir";
+import { CLASSES } from "./coffrets";
 
 // La mascotte-guide (mood-tools.yourmood.net/guide) : répond aux questions des nouvelles
 // clientes UNIQUEMENT avec ce qui est écrit ci-dessous (pages du site + conditions de vente
@@ -87,7 +88,7 @@ const CONSIGNE = `Tu es la mascotte de mood : un petit anneau blanc tout doux qu
 
 TON : chaleureux, simple, clair, tutoiement (sauf si la personne vouvoie). Court : 2 à 5 phrases, ou une petite liste si on demande plusieurs infos (horaires…). Un emoji de temps en temps seulement, parmi 🤍 ✨ 💙 🫶🏼. On dit « on », jamais « nous ». Jamais « N'hésitez pas ». Pas de vente agressive : tu aides, tu rassures, tu donnes UNE prochaine étape claire.
 
-TU CONNAIS TOUT : le SAVOIR, les PAGES DU SITE plus bas (boutiques avec adresses et horaires exacts, questions fréquentes, Mood Care, tailles, bons cadeaux, parrainage, conditions de vente…) et l'outil chercher_produits, qui cherche EN DIRECT dans la boutique en ligne (noms exacts, prix actuels, disponibilité, lien). Dès qu'on te parle d'un bijou, d'une couleur, d'une matière, d'une collection ou d'un prix → utilise chercher_produits avant de répondre, et donne le nom exact, le prix et le lien. Sois PRÉCIS : une adresse, un horaire, un prix, un délai se donnent exactement comme écrits, jamais arrondis ni résumés de mémoire. Aujourd'hui nous sommes le {DATE} : tiens-en compte (jour de la semaine, boutique fermée pour la saison…).
+TU CONNAIS TOUT : le SAVOIR, les PAGES DU SITE plus bas (boutiques avec adresses et horaires exacts, questions fréquentes, Mood Care, tailles, bons cadeaux, parrainage, conditions de vente…) et l'outil chercher_produits, qui cherche EN DIRECT dans la boutique en ligne (noms exacts, prix actuels, disponibilité, lien). Pour une idée de cadeau ou une bague complète, utilise chercher_coffrets (il connaît la largeur, pour elle/lui, brillant ou sobre, le budget) et mets en avant les coffrets à prix réduit. Dès qu'on te parle d'un bijou, d'une couleur, d'une matière, d'une collection ou d'un prix → utilise chercher_produits avant de répondre, et donne le nom exact, le prix et le lien. Sois PRÉCIS : une adresse, un horaire, un prix, un délai se donnent exactement comme écrits, jamais arrondis ni résumés de mémoire. Aujourd'hui nous sommes le {DATE} : tiens-en compte (jour de la semaine, boutique fermée pour la saison…).
 
 GUIDER : la personne est souvent nouvelle. Réponds à sa question, puis propose UNE prochaine étape claire. Termine TOUJOURS ta réponse par une dernière ligne qui commence par « BOUTONS: » suivie de 2 ou 3 suites courtes (3 à 6 mots) qu'elle pourrait vouloir cliquer, séparées par « | ». Exemple : BOUTONS: Voir les horaires d'Orbe | Trouver ma taille | Choisir ma base
 
@@ -103,6 +104,16 @@ SAVOIR :
 ${SAVOIR}`;
 
 const OUTILS = [{
+  name: "chercher_coffrets",
+  description: "Trouve les coffrets (bagues complètes prêtes à offrir : base + anneaux assortis) en vente, avec prix actuel, prix réduit et lien. Filtres facultatifs. Les coffrets à prix réduit sortent en premier.",
+  input_schema: { type: "object", properties: {
+    pour: { type: "string", enum: ["femme", "homme", "tous"] },
+    base: { type: "string", enum: ["xs", "s", "l", "tous"], description: "largeur de base : xs = extra small 9 mm, s = small 11 mm, l = large 13 mm" },
+    brille: { type: "string", enum: ["oui", "non", "tous"] },
+    budget_min: { type: "number" }, budget_max: { type: "number" },
+    mots: { type: "string", description: "mots de style facultatifs (couleur, matière, thème)" },
+  } },
+}, {
   name: "chercher_produits",
   description: "Cherche en direct dans la boutique en ligne mood (yourmood.net) les bijoux en vente : nom exact, prix, disponibilité, lien. Utilise des mots simples en français (ex. « aura medium », « deux tiers aluminium rose », « base extra small », « bon cadeau », « starter pack »).",
   input_schema: { type: "object", properties: { recherche: { type: "string", description: "les mots à chercher" } }, required: ["recherche"] },
@@ -145,6 +156,66 @@ async function chercherProduits(recherche: string) {
 
 type Msg = { role: "user" | "assistant"; content: string };
 
+/* ——— les coffrets : classement fixe + prix / réductions / dispo lus en direct ——— */
+type Filtres = { pour?: string; base?: string; brille?: string; budget_min?: number; budget_max?: number; mots?: string };
+type Coffret = { titre: string; url: string; image: string; prix: number; avant: number | null; reduit: number; base: string; pour: string; brille: number; style: string };
+let CACHE: { t: number; liste: Coffret[] } | null = null;
+async function tousCoffrets(): Promise<Coffret[]> {
+  if (CACHE && Date.now() - CACHE.t < 10 * 60 * 1000) return CACHE.liste;
+  const liste: Coffret[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < 6; page++) {
+    const r: Response = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
+      method: "POST",
+      headers: { "X-Shopify-Access-Token": SHOP_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({ query: `query($a:String){ products(first:100, after:$a, query:"status:active AND product_type:coffret"){ pageInfo{ hasNextPage endCursor } nodes{ title handle onlineStoreUrl featuredImage{ url } variants(first:40){ nodes{ price compareAtPrice availableForSale } } } } }`, variables: { a: after } }),
+    });
+    const j: { data?: { products?: { pageInfo: { hasNextPage: boolean; endCursor: string }; nodes: { title: string; handle: string; onlineStoreUrl: string | null; featuredImage: { url: string } | null; variants: { nodes: { price: string; compareAtPrice: string | null; availableForSale: boolean }[] } }[] } } } = await r.json();
+    const d = j.data?.products; if (!d) break;
+    for (const p of d.nodes) {
+      if (!p.onlineStoreUrl || !p.featuredImage) continue;
+      const vs = p.variants.nodes.filter((v) => v.availableForSale);
+      if (!vs.length) continue;
+      const v = vs.reduce((a, b) => (parseFloat(a.price) <= parseFloat(b.price) ? a : b));
+      const prix = parseFloat(v.price), ca = v.compareAtPrice ? parseFloat(v.compareAtPrice) : 0;
+      const avant = ca > prix ? ca : null;
+      const c = CLASSES[p.handle] || ["", "m", /zircon|diamant|serti|strass|aura|paillet/i.test(p.title) ? 1 : 0, ""];
+      liste.push({ titre: p.title.replace(/\s*\|\s*bague.*$/i, "").trim(), url: p.onlineStoreUrl, image: p.featuredImage.url + (p.featuredImage.url.includes("?") ? "&" : "?") + "width=400", prix, avant, reduit: avant ? Math.round((1 - prix / avant) * 100) : 0, base: c[0], pour: c[1], brille: c[2], style: c[3] });
+    }
+    if (!d.pageInfo.hasNextPage) break;
+    after = d.pageInfo.endCursor;
+  }
+  CACHE = { t: Date.now(), liste };
+  return liste;
+}
+async function filtrerCoffrets(f: Filtres) {
+  const L = await tousCoffrets();
+  const mots = String(f.mots || "").toLowerCase().split(/\s+/).filter((m) => m.length > 2);
+  let r = L.filter((c) =>
+    (!f.pour || f.pour === "tous" || (f.pour === "femme" ? c.pour !== "h" : c.pour !== "f")) &&
+    (!f.base || f.base === "tous" || c.base.includes(f.base === "xs" ? "x" : f.base)) &&
+    (!f.brille || f.brille === "tous" || (f.brille === "oui" ? c.brille === 1 : c.brille === 0)) &&
+    (f.budget_min == null || c.prix >= f.budget_min) && (f.budget_max == null || c.prix <= f.budget_max) &&
+    (!mots.length || mots.some((m) => (c.titre + " " + c.style).toLowerCase().includes(m))));
+  r = r.sort((a, b) => b.reduit - a.reduit || a.prix - b.prix);
+  return r;
+}
+async function texteCoffrets(f: Filtres) {
+  const r = await filtrerCoffrets(f || {});
+  if (!r.length) return "Aucun coffret ne correspond exactement. Propose d'élargir un critère (budget, largeur, brillant).";
+  return `${r.length} coffrets trouvés (les réduits d'abord) :\n` + r.slice(0, 10).map((c) => `• ${c.titre} — ${c.prix}.–${c.avant ? ` au lieu de ${c.avant}.– (-${c.reduit} %)` : ""} — ${c.url} — style : ${c.style}`).join("\n");
+}
+
+export async function GET(req: Request) {
+  const u = new URL(req.url).searchParams;
+  if (!u.get("coffrets")) return NextResponse.json({ error: "?" }, { status: 400 });
+  const num = (k: string) => (u.get(k) ? Number(u.get(k)) : undefined);
+  try {
+    const r = await filtrerCoffrets({ pour: u.get("pour") || undefined, base: u.get("base") || undefined, brille: u.get("brille") || undefined, budget_min: num("min"), budget_max: num("max") });
+    return NextResponse.json({ total: r.length, coffrets: r.slice(0, 40).map(({ titre, url, image, prix, avant, reduit }) => ({ titre, url, image, prix, avant, reduit })) });
+  } catch { return NextResponse.json({ error: "indisponible" }, { status: 500 }); }
+}
+
 export async function POST(req: Request) {
   if (!KEY) return NextResponse.json({ error: "indisponible" }, { status: 503 });
   let body: { messages?: Msg[]; contexte?: string };
@@ -172,12 +243,12 @@ export async function POST(req: Request) {
       body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: system.map((x, k) => k === 0 ? { ...x, text: x.text.replace("{DATE}", date) } : x), tools: OUTILS, messages: conv }),
     });
     if (!r.ok) return NextResponse.json({ error: "réponse impossible" }, { status: 502 });
-    const j: { stop_reason?: string; content?: { type: string; text?: string; id?: string; name?: string; input?: { recherche?: string } }[] } = await r.json();
+    const j: { stop_reason?: string; content?: { type: string; text?: string; id?: string; name?: string; input?: { recherche?: string } & Filtres }[] } = await r.json();
     const blocs = j.content || [];
     texte = blocs.filter((c) => c.type === "text").map((c) => c.text || "").join("").trim();
     if (j.stop_reason !== "tool_use") break;
     conv.push({ role: "assistant", content: blocs });
-    const res = await Promise.all(blocs.filter((c) => c.type === "tool_use").map(async (c) => ({ type: "tool_result", tool_use_id: c.id, content: await chercherProduits(c.input?.recherche || "").catch(() => "recherche impossible") })));
+    const res = await Promise.all(blocs.filter((c) => c.type === "tool_use").map(async (c) => ({ type: "tool_result", tool_use_id: c.id, content: await (c.name === "chercher_coffrets" ? texteCoffrets(c.input as Filtres) : chercherProduits(c.input?.recherche || "")).catch(() => "recherche impossible") })));
     conv.push({ role: "user", content: res });
   }
   let boutons: string[] = [];

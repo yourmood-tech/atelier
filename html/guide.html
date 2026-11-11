@@ -27,9 +27,9 @@ a{color:var(--acc)}
 .mascotte img{width:100%;height:100%;object-fit:contain}
 .mascotte:hover{animation-play-state:paused;transform:translateY(-4px) rotate(-3deg)}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.mascotte.coucou img{animation:coucou 1s ease-in-out}
+
 @keyframes coucou{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg) translateY(-4px)}40%{transform:rotate(7deg)}60%{transform:rotate(-6deg) translateY(-3px)}80%{transform:rotate(4deg)}}
-.mascotte img{transform-origin:50% 90%}
+.mascotte video{width:100%;height:100%;object-fit:contain;display:block}
 .bulle{position:fixed;right:146px;bottom:80px;z-index:50;background:#fff;border-radius:18px 18px 4px 18px;padding:11px 15px;font-size:14px;box-shadow:0 8px 28px rgba(40,30,20,.12);max-width:230px;opacity:0;transform:translateY(8px) scale(.96);transition:.35s;pointer-events:none}
 .bulle.on{opacity:1;transform:none;pointer-events:auto;cursor:pointer}
 .bulle b{font-weight:500}
@@ -39,9 +39,11 @@ a{color:var(--acc)}
 .panneau.on{opacity:1;transform:none;pointer-events:auto}
 .tete{display:flex;align-items:center;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
 .tete .perso{width:70px;height:64px;flex:none;margin:-4px 0 -4px -4px}
-.tete .perso img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;transform-origin:50% 92%;transition:opacity .2s}
-.perso.parle img{animation:parle .42s ease-in-out infinite}
-.perso.saute img{animation:saute .75s cubic-bezier(.3,1.6,.5,1)}
+.tete .perso{position:relative;mix-blend-mode:multiply}
+.tete .perso video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s;transform-origin:50% 92%}
+.tete .perso #vParle{opacity:0}
+.perso.parle #vParle{opacity:1}.perso.parle #vRepos{opacity:0}
+.perso.saute video{animation:saute .75s cubic-bezier(.3,1.6,.5,1)}
 @keyframes parle{0%,100%{transform:translateY(0) scale(1,1) rotate(0)}30%{transform:translateY(-5px) scale(.95,1.06) rotate(-4deg)}65%{transform:translateY(0) scale(1.05,.95) rotate(3deg)}}
 @keyframes saute{0%{transform:scale(.4) translateY(20px)}60%{transform:scale(1.12) translateY(-8px) rotate(-6deg)}100%{transform:none}}
 .humeurs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;align-self:stretch}
@@ -52,6 +54,14 @@ a{color:var(--acc)}
 .couleur{display:flex;gap:10px;align-items:center;align-self:flex-start;border:1px solid var(--line);border-radius:14px;padding:7px 12px 7px 7px;background:#fff;text-decoration:none;color:var(--ink);font-size:13px;max-width:88%}
 .couleur img{width:52px;height:52px;border-radius:9px;object-fit:cover;background:var(--cream)}
 .couleur b{display:block;font-weight:500}
+.coffs{display:flex;gap:9px;overflow-x:auto;align-self:stretch;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.coff{flex:none;width:150px;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:var(--ink);font-size:12.5px;line-height:1.3;scroll-snap-align:start;position:relative;overflow:hidden}
+.coff img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--cream)}
+.coff div{padding:7px 9px 9px}
+.coff b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:500;min-height:32px}
+.coff .px{margin-top:4px;color:var(--acc);font-weight:500;font-size:13.5px}
+.coff s{color:var(--mid);font-weight:300;font-size:11.5px;margin-left:5px}
+.coff .rd{position:absolute;top:7px;left:7px;background:#c2410c;color:#fff;font-size:11px;font-weight:500;border-radius:99px;padding:2px 8px}
 .couleur span{color:var(--acc);font-size:12px}
 .tete .nom{flex:1;font-weight:500;font-size:15px;line-height:1.2}
 .tete .nom small{display:block;font-weight:300;color:var(--mid);font-size:12px}
@@ -122,11 +132,11 @@ form button{border:0;background:var(--ink);color:#fff;border-radius:50%;width:42
 </div>
 
 <div class="bulle" id="bulle">Coucou&nbsp;! <b>Première fois chez mood&nbsp;?</b> Je te montre 🤍</div>
-<button class="mascotte" id="mascotte" aria-label="Ouvrir ton guide mood"><img id="flotteImg" src="/guide/mascotte.png" alt=""></button>
+<button class="mascotte" id="mascotte" aria-label="Ouvrir ton guide mood"><video id="flotteVid" src="/guide/films/coucou.mp4" poster="/guide/mascotte.png" autoplay muted loop playsinline></video></button>
 
 <section class="panneau" id="panneau" aria-label="Ton guide mood">
   <div class="tete">
-    <div class="perso" id="perso"><img id="persoImg" src="/guide/mascotte.png" alt=""></div>
+    <div class="perso" id="perso"><video id="vRepos" src="/guide/films/coucou.mp4" poster="/guide/mascotte.png" autoplay muted loop playsinline></video><video id="vParle" src="/guide/films/parle.mp4" autoplay muted loop playsinline></video></div>
     <div class="nom">Ton guide mood<small>Boutiques, bijoux, tailles, cadeaux… demande-moi tout</small></div>
     <button id="fermer" aria-label="Fermer">×</button>
   </div>
@@ -183,8 +193,8 @@ var pause=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
 
 function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function liens(t){
-  return esc(t).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>')
+  return esc(t).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,'$1<a href="$2">$2</a>')
     .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
 }
 function bas(){ fil.scrollTop=fil.scrollHeight; }
@@ -211,7 +221,7 @@ function boutons(liste){
     var d=document.createElement('div'); d.className='choix';
     liste.forEach(function(b){
       var e;
-      if(typeof b[1]==='string'){ e=document.createElement('a'); e.href=b[1]; e.target='_blank'; e.rel='noopener'; }
+      if(typeof b[1]==='string'){ e=document.createElement('a'); e.href=b[1]; e.onclick=sauve; }
       else { e=document.createElement('button'); e.onclick=function(){ d.querySelectorAll('button').forEach(function(x){x.disabled=true;x.style.opacity=.45;}); e.style.opacity=1; client(b[0]); b[1](); }; }
       e.textContent=b[0]; if(b[2]) e.className='plein'; d.appendChild(e);
     });
@@ -225,9 +235,10 @@ function chemin(){
 function va(i){ ensuite(function(){ etat.etape=i; chemin(); }); }
 
 /* ——— le mood du jour ——— */
+function film(v,u,poster){ v.poster=poster||''; v.src=u; var p=v.play(); if(p&&p.catch) p.catch(function(){}); }
 function changeTete(f){
-  var u='/guide/humeurs/'+f+'.jpg';
-  $('persoImg').src=u; $('flotteImg').src=u; saute();
+  var u='/guide/films/hum/'+f+'.mp4', im='/guide/humeurs/'+f+'.jpg';
+  film($('vRepos'),u,im); film($('vParle'),u,im); film($('flotteVid'),u,im); saute();
 }
 function humeur(){
   dit("Dis-moi, c'est quoi ton mood du jour ?");
@@ -244,9 +255,52 @@ function choisi(h){
   dit(h[2]);
   if(h[3]){
     var u=h[4]==='@aluminium'?SITE+'/collections/aluminium':SITE+'/products/'+h[4];
-    bloc('<a class="couleur" href="'+u+'" target="_blank" rel="noopener"><img src="/guide/humeurs/'+h[0]+'.jpg" alt=""><div><b>'+h[3]+'</b><span>Voir la couleur →</span></div></a>','choix');
+    bloc('<a class="couleur" href="'+u+'"><img src="/guide/humeurs/'+h[0]+'.jpg" alt=""><div><b>'+h[3]+'</b><span>Voir la couleur →</span></div></a>','choix');
   }
-  boutons([["On trouve ma première bague →",principe,1],["Changer de mood",humeur]]);
+  boutons([["On trouve ma première bague →",principe,1],["Trouver mon coffret",coffret],["Changer de mood",humeur]]);
+}
+
+/* ——— trouve ton coffret ——— */
+var CF={};
+function coffret(){
+  CF={};
+  dit("On te trouve le coffret parfait : une bague complète, déjà assortie, souvent à prix réduit 🤍 Quatre petites questions.\nC'est pour qui ?");
+  boutons([["Pour elle",function(){ CF.pour='femme'; cLargeur(); }],["Pour lui",function(){ CF.pour='homme'; cLargeur(); }],["Peu importe",function(){ CF.pour='tous'; cLargeur(); }]]);
+}
+function cLargeur(){
+  if(etat.base){ CF.base=etat.base==='xs'?'xs':etat.base; return cBrille(); }
+  dit("Quelle largeur de base ? L'extra small (9 mm) est fine et discrète, la small (11 mm) la plus choisie, la large (13 mm) affirmée.");
+  boutons([["Extra small",function(){ CF.base='xs'; cBrille(); }],["Small",function(){ CF.base='s'; cBrille(); }],["Large",function(){ CF.base='l'; cBrille(); }],["Je ne sais pas",function(){ CF.base='tous'; cBrille(); }]]);
+}
+function cBrille(){
+  dit("Ça doit briller ?");
+  boutons([["Oui, ça brille ✨",function(){ CF.brille='oui'; cBudget(); }],["Plutôt sobre",function(){ CF.brille='non'; cBudget(); }],["Peu importe",function(){ CF.brille='tous'; cBudget(); }]]);
+}
+function cBudget(){
+  dit("Et ton budget ?");
+  boutons([["Jusqu'à 150.–",function(){ CF.max=150; cMontre(); }],["150 à 250.–",function(){ CF.min=150; CF.max=250; cMontre(); }],["250 à 400.–",function(){ CF.min=250; CF.max=400; cMontre(); }],["Plus de 400.–",function(){ CF.min=400; cMontre(); }],["Peu importe",cMontre]]);
+}
+function cMontre(relache){
+  var q='coffrets=1&pour='+CF.pour+'&base='+CF.base+'&brille='+CF.brille+(CF.min?'&min='+CF.min:'')+(CF.max?'&max='+CF.max:'');
+  ensuite(function(){ parle(true); return fetch('/api/guide?'+q).then(function(r){return r.json();}).then(function(j){ parle(false); CF.res=j.coffrets||[]; CF.vu=0; }).catch(function(){ parle(false); CF.res=[]; }); });
+  ensuite(function(){
+    if(!CF.res.length){
+      if(CF.min||CF.max){ delete CF.min; delete CF.max; dit("Je n'ai rien trouvé dans ce budget… Je te montre ce qui existe avec tes autres choix :"); cMontre(1); return; }
+      dit("Je n'ai pas de coffret qui coche toutes les cases. Écris-moi ce que tu cherches, je regarde avec toi 🤍"); return;
+    }
+    var red=CF.res.filter(function(c){return c.reduit;}).length;
+    dit((relache?'':"J'ai trouvé "+CF.res.length+" coffret"+(CF.res.length>1?'s':'')+" pour toi")+(red?(relache?'':' — ')+red+" à prix réduit, je te les montre en premier.":'.')); cPage();
+  });
+}
+function cPage(){
+  ensuite(function(){
+    var l=CF.res.slice(CF.vu,CF.vu+8); CF.vu+=l.length;
+    var h=l.map(function(c){ return '<a class="coff" href="'+c.url+'">'+(c.reduit?'<span class="rd">-'+c.reduit+' %</span>':'')+'<img src="'+c.image+'" alt="" loading="lazy"><div><b>'+esc(c.titre)+'</b><div class="px">'+c.prix+'.–'+(c.avant?'<s>'+c.avant+'.–</s>':'')+'</div></div></a>'; }).join('');
+    var d=document.createElement('div'); d.className='coffs'; d.innerHTML=h; d.querySelectorAll('a').forEach(function(a){ a.onclick=sauve; }); fil.appendChild(d); setTimeout(bas,60);
+  });
+  var suite=[]; if(CF.res.length>CF.vu+0) suite.push(["Voir d'autres coffrets",function(){ if(CF.vu<CF.res.length) cPage(); else dit("Tu les as tous vus 🤍"); }]);
+  suite.push(["Changer mes critères",coffret]); suite.push(["Et ma taille ? →",taille,1]);
+  boutons(suite);
 }
 
 /* ——— le chemin ——— */
@@ -283,8 +337,8 @@ function anneaux(){
     h+='<div class="combo">'+a+'<div><b>'+k[0]+'</b><br><span>'+k[1]+'</span></div></div>';
   });
   bloc(h,'combos');
-  dit("Le plus simple pour commencer ? Un **starter pack**, avec la base et les anneaux déjà assortis. Ou laisse-toi guider par le petit quizz.");
-  boutons([["Voir les starter packs",SITE+'/collections/starter-pack-in-the-mood-for'],["Faire le quizz",'https://mood-tools.yourmood.net/quiz'],["Les couleurs aluminium",SITE+'/collections/aluminium'],["Et ma taille ? →",taille,1]]);
+  dit("Le plus simple pour commencer ? Un **coffret** : une bague complète déjà assortie, souvent à prix réduit. Je te trouve le tien en 4 questions. Ou un starter pack, ou le petit quizz.");
+  boutons([["Trouver mon coffret",coffret,1],["Voir les starter packs",SITE+'/collections/starter-pack-in-the-mood-for'],["Faire le quizz",'https://mood-tools.yourmood.net/quiz'],["Les couleurs aluminium",SITE+'/collections/aluminium'],["Et ma taille ? →",taille]]);
 }
 function taille(){
   va(3);
@@ -301,10 +355,10 @@ function fin(){
   var l=[]; if(B) l.push(["Voir ma base "+B.n,B.u,1]); l.push(["Les starter packs",SITE+'/collections/starter-pack-in-the-mood-for']); l.push(["Recommencer",function(){ ensuite(function(){ fil.innerHTML=''; etat={etape:-1,base:null}; changeTete2(); }); accueil(); }]);
   boutons(l);
 }
-function changeTete2(){ $('persoImg').src='/guide/mascotte.png'; $('flotteImg').src='/guide/mascotte.png'; }
+function changeTete2(){ film($('vRepos'),'/guide/films/coucou.mp4','/guide/mascotte.png'); film($('vParle'),'/guide/films/parle.mp4'); film($('flotteVid'),'/guide/films/coucou.mp4','/guide/mascotte.png'); }
 function offrir(){
   dit("Quelle jolie idée 🤍 Pour un cadeau, voici ce qu'il faut savoir :\n• Tu ne connais pas sa taille ? Tu peux commander en « taille inconnue » : on envoie le baguier, puis on fabrique à la bonne taille.\n• Pour une première bague mood, un échange de taille est possible une fois, si elle n'a jamais été portée.\n• Le plus simple à offrir : un starter pack, déjà assorti.");
-  boutons([["Voir les starter packs",SITE+'/collections/starter-pack-in-the-mood-for'],["Je fais quand même le chemin",principe,1]]);
+  boutons([["Trouver le coffret parfait",coffret,1],["Voir les starter packs",SITE+'/collections/starter-pack-in-the-mood-for'],["Je fais quand même le chemin",principe]]);
 }
 
 /* ——— question libre ——— */
@@ -326,8 +380,23 @@ function suites(l){
 }
 function contexte(){ var c=[]; c.push('étape : '+(etat.etape>=0&&etat.etape<4?ETAPES[etat.etape]:etat.etape>=4?'chemin terminé':'accueil')); if(etat.base) c.push('base choisie : '+BASES[etat.base].n); if(etat.mood) c.push('mood du jour : '+etat.mood); return c.join(' · '); }
 $('form').onsubmit=function(e){ e.preventDefault(); var q=$('q').value.trim(); if(!q) return; $('q').value=''; libre(q); };
-var PUCES=[['Mon mood du jour',function(){ client('Mon mood du jour'); humeur(); }],['C\'est pour offrir',function(){ client("C'est pour offrir"); offrir(); }],['Livraison','Combien de temps pour recevoir ma bague ?'],['Garantie','Quelle est la garantie ?'],['Échange','Est-ce que je peux échanger ma bague ?'],['Allergie',"Est-ce que l'acier peut donner des allergies ?"],["Dans l'eau ?","Est-ce que je peux garder ma bague dans l'eau ?"],['Paiement','Comment je peux payer ?'],['Boutiques','Où sont vos boutiques ?']];
+var PUCES=[['Trouver mon coffret',function(){ client('Trouver mon coffret'); coffret(); }],['Mon mood du jour',function(){ client('Mon mood du jour'); humeur(); }],['C\'est pour offrir',function(){ client("C'est pour offrir"); offrir(); }],['Livraison','Combien de temps pour recevoir ma bague ?'],['Garantie','Quelle est la garantie ?'],['Échange','Est-ce que je peux échanger ma bague ?'],['Allergie',"Est-ce que l'acier peut donner des allergies ?"],["Dans l'eau ?","Est-ce que je peux garder ma bague dans l'eau ?"],['Paiement','Comment je peux payer ?'],['Boutiques','Où sont vos boutiques ?']];
 PUCES.forEach(function(p){ var b=document.createElement('button'); b.textContent=p[0]; b.onclick=function(){ typeof p[1]==='string'?libre(p[1]):p[1](); }; $('puces').appendChild(b); });
+
+/* ——— la conversation se garde quand on change de page ——— */
+function sauve(){ try{ sessionStorage.setItem('moodGuide',JSON.stringify({fil:fil.innerHTML,histo:histo,etat:etat,tete:$('vRepos').getAttribute('src'),ouvert:panneau.classList.contains('on')})); }catch(e){} }
+window.addEventListener('pagehide',sauve);
+function reprend(){
+  try{ var g=JSON.parse(sessionStorage.getItem('moodGuide')||'null'); if(!g||!g.fil) return false;
+    fil.innerHTML=g.fil; histo=g.histo||[]; etat=g.etat||etat; lance=true; chemin();
+    fil.querySelectorAll('.choix button,.hum,.carte').forEach(function(b){ b.disabled=true; b.style.opacity=.45; b.style.pointerEvents='none'; });
+    fil.querySelectorAll('.coffs a,.choix a,.couleur').forEach(function(a){ a.onclick=sauve; });
+    if(g.tete&&g.tete.indexOf('/hum/')>-1){ var f=g.tete.split('/').pop().replace('.mp4',''); film($('vRepos'),g.tete,'/guide/humeurs/'+f+'.jpg'); film($('vParle'),g.tete); film($('flotteVid'),g.tete); }
+    dit("Re-coucou 🤍 On continue ?");
+    boutons([["Trouver mon coffret",coffret],["Reprendre le chemin",etat.base?anneaux:principe,1],["J'ai une question",function(){ $('q').focus(); }]]);
+    if(g.ouvert) ouvrir(); return true;
+  }catch(e){ return false; }
+}
 
 /* ——— ouvrir / fermer ——— */
 var lance=false;
@@ -335,10 +404,10 @@ function ouvrir(){ panneau.classList.add('on'); bulle.classList.remove('on'); $(
 function fermer(){ panneau.classList.remove('on'); $('mascotte').style.display=''; }
 $('mascotte').onclick=ouvrir; bulle.onclick=ouvrir; $('ouvrir2').onclick=ouvrir; $('fermer').onclick=fermer;
 /* la mascotte fait coucou de temps en temps */
-function coucou(){ var m=$('mascotte'); m.classList.remove('coucou'); void m.offsetWidth; m.classList.add('coucou'); }
+function coucou(){}
 setTimeout(function(){ if(!panneau.classList.contains('on')){ bulle.classList.add('on'); coucou(); } },1800);
-setInterval(function(){ if(!panneau.classList.contains('on')) coucou(); },5000);
 chemin();
+reprend();
 })();
 </script>
 </body>
