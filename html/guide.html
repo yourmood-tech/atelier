@@ -23,8 +23,8 @@ a{color:var(--acc)}
 .apercu .vers button{font:inherit;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:99px;padding:10px 18px;cursor:pointer}
 
 /* la mascotte flottante */
-.mascotte{position:fixed;right:18px;bottom:14px;z-index:50;width:104px;height:96px;border:0;background:transparent;padding:0;cursor:pointer;animation:flotte 3.2s ease-in-out infinite}
-.mascotte img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;filter:drop-shadow(0 6px 10px rgba(80,60,40,.12))}
+.mascotte{position:fixed;right:18px;bottom:14px;z-index:50;width:104px;height:96px;border:0;background:transparent;padding:0;cursor:pointer;animation:flotte 3.2s ease-in-out infinite;mix-blend-mode:multiply}
+.mascotte img{width:100%;height:100%;object-fit:contain}
 .mascotte:hover{animation-play-state:paused;transform:translateY(-4px) rotate(-3deg)}
 @keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 .bulle{position:fixed;right:122px;bottom:66px;z-index:50;background:#fff;border-radius:18px 18px 4px 18px;padding:11px 15px;font-size:14px;box-shadow:0 8px 28px rgba(40,30,20,.12);max-width:230px;opacity:0;transform:translateY(8px) scale(.96);transition:.35s;pointer-events:none}
@@ -129,9 +129,9 @@ var ETAPES=['Le principe','Ta base','Tes anneaux','Ta taille'];
 var BASES={
   xs:{n:'extra small',mm:'9 mm',d:'fine et discrète',p:'dès 220.–',i:'files/5_a2568555-f82a-4e68-88bd-2be742201eaa.jpg?v=1774281033',u:SITE+'/products/bague-homme-femme-modulable-9mm-arrondie-polie',h:16,
       k:[['1 deux tiers','tout seul',[['dt',2]]],['2 mediums','deux couleurs',[['med',1],['med2',1]]],['1 medium + 2 minis','le mix',[['med',1],['mini',.5],['mini2',.5]]]]},
-  s:{n:'small',mm:'11 mm',d:'la plus choisie',p:'250.–',i:'files/arrondie-small-3-couleurs.gif?v=1791564086',u:SITE+'/products/base-small',h:20,
+  s:{n:'small',mm:'11 mm',d:'la plus choisie',p:'250.–',i:'files/Bague_argentee_a_incrustation_blanche.png?v=1791496585',u:SITE+'/products/base-small',h:20,
       k:[['1 addon','tout seul',[['addon',3]]],['1 deux tiers + 1 medium','ou + 2 minis',[['dt',2],['med',1]]],['3 mediums','trois couleurs',[['med',1],['med2',1],['med3',1]]]]},
-  l:{n:'large',mm:'13 mm',d:'affirmée',p:'250.–',i:'files/base-large-3-couleurs.gif?v=1791563649',u:SITE+'/products/base-large-polie',h:24,
+  l:{n:'large',mm:'13 mm',d:'affirmée',p:'250.–',i:'files/Bague_moderne_en_metal_et_ceramique_blanche.png?v=1791534988',u:SITE+'/products/base-large-polie',h:24,
       k:[['1 addon','tout seul',[['addon',3]]],['1 deux tiers + 1 medium','ou + 2 minis',[['dt',2],['med',1]]],['3 mediums','trois couleurs',[['med',1],['med2',1],['med3',1]]]]}
 };
 var COL={addon:'#1f6f78',dt:'#c9a46a',med:'#d98c9a',med2:'#7d8fb3',med3:'#9bb59a',mini:'#7d8fb3',mini2:'#c9a46a'};
@@ -175,7 +175,7 @@ function accueil(){
 function principe(){
   va(0);
   dit("Une bague mood, c'est deux choses :\n• une **base**, la bague du dessous, en acier, garantie à vie\n• des **anneaux** qui se clipsent dessus\n\nTu changes d'anneau selon ton humeur ou ta tenue : c'est le clic mood ✨");
-  bloc('<img src="'+img('files/arrondie-small-3-couleurs.gif?v=1791564086',500)+'" alt="Une base et ses anneaux">','photo');
+  bloc('<img src="'+img('files/2_b5cd49a7-3579-4279-8722-3a56b8166090.jpg?v=1774281033',600)+'" alt="Une base et ses anneaux">','photo');
   boutons([["J'ai compris, on choisit ma base →",base,1],["Comment on change d'anneau ?",function(){ libre("Comment on ouvre la base pour changer d'anneau ?"); }]]);
 }
 function base(){
