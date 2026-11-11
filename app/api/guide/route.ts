@@ -111,18 +111,31 @@ const OUTILS = [{
 type Prod = { title: string; productType: string; onlineStoreUrl: string | null; totalInventory: number | null; priceRangeV2: { minVariantPrice: { amount: string }; maxVariantPrice: { amount: string } }; description: string; variants: { nodes: { availableForSale: boolean }[] } };
 async function chercherProduits(recherche: string) {
   if (!SHOP_TOKEN) return "recherche indisponible";
-  const mots = String(recherche || "").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter((m) => m.length > 1).slice(0, 6);
+  const VIDES = new Set(["en", "de", "du", "des", "la", "le", "les", "un", "une", "pour", "avec", "et", "ou", "vous", "avez", "tu", "as", "bague", "bagues", "mood", "anneau", "anneaux", "interchangeable"]);
+  const mots = String(recherche || "").toLowerCase().replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/)
+    .filter((m) => m.length > 1 && !VIDES.has(m)).map((m) => (m.length > 4 && m.endsWith("s") ? m.slice(0, -1) : m)).slice(0, 6);
   if (!mots.length) return "aucun mot";
-  const q = "status:active AND " + mots.map((m) => `title:*${m}*`).join(" AND ");
-  const r = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
-    method: "POST",
-    headers: { "X-Shopify-Access-Token": SHOP_TOKEN, "Content-Type": "application/json" },
-    body: JSON.stringify({ query: `query($q:String!){ products(first:40, query:$q, sortKey:UPDATED_AT, reverse:true){ nodes{ title productType onlineStoreUrl totalInventory description(truncateAt:220) priceRangeV2{ minVariantPrice{amount} maxVariantPrice{amount} } variants(first:30){ nodes{ availableForSale } } } } }`, variables: { q } }),
-  });
-  const j: { data?: { products?: { nodes: Prod[] } } } = await r.json();
-  const prods = (j.data?.products?.nodes || []).filter((p) => p.onlineStoreUrl).slice(0, 10);
+  const cherche = async (liste: string[]) => {
+    const q = "status:active AND " + liste.map((m) => `title:*${m}*`).join(" AND ");
+    const r = await fetch(`https://${SHOP}/admin/api/2025-01/graphql.json`, {
+      method: "POST",
+      headers: { "X-Shopify-Access-Token": SHOP_TOKEN, "Content-Type": "application/json" },
+      body: JSON.stringify({ query: `query($q:String!){ products(first:40, query:$q, sortKey:UPDATED_AT, reverse:true){ nodes{ title productType onlineStoreUrl totalInventory description(truncateAt:220) priceRangeV2{ minVariantPrice{amount} maxVariantPrice{amount} } variants(first:30){ nodes{ availableForSale } } } } }`, variables: { q } }),
+    });
+    const j: { data?: { products?: { nodes: Prod[] } } } = await r.json();
+    return (j.data?.products?.nodes || []).filter((p) => p.onlineStoreUrl);
+  };
+  let trouves = await cherche(mots);
+  let note = "";
+  // rien avec tous les mots → on relâche en gardant les mots les plus longs
+  for (let n = mots.length - 1; !trouves.length && n >= 1; n--) {
+    const garde = [...mots].sort((a, b) => b.length - a.length).slice(0, n);
+    trouves = await cherche(garde);
+    if (trouves.length) note = `(rien avec tous les mots ; résultats pour « ${garde.join(" ")} » seulement)\n`;
+  }
+  const prods = trouves.slice(0, 10);
   if (!prods.length) return `Aucun bijou en vente trouvé pour « ${recherche} ». Essaie d'autres mots, ou dis-le honnêtement.`;
-  return prods.map((p) => {
+  return note + prods.map((p) => {
     const a = parseFloat(p.priceRangeV2.minVariantPrice.amount), b = parseFloat(p.priceRangeV2.maxVariantPrice.amount);
     const prix = a === b ? `${a}.–` : `de ${a}.– à ${b}.–`;
     const dispo = p.variants.nodes.some((v) => v.availableForSale) ? "disponible" : "épuisé";
