@@ -228,21 +228,25 @@ function parleVoix(on){ voixActive=on; perso.classList.toggle('parle',tapeActif|
 /* ——— la voix (Kore) : il dit ses phrases à voix haute, une après l'autre ——— */
 var VOIX_URL='/api/guide/voix';
 var son=true; try{ son=localStorage.getItem('moodGuideSon')!=='0'; }catch(e){}
-var audio=new Audio(); audio.preload='auto';
-var fileVoix=[], joue=false, gen=0;
-function pourDire(t){ return String(t).replace(/(^|\n)\s*\[[^\]]+\]\([^)]+\)\s*(?=\n|$)/g,'$1').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(\d{1,2}):00/g,'$1 heures').replace(/(\d{1,2}):(\d{2})/g,'$1 heures $2').replace(/(heures(?: \d{2})?)\s*[–-]\s*/g,'$1 à ').replace(/\s·\s/g,', puis ').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
-function morceaux(p){ var ph=p.match(/[^.!?…]+[.!?…]*\s*/g)||[p], out=[], cur='';
-  ph.forEach(function(x){ if((cur+x).length>200&&cur){ out.push(cur.trim()); cur=''; } cur+=x; }); if(cur.trim()) out.push(cur.trim());
-  if(out.length>1&&out[0].length<60){ out[1]=out[0]+' '+out[1]; out.shift(); } return out; }
-function dire(t){ if(!son) return; var p=pourDire(t); if(!p) return;
-  morceaux(p).forEach(function(m){ var it={g:gen}; it.pret=fetch(VOIX_URL+'?t='+encodeURIComponent(m.slice(0,600))).then(function(r){ return r.ok?r.blob():null; }).catch(function(){ return null; }); fileVoix.push(it); });
-  suivant(); }
-function suivant(){ if(joue||!fileVoix.length) return; var it=fileVoix.shift(); if(it.g!==gen) return suivant(); joue=true;
-  it.pret.then(function(b){ if(!b||it.g!==gen||!son){ joue=false; return suivant(); } audio.src=URL.createObjectURL(b); parleVoix(true); var pp=audio.play(); if(pp&&pp.catch) pp.catch(function(){ joue=false; parleVoix(false); suivant(); }); }); }
-audio.onended=function(){ joue=false; parleVoix(false); suivant(); };
-function tais(){ gen++; fileVoix=[]; try{ audio.pause(); }catch(e){} joue=false; parleVoix(false); }
-var SILENCE='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
-function debloqueSon(){ try{ audio.src=SILENCE; var pp=audio.play(); if(pp&&pp.catch) pp.catch(function(){}); }catch(e){} }
+/* lecteur de voix : le haut-parleur du navigateur (fiable sur téléphone), une phrase après l'autre */
+var AC=null, enCours=null, finEnCours=null, genV=0;
+function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(C){ try{ AC=new C(); }catch(e){} } } return AC; }
+function debloqueSon(){ var c=ac(); if(!c) return; try{ if(c.state==='suspended') c.resume(); var b=c.createBuffer(1,1,22050), s=c.createBufferSource(); s.buffer=b; s.connect(c.destination); s.start(0); }catch(e){} }
+function charge(m){ var c=ac(); if(!c) return Promise.resolve(null);
+  return fetch(VOIX_URL+'?t='+encodeURIComponent(m.slice(0,600))).then(function(r){ return r.ok?r.arrayBuffer():null; })
+    .then(function(ab){ return ab?new Promise(function(ok){ try{ c.decodeAudioData(ab,ok,function(){ ok(null); }); }catch(e){ ok(null); } }):null; }).catch(function(){ return null; }); }
+function joue(proms){ var g=genV; return new Promise(function(fin){ finEnCours=fin; var i=0;
+  (function suite(){ if(g!==genV||i>=proms.length){ parleVoix(false); return fin(); }
+    proms[i++].then(function(buf){ if(g!==genV){ return fin(); } if(!buf) return suite();
+      try{ if(AC.state==='suspended') AC.resume(); var src=AC.createBufferSource(); src.buffer=buf; src.connect(AC.destination); enCours=src; parleVoix(true);
+        src.onended=function(){ if(enCours===src) enCours=null; suite(); }; src.start(0); }catch(e){ suite(); } }); })(); }); }
+/* prépare la voix d'un texte : renvoie quand commencer (1re phrase prête, 6 s max) et comment la jouer */
+function voixDe(t){ if(!son||!ac()) return null; var p=pourDire(t); if(!p) return null; var proms=morceaux(p).map(charge);
+  return { pret:Promise.race([proms[0],pause(6000)]), joue:function(){ return joue(proms); } }; }
+function tais(){ genV++; if(enCours){ try{ enCours.onended=null; enCours.stop(); }catch(e){} enCours=null; } parleVoix(false); if(finEnCours){ var f=finEnCours; finEnCours=null; f(); } }
+/* écrire ET dire en même temps ; on attend la fin des deux avant la suite */
+function ecritEtDit(el,t){ var v=voixDe(t); if(!v) return tape(el,t);
+  return v.pret.then(function(){ return Promise.all([tape(el,t), v.joue()]); }); }
 function afficheSon(){ $('sonBtn').textContent=son?'🔊':'🔇'; }
 function saute(){ perso.classList.remove('saute'); void perso.offsetWidth; perso.classList.add('saute'); }
 /* le guide écrit sa phrase lettre par lettre en bougeant */
@@ -258,7 +262,7 @@ function tape(el,t){
     })();
   });
 }
-function dit(t){ return ensuite(function(){ dire(t); var d=document.createElement('div'); d.className='m g'; fil.appendChild(d); return tape(d,t).then(function(){ return pause(180); }); }); }
+function dit(t){ return ensuite(function(){ var d=document.createElement('div'); d.className='m g'; fil.appendChild(d); bas(); return ecritEtDit(d,t).then(function(){ return pause(180); }); }); }
 function client(t){ tais(); var d=document.createElement('div'); d.className='m c'; d.textContent=t; fil.appendChild(d); bas(); }
 function bloc(html,cls,apres){ return ensuite(function(){ var d=document.createElement('div'); d.className=cls; d.innerHTML=html; fil.appendChild(d); if(apres) apres(d); setTimeout(bas,60); return pause(150); }); }
 function boutons(liste){
@@ -413,7 +417,7 @@ function libre(q,dejaAffiche){
   ensuite(function(){ w=document.createElement('div'); w.className='m g attente'; w.innerHTML='<span>●</span> <span>●</span> <span>●</span>'; fil.appendChild(w); bas(); parle(true);
     return fetch('/api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:histo,contexte:contexte()})})
       .then(function(r){return r.json();})
-      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); dire(t); return tape(w,t).then(function(){ if(j.cartes&&j.cartes.length) montreCartes(j.cartes); if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
+      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); return ecritEtDit(w,t).then(function(){ if(j.cartes&&j.cartes.length) montreCartes(j.cartes); if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
       .catch(function(){ histo.pop(); w.classList.remove('attente'); return tape(w,"Oups, je n'ai pas réussi à répondre. Écris-nous à contact@yourmood.net, on te répond vite 🤍"); });
   });
 }

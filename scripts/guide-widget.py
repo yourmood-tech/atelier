@@ -34,6 +34,7 @@ body = body.replace('src="/guide/', f'src="{BASE}/guide/').replace('poster="/gui
 js = src[src.index("<script>") + 8 : src.index("</script>")]
 js = js.replace("var $=function(id){return document.getElementById(id);};", "var $=function(id){return RACINE.getElementById(id);};")
 js = js.replace("'/guide/", f"'{BASE}/guide/").replace("'/api/guide", f"'{BASE}/api/guide")
+js = js.replace('src="/guide/', f'src="{BASE}/guide/').replace('poster="/guide/', f'poster="{BASE}/guide/')
 js = js.replace("$('ouvrir2').onclick=ouvrir; ", "")
 # pastille près de la mascotte quand elle disparaît
 out = f"""/* bonhomme mood — fabriqué depuis html/guide.html par scripts/guide-widget.py, ne pas modifier à la main */
