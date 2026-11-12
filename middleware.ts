@@ -57,6 +57,11 @@ export default auth((req) => {
     return;
   }
 
+  // compteur anti-saturation (tâche planifiée, protégé par une clé dans la route)
+  if (pathname === "/api/compteur") {
+    return;
+  }
+
   // calcul de nuit « Prête à partir / Fabriquée pour vous » (protégé par une clé dans la route)
   if (pathname === "/api/delai-fabrication") {
     return;
