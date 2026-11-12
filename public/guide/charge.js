@@ -1,0 +1,2 @@
+/* mood — chargeur du bonhomme-guide. Essai caché : rien ne se charge sans ?guide=1 (retenu dans ce navigateur), ?guide=0 l'éteint. */
+(function(){try{var q=new URLSearchParams(location.search).get('guide');if(q==='1')localStorage.setItem('moodGuideEssai','1');if(q==='0')localStorage.removeItem('moodGuideEssai');if(localStorage.getItem('moodGuideEssai')!=='1')return;var s=document.createElement('script');s.src='https://mood-tools.yourmood.net/guide/widget.js?v='+Math.floor(Date.now()/3e5);s.async=true;document.head.appendChild(s);}catch(e){}})();
