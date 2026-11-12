@@ -77,7 +77,7 @@ export class Armoire {
 // ── Klaviyo ──────────────────────────────────────────────────────────────────
 async function kget(url: string, rev = "2024-10-15"): Promise<Record<string, unknown>> {
   for (let i = 0; i < 8; i++) {
-    const r = await fetch(url, { headers: { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: rev, accept: "application/vnd.api+json" }, cache: "no-store" });
+    const r = await fetch(url, { headers: { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: rev, accept: "application/vnd.api+json" }, cache: "no-store", signal: AbortSignal.timeout(30000) });
     if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 1500 * (i + 1))); continue; }
     if (!r.ok) throw new Error(`Klaviyo ${r.status} : ${(await r.text()).slice(0, 200)}`);
     return r.json();
@@ -86,7 +86,7 @@ async function kget(url: string, rev = "2024-10-15"): Promise<Record<string, unk
 }
 async function kpost(url: string, body: unknown) {
   for (let i = 0; i < 8; i++) {
-    const r = await fetch(url, { method: "POST", headers: { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: "2025-07-15", accept: "application/vnd.api+json", "content-type": "application/vnd.api+json" }, body: JSON.stringify(body) });
+    const r = await fetch(url, { method: "POST", headers: { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: "2025-07-15", accept: "application/vnd.api+json", "content-type": "application/vnd.api+json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) });
     if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 1500 * (i + 1))); continue; }
     if (!r.ok) throw new Error(`Klaviyo ${r.status} : ${(await r.text()).slice(0, 300)}`);
     return;
@@ -186,7 +186,7 @@ type Boutique = keyof typeof BOUTIQUES;
 async function shopifyGql(b: Boutique, query: string, variables: Record<string, unknown> = {}) {
   const { domaine, jeton } = BOUTIQUES[b];
   for (let i = 0; i < 8; i++) {
-    const r = await fetch(`https://${domaine}/admin/api/2025-01/graphql.json`, { method: "POST", headers: { "X-Shopify-Access-Token": jeton, "Content-Type": "application/json" }, body: JSON.stringify({ query, variables }), cache: "no-store" });
+    const r = await fetch(`https://${domaine}/admin/api/2025-01/graphql.json`, { method: "POST", headers: { "X-Shopify-Access-Token": jeton, "Content-Type": "application/json" }, body: JSON.stringify({ query, variables }), cache: "no-store", signal: AbortSignal.timeout(30000) });
     if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 1000 * (i + 1))); continue; }
     const j = await r.json();
     if (j.errors && JSON.stringify(j.errors).includes("THROTTLED")) { await new Promise((ok) => setTimeout(ok, 1000 * (i + 1))); continue; }
@@ -198,6 +198,7 @@ async function shopifyGql(b: Boutique, query: string, variables: Record<string, 
 
 // ── Index email → fiche (repris de la v1 : une demande par page de 250 fiches) ─
 // Parcourt les fiches modifiées depuis le dernier passage (tout au premier passage), reprend au curseur.
+export async function trace(etape: string) { demandes.n++; await kv.set("cpt2:trace", { etape, quand: new Date().toISOString() }); }
 export async function indexer(montre: Montre, essai: boolean) {
   const bilan: Record<string, { fiches: number; fini: boolean }> = {};
   for (const b of Object.keys(BOUTIQUES) as Boutique[]) {

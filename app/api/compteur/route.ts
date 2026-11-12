@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
-import { Armoire, collecteAJour, collecter, demandes, ecrire, hebdo, indexer, indexPret, menageV1 } from "@/lib/compteur/moteur";
+import { Armoire, collecteAJour, collecter, demandes, ecrire, hebdo, indexer, indexPret, menageV1, trace } from "@/lib/compteur/moteur";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,12 +46,15 @@ export async function GET(req: NextRequest) {
     const armoire = new Armoire();
     const pret = await indexPret();
     bilan.collecte = await collecter({ fin: pret ? montre.fin - 60000 : Date.now() + 120000 }, armoire, essai);
+    await trace("index des fiches");
     if (!pret) bilan.index = await indexer({ fin: Math.min(montre.fin, Date.now() + 90000) }, essai);
     else bilan.index = await indexer({ fin: Date.now() + 45000 }, essai); // nouvelles fiches seulement
+    await trace("contrôle du rattrapage");
     const ajour = await collecteAJour();
     if (pret && ajour) {
       const autorise = !!(await kv.get("cpt2:ecriture-ok")); demandes.n++;
-      const h = await hebdo(essai);
+      await trace("liste hebdo"); const h = await hebdo(essai);
+      await trace("calcul et écriture");
       bilan.ecriture = await ecrire(montre, armoire, h, essai || !autorise);
       if (!autorise && !essai) bilan.note = "calculé seulement : écriture sur les fiches pas encore autorisée";
     } else bilan.ecriture = !pret ? "en attente : index des fiches Shopify" : "en attente : premier rattrapage des messages et des clics";
@@ -59,6 +62,7 @@ export async function GET(req: NextRequest) {
     if (!essai) await kv.set("cpt2:bilan", { quand: new Date().toISOString(), ...bilan }, { ex: 7 * 86400 });
     return NextResponse.json({ ok: true, ...bilan });
   } catch (e) {
+    if (!essai) await kv.set("cpt2:bilan", { quand: new Date().toISOString(), erreur: e instanceof Error ? e.message : String(e), ...bilan }, { ex: 7 * 86400 });
     return NextResponse.json({ erreur: e instanceof Error ? e.message : String(e), ...bilan, demandesStockage: demandes.n }, { status: 500 });
   } finally {
     if (!essai) await kv.del("cpt2:verrou");
