@@ -89,10 +89,17 @@ export async function collecter(montre: Montre, essai: boolean) {
       }
       b.pages++; b.jusqua = curseur;
       url = ((d.links as { next?: string } | undefined)?.next) ?? null;
+      if (!url && !essai) await kv.set(`cpt:fini:${mesure}`, new Date().toISOString()); // rattrapage terminé pour cette mesure
       if (essai && b.pages >= 2) break;
     }
   }
   return bilan;
+}
+
+// Le premier rattrapage (7 jours de messages, 90 jours de clics) est-il terminé pour toutes les mesures ?
+export async function collecteAJour(): Promise<boolean> {
+  for (const m of [...MESURES_RECU, ...MESURES_SIGNAUX]) if (!(await kv.get(`cpt:fini:${m}`))) return false;
+  return true;
 }
 
 // ── 2. Inscrites « une newsletter par semaine » (une fois par jour) ─────────
@@ -129,7 +136,7 @@ async function hashEntier(cle: string, cb: (champ: string, valeur: string) => vo
 }
 export async function calculerProfils(essai: boolean): Promise<Record<Profil, number> | null> {
   const aujourdhui = jourSuisse(new Date());
-  if ((await kv.get<string>("cpt:profil:jour")) === aujourdhui) return null;
+  if ((await kv.get<string>("cpt:profil:jour:v2")) === aujourdhui) return null;
   const joursClic = new Map<string, number>(); const desab = new Set<string>();
   for (const j of joursAvant(JOURS_PROFIL)) {
     await hashEntier(`cpt:clic:${j}`, (e) => joursClic.set(e, (joursClic.get(e) ?? 0) + 1));
@@ -146,7 +153,7 @@ export async function calculerProfils(essai: boolean): Promise<Record<Profil, nu
     await kv.del("cpt:profil");
     const l = Object.entries(garder);
     for (let i = 0; i < l.length; i += 500) await kv.hset("cpt:profil", Object.fromEntries(l.slice(i, i + 500)));
-    await kv.set("cpt:profil:jour", aujourdhui);
+    await kv.set("cpt:profil:jour:v2", aujourdhui);
   }
   return res;
 }

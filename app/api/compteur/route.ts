@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
-import { calculerProfils, collecter, ecrire, indexer, indexPret, rafraichirHebdo } from "@/lib/compteur/moteur";
+import { calculerProfils, collecteAJour, collecter, ecrire, indexer, indexPret, rafraichirHebdo } from "@/lib/compteur/moteur";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,15 +30,19 @@ export async function GET(req: NextRequest) {
   const montre = { fin: Date.now() + 270000 };
   const bilan: Record<string, unknown> = { essai };
   try {
-    bilan.collecte = await collecter({ fin: Math.min(montre.fin, Date.now() + 120000) }, essai);
+    const pret = await indexPret();
+    // tant que l'index est construit, la lecture laisse du temps à l'index ; ensuite elle prend presque toute la tranche
+    bilan.collecte = await collecter({ fin: pret ? montre.fin - 40000 : Math.min(montre.fin, Date.now() + 120000) }, essai);
     bilan.hebdo = await rafraichirHebdo(essai);
     bilan.index = await indexer({ fin: Math.min(montre.fin, Date.now() + 90000) }, essai);
     // les profils et l'écriture attendent que l'index des fiches soit complet (sinon tout partirait sur Klaviyo)
-    if (await indexPret()) {
+    // ET que le premier rattrapage des messages et des clics soit fini (sinon personne ne serait addict)
+    const ajour = await collecteAJour();
+    if ((await indexPret()) && ajour) {
       bilan.profils = await calculerProfils(essai);
       bilan.ecriture = await ecrire(montre, essai || !autorise);
       if (!autorise && !essai) bilan.ecriture = { ...(bilan.ecriture as object), note: "calculé seulement : écriture pas encore autorisée" };
-    } else bilan.ecriture = "en attente : premier parcours des fiches Shopify pas terminé";
+    } else bilan.ecriture = ajour ? "en attente : premier parcours des fiches Shopify pas terminé" : "en attente : rattrapage des messages et des clics pas terminé";
     if (!essai) await kv.set("cpt:dernier-bilan", { quand: new Date().toISOString(), ...bilan }, { ex: 7 * 86400 });
     return NextResponse.json({ ok: true, ...bilan });
   } catch (e) {
