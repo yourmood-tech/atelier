@@ -26,7 +26,7 @@ css = css.replace(".bulle{position:fixed;left:150px;bottom:40px;", ".bulle{posit
 css = css.replace(".pastille{position:fixed;left:126px;bottom:112px;", ".pastille{position:fixed;left:100px;bottom:170px;")
 css = css.replace("@media (max-width:520px){.bulle{right:12px;bottom:140px;width:auto;left:12px;max-width:none}}", "@media (max-width:520px){.bulle{right:12px;bottom:196px;width:auto;left:12px;max-width:none}}")
 for sel in [".mascotte{", ".bulle{", ".pastille{", ".panneau{"]:
-    css = css.replace(sel, sel + "z-index:2147483000;", 1)
+    css = css.replace(sel, sel + "z-index:2147483647;", 1)
 
 body = src[src.index('<div class="bulle"') : src.index("<script>")]
 body = body.replace('src="/guide/', f'src="{BASE}/guide/').replace('poster="/guide/', f'poster="{BASE}/guide/')
