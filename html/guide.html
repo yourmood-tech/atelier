@@ -230,8 +230,13 @@ var VOIX_URL='/api/guide/voix';
 var son=true; try{ son=localStorage.getItem('moodGuideSon')!=='0'; }catch(e){}
 var audio=new Audio(); audio.preload='auto';
 var fileVoix=[], joue=false, gen=0;
-function pourDire(t){ return String(t).replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
-function dire(t){ if(!son) return; var p=pourDire(t); if(!p) return; var it={g:gen}; it.pret=fetch(VOIX_URL+'?t='+encodeURIComponent(p.slice(0,900))).then(function(r){ return r.ok?r.blob():null; }).catch(function(){ return null; }); fileVoix.push(it); suivant(); }
+function pourDire(t){ return String(t).replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(\d{1,2}):00/g,'$1 heures').replace(/(\d{1,2}):(\d{2})/g,'$1 heures $2').replace(/(heures(?: \d{2})?)\s*[–-]\s*/g,'$1 à ').replace(/\s·\s/g,', puis ').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
+function morceaux(p){ var ph=p.match(/[^.!?…]+[.!?…]*\s*/g)||[p], out=[], cur='';
+  ph.forEach(function(x){ if((cur+x).length>200&&cur){ out.push(cur.trim()); cur=''; } cur+=x; }); if(cur.trim()) out.push(cur.trim());
+  if(out.length>1&&out[0].length<60){ out[1]=out[0]+' '+out[1]; out.shift(); } return out; }
+function dire(t){ if(!son) return; var p=pourDire(t); if(!p) return;
+  morceaux(p).forEach(function(m){ var it={g:gen}; it.pret=fetch(VOIX_URL+'?t='+encodeURIComponent(m.slice(0,600))).then(function(r){ return r.ok?r.blob():null; }).catch(function(){ return null; }); fileVoix.push(it); });
+  suivant(); }
 function suivant(){ if(joue||!fileVoix.length) return; var it=fileVoix.shift(); if(it.g!==gen) return suivant(); joue=true;
   it.pret.then(function(b){ if(!b||it.g!==gen||!son){ joue=false; return suivant(); } audio.src=URL.createObjectURL(b); parleVoix(true); var pp=audio.play(); if(pp&&pp.catch) pp.catch(function(){ joue=false; parleVoix(false); suivant(); }); }); }
 audio.onended=function(){ joue=false; parleVoix(false); suivant(); };
