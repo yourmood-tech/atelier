@@ -1,15 +1,12 @@
-// Compteur anti-saturation — moteur. Tourne par petites tranches (tâche planifiée), chaque tranche
-// reprend là où la précédente s'est arrêtée (curseurs dans KV). Rien n'est perdu si une tranche est coupée.
+// Compteur anti-saturation — moteur v2, ÉCONOME (réécrit le 12.11.2026 après l'épuisement du quota du stockage partagé).
+// Principe : tout le calcul se fait en mémoire ; le stockage ne garde que 32 « classeurs » (un objet chacun),
+// relus et réécrits seulement quand une de leurs clientes bouge. Ordre de grandeur : ~70 demandes par passage.
 //
-// Rangement KV :
-//   cpt:curseur:<mesure> / cpt:bord:<mesure>   jusqu'où on a lu les événements Klaviyo
-//   cpt:j:<jour>        email → nb de messages comptés ce jour-là (jour suisse), gardé 10 jours
-//   cpt:dernier         email → date du dernier message compté
-//   cpt:clic:<jour>     email → 1 si clic ce jour-là, gardé 95 jours (idem cpt:desab:<jour>)
-//   cpt:hebdo           ensemble des emails « une newsletter par semaine »
-//   cpt:profil          email → profil (seulement hebdo / addict / superAddict ; absent = normale)
-//   cpt:idx:<boutique>  email → numéro de fiche cliente Shopify
-//   cpt:ecrit           email → « messages|budget|dernier » tel qu'écrit la dernière fois
+// Rangement (stockage partagé, préfixe cpt2:) :
+//   cpt2:c:<0..31>       classeur : email → { d: {jour: nb}, l: dernier message, k: [jours de clic], u: dernière désinscription, w: déjà écrit }
+//   cpt2:curseur:<mesure> / cpt2:bord:<mesure> / cpt2:fini:<mesure>   lecture des événements Klaviyo
+//   cpt2:hebdo           liste des emails « une newsletter par semaine » (un seul objet, rafraîchi chaque jour)
+//   cpt:idx:<boutique>   email → numéro de fiche Shopify (déjà construit, gardé de la v1)
 import { kv } from "@vercel/kv";
 import {
   BUDGET, JOURS_FENETRE, JOURS_PROFIL, LISTES_HEBDO, M, MESURES_RECU, MESURES_SIGNAUX, SEGMENTS_HEBDO,
@@ -17,10 +14,65 @@ import {
 } from "./regles";
 
 const KLAVIYO = process.env.KLAVIYO_API_KEY ?? "";
-const DIX_JOURS = 10 * 86400, QUATRE_VINGT_QUINZE_JOURS = 95 * 86400;
-
+export const NB_CLASSEURS = 32;
+type Fiche = { d?: Record<string, number>; l?: string; k?: string[]; u?: string; w?: string };
+type Classeur = Record<string, Fiche>;
 type Montre = { fin: number };
 const reste = (m: Montre) => m.fin - Date.now();
+
+// compteur de demandes au stockage, pour le bilan
+export const demandes = { n: 0 };
+const kvGet = async <T,>(k: string) => { demandes.n++; return kv.get<T>(k); };
+const kvSet = async (k: string, v: unknown, o?: { ex: number }) => { demandes.n++; return o ? kv.set(k, v, o) : kv.set(k, v); };
+
+function numeroClasseur(email: string): number {
+  let h = 0;
+  for (let i = 0; i < email.length; i++) h = (h * 31 + email.charCodeAt(i)) >>> 0;
+  return h % NB_CLASSEURS;
+}
+
+// Les classeurs sont lus une fois par passage (par paquets de 4) et réécrits seulement s'ils ont changé.
+export class Armoire {
+  private c = new Map<number, Classeur>();
+  private sale = new Set<number>();
+  async ouvrir(nums: number[]) {
+    const manquants = nums.filter((n) => !this.c.has(n));
+    for (let i = 0; i < manquants.length; i += 2) {
+      const part = manquants.slice(i, i + 2);
+      demandes.n++;
+      const v = (await kv.mget<Classeur[]>(...part.map((n) => `cpt2:c:${n}`))) ?? [];
+      part.forEach((n, j) => this.c.set(n, (v[j] as Classeur | null) ?? {}));
+    }
+  }
+  async toutOuvrir() { await this.ouvrir([...Array(NB_CLASSEURS).keys()]); }
+  fiche(email: string): Fiche {
+    const n = numeroClasseur(email); const c = this.c.get(n)!;
+    this.sale.add(n);
+    return (c[email] ??= {});
+  }
+  lire(email: string): Fiche | undefined { return this.c.get(numeroClasseur(email))?.[email]; }
+  *toutes(): Generator<[string, Fiche]> { for (const c of this.c.values()) for (const e of Object.keys(c)) yield [e, c[e]]; }
+  // ménage : retire les jours sortis de la fenêtre et les fiches vides
+  menage() {
+    const garderJours = new Set(joursAvant(JOURS_FENETRE + 1));
+    const limiteClic = joursAvant(JOURS_PROFIL).at(-1)!;
+    for (const [n, c] of this.c) {
+      for (const e of Object.keys(c)) {
+        const f = c[e]; let change = false;
+        if (f.d) for (const j of Object.keys(f.d)) if (!garderJours.has(j)) { delete f.d[j]; change = true; }
+        if (f.k) { const k = f.k.filter((j) => j >= limiteClic); if (k.length !== f.k.length) { f.k = k; change = true; } }
+        if (f.u && f.u < limiteClic) { delete f.u; change = true; }
+        const vide = (!f.d || !Object.keys(f.d).length) && !f.k?.length && !f.u && (!f.w || f.w.startsWith("0|"));
+        if (vide) { delete c[e]; change = true; }
+        if (change) this.sale.add(n);
+      }
+    }
+  }
+  async ranger() {
+    for (const n of this.sale) await kvSet(`cpt2:c:${n}`, this.c.get(n));
+    const nb = this.sale.size; this.sale.clear(); return nb;
+  }
+}
 
 // ── Klaviyo ──────────────────────────────────────────────────────────────────
 async function kget(url: string, rev = "2024-10-15"): Promise<Record<string, unknown>> {
@@ -32,83 +84,85 @@ async function kget(url: string, rev = "2024-10-15"): Promise<Record<string, unk
   }
   throw new Error("Klaviyo : trop de demandes, réessayer plus tard");
 }
-async function kpost(url: string, body: unknown): Promise<Record<string, unknown>> {
+async function kpost(url: string, body: unknown) {
   for (let i = 0; i < 8; i++) {
     const r = await fetch(url, { method: "POST", headers: { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: "2025-07-15", accept: "application/vnd.api+json", "content-type": "application/vnd.api+json" }, body: JSON.stringify(body) });
     if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 1500 * (i + 1))); continue; }
     if (!r.ok) throw new Error(`Klaviyo ${r.status} : ${(await r.text()).slice(0, 300)}`);
-    const t = await r.text(); return t ? JSON.parse(t) : {};
+    return;
   }
   throw new Error("Klaviyo : trop de demandes, réessayer plus tard");
 }
 
-// ── 1. Collecte des événements (reçus, clics, désinscriptions, plaintes) ─────
-export async function collecter(montre: Montre, essai: boolean) {
-  const bilan: Record<string, { pages: number; lus: number; comptes: number; jusqua: string }> = {};
-  const avant = new Date(Date.now() - 2 * 60000).toISOString().slice(0, 19) + "Z"; // on laisse 2 minutes aux événements en vol
+// ── 1. Lecture des événements, rangés en mémoire puis dans les classeurs ────
+type Ev = { email: string; jour: string; quand: string };
+export async function collecter(montre: Montre, armoire: Armoire, essai: boolean) {
+  const bilan: Record<string, { pages: number; comptes: number; jusqua: string; fini: boolean }> = {};
+  const avant = new Date(Date.now() - 2 * 60000).toISOString().slice(0, 19) + "Z";
+  const recus: Ev[] = [], clics: Ev[] = [], desab: Ev[] = [];
+  const curseurs: Record<string, [string, string[]]> = {};
+  const finis: string[] = [];
   for (const mesure of [...MESURES_RECU, ...MESURES_SIGNAUX]) {
     const recu = (MESURES_RECU as readonly string[]).includes(mesure);
     const defaut = new Date(Date.now() - (recu ? JOURS_FENETRE : JOURS_PROFIL) * 86400000).toISOString().slice(0, 19) + "Z";
-    let curseur = (await kv.get<string>(`cpt:curseur:${mesure}`)) ?? defaut;
-    let bord = new Set((await kv.get<string[]>(`cpt:bord:${mesure}`)) ?? []);
-    const b = (bilan[mesure] = { pages: 0, lus: 0, comptes: 0, jusqua: curseur });
+    let curseur = (await kvGet<string>(`cpt2:curseur:${mesure}`)) ?? defaut;
+    let bord = new Set((await kvGet<string[]>(`cpt2:bord:${mesure}`)) ?? []);
+    const b: { pages: number; comptes: number; jusqua: string; fini: boolean } = (bilan[mesure] = { pages: 0, comptes: 0, jusqua: curseur, fini: false });
     const filtre = `equals(metric_id,'${mesure}'),greater-or-equal(datetime,${curseur}),less-than(datetime,${avant})`;
     let url: string | null = `https://a.klaviyo.com/api/events/?filter=${encodeURIComponent(filtre)}&sort=datetime&page[size]=200&include=profile&fields[profile]=email&fields[event]=datetime,event_properties`;
-    while (url && reste(montre) > 25000) {
+    while (url && reste(montre) > 0) {
       const d = await kget(url);
       const emails = new Map<string, string>();
       for (const p of (d.included as { id: string; attributes: { email?: string } }[]) ?? []) if (p.attributes?.email) emails.set(p.id, p.attributes.email.toLowerCase());
       const ev = (d.data as { id: string; attributes: { datetime: string; event_properties: Record<string, unknown> }; relationships: { profile: { data: { id: string } } } }[]) ?? [];
-      const pipe = kv.pipeline(); let n = 0; const jours = new Set<string>();
       for (const e of ev) {
         if (bord.has(e.id)) continue;
-        b.lus++;
         const email = emails.get(e.relationships?.profile?.data?.id);
         if (!email) continue;
-        const jour = jourSuisse(e.attributes.datetime);
-        if (recu) {
-          if (!compte(mesure, e.attributes.event_properties ?? {})) continue;
-          pipe.hincrby(`cpt:j:${jour}`, email, 1); pipe.hset("cpt:dernier", { [email]: e.attributes.datetime }); n += 2; b.comptes++;
-          jours.add(`cpt:j:${jour}`);
-        } else {
-          const cle = mesure === M.clic ? `cpt:clic:${jour}` : `cpt:desab:${jour}`;
-          pipe.hset(cle, { [email]: 1 }); n++; b.comptes++; jours.add(cle);
-        }
+        const x = { email, jour: jourSuisse(e.attributes.datetime), quand: e.attributes.datetime };
+        if (recu) { if (compte(mesure, e.attributes.event_properties ?? {})) { recus.push(x); b.comptes++; } }
+        else if (mesure === M.clic) { clics.push(x); b.comptes++; }
+        else { desab.push(x); b.comptes++; }
       }
-      for (const k of jours) { pipe.expire(k, k.startsWith("cpt:j:") ? DIX_JOURS : QUATRE_VINGT_QUINZE_JOURS); n++; }
-      // curseur = date du dernier événement de la page ; on garde les numéros des événements de cette seconde-là
       if (ev.length) {
         const der = ev[ev.length - 1].attributes.datetime.slice(0, 19) + "Z";
-        const memeSeconde = ev.filter((e) => e.attributes.datetime.slice(0, 19) + "Z" === der).map((e) => e.id);
-        bord = der === curseur ? new Set([...bord, ...memeSeconde]) : new Set(memeSeconde);
+        const meme = ev.filter((e) => e.attributes.datetime.slice(0, 19) + "Z" === der).map((e) => e.id);
+        bord = der === curseur ? new Set([...bord, ...meme]) : new Set(meme);
         curseur = der;
-      }
-      if (!essai) {
-        pipe.set(`cpt:curseur:${mesure}`, curseur); pipe.set(`cpt:bord:${mesure}`, [...bord]); n += 2;
-        if (n) await pipe.exec();
       }
       b.pages++; b.jusqua = curseur;
       url = ((d.links as { next?: string } | undefined)?.next) ?? null;
-      if (!url && !essai) await kv.set(`cpt:fini:${mesure}`, new Date().toISOString()); // rattrapage terminé pour cette mesure
+      if (!url) { b.fini = true; finis.push(mesure); }
       if (essai && b.pages >= 2) break;
     }
+    curseurs[mesure] = [curseur, [...bord]];
   }
-  return bilan;
+  if (essai) return { bilan, recus: recus.length };
+  // ranger dans les classeurs (une seule ouverture par classeur)
+  const tous = [...recus, ...clics, ...desab];
+  await armoire.ouvrir([...new Set(tous.map((x) => numeroClasseur(x.email)))]);
+  for (const x of recus) { const f = armoire.fiche(x.email); (f.d ??= {})[x.jour] = (f.d[x.jour] ?? 0) + 1; if (!f.l || x.quand > f.l) f.l = x.quand; }
+  for (const x of clics) { const f = armoire.fiche(x.email); if (!(f.k ??= []).includes(x.jour)) f.k.push(x.jour); }
+  for (const x of desab) { const f = armoire.fiche(x.email); if (!f.u || x.jour > f.u) f.u = x.jour; }
+  const classeurs = await armoire.ranger();
+  // curseurs APRÈS les classeurs : si la tranche est coupée entre les deux, on relit, on ne perd rien
+  for (const [m, [c, bd]] of Object.entries(curseurs)) { await kvSet(`cpt2:curseur:${m}`, c); await kvSet(`cpt2:bord:${m}`, bd); }
+  for (const m of finis) if (!(await kvGet(`cpt2:fini:${m}`))) await kvSet(`cpt2:fini:${m}`, new Date().toISOString());
+  return { bilan, recus: recus.length, classeurs };
 }
-
-// Le premier rattrapage (7 jours de messages, 90 jours de clics) est-il terminé pour toutes les mesures ?
 export async function collecteAJour(): Promise<boolean> {
-  for (const m of [...MESURES_RECU, ...MESURES_SIGNAUX]) if (!(await kv.get(`cpt:fini:${m}`))) return false;
-  return true;
+  demandes.n++;
+  const v = await kv.mget<(string | null)[]>(...[...MESURES_RECU, ...MESURES_SIGNAUX].map((m) => `cpt2:fini:${m}`));
+  return (v ?? []).every(Boolean);
 }
 
-// ── 2. Inscrites « une newsletter par semaine » (une fois par jour) ─────────
-export async function rafraichirHebdo(essai: boolean): Promise<number | null> {
+// ── 2. « Une newsletter par semaine » : un seul objet, rafraîchi une fois par jour ─
+export async function hebdo(essai: boolean): Promise<Set<string>> {
   const aujourdhui = jourSuisse(new Date());
-  if ((await kv.get<string>("cpt:hebdo:jour")) === aujourdhui) return null;
+  const v = await kvGet<{ jour: string; emails: string[] }>("cpt2:hebdo");
+  if (v && v.jour === aujourdhui) return new Set(v.emails);
   const emails = new Set<string>();
-  const sources = [...SEGMENTS_HEBDO.map((s) => `segments/${s}`), ...LISTES_HEBDO.map((l) => `lists/${l}`)];
-  for (const s of sources) {
+  for (const s of [...SEGMENTS_HEBDO.map((x) => `segments/${x}`), ...LISTES_HEBDO.map((x) => `lists/${x}`)]) {
     let url: string | null = `https://a.klaviyo.com/api/${s}/profiles/?fields[profile]=email&page[size]=100`;
     while (url) {
       const d = await kget(url, "2025-07-15");
@@ -116,55 +170,16 @@ export async function rafraichirHebdo(essai: boolean): Promise<number | null> {
       url = ((d.links as { next?: string } | undefined)?.next) ?? null;
     }
   }
-  if (!essai) {
-    await kv.del("cpt:hebdo");
-    const l = [...emails];
-    for (let i = 0; i < l.length; i += 500) await kv.sadd("cpt:hebdo", ...(l.slice(i, i + 500) as [string, ...string[]]));
-    await kv.set("cpt:hebdo:jour", aujourdhui);
-  }
-  return emails.size;
+  if (!essai) await kvSet("cpt2:hebdo", { jour: aujourdhui, emails: [...emails] });
+  return emails;
 }
 
-// ── 3. Profils (normale / addict / super-addict / hebdo), une fois par jour ─
-async function hashEntier(cle: string, cb: (champ: string, valeur: string) => void) {
-  let c: string | number = 0;
-  do {
-    const [suite, items] = (await kv.hscan(cle, c, { count: 5000 })) as [string | number, (string | number)[]];
-    for (let i = 0; i < items.length; i += 2) cb(String(items[i]), String(items[i + 1]));
-    c = suite;
-  } while (String(c) !== "0");
-}
-export async function calculerProfils(essai: boolean): Promise<Record<Profil, number> | null> {
-  const aujourdhui = jourSuisse(new Date());
-  if ((await kv.get<string>("cpt:profil:jour:v2")) === aujourdhui) return null;
-  const joursClic = new Map<string, number>(); const desab = new Set<string>();
-  for (const j of joursAvant(JOURS_PROFIL)) {
-    await hashEntier(`cpt:clic:${j}`, (e) => joursClic.set(e, (joursClic.get(e) ?? 0) + 1));
-    await hashEntier(`cpt:desab:${j}`, (e) => desab.add(e));
-  }
-  const hebdo = new Set(((await kv.smembers("cpt:hebdo")) as string[]) ?? []);
-  const res: Record<Profil, number> = { hebdo: 0, normale: 0, addict: 0, superAddict: 0 };
-  const garder: Record<string, Profil> = {};
-  for (const e of new Set([...joursClic.keys(), ...hebdo])) {
-    const p = profilDe({ hebdo: hebdo.has(e), joursClic: joursClic.get(e) ?? 0, desabonnee: desab.has(e) });
-    res[p]++; if (p !== "normale") garder[e] = p;
-  }
-  if (!essai) {
-    await kv.del("cpt:profil");
-    const l = Object.entries(garder);
-    for (let i = 0; i < l.length; i += 500) await kv.hset("cpt:profil", Object.fromEntries(l.slice(i, i + 500)));
-    await kv.set("cpt:profil:jour:v2", aujourdhui);
-  }
-  return res;
-}
-
-// ── 4. Index email → fiche Shopify (yourmood + mood joaillerie) ─────────────
+// ── 3. Écriture sur les fiches ───────────────────────────────────────────────
 export const BOUTIQUES = {
   yourmood: { domaine: process.env.MOOD_SHOPIFY_DOMAIN || process.env.SHOPIFY_STORE || "", jeton: process.env.MOOD_SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_API_TOKEN || "" },
   joaillerie: { domaine: process.env.MOODJOAILLERIE_SHOPIFY_DOMAIN || "", jeton: process.env.MOODJOAILLERIE_SHOPIFY_ACCESS_TOKEN || "" },
 } as const;
 type Boutique = keyof typeof BOUTIQUES;
-
 async function shopifyGql(b: Boutique, query: string, variables: Record<string, unknown> = {}) {
   const { domaine, jeton } = BOUTIQUES[b];
   for (let i = 0; i < 8; i++) {
@@ -178,25 +193,26 @@ async function shopifyGql(b: Boutique, query: string, variables: Record<string, 
   throw new Error(`Shopify ${b} : trop de demandes`);
 }
 
+// ── Index email → fiche (repris de la v1 : une demande par page de 250 fiches) ─
 // Parcourt les fiches modifiées depuis le dernier passage (tout au premier passage), reprend au curseur.
 export async function indexer(montre: Montre, essai: boolean) {
   const bilan: Record<string, { fiches: number; fini: boolean }> = {};
   for (const b of Object.keys(BOUTIQUES) as Boutique[]) {
     if (!BOUTIQUES[b].jeton) continue;
-    const etat = (await kv.get<{ depuis: string | null; curseur: string | null; debut: string }>(`cpt:idx:${b}:etat`)) ?? { depuis: null, curseur: null, debut: new Date().toISOString() };
+    const etat = (await kvGet<{ depuis: string | null; curseur: string | null; debut: string }>(`cpt:idx:${b}:etat`)) ?? { depuis: null, curseur: null, debut: new Date().toISOString() };
     const q = etat.depuis ? `updated_at:>'${etat.depuis}'` : "";
     let fiches = 0, fini = false, curseur = etat.curseur;
     while (reste(montre) > 30000) {
       const d = await shopifyGql(b, `query($c:String,$q:String){customers(first:250,after:$c,query:$q){pageInfo{hasNextPage endCursor} nodes{ legacyResourceId defaultEmailAddress{emailAddress} }}}`, { c: curseur, q });
       const m: Record<string, string> = {};
       for (const n of d.customers.nodes) { const e = n.defaultEmailAddress?.emailAddress; if (e) m[e.toLowerCase()] = String(n.legacyResourceId); }
-      if (!essai && Object.keys(m).length) await kv.hset(`cpt:idx:${b}`, m);
+      if (!essai && Object.keys(m).length) { demandes.n++; await kv.hset(`cpt:idx:${b}`, m); }
       fiches += d.customers.nodes.length;
       curseur = d.customers.pageInfo.endCursor;
       if (!d.customers.pageInfo.hasNextPage) { fini = true; break; }
       if (essai) break;
     }
-    if (!essai) await kv.set(`cpt:idx:${b}:etat`, fini ? { depuis: etat.debut, curseur: null, debut: new Date().toISOString() } : { ...etat, curseur });
+    if (!essai) await kvSet(`cpt:idx:${b}:etat`, fini ? { depuis: etat.debut, curseur: null, debut: new Date().toISOString() } : { ...etat, curseur });
     bilan[b] = { fiches, fini };
   }
   return bilan;
@@ -204,49 +220,43 @@ export async function indexer(montre: Montre, essai: boolean) {
 export async function indexPret(): Promise<boolean> {
   for (const b of Object.keys(BOUTIQUES) as Boutique[]) {
     if (!BOUTIQUES[b].jeton) continue;
-    const e = await kv.get<{ depuis: string | null }>(`cpt:idx:${b}:etat`);
+    const e = await kvGet<{ depuis: string | null }>(`cpt:idx:${b}:etat`);
     if (!e?.depuis) return false; // premier parcours pas encore terminé
   }
   return true;
 }
 
-// ── 5. Écriture sur les fiches (Shopify d'abord, sinon profil Klaviyo) ──────
+
 type Etat = { n: number; budget: number; dernier: string; profil: Profil };
-export async function ecrire(montre: Montre, essai: boolean) {
-  const jours = joursAvant(JOURS_FENETRE);
-  const n = new Map<string, number>();
-  for (const j of jours) await hashEntier(`cpt:j:${j}`, (e, v) => n.set(e, (n.get(e) ?? 0) + Number(v)));
-  const ecrit = new Map<string, string>();
-  await hashEntier("cpt:ecrit", (e, v) => ecrit.set(e, v));
-  const profils = new Map<string, Profil>();
-  await hashEntier("cpt:profil", (e, v) => profils.set(e, v as Profil));
-  // à écrire : tout email dont le chiffre a changé (y compris retour à 0 quand les jours sortent de la fenêtre)
-  const cand = new Set<string>([...n.keys()]);
-  for (const [e, v] of ecrit) if (!v.startsWith("0|")) cand.add(e);
-  const derniers = new Map<string, string>();
-  const liste = [...cand];
-  for (let i = 0; i < liste.length; i += 500) {
-    const part = liste.slice(i, i + 500);
-    const v = (await kv.hmget<Record<string, string>>("cpt:dernier", ...part)) ?? {};
-    for (const e of part) if (v?.[e]) derniers.set(e, String(v[e]));
-  }
+export function etatDe(f: Fiche, estHebdo: boolean): Etat {
+  const fen = new Set(joursAvant(JOURS_FENETRE));
+  const n = Object.entries(f.d ?? {}).reduce((s, [j, v]) => s + (fen.has(j) ? v : 0), 0);
+  const profil = profilDe({ hebdo: estHebdo, joursClic: f.k?.length ?? 0, desabonnee: !!f.u });
+  return { n, budget: BUDGET[profil], dernier: f.l ?? "", profil };
+}
+const sig = (s: Etat) => `${s.n}|${s.budget}|${s.dernier}`;
+
+export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<string>, essai: boolean) {
+  await armoire.toutOuvrir();
+  armoire.menage();
   const aEcrire: [string, Etat][] = [];
-  for (const e of liste) {
-    const profil = profils.get(e) ?? "normale";
-    const etat: Etat = { n: n.get(e) ?? 0, budget: BUDGET[profil], dernier: derniers.get(e) ?? "", profil };
-    if (ecrit.get(e) !== `${etat.n}|${etat.budget}|${etat.dernier}`) aEcrire.push([e, etat]);
+  const profils: Record<Profil, number> = { hebdo: 0, normale: 0, addict: 0, superAddict: 0 };
+  let touchees = 0, auDessus = 0;
+  for (const [e, f] of armoire.toutes()) {
+    const s = etatDe(f, hebdoSet.has(e));
+    if (s.n > 0) { touchees++; profils[s.profil]++; if (s.n > s.budget) auDessus++; }
+    if (f.w !== sig(s) && (s.n > 0 || (f.w && !f.w.startsWith("0|")))) aEcrire.push([e, s]);
   }
-  const bilan = { aEcrire: aEcrire.length, shopify: 0, joaillerie: 0, klaviyo: 0, reste: 0, auDessus: 0 };
-  for (const [, s] of aEcrire) if (s.n > s.budget) bilan.auDessus++;
+  const bilan = { touchees, profils, auDessus, aEcrire: aEcrire.length, shopify: 0, joaillerie: 0, klaviyo: 0, reste: 0 };
   if (essai) { bilan.reste = aEcrire.length; return bilan; }
 
-  // répartition par boutique
   const ou = new Map<string, { b: Boutique; id: string }>();
   for (const b of ["yourmood", "joaillerie"] as Boutique[]) {
     if (!BOUTIQUES[b].jeton) continue;
     const sans = aEcrire.map(([e]) => e).filter((e) => !ou.has(e));
-    for (let i = 0; i < sans.length; i += 500) {
-      const part = sans.slice(i, i + 500);
+    for (let i = 0; i < sans.length; i += 1000) {
+      const part = sans.slice(i, i + 1000);
+      demandes.n++;
       const v = (await kv.hmget<Record<string, string>>(`cpt:idx:${b}`, ...part)) ?? {};
       for (const e of part) if (v?.[e]) ou.set(e, { b, id: String(v[e]) });
     }
@@ -266,20 +276,31 @@ export async function ecrire(montre: Montre, essai: boolean) {
     for (let i = 0; i < lot.length && reste(montre) > 20000; i += 8) {
       const part = lot.slice(i, i + 8);
       const d = await shopifyGql(b, MS, { m: part.flatMap(([e, s]) => champs(ou.get(e)!.id, s)) });
-      const erreurs = d.metafieldsSet.userErrors as { message: string }[];
-      if (erreurs.length && erreurs.length >= part.length * 2) throw new Error(`Shopify ${b} : ${erreurs[0].message}`);
-      await kv.hset("cpt:ecrit", Object.fromEntries(part.map(([e, s]) => [e, `${s.n}|${s.budget}|${s.dernier}`])));
+      const err = d.metafieldsSet.userErrors as { message: string }[];
+      if (err.length >= part.length * 2) throw new Error(`Shopify ${b} : ${err[0].message}`);
+      for (const [e, s] of part) armoire.fiche(e).w = sig(s);
       if (b === "yourmood") bilan.shopify += part.length; else bilan.joaillerie += part.length;
     }
   }
-  // sans fiche Shopify (ou joaillerie seulement si la marketplace l'a) : profil Klaviyo, par lots de 5 000
   const kl = aEcrire.filter(([e]) => !ou.has(e));
   for (let i = 0; i < kl.length && reste(montre) > 15000; i += 5000) {
     const part = kl.slice(i, i + 5000);
     await kpost("https://a.klaviyo.com/api/profile-bulk-import-jobs/", { data: { type: "profile-bulk-import-job", attributes: { profiles: { data: part.map(([e, s]) => ({ type: "profile", attributes: { email: e, properties: { compteur_messages_7j: s.n, compteur_budget_semaine: s.budget, compteur_profil: s.profil, ...(s.dernier ? { compteur_dernier_message: s.dernier } : {}) } } })) } } } });
-    await kv.hset("cpt:ecrit", Object.fromEntries(part.map(([e, s]) => [e, `${s.n}|${s.budget}|${s.dernier}`])));
+    for (const [e, s] of part) armoire.fiche(e).w = sig(s);
     bilan.klaviyo += part.length;
   }
   bilan.reste = bilan.aEcrire - bilan.shopify - bilan.joaillerie - bilan.klaviyo;
+  await armoire.ranger();
   return bilan;
+}
+
+// ── Ménage unique des clés de la v1 (cpt:j:*, cpt:clic:*, cpt:desab:*, cpt:dernier, cpt:ecrit, cpt:profil…) ─
+export async function menageV1() {
+  if (await kvGet("cpt2:menage-v1")) return 0;
+  const cles = ["cpt:dernier", "cpt:ecrit", "cpt:profil", "cpt:profil:jour", "cpt:profil:jour:v2", "cpt:hebdo", "cpt:hebdo:jour", "cpt:dernier-bilan", "cpt:ecriture-ok", "cpt:verrou"];
+  for (const m of [...MESURES_RECU, ...MESURES_SIGNAUX]) cles.push(`cpt:curseur:${m}`, `cpt:bord:${m}`, `cpt:fini:${m}`);
+  for (const j of joursAvant(100)) cles.push(`cpt:j:${j}`, `cpt:clic:${j}`, `cpt:desab:${j}`);
+  for (let i = 0; i < cles.length; i += 100) { demandes.n++; await kv.del(...cles.slice(i, i + 100)); }
+  await kvSet("cpt2:menage-v1", new Date().toISOString());
+  return cles.length;
 }

@@ -1,56 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
-import { calculerProfils, collecteAJour, collecter, ecrire, indexer, indexPret, rafraichirHebdo } from "@/lib/compteur/moteur";
+import { Armoire, collecteAJour, collecter, demandes, ecrire, hebdo, indexer, indexPret, menageV1 } from "@/lib/compteur/moteur";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// Compteur anti-saturation (Mood Cash Engine, étage 1 — décisions de Philippe du 12.11.2026).
-// Toutes les 15 minutes : lit les messages partis de Klaviyo, compte par cliente sur 7 jours, repère les
-// profils (normale 5 / addict 10 / super-addict 14 / « une par semaine » 2) et écrit le résultat sur la fiche
-// Shopify (yourmood, sinon mood joaillerie), ou sur le profil Klaviyo quand la personne n'a pas de fiche.
-// MODE OBSERVATION : n'appose AUCUNE étiquette « au-repos » et ne bloque aucun envoi.
-// Lancement à la main : ?cle=… (SAV_POSTE_CLE) ; &essai=1 = lit et calcule, n'écrit rien.
+// Compteur anti-saturation v2 — ÉCONOME (Mood Cash Engine, étage 1 ; règles de Philippe du 12.11.2026).
+// MODE OBSERVATION : aucune étiquette « au-repos », aucun envoi bloqué.
+// Interrupteurs (à la main, ?cle=<SAV_POSTE_CLE>) :
+//   &actif=1 / &actif=0         la tâche planifiée tourne / ne tourne pas (arrêt par défaut)
+//   &autoriser=1 / &autoriser=0 écriture sur les fiches Shopify / Klaviyo (verrouillée par défaut)
+//   &bilan=1                    dernier bilan (dont le nombre de demandes au stockage)
+//   &essai=1                    lit et calcule, n'écrit rien nulle part
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   const cle = process.env.SAV_POSTE_CLE;
-  if (!estCron(req) && !(cle && p.get("cle") === cle)) return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
-  // SUSPENDU le 12.11.2026 : le premier rattrapage a épuisé le quota mensuel du stockage partagé (500 000 demandes),
-  // ce qui a mis en panne les autres outils de l'atelier. À réécrire avec beaucoup moins de demandes avant toute relance.
-  if (process.env.COMPTEUR_ACTIF !== "1") return NextResponse.json({ ok: true, raison: "compteur suspendu" });
-  // l'écriture sur les fiches ne démarre qu'après contrôle à la main : ?cle=…&autoriser=1 (ou &autoriser=0 pour la couper)
-  if (p.get("autoriser") === "1" || p.get("autoriser") === "0") {
-    if (p.get("autoriser") === "1") await kv.set("cpt:ecriture-ok", new Date().toISOString()); else await kv.del("cpt:ecriture-ok");
-    return NextResponse.json({ ok: true, ecriture: p.get("autoriser") === "1" ? "autorisée" : "coupée" });
+  const main = !!(cle && p.get("cle") === cle);
+  if (!estCron(req) && !main) return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
+  for (const [param, k] of [["actif", "cpt2:actif"], ["autoriser", "cpt2:ecriture-ok"]] as const) {
+    if (main && (p.get(param) === "1" || p.get(param) === "0")) {
+      if (p.get(param) === "1") await kv.set(k, new Date().toISOString()); else await kv.del(k);
+      return NextResponse.json({ ok: true, [param]: p.get(param) === "1" });
+    }
   }
-  if (p.get("bilan") === "1") return NextResponse.json({ ok: true, dernier: await kv.get("cpt:dernier-bilan"), ecriture: (await kv.get("cpt:ecriture-ok")) ? "autorisée" : "pas encore autorisée" });
-  const autorise = !!(await kv.get("cpt:ecriture-ok"));
+  if (main && p.get("bilan") === "1") {
+    const [b, a, e] = await kv.mget("cpt2:bilan", "cpt2:actif", "cpt2:ecriture-ok");
+    return NextResponse.json({ ok: true, actif: !!a, ecriture: !!e, dernier: b });
+  }
   const essai = p.get("essai") === "1";
-  // une seule tranche à la fois
-  if (!essai && !(await kv.set("cpt:verrou", Date.now(), { nx: true, ex: 290 }))) return NextResponse.json({ ok: true, raison: "une tranche tourne déjà" });
+  if (!main && !(await kv.get("cpt2:actif"))) return NextResponse.json({ ok: true, raison: "compteur à l'arrêt" });
+  if (!essai && !(await kv.set("cpt2:verrou", Date.now(), { nx: true, ex: 290 }))) return NextResponse.json({ ok: true, raison: "une tranche tourne déjà" });
+  demandes.n = 4;
   const montre = { fin: Date.now() + 270000 };
   const bilan: Record<string, unknown> = { essai };
   try {
+    if (!essai) bilan.menageV1 = await menageV1();
+    const armoire = new Armoire();
     const pret = await indexPret();
-    // tant que l'index est construit, la lecture laisse du temps à l'index ; ensuite elle prend presque toute la tranche
-    bilan.collecte = await collecter({ fin: pret ? montre.fin - 40000 : Math.min(montre.fin, Date.now() + 120000) }, essai);
-    bilan.hebdo = await rafraichirHebdo(essai);
-    bilan.index = await indexer({ fin: Math.min(montre.fin, Date.now() + 90000) }, essai);
-    // les profils et l'écriture attendent que l'index des fiches soit complet (sinon tout partirait sur Klaviyo)
-    // ET que le premier rattrapage des messages et des clics soit fini (sinon personne ne serait addict)
+    bilan.collecte = await collecter({ fin: pret ? montre.fin - 60000 : Date.now() + 120000 }, armoire, essai);
+    if (!pret) bilan.index = await indexer({ fin: Math.min(montre.fin, Date.now() + 90000) }, essai);
+    else bilan.index = await indexer({ fin: Date.now() + 45000 }, essai); // nouvelles fiches seulement
     const ajour = await collecteAJour();
-    if ((await indexPret()) && ajour) {
-      bilan.profils = await calculerProfils(essai);
-      bilan.ecriture = await ecrire(montre, essai || !autorise);
-      if (!autorise && !essai) bilan.ecriture = { ...(bilan.ecriture as object), note: "calculé seulement : écriture pas encore autorisée" };
-    } else bilan.ecriture = ajour ? "en attente : premier parcours des fiches Shopify pas terminé" : "en attente : rattrapage des messages et des clics pas terminé";
-    if (!essai) await kv.set("cpt:dernier-bilan", { quand: new Date().toISOString(), ...bilan }, { ex: 7 * 86400 });
+    if (pret && ajour) {
+      const autorise = !!(await kv.get("cpt2:ecriture-ok")); demandes.n++;
+      const h = await hebdo(essai);
+      bilan.ecriture = await ecrire(montre, armoire, h, essai || !autorise);
+      if (!autorise && !essai) bilan.note = "calculé seulement : écriture sur les fiches pas encore autorisée";
+    } else bilan.ecriture = !pret ? "en attente : index des fiches Shopify" : "en attente : premier rattrapage des messages et des clics";
+    bilan.demandesStockage = demandes.n + 2;
+    if (!essai) await kv.set("cpt2:bilan", { quand: new Date().toISOString(), ...bilan }, { ex: 7 * 86400 });
     return NextResponse.json({ ok: true, ...bilan });
   } catch (e) {
-    return NextResponse.json({ erreur: e instanceof Error ? e.message : String(e), ...bilan }, { status: 500 });
+    return NextResponse.json({ erreur: e instanceof Error ? e.message : String(e), ...bilan, demandesStockage: demandes.n }, { status: 500 });
   } finally {
-    if (!essai) await kv.del("cpt:verrou");
+    if (!essai) await kv.del("cpt2:verrou");
   }
 }
