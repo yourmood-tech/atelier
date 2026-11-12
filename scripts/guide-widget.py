@@ -20,6 +20,11 @@ css = css.replace(".pastille{position:fixed;right:24px;", ".pastille{position:fi
 css = css.replace(".panneau{position:fixed;right:18px;", ".panneau{position:fixed;left:18px;").replace("transform-origin:bottom right;transition:.3s", "transform-origin:bottom left;transition:.3s")
 css = css.replace(".panneau{right:0;bottom:0;", ".panneau{left:0;bottom:0;")
 css += "\n.racine{font-family:Poppins,Helvetica,Arial,sans-serif;font-weight:300;line-height:1.55;color:var(--ink);-webkit-font-smoothing:antialiased}\n.racine *,.racine *::before,.racine *::after{box-sizing:border-box}\n"
+# sur yourmood.net : au-dessus du rond du service client (en bas à gauche)
+css = css.replace(".mascotte{position:fixed;left:18px;bottom:14px;z-index:50;width:128px;height:118px;", ".mascotte{position:fixed;left:6px;bottom:84px;z-index:50;width:112px;height:104px;")
+css = css.replace(".bulle{position:fixed;left:150px;bottom:40px;", ".bulle{position:fixed;left:122px;bottom:110px;")
+css = css.replace(".pastille{position:fixed;left:126px;bottom:112px;", ".pastille{position:fixed;left:100px;bottom:170px;")
+css = css.replace("@media (max-width:520px){.bulle{right:12px;bottom:140px;width:auto;left:12px;max-width:none}}", "@media (max-width:520px){.bulle{right:12px;bottom:196px;width:auto;left:12px;max-width:none}}")
 for sel in [".mascotte{", ".bulle{", ".pastille{", ".panneau{"]:
     css = css.replace(sel, sel + "z-index:2147483000;", 1)
 
