@@ -8,6 +8,11 @@ import { CLASSES } from "./coffrets";
 
 export const dynamic = "force-dynamic";
 
+// le bonhomme posé sur yourmood.net appelle ce service depuis le site : on l'autorise
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
+const rep = (corps: unknown, init?: { status?: number }) => NextResponse.json(corps, { status: init?.status, headers: CORS });
+export async function OPTIONS() { return new Response(null, { status: 204, headers: CORS }); }
+
 const KEY = process.env.ANTHROPIC_API_KEY || "";
 const MODEL = "claude-sonnet-5-5";
 const SHOP = "yourmood.myshopify.com";
@@ -236,24 +241,24 @@ async function texteCoffrets(f: Filtres): Promise<Resultat> {
 
 export async function GET(req: Request) {
   const u = new URL(req.url).searchParams;
-  if (!u.get("coffrets")) return NextResponse.json({ error: "?" }, { status: 400 });
+  if (!u.get("coffrets")) return rep({ error: "?" }, { status: 400 });
   const num = (k: string) => (u.get(k) ? Number(u.get(k)) : undefined);
   try {
     const { liste: r, enleve } = await chercherCoffrets({ pour: u.get("pour") || undefined, base: u.get("base") || undefined, brille: u.get("brille") || undefined, budget_min: num("min"), budget_max: num("max") });
-    return NextResponse.json({ total: r.length, enleve, coffrets: r.slice(0, 40).map(({ titre, url, image, prix, avant, reduit }) => ({ titre, url, image, prix, avant, reduit })) });
-  } catch { return NextResponse.json({ error: "indisponible" }, { status: 500 }); }
+    return rep({ total: r.length, enleve, coffrets: r.slice(0, 40).map(({ titre, url, image, prix, avant, reduit }) => ({ titre, url, image, prix, avant, reduit })) });
+  } catch { return rep({ error: "indisponible" }, { status: 500 }); }
 }
 
 export async function POST(req: Request) {
-  if (!KEY) return NextResponse.json({ error: "indisponible" }, { status: 503 });
+  if (!KEY) return rep({ error: "indisponible" }, { status: 503 });
   let body: { messages?: Msg[]; contexte?: string };
-  try { body = await req.json(); } catch { return NextResponse.json({ error: "illisible" }, { status: 400 }); }
+  try { body = await req.json(); } catch { return rep({ error: "illisible" }, { status: 400 }); }
   const messages = (Array.isArray(body.messages) ? body.messages : [])
     .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
     .slice(-10)
     .map((m) => ({ role: m.role, content: m.content.slice(0, 600) }));
   while (messages.length && messages[0].role !== "user") messages.shift();
-  if (!messages.length || messages[messages.length - 1].role !== "user") return NextResponse.json({ error: "question vide" }, { status: 400 });
+  if (!messages.length || messages[messages.length - 1].role !== "user") return rep({ error: "question vide" }, { status: 400 });
 
   const date = new Date().toLocaleDateString("fr-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Zurich" });
   const contexte = String((body as { contexte?: string }).contexte || "").slice(0, 300);
@@ -271,7 +276,7 @@ export async function POST(req: Request) {
       headers: { "x-api-key": KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
       body: JSON.stringify({ model: MODEL, max_tokens: 1500, system: system.map((x, k) => k === 0 ? { ...x, text: x.text.replace("{DATE}", date) } : x), tools: OUTILS, messages: conv }),
     });
-    if (!r.ok) return NextResponse.json({ error: "réponse impossible" }, { status: 502 });
+    if (!r.ok) return rep({ error: "réponse impossible" }, { status: 502 });
     const j: { stop_reason?: string; content?: { type: string; text?: string; id?: string; name?: string; input?: { recherche?: string } & Filtres }[] } = await r.json();
     const blocs = j.content || [];
     texte = blocs.filter((c) => c.type === "text").map((c) => c.text || "").join("").trim();
@@ -295,5 +300,5 @@ export async function POST(req: Request) {
   const score = (c: Carte) => (texte.includes(c.url) ? 99 : cle(c).filter((m) => nt.includes(m)).length / Math.max(1, Math.min(3, cle(c).length)));
   const cites = cartes.filter((c) => score(c) >= 0.99);
   const montre = [...cites, ...cartes.filter((c) => !cites.includes(c))].slice(0, Math.max(cites.length, 6)).slice(0, 8);
-  return NextResponse.json({ texte: texte || "Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍", boutons, cartes: montre });
+  return rep({ texte: texte || "Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍", boutons, cartes: montre });
 }

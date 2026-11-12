@@ -1,0 +1,283 @@
+/* bonhomme mood — fabriqué depuis html/guide.html par scripts/guide-widget.py, ne pas modifier à la main */
+(function(){
+  try{
+    var q=new URLSearchParams(location.search).get('guide');
+    if(q==='1') localStorage.setItem('moodGuideEssai','1');
+    if(q==='0') localStorage.removeItem('moodGuideEssai');
+    if(localStorage.getItem('moodGuideEssai')!=='1') return;   /* essai caché : invisible pour les clients */
+  }catch(e){ return; }
+  if(window.__moodGuide) return; window.__moodGuide=1;
+  var hote=document.createElement('div'); hote.id='mood-guide';
+  var RACINE=hote.attachShadow({mode:'open'});
+  RACINE.innerHTML='<style>'+"\n:host{all:initial;--ink:#191917;--mid:#8b8880;--line:#ece9e4;--cream:#f7f4ef;--ivory:#efe6dc;--acc:#1f6f78;--acc-soft:#e6f1f2}\n*,*::before,*::after{box-sizing:border-box}\nhtml,.apercu-inutile{margin:0}\n.apercu-inutile{background:var(--cream);color:var(--ink);font-family:Poppins,Helvetica,Arial,sans-serif;font-weight:300;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}\na{color:var(--acc)}\n/* fond : aper\u00e7u explicatif */\n.apercu{max-width:640px;margin:0 auto;padding:64px 20px 160px}\n.apercu .tag{display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);border:1px solid var(--line);border-radius:99px;padding:4px 12px;background:#fff}\n.apercu h1{font-family:'Playfair Display',serif;font-weight:400;font-size:clamp(30px,6vw,44px);line-height:1.15;margin:18px 0 12px}\n.apercu p{color:#55524c;margin:0 0 10px}\n.apercu .vers{margin-top:26px;display:flex;gap:10px;flex-wrap:wrap}\n.apercu .vers button{font:inherit;border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:99px;padding:10px 18px;cursor:pointer}\n\n/* la mascotte flottante */\n.mascotte{z-index:2147483000;position:fixed;left:18px;bottom:14px;z-index:50;width:128px;height:118px;border:0;background:transparent;padding:0;cursor:pointer;animation:flotte 3.2s ease-in-out infinite;mix-blend-mode:multiply}\n.mascotte img{width:100%;height:100%;object-fit:contain}\n.mascotte:hover{animation-play-state:paused;transform:translateY(-4px) rotate(-3deg)}\n@keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}\n\n@keyframes coucou{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg) translateY(-4px)}40%{transform:rotate(7deg)}60%{transform:rotate(-6deg) translateY(-3px)}80%{transform:rotate(4deg)}}\n.mascotte video{width:100%;height:100%;object-fit:contain;display:block}\n.bulle{z-index:2147483000;position:fixed;left:150px;bottom:40px;z-index:50;background:#fff;border-radius:20px 20px 20px 4px;padding:14px 14px 12px;font-size:14.5px;line-height:1.4;box-shadow:0 12px 40px rgba(40,30,20,.18);width:270px;max-width:calc(100vw - 170px);opacity:0;transform:translateY(10px) scale(.95);transform-origin:bottom left;transition:.4s cubic-bezier(.3,1.4,.5,1);pointer-events:none}\n.bulle.on{opacity:1;transform:none;pointer-events:auto}\n.bulle.rappel{animation:rappel .9s ease}\n@keyframes rappel{0%,100%{transform:none}25%{transform:translateY(-6px) rotate(-1.5deg)}55%{transform:translateY(0) rotate(1deg)}}\n.bulle b{font-weight:500}\n.bulle .x{position:absolute;top:-9px;right:-9px;width:24px;height:24px;border-radius:50%;border:0;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15);font-size:14px;line-height:24px;cursor:pointer;color:var(--mid);padding:0}\n.bulle .bb{display:flex;flex-direction:column;gap:6px;margin-top:10px}\n.bulle .bb button{font:inherit;font-size:13.5px;text-align:left;border:1px solid var(--acc);color:var(--acc);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer}\n.bulle .bb button.plein{background:var(--acc);color:#fff}\n.bulle .bq{display:flex;margin-top:8px;border:1px solid var(--line);border-radius:99px;overflow:hidden}\n.bulle .bq input{flex:1;border:0;font:inherit;font-size:13px;padding:8px 12px;outline:none;min-width:0}\n.bulle .bq button{border:0;background:var(--ink);color:#fff;width:34px;cursor:pointer}\n.pastille{z-index:2147483000;position:fixed;left:126px;bottom:112px;z-index:51;width:24px;height:24px;border-radius:50%;background:#c2410c;color:#fff;font-size:13px;font-weight:500;line-height:24px;text-align:center;box-shadow:0 0 0 3px #fff;pointer-events:none;opacity:0;transition:.3s}\n.pastille.on{opacity:1;animation:pouls 1.8s ease-in-out infinite}\n@keyframes pouls{0%,100%{box-shadow:0 0 0 3px #fff,0 0 0 3px rgba(194,65,12,.5)}50%{box-shadow:0 0 0 3px #fff,0 0 0 11px rgba(194,65,12,0)}}\n@media (max-width:520px){.bulle{right:12px;bottom:140px;width:auto;left:12px;max-width:none}}\n\n/* le panneau-guide */\n.panneau{z-index:2147483000;position:fixed;left:18px;bottom:18px;z-index:60;width:390px;max-width:calc(100vw - 24px);height:min(660px,calc(100vh - 36px));background:#fff;border-radius:22px;box-shadow:0 18px 60px rgba(40,30,20,.22);display:flex;flex-direction:column;overflow:hidden;opacity:0;transform:translateY(16px) scale(.97);transform-origin:bottom left;transition:.3s;pointer-events:none}\n.panneau.on{opacity:1;transform:none;pointer-events:auto}\n.tete{display:flex;align-items:center;gap:10px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}\n.tete .perso{width:70px;height:64px;flex:none;margin:-4px 0 -4px -4px}\n.tete .perso{position:relative;mix-blend-mode:multiply}\n.tete .perso video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .25s;transform-origin:50% 92%}\n.tete .perso #vParle{opacity:0}\n.perso.parle #vParle{opacity:1}.perso.parle #vRepos{opacity:0}\n.perso.saute video{animation:saute .75s cubic-bezier(.3,1.6,.5,1)}\n@keyframes parle{0%,100%{transform:translateY(0) scale(1,1) rotate(0)}30%{transform:translateY(-5px) scale(.95,1.06) rotate(-4deg)}65%{transform:translateY(0) scale(1.05,.95) rotate(3deg)}}\n@keyframes saute{0%{transform:scale(.4) translateY(20px)}60%{transform:scale(1.12) translateY(-8px) rotate(-6deg)}100%{transform:none}}\n.humeurs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;align-self:stretch}\n.hum{border:0;background:#fff;border-radius:12px;padding:2px 2px 6px;font:inherit;font-size:10.5px;cursor:pointer;line-height:1.15;color:#4a4740}\n.hum video{width:100%;aspect-ratio:1;object-fit:contain;mix-blend-mode:multiply;display:block;transition:transform .2s;pointer-events:none}\n.hum:hover video{transform:translateY(-4px) scale(1.07) rotate(-3deg)}\n.hum:hover{color:var(--ink)}\n.couleur{display:flex;gap:10px;align-items:center;align-self:flex-start;border:1px solid var(--line);border-radius:14px;padding:7px 12px 7px 7px;background:#fff;text-decoration:none;color:var(--ink);font-size:13px;max-width:88%}\n.couleur img{width:52px;height:52px;border-radius:9px;object-fit:cover;background:var(--cream)}\n.couleur b{display:block;font-weight:500}\n.fil>*{flex-shrink:0}\n.coffs{display:flex;gap:9px;overflow-x:auto;align-self:stretch;padding:2px 2px 8px;scroll-snap-type:x mandatory}\n.coff{flex:none;width:150px;border:1px solid var(--line);border-radius:14px;background:#fff;text-decoration:none;color:var(--ink);font-size:12.5px;line-height:1.3;scroll-snap-align:start;position:relative;overflow:hidden}\n.coff img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--cream)}\n.coff div{padding:7px 9px 9px}\n.coff b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:500;min-height:32px}\n.coff .px{margin-top:4px;color:var(--acc);font-weight:500;font-size:13.5px}\n.coff s{color:var(--mid);font-weight:300;font-size:11.5px;margin-left:5px}\n.coff .rd{position:absolute;top:7px;left:7px;background:#c2410c;color:#fff;font-size:11px;font-weight:500;border-radius:99px;padding:2px 8px}\n.couleur span{color:var(--acc);font-size:12px}\n.tete .nom{flex:1;font-weight:500;font-size:15px;line-height:1.2}\n.tete .nom small{display:block;font-weight:300;color:var(--mid);font-size:12px}\n.tete button{border:0;background:var(--cream);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;color:var(--ink)}\n/* le chemin */\n.chemin{display:flex;align-items:center;padding:10px 16px 12px;gap:0;border-bottom:1px solid var(--line);background:#fcfbf9}\n.etape{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;color:var(--mid);position:relative;text-align:center;line-height:1.15;cursor:pointer;background:none;border:0;font-family:inherit;padding:0}\n.etape::before{content:\"\";position:absolute;top:9px;right:50%;width:100%;height:2px;background:var(--line);z-index:0}\n.etape:first-child::before{display:none}\n.etape i{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);background:#fff;z-index:1;font-style:normal;font-size:10px;line-height:16px;color:var(--mid);font-weight:500}\n.etape.fait i{background:var(--acc);border-color:var(--acc);color:#fff}\n.etape.fait::before,.etape.ici::before{background:var(--acc)}\n.etape.ici i{border-color:var(--acc);color:var(--acc);box-shadow:0 0 0 4px var(--acc-soft)}\n.etape.ici{color:var(--ink);font-weight:500}\n/* la conversation */\n.fil{flex:1;overflow-y:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}\n.m{max-width:88%;padding:10px 13px;border-radius:16px;font-size:14px;white-space:pre-line}\n.m.g{background:var(--cream);border-top-left-radius:4px;align-self:flex-start}\n.m.c{background:var(--ink);color:#fff;border-top-right-radius:4px;align-self:flex-end}\n.m.g a{color:var(--acc);font-weight:500}\n.m.attente{color:var(--mid)}\n.m.attente span{animation:pt 1.2s infinite}.m.attente span:nth-child(2){animation-delay:.2s}.m.attente span:nth-child(3){animation-delay:.4s}\n@keyframes pt{0%,100%{opacity:.2}50%{opacity:1}}\n.choix{display:flex;flex-wrap:wrap;gap:7px;align-self:flex-start;max-width:100%}\n.choix button,.choix a{font:inherit;font-size:13.5px;border:1px solid var(--acc);color:var(--acc);background:#fff;border-radius:99px;padding:7px 13px;cursor:pointer;text-decoration:none;line-height:1.3}\n.choix button.plein,.choix a.plein{background:var(--acc);color:#fff}\n.choix button:hover,.choix a:hover{background:var(--acc-soft)}\n.choix button.plein:hover,.choix a.plein:hover{background:#185a62}\n.cartes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-self:stretch}\n.carte{border:1px solid var(--line);border-radius:14px;background:#fff;padding:6px 6px 9px;text-align:center;cursor:pointer;font:inherit;font-size:12.5px;line-height:1.3;transition:.2s}\n.carte:hover{border-color:var(--acc);transform:translateY(-2px)}\n.carte img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;background:var(--cream);display:block;margin-bottom:6px}\n.carte b{display:block;font-weight:500;font-size:13px}\n.carte span{color:var(--mid);font-size:11.5px}\n.carte em{display:block;font-style:normal;color:var(--acc);font-weight:500;margin-top:2px}\n.combos{display:flex;flex-direction:column;gap:6px;align-self:stretch}\n.combo{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;background:#fff}\n.combo .anneau{display:flex;flex-direction:column;gap:2px;width:30px;flex:none}\n.combo .anneau i{display:block;border-radius:3px}\n.combo b{font-weight:500}\n.combo span{color:var(--mid)}\n.photo{align-self:flex-start;width:70%;border-radius:14px;overflow:hidden;background:var(--cream)}\n.photo img{width:100%;display:block}\n/* question libre */\n.pied{border-top:1px solid var(--line);padding:9px 10px 10px;background:#fff}\n.puces{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}\n.puces::-webkit-scrollbar{display:none}\n.puces button{flex:none;font:inherit;font-size:12px;border:1px solid var(--line);background:var(--cream);border-radius:99px;padding:5px 11px;cursor:pointer;color:#4a4740}\n.puces button:hover{border-color:var(--acc);color:var(--acc)}\nform{display:flex;gap:7px}\nform input{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:99px;padding:10px 15px;outline:none;min-width:0;background:#fff}\nform input:focus{border-color:var(--acc)}\nform button{border:0;background:var(--ink);color:#fff;border-radius:50%;width:42px;height:42px;font-size:17px;cursor:pointer;flex:none}\n@media (max-width:520px){\n  .panneau{left:0;bottom:0;width:100vw;max-width:100vw;height:100dvh;border-radius:0}\n  .apercu{padding-top:40px}\n}\n\n.racine{font-family:Poppins,Helvetica,Arial,sans-serif;font-weight:300;line-height:1.55;color:var(--ink);-webkit-font-smoothing:antialiased}\n.racine *,.racine *::before,.racine *::after{box-sizing:border-box}\n"+'</style><div class="racine">'+"<div class=\"bulle\" id=\"bulle\" role=\"dialog\" aria-label=\"Ton guide mood\">\n  <button class=\"x\" id=\"bulleX\" aria-label=\"Fermer\">\u00d7</button>\n  Coucou&nbsp;! \ud83e\udd0d <b>Premi\u00e8re fois chez mood&nbsp;?</b><br>Je t'aide \u00e0 trouver ta bague, ou je r\u00e9ponds \u00e0 tes questions.\n  <div class=\"bb\">\n    <button class=\"plein\" data-a=\"guide\">\u2728 Oui, guide-moi pas \u00e0 pas</button>\n    <button data-a=\"coffret\">\ud83c\udf81 Trouver un coffret</button>\n  </div>\n  <form class=\"bq\" id=\"bulleQ\"><input placeholder=\"Ou pose ta question ici\u2026\" maxlength=\"500\"><button aria-label=\"Envoyer\">\u2191</button></form>\n</div>\n<div class=\"pastille\" id=\"pastille\">1</div>\n<button class=\"mascotte\" id=\"mascotte\" aria-label=\"Ouvrir ton guide mood\"><video id=\"flotteVid\" src=\"https://mood-tools.yourmood.net/guide/films/coucou.mp4\" poster=\"https://mood-tools.yourmood.net/guide/mascotte.png\" autoplay muted loop playsinline></video></button>\n\n<section class=\"panneau\" id=\"panneau\" aria-label=\"Ton guide mood\">\n  <div class=\"tete\">\n    <div class=\"perso\" id=\"perso\"><video id=\"vRepos\" src=\"https://mood-tools.yourmood.net/guide/films/coucou.mp4\" poster=\"https://mood-tools.yourmood.net/guide/mascotte.png\" autoplay muted loop playsinline></video><video id=\"vParle\" src=\"https://mood-tools.yourmood.net/guide/films/parle.mp4\" autoplay muted loop playsinline></video></div>\n    <div class=\"nom\">Ton guide mood<small>Boutiques, bijoux, tailles, cadeaux\u2026 demande-moi tout</small></div>\n    <button id=\"fermer\" aria-label=\"Fermer\">\u00d7</button>\n  </div>\n  <div class=\"chemin\" id=\"chemin\"></div>\n  <div class=\"fil\" id=\"fil\"></div>\n  <div class=\"pied\">\n    <div class=\"puces\" id=\"puces\"></div>\n    <form id=\"form\"><input id=\"q\" placeholder=\"Pose-moi ta question\u2026\" autocomplete=\"off\" maxlength=\"500\"><button aria-label=\"Envoyer\">\u2191</button></form>\n  </div>\n</section>\n\n"+'</div>';
+  function go(){ document.body.appendChild(hote);
+
+(function(){
+var SITE='https://www.yourmood.net', CDN='https://cdn.shopify.com/s/files/1/0798/2303/';
+var img=function(u,w){return CDN+u+(u.indexOf('?')>-1?'&':'?')+'width='+(w||400);};
+var ETAPES=['Le principe','Ta base','Tes anneaux','Ta taille'];
+var BASES={
+  xs:{n:'extra small',mm:'9 mm',d:'fine et discrète',p:'dès 220.–',i:'files/5_a2568555-f82a-4e68-88bd-2be742201eaa.jpg?v=1774281033',u:SITE+'/products/bague-homme-femme-modulable-9mm-arrondie-polie',h:16,
+      k:[['1 deux tiers','tout seul',[['dt',2]]],['2 mediums','deux couleurs',[['med',1],['med2',1]]],['1 medium + 2 minis','le mix',[['med',1],['mini',.5],['mini2',.5]]]]},
+  s:{n:'small',mm:'11 mm',d:'la plus choisie',p:'250.–',i:'files/Bague_argentee_a_incrustation_blanche.png?v=1791496585',u:SITE+'/products/base-small',h:20,
+      k:[['1 addon','tout seul',[['addon',3]]],['1 deux tiers + 1 medium','ou + 2 minis',[['dt',2],['med',1]]],['3 mediums','trois couleurs',[['med',1],['med2',1],['med3',1]]]]},
+  l:{n:'large',mm:'13 mm',d:'affirmée',p:'250.–',i:'files/Bague_moderne_en_metal_et_ceramique_blanche.png?v=1791534988',u:SITE+'/products/base-large-polie',h:24,
+      k:[['1 addon','tout seul',[['addon',3]]],['1 deux tiers + 1 medium','ou + 2 minis',[['dt',2],['med',1]]],['3 mediums','trois couleurs',[['med',1],['med2',1],['med3',1]]]]}
+};
+var COL={addon:'#1f6f78',dt:'#c9a46a',med:'#d98c9a',med2:'#7d8fb3',med3:'#9bb59a',mini:'#7d8fb3',mini2:'#c9a46a'};
+/* les humeurs : [fichier, nom, ce que dit le guide, couleur proposée, adresse de l'anneau] */
+var HUM=[
+ ['fachee','Fâchée',"Oh… journée orageuse ? On respire. Un anneau noir, ça s'assume et ça dit « ne me cherche pas » 😉",'Medium aluminium noir','addon-medium-en-aluminium-anodise-anthracite'],
+ ['triste','Triste',"Viens là 🤍 Un petit coup de douceur pour aujourd'hui : un pêche tout tendre, comme un câlin au doigt.",'Medium aluminium pêche','medium-en-aluminium-peche'],
+ ['amoureux','Amoureux',"Ça se voit d'ici ! Le cœur qui bat, ça se porte en rouge ❤️",'Medium aluminium rouge','addon-medium-en-aluminium-anodise-rouge'],
+ ['neutre','Neutre',"Une journée tranquille, j'aime bien aussi. Un noisette, ça va avec tout et ça ne fait pas de bruit.",'Medium aluminium noisette','addon-medium-en-aluminium-noisette'],
+ ['mauvaise-humeur','Mauvaise humeur',"Bras croisés, moi aussi parfois… Un anthracite, élégant et un peu mystérieux, ça calme tout le monde.",'Medium aluminium anthracite','addon-medium-en-aluminium-anodise-anthracite-1'],
+ ['chanceux','Chanceux',"La chance est avec toi ! Elle se porte en émeraude ✨",'Medium aluminium émeraude','anneau-medium-aluminium-emeraude'],
+ ['heureux','Heureux',"Ton sourire me fait sourire ! Un abricot plein de soleil pour aller avec.",'Medium aluminium abricot','medium-aluminium-abricot'],
+ ['super-content','Super content',"Waouh, quelle énergie ! Un jaune pastel lumineux, à ton image ✨",'Medium aluminium jaune pastel','medium-en-aluminium-jaune-pastel'],
+ ['ennuye','Ennuyé',"On va réveiller ça ! Un coup de frais avec un turquoise.",'Medium aluminium turquoise','addon-medium-en-aluminium-anodise-turquoise'],
+ ['fete','Fête',"C'est la fête ! Alors pas une couleur, mais trois : sur une base small, tu peux clipser 3 mediums de couleurs différentes 🫶🏼",'Toutes les couleurs aluminium','@aluminium'],
+ ['timide','Timide',"Tout en douceur, je comprends. Un lilas cashmere, discret et tellement joli.",'Medium aluminium lilas cashmere','addon-medium-en-aluminium-anodise-lila-cashmere'],
+ ['reveur','Rêveur',"La tête dans les nuages… Un bleu pastel, couleur ciel, pour rêver encore un peu 💙",'Medium aluminium bleu pastel','medium-en-aluminium-bleu-pastel'],
+ ['zen','Zen',"Tout est calme, c'est beau. Un vert pastel, doux comme une forêt le matin.",'Medium aluminium vert pastel','medium-en-aluminium-vert-pastel'],
+ ['surpris','Surpris',"Oh ! Surprise ? Un myrtille, c'est la couleur qu'on n'attendait pas 💜",'Medium aluminium myrtille','anneau-interchangeable-medium-aluminium-myrtille'],
+ ['fatigue','Fatigué',"Grosse journée… Pas besoin de réfléchir : je te guide tout doucement, en 4 petites étapes.",'',''],
+ ['confiant','Confiant',"J'adore cette assurance ! Un bleu marine, chic et sûr de lui 💙",'Medium aluminium bleu marine','anneau-medium-aluminium-bleu-marine']
+];
+
+var $=function(id){return RACINE.getElementById(id);};
+var fil=$('fil'), panneau=$('panneau'), bulle=$('bulle'), perso=$('perso');
+var etat={etape:-1,base:null}, histo=[];
+
+/* tout ce que le guide affiche passe dans une file : il « parle » une chose après l'autre */
+var file=Promise.resolve();
+function ensuite(f){ file=file.then(f).catch(function(){}); return file; }
+var pause=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
+
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function liens(t){
+  return esc(t).replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2">$1</a>')
+    .replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,'$1<a href="$2">$2</a>')
+    .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+}
+function bas(){ fil.scrollTop=fil.scrollHeight; }
+function parle(on){ perso.classList.toggle('parle',on); }
+function saute(){ perso.classList.remove('saute'); void perso.offsetWidth; perso.classList.add('saute'); }
+/* le guide écrit sa phrase lettre par lettre en bougeant */
+function tape(el,t){
+  return new Promise(function(fin){
+    var brut=t.replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/\*\*/g,'');
+    var n=0, pas=Math.max(1,Math.round(brut.length/70));
+    parle(true);
+    (function suite(){
+      n+=pas; el.textContent=brut.slice(0,n); bas();
+      if(n<brut.length) setTimeout(suite,16);
+      else { el.innerHTML=liens(t); parle(false); bas(); fin(); }
+    })();
+  });
+}
+function dit(t){ return ensuite(function(){ var d=document.createElement('div'); d.className='m g'; fil.appendChild(d); return tape(d,t).then(function(){ return pause(180); }); }); }
+function client(t){ var d=document.createElement('div'); d.className='m c'; d.textContent=t; fil.appendChild(d); bas(); }
+function bloc(html,cls,apres){ return ensuite(function(){ var d=document.createElement('div'); d.className=cls; d.innerHTML=html; fil.appendChild(d); if(apres) apres(d); setTimeout(bas,60); return pause(150); }); }
+function boutons(liste){
+  return ensuite(function(){
+    var d=document.createElement('div'); d.className='choix';
+    liste.forEach(function(b){
+      var e;
+      if(typeof b[1]==='string'){ e=document.createElement('a'); e.href=b[1]; e.onclick=sauve; }
+      else { e=document.createElement('button'); e.onclick=function(){ d.querySelectorAll('button').forEach(function(x){x.disabled=true;x.style.opacity=.45;}); e.style.opacity=1; client(b[0]); b[1](); }; }
+      e.textContent=b[0]; if(b[2]) e.className='plein'; d.appendChild(e);
+    });
+    fil.appendChild(d); bas();
+  });
+}
+function chemin(){
+  $('chemin').innerHTML=ETAPES.map(function(n,i){ return '<button class="etape '+(i<etat.etape?'fait':i===etat.etape?'ici':'')+'" data-i="'+i+'"><i>'+(i<etat.etape?'✓':i+1)+'</i>'+n+'</button>'; }).join('');
+  $('chemin').querySelectorAll('.etape').forEach(function(b){ b.onclick=function(){ var i=+b.getAttribute('data-i'); if(i!==2||etat.base) [principe,base,anneaux,taille][i](); }; });
+}
+function va(i){ ensuite(function(){ etat.etape=i; chemin(); }); }
+
+/* ——— le mood du jour ——— */
+function film(v,u,poster){ v.poster=poster||''; v.src=u; var p=v.play(); if(p&&p.catch) p.catch(function(){}); }
+function changeTete(f){
+  var u='https://mood-tools.yourmood.net/guide/films/hum/'+f+'.mp4', im='https://mood-tools.yourmood.net/guide/humeurs/'+f+'.jpg';
+  film($('vRepos'),u,im); film($('vParle'),u,im); film($('flotteVid'),u,im); saute();
+}
+function humeur(){
+  dit("Dis-moi, c'est quoi ton mood du jour ?");
+  bloc(HUM.map(function(h,i){ return '<button class="hum" data-i="'+i+'"><video src="/guide/films/hum/'+h[0]+'.mp4" poster="/guide/humeurs/'+h[0]+'.jpg" autoplay muted loop playsinline></video>'+h[1]+'</button>'; }).join(''),'humeurs',function(g){
+    g.querySelectorAll('.hum').forEach(function(b){ b.onclick=function(){
+      g.querySelectorAll('.hum').forEach(function(x){ x.style.opacity=x===b?1:.35; x.style.pointerEvents='none'; });
+      var h=HUM[+b.getAttribute('data-i')]; etat.mood=h[1]; client('Mon mood du jour : '+h[1]); choisi(h);
+    }; });
+  });
+  boutons([["Passer, on choisit ma bague →",principe]]);
+}
+function choisi(h){
+  ensuite(function(){ changeTete(h[0]); return pause(450); });
+  dit(h[2]);
+  if(h[3]){
+    var u=h[4]==='@aluminium'?SITE+'/collections/aluminium':SITE+'/products/'+h[4];
+    bloc('<a class="couleur" href="'+u+'"><video src="/guide/films/hum/'+h[0]+'.mp4" poster="/guide/humeurs/'+h[0]+'.jpg" autoplay muted loop playsinline style="width:52px;height:52px;border-radius:9px;object-fit:cover"></video><div><b>'+h[3]+'</b><span>Voir la couleur →</span></div></a>','choix');
+  }
+  boutons([["On trouve ma première bague →",principe,1],["Trouver mon coffret",coffret],["Changer de mood",humeur]]);
+}
+
+/* ——— trouve ton coffret ——— */
+var CF={};
+function coffret(){
+  CF={};
+  dit("On te trouve le coffret parfait : une bague complète, déjà assortie, souvent à prix réduit 🤍 Quatre petites questions.\nC'est pour qui ?");
+  boutons([["Pour elle",function(){ CF.pour='femme'; cLargeur(); }],["Pour lui",function(){ CF.pour='homme'; cLargeur(); }],["Peu importe",function(){ CF.pour='tous'; cLargeur(); }]]);
+}
+function cLargeur(){
+  if(etat.base){ CF.base=etat.base==='xs'?'xs':etat.base; return cBrille(); }
+  dit("Quelle largeur de base ? L'extra small (9 mm) est fine et discrète, la small (11 mm) la plus choisie, la large (13 mm) affirmée.");
+  boutons([["Extra small",function(){ CF.base='xs'; cBrille(); }],["Small",function(){ CF.base='s'; cBrille(); }],["Large",function(){ CF.base='l'; cBrille(); }],["Je ne sais pas",function(){ CF.base='tous'; cBrille(); }]]);
+}
+function cBrille(){
+  dit("Ça doit briller ?");
+  boutons([["Oui, ça brille ✨",function(){ CF.brille='oui'; cBudget(); }],["Plutôt sobre",function(){ CF.brille='non'; cBudget(); }],["Peu importe",function(){ CF.brille='tous'; cBudget(); }]]);
+}
+function cBudget(){
+  dit("Et ton budget ?");
+  boutons([["Jusqu'à 150.–",function(){ CF.max=150; cMontre(); }],["150 à 250.–",function(){ CF.min=150; CF.max=250; cMontre(); }],["250 à 400.–",function(){ CF.min=250; CF.max=400; cMontre(); }],["Plus de 400.–",function(){ CF.min=400; cMontre(); }],["Peu importe",cMontre]]);
+}
+function cMontre(){
+  var q='coffrets=1&pour='+CF.pour+'&base='+CF.base+'&brille='+CF.brille+(CF.min?'&min='+CF.min:'')+(CF.max?'&max='+CF.max:'');
+  ensuite(function(){ parle(true); return fetch('https://mood-tools.yourmood.net/api/guide?'+q).then(function(r){return r.json();}).then(function(j){ parle(false); CF.res=j.coffrets||[]; CF.enleve=j.enleve||[]; CF.vu=0; }).catch(function(){ parle(false); CF.res=[]; }); });
+  ensuite(function(){
+    if(!CF.res.length){ dit("Je n'ai aucun coffret dans ce budget, même en élargissant un peu… Essaie un autre budget, ou pense au bon cadeau : la personne compose elle-même 🤍"); boutons([["Changer mon budget",cBudget,1],["Les bons cadeaux",SITE+'/pages/bon-cadeau-bijou']]); return; }
+    if(CF.enleve.length) dit("Aucun coffret ne cochait toutes les cases, alors j'ai été un peu plus souple sur "+CF.enleve.join(' et ')+". Ton budget, lui, est respecté.");
+    var red=CF.res.filter(function(c){return c.reduit;}).length;
+    dit("J'ai trouvé "+CF.res.length+" coffret"+(CF.res.length>1?'s':'')+" pour toi"+(red?" — "+red+" à prix réduit, je te les montre en premier.":'.')); cPage();
+  });
+}
+function cartesHTML(l){ return l.map(function(c){ return '<a class="coff" href="'+c.url+'">'+(c.reduit?'<span class="rd">-'+c.reduit+' %</span>':'')+'<img src="'+c.image+'" alt="" loading="lazy"><div><b>'+esc(c.titre)+'</b><div class="px">'+c.prix+'.–'+(c.avant?'<s>'+c.avant+'.–</s>':'')+'</div></div></a>'; }).join(''); }
+function montreCartes(l){ var d=document.createElement('div'); d.className='coffs'; d.innerHTML=cartesHTML(l); d.querySelectorAll('a').forEach(function(a){ a.onclick=sauve; }); fil.appendChild(d); setTimeout(bas,60); }
+function cPage(){
+  ensuite(function(){
+    var l=CF.res.slice(CF.vu,CF.vu+8); CF.vu+=l.length;
+    montreCartes(l);
+  });
+  var suite=[]; if(CF.res.length>CF.vu+0) suite.push(["Voir d'autres coffrets",function(){ if(CF.vu<CF.res.length) cPage(); else dit("Tu les as tous vus 🤍"); }]);
+  suite.push(["Changer mes critères",coffret]); suite.push(["Et ma taille ? →",taille,1]);
+  boutons(suite);
+}
+
+/* ——— le chemin ——— */
+function accueil(){
+  etat.etape=-1; chemin();
+  dit("Coucou, moi c'est ton guide mood 🤍\nJe t'aide à trouver ta première bague mood, pas à pas. Et si tu as une question, écris-la-moi en bas, à tout moment.");
+  humeur();
+}
+function principe(){
+  va(0);
+  dit("Une bague mood, c'est deux choses :\n• une **base**, la bague du dessous, en acier, garantie à vie\n• des **anneaux** qui se clipsent dessus\n\nTu changes d'anneau selon ton humeur ou ta tenue : c'est le clic mood ✨");
+  bloc('<img src="'+img('files/2_b5cd49a7-3579-4279-8722-3a56b8166090.jpg?v=1774281033',600)+'" alt="Une base et ses anneaux">','photo');
+  boutons([["J'ai compris, on choisit ma base →",base,1],["Comment on change d'anneau ?",function(){ libre("Comment on ouvre la base pour changer d'anneau ?",1); }]]);
+}
+function base(){
+  va(1);
+  dit("Commençons par ta base. Elle existe en 3 largeurs : plus elle est large, plus tu peux y mettre d'anneaux.");
+  var h='';
+  ['xs','s','l'].forEach(function(k){ var B=BASES[k]; h+='<button class="carte" data-k="'+k+'"><img src="'+img(B.i)+'" alt=""><b>'+B.n.charAt(0).toUpperCase()+B.n.slice(1)+'</b><span>'+B.mm+' · '+B.d+'</span><em>'+B.p+'</em></button>'; });
+  bloc(h,'cartes',function(c){
+    c.querySelectorAll('.carte').forEach(function(b){ b.onclick=function(){
+      c.querySelectorAll('.carte').forEach(function(x){ x.style.opacity=x===b?1:.4; x.style.pointerEvents='none'; });
+      etat.base=b.getAttribute('data-k'); client('La '+BASES[etat.base].n); anneaux();
+    }; });
+  });
+  boutons([["Je ne sais pas laquelle choisir",function(){ dit("La small (11 mm) est la plus choisie : elle accueille tous les anneaux. Si tu aimes les bijoux fins et discrets, prends l'extra small (9 mm). Touche celle qui te plaît juste au-dessus."); }]]);
+}
+function anneaux(){
+  var B=BASES[etat.base]; va(2);
+  dit("Sur une base "+B.n+", voici ce que tu peux clipser :");
+  var h='';
+  B.k.forEach(function(k){
+    var a='<span class="anneau">'+k[2].map(function(p){ return '<i style="height:'+Math.max(3,Math.round(B.h/3*p[1]))+'px;background:'+COL[p[0]]+'"></i>'; }).join('')+'</span>';
+    h+='<div class="combo">'+a+'<div><b>'+k[0]+'</b><br><span>'+k[1]+'</span></div></div>';
+  });
+  bloc(h,'combos');
+  dit("Le plus simple pour commencer ? Un **coffret** : une bague complète déjà assortie, souvent à prix réduit. Je te trouve le tien en 4 questions. Ou un starter pack, ou le petit quizz.");
+  boutons([["Trouver mon coffret",coffret,1],["Voir les starter packs",SITE+'/collections/starter-pack-in-the-mood-for'],["Faire le quizz",'https://mood-tools.yourmood.net/quiz'],["Les couleurs aluminium",SITE+'/collections/aluminium'],["Et ma taille ? →",taille]]);
+}
+function taille(){
+  va(3);
+  dit("Dernière étape : ta taille. Tu la connais ?");
+  boutons([["Oui, je la connais",function(){ dit("Parfait ! Tu la choisiras directement sur la fiche de ta base. Si tu hésites entre deux tailles, prends celle du dessus."); fin(); }],
+           ["Non, pas du tout",function(){ dit("Pas de souci, 3 solutions :\n1. On t'envoie le **baguier gratuit** : tu le glisses sur ton doigt et tu lis ta taille.\n2. Tu enroules un fil autour de ton doigt et tu mesures la longueur en mm : c'est ta taille.\n3. Tu passes dans une de nos 6 boutiques, on la prend avec toi.");
+             boutons([["Je reçois le baguier gratuit",SITE+'/products/multisizer-baguier-gratuit'],["Le tableau des tailles",SITE+'/pages/tableau-de-conversion-des-tailles-de-bagues'],["Nos boutiques",SITE+'/pages/comment-se-rendre-dans-une-boutique-mood'],["C'est noté →",fin,1]]); }]]);
+}
+function fin(){
+  va(4);
+  ensuite(function(){ saute(); });
+  var B=etat.base?BASES[etat.base]:null;
+  dit("Et voilà, tu as fait tout le chemin 🫶🏼"+(B?"\nTa base "+B.n+" t'attend, et tes anneaux aussi.":""));
+  var l=[]; if(B) l.push(["Voir ma base "+B.n,B.u,1]); l.push(["Les starter packs",SITE+'/collections/starter-pack-in-the-mood-for']); l.push(["Recommencer",function(){ ensuite(function(){ fil.innerHTML=''; etat={etape:-1,base:null}; changeTete2(); }); accueil(); }]);
+  boutons(l);
+}
+function changeTete2(){ film($('vRepos'),'https://mood-tools.yourmood.net/guide/films/coucou.mp4','https://mood-tools.yourmood.net/guide/mascotte.png'); film($('vParle'),'https://mood-tools.yourmood.net/guide/films/parle.mp4'); film($('flotteVid'),'https://mood-tools.yourmood.net/guide/films/coucou.mp4','https://mood-tools.yourmood.net/guide/mascotte.png'); }
+function offrir(){
+  dit("Quelle jolie idée 🤍 Pour un cadeau, voici ce qu'il faut savoir :\n• Tu ne connais pas sa taille ? Tu peux commander en « taille inconnue » : on envoie le baguier, puis on fabrique à la bonne taille.\n• Pour une première bague mood, un échange de taille est possible une fois, si elle n'a jamais été portée.\n• Le plus simple à offrir : un starter pack, déjà assorti.");
+  boutons([["Trouver le coffret parfait",coffret,1],["Voir les starter packs",SITE+'/collections/starter-pack-in-the-mood-for'],["Je fais quand même le chemin",principe]]);
+}
+
+/* ——— question libre ——— */
+function libre(q,dejaAffiche){
+  if(!dejaAffiche) client(q); else client(q);
+  histo.push({role:'user',content:q});
+  var w;
+  ensuite(function(){ w=document.createElement('div'); w.className='m g attente'; w.innerHTML='<span>●</span> <span>●</span> <span>●</span>'; fil.appendChild(w); bas(); parle(true);
+    return fetch('https://mood-tools.yourmood.net/api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:histo,contexte:contexte()})})
+      .then(function(r){return r.json();})
+      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); return tape(w,t).then(function(){ if(j.cartes&&j.cartes.length) montreCartes(j.cartes); if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
+      .catch(function(){ histo.pop(); w.classList.remove('attente'); return tape(w,"Oups, je n'ai pas réussi à répondre. Écris-nous à contact@yourmood.net, on te répond vite 🤍"); });
+  });
+}
+function suites(l){
+  var d=document.createElement('div'); d.className='choix';
+  l.forEach(function(t){ var e=document.createElement('button'); e.textContent=t; e.onclick=function(){ d.querySelectorAll('button').forEach(function(x){x.disabled=true;x.style.opacity=.45;}); e.style.opacity=1; libre(t); }; d.appendChild(e); });
+  fil.appendChild(d); bas();
+}
+function contexte(){ var c=[]; c.push('étape : '+(etat.etape>=0&&etat.etape<4?ETAPES[etat.etape]:etat.etape>=4?'chemin terminé':'accueil')); if(etat.base) c.push('base choisie : '+BASES[etat.base].n); if(etat.mood) c.push('mood du jour : '+etat.mood); return c.join(' · '); }
+$('form').onsubmit=function(e){ e.preventDefault(); var q=$('q').value.trim(); if(!q) return; $('q').value=''; libre(q); };
+var PUCES=[['Trouver mon coffret',function(){ client('Trouver mon coffret'); coffret(); }],['Mon mood du jour',function(){ client('Mon mood du jour'); humeur(); }],['C\'est pour offrir',function(){ client("C'est pour offrir"); offrir(); }],['Livraison','Combien de temps pour recevoir ma bague ?'],['Garantie','Quelle est la garantie ?'],['Échange','Est-ce que je peux échanger ma bague ?'],['Allergie',"Est-ce que l'acier peut donner des allergies ?"],["Dans l'eau ?","Est-ce que je peux garder ma bague dans l'eau ?"],['Paiement','Comment je peux payer ?'],['Boutiques','Où sont vos boutiques ?']];
+PUCES.forEach(function(p){ var b=document.createElement('button'); b.textContent=p[0]; b.onclick=function(){ typeof p[1]==='string'?libre(p[1]):p[1](); }; $('puces').appendChild(b); });
+
+/* ——— la conversation se garde quand on change de page ——— */
+function sauve(){ try{ sessionStorage.setItem('moodGuide',JSON.stringify({fil:fil.innerHTML,histo:histo,etat:etat,tete:$('vRepos').getAttribute('src'),ouvert:panneau.classList.contains('on')})); }catch(e){} }
+window.addEventListener('pagehide',sauve);
+function reprend(){
+  try{ var g=JSON.parse(sessionStorage.getItem('moodGuide')||'null'); if(!g||!g.fil) return false;
+    fil.innerHTML=g.fil; histo=g.histo||[]; etat=g.etat||etat; lance=true; chemin();
+    fil.querySelectorAll('.choix button,.hum,.carte').forEach(function(b){ b.disabled=true; b.style.opacity=.45; b.style.pointerEvents='none'; });
+    fil.querySelectorAll('.coffs a,.choix a,.couleur').forEach(function(a){ a.onclick=sauve; });
+    if(g.tete&&g.tete.indexOf('/hum/')>-1){ var f=g.tete.split('/').pop().replace('.mp4',''); film($('vRepos'),g.tete,'https://mood-tools.yourmood.net/guide/humeurs/'+f+'.jpg'); film($('vParle'),g.tete); film($('flotteVid'),g.tete); }
+    dit("Re-coucou 🤍 On continue ?");
+    boutons([["Trouver mon coffret",coffret],["Reprendre le chemin",etat.base?anneaux:principe,1],["J'ai une question",function(){ $('q').focus(); }]]);
+    if(g.ouvert) ouvrir(); return true;
+  }catch(e){ return false; }
+}
+
+/* ——— ouvrir / fermer ——— */
+var lance=false;
+function ouvrir(){ panneau.classList.add('on'); bulle.classList.remove('on'); $('pastille').classList.remove('on'); $('mascotte').style.display='none'; setTimeout(saute,120); if(!lance){ lance=true; accueil(); } setTimeout(function(){ if(window.innerWidth>520) $('q').focus({preventScroll:true}); },300); }
+function fermer(){ panneau.classList.remove('on'); $('mascotte').style.display=''; }
+$('mascotte').onclick=ouvrir; $('fermer').onclick=fermer;
+/* la bulle : de vrais boutons, et une question tapée directement */
+bulle.querySelectorAll('.bb button').forEach(function(b){ b.onclick=function(){ var a=b.getAttribute('data-a'); var deja=lance; ouvrir(); if(a==='coffret'){ client('Trouver un coffret'); coffret(); } else if(deja){ principe(); } }; });
+$('bulleQ').onsubmit=function(e){ e.preventDefault(); var q=this.querySelector('input').value.trim(); if(!q) return; this.querySelector('input').value=''; lance=true; ouvrir(); dit("Coucou 🤍 Je regarde ça pour toi…"); libre(q); };
+$('bulleX').onclick=function(e){ e.stopPropagation(); bulle.classList.remove('on'); };
+/* la mascotte fait coucou de temps en temps */
+function coucou(){}
+setTimeout(function(){ if(!panneau.classList.contains('on')){ bulle.classList.add('on'); $('pastille').classList.add('on'); } },1500);
+/* petit rappel toutes les 9 secondes tant qu'on ne l'a pas ouvert */
+setInterval(function(){ if(!panneau.classList.contains('on')&&bulle.classList.contains('on')){ bulle.classList.remove('rappel'); void bulle.offsetWidth; bulle.classList.add('rappel'); } },9000);
+chemin();
+reprend();
+})();
+
+  }
+  if(document.body) go(); else document.addEventListener('DOMContentLoaded',go);
+})();
