@@ -17,6 +17,9 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   const cle = process.env.SAV_POSTE_CLE;
   if (!estCron(req) && !(cle && p.get("cle") === cle)) return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
+  // SUSPENDU le 12.11.2026 : le premier rattrapage a épuisé le quota mensuel du stockage partagé (500 000 demandes),
+  // ce qui a mis en panne les autres outils de l'atelier. À réécrire avec beaucoup moins de demandes avant toute relance.
+  if (process.env.COMPTEUR_ACTIF !== "1") return NextResponse.json({ ok: true, raison: "compteur suspendu" });
   // l'écriture sur les fiches ne démarre qu'après contrôle à la main : ?cle=…&autoriser=1 (ou &autoriser=0 pour la couper)
   if (p.get("autoriser") === "1" || p.get("autoriser") === "0") {
     if (p.get("autoriser") === "1") await kv.set("cpt:ecriture-ok", new Date().toISOString()); else await kv.del("cpt:ecriture-ok");

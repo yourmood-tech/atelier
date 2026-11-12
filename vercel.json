@@ -39,10 +39,6 @@
     {
       "path": "/api/sav/veille",
       "schedule": "20 * * * *"
-    },
-    {
-      "path": "/api/compteur",
-      "schedule": "*/15 * * * *"
     }
   ]
 }
