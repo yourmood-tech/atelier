@@ -25,6 +25,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: true, [param]: p.get(param) === "1" });
     }
   }
+  if (main && p.get("taille") === "1") {
+    const t: number[] = [];
+    for (let i = 0; i < 32; i++) t.push(Number(await kv.strlen(`cpt2:c:${i}`)));
+    const trace = await kv.get("cpt2:trace");
+    return NextResponse.json({ ok: true, octetsParClasseur: t, total: t.reduce((a, b) => a + b, 0), trace });
+  }
   if (main && p.get("bilan") === "1") {
     const [b, a, e] = await kv.mget("cpt2:bilan", "cpt2:actif", "cpt2:ecriture-ok");
     return NextResponse.json({ ok: true, actif: !!a, ecriture: !!e, dernier: b });

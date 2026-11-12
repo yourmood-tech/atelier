@@ -138,13 +138,16 @@ export async function collecter(montre: Montre, armoire: Armoire, essai: boolean
     curseurs[mesure] = [curseur, [...bord]];
   }
   if (essai) return { bilan, recus: recus.length };
+  await kv.set("cpt2:trace", { etape: "lecture finie, rangement", quand: new Date().toISOString(), evenements: recus.length + clics.length + desab.length }); demandes.n++;
   // ranger dans les classeurs (une seule ouverture par classeur)
   const tous = [...recus, ...clics, ...desab];
   await armoire.ouvrir([...new Set(tous.map((x) => numeroClasseur(x.email)))]);
   for (const x of recus) { const f = armoire.fiche(x.email); (f.d ??= {})[x.jour] = (f.d[x.jour] ?? 0) + 1; if (!f.l || x.quand > f.l) f.l = x.quand; }
   for (const x of clics) { const f = armoire.fiche(x.email); if (!(f.k ??= []).includes(x.jour)) f.k.push(x.jour); }
   for (const x of desab) { const f = armoire.fiche(x.email); if (!f.u || x.jour > f.u) f.u = x.jour; }
+  await kv.set("cpt2:trace", { etape: "classeurs ouverts, écriture", quand: new Date().toISOString() }); demandes.n++;
   const classeurs = await armoire.ranger();
+  await kv.set("cpt2:trace", { etape: "classeurs rangés", quand: new Date().toISOString() }); demandes.n++;
   // curseurs APRÈS les classeurs : si la tranche est coupée entre les deux, on relit, on ne perd rien
   for (const [m, [c, bd]] of Object.entries(curseurs)) { await kvSet(`cpt2:curseur:${m}`, c); await kvSet(`cpt2:bord:${m}`, bd); }
   for (const m of finis) if (!(await kvGet(`cpt2:fini:${m}`))) await kvSet(`cpt2:fini:${m}`, new Date().toISOString());
