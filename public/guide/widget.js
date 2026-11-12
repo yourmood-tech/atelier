@@ -67,6 +67,10 @@ function parleVoix(on){ voixActive=on; perso.classList.toggle('parle',tapeActif|
 /* ——— la voix (Kore) : il dit ses phrases à voix haute, une après l'autre ——— */
 var VOIX_URL='https://mood-tools.yourmood.net/api/guide/voix';
 var son=true; try{ son=localStorage.getItem('moodGuideSon')!=='0'; }catch(e){}
+function pourDire(t){ return String(t).replace(/(^|\n)\s*\[[^\]]+\]\([^)]+\)\s*(?=\n|$)/g,'$1').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(\d{1,2}):00/g,'$1 heures').replace(/(\d{1,2}):(\d{2})/g,'$1 heures $2').replace(/(heures(?: \d{2})?)\s*[–-]\s*/g,'$1 à ').replace(/\s·\s/g,', puis ').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
+function morceaux(p){ var ph=p.match(/[^.!?…]+[.!?…]*\s*/g)||[p], out=[], cur='';
+  ph.forEach(function(x){ if((cur+x).length>200&&cur){ out.push(cur.trim()); cur=''; } cur+=x; }); if(cur.trim()) out.push(cur.trim());
+  if(out.length>1&&out[0].length<60){ out[1]=out[0]+' '+out[1]; out.shift(); } return out; }
 /* lecteur de voix : le haut-parleur du navigateur (fiable sur téléphone), une phrase après l'autre */
 var AC=null, enCours=null, finEnCours=null, genV=0;
 function ac(){ if(!AC){ var C=window.AudioContext||window.webkitAudioContext; if(C){ try{ AC=new C(); }catch(e){} } } return AC; }
