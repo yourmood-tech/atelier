@@ -69,7 +69,7 @@ var VOIX_URL='https://mood-tools.yourmood.net/api/guide/voix';
 var son=true; try{ son=localStorage.getItem('moodGuideSon')!=='0'; }catch(e){}
 var audio=new Audio(); audio.preload='auto';
 var fileVoix=[], joue=false, gen=0;
-function pourDire(t){ return String(t).replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(\d{1,2}):00/g,'$1 heures').replace(/(\d{1,2}):(\d{2})/g,'$1 heures $2').replace(/(heures(?: \d{2})?)\s*[–-]\s*/g,'$1 à ').replace(/\s·\s/g,', puis ').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
+function pourDire(t){ return String(t).replace(/(^|\n)\s*\[[^\]]+\]\([^)]+\)\s*(?=\n|$)/g,'$1').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(\d{1,2}):00/g,'$1 heures').replace(/(\d{1,2}):(\d{2})/g,'$1 heures $2').replace(/(heures(?: \d{2})?)\s*[–-]\s*/g,'$1 à ').replace(/\s·\s/g,', puis ').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
 function morceaux(p){ var ph=p.match(/[^.!?…]+[.!?…]*\s*/g)||[p], out=[], cur='';
   ph.forEach(function(x){ if((cur+x).length>200&&cur){ out.push(cur.trim()); cur=''; } cur+=x; }); if(cur.trim()) out.push(cur.trim());
   if(out.length>1&&out[0].length<60){ out[1]=out[0]+' '+out[1]; out.shift(); } return out; }
