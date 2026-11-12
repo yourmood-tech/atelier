@@ -78,7 +78,7 @@ export default auth((req) => {
   }
 
   // /guide (la mascotte qui guide les nouvelles clientes) + ses réponses
-  if (pathname === "/guide" || pathname === "/api/guide") {
+  if (pathname === "/guide" || pathname === "/api/guide" || pathname === "/api/guide/voix") {
     return;
   }
 

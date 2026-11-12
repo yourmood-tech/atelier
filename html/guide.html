@@ -79,6 +79,7 @@ a{color:var(--acc)}
 .couleur span{color:var(--acc);font-size:12px}
 .tete .nom{flex:1;font-weight:500;font-size:15px;line-height:1.2}
 .tete .nom small{display:block;font-weight:300;color:var(--mid);font-size:12px}
+.tete #sonBtn{margin-right:6px;font-size:15px}
 .tete button{border:0;background:var(--cream);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;color:var(--ink)}
 /* le chemin */
 .chemin{display:flex;align-items:center;padding:10px 16px 12px;gap:0;border-bottom:1px solid var(--line);background:#fcfbf9}
@@ -161,7 +162,7 @@ form button{border:0;background:var(--ink);color:#fff;border-radius:50%;width:42
   <div class="tete">
     <div class="perso" id="perso"><video id="vRepos" src="/guide/films/coucou.mp4" poster="/guide/mascotte.png" autoplay muted loop playsinline></video><video id="vParle" src="/guide/films/parle.mp4" autoplay muted loop playsinline></video></div>
     <div class="nom">Ton guide mood<small>Boutiques, bijoux, tailles, cadeaux… demande-moi tout</small></div>
-    <button id="fermer" aria-label="Fermer">×</button>
+    <button id="sonBtn" aria-label="Couper ou remettre la voix" title="Voix">🔊</button><button id="fermer" aria-label="Fermer">×</button>
   </div>
   <div class="chemin" id="chemin"></div>
   <div class="fil" id="fil"></div>
@@ -221,7 +222,23 @@ function liens(t){
     .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
 }
 function bas(){ fil.scrollTop=fil.scrollHeight; }
-function parle(on){ perso.classList.toggle('parle',on); }
+var tapeActif=false, voixActive=false;
+function parle(on){ tapeActif=on; perso.classList.toggle('parle',tapeActif||voixActive); }
+function parleVoix(on){ voixActive=on; perso.classList.toggle('parle',tapeActif||voixActive); }
+/* ——— la voix (Kore) : il dit ses phrases à voix haute, une après l'autre ——— */
+var VOIX_URL='/api/guide/voix';
+var son=true; try{ son=localStorage.getItem('moodGuideSon')!=='0'; }catch(e){}
+var audio=new Audio(); audio.preload='auto';
+var fileVoix=[], joue=false, gen=0;
+function pourDire(t){ return String(t).replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/https?:\/\/\S+/g,'').replace(/\*\*/g,'').replace(/(\d+)\.–/g,'$1 francs').replace(/(^|\n)\s*[•\-–]\s*/g,'$1').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/\s+/g,' ').trim(); }
+function dire(t){ if(!son) return; var p=pourDire(t); if(!p) return; var it={g:gen}; it.pret=fetch(VOIX_URL+'?t='+encodeURIComponent(p.slice(0,900))).then(function(r){ return r.ok?r.blob():null; }).catch(function(){ return null; }); fileVoix.push(it); suivant(); }
+function suivant(){ if(joue||!fileVoix.length) return; var it=fileVoix.shift(); if(it.g!==gen) return suivant(); joue=true;
+  it.pret.then(function(b){ if(!b||it.g!==gen||!son){ joue=false; return suivant(); } audio.src=URL.createObjectURL(b); parleVoix(true); var pp=audio.play(); if(pp&&pp.catch) pp.catch(function(){ joue=false; parleVoix(false); suivant(); }); }); }
+audio.onended=function(){ joue=false; parleVoix(false); suivant(); };
+function tais(){ gen++; fileVoix=[]; try{ audio.pause(); }catch(e){} joue=false; parleVoix(false); }
+var SILENCE='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+function debloqueSon(){ try{ audio.src=SILENCE; var pp=audio.play(); if(pp&&pp.catch) pp.catch(function(){}); }catch(e){} }
+function afficheSon(){ $('sonBtn').textContent=son?'🔊':'🔇'; }
 function saute(){ perso.classList.remove('saute'); void perso.offsetWidth; perso.classList.add('saute'); }
 /* le guide écrit sa phrase lettre par lettre en bougeant */
 function tape(el,t){
@@ -236,8 +253,8 @@ function tape(el,t){
     })();
   });
 }
-function dit(t){ return ensuite(function(){ var d=document.createElement('div'); d.className='m g'; fil.appendChild(d); return tape(d,t).then(function(){ return pause(180); }); }); }
-function client(t){ var d=document.createElement('div'); d.className='m c'; d.textContent=t; fil.appendChild(d); bas(); }
+function dit(t){ return ensuite(function(){ dire(t); var d=document.createElement('div'); d.className='m g'; fil.appendChild(d); return tape(d,t).then(function(){ return pause(180); }); }); }
+function client(t){ tais(); var d=document.createElement('div'); d.className='m c'; d.textContent=t; fil.appendChild(d); bas(); }
 function bloc(html,cls,apres){ return ensuite(function(){ var d=document.createElement('div'); d.className=cls; d.innerHTML=html; fil.appendChild(d); if(apres) apres(d); setTimeout(bas,60); return pause(150); }); }
 function boutons(liste){
   return ensuite(function(){
@@ -391,7 +408,7 @@ function libre(q,dejaAffiche){
   ensuite(function(){ w=document.createElement('div'); w.className='m g attente'; w.innerHTML='<span>●</span> <span>●</span> <span>●</span>'; fil.appendChild(w); bas(); parle(true);
     return fetch('/api/guide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:histo,contexte:contexte()})})
       .then(function(r){return r.json();})
-      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); return tape(w,t).then(function(){ if(j.cartes&&j.cartes.length) montreCartes(j.cartes); if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
+      .then(function(j){ var t=j.texte||"Je préfère qu'une personne de l'équipe te réponde : écris-nous à contact@yourmood.net 🤍"; histo.push({role:'assistant',content:t}); w.classList.remove('attente'); dire(t); return tape(w,t).then(function(){ if(j.cartes&&j.cartes.length) montreCartes(j.cartes); if(j.boutons&&j.boutons.length) suites(j.boutons); }); })
       .catch(function(){ histo.pop(); w.classList.remove('attente'); return tape(w,"Oups, je n'ai pas réussi à répondre. Écris-nous à contact@yourmood.net, on te répond vite 🤍"); });
   });
 }
@@ -422,8 +439,9 @@ function reprend(){
 
 /* ——— ouvrir / fermer ——— */
 var lance=false;
-function ouvrir(){ panneau.classList.add('on'); bulle.classList.remove('on'); $('pastille').classList.remove('on'); $('mascotte').style.display='none'; setTimeout(saute,120); if(!lance){ lance=true; accueil(); } setTimeout(function(){ if(window.innerWidth>520) $('q').focus({preventScroll:true}); },300); }
-function fermer(){ panneau.classList.remove('on'); $('mascotte').style.display=''; }
+function ouvrir(){ debloqueSon(); panneau.classList.add('on'); bulle.classList.remove('on'); $('pastille').classList.remove('on'); $('mascotte').style.display='none'; setTimeout(saute,120); if(!lance){ lance=true; accueil(); } setTimeout(function(){ if(window.innerWidth>520) $('q').focus({preventScroll:true}); },300); }
+function fermer(){ tais(); panneau.classList.remove('on'); $('mascotte').style.display=''; }
+$('sonBtn').onclick=function(){ son=!son; try{ localStorage.setItem('moodGuideSon',son?'1':'0'); }catch(e){} if(!son) tais(); else debloqueSon(); afficheSon(); }; afficheSon();
 $('mascotte').onclick=ouvrir; $('ouvrir2').onclick=ouvrir; $('fermer').onclick=fermer;
 /* la bulle : de vrais boutons, et une question tapée directement */
 bulle.querySelectorAll('.bb button').forEach(function(b){ b.onclick=function(){ var a=b.getAttribute('data-a'); var deja=lance; ouvrir(); if(a==='coffret'){ client('Trouver un coffret'); coffret(); } else if(deja){ principe(); } }; });
