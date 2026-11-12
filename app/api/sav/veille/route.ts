@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
-import { ticketsCompletsDeLaVue, getTicketMessages } from "@/lib/gorgias";
+import { ticketsCompletsDeLaVue, getTicketMessages, assignTicket } from "@/lib/gorgias";
 import { heuresOuvrees, estWeekEnd, heureSuisse } from "@/lib/sav/heures";
 
 export const runtime = "nodejs";
@@ -13,7 +13,30 @@ export const maxDuration = 120;
 // cliente attend une réponse depuis plus de 24 heures, sans compter vendredi 17h → lundi 9h.
 // Les tickets « rangés » (étiquette SAV-range : pas une demande de cliente) ne comptent pas.
 // Chaque attente n'est signalée qu'une fois ; un rappel groupé part le matin à 9h s'il reste du retard.
-// Lancement à la main : ?cle=… (SAV_POSTE_CLE), &essai=1 pour voir sans écrire sur Slack.
+// Lancement à la main : ?cle=… (SAV_POSTE_CLE), &essai=1 pour voir sans écrire sur Slack ni attribuer.
+//
+// Attribution (décision Philippe 12.11.2026) : à chaque passage, les demandes ouvertes de la vue
+// « SAV - division 5 » qui n'ont encore personne sont attribuées à Marlène — de jour comme de nuit.
+const VUE_SAV_DIVISION_5 = 259906;
+const MARLENE = 1174596829;   // agent Gorgias de Marlène Epars
+
+type Attribue = { id: number; client: string; sujet: string };
+
+async function attribuerSansPersonne(essai: boolean): Promise<{ attribues: Attribue[]; echecs: { id: number; erreur: string }[] }> {
+  const attribues: Attribue[] = []; const echecs: { id: number; erreur: string }[] = [];
+  for (const t of await ticketsCompletsDeLaVue(VUE_SAV_DIVISION_5)) {
+    if ((t.assignee_user as { id?: number } | null)?.id) continue;
+    const id = Number(t.id);
+    try {
+      if (!essai) await assignTicket(id, MARLENE);
+      const c = (t.customer as Record<string, unknown>) ?? {};
+      attribues.push({ id, client: String(c.name || c.email || "cliente"), sujet: String(t.subject || "(sans sujet)").slice(0, 70) });
+    } catch (e) {
+      echecs.push({ id, erreur: e instanceof Error ? e.message : String(e) });
+    }
+  }
+  return { attribues, echecs };
+}
 
 const POSTES: { nom: string; vue: number }[] = (() => {
   try { const v = JSON.parse(process.env.SAV_VEILLE_POSTES ?? ""); if (Array.isArray(v) && v.length) return v; } catch { /* défaut */ }
@@ -67,6 +90,8 @@ export async function GET(req: NextRequest) {
   if (!estCron(req) && !(cle && p.get("cle") === cle)) return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
   const essai = p.get("essai") === "1";
   try {
+    // d'abord attribuer, pour que les nouvelles demandes entrent aussitôt dans l'inbox de Marlène
+    const attribution = await attribuerSansPersonne(essai);
     const { retards, ouverts } = await enRetard();
     const maintenant = new Date();
     const silence = estWeekEnd(maintenant) || heureSuisse(maintenant) < 8 || heureSuisse(maintenant) >= 19;
@@ -87,7 +112,7 @@ export async function GET(req: NextRequest) {
       if (envoye) for (const r of retards) await kv.set(`sav:alerte:${r.id}:${r.depuis}`, 1, { ex: 86400 * 30 });
       raison = envoye ? "envoyé" : "rien de nouveau";
     }
-    return NextResponse.json({ ok: true, ouverts, retards, envoye, raison });
+    return NextResponse.json({ ok: true, attribution: { ...attribution, essai }, ouverts, retards, envoye, raison });
   } catch (e) {
     return NextResponse.json({ erreur: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
