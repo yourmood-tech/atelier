@@ -2082,7 +2082,8 @@ function rendreCalendrier() {
       const jeudiSem = new Date(debutDate);
       jeudiSem.setDate(jeudiSem.getDate() + ((4 - debutDate.getDay() + 7) % 7));
       const jeudiSemISO = dateISOLocal(jeudiSem);
-      const produitsExtra = donnees.produits.filter(p => p.date === jeudiSemISO && p.extraSemaine);
+      // « Prévues » = seulement ce qui doit encore sortir ; une pièce déjà sortie avant la semaine reste dans le tableau (Game changer), pas ici
+      const produitsExtra = donnees.produits.filter(p => p.date === jeudiSemISO && p.extraSemaine && !(p.dateSortie && p.dateSortie < jeudiSemISO));
       let extraCardsHtml = '';
       for (const p of produitsExtra) {
         const objTxt = [p.objectifQty ? `${p.objectifQty} pièces` : '', p.objectifCA ? `${(+p.objectifCA).toLocaleString('fr-CH')}.-` : ''].filter(Boolean).join(' · ');
