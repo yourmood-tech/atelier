@@ -15,7 +15,8 @@ import {
 
 const KLAVIYO = process.env.KLAVIYO_API_KEY ?? "";
 export const NB_CLASSEURS = 32;
-type Fiche = { d?: Record<string, number>; l?: string; k?: string[]; u?: string; w?: string };
+type Fiche = { d?: Record<string, number>; l?: string; k?: string[]; u?: string; w?: string; r?: 1; t?: 1 };
+// r = marque « au repos » posée dans Klaviyo ; t = étiquette « au-repos » posée sur la fiche Shopify (ou rien à poser)
 type Classeur = Record<string, Fiche>;
 type Montre = { fin: number };
 const reste = (m: Montre) => m.fin - Date.now();
@@ -62,7 +63,7 @@ export class Armoire {
         if (f.d) for (const j of Object.keys(f.d)) if (!garderJours.has(j)) { delete f.d[j]; change = true; }
         if (f.k) { const k = f.k.filter((j) => j >= limiteClic); if (k.length !== f.k.length) { f.k = k; change = true; } }
         if (f.u && f.u < limiteClic) { delete f.u; change = true; }
-        const vide = (!f.d || !Object.keys(f.d).length) && !f.k?.length && !f.u && (!f.w || f.w.startsWith("0|"));
+        const vide = (!f.d || !Object.keys(f.d).length) && !f.k?.length && !f.u && (!f.w || f.w.startsWith("0|")) && !f.r && !f.t;
         if (vide) { delete c[e]; change = true; }
         if (change) this.sale.add(n);
       }
@@ -245,25 +246,35 @@ export function etatDe(f: Fiche, estHebdo: boolean, fen: Set<string> = new Set(j
 }
 const sig = (s: Etat) => `${s.n}|${s.budget}|${s.dernier}`;
 
-export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<string>, essai: boolean) {
+// Mise au repos (décision Philippe 13.11.2026) : plafond de la semaine atteint (messages ≥ budget) → marque « au repos »
+// dans Klaviyo (propriété compteur_au_repos, exclue des campagnes) + étiquette « au-repos » sur la fiche Shopify.
+// Elle se retire toute seule quand le compteur redescend, ou pour tout le monde si la mise au repos est coupée.
+export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<string>, essai: boolean, reposActif = false) {
   await armoire.toutOuvrir();
   armoire.menage();
   const aEcrire: [string, Etat][] = [];
   const profils: Record<Profil, number> = { hebdo: 0, normale: 0, addict: 0, superAddict: 0 };
-  let touchees = 0, auDessus = 0;
+  const reposK: [string, boolean][] = [], reposS: [string, boolean][] = [];
+  let touchees = 0, auDessus = 0, auRepos = 0;
   const fen = new Set(joursAvant(JOURS_FENETRE)); // calculé une fois pour toutes les clientes
   for (const [e, f] of armoire.toutes()) {
     const s = etatDe(f, hebdoSet.has(e), fen);
     if (s.n > 0) { touchees++; profils[s.profil]++; if (s.n > s.budget) auDessus++; }
+    const plafond = s.n > 0 && s.n >= s.budget;
+    if (plafond) auRepos++;
+    const veut = reposActif && plafond;
+    if (!!f.r !== veut) reposK.push([e, veut]);
+    if (!!f.t !== veut) reposS.push([e, veut]);
     if (f.w !== sig(s) && (s.n > 0 || (f.w && !f.w.startsWith("0|")))) aEcrire.push([e, s]);
   }
-  const bilan = { touchees, profils, auDessus, aEcrire: aEcrire.length, shopify: 0, joaillerie: 0, klaviyo: 0, reste: 0 };
+  const bilan = { touchees, profils, auDessus, auRepos, reposActif, aEcrire: aEcrire.length, shopify: 0, joaillerie: 0, klaviyo: 0, reste: 0,
+    repos: { klaviyoAFaire: reposK.length, klaviyoFait: 0, etiquettesAFaire: reposS.length, etiquettesFaites: 0 } };
   if (essai) { bilan.reste = aEcrire.length; return bilan; }
 
   const ou = new Map<string, { b: Boutique; id: string }>();
   for (const b of ["yourmood", "joaillerie"] as Boutique[]) {
     if (!BOUTIQUES[b].jeton) continue;
-    const sans = aEcrire.map(([e]) => e).filter((e) => !ou.has(e));
+    const sans = [...new Set([...aEcrire.map(([e]) => e), ...reposS.map(([e]) => e)])].filter((e) => !ou.has(e));
     for (let i = 0; i < sans.length; i += 1000) {
       const part = sans.slice(i, i + 1000);
       demandes.n++;
@@ -300,6 +311,28 @@ export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<str
     bilan.klaviyo += part.length;
   }
   bilan.reste = bilan.aEcrire - bilan.shopify - bilan.joaillerie - bilan.klaviyo;
+
+  // ── mise au repos : d'abord Klaviyo (c'est lui qui exclut des campagnes), ensuite les étiquettes Shopify ──
+  for (let i = 0; i < reposK.length && reste(montre) > 15000; i += 5000) {
+    const part = reposK.slice(i, i + 5000);
+    await kpost("https://a.klaviyo.com/api/profile-bulk-import-jobs/", { data: { type: "profile-bulk-import-job", attributes: { profiles: { data: part.map(([e, v]) => ({ type: "profile", attributes: { email: e, properties: { compteur_au_repos: v } } })) } } } });
+    for (const [e, v] of part) { const f = armoire.fiche(e); if (v) f.r = 1; else delete f.r; }
+    bilan.repos.klaviyoFait += part.length;
+  }
+  const marque = (f: Fiche, v: boolean) => { if (v) f.t = 1; else delete f.t; };
+  for (const [e, v] of reposS) if (!ou.has(e)) { marque(armoire.fiche(e), v); bilan.repos.etiquettesFaites++; } // pas de fiche Shopify : rien à poser
+  for (const b of ["yourmood", "joaillerie"] as Boutique[]) {
+    const lot = reposS.filter(([e]) => ou.get(e)?.b === b);
+    for (let i = 0; i < lot.length && reste(montre) > 15000; i += 10) {
+      const part = lot.slice(i, i + 10);
+      const corps = part.map(([e, v], j) => `a${j}: ${v ? "tagsAdd" : "tagsRemove"}(id: "gid://shopify/Customer/${ou.get(e)!.id}", tags: ["au-repos"]) { userErrors { message } }`).join("\n");
+      const d = await shopifyGql(b, `mutation { ${corps} }`);
+      const erreurs = part.filter((_, j) => d[`a${j}`]?.userErrors?.length);
+      if (erreurs.length === part.length) throw new Error(`Shopify ${b} étiquette : ${d.a0.userErrors[0].message}`);
+      for (const [e, v] of part) marque(armoire.fiche(e), v);
+      bilan.repos.etiquettesFaites += part.length;
+    }
+  }
   await armoire.ranger();
   return bilan;
 }

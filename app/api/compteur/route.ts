@@ -8,10 +8,11 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 // Compteur anti-saturation v2 — ÉCONOME (Mood Cash Engine, étage 1 ; règles de Philippe du 12.11.2026).
-// MODE OBSERVATION : aucune étiquette « au-repos », aucun envoi bloqué.
+// MISE AU REPOS : coupée par défaut ; quand elle est allumée, plafond atteint → marque « au repos » (Klaviyo + étiquette Shopify).
 // Interrupteurs (à la main, ?cle=<SAV_POSTE_CLE>) :
 //   &actif=1 / &actif=0         la tâche planifiée tourne / ne tourne pas (arrêt par défaut)
 //   &autoriser=1 / &autoriser=0 écriture sur les fiches Shopify / Klaviyo (verrouillée par défaut)
+//   &repos=1 / &repos=0         mise au repos allumée / coupée (coupée = toutes les marques retirées)
 //   &bilan=1                    dernier bilan (dont le nombre de demandes au stockage)
 //   &essai=1                    lit et calcule, n'écrit rien nulle part
 export async function GET(req: NextRequest) {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
   const cle = process.env.SAV_POSTE_CLE;
   const main = !!(cle && p.get("cle") === cle);
   if (!estCron(req) && !main) return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
-  for (const [param, k] of [["actif", "cpt2:actif"], ["autoriser", "cpt2:ecriture-ok"]] as const) {
+  for (const [param, k] of [["actif", "cpt2:actif"], ["autoriser", "cpt2:ecriture-ok"], ["repos", "cpt2:repos-ok"]] as const) {
     if (main && (p.get(param) === "1" || p.get(param) === "0")) {
       if (p.get(param) === "1") await kv.set(k, new Date().toISOString()); else await kv.del(k);
       return NextResponse.json({ ok: true, [param]: p.get(param) === "1" });
@@ -50,8 +51,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, out });
   }
   if (main && p.get("bilan") === "1") {
-    const [b, a, e] = await kv.mget("cpt2:bilan", "cpt2:actif", "cpt2:ecriture-ok");
-    return NextResponse.json({ ok: true, actif: !!a, ecriture: !!e, dernier: b });
+    const [b, a, e, r] = await kv.mget("cpt2:bilan", "cpt2:actif", "cpt2:ecriture-ok", "cpt2:repos-ok");
+    return NextResponse.json({ ok: true, actif: !!a, ecriture: !!e, repos: !!r, dernier: b });
   }
   const essai = p.get("essai") === "1";
   if (!main && !(await kv.get("cpt2:actif"))) return NextResponse.json({ ok: true, raison: "compteur à l'arrêt" });
@@ -70,10 +71,11 @@ export async function GET(req: NextRequest) {
     await trace("contrôle du rattrapage");
     const ajour = await collecteAJour();
     if (pret && ajour) {
-      const autorise = !!(await kv.get("cpt2:ecriture-ok")); demandes.n++;
+      const [autoriseV, reposV] = await kv.mget("cpt2:ecriture-ok", "cpt2:repos-ok"); demandes.n++;
+      const autorise = !!autoriseV;
       await trace("liste hebdo"); const h = await hebdo(essai);
       await trace("calcul et écriture");
-      bilan.ecriture = await ecrire(montre, armoire, h, essai || !autorise);
+      bilan.ecriture = await ecrire(montre, armoire, h, essai || !autorise, !!reposV);
       if (!autorise && !essai) bilan.note = "calculé seulement : écriture sur les fiches pas encore autorisée";
     } else bilan.ecriture = !pret ? "en attente : index des fiches Shopify" : "en attente : premier rattrapage des messages et des clics";
     bilan.demandesStockage = demandes.n + 2;
