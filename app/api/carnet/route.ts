@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
 import { carnet, type Commande } from "@/lib/carnet/classe";
+import { estTemoin } from "@/lib/temoin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,10 +27,11 @@ async function gql(query: string, variables: Record<string, unknown> = {}) {
   throw new Error("Shopify : trop de demandes");
 }
 
-async function historique(id: string): Promise<Commande[]> {
+async function historique(id: string, info?: { email?: string; tags?: string[] }): Promise<Commande[]> {
   const out: Commande[] = []; let c: string | null = null;
   for (;;) {
-    const d = await gql(`query($id:ID!,$c:String){customer(id:$id){orders(first:50,after:$c){pageInfo{hasNextPage endCursor} nodes{createdAt cancelledAt lineItems(first:100){nodes{title variantTitle sku currentQuantity product{productType}}}}}}}`, { id: `gid://shopify/Customer/${id}`, c });
+    const d = await gql(`query($id:ID!,$c:String){customer(id:$id){defaultEmailAddress{emailAddress} tags orders(first:50,after:$c){pageInfo{hasNextPage endCursor} nodes{createdAt cancelledAt lineItems(first:100){nodes{title variantTitle sku currentQuantity product{productType}}}}}}}`, { id: `gid://shopify/Customer/${id}`, c });
+    if (info && d.customer) { info.email = d.customer.defaultEmailAddress?.emailAddress ?? undefined; info.tags = d.customer.tags; }
     const o = d.customer?.orders; if (!o) break;
     for (const n of o.nodes) out.push({ createdAt: n.createdAt, cancelledAt: n.cancelledAt, lignes: n.lineItems.nodes });
     if (!o.pageInfo.hasNextPage) break; c = o.pageInfo.endCursor;
@@ -38,7 +40,11 @@ async function historique(id: string): Promise<Commande[]> {
 }
 
 async function ecrire(id: string) {
-  const r = carnet(await historique(id));
+  const info: { email?: string; tags?: string[] } = {};
+  const r = carnet(await historique(id, info));
+  // groupe témoin : même règle que le tirage du 13.11.2026, appliquée aux nouvelles clientes
+  if (info.email && estTemoin(info.email) && !info.tags?.includes("groupe-temoin"))
+    await gql(`mutation($id:ID!){tagsAdd(id:$id,tags:["groupe-temoin"]){userErrors{message}}}`, { id: `gid://shopify/Customer/${id}` });
   if (!r) return false;
   const owner = `gid://shopify/Customer/${id}`;
   const m: Record<string, string>[] = [];
@@ -49,6 +55,26 @@ async function ecrire(id: string) {
   const d = await gql(`mutation($m:[MetafieldsSetInput!]!){metafieldsSet(metafields:$m){userErrors{message}}}`, { m });
   if (d.metafieldsSet.userErrors.length) throw new Error(`fiche ${id} : ${d.metafieldsSet.userErrors[0].message}`);
   return true;
+}
+
+const KLAVIYO = process.env.KLAVIYO_API_KEY ?? "";
+async function temoinsKlaviyoNouveaux(depuis: string, fin: number) {
+  const H = { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: "2025-07-15", accept: "application/vnd.api+json", "content-type": "application/vnd.api+json" };
+  const t: string[] = [];
+  let url: string | null = `https://a.klaviyo.com/api/profiles/?fields[profile]=email&page[size]=100&filter=${encodeURIComponent(`greater-than(created,${depuis.replace(/\.\d+Z$/, "Z")})`)}`;
+  while (url && Date.now() < fin) {
+    const r: Response = await fetch(url, { headers: H, cache: "no-store", signal: AbortSignal.timeout(30000) });
+    if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 2000)); continue; }
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 150)}`);
+    const d: { data?: { attributes?: { email?: string } }[]; links?: { next?: string } } = await r.json();
+    for (const p of d.data ?? []) { const e = p.attributes?.email; if (e && estTemoin(e)) t.push(e); }
+    url = d.links?.next ?? null;
+  }
+  if (t.length) {
+    const r = await fetch("https://a.klaviyo.com/api/profile-bulk-import-jobs/", { method: "POST", headers: H, body: JSON.stringify({ data: { type: "profile-bulk-import-job", attributes: { profiles: { data: t.map((email) => ({ type: "profile", attributes: { email, properties: { groupe_temoin: true, groupe_temoin_depuis: new Date().toISOString().slice(0, 10) } } })) } } } }), signal: AbortSignal.timeout(60000) });
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 150)}`);
+  }
+  return t.length;
 }
 
 export async function GET(req: NextRequest) {
@@ -77,9 +103,12 @@ export async function GET(req: NextRequest) {
     try { await ecrire(id); } catch (e) { erreurs.push(e instanceof Error ? e.message : String(e)); }
     file.delete(id); faites++;
   }
+  // groupe témoin dans Klaviyo : nouvelles inscrites depuis le dernier passage
+  let temoinsKlaviyo = 0;
+  try { temoinsKlaviyo = await temoinsKlaviyoNouveaux(depuis, fin + 30000); } catch (e) { erreurs.push(`Klaviyo témoin : ${e instanceof Error ? e.message : String(e)}`); }
   await kv.set("carnet:depuis", debut);
   await kv.set("carnet:file", [...file]);
-  const bilan = { quand: debut, depuis, commandes, faites, reste: file.size, erreurs: erreurs.slice(0, 5) };
+  const bilan = { quand: debut, depuis, commandes, faites, reste: file.size, temoinsKlaviyo, erreurs: erreurs.slice(0, 5) };
   await kv.set("carnet:bilan", bilan, { ex: 7 * 86400 });
   return NextResponse.json({ ok: true, ...bilan });
 }
