@@ -82,7 +82,13 @@ export async function analyser(produitId: string): Promise<Analyse> {
     const c = classe(p.title, v.title, v.sku, p.productType);
     if (!c.taille || !v.sku) continue;
     const anneaux = c.pieces.filter((x) => x.type in PLACES);
-    const places = Math.max(0, ...anneaux.map((x) => PLACES[x.type as keyof typeof PLACES] * x.nb));
+    let places = Math.max(0, ...anneaux.map((x) => PLACES[x.type as keyof typeof PLACES] * x.nb));
+    // le choix de la taille dit souvent la forme (« Addon / 58 », « Deux tiers / 58 ») : il passe avant le type de la fiche
+    const vt = (v.title ?? "").toLowerCase();
+    if (/deux tiers|2\/3/.test(vt)) places = PLACES["deux tiers"];
+    else if (/\baddon\b/.test(vt)) places = PLACES.addon;
+    else if (/\bmedium\b/.test(vt)) places = PLACES.medium;
+    else if (/\bmini\b/.test(vt)) places = PLACES.mini;
     const base = c.pieces.some((x) => x.type === "base");
     if (!places && !base) continue;
     const stock = await faisable(v.sku, cache);
