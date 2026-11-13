@@ -124,6 +124,11 @@ export default auth((req) => {
   if (pathname === "/erable-kyoto" || pathname.startsWith("/erable-kyoto/")) {
     return;
   }
+  // /noel-serti (page des 5 addons Noël serti 2026 — lien à montrer à l'équipe)
+  if (pathname === "/noel-serti") {
+    return;
+  }
+
   // /chromaline (maquette de la page Chromaline — lien à montrer à l'équipe)
   if (pathname === "/chromaline" || pathname.startsWith("/chromaline/")) {
     return;
