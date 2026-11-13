@@ -200,11 +200,17 @@ async function shopifyGql(b: Boutique, query: string, variables: Record<string, 
 // Parcourt les fiches modifiées depuis le dernier passage (tout au premier passage), reprend au curseur.
 export async function trace(etape: string) { demandes.n++; await kv.set("cpt2:trace", { etape, quand: new Date().toISOString() }); }
 export async function indexer(montre: Montre, essai: boolean) {
+  if (!essai && !(await kvGet("cpt2:idx-joaillerie-acheteuses"))) {
+    demandes.n += 2; await kv.del("cpt:idx:joaillerie", "cpt:idx:joaillerie:etat");
+    await kvSet("cpt2:idx-joaillerie-acheteuses", new Date().toISOString());
+  }
   const bilan: Record<string, { fiches: number; fini: boolean }> = {};
   for (const b of Object.keys(BOUTIQUES) as Boutique[]) {
     if (!BOUTIQUES[b].jeton) continue;
     const etat = (await kvGet<{ depuis: string | null; curseur: string | null; debut: string }>(`cpt:idx:${b}:etat`)) ?? { depuis: null, curseur: null, debut: new Date().toISOString() };
-    const q = etat.depuis ? `updated_at:>'${etat.depuis}'` : "";
+    // mood joaillerie : seulement les acheteuses (les autres fiches sont des copies de la newsletter → compteur dans Klaviyo)
+    const filtre = b === "joaillerie" ? "orders_count:>0" : "";
+    const q = [etat.depuis ? `updated_at:>'${etat.depuis}'` : "", filtre].filter(Boolean).join(" AND ");
     let fiches = 0, fini = false, curseur = etat.curseur;
     while (reste(montre) > 30000) {
       const d = await shopifyGql(b, `query($c:String,$q:String){customers(first:250,after:$c,query:$q){pageInfo{hasNextPage endCursor} nodes{ legacyResourceId defaultEmailAddress{emailAddress} }}}`, { c: curseur, q });
