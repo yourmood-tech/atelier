@@ -43,6 +43,10 @@
     {
       "path": "/api/compteur",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/carnet",
+      "schedule": "35 * * * *"
     }
   ]
 }

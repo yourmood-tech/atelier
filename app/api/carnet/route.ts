@@ -1,115 +1,85 @@
-// Carnet des nouveautés — dictionnaire de fabrication Mood.
-// Collections + addons (fiches) stockés dans Vercel KV, partagés pour toute l'équipe.
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
-import { auth } from "@/auth";
-import { randomUUID } from "crypto";
+import { estCron } from "@/lib/est-cron";
+import { carnet, type Commande } from "@/lib/carnet/classe";
 
-// Seules ces personnes peuvent créer/modifier ; les autres ne font que consulter.
-const EDITORS = new Set(["amila@yourmood.net"]);
-const canEdit = (email?: string | null) => !!email && EDITORS.has(email.toLowerCase());
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
-const COLS = "carnet:cols"; // [{id,name,month}]
-const colAddons = (id: string) => `carnet:col:${id}`; // [addonId,...]
-const addonKey = (id: string) => `carnet:addon:${id}`; // objet fiche
+// Carnet cliente — mise à jour : chaque heure, les clientes dont une commande a bougé voient leur carnet recalculé
+// sur TOUT leur historique, puis réécrit sur la fiche Shopify (custom.carnet_taille / carnet_bases / carnet_anneaux / carnet).
+// Stockage partagé : 2 clés (carnet:depuis, carnet:file) → quelques demandes par heure seulement.
+// À la main (?cle=<SAV_POSTE_CLE>) : &voir=<numéro de fiche> calcule sans écrire ; &bilan=1 dernier passage.
+const DOM = process.env.MOOD_SHOPIFY_DOMAIN || process.env.SHOPIFY_STORE || "";
+const JETON = process.env.MOOD_SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_API_TOKEN || "";
 
-type Collection = { id: string; name: string; month: string; cover?: string; shopify?: string; sortie?: boolean };
-type Addon = Record<string, unknown> & { id: string; collectionId: string; nom: string };
-
-async function getCols(): Promise<Collection[]> {
-  return ((await kv.get<Collection[]>(COLS)) || []);
+async function gql(query: string, variables: Record<string, unknown> = {}) {
+  for (let i = 0; i < 8; i++) {
+    const r = await fetch(`https://${DOM}/admin/api/2025-01/graphql.json`, { method: "POST", headers: { "X-Shopify-Access-Token": JETON, "Content-Type": "application/json" }, body: JSON.stringify({ query, variables }), cache: "no-store", signal: AbortSignal.timeout(30000) });
+    if (r.status === 429) { await new Promise((ok) => setTimeout(ok, 1000 * (i + 1))); continue; }
+    const j = await r.json();
+    if (j.errors && JSON.stringify(j.errors).includes("THROTTLED")) { await new Promise((ok) => setTimeout(ok, 1000 * (i + 1))); continue; }
+    if (j.errors) throw new Error(`Shopify : ${JSON.stringify(j.errors).slice(0, 200)}`);
+    return j.data;
+  }
+  throw new Error("Shopify : trop de demandes");
 }
 
-// GET → { collections:[{...,addons:[fiche]}] }
-export async function GET() {
-  // Consultation ouverte : tout le monde avec le lien voit le Carnet (aucune connexion requise).
-  // La connexion sert seulement à savoir si la personne a le droit de modifier (canEdit).
-  const session = await auth().catch(() => null);
-  try {
-    const cols = await getCols();
-    const out = [];
-    for (const c of cols) {
-      const ids = (await kv.get<string[]>(colAddons(c.id))) || [];
-      const addons = (ids.length ? await kv.mget<(Addon | null)[]>(...ids.map(addonKey)) : []).filter(Boolean);
-      out.push({ ...c, addons });
-    }
-    return NextResponse.json({ collections: out, canEdit: canEdit(session?.user?.email) });
-  } catch (e) {
-    return NextResponse.json({ error: String((e as Error)?.message || e) }, { status: 500 });
+async function historique(id: string): Promise<Commande[]> {
+  const out: Commande[] = []; let c: string | null = null;
+  for (;;) {
+    const d = await gql(`query($id:ID!,$c:String){customer(id:$id){orders(first:50,after:$c){pageInfo{hasNextPage endCursor} nodes{createdAt cancelledAt lineItems(first:100){nodes{title variantTitle sku currentQuantity product{productType}}}}}}}`, { id: `gid://shopify/Customer/${id}`, c });
+    const o = d.customer?.orders; if (!o) break;
+    for (const n of o.nodes) out.push({ createdAt: n.createdAt, cancelledAt: n.cancelledAt, lignes: n.lineItems.nodes });
+    if (!o.pageInfo.hasNextPage) break; c = o.pageInfo.endCursor;
   }
+  return out;
 }
 
-// POST { action, ... }
-export async function POST(request: Request) {
-  const session = await auth();
-  if (!session) return NextResponse.json({ error: "non connecté" }, { status: 401 });
-  let b: Record<string, unknown>;
-  try { b = await request.json(); } catch { return NextResponse.json({ error: "JSON invalide" }, { status: 400 }); }
-  const action = b.action as string;
-  const by = session.user?.email || "";
-  if (!canEdit(by)) return NextResponse.json({ error: "lecture seule — seule Amila peut modifier le Carnet" }, { status: 403 });
-  try {
-    if (action === "createCollection") {
-      const c: Collection = { id: randomUUID().slice(0, 8), name: String(b.name || "Sans nom"), month: String(b.month || "") };
-      const cols = await getCols();
-      cols.unshift(c);
-      await kv.set(COLS, cols);
-      return NextResponse.json({ ok: true, collection: c });
-    }
-    if (action === "updateCollection") {
-      const cols = await getCols();
-      const c = cols.find((x) => x.id === b.id);
-      if (!c) return NextResponse.json({ error: "collection introuvable" }, { status: 404 });
-      if (b.name !== undefined) c.name = String(b.name);
-      if (b.month !== undefined) c.month = String(b.month);
-      if (b.cover !== undefined) c.cover = String(b.cover);
-      if (b.shopify !== undefined) c.shopify = String(b.shopify);
-      if (b.sortie !== undefined) c.sortie = !!b.sortie;
-      await kv.set(COLS, cols);
-      return NextResponse.json({ ok: true });
-    }
-    if (action === "deleteCollection") {
-      const cols = (await getCols()).filter((x) => x.id !== b.id);
-      const ids = (await kv.get<string[]>(colAddons(String(b.id)))) || [];
-      for (const id of ids) await kv.del(addonKey(id));
-      await kv.del(colAddons(String(b.id)));
-      await kv.set(COLS, cols);
-      return NextResponse.json({ ok: true });
-    }
-    if (action === "createAddon") {
-      const colId = String(b.collectionId);
-      const addon: Addon = {
-        id: randomUUID().slice(0, 8), collectionId: colId, nom: String(b.nom || "Nouvel addon"),
-        format: "", matiere: "", couleur: "", finition: "",
-        croquis: [], inspi: [], ai: [], photos: [],
-        laser: "", realisation: "", mtrl: "", shopify: "",
-        _by: by, _at: new Date().toISOString(),
-      };
-      await kv.set(addonKey(addon.id), addon);
-      const ids = (await kv.get<string[]>(colAddons(colId))) || [];
-      ids.push(addon.id);
-      await kv.set(colAddons(colId), ids);
-      return NextResponse.json({ ok: true, addon });
-    }
-    if (action === "updateAddon") {
-      const cur = await kv.get<Addon>(addonKey(String(b.id)));
-      if (!cur) return NextResponse.json({ error: "addon introuvable" }, { status: 404 });
-      const patch = (b.patch as Record<string, unknown>) || {};
-      const next = { ...cur, ...patch, _by: by, _at: new Date().toISOString() };
-      await kv.set(addonKey(String(b.id)), next);
-      return NextResponse.json({ ok: true, addon: next });
-    }
-    if (action === "deleteAddon") {
-      const cur = await kv.get<Addon>(addonKey(String(b.id)));
-      if (cur) {
-        const ids = ((await kv.get<string[]>(colAddons(cur.collectionId))) || []).filter((x) => x !== b.id);
-        await kv.set(colAddons(cur.collectionId), ids);
-        await kv.del(addonKey(String(b.id)));
-      }
-      return NextResponse.json({ ok: true });
-    }
-    return NextResponse.json({ error: "action inconnue" }, { status: 400 });
-  } catch (e) {
-    return NextResponse.json({ error: String((e as Error)?.message || e) }, { status: 500 });
+async function ecrire(id: string) {
+  const r = carnet(await historique(id));
+  if (!r) return false;
+  const owner = `gid://shopify/Customer/${id}`;
+  const m: Record<string, string>[] = [];
+  if (r.taille) m.push({ ownerId: owner, namespace: "custom", key: "carnet_taille", type: "number_integer", value: String(r.taille) });
+  if (r.basesTxt) m.push({ ownerId: owner, namespace: "custom", key: "carnet_bases", type: "multi_line_text_field", value: r.basesTxt });
+  if (r.anneauxTxt) m.push({ ownerId: owner, namespace: "custom", key: "carnet_anneaux", type: "single_line_text_field", value: r.anneauxTxt });
+  m.push({ ownerId: owner, namespace: "custom", key: "carnet", type: "json", value: JSON.stringify(r.json) });
+  const d = await gql(`mutation($m:[MetafieldsSetInput!]!){metafieldsSet(metafields:$m){userErrors{message}}}`, { m });
+  if (d.metafieldsSet.userErrors.length) throw new Error(`fiche ${id} : ${d.metafieldsSet.userErrors[0].message}`);
+  return true;
+}
+
+export async function GET(req: NextRequest) {
+  const p = req.nextUrl.searchParams;
+  const cle = process.env.SAV_POSTE_CLE;
+  const main = !!(cle && p.get("cle") === cle);
+  if (!estCron(req) && !main) return NextResponse.json({ erreur: "non autorisé" }, { status: 401 });
+  if (main && p.get("voir")) return NextResponse.json({ ok: true, carnet: carnet(await historique(p.get("voir")!)) });
+  if (main && p.get("bilan") === "1") return NextResponse.json({ ok: true, dernier: await kv.get("carnet:bilan") });
+
+  const fin = Date.now() + 250000;
+  const debut = new Date().toISOString();
+  // premier passage : on part du calcul complet du 13.11.2026
+  const depuis = (await kv.get<string>("carnet:depuis")) ?? "2026-11-13T09:00:00Z";
+  const file = new Set((await kv.get<string[]>("carnet:file")) ?? []);
+  // commandes créées ou modifiées (remboursement, annulation…) depuis le dernier passage
+  let c: string | null = null, commandes = 0;
+  for (;;) {
+    const d = await gql(`query($c:String,$q:String){orders(first:250,after:$c,query:$q){pageInfo{hasNextPage endCursor} nodes{customer{legacyResourceId}}}}`, { c, q: `updated_at:>'${depuis}'` });
+    for (const n of d.orders.nodes) { commandes++; if (n.customer) file.add(String(n.customer.legacyResourceId)); }
+    if (!d.orders.pageInfo.hasNextPage) break; c = d.orders.pageInfo.endCursor;
   }
+  let faites = 0; const erreurs: string[] = [];
+  for (const id of [...file]) {
+    if (Date.now() > fin) break;
+    try { await ecrire(id); } catch (e) { erreurs.push(e instanceof Error ? e.message : String(e)); }
+    file.delete(id); faites++;
+  }
+  await kv.set("carnet:depuis", debut);
+  await kv.set("carnet:file", [...file]);
+  const bilan = { quand: debut, depuis, commandes, faites, reste: file.size, erreurs: erreurs.slice(0, 5) };
+  await kv.set("carnet:bilan", bilan, { ex: 7 * 86400 });
+  return NextResponse.json({ ok: true, ...bilan });
 }
