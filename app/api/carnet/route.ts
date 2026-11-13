@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
-import { carnet, type Commande } from "@/lib/carnet/classe";
+import { carnet, proprietesKlaviyo, type Commande } from "@/lib/carnet/classe";
 import { estTemoin } from "@/lib/temoin";
 
 export const runtime = "nodejs";
@@ -39,6 +39,7 @@ async function historique(id: string, info?: { email?: string; tags?: string[] }
   return out;
 }
 
+const pourKlaviyo: { email: string; properties: Record<string, unknown> }[] = [];
 async function ecrire(id: string) {
   const info: { email?: string; tags?: string[] } = {};
   const r = carnet(await historique(id, info));
@@ -54,6 +55,7 @@ async function ecrire(id: string) {
   m.push({ ownerId: owner, namespace: "custom", key: "carnet", type: "json", value: JSON.stringify(r.json) });
   const d = await gql(`mutation($m:[MetafieldsSetInput!]!){metafieldsSet(metafields:$m){userErrors{message}}}`, { m });
   if (d.metafieldsSet.userErrors.length) throw new Error(`fiche ${id} : ${d.metafieldsSet.userErrors[0].message}`);
+  if (info.email) pourKlaviyo.push({ email: info.email.trim().toLowerCase(), properties: proprietesKlaviyo(r) });
   return true;
 }
 
@@ -85,6 +87,7 @@ export async function GET(req: NextRequest) {
   if (main && p.get("voir")) return NextResponse.json({ ok: true, carnet: carnet(await historique(p.get("voir")!)) });
   if (main && p.get("bilan") === "1") return NextResponse.json({ ok: true, dernier: await kv.get("carnet:bilan") });
 
+  pourKlaviyo.length = 0;
   const fin = Date.now() + 250000;
   const debut = new Date().toISOString();
   // premier passage : on part du calcul complet du 13.11.2026
@@ -103,12 +106,19 @@ export async function GET(req: NextRequest) {
     try { await ecrire(id); } catch (e) { erreurs.push(e instanceof Error ? e.message : String(e)); }
     file.delete(id); faites++;
   }
+  // carnet dans Klaviyo (taille, bases, matières) pour les clientes recalculées
+  if (pourKlaviyo.length) {
+    try {
+      const r = await fetch("https://a.klaviyo.com/api/profile-bulk-import-jobs/", { method: "POST", headers: { Authorization: `Klaviyo-API-Key ${KLAVIYO}`, revision: "2025-07-15", accept: "application/vnd.api+json", "content-type": "application/vnd.api+json" }, body: JSON.stringify({ data: { type: "profile-bulk-import-job", attributes: { profiles: { data: pourKlaviyo.map((x) => ({ type: "profile", attributes: { email: x.email, properties: x.properties } })) } } } }), signal: AbortSignal.timeout(60000) });
+      if (!r.ok) erreurs.push(`Klaviyo carnet : ${r.status} ${(await r.text()).slice(0, 150)}`);
+    } catch (e) { erreurs.push(`Klaviyo carnet : ${e instanceof Error ? e.message : String(e)}`); }
+  }
   // groupe témoin dans Klaviyo : nouvelles inscrites depuis le dernier passage
   let temoinsKlaviyo = 0;
   try { temoinsKlaviyo = await temoinsKlaviyoNouveaux(depuis, fin + 30000); } catch (e) { erreurs.push(`Klaviyo témoin : ${e instanceof Error ? e.message : String(e)}`); }
   await kv.set("carnet:depuis", debut);
   await kv.set("carnet:file", [...file]);
-  const bilan = { quand: debut, depuis, commandes, faites, reste: file.size, temoinsKlaviyo, erreurs: erreurs.slice(0, 5) };
+  const bilan = { quand: debut, depuis, commandes, faites, reste: file.size, temoinsKlaviyo, carnetsKlaviyo: pourKlaviyo.length, erreurs: erreurs.slice(0, 5) };
   await kv.set("carnet:bilan", bilan, { ex: 7 * 86400 });
   return NextResponse.json({ ok: true, ...bilan });
 }

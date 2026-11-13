@@ -58,7 +58,7 @@ export default auth((req) => {
   }
 
   // compteur anti-saturation (tâche planifiée, protégé par une clé dans la route)
-  if (pathname === "/api/compteur" || pathname === "/api/carnet") {
+  if (pathname === "/api/compteur" || pathname === "/api/carnet" || pathname === "/api/pepites") {
     return;
   }
 

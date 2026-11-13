@@ -63,13 +63,19 @@ export function classe(title: string | null, vt: string | null, sku: string | nu
   return { pieces: [{ type: "inconnu", largeur: null, nb: 1 }], taille: tl };
 }
 
+const MAT: [string, RegExp][] = [["aluminium", /alumin|\balu\b|^alu-|-alu-/], ["argent", /argent|\bsilver\b|-arg-/], ["or", /\bor\b|\b9k\b|\b18k\b|\bgold\b|carats?/], ["titane", /titan/], ["ceramique", /ceramique/], ["carbone", /carbone/], ["bois", /\bbois\b|ebene|olivier|zebrano/], ["bronze", /bronze/], ["email", /\bemail\b|enamel/], ["polymere", /polymere|acetate|plastique|resine|washed|translucide|colore/], ["acier", /acier|inox|316l|steel/]];
+export function matiere(title: string | null, sku: string | null, ptype: string | null): string | null {
+  const t = norm([ptype ?? "", title ?? "", sku ?? ""].join(" "));
+  return MAT.find(([, re]) => re.test(t))?.[0] ?? null;
+}
+
 const ORDRE = ["addon", "deux tiers", "medium", "mini", "anneau"] as const;
 const NOM: Record<string, string> = { XS: "extra small", S: "small", L: "large", "?": "largeur inconnue" };
 type Ligne = { title: string; variantTitle: string | null; sku: string | null; currentQuantity: number; product: { productType: string } | null };
 export type Commande = { createdAt: string; cancelledAt: string | null; lignes: Ligne[] };
 
 export function carnet(cmds: Commande[]) {
-  const tailles = new Map<number, number>(), bases = new Map<string, number>(), ann: Record<string, number> = {};
+  const tailles = new Map<number, number>(), bases = new Map<string, number>(), ann: Record<string, number> = {}, mat: Record<string, number> = {};
   const dates: string[] = []; let nbCmd = 0;
   for (const c of cmds) {
     if (c.cancelledAt) continue;
@@ -83,7 +89,11 @@ export function carnet(cmds: Commande[]) {
         const n = pc.nb * q;
         if (tl) tailles.set(tl, (tailles.get(tl) ?? 0) + n);
         if (pc.type === "base") { const k = `${pc.largeur}|${tl ?? ""}`; bases.set(k, (bases.get(k) ?? 0) + n); }
-        else ann[pc.type] = (ann[pc.type] ?? 0) + n;
+        else {
+          ann[pc.type] = (ann[pc.type] ?? 0) + n;
+          const m = matiere(l.title, l.sku, l.product?.productType ?? null);
+          if (m) mat[m] = (mat[m] ?? 0) + n;
+        }
       }
     }
     if (compte) { nbCmd++; dates.push(c.createdAt.slice(0, 10)); }
@@ -98,6 +108,20 @@ export function carnet(cmds: Commande[]) {
   dates.sort();
   return {
     taille: tp, basesTxt, anneauxTxt,
-    json: { taille: tp, autres_tailles: autres, bases: bl, anneaux: Object.fromEntries(ORDRE.filter((x) => ann[x]).map((x) => [x, ann[x]])), premier_achat: dates[0], dernier_achat: dates.at(-1), commandes: nbCmd },
+    json: { taille: tp, autres_tailles: autres, bases: bl, anneaux: Object.fromEntries(ORDRE.filter((x) => ann[x]).map((x) => [x, ann[x]])), matieres: Object.fromEntries(Object.entries(mat).sort((a, b) => b[1] - a[1])), premier_achat: dates[0], dernier_achat: dates.at(-1), commandes: nbCmd },
   };
+}
+
+// Propriétés envoyées à Klaviyo (mêmes règles que l'envoi initial du 13.11.2026)
+export function proprietesKlaviyo(r: NonNullable<ReturnType<typeof carnet>>) {
+  const j = r.json;
+  const bases = j.bases.filter((b) => b.largeur in { XS: 1, S: 1, L: 1 } && b.taille);
+  const bp = [...bases].sort((a, b) => Number(b.taille === j.taille) - Number(a.taille === j.taille) || b.nb - a.nb)[0];
+  const p: Record<string, unknown> = {
+    carnet_taille: j.taille, carnet_largeurs: [...new Set(bases.map((b) => b.largeur))].sort(),
+    carnet_tailles_bases: [...new Set(bases.map((b) => b.taille))].sort(), carnet_base_principale: bp ? `${NOM[bp.largeur]} ${bp.taille}` : null,
+    carnet_dernier_achat: j.dernier_achat, carnet_anneaux: r.anneauxTxt || null,
+    carnet_bases_codes: [...new Set(bases.map((b) => `${b.largeur}${b.taille}`))].sort(), carnet_matieres: Object.keys(j.matieres).sort(),
+  };
+  return Object.fromEntries(Object.entries(p).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length)));
 }
