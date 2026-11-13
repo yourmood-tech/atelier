@@ -232,8 +232,7 @@ export async function indexPret(): Promise<boolean> {
 
 
 type Etat = { n: number; budget: number; dernier: string; profil: Profil };
-export function etatDe(f: Fiche, estHebdo: boolean): Etat {
-  const fen = new Set(joursAvant(JOURS_FENETRE));
+export function etatDe(f: Fiche, estHebdo: boolean, fen: Set<string> = new Set(joursAvant(JOURS_FENETRE))): Etat {
   const n = Object.entries(f.d ?? {}).reduce((s, [j, v]) => s + (fen.has(j) ? v : 0), 0);
   const profil = profilDe({ hebdo: estHebdo, joursClic: f.k?.length ?? 0, desabonnee: !!f.u });
   return { n, budget: BUDGET[profil], dernier: f.l ?? "", profil };
@@ -246,8 +245,9 @@ export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<str
   const aEcrire: [string, Etat][] = [];
   const profils: Record<Profil, number> = { hebdo: 0, normale: 0, addict: 0, superAddict: 0 };
   let touchees = 0, auDessus = 0;
+  const fen = new Set(joursAvant(JOURS_FENETRE)); // calculé une fois pour toutes les clientes
   for (const [e, f] of armoire.toutes()) {
-    const s = etatDe(f, hebdoSet.has(e));
+    const s = etatDe(f, hebdoSet.has(e), fen);
     if (s.n > 0) { touchees++; profils[s.profil]++; if (s.n > s.budget) auDessus++; }
     if (f.w !== sig(s) && (s.n > 0 || (f.w && !f.w.startsWith("0|")))) aEcrire.push([e, s]);
   }

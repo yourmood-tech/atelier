@@ -67,9 +67,9 @@ export function compte(mesure: string, p: Record<string, unknown>): boolean {
 }
 
 // Jour suisse (AAAA-MM-JJ) d'un instant.
+const FORMAT_JOUR = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zurich" }); // créé une seule fois (lent à créer)
 export function jourSuisse(iso: string | Date): string {
-  const d = typeof iso === "string" ? new Date(iso) : iso;
-  return new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zurich" }).format(d);
+  return FORMAT_JOUR.format(typeof iso === "string" ? new Date(iso) : iso);
 }
 export function joursAvant(n: number, depuis = new Date()): string[] {
   const out: string[] = [];
