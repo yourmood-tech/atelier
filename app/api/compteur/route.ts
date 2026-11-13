@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { estCron } from "@/lib/est-cron";
-import { Armoire, collecteAJour, collecter, demandes, ecrire, hebdo, indexer, indexPret, menageV1, trace } from "@/lib/compteur/moteur";
+import { Armoire, etatDe, collecteAJour, collecter, demandes, ecrire, hebdo, indexer, indexPret, menageV1, trace } from "@/lib/compteur/moteur";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +30,24 @@ export async function GET(req: NextRequest) {
     for (let i = 0; i < 32; i++) t.push(Number(await kv.strlen(`cpt2:c:${i}`)));
     const trace = await kv.get("cpt2:trace");
     return NextResponse.json({ ok: true, octetsParClasseur: t, total: t.reduce((a, b) => a + b, 0), trace });
+  }
+  // contrôle : état calculé pour quelques emails (?voir=a@x.ch,b@y.ch) ou un échantillon par profil (?voir=echantillon)
+  if (main && p.get("voir")) {
+    const armoire = new Armoire(); await armoire.toutOuvrir();
+    const h = new Set(((await kv.get<{ emails: string[] }>("cpt2:hebdo"))?.emails) ?? []);
+    if (p.get("voir") === "echantillon") {
+      const ech: Record<string, unknown[]> = { hebdo: [], normale: [], addict: [], superAddict: [], auDessus: [] };
+      for (const [e, f] of armoire.toutes()) {
+        const s = etatDe(f, h.has(e));
+        if (s.n === 0) continue;
+        if (ech[s.profil].length < 3) ech[s.profil].push({ e, ...s, clics: f.k?.length ?? 0 });
+        if (s.profil === "normale" && s.n > s.budget && ech.auDessus.length < 3) ech.auDessus.push({ e, ...s });
+      }
+      return NextResponse.json({ ok: true, ech });
+    }
+    const out: Record<string, unknown> = {};
+    for (const e of (p.get("voir") ?? "").toLowerCase().split(",")) { const f = armoire.lire(e.trim()); out[e] = f ? { ...etatDe(f, h.has(e.trim())), jours: f.d, clics: f.k?.length ?? 0 } : null; }
+    return NextResponse.json({ ok: true, out });
   }
   if (main && p.get("bilan") === "1") {
     const [b, a, e] = await kv.mget("cpt2:bilan", "cpt2:actif", "cpt2:ecriture-ok");
