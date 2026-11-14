@@ -30,6 +30,17 @@ async function k(method: string, path: string, body?: unknown): Promise<L | L[] 
 }
 const liste = async (path: string) => ((await k("GET", path)) as L[]) ?? [];
 
+// Katana applique un changement d'état en arrière-plan : on attend qu'il ait fini avant d'écrire dedans
+async function attendre(sid: number, max = 40000) {
+  const fin = Date.now() + max;
+  for (;;) {
+    const s = (await liste(`/stocktakes?ids=${sid}`))[0];
+    if (!s?.status_update_in_progress) return s;
+    if (Date.now() > fin) throw new Error("Katana met à jour le comptage, réessaie dans une minute");
+    await pause(1500);
+  }
+}
+
 const CLE = (sid: number) => `comptage:${sid}`;
 type Memo = { r: number; c: number; n: string }; // ligne Katana, quantité comptée, nom affiché
 
@@ -51,8 +62,9 @@ export async function creer(raison: string): Promise<Seance> {
 }
 
 export async function changerStatut(sid: number, statut: "NOT_STARTED" | "IN_PROGRESS" | "COUNTED" | "COMPLETED") {
+  await attendre(sid);
   await k("PATCH", `/stocktakes/${sid}`, { status: statut });
-  return seance(((await liste(`/stocktakes?ids=${sid}`))[0]) ?? { id: sid, status: statut });
+  return seance((await attendre(sid, 120000)) ?? { id: sid, status: statut });
 }
 
 const taille = (v: L): string => {
@@ -90,10 +102,10 @@ export async function produit(sid: number, code: string) {
 
 // Enregistre les quantités d'un produit dans le comptage Katana (créations groupées, corrections une par une)
 export async function enregistrer(sid: number, nom: string, lignes: { variantId: number; taille: string; compte: number }[]) {
-  const s = (await liste(`/stocktakes?ids=${sid}`))[0];
+  const s = await attendre(sid);
   if (!s) throw new Error("Comptage introuvable");
   if (s.status === "COMPLETED") throw new Error("Ce comptage est déjà terminé");
-  if (s.status === "NOT_STARTED" || s.status === "COUNTED") await k("PATCH", `/stocktakes/${sid}`, { status: "IN_PROGRESS" });
+  if (s.status === "NOT_STARTED" || s.status === "COUNTED") { await k("PATCH", `/stocktakes/${sid}`, { status: "IN_PROGRESS" }); await attendre(sid); }
   const memo = (await kv.hmget<Record<string, Memo>>(CLE(sid), ...lignes.map((l) => String(l.variantId)))) ?? {};
   const nouvelles = lignes.filter((l) => !memo?.[String(l.variantId)]);
   const maj: Record<string, Memo> = {};
