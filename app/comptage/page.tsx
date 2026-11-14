@@ -136,7 +136,7 @@ export default function Comptage() {
       <h1 className="text-2xl font-semibold">Comptage du stock</h1>
       <section className="rounded-xl border p-4 space-y-3">
         <h2 className="font-medium">Nouveau comptage</h2>
-        <input id="raison" value={raison} onChange={(e) => setRaison(e.target.value)} placeholder="Ce qu'on compte (ex. tiroir anneaux argent A–C)" className="w-full rounded-lg border px-3 py-2" />
+        <input id="raison" value={raison} onChange={(e) => setRaison(e.target.value)} placeholder="Qui compte et quoi (ex. Marlène — tiroirs argent A–F)" className="w-full rounded-lg border px-3 py-2" />
         <button onClick={nouvelle} disabled={occupe} className="rounded-lg bg-black px-4 py-2 text-white disabled:opacity-50">Créer le comptage</button>
       </section>
       <section className="space-y-2">
