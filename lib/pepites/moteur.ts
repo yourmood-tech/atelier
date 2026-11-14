@@ -10,13 +10,14 @@
 //      < 50 pièces → compatibles avec (même famille OU même fête) ET même couleur (une seule des deux si la pépite n'a que ça) ;
 //      0 pièce (fabriquée à la commande) → comme ≥ 50, réservé aux grandes cliqueuses, délai écrit clairement ;
 //      pépite sans famille, fête ni couleur lisible → ancienne règle (peu de stock : même matière ; sinon toutes les compatibles) ;
+//      jamais aux clientes qui l'ont déjà commandée, dans n'importe quel format (contrôle fait par Klaviyo au moment de l'envoi) ;
 //   4. dans Klaviyo : un groupe FR et un groupe DE (même règle de langue que les envois quotidiens), puis deux BROUILLONS
 //      de campagne qui excluent les clientes au repos, le groupe témoin et la pause « Inactives 6 mois ».
 // RIEN n'est envoyé : Stéphanie relit et envoie (validation humaine, ch. 27). Pas de remise, pas de fausse rareté.
 import { kv } from "@vercel/kv";
 import { shopifyGraphql } from "@/lib/shopify";
 import { classe, matiere, PLACES, PLACES_BASE } from "@/lib/carnet/classe";
-import { couleurDe, familleDe, fetesDe, type Famille, type Fete, type Teinte } from "@/lib/carnet/gout";
+import { cle, couleurDe, familleDe, fetesDe, type Famille, type Fete, type Teinte } from "@/lib/carnet/gout";
 
 const KATANA = "https://api.katanamrp.com/v1";
 const KKEY = process.env.KATANA_API_KEY ?? "";
@@ -25,6 +26,7 @@ const KLAVIYO = process.env.KLAVIYO_API_KEY ?? "";
 export const EXCLUS = { auRepos: "RMNrmb", temoin: "XQrjy3", inactives: "TMmZzE" };
 const LANGUE = { FR: "UzADxv", DE: "TaThDP" }; // segments quotidiens dont on reprend la règle de langue
 const CLICS = "NpL6Ey";
+const PRODUIT_COMMANDE = "KN7pMp"; // « Ordered Product » (Shopify → Klaviyo, site ET boutiques)
 export const SEUIL_PEU = 50; // en dessous : seulement les amatrices de la même matière
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -75,6 +77,7 @@ export type Analyse = {
   stockTotal: number; sansRecette: number; mode: "a-la-commande" | "peu" | "large";
   codes: string[]; taillesBase: number[]; raison?: string;
   famille: Famille | null; fetes: Fete[]; couleur: Teinte | null;
+  jumeaux: number[]; // la pièce et ses autres formats (même design) : celles qui l'ont déjà commandée sont exclues
 };
 
 // ── 2. analyse d'une pépite ──
@@ -110,8 +113,12 @@ export async function analyser(produitId: string): Promise<Analyse> {
     if (t.base && !t.places) { taillesBase.add(t.taille); continue; } // une base seule : clientes de cette taille
     for (const [w, cap] of Object.entries(PLACES_BASE)) if (t.places <= cap) codes.add(`${w}${t.taille}`);
   }
+  // même design dans un autre format (ex. Entwine addon / deux tiers) : fiches dont le nom donne la même clé
+  const nomCle = cle(p.title); const mots = nomCle.split(" ").filter((m) => m.length > 2).slice(0, 3);
+  const freres: L = mots.length ? await shopifyGraphql<L>(`query($q:String){ products(first:20, query:$q){ nodes{ id title } } }`, { q: mots.map((m) => `title:*${m}*`).join(" AND ") }) : { products: { nodes: [] } };
+  const jumeaux = [...new Set([p.id, ...freres.products.nodes.filter((x: L) => cle(x.title) === nomCle).map((x: L) => x.id)])].map((g) => Number(String(g).split("/").pop()));
   return {
-    id: p.id, titre: p.title, lien: p.onlineStoreUrl ?? `https://www.yourmood.net/products/${p.handle}`, image: p.featuredImage?.url ?? null,
+    id: p.id, titre: p.title, jumeaux, lien: p.onlineStoreUrl ?? `https://www.yourmood.net/products/${p.handle}`, image: p.featuredImage?.url ?? null,
     matiere: matiere(p.title, p.variants.nodes[0]?.sku ?? null, p.productType), tailles, stockTotal, sansRecette, mode,
     codes: [...codes].sort(), taillesBase: [...taillesBase].sort(),
     famille: familleDe(p.title, p.tags ?? []), fetes: fetesDe(p.title, p.tags ?? []), couleur: couleurDe(p.title, null, p.tags ?? [], p.descriptionHtml),
@@ -142,6 +149,8 @@ function definition(a: Analyse, langue: L[]) {
     if (teinte.length) groupes.push({ conditions: teinte });
   } else groupes.push({ conditions: [...design, ...teinte] });
   if (a.mode === "a-la-commande") groupes.push({ conditions: [{ type: "profile-metric", metric_id: CLICS, measurement: "count", measurement_filter: { type: "numeric", operator: "greater-than", value: 12 }, timeframe_filter: { type: "date", operator: "in-the-last", unit: "day", quantity: 90 }, metric_filters: null }] });
+  // déjà commandée (site ou boutique, à n'importe quel moment, jusqu'à l'envoi) → exclue (demande Philippe 14.11)
+  for (const id of a.jumeaux) groupes.push({ conditions: [{ type: "profile-metric", metric_id: PRODUIT_COMMANDE, measurement: "count", measurement_filter: { type: "numeric", operator: "equals", value: 0 }, timeframe_filter: { type: "date", operator: "alltime" }, metric_filters: [{ property: "ProductID", filter: { type: "numeric", operator: "equals", value: id } }] }] });
   groupes.push(...langue);
   groupes.push({ conditions: [{ type: "profile-marketing-consent", consent: { channel: "email", can_receive_marketing: true, consent_status: { subscription: "any", filters: null } } }] });
   return { condition_groups: groupes };
