@@ -1,7 +1,7 @@
 // Compteur anti-saturation — règles décidées par Philippe le 12.11.2026 (Mood Cash Engine, étage 1),
 // revues avec Stéphanie le 14.11.2026 :
 // Ce qui compte : seulement ce qu'un humain décide d'envoyer = newsletters (campagnes email, WhatsApp, SMS, push)
-// et messages « 1 à 1 » des gérantes (campagnes Klaviyo). Les messages automatiques (flows : relances panier,
+// et messages « 1 à 1 » des gérantes (campagnes Klaviyo + emails des adresses boutiques envoyés depuis la fiche Shopify). Les messages automatiques (flows : relances panier,
 // produit vu, anniversaire, fabrication, paiement…) ne comptent plus. Réponses du service client : jamais.
 // Plafond : 5 par semaine ; « une newsletter par semaine » : 2 ; sans plafond : grandes cliqueuses (≥ 13 jours
 // de clic en 90 j) + liste du jour « sans plafond » (vraies ouvertures + commandes, voir libres.ts).

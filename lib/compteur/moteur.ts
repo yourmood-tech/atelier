@@ -138,7 +138,10 @@ export async function collecter(montre: Montre, armoire: Armoire, essai: boolean
     }
     curseurs[mesure] = [curseur, [...bord]];
   }
-  if (essai) return { bilan, recus: recus.length };
+  // emails écrits à la main par les boutiques depuis la fiche Shopify (décision du 14.11.2026)
+  const mb = await mailsBoutiques(montre);
+  recus.push(...mb.evs);
+  if (essai) return { bilan, recus: recus.length, mailsBoutiques: mb.evs.length };
   await kv.set("cpt2:trace", { etape: "lecture finie, rangement", quand: new Date().toISOString(), evenements: recus.length + clics.length + desab.length }); demandes.n++;
   // ranger dans les classeurs (une seule ouverture par classeur)
   const tous = [...recus, ...clics, ...desab];
@@ -152,8 +155,31 @@ export async function collecter(montre: Montre, armoire: Armoire, essai: boolean
   // curseurs APRÈS les classeurs : si la tranche est coupée entre les deux, on relit, on ne perd rien
   for (const [m, [c, bd]] of Object.entries(curseurs)) { await kvSet(`cpt2:curseur:${m}`, c); await kvSet(`cpt2:bord:${m}`, bd); }
   for (const m of finis) if (!(await kvGet(`cpt2:fini:${m}`))) await kvSet(`cpt2:fini:${m}`, new Date().toISOString());
-  return { bilan, recus: recus.length, classeurs };
+  if (mb.curseur) await kvSet("cpt2:curseur:mails-boutiques", mb.curseur);
+  return { bilan, recus: recus.length, mailsBoutiques: mb.evs.length, classeurs };
 }
+// Emails des boutiques envoyés depuis Shopify (trace « X sent an email from orbe@yourmood.net to this customer (email) »).
+// Seules les adresses des boutiques comptent : « contact@ » = service client (jamais compté), envois par application = inconnus.
+const ADRESSE_BOUTIQUE = /\b(orbe|martigny|carouge|fribourg|zermatt|zurich|monthey|vevey)@yourmood\.net/i;
+async function mailsBoutiques(montre: Montre): Promise<{ evs: Ev[]; curseur: string | null }> {
+  if (!BOUTIQUES.yourmood.jeton) return { evs: [], curseur: null };
+  const depuis = (await kvGet<string>("cpt2:curseur:mails-boutiques")) ?? new Date(Date.now() - JOURS_FENETRE * 86400000).toISOString().slice(0, 19) + "Z";
+  const evs: Ev[] = []; let c: string | null = null; let dernier = depuis;
+  const q = `subject_type:CUSTOMER AND action:follow_up AND created_at:>'${depuis}'`;
+  for (let i = 0; i < 40 && reste(montre) > 30000; i++) {
+    const d = await shopifyGql("yourmood", `query($c:String,$q:String){ events(first:250, after:$c, sortKey:CREATED_AT, query:$q){ pageInfo{ hasNextPage endCursor } nodes{ createdAt message } } }`, { c, q });
+    for (const n of d.events.nodes as { createdAt: string; message: string }[]) {
+      if (n.createdAt > dernier) dernier = n.createdAt;
+      if (!ADRESSE_BOUTIQUE.test(n.message)) continue;
+      const email = n.message.match(/to this customer \(([^)\s]+@[^)\s]+)\)/)?.[1]?.toLowerCase();
+      if (email) evs.push({ email, jour: jourSuisse(n.createdAt), quand: n.createdAt });
+    }
+    if (!d.events.pageInfo.hasNextPage) return { evs, curseur: dernier };
+    c = d.events.pageInfo.endCursor;
+  }
+  return { evs, curseur: dernier }; // reprise au passage suivant (les plus anciennes d'abord)
+}
+
 export async function collecteAJour(): Promise<boolean> {
   demandes.n++;
   const v = await kv.mget<(string | null)[]>(...[...MESURES_RECU, ...MESURES_SIGNAUX].map((m) => `cpt2:fini:${m}`));
