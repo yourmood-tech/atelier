@@ -20,6 +20,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
         description: "Scannez un produit Shopify pour voir sa recette Katana et lancer une production.",
       },
       {
+        href: "/comptage",
+        emoji: "🔢",
+        title: "Comptage du stock",
+        description: "Comptez le stock en scannant, produit par produit ; les tailles non trouvées passent à zéro. Remplit un vrai comptage Katana.",
+      },
+      {
         href: "/reprint",
         emoji: "🖨️",
         title: "Réimpression",
