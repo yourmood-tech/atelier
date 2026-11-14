@@ -1,15 +1,18 @@
-// Compteur anti-saturation — règles décidées par Philippe le 12.11.2026 (Mood Cash Engine, étage 1).
-// Ce qui compte : newsletters, relances automatiques à but commercial, WhatsApp publicitaires, push, SMS,
-// messages « 1 à 1 » des gérantes (ce sont des campagnes Klaviyo).
-// Ce qui ne compte pas : réponses du service client (Gorgias par email = hors Klaviyo ; WhatsApp
-// « conversation » = réponses Gorgias passant par Klaviyo) et messages de service (paiement, fabrication, devis).
+// Compteur anti-saturation — règles décidées par Philippe le 12.11.2026 (Mood Cash Engine, étage 1),
+// revues avec Stéphanie le 14.11.2026 :
+// Ce qui compte : seulement ce qu'un humain décide d'envoyer = newsletters (campagnes email, WhatsApp, SMS, push)
+// et messages « 1 à 1 » des gérantes (campagnes Klaviyo). Les messages automatiques (flows : relances panier,
+// produit vu, anniversaire, fabrication, paiement…) ne comptent plus. Réponses du service client : jamais.
+// Plafond : 5 par semaine ; « une newsletter par semaine » : 2 ; sans plafond : grandes cliqueuses (≥ 13 jours
+// de clic en 90 j) + liste du jour « sans plafond » (vraies ouvertures + commandes, voir libres.ts).
+// Les newsletters qui sautent quand le plafond est atteint = au hasard du calendrier (choix assumé le 14.11).
 
-export const BUDGET = { hebdo: 2, normale: 5, addict: 10, superAddict: 14 } as const;
+export const SANS_PLAFOND = 999;
+export const BUDGET = { hebdo: 2, normale: 5, sansPlafond: SANS_PLAFOND } as const;
 export type Profil = keyof typeof BUDGET;
 
-// Addict = a cliqué dans un message sur au moins N jours différents en 90 jours, sans désinscription ni plainte.
+// Grande cliqueuse = a cliqué dans un message sur au moins N jours différents en 90 jours, sans désinscription ni plainte.
 export const SEUIL_ADDICT = 13;
-export const SEUIL_SUPER_ADDICT = 26;
 export const JOURS_PROFIL = 90;
 export const JOURS_FENETRE = 7;
 
@@ -39,20 +42,20 @@ export const RELANCES_DE_SERVICE = new Set([
   "S4J2L3", // CNIL FR
 ]);
 
-// Inscrites qui ont choisi « une newsletter par semaine » : budget 2, jamais addict.
+// Inscrites qui ont choisi « une newsletter par semaine » : budget 2, même si elles sont très actives (leur choix).
 export const SEGMENTS_HEBDO = ["YiANYi"]; // propriété send-frequency = oneperweek (FR + DE)
 export const LISTES_HEBDO = ["UfzzhQ", "Tb8B4v"]; // « 1_fois_par_semaine », « Une fois par semaine »
 
-export function profilDe(o: { hebdo: boolean; joursClic: number; desabonnee: boolean }): Profil {
-  if (o.hebdo) return "hebdo";
+export function profilDe(o: { hebdo: boolean; joursClic: number; desabonnee: boolean; libre?: boolean }): Profil {
+  if (o.hebdo) return "hebdo"; // elle a choisi une newsletter par semaine : on respecte son choix
   if (o.desabonnee) return "normale";
-  if (o.joursClic >= SEUIL_SUPER_ADDICT) return "superAddict";
-  if (o.joursClic >= SEUIL_ADDICT) return "addict";
+  if (o.joursClic >= SEUIL_ADDICT || o.libre) return "sansPlafond";
   return "normale";
 }
 
 // Un message reçu compte-t-il ? (propriétés de l'événement Klaviyo)
 export function compte(mesure: string, p: Record<string, unknown>): boolean {
+  if (p["$flow"]) return false; // message automatique : ne compte plus (décision du 14.11.2026)
   if (mesure === M.recuWhatsapp) {
     if (String(p["Message Type"] ?? "").toLowerCase() === "conversation") return false;
     if (String(p["Content Type"] ?? "").toLowerCase() === "service") return false;

@@ -184,7 +184,7 @@ export const BOUTIQUES = {
   joaillerie: { domaine: process.env.MOODJOAILLERIE_SHOPIFY_DOMAIN || "", jeton: process.env.MOODJOAILLERIE_SHOPIFY_ACCESS_TOKEN || "" },
 } as const;
 type Boutique = keyof typeof BOUTIQUES;
-async function shopifyGql(b: Boutique, query: string, variables: Record<string, unknown> = {}) {
+export async function shopifyGql(b: Boutique, query: string, variables: Record<string, unknown> = {}) {
   const { domaine, jeton } = BOUTIQUES[b];
   for (let i = 0; i < 8; i++) {
     const r = await fetch(`https://${domaine}/admin/api/2025-01/graphql.json`, { method: "POST", headers: { "X-Shopify-Access-Token": jeton, "Content-Type": "application/json" }, body: JSON.stringify({ query, variables }), cache: "no-store", signal: AbortSignal.timeout(30000) });
@@ -239,9 +239,9 @@ export async function indexPret(): Promise<boolean> {
 
 
 type Etat = { n: number; budget: number; dernier: string; profil: Profil };
-export function etatDe(f: Fiche, estHebdo: boolean, fen: Set<string> = new Set(joursAvant(JOURS_FENETRE))): Etat {
+export function etatDe(f: Fiche, estHebdo: boolean, fen: Set<string> = new Set(joursAvant(JOURS_FENETRE)), libre = false): Etat {
   const n = Object.entries(f.d ?? {}).reduce((s, [j, v]) => s + (fen.has(j) ? v : 0), 0);
-  const profil = profilDe({ hebdo: estHebdo, joursClic: f.k?.length ?? 0, desabonnee: !!f.u });
+  const profil = profilDe({ hebdo: estHebdo, joursClic: f.k?.length ?? 0, desabonnee: !!f.u, libre });
   return { n, budget: BUDGET[profil], dernier: f.l ?? "", profil };
 }
 const sig = (s: Etat) => `${s.n}|${s.budget}|${s.dernier}`;
@@ -249,16 +249,16 @@ const sig = (s: Etat) => `${s.n}|${s.budget}|${s.dernier}`;
 // Mise au repos (décision Philippe 13.11.2026) : plafond de la semaine atteint (messages ≥ budget) → marque « au repos »
 // dans Klaviyo (propriété compteur_au_repos, exclue des campagnes) + étiquette « au-repos » sur la fiche Shopify.
 // Elle se retire toute seule quand le compteur redescend, ou pour tout le monde si la mise au repos est coupée.
-export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<string>, essai: boolean, reposActif = false) {
+export async function ecrire(montre: Montre, armoire: Armoire, hebdoSet: Set<string>, essai: boolean, reposActif = false, libres: Set<string> = new Set()) {
   await armoire.toutOuvrir();
   armoire.menage();
   const aEcrire: [string, Etat][] = [];
-  const profils: Record<Profil, number> = { hebdo: 0, normale: 0, addict: 0, superAddict: 0 };
+  const profils: Record<Profil, number> = { hebdo: 0, normale: 0, sansPlafond: 0 };
   const reposK: [string, boolean][] = [], reposS: [string, boolean][] = [];
   let touchees = 0, auDessus = 0, auRepos = 0;
   const fen = new Set(joursAvant(JOURS_FENETRE)); // calculé une fois pour toutes les clientes
   for (const [e, f] of armoire.toutes()) {
-    const s = etatDe(f, hebdoSet.has(e), fen);
+    const s = etatDe(f, hebdoSet.has(e), fen, libres.has(e));
     if (s.n > 0) { touchees++; profils[s.profil]++; if (s.n > s.budget) auDessus++; }
     const plafond = s.n > 0 && s.n >= s.budget;
     if (plafond) auRepos++;

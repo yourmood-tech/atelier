@@ -36,10 +36,11 @@ export async function GET(req: NextRequest) {
   if (main && p.get("voir")) {
     const armoire = new Armoire(); await armoire.toutOuvrir();
     const h = new Set(((await kv.get<{ emails: string[] }>("cpt2:hebdo"))?.emails) ?? []);
+    const lib = new Set(((await kv.get<{ emails: string[] }>("cpt2:libres"))?.emails) ?? []);
     if (p.get("voir") === "echantillon") {
-      const ech: Record<string, unknown[]> = { hebdo: [], normale: [], addict: [], superAddict: [], auDessus: [] };
+      const ech: Record<string, unknown[]> = { hebdo: [], normale: [], sansPlafond: [], auDessus: [] };
       for (const [e, f] of armoire.toutes()) {
-        const s = etatDe(f, h.has(e));
+        const s = etatDe(f, h.has(e), undefined, lib.has(e));
         if (s.n === 0) continue;
         if (ech[s.profil].length < 3) ech[s.profil].push({ e, ...s, clics: f.k?.length ?? 0 });
         if (s.profil === "normale" && s.n > s.budget && ech.auDessus.length < 3) ech.auDessus.push({ e, ...s });
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: true, ech });
     }
     const out: Record<string, unknown> = {};
-    for (const e of (p.get("voir") ?? "").toLowerCase().split(",")) { const f = armoire.lire(e.trim()); out[e] = f ? { ...etatDe(f, h.has(e.trim())), jours: f.d, clics: f.k?.length ?? 0 } : null; }
+    for (const e of (p.get("voir") ?? "").toLowerCase().split(",")) { const f = armoire.lire(e.trim()); out[e] = f ? { ...etatDe(f, h.has(e.trim()), undefined, lib.has(e.trim())), jours: f.d, clics: f.k?.length ?? 0 } : null; }
     return NextResponse.json({ ok: true, out });
   }
   if (main && p.get("bilan") === "1") {
@@ -74,8 +75,9 @@ export async function GET(req: NextRequest) {
       const [autoriseV, reposV] = await kv.mget("cpt2:ecriture-ok", "cpt2:repos-ok"); demandes.n++;
       const autorise = !!autoriseV;
       await trace("liste hebdo"); const h = await hebdo(essai);
+      const libres = new Set(((await kv.get<{ emails: string[] }>("cpt2:libres"))?.emails) ?? []); demandes.n++;
       await trace("calcul et écriture");
-      bilan.ecriture = await ecrire(montre, armoire, h, essai || !autorise, !!reposV);
+      bilan.ecriture = await ecrire(montre, armoire, h, essai || !autorise, !!reposV, libres);
       if (!autorise && !essai) bilan.note = "calculé seulement : écriture sur les fiches pas encore autorisée";
     } else bilan.ecriture = !pret ? "en attente : index des fiches Shopify" : "en attente : premier rattrapage des messages et des clics";
     bilan.demandesStockage = demandes.n + 2;

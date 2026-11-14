@@ -51,6 +51,10 @@
     {
       "path": "/api/pepites",
       "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/compteur-libres",
+      "schedule": "20 * * * *"
     }
   ]
 }
