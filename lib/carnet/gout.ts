@@ -55,7 +55,8 @@ const COUL: [Teinte, RegExp][] = [
 const MOTS_UNI = /\b(en|aluminium|alu|anodise|anodisee|polymere|polymer|opaque|colore|coloree|acetate|mini|minis|s|1|un|medium|addon|deux|tiers|couleur|a|choix|de|pour|bague|mood|interchangeable)\b/g;
 
 export function couleurTexte(texte?: string | null): Teinte | null {
-  const s = norm(texte);
+  // « rose gold » / « or rose » = une touche sur une pièce d'argent ou d'acier, pas sa couleur (Entwine, 14.11)
+  const s = norm(texte).replace(/rose[- ]?gold|pink[- ]?gold|\bor rose\b|\bgold[- ]?rose/g, " ");
   for (const [c, re] of COUL.slice(0, -1)) if (re.test(s)) return c;
   return COUL.at(-1)![1].test(s) ? "argente" : null;
 }
