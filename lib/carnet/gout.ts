@@ -1,10 +1,12 @@
 // Goût de la cliente (décision Philippe 14.11.2026) : 8 familles de design + couleur dominante, pour cibler les pépites.
 // Familles = trouvées d'après les achats communs (analyse du 14.11 sur les achats depuis 2023), complétées par des règles
-// de mots pour les nouvelles pièces. Couleur = lue dans le titre et la variante, sinon dans les étiquettes de la fiche.
+// de mots pour les nouvelles pièces. Couleur = la variante choisie, sinon la ligne « Couleur » de la description de la
+// fiche (corrigé le 14.11 : « myrtille » = bleu, cf. Ours céleste), sinon le titre, sinon les étiquettes.
+// Fêtes (décision Philippe 14.11) : Noël, Saint-Valentin, Fête des mères — lues dans le nom et les étiquettes des fiches.
 // Couleur dominante (validée 14.11) : sur les 12 derniers anneaux dont la couleur est lisible, au moins 2 anneaux et
 // au moins 40 % de la même teinte ; sinon « melange ». Même logique que le calcul initial (scratchpad design/gout.py).
 import CARTE from "./carte-familles.json";
-import COULEUR_ETIQUETTES from "./couleur-par-etiquettes.json";
+import FICHES from "./fiches-anneaux.json";
 
 export const FAMILLES = {
   coeurs: "Cœurs et amour", aura: "Aura sertis", suisse: "Suisse et montagne", brutes: "Matières brutes",
@@ -42,8 +44,8 @@ const COUL: [Teinte, RegExp][] = [
   ["blanc", /\bblanc|\bwhite|nacre|perle|ivoire|neige|givre/],
   ["rose", /\brose\b|\bpink|blush|sakura|poudre|corail|saumon|peche|abricot/],
   ["rouge", /\brouge|\bred\b|rubis|framboise|cerise|chili|bordeaux|lie-de-vin|lie de vin|grenat/],
-  ["violet", /violet|aubergine|lilas|lavand|prune|purple|mauve|parme|indigo|myrtille|amethyste/],
-  ["bleu", /\bbleu|\bblue|marine|azur|saphir|lapis|\bnuit\b|cobalt|\bciel\b|london|\bsky\b/],
+  ["violet", /violet|aubergine|lilas|lavand|prune|purple|mauve|parme|indigo|amethyste/],
+  ["bleu", /\bbleu|\bblue|marine|azur|saphir|lapis|\bnuit\b|cobalt|\bciel\b|london|\bsky\b|myrtille/],
   ["turquoise", /turquoise|lagon|menthe|aqua|cyan|celadon/],
   ["vert", /\bvert|\bgreen|emeraude|olive|kaki|sapin|jade|anis|tilleul/],
   ["dore", /jaune|\bor\b|dore|orange|ocre|moutarde|soleil|citron|caramel|ambre|miel|\bgold/],
@@ -73,11 +75,26 @@ export function familleDe(titre?: string | null, etiquettes: string[] = []): Fam
   if (t && t in FAMILLES) return t as Famille;
   return ((CARTE as Record<string, string>)[cle(titre)] as Famille | undefined) ?? familleRegles(titre);
 }
-export function couleurDe(titre?: string | null, variante?: string | null, etiquettes: string[] = []): Teinte | null {
+type Fiche = { c?: Teinte; fe?: Fete[] };
+const fiche = (titre?: string | null) => (FICHES as Record<string, Fiche>)[cle(titre)];
+export function couleurDe(titre?: string | null, variante?: string | null, etiquettes: string[] = [], description?: string | null): Teinte | null {
   const t = etiquettes.map((e) => norm(e)).find((e) => e.startsWith("couleur-"))?.slice(8);
   if (t && (TEINTES as readonly string[]).includes(t)) return t as Teinte;
-  return couleurTexte(`${titre ?? ""} ${variante ?? ""}`) ?? ((COULEUR_ETIQUETTES as Record<string, string>)[cle(titre)] as Teinte | undefined)
+  const ligne = description?.match(/<td>\s*Couleur\s*<\/td>\s*<td>([\s\S]*?)<\/td>/i)?.[1];
+  return couleurTexte(variante) ?? (ligne ? couleurTexte(ligne.replace(/<[^>]+>/g, " ")) : null) ?? fiche(titre)?.c ?? couleurTexte(titre)
     ?? couleurTexte(etiquettes.filter((e) => e.length < 25).join(" "));
+}
+
+export const FETES = { noel: "Noël", "saint-valentin": "Saint-Valentin", "fete-des-meres": "Fête des mères" } as const;
+export type Fete = keyof typeof FETES;
+const REGLES_FETES: [Fete, RegExp][] = [
+  ["noel", /no[e]l|sapin|flocon|renne|pere noel|weihnacht|christmas|xmas|bonhomme de neige|calendrier de l.avent/],
+  ["saint-valentin", /saint[- ]?valentin|\bvalentin|valentine/],
+  ["fete-des-meres", /fete des meres|fete-des-meres|\bmaman|\bmom\b|muttertag|\bmama\b/],
+];
+export function fetesDe(titre?: string | null, etiquettes: string[] = []): Fete[] {
+  const tx = norm(`${titre ?? ""} ${etiquettes.join(" ")}`);
+  return [...new Set([...REGLES_FETES.filter(([, re]) => re.test(tx)).map(([f]) => f), ...(fiche(titre)?.fe ?? [])])];
 }
 export function dominante(suite: { jour: string; teinte: Teinte }[]): Teinte | "melange" | null {
   const s = [...suite].sort((a, b) => a.jour.localeCompare(b.jour)).slice(-12);
