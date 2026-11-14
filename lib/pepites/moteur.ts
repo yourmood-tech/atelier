@@ -4,14 +4,19 @@
 //   1. stock RÉEL par taille (recette Katana, la matière la plus rare décide ; le stock Shopify n'a pas de sens) ;
 //   2. clientes compatibles, uniquement sur des faits (carnet dans Klaviyo : carnet_bases_codes = largeur+taille des bases
 //      achetées) + règle des places (mini 1, medium 2, deux tiers 4, addon 6 ; base XS 4 places, small/large 6) ;
-//   3. plafond selon le stock : 0 pièce (fabriquée à la commande) → seulement les « addicts » compatibles et le délai écrit
-//      clairement ; peu de pièces → compatibles qui ont déjà acheté la même matière ; beaucoup → toutes les compatibles ;
+//   3. goût (décision Philippe + Stéphanie 14.11.2026) : famille de design, fête (Noël, Saint-Valentin, Fête des mères)
+//      et couleur dominante de la cliente (carnet_familles / carnet_fetes / carnet_couleur dans Klaviyo) :
+//      ≥ 50 pièces → compatibles avec même famille OU même fête OU même couleur ;
+//      < 50 pièces → compatibles avec (même famille OU même fête) ET même couleur (une seule des deux si la pépite n'a que ça) ;
+//      0 pièce (fabriquée à la commande) → comme ≥ 50, réservé aux grandes cliqueuses, délai écrit clairement ;
+//      pépite sans famille, fête ni couleur lisible → ancienne règle (peu de stock : même matière ; sinon toutes les compatibles) ;
 //   4. dans Klaviyo : un groupe FR et un groupe DE (même règle de langue que les envois quotidiens), puis deux BROUILLONS
 //      de campagne qui excluent les clientes au repos, le groupe témoin et la pause « Inactives 6 mois ».
 // RIEN n'est envoyé : Stéphanie relit et envoie (validation humaine, ch. 27). Pas de remise, pas de fausse rareté.
 import { kv } from "@vercel/kv";
 import { shopifyGraphql } from "@/lib/shopify";
 import { classe, matiere, PLACES, PLACES_BASE } from "@/lib/carnet/classe";
+import { couleurDe, familleDe, fetesDe, type Famille, type Fete, type Teinte } from "@/lib/carnet/gout";
 
 const KATANA = "https://api.katanamrp.com/v1";
 const KKEY = process.env.KATANA_API_KEY ?? "";
@@ -69,11 +74,12 @@ export type Analyse = {
   tailles: { taille: number; stock: number | null; places: number; base: boolean }[];
   stockTotal: number; sansRecette: number; mode: "a-la-commande" | "peu" | "large";
   codes: string[]; taillesBase: number[]; raison?: string;
+  famille: Famille | null; fetes: Fete[]; couleur: Teinte | null;
 };
 
 // ── 2. analyse d'une pépite ──
 export async function analyser(produitId: string): Promise<Analyse> {
-  const d: L = await shopifyGraphql<L>(`query($id:ID!){ product(id:$id){ id title handle productType onlineStoreUrl featuredImage{ url } variants(first:100){ nodes{ title sku } } } }`, { id: produitId });
+  const d: L = await shopifyGraphql<L>(`query($id:ID!){ product(id:$id){ id title handle productType tags descriptionHtml onlineStoreUrl featuredImage{ url } variants(first:100){ nodes{ title sku } } } }`, { id: produitId });
   const p = d.product;
   const cache = new Map<number, number>();
   const tailles: Analyse["tailles"] = [];
@@ -108,6 +114,7 @@ export async function analyser(produitId: string): Promise<Analyse> {
     id: p.id, titre: p.title, lien: p.onlineStoreUrl ?? `https://www.yourmood.net/products/${p.handle}`, image: p.featuredImage?.url ?? null,
     matiere: matiere(p.title, p.variants.nodes[0]?.sku ?? null, p.productType), tailles, stockTotal, sansRecette, mode,
     codes: [...codes].sort(), taillesBase: [...taillesBase].sort(),
+    famille: familleDe(p.title, p.tags ?? []), fetes: fetesDe(p.title, p.tags ?? []), couleur: couleurDe(p.title, null, p.tags ?? [], p.descriptionHtml),
     raison: !tailles.length ? "pas une pièce à clipser (ni anneau ni base)" : !retenues.length ? "aucune taille avec recette Katana" : undefined,
   };
 }
@@ -125,7 +132,15 @@ function definition(a: Analyse, langue: L[]) {
     ...a.taillesBase.map((t) => ({ type: "profile-property", property: "properties['carnet_taille']", filter: { type: "numeric", operator: "equals", value: t } })),
   ];
   groupes.push({ conditions: cible });
-  if (a.mode === "peu" && a.matiere) groupes.push({ conditions: [{ type: "profile-property", property: "properties['carnet_matieres']", filter: { type: "list", operator: "contains", value: a.matiere } }] });
+  const liste = (prop: string, v: string) => ({ type: "profile-property", property: `properties['${prop}']`, filter: { type: "list", operator: "contains", value: v } });
+  const design = [...(a.famille ? [liste("carnet_familles", a.famille)] : []), ...a.fetes.map((f) => liste("carnet_fetes", f))];
+  const teinte = a.couleur ? [{ type: "profile-property", property: "properties['carnet_couleur']", filter: { type: "string", operator: "equals", value: a.couleur } }] : [];
+  if (!design.length && !teinte.length) {
+    if (a.mode === "peu" && a.matiere) groupes.push({ conditions: [liste("carnet_matieres", a.matiere)] });
+  } else if (a.mode === "peu") {
+    if (design.length) groupes.push({ conditions: design });
+    if (teinte.length) groupes.push({ conditions: teinte });
+  } else groupes.push({ conditions: [...design, ...teinte] });
   if (a.mode === "a-la-commande") groupes.push({ conditions: [{ type: "profile-metric", metric_id: CLICS, measurement: "count", measurement_filter: { type: "numeric", operator: "greater-than", value: 12 }, timeframe_filter: { type: "date", operator: "in-the-last", unit: "day", quantity: 90 }, metric_filters: null }] });
   groupes.push(...langue);
   groupes.push({ conditions: [{ type: "profile-marketing-consent", consent: { channel: "email", can_receive_marketing: true, consent_status: { subscription: "any", filters: null } } }] });
@@ -191,7 +206,7 @@ export async function passage(opts: { creer: boolean; fin: number; produit?: str
     if (!opts.produit && faites.has(id)) continue;
     try {
       const a = await analyser(id);
-      const r: Record<string, unknown> = { id, titre: a.titre, mode: a.mode, stock: a.stockTotal, matiere: a.matiere, codes: a.codes.length, taillesBase: a.taillesBase, sansRecette: a.sansRecette, raison: a.raison };
+      const r: Record<string, unknown> = { id, titre: a.titre, mode: a.mode, stock: a.stockTotal, matiere: a.matiere, famille: a.famille, fetes: a.fetes, couleur: a.couleur, codes: a.codes.length, taillesBase: a.taillesBase, sansRecette: a.sansRecette, raison: a.raison };
       if (!a.raison && opts.creer) { r.klaviyo = await preparer(a); faites.add(id); }
       resultats.push(r);
     } catch (e) { resultats.push({ id, erreur: e instanceof Error ? e.message : String(e) }); }
