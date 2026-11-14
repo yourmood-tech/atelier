@@ -30,7 +30,7 @@ async function gql(query: string, variables: Record<string, unknown> = {}) {
 async function historique(id: string, info?: { email?: string; tags?: string[] }): Promise<Commande[]> {
   const out: Commande[] = []; let c: string | null = null;
   for (;;) {
-    const d = await gql(`query($id:ID!,$c:String){customer(id:$id){defaultEmailAddress{emailAddress} tags orders(first:50,after:$c){pageInfo{hasNextPage endCursor} nodes{createdAt cancelledAt lineItems(first:100){nodes{title variantTitle sku currentQuantity product{productType}}}}}}}`, { id: `gid://shopify/Customer/${id}`, c });
+    const d = await gql(`query($id:ID!,$c:String){customer(id:$id){defaultEmailAddress{emailAddress} tags orders(first:50,after:$c){pageInfo{hasNextPage endCursor} nodes{createdAt cancelledAt lineItems(first:100){nodes{title variantTitle sku currentQuantity product{productType tags}}}}}}}`, { id: `gid://shopify/Customer/${id}`, c });
     if (info && d.customer) { info.email = d.customer.defaultEmailAddress?.emailAddress ?? undefined; info.tags = d.customer.tags; }
     const o = d.customer?.orders; if (!o) break;
     for (const n of o.nodes) out.push({ createdAt: n.createdAt, cancelledAt: n.cancelledAt, lignes: n.lineItems.nodes });

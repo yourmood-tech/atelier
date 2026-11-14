@@ -2,6 +2,7 @@
 // Tri d'une ligne de commande en pièces (base + largeur, addon, deux tiers, medium, mini) et lecture de la taille.
 // Même logique que le calcul initial fait sur tout l'historique le 13.11.2026 (65 596 clientes).
 // Compatibilité (validée Philippe 13.11) : mini 1 place, medium 2, deux tiers 4, addon 6 ; base XS 4 places, small/large 6 ; même taille.
+import { couleurDe, dominante, familleDe, type Teinte } from "./gout";
 export type Piece = { type: "base" | "addon" | "deux tiers" | "medium" | "mini" | "anneau" | "inconnu"; largeur: "XS" | "S" | "L" | "?" | null; nb: number };
 export const PLACES = { mini: 1, medium: 2, "deux tiers": 4, addon: 6 } as const;
 export const PLACES_BASE = { XS: 4, S: 6, L: 6 } as const;
@@ -71,12 +72,13 @@ export function matiere(title: string | null, sku: string | null, ptype: string 
 
 const ORDRE = ["addon", "deux tiers", "medium", "mini", "anneau"] as const;
 const NOM: Record<string, string> = { XS: "extra small", S: "small", L: "large", "?": "largeur inconnue" };
-type Ligne = { title: string; variantTitle: string | null; sku: string | null; currentQuantity: number; product: { productType: string } | null };
+type Ligne = { title: string; variantTitle: string | null; sku: string | null; currentQuantity: number; product: { productType: string; tags?: string[] } | null };
 export type Commande = { createdAt: string; cancelledAt: string | null; lignes: Ligne[] };
 
 export function carnet(cmds: Commande[]) {
   const tailles = new Map<number, number>(), bases = new Map<string, number>(), ann: Record<string, number> = {}, mat: Record<string, number> = {};
   const dates: string[] = []; let nbCmd = 0;
+  const familles: Record<string, number> = {}; const teintes: { jour: string; teinte: Teinte }[] = [];
   for (const c of cmds) {
     if (c.cancelledAt) continue;
     let compte = false;
@@ -91,6 +93,11 @@ export function carnet(cmds: Commande[]) {
         if (pc.type === "base") { const k = `${pc.largeur}|${tl ?? ""}`; bases.set(k, (bases.get(k) ?? 0) + n); }
         else {
           ann[pc.type] = (ann[pc.type] ?? 0) + n;
+          if (pieces.length === 1 && pc.type !== "anneau") { // goût : seulement les anneaux vendus seuls (pas les packs)
+            const tags = l.product?.tags ?? [];
+            const f = familleDe(l.title, tags); if (f) familles[f] = (familles[f] ?? 0) + n;
+            const co = couleurDe(l.title, l.variantTitle, tags); if (co) for (let i = 0; i < n; i++) teintes.push({ jour: c.createdAt.slice(0, 10), teinte: co });
+          }
           const m = matiere(l.title, l.sku, l.product?.productType ?? null);
           if (m) mat[m] = (mat[m] ?? 0) + n;
         }
@@ -108,7 +115,8 @@ export function carnet(cmds: Commande[]) {
   dates.sort();
   return {
     taille: tp, basesTxt, anneauxTxt,
-    json: { taille: tp, autres_tailles: autres, bases: bl, anneaux: Object.fromEntries(ORDRE.filter((x) => ann[x]).map((x) => [x, ann[x]])), matieres: Object.fromEntries(Object.entries(mat).sort((a, b) => b[1] - a[1])), premier_achat: dates[0], dernier_achat: dates.at(-1), commandes: nbCmd },
+    json: { taille: tp, autres_tailles: autres, bases: bl, anneaux: Object.fromEntries(ORDRE.filter((x) => ann[x]).map((x) => [x, ann[x]])), matieres: Object.fromEntries(Object.entries(mat).sort((a, b) => b[1] - a[1])), premier_achat: dates[0], dernier_achat: dates.at(-1), commandes: nbCmd,
+      familles: Object.fromEntries(Object.entries(familles).sort((a, b) => b[1] - a[1])), couleur_dominante: dominante(teintes) },
   };
 }
 
@@ -122,6 +130,7 @@ export function proprietesKlaviyo(r: NonNullable<ReturnType<typeof carnet>>) {
     carnet_tailles_bases: [...new Set(bases.map((b) => b.taille))].sort(), carnet_base_principale: bp ? `${NOM[bp.largeur]} ${bp.taille}` : null,
     carnet_dernier_achat: j.dernier_achat, carnet_anneaux: r.anneauxTxt || null,
     carnet_bases_codes: [...new Set(bases.map((b) => `${b.largeur}${b.taille}`))].sort(), carnet_matieres: Object.keys(j.matieres).sort(),
+    carnet_familles: Object.keys(j.familles ?? {}).sort(), carnet_couleur: j.couleur_dominante ?? null,
   };
   return Object.fromEntries(Object.entries(p).filter(([, v]) => v != null && !(Array.isArray(v) && !v.length)));
 }
