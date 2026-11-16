@@ -67,7 +67,7 @@ export const COLORAL_COLOR_ALIASES: Record<string, string> = {
 // Correspondances propres à une feuille : la feuille des mediums écrit « Bleu marine »
 // là où les autres feuilles écrivent « Marine » (confirmé Philippe le 16.11.2026).
 export const COLORAL_TYPE_ALIASES: Record<string, Record<string, string>> = {
-  MEDALU: { marine: "bleu marine", bleuroi: "bleu marine" },
+  MEDALU: { marine: "bleu marine", bleuroi: "bleu marine", belip: "belinda" }, // beli pastel des mediums = colonne Belinda (Philippe 16.11)
 };
 
 // Résout une couleur Katana vers le nom normalisé attendu dans le fichier (alias d'abord).
