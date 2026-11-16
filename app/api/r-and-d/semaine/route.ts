@@ -16,6 +16,10 @@ const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_R
 
 const EXCLU = /devis|carte cadeau|bon cadeau|gift|seconde main|^\s*\d+\s+(novembre|décembre)|papier cadeau|service|réparation|rénovation|frais/i;
 const SEUIL_JOAILLERIE = 600;
+// ventes boutique tapées à la main : [titre reconnu, fiche yourmood.net où les compter] (demande Amila 16.11)
+const A_LA_MAIN: [RegExp, number][] = [
+  [/village des [ée]toiles?/i, 15944181809529],
+];
 
 interface Ligne { product_id: number | null; quantity: number; price: string; title: string; discount_allocations?: Array<{ amount: string }>; properties?: Array<{ name: string; value: string }> }
 interface Commande { id: number; cancelled_at: string | null; line_items: Ligne[]; total_price?: string }
@@ -119,8 +123,11 @@ export async function GET(request: Request) {
         if (!L.groupes.has(g)) { L.groupes.add(g); L.qty += parseInt(nb || "1", 10) || 1; }
         L.total += t;
       }
+      // pièce tapée à la main en boutique (sans fiche) mais qui est un produit connu → on la range sur sa fiche, jamais en Joaillerie
+      const lie = !l.product_id ? A_LA_MAIN.find(([rx]) => rx.test(l.title || "")) : undefined;
+      if (lie) l.product_id = lie[1];
       if (l.product_id) { const k = String(l.product_id); parProduit[k] = parProduit[k] || { qty: 0, total: 0 }; parProduit[k].qty += l.quantity; parProduit[k].total += t; titres[k] = l.title || ""; }
-      if (parseFloat(l.price) > SEUIL_JOAILLERIE && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; const jt = (l.title || "").trim(); joaDet[jt] = joaDet[jt] || { q: 0, c: 0 }; joaDet[jt].q += l.quantity; joaDet[jt].c += t; }
+      if (!lie && parseFloat(l.price) > SEUIL_JOAILLERIE && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; const jt = (l.title || "").trim(); joaDet[jt] = joaDet[jt] || { q: 0, c: 0 }; joaDet[jt].q += l.quantity; joaDet[jt].c += t; }
     }
     // lots → produit du lot (le coffret) ; ajouté à parProduit sous l'ID du coffret
     const vids = Object.keys(lots);
