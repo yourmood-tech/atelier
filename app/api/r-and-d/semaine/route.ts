@@ -21,7 +21,7 @@ const SEUIL_JOAILLERIE = 600;
 const A_LA_MAIN: [RegExp, number][] = [
   [/village des [ée]toiles?/i, 15944181809529],
   [/perles? de minuits?/i, 15944179155321],
-  [/^(?=.*(algod|barbe [àa] papa|nacar inlay)).*(deux tiers|2\/3)/i, 15967764185465],
+  [/^(?=.*(algod|barbe [àa] papa)).*(deux tiers|2\/3)/i, 15967764185465],
   [/^(?=.*(algod|barbe [àa] papa)).*medium/i, 15967776375161],
   [/algod|barbe [àa] papa/i, 15967751504249],
 ];
