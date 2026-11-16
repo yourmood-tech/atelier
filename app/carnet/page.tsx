@@ -24,7 +24,7 @@ const MATIERES = ["argent", "acier", "titane", "or", "aluminium", "polymère", "
 const FOURNISSEURS = ["mood gravure mécanique", "mood gravure laser", "bijouterie", "icelea", "vacor"];
 
 async function api(action: string, body: Record<string, unknown> = {}) {
-  const r = await fetch("/api/carnet", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...body }) });
+  const r = await fetch("/api/carnet-fiches", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...body }) });
   return r.json();
 }
 
@@ -47,7 +47,7 @@ export default function CarnetPage() {
   const [printMonth, setPrintMonth] = useState<{ label: string; items: Collection[] } | null>(null);
 
   const load = useCallback(() => {
-    fetch("/api/carnet").then((r) => r.json()).then((d) => { setCols(d.collections || []); setCanEdit(!!d.canEdit); setLoading(false); }).catch(() => setLoading(false));
+    fetch("/api/carnet-fiches").then((r) => r.json()).then((d) => { setCols(d.collections || []); setCanEdit(!!d.canEdit); setLoading(false); }).catch(() => setLoading(false));
   }, []);
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
@@ -793,7 +793,7 @@ function IceleaBoard() {
   // Quand le produit est sorti → créer une vraie fiche dans le Carnet (collection « Sorties Icelea »).
   async function duplicateToCarnet(p: IceProjet) {
     try {
-      const r = await fetch("/api/carnet");
+      const r = await fetch("/api/carnet-fiches");
       const d = await r.json();
       if (!r.ok || d.error) throw new Error("auth");
       const cols: { id: string; name: string }[] = d.collections || [];

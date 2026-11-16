@@ -187,7 +187,7 @@ export default auth((req) => {
   // /carnet + son contenu : consultable sans login Google (on envoie le lien, la personne voit tout de suite).
   // L'écriture (créer/éditer les fiches) reste protégée dans /api/carnet lui-même (login + Amila uniquement).
   // L'onglet « Projet Icelea » a sa propre protection par code.
-  if (pathname === "/carnet" || pathname === "/api/carnet" || pathname === "/api/carnet/icelea" || pathname === "/api/carnet/icelea-upload" || pathname === "/api/carnet/icelea-stock") {
+  if (pathname === "/carnet" || pathname === "/api/carnet-fiches" || pathname === "/api/carnet/icelea" || pathname === "/api/carnet/icelea-upload" || pathname === "/api/carnet/icelea-stock") {
     return;
   }
 
