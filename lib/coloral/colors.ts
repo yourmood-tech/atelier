@@ -55,6 +55,7 @@ export const COLORAL_COLOR_ALIASES: Record<string, string> = {
   // Katana écrit la couleur en un seul mot, la feuille fournisseur en deux.
   chilipepper: "chili pepper",
   vertkalekaki: "vert kale kaki",
+  vertmood: "vert mood",
   // Confirmé Philippe le 16.11.2026 :
   myr: "myrtille", // MEDALU MYR = myrtille
   belip: "belipastel", // BELIP = beli pastel (colonne « belipastel » des minis)
