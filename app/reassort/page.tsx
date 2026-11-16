@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { coloralColorInFile } from "@/lib/coloral/colors";
+import { coloralColorInFile, coloralColorDiscontinued } from "@/lib/coloral/colors";
 import type { KatanaReassortRow } from "@/lib/reassort-katana";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -478,7 +478,7 @@ function applyColoralMoq(
   mins: ColoralMins,
   minSku: number,
   mode: Mode
-): { rows: ResultRow[]; excluded: string[] } {
+): { rows: ResultRow[]; excluded: string[]; stopped: string[] } {
   const resBySku = new Map(results.map((r) => [r.sku, r]));
 
   // Univers complet des tailles Coloral connues (issues des fichiers), groupé par type|couleur
@@ -494,9 +494,17 @@ function applyColoralMoq(
   // On garde tel quel tout ce qui n'est pas Coloral ; on reconstruit les lignes Coloral.
   const out: ResultRow[] = results.filter((r) => !parseColoralSku(r.sku, mins));
   const excluded: string[] = []; // couleurs Katana absentes du fichier Coloral → non commandées
+  const stopped: string[] = []; // couleurs que l'on ne vend plus → jamais commandées
 
   for (const { type, color, min, skus } of groups.values()) {
     const label = `${type} ${color}`;
+
+    // Couleur arrêtée (plus en vente) → jamais commandée, même avec des sorties de fin de stock.
+    if (coloralColorDiscontinued(type, color)) {
+      const need = skus.reduce((s, m) => s + (resBySku.get(m.sku)?.recommendedQty ?? 0), 0);
+      if (need > 0) stopped.push(label);
+      continue;
+    }
 
     // Couleur absente du fichier de commande Coloral → on ne la commande pas (ni xlsx, ni bon Katana).
     if (!coloralColorInFile(type, color)) {
@@ -572,7 +580,7 @@ function applyColoralMoq(
     if (b.planningDailyDemand !== a.planningDailyDemand) return b.planningDailyDemand - a.planningDailyDemand;
     return a.estimatedCoverDays - b.estimatedCoverDays;
   });
-  return { rows: out, excluded };
+  return { rows: out, excluded, stopped };
 }
 
 // ─── Export CSV ───────────────────────────────────────────────────────────────
@@ -761,6 +769,7 @@ export default function ReassortPage() {
   const [coloralMins, setColoralMins] = useState<ColoralMins>(DEFAULT_COLORAL_MINS);
   const [coloralMinSku, setColoralMinSku] = useState(5); // plancher par taille (SKU), spécifique Coloral
   const [coloralExcluded, setColoralExcluded] = useState<string[]>([]); // couleurs absentes du fichier Coloral
+  const [coloralStopped, setColoralStopped] = useState<string[]>([]); // couleurs arrêtées (plus en vente)
   // Export commande Coloral (.xlsx au format fournisseur)
   const [coloralExportLoading, setColoralExportLoading] = useState(false);
   const [coloralExportError, setColoralExportError] = useState<string | null>(null);
@@ -963,6 +972,10 @@ export default function ReassortPage() {
         const moq = applyColoralMoq(recs, merged, coloralMins, coloralMinSku, params.mode);
         recs = moq.rows;
         setColoralExcluded(moq.excluded);
+        setColoralStopped(moq.stopped);
+        if (moq.stopped.length > 0) {
+          addLog(`Couleurs arrêtées (plus en vente, non commandées) : ${moq.stopped.join(", ")}`);
+        }
         addLog(
           `Gamme Coloral reconstituée — min/couleur ALU ${coloralMins.ALU} · 23ALU ${coloralMins["23ALU"]} · MEDALU ${coloralMins.MEDALU} · MINIALU ${coloralMins.MINIALU} | plancher ${coloralMinSku}/taille`
         );
@@ -971,6 +984,7 @@ export default function ReassortPage() {
         }
       } else {
         setColoralExcluded([]);
+        setColoralStopped([]);
       }
 
       const totalUnits = recs.reduce((s, r) => s + r.recommendedQty, 0);
@@ -1308,6 +1322,20 @@ export default function ReassortPage() {
             <p className="text-xs opacity-80">
               Si l&apos;une devrait se commander, c&apos;est qu&apos;il manque sa correspondance de couleur (à ajouter dans la table Coloral).
             </p>
+          </div>
+        )}
+
+        {/* Couleurs arrêtées → jamais commandées */}
+        {coloralStopped.length > 0 && (
+          <div className="rounded-xl border border-zinc-700 bg-zinc-900/40 p-4 text-sm text-zinc-300 space-y-2">
+            <p className="font-semibold">
+              {coloralStopped.length} couleur(s) arrêtée(s) — plus en vente, donc non commandée(s) malgré des sorties récentes :
+            </p>
+            <ul className="text-xs space-y-0.5 font-mono">
+              {coloralStopped.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
           </div>
         )}
 

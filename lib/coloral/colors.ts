@@ -124,3 +124,18 @@ export function coloralColorInFile(type: string, rawColor: string): boolean {
   if (!set) return false;
   return set.has(resolveColoralColor(rawColor, type));
 }
+
+// Couleurs que l'on ne vend plus : jamais recommandées au réassort, même si elles ont
+// encore des sorties (fin de stock). Liste de Marie-Noël, transmise par Philippe le
+// 16.11.2026. Noms du fichier Coloral (normalisés). Pour arrêter ou reprendre une
+// couleur, modifier cette liste.
+export const COLORAL_DISCONTINUED: Record<string, ReadonlySet<string>> = {
+  MEDALU: new Set(["gris", "menthe", "vert mood", "petrole", "chili pepper", "vert kale kaki", "bleu lagon"]),
+  "23ALU": new Set(["rubis", "vert mood", "orange", "pistache", "caramel", "kaki"]),
+  ALU: new Set(["gris", "menthe", "petrole", "pourpre"]),
+};
+
+// La couleur Katana correspond-elle à une couleur arrêtée pour ce type d'anneau ?
+export function coloralColorDiscontinued(type: string, rawColor: string): boolean {
+  return COLORAL_DISCONTINUED[type]?.has(resolveColoralColor(rawColor, type)) ?? false;
+}
