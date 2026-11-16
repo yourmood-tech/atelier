@@ -51,6 +51,7 @@ export const COLORAL_COLOR_ALIASES: Record<string, string> = {
   // ces deux couleurs disparaissaient de toute commande Coloral sans aucun signal.
   lil: "lila", // "lila" devient "lila cashmere" via canonFileColor
   bel: "belinda",
+  beli: "belinda", // ALU BELI = belinda (Philippe 16.11)
   // Katana écrit la couleur en un seul mot, la feuille fournisseur en deux.
   chilipepper: "chili pepper",
   vertkalekaki: "vert kale kaki",
