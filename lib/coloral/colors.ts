@@ -56,6 +56,10 @@ export const COLORAL_COLOR_ALIASES: Record<string, string> = {
   chilipepper: "chili pepper",
   vertkalekaki: "vert kale kaki",
   vertmood: "vert mood",
+  // Abréviations Katana confirmées par Philippe le 16.11.2026
+  bleuv: "bleu violet",
+  prpr: "pourpre",
+  vp: "vert pastel",
   // Confirmé Philippe le 16.11.2026 :
   myr: "myrtille", // MEDALU MYR = myrtille
   belip: "belipastel", // BELIP = beli pastel (colonne « belipastel » des minis)
