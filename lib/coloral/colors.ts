@@ -51,16 +51,30 @@ export const COLORAL_COLOR_ALIASES: Record<string, string> = {
   // ces deux couleurs disparaissaient de toute commande Coloral sans aucun signal.
   lil: "lila", // "lila" devient "lila cashmere" via canonFileColor
   bel: "belinda",
+  // Katana écrit la couleur en un seul mot, la feuille fournisseur en deux.
+  chilipepper: "chili pepper",
+  vertkalekaki: "vert kale kaki",
+  // Confirmé Philippe le 16.11.2026 :
+  myr: "myrtille", // MEDALU MYR = myrtille
+  belip: "belipastel", // BELIP = beli pastel (colonne « belipastel » des minis)
+  bleuroi: "marine", // bleu roi : on commande le bleu marine à la place
   bp: "bleu pastel",
   bleupastel: "bleu pastel",
   vertpastel: "vert pastel",
   jaunepastel: "jaune pastel",
 };
 
+// Correspondances propres à une feuille : la feuille des mediums écrit « Bleu marine »
+// là où les autres feuilles écrivent « Marine » (confirmé Philippe le 16.11.2026).
+export const COLORAL_TYPE_ALIASES: Record<string, Record<string, string>> = {
+  MEDALU: { marine: "bleu marine", bleuroi: "bleu marine" },
+};
+
 // Résout une couleur Katana vers le nom normalisé attendu dans le fichier (alias d'abord).
-export function resolveColoralColor(rawColor: string): string {
+// Le type d'anneau (ALU, MEDALU…) permet les correspondances propres à une feuille.
+export function resolveColoralColor(rawColor: string, type?: string): string {
   const n = canonFileColor(normColor(rawColor));
-  const aliased = COLORAL_COLOR_ALIASES[n];
+  const aliased = (type && COLORAL_TYPE_ALIASES[type]?.[n]) || COLORAL_COLOR_ALIASES[n];
   return aliased ? canonFileColor(aliased) : n;
 }
 
@@ -102,5 +116,5 @@ export const COLORAL_FILE_COLORS: Record<string, ReadonlySet<string>> = {
 export function coloralColorInFile(type: string, rawColor: string): boolean {
   const set = COLORAL_FILE_COLORS[type];
   if (!set) return false;
-  return set.has(resolveColoralColor(rawColor));
+  return set.has(resolveColoralColor(rawColor, type));
 }

@@ -129,7 +129,7 @@ export async function buildColoralOrder(
       unmatched.push({ sku: it.sku, qty, reason: `type ${p.type} hors Coloral` });
       continue;
     }
-    const col = sc.get(resolveColoralColor(p.color));
+    const col = sc.get(resolveColoralColor(p.color, p.type));
     if (!col) {
       unmatched.push({ sku: it.sku, qty, reason: `couleur "${p.color}" absente de la feuille ${sheet}` });
       continue;
@@ -139,7 +139,10 @@ export async function buildColoralOrder(
       unmatched.push({ sku: it.sku, qty, reason: `taille ${p.size} absente pour ${p.color}` });
       continue;
     }
-    wb.getWorksheet(sheet)!.getCell(cell.r, cell.c).value = qty;
+    // Additionne : deux couleurs Katana peuvent viser la même case (ex. bleu roi → marine).
+    const target = wb.getWorksheet(sheet)!.getCell(cell.r, cell.c);
+    const prev = typeof target.value === "number" ? target.value : 0;
+    target.value = prev + qty;
     filledLines++;
     totalQty += qty;
   }
