@@ -1640,7 +1640,17 @@ function tableauSemaine(annee, m, debut, numSem){
       : (p.shopifyIds || []).length ? (dejaAvant ? `<span class="pill vert">✅ déjà sortie le ${new Date(p.dateSortie + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}</span>` : `<span class="pill vert">✅ sorti ${jourDe(p.dateSortie || p.date)}</span>`)
       : p.dejaSortie ? `<span class="pill vert">✅ déjà sortie</span> <button class="pill-btn" onclick="event.stopPropagation();basculerDejaSortie('${p.id}')" title="Annuler">↩︎</button>`
       : (p.extraSemaine ? `<span class="pill">📝 prévue cette semaine</span>` : `<span class="pill">prévu ${jourDe(p.date)}</span>`) + ` <button class="pill-btn" onclick="event.stopPropagation();basculerDejaSortie('${p.id}')">✅ déjà sortie</button>`;
-    rowsGC += ligne(escapeHtml(p.nom || '(sans nom)'), etat, v, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)`, prevOk });
+    // ligne qui regroupe plusieurs pièces : décompte pièce par pièce (comme les coffrets)
+    const plusieurs = (p.shopifyIds || []).length > 1; const ouvertP = plusieurs && !!detOuvert[debut + ':' + p.id];
+    const lienDet = plusieurs ? ` <span class="l-petit det-lien" onclick="event.stopPropagation();basculerDet('${debut}','${p.id}')">${ouvertP ? '▾ masquer le détail' : '▸ voir le détail pièce par pièce'}</span>` : '';
+    rowsGC += ligne(escapeHtml(p.nom || '(sans nom)'), etat + lienDet, v, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)`, prevOk });
+    if (ouvertP) {
+      const VP = D && D.ventesParProduit;
+      const L = VP ? p.shopifyIds.map(id => ({ t: (p.titres && p.titres[id]) || ('pièce ' + id), q: (VP[id] || {}).qty || 0, c: (VP[id] || {}).total || 0 })).sort((a, b) => b.c - a.c || b.q - a.q) : null;
+      const corps = !L ? '<div class="det-vide">⏳ chargement…</div>'
+        : `<table class="det-tab">${L.map(x => `<tr${x.q ? '' : ' style="color:#a0948a"'}><td>${escapeHtml(x.t)}</td><td class="p">${n(x.q)} pce${x.q > 1 ? 's' : ''}</td><td class="p">${n(x.c)}.–</td></tr>`).join('')}</table>`;
+      rowsGC += `<tr class="det-ligne"><td colspan="9">${corps}</td></tr>`;
+    }
   });
   if (!tous.length) rowsGC += `<tr class="vide"><td colspan="9">Aucune nouveauté pour l'instant.</td></tr>`;
   if (!charge) rowsGC += `<tr class="vide"><td colspan="9">${D && D.erreur ? 'Ventes indisponibles pour le moment.' : (d0 > new Date() ? 'Semaine à venir.' : '⏳ Je regarde ce qui est sorti cette semaine…')}</td></tr>`;
