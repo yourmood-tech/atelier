@@ -32,6 +32,8 @@
 #dh .jin{margin:0;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
 #dh .jph{position:relative;background:#1c1c1c;height:100%;overflow:hidden}
 #dh .jin+.jin{border-top:1px solid #2a2a2a}
+#dh .jph.vide{background:#f4f3f0}
+#dh .jph.vide i{background-size:86% auto;background-position:center}
 #dh .jph i{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity 1.4s ease,transform 6s ease}
 #dh .jph i.on{opacity:1;transform:scale(1)}
 #dh .jpts{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:8px;z-index:2}
@@ -146,8 +148,8 @@
     if(!jours.length){box.innerHTML='<div class="attente">Le premier article sera bientôt dévoilé…</div>';return}
     var html="";
     jours.forEach(function(jour,ix){
-      var imgs=(jour.photos&&jour.photos.length?jour.photos:[jour.photo||jour.dessin]).filter(Boolean);
-      var ph='<div class="jph" id="dhPh'+jour.n+'">'+imgs.map(function(u,q){return '<i'+(q?'':' class="on"')+' style="background-image:url(\''+esc(u)+'\')"></i>'}).join('')+(imgs.length>1?'<div class="jpts">'+imgs.map(function(u,q){return '<b'+(q?'':' class="on"')+' data-q="'+q+'"></b>'}).join('')+'</div>':'')+'</div>';
+      var sansPhoto=!(jour.photos&&jour.photos.length)&&!jour.photo, imgs=(jour.photos&&jour.photos.length?jour.photos:[jour.photo||jour.dessin]).filter(Boolean);
+      var ph='<div class="jph'+(sansPhoto?' vide':'')+'" id="dhPh'+jour.n+'">'+imgs.map(function(u,q){return '<i'+(q?'':' class="on"')+' style="background-image:url(\''+esc(u)+'\')"></i>'}).join('')+(imgs.length>1?'<div class="jpts">'+imgs.map(function(u,q){return '<b'+(q?'':' class="on"')+' data-q="'+q+'"></b>'}).join('')+'</div>':'')+'</div>';
       var tx='<div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit'+jour.n+'">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
       html+='<div class="jin'+(ix%2?' inv':'')+'">'+(ix%2?tx+ph:ph+tx)+'</div>';
     });
