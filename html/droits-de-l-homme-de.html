@@ -1,0 +1,170 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Menschenrechte — mood</title><meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@300;400;500&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+#dh{--noir:#111;--gris:#77736c;--ligne:#e6e3de;font-family:Poppins,sans-serif;font-weight:300;color:var(--noir);background:#fff}
+#dh .hero,#dh .hero .in,#dh .hero h1{color:#111!important} #dh .hero p{color:#4b4741!important}
+#dh *{box-sizing:border-box} #dh a{color:inherit;text-decoration:none}
+#dh .k{font:500 10.5px Poppins;letter-spacing:.32em;text-transform:uppercase;color:var(--gris)}
+#dh h1,#dh h2,#dh h3{font-family:'Playfair Display',serif;font-weight:400;margin:0}
+#dh .btn{display:inline-block;border-radius:999px;padding:14px 30px;font:500 11.5px Poppins;letter-spacing:.2em;text-transform:uppercase}
+/* héros : la déclaration écrite à la main en fond */
+#dh .hero{position:relative;min-height:0;height:min(62vh,560px);display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#fff}
+#dh .frappe{position:absolute;inset:0;overflow:hidden}
+#dh .frin{position:absolute;left:10px;right:10px;top:0;bottom:0;overflow:hidden;text-align:justify;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;color:rgba(0,0,0,.12)}
+#dh .defil{transition:transform 2.6s cubic-bezier(.45,0,.2,1)}
+@keyframes dhdef{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+#dh .frin b{font-weight:700}
+#dh .frin .sep{color:rgba(0,0,0,.10)}
+#dh .frin .ec{color:rgba(0,0,0,.6);transition:color 1.5s}
+#dh .curseur{display:inline-block;width:.55em;height:1.05em;background:rgba(0,0,0,.45);vertical-align:-.15em;margin-left:1px;animation:dhcl 1s steps(1) infinite}
+@keyframes dhcl{50%{opacity:0}}
+#dh .hero:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,.92) 0%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 75%)}
+#dh .hero .in{position:relative;z-index:1;padding:40px 24px}
+#dh .hero h1{font-size:clamp(46px,6.2vw,92px);line-height:1;letter-spacing:-.01em;margin:16px 0 16px}
+#dh .hero h1 i{font-style:italic}
+#dh .hero p{font-size:15.5px;line-height:1.7;color:#4b4741;max-width:520px;margin:0 auto 24px}
+#dh .hero .btn{background:var(--noir);color:#fff}
+#dh .defile{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);z-index:1;font:500 10px Poppins;letter-spacing:.3em;color:#9a958d}
+/* bande */
+#dh .bande{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px;padding:18px 20px;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne);font:500 10.5px Poppins;letter-spacing:.24em;text-transform:uppercase;color:#8d8880}
+/* addon du jour */
+#dh .jour{background:var(--noir);color:#fff}
+#dh .jin{margin:0;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
+#dh .jph{position:relative;background:#1c1c1c;height:100%;overflow:hidden}
+#dh .jin+.jin{border-top:1px solid #2a2a2a}
+#dh .jph.vide{background:#f4f3f0}
+#dh .jph.vide i{background-size:86% auto;background-position:center}
+#dh .jph i{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity 1.4s ease,transform 6s ease}
+#dh .jph i.on{opacity:1;transform:scale(1)}
+#dh .jpts{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:8px;z-index:2}
+#dh .jpts b{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);cursor:pointer}
+#dh .jpts b.on{background:#fff}
+#dh .jtx{padding:56px 48px 48px 56px;display:flex;flex-direction:column;height:100%;min-height:0}
+#dh .jtx .k{color:#a9a49b}
+#dh .jtx h2{font-size:clamp(38px,4.2vw,60px);line-height:1;margin:14px 0 6px}
+#dh .jtx h3{font-style:italic;font-size:22px;color:#cfcac1;margin:0 0 18px}
+#dh .jtx p{font-size:15.5px;line-height:1.8;color:#d8d4cc;margin:0 0 30px;max-width:420px}
+#dh .recit{flex:1;min-height:0;overflow:hidden;font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;color:#dcd8d0;margin:0 0 22px;max-width:none;padding-top:24px;padding-right:6px;text-align:justify;hyphens:auto;-webkit-mask-image:linear-gradient(transparent 0,#000 34px);mask-image:linear-gradient(transparent 0,#000 34px);scrollbar-width:thin;scrollbar-color:#444 transparent}
+#dh .recit.fini{overflow-y:auto}
+#dh .recit p{margin:0 0 14px;font:inherit;color:inherit;max-width:none} #dh .recit strong{color:#fff;font-weight:700}
+#dh .recit p.cit{font-family:'Playfair Display',serif;font-style:italic;font-size:21px;line-height:1.5;color:#fff}
+#dh .recit .curseur{background:#fff}
+#dh .jdes{margin:0 0 22px;max-width:none} #dh .jdes img{width:100%;display:block;border-radius:6px}
+#dh .jtx .btn{background:#fff;color:var(--noir);align-self:flex-start}
+#dh .attente{grid-column:1/-1;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:24px;color:#bdb8af}
+/* les 30 */
+#dh .col{max-width:1200px;margin:0 auto;padding:110px 24px 120px;text-align:center}
+#dh .col h2{font-size:clamp(34px,4.4vw,58px);margin:14px 0 14px} #dh .col .intro{color:var(--gris);max-width:520px;margin:0 auto 56px;line-height:1.8}
+#dh .grille{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--ligne);border-left:1px solid var(--ligne)}
+#dh .t{position:relative;aspect-ratio:1/1;border-right:1px solid var(--ligne);border-bottom:1px solid var(--ligne);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden;background:#fff;transition:background .4s}
+#dh .t .n{font-family:'Playfair Display',serif;font-size:clamp(28px,3.2vw,44px);color:#d6d2cb;transition:color .4s}
+#dh .t .s{font:500 9.5px Poppins;letter-spacing:.26em;text-transform:uppercase;color:#bcb7af}
+#dh .t.ouvert{cursor:pointer} #dh .t.ouvert .n{color:var(--noir)}
+#dh .t.ouvert .d{width:84%;display:block;border-radius:3px}
+#dh .t.film{padding:0;justify-content:flex-end}
+#dh .t.film.jourc{grid-column:span 2;grid-row:span 2;aspect-ratio:auto}
+#dh .t.film video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#dh .t.film .n,#dh .t.film .s{position:relative;z-index:1}
+#dh .t.film .n{position:absolute;top:10px;left:14px;font-size:24px}
+#dh .t.film.jourc .n{top:14px;left:18px;font-size:34px}
+#dh .t.film:not(.jourc) .s{font-size:8.5px;margin-bottom:10px;padding:4px 8px}
+#dh .t.film .s{margin:0 0 16px;background:rgba(255,255,255,.85);padding:6px 12px;border-radius:999px}
+#dh .t.ouvert .s{color:var(--noir)} #dh .t.ouvert:hover{background:#f6f5f2}
+#dh .t.jourc:after{content:"aujourd’hui";position:absolute;top:10px;left:0;right:0;font:500 9px Poppins;letter-spacing:.24em;text-transform:uppercase;color:#9a958d}
+/* atelier */
+#dh .atel{border-top:1px solid var(--ligne);padding:110px 24px;text-align:center}
+#dh .atel h2{font-size:clamp(30px,3.8vw,48px);margin:14px 0 16px} #dh .atel p{max-width:560px;margin:0 auto;line-height:1.8;color:#4b4741}
+/* fin */
+#dh .fin{background:var(--noir);color:#fff;text-align:center;padding:120px 24px}
+#dh .fin h2{font-size:clamp(36px,4.6vw,62px);margin:0 0 16px} #dh .fin p{color:#bdb8af;margin:0 0 34px}
+#dh .fin .btn{background:#fff;color:var(--noir)} #dh .fin img{width:110px;margin-top:70px;opacity:.95}
+@media(max-width:900px){#dh .jin{grid-template-columns:1fr;height:auto} #dh .jph{min-height:420px} #dh .recit{height:22em;flex:none} #dh .jtx{padding:48px 24px} #dh .grille{grid-template-columns:repeat(3,1fr)}}
+</style></head><body style="margin:0"><div id="dh">
+<section class="hero"><div class="frappe" aria-hidden="true"><div class="frin" id="dhFrappe"></div></div><div class="in"><div class="k">mood collection · 2026</div>
+<h1>Die Menschen&shy;rechte<i>.</i></h1>
+<p>Dreissig Artikel, 1948 für die ganze Welt geschrieben. Wir haben sie gezeichnet, graviert und von Hand gefasst – zum Aufklipsen auf deinen mood Ring.</p>
+<a class="btn" href="#dh-jour">Artikel des Tages</a></div></section>
+<div class="bande"><span>30 Artikel</span><span>Von Hand graviert und gefasst</span><span>Farbe nach Wahl</span><span>Schweizer Marke</span></div>
+<section class="jour" id="dh-jour"><div class="jin" id="dhJour"><div class="attente">…</div></div></section>
+<section class="col"><div class="k">Die Kollektion</div><h2>Dreissig Artikel.<br>Dreissig Ringe.</h2><p class="intro">30 Artikel, 30 verschiedene Designs. Jeder zeigt sich, wenn er an der Reihe ist…</p><div class="grille"><a class="t" id="a1"><span class="n">01</span><span class="s">bald</span></a><a class="t" id="a2"><span class="n">02</span><span class="s">bald</span></a><a class="t" id="a3"><span class="n">03</span><span class="s">bald</span></a><a class="t" id="a4"><span class="n">04</span><span class="s">bald</span></a><a class="t" id="a5"><span class="n">05</span><span class="s">bald</span></a><a class="t" id="a6"><span class="n">06</span><span class="s">bald</span></a><a class="t" id="a7"><span class="n">07</span><span class="s">bald</span></a><a class="t" id="a8"><span class="n">08</span><span class="s">bald</span></a><a class="t" id="a9"><span class="n">09</span><span class="s">bald</span></a><a class="t" id="a10"><span class="n">10</span><span class="s">bald</span></a><a class="t" id="a11"><span class="n">11</span><span class="s">bald</span></a><a class="t" id="a12"><span class="n">12</span><span class="s">bald</span></a><a class="t" id="a13"><span class="n">13</span><span class="s">bald</span></a><a class="t" id="a14"><span class="n">14</span><span class="s">bald</span></a><a class="t" id="a15"><span class="n">15</span><span class="s">bald</span></a><a class="t" id="a16"><span class="n">16</span><span class="s">bald</span></a><a class="t" id="a17"><span class="n">17</span><span class="s">bald</span></a><a class="t" id="a18"><span class="n">18</span><span class="s">bald</span></a><a class="t" id="a19"><span class="n">19</span><span class="s">bald</span></a><a class="t" id="a20"><span class="n">20</span><span class="s">bald</span></a><a class="t" id="a21"><span class="n">21</span><span class="s">bald</span></a><a class="t" id="a22"><span class="n">22</span><span class="s">bald</span></a><a class="t" id="a23"><span class="n">23</span><span class="s">bald</span></a><a class="t" id="a24"><span class="n">24</span><span class="s">bald</span></a><a class="t" id="a25"><span class="n">25</span><span class="s">bald</span></a><a class="t" id="a26"><span class="n">26</span><span class="s">bald</span></a><a class="t" id="a27"><span class="n">27</span><span class="s">bald</span></a><a class="t" id="a28"><span class="n">28</span><span class="s">bald</span></a><a class="t" id="a29"><span class="n">29</span><span class="s">bald</span></a><a class="t" id="a30"><span class="n">30</span><span class="s">bald</span></a></div></section>
+<section class="atel"><div class="k">Aus dem Atelier</div><h2>Graviert, dann von Hand gefasst.</h2><p>Jeder Artikel wird gezeichnet, ins Aluminium graviert und dann Stein für Stein gefasst. Worte, die zählen – für jeden Tag.</p></section>
+<section class="fin"><h2>Trag, was zählt.</h2><p>Ein Artikel, ein Recht, ein mood Ring.</p><a class="btn" href="#dh-jour">Artikel des Tages</a><br><img src="https://mood-tools.yourmood.net/droits-homme/logo-blanc.png" alt="mood"></section>
+</div>
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  var DECL=["ARTIKEL 1 : ALLE MENSCHEN SIND FREI UND GLEICH AN WÜRDE UND RECHTEN GEBOREN.", "ARTIKEL 2 : ALLE HABEN DIESELBEN RECHTE, UNABHÄNGIG VON HAUTFARBE, GESCHLECHT, SPRACHE, RELIGION ODER HERKUNFT.", "ARTIKEL 3 : JEDER MENSCH HAT DAS RECHT AUF LEBEN, FREIHEIT UND SICHERHEIT DER PERSON.", "ARTIKEL 4 : NIEMAND DARF IN SKLAVEREI ODER LEIBEIGENSCHAFT GEHALTEN WERDEN.", "ARTIKEL 5 : NIEMAND DARF DER FOLTER ODER GRAUSAMER, UNMENSCHLICHER ODER ERNIEDRIGENDER BEHANDLUNG ODER STRAFE UNTERWORFEN WERDEN.", "ARTIKEL 6 : JEDER MENSCH HAT DAS RECHT, ÜBERALL ALS RECHTSFÄHIG ANERKANNT ZU WERDEN.", "ARTIKEL 7 : ALLE MENSCHEN SIND VOR DEM GESETZ GLEICH UND HABEN ANSPRUCH AUF GLEICHEN SCHUTZ DURCH DAS GESETZ.", "ARTIKEL 8 : JEDER MENSCH HAT ANSPRUCH AUF EINEN WIRKSAMEN RECHTSBEHELF VOR DEN GERICHTEN, WENN SEINE RECHTE VERLETZT WERDEN.", "ARTIKEL 9 : NIEMAND DARF WILLKÜRLICH FESTGENOMMEN, IN HAFT GEHALTEN ODER DES LANDES VERWIESEN WERDEN.", "ARTIKEL 10 : JEDER MENSCH HAT ANSPRUCH AUF EIN GERECHTES UND ÖFFENTLICHES VERFAHREN VOR EINEM UNABHÄNGIGEN UND UNPARTEIISCHEN GERICHT.", "ARTIKEL 11 : JEDER ANGEKLAGTE GILT ALS UNSCHULDIG, SOLANGE SEINE SCHULD NICHT GESETZLICH NACHGEWIESEN IST.", "ARTIKEL 12 : NIEMAND DARF WILLKÜRLICHEN EINGRIFFEN IN SEIN PRIVATLEBEN, SEINE FAMILIE, SEINE WOHNUNG ODER SEINEN SCHRIFTVERKEHR AUSGESETZT WERDEN.", "ARTIKEL 13 : JEDER MENSCH HAT DAS RECHT, SICH FREI ZU BEWEGEN, JEDES LAND ZU VERLASSEN, AUCH SEIN EIGENES, UND DORTHIN ZURÜCKZUKEHREN.", "ARTIKEL 14 : JEDER MENSCH HAT DAS RECHT, VOR VERFOLGUNG IN ANDEREN LÄNDERN ASYL ZU SUCHEN.", "ARTIKEL 15 : JEDER MENSCH HAT DAS RECHT AUF EINE STAATSANGEHÖRIGKEIT, UND NIEMAND DARF SIE IHM WILLKÜRLICH ENTZIEHEN.", "ARTIKEL 16 : FRAUEN UND MÄNNER HABEN DAS RECHT, FREI ZU HEIRATEN UND EINE FAMILIE ZU GRÜNDEN, DIE VON DER GESELLSCHAFT GESCHÜTZT WIRD.", "ARTIKEL 17 : JEDER MENSCH HAT DAS RECHT AUF EIGENTUM, UND NIEMAND DARF WILLKÜRLICH SEINES EIGENTUMS BERAUBT WERDEN.", "ARTIKEL 18 : JEDER MENSCH HAT DAS RECHT AUF GEDANKEN-, GEWISSENS- UND RELIGIONSFREIHEIT.", "ARTIKEL 19 : JEDER MENSCH HAT DAS RECHT AUF FREIE MEINUNGSÄUSSERUNG, OHNE WEGEN SEINER MEINUNG BELÄSTIGT ZU WERDEN.", "ARTIKEL 20 : JEDER MENSCH HAT DAS RECHT, SICH FRIEDLICH ZU VERSAMMELN UND SICH ZU VEREINIGUNGEN ZUSAMMENZUSCHLIESSEN.", "ARTIKEL 21 : JEDER MENSCH HAT DAS RECHT, AN DER GESTALTUNG SEINES LANDES MITZUWIRKEN; DER WILLE DES VOLKES ZEIGT SICH IN FREIEN WAHLEN.", "ARTIKEL 22 : JEDER MENSCH HAT DAS RECHT AUF SOZIALE SICHERHEIT UND AUF DIE RECHTE, DIE FÜR SEINE WÜRDE UNERLÄSSLICH SIND.", "ARTIKEL 23 : JEDER MENSCH HAT DAS RECHT AUF ARBEIT, AUF GERECHTE BEDINGUNGEN UND AUF GLEICHEN LOHN FÜR GLEICHE ARBEIT.", "ARTIKEL 24 : JEDER MENSCH HAT DAS RECHT AUF ERHOLUNG, FREIZEIT UND BEZAHLTEN URLAUB.", "ARTIKEL 25 : JEDER MENSCH HAT DAS RECHT AUF EINEN ANGEMESSENEN LEBENSSTANDARD: NAHRUNG, WOHNUNG, ÄRZTLICHE VERSORGUNG.", "ARTIKEL 26 : JEDER MENSCH HAT DAS RECHT AUF BILDUNG, DIE ZUMINDEST IM GRUNDSCHULUNTERRICHT UNENTGELTLICH IST.", "ARTIKEL 27 : JEDER MENSCH HAT DAS RECHT, AM KULTURELLEN LEBEN TEILZUNEHMEN, SICH AN DEN KÜNSTEN ZU ERFREUEN UND AM WISSENSCHAFTLICHEN FORTSCHRITT TEILZUHABEN.", "ARTIKEL 28 : JEDER MENSCH HAT ANSPRUCH AUF EINE ORDNUNG, IN SEINEM LAND UND IN DER WELT, IN DER DIESE RECHTE VOLL VERWIRKLICHT WERDEN KÖNNEN.", "ARTIKEL 29 : JEDER MENSCH HAT PFLICHTEN GEGENÜBER DER GEMEINSCHAFT; UNSERE FREIHEIT ENDET DORT, WO DIE DER ANDEREN BEGINNT.", "ARTIKEL 30 : KEINE BESTIMMUNG DIESER ERKLÄRUNG DARF DAZU BENUTZT WERDEN, DIE DARIN VERKÜNDETEN RECHTE UND FREIHEITEN ZU ZERSTÖREN."];
+  (function(){
+    var box=document.getElementById("dhFrappe"); if(!box) return;
+    function bloc(k,tape){var l=DECL[k],j=l.indexOf(":")+1,html="";
+      for(var x=0;x<l.length;x++){var ch=l.charAt(x);if(x===0)html+="<b>";html+=ch;if(x===j-1)html+="</b>"}
+      return html}
+    var tout="";for(var k=0;k<DECL.length;k++){tout+='<span class="l" data-k="'+k+'">'+bloc(k)+'</span><span class="sep"> &nbsp;·&nbsp; </span>'}
+    box.innerHTML='<div class="defil">'+tout+tout+'</div>';
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var spans=box.querySelectorAll('.l'), i=0, c=0, cur='<span class="curseur"></span>';
+    function peindre(k,n){
+      var l=DECL[k],j=l.indexOf(":")+1,a=l.slice(0,n),b=l.slice(n),fa=a.slice(0,Math.min(n,j)),fb=a.slice(Math.min(n,j));
+      var h='<span class="ec"><b>'+fa+'</b>'+fb+'</span>'+cur+(n<j?'<b>'+l.slice(n,j)+'</b>'+l.slice(j):b);
+      for(var q=0;q<spans.length;q++) if(+spans[q].getAttribute("data-k")===k) spans[q].innerHTML=h;
+    }
+    function remet(k){for(var q=0;q<spans.length;q++) if(+spans[q].getAttribute("data-k")===k) spans[q].innerHTML=bloc(k)}
+    var defil=box.querySelector('.defil'), hero=box.parentNode.parentNode;
+    function suivre(k){var s=box.querySelector('.l[data-k="'+k+'"]');if(!s)return;var y=s.offsetTop-hero.offsetHeight*0.22;defil.style.transform="translateY("+(y>0?-y:0)+"px)"}
+    function tape(){
+      var l=DECL[i]; c++; if(c===1) suivre(i); peindre(i,c);
+      if(c>=l.length){var fini=i;setTimeout(function(){remet(fini)},1800);i=(i+1)%DECL.length;c=0;setTimeout(tape,500);return}
+      var ch=l.charAt(c-1); setTimeout(tape,ch===" "?20:30+Math.random()*30);
+    }
+    setTimeout(tape,600);
+  })();
+  function ecrire(el){
+    var boite=el, src=el.innerHTML; el.innerHTML="";
+    var tmp=document.createElement("div"); tmp.innerHTML=src;
+    var cur=document.createElement("span"); cur.className="curseur";
+    var noeuds=[]; (function walk(n,dst){for(var k=0;k<n.childNodes.length;k++){var x=n.childNodes[k];if(x.nodeType===3){var t=document.createTextNode("");dst.appendChild(t);noeuds.push([t,x.nodeValue])}else{var y=x.cloneNode(false);dst.appendChild(y);walk(x,y)}}})(tmp,el);
+    var a=0,b=0;
+    (function pas(){
+      if(a>=noeuds.length){cur.remove();boite.classList.add("fini");return}
+      var t=noeuds[a][0],s=noeuds[a][1]; t.nodeValue=s.slice(0,++b); t.parentNode.appendChild(cur); boite.scrollTop=boite.scrollHeight;
+      var ch=s.charAt(b-1); if(b>=s.length){a++;b=0}
+      setTimeout(pas,/[.!?»]/.test(ch)?260:ch===","?120:14+Math.random()*22);
+    })();
+  }
+  function recitHTML(r){
+    return r.split(/\n\s*\n/).map(function(p){var e=esc(p).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");return '<p'+(/^[«„]/.test(p.trim())?' class="cit"':'')+'>'+e+'</p>'}).join("");
+  }
+  var API="https://mood-tools.yourmood.net/api/droits-homme"+(/[?&]apercu=/.test(location.search)?location.search+"&lang=de":"?lang=de");
+  function nom(n){return n===1?"Erster Artikel":"Artikel "+n}
+  fetch(API).then(function(r){return r.json()}).then(function(d){
+    var dj=d.duJours||(d.duJour?[d.duJour]:[]), jours=[];
+    (d.articles||[]).forEach(function(a){
+      var t=document.getElementById("a"+a.n); if(!t) return;
+      var est=dj.indexOf(a.n)>=0;
+      t.className="t ouvert"+(est?" jourc":""); t.href=a.lien;
+      if(a.video){t.className+=" film";t.innerHTML='<video autoplay muted loop playsinline preload="metadata" poster="'+esc(a.affiche)+'" src="'+esc(a.video)+'"></video><span class="n">'+(a.n<10?"0":"")+a.n+'</span><span class="s">'+esc(a.titre)+'</span>'}
+      else t.innerHTML='<span class="n">'+(a.n<10?"0":"")+a.n+'</span>'+(a.dessin?'<img class="d" loading="lazy" src="'+esc(a.dessin)+'" alt="">':'')+'<span class="s">'+esc(a.titre)+'</span>';
+      if(est) jours.push(a);
+    });
+    var box=document.getElementById("dhJour");
+    if(!jours.length){box.innerHTML='<div class="attente">Der erste Artikel wird bald enthüllt…</div>';return}
+    var html="";
+    jours.forEach(function(jour,ix){
+      var sansPhoto=!(jour.photos&&jour.photos.length)&&!jour.photo, imgs=(jour.photos&&jour.photos.length?jour.photos:[jour.photo||jour.dessin]).filter(Boolean);
+      var ph='<div class="jph'+(sansPhoto?' vide':'')+'" id="dhPh'+jour.n+'">'+imgs.map(function(u,q){return '<i'+(q?'':' class="on"')+' style="background-image:url(\''+esc(u)+'\')"></i>'}).join('')+(imgs.length>1?'<div class="jpts">'+imgs.map(function(u,q){return '<b'+(q?'':' class="on"')+' data-q="'+q+'"></b>'}).join('')+'</div>':'')+'</div>';
+      var tx='<div class="jtx"><div class="k">Heute · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit'+jour.n+'">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Ich entdecke</a></div>';
+      html+='<div class="jin'+(ix%2?' inv':'')+'">'+(ix%2?tx+ph:ph+tx)+'</div>';
+    });
+    box.outerHTML=html;
+    jours.forEach(function(jour){
+      (function(){var ph=document.getElementById("dhPh"+jour.n);if(!ph)return;var is=ph.querySelectorAll("i"),ps=ph.querySelectorAll(".jpts b"),q=0,t;if(is.length<2)return;
+        function va(n){is[q].classList.remove("on");if(ps[q])ps[q].classList.remove("on");q=n;is[q].classList.add("on");if(ps[q])ps[q].classList.add("on")}
+        function boucle(){clearInterval(t);t=setInterval(function(){va((q+1)%is.length)},4500)}
+        for(var z=0;z<ps.length;z++)ps[z].onclick=function(){va(+this.getAttribute("data-q"));boucle()};boucle()})();
+      var rc=document.getElementById("dhRecit"+jour.n);
+      if(rc){var fait=false;var go=function(){if(!fait){fait=true;ecrire(rc)}};if("IntersectionObserver" in window){new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();go()}},{threshold:.2}).observe(rc)}else go()}
+    });
+  }).catch(function(){var b=document.getElementById("dhJour");if(b)b.innerHTML='<div class="attente">Komm gleich wieder…</div>'});
+})();
+</script></body></html>
