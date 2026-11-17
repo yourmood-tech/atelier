@@ -11,14 +11,14 @@ export async function OPTIONS() { return new NextResponse(null, { headers: CORS 
 const BASE = "https://mood-tools.yourmood.net";
 
 export async function GET() {
-  const d = await gq(`{products(first:60,query:"tag:col-droits-homme-2026 status:active"){nodes{title handle status publishedAt onlineStoreUrl featuredImage{url}}}}`, {});
-  const vus = new Map<number, { n: number; publie: string; lien: string; photo: string | null }>();
+  const d = await gq(`{products(first:60,query:"tag:col-droits-homme-2026 status:active"){nodes{title handle status publishedAt onlineStoreUrl featuredImage{url} images(first:12){nodes{url}}}}}`, {});
+  const vus = new Map<number, { n: number; publie: string; lien: string; photo: string | null; photos: string[] }>();
   for (const p of d.products?.nodes || []) {
     if (p.status !== "ACTIVE" || !p.onlineStoreUrl || !p.publishedAt) continue;
     const m = /Article\s+(\d+)/i.exec(p.title || ""); if (!m) continue;
     const n = parseInt(m[1], 10); if (!ARTICLES[n]) continue;
     const prev = vus.get(n);
-    if (!prev || p.publishedAt > prev.publie) vus.set(n, { n, publie: p.publishedAt, lien: `https://www.yourmood.net/products/${p.handle}`, photo: p.featuredImage?.url || null });
+    if (!prev || p.publishedAt > prev.publie) vus.set(n, { n, publie: p.publishedAt, lien: `https://www.yourmood.net/products/${p.handle}`, photo: p.featuredImage?.url || null, photos: (p.images?.nodes || []).map((x: { url: string }) => x.url) });
   }
   const articles = [...vus.values()].sort((a, b) => a.n - b.n).map((a) => {
     const f = DESSINS[a.n];

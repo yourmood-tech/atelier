@@ -30,7 +30,12 @@
 /* addon du jour */
 #dh .jour{background:var(--noir);color:#fff}
 #dh .jin{margin:0;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
-#dh .jph{background:#1c1c1c center/cover no-repeat;height:100%}
+#dh .jph{position:relative;background:#1c1c1c;height:100%;overflow:hidden}
+#dh .jph i{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity 1.4s ease,transform 6s ease}
+#dh .jph i.on{opacity:1;transform:scale(1)}
+#dh .jpts{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:8px;z-index:2}
+#dh .jpts b{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);cursor:pointer}
+#dh .jpts b.on{background:#fff}
 #dh .jtx{padding:56px 48px 48px 56px;display:flex;flex-direction:column;height:100%;min-height:0}
 #dh .jtx .k{color:#a9a49b}
 #dh .jtx h2{font-size:clamp(38px,4.2vw,60px);line-height:1;margin:14px 0 6px}
@@ -128,7 +133,12 @@
     });
     var box=document.getElementById("dhJour");
     if(!jour){box.innerHTML='<div class="attente">Le premier article sera bientôt dévoilé…</div>';return}
-    box.innerHTML='<div class="jph" style="background-image:url(\''+esc(jour.photo||jour.dessin)+'\')"></div><div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
+    var imgs=(jour.photos&&jour.photos.length?jour.photos:[jour.photo||jour.dessin]).filter(Boolean);
+    box.innerHTML='<div class="jph" id="dhPh">'+imgs.map(function(u,q){return '<i'+(q?'':' class="on"')+' style="background-image:url(\''+esc(u)+'\')"></i>'}).join('')+(imgs.length>1?'<div class="jpts">'+imgs.map(function(u,q){return '<b'+(q?'':' class="on"')+' data-q="'+q+'"></b>'}).join('')+'</div>':'')+'</div><div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
+    (function(){var ph=document.getElementById("dhPh");if(!ph)return;var is=ph.querySelectorAll("i"),ps=ph.querySelectorAll(".jpts b"),q=0,t;if(is.length<2)return;
+      function va(n){is[q].classList.remove("on");if(ps[q])ps[q].classList.remove("on");q=n;is[q].classList.add("on");if(ps[q])ps[q].classList.add("on")}
+      function boucle(){clearInterval(t);t=setInterval(function(){va((q+1)%is.length)},4500)}
+      for(var z=0;z<ps.length;z++)ps[z].onclick=function(){va(+this.getAttribute("data-q"));boucle()};boucle()})();
     var rc=document.getElementById("dhRecit");
     if(rc){var fait=false;var go=function(){if(!fait){fait=true;ecrire(rc)}};if("IntersectionObserver" in window){new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();go()}},{threshold:.2}).observe(rc)}else go()}
   }).catch(function(){document.getElementById("dhJour").innerHTML='<div class="attente">Revenez dans un instant…</div>'});
