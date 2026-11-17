@@ -79,9 +79,19 @@ Le choix des pierres a également une signification particulière. J’ai sélec
 Ces différentes nuances évoquent la **diversité** des couleurs de peau et des origines humaines. Chaque pierre est différente, mais toutes ont **la même place** et **la même importance** dans le bijou.
 
 L’idée est simple : nous sommes tous **DIFFÉRENTS**, mais nous naissons tous **LIBRES ET ÉGAUX EN DROITS**.`,
+  2: `Aujourd’hui, j’aimerais vous présenter l’**article 2** de la Déclaration universelle des droits de l’homme : le droit à la **NON-DISCRIMINATION**.
+
+Cet article nous rappelle que nous avons tous **les mêmes droits et libertés**, sans distinction d’origine, de couleur de peau, de sexe, de religion ou d’opinion.
+
+Pour cet add-on, j’ai voulu représenter cette **diversité** à travers plusieurs **formes différentes**. Chacune a sa **propre identité**, mais elles se retrouvent toutes **réunies sur un même bijou**.
+
+Au centre, j’ai placé **deux grandes étoiles** pour donner plus de force à cet ensemble et symboliser notre **UNION**.
+
+L’idée, c’est de montrer que malgré toutes nos différences, nous faisons partie d’un **même ensemble**. Peu importe qui nous sommes, nous avons tous **la même valeur** et **LES MÊMES DROITS**.`,
 };
 
 // Films (nom imprévisible) : la vidéo remplit la case de l'article dans la grille
 export const VIDEOS: Record<number, string> = {
   1: "article-01-66b26e302e",
+  2: "article-02-d510a18e4a",
 };
