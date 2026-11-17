@@ -10,8 +10,9 @@
 /* héros : la déclaration écrite à la main en fond */
 #dh .hero{position:relative;min-height:92vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#fff}
 #dh .frappe{position:absolute;inset:0;overflow:hidden}
-#dh .frin{position:absolute;left:4vw;right:4vw;top:0;text-align:left;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;color:rgba(0,0,0,.16);letter-spacing:.02em;white-space:pre-wrap;transition:opacity 1s}
-#dh .frin b{font-weight:700;color:rgba(0,0,0,.24)}
+#dh .frin{position:absolute;left:4vw;right:4vw;top:0;text-align:left;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;white-space:pre-wrap;transition:opacity 1s,transform .6s ease}
+#dh .frin b{font-weight:700}
+#dh .frin .l{display:block;transition:color .8s}
 #dh .curseur{display:inline-block;width:.55em;height:1.05em;background:rgba(0,0,0,.35);vertical-align:-.15em;margin-left:1px;animation:dhcl 1s steps(1) infinite}
 @keyframes dhcl{50%{opacity:0}}
 #dh .hero:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,.92) 0%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 75%)}
@@ -32,7 +33,9 @@
 #dh .jtx h2{font-size:clamp(46px,5.4vw,78px);line-height:1;margin:18px 0 8px}
 #dh .jtx h3{font-style:italic;font-size:26px;color:#cfcac1;margin:0 0 22px}
 #dh .jtx p{font-size:15.5px;line-height:1.8;color:#d8d4cc;margin:0 0 30px;max-width:420px}
-#dh .recit{font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;color:#dcd8d0;margin:0 0 30px;max-width:480px;min-height:20em}
+#dh .recit{position:relative;font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;color:#dcd8d0;margin:0 0 30px;max-width:480px}
+#dh .recit .fantome{visibility:hidden}
+#dh .recit .vivant{position:absolute;inset:0}
 #dh .recit p{margin:0 0 14px;font:inherit;color:inherit;max-width:none} #dh .recit strong{color:#fff;font-weight:700}
 #dh .recit p.cit{font-family:'Playfair Display',serif;font-style:italic;font-size:21px;line-height:1.5;color:#fff}
 #dh .recit .curseur{background:#fff}
@@ -77,7 +80,11 @@
     var box=document.getElementById("dhFrappe"); if(!box) return;
     var hero=box.parentNode.parentNode, i=0, c=0, html="", cur='<span class="curseur"></span>';
     if(matchMedia("(prefers-reduced-motion: reduce)").matches){box.innerHTML=DECL.join("\n");return}
-    function rendu(){box.innerHTML=html+cur;var trop=box.offsetHeight-hero.offsetHeight*0.86;box.style.transform="translateY("+(trop>0?-trop:0)+"px)"}
+    function rendu(){
+      var lignes=html.split("\n"),n=lignes.length,out="";
+      for(var k=0;k<n;k++){var age=n-1-k,o=age===0?.62:Math.max(.07,.30-age*.035);out+='<span class="l" style="color:rgba(0,0,0,'+o+')">'+lignes[k]+(k===n-1?cur:"")+'</span>'}
+      box.innerHTML=out;var trop=box.offsetHeight-hero.offsetHeight*0.80;box.style.transform="translateY("+(trop>0?-trop:0)+"px)";
+    }
     function tape(){
       if(i>=DECL.length){setTimeout(function(){box.style.opacity=0;setTimeout(function(){i=0;c=0;html="";rendu();box.style.opacity=1;setTimeout(tape,600)},1100)},2500);return}
       var l=DECL[i];
@@ -90,7 +97,7 @@
     rendu(); setTimeout(tape,500);
   })();
   function ecrire(el){
-    var src=el.innerHTML; el.innerHTML="";
+    var src=el.innerHTML; el.innerHTML='<div class="fantome">'+src+'</div><div class="vivant"></div>'; el=el.lastChild;
     var tmp=document.createElement("div"); tmp.innerHTML=src;
     var cur=document.createElement("span"); cur.className="curseur";
     var noeuds=[]; (function walk(n,dst){for(var k=0;k<n.childNodes.length;k++){var x=n.childNodes[k];if(x.nodeType===3){var t=document.createTextNode("");dst.appendChild(t);noeuds.push([t,x.nodeValue])}else{var y=x.cloneNode(false);dst.appendChild(y);walk(x,y)}}})(tmp,el);
