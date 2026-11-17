@@ -81,7 +81,7 @@
     if(matchMedia("(prefers-reduced-motion: reduce)").matches){box.innerHTML=DECL.join("\n");return}
     function rendu(){
       var lignes=html.split("\n"),n=lignes.length,out="";
-      for(var k=0;k<n;k++){var age=n-1-k,o=age===0?.62:Math.max(.10,.30-age*.03);out+='<span class="l" style="color:rgba(0,0,0,'+o+')">'+lignes[k]+(k===n-1?cur:"")+'</span>'+(k<n-1?' &nbsp;·&nbsp; ':'')}
+      for(var k=0;k<n;k++){var age=n-1-k,o=age===0?.62:Math.max(.10,.30-age*.03);out+='<span class="l" style="color:rgba(0,0,0,'+o+')">'+lignes[k]+(k===n-1?cur:"")+'</span>'+(k<n-1?'<span style="color:rgba(0,0,0,.14)"> &nbsp;·&nbsp; </span>':'')}
       box.innerHTML=out;var trop=box.offsetHeight-hero.offsetHeight*0.80;box.style.transform="translateY("+(trop>0?-trop:0)+"px)";
     }
     function tape(){
