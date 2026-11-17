@@ -95,3 +95,6 @@ export const VIDEOS: Record<number, string> = {
   1: "article-01-66b26e302e",
   2: "article-02-d510a18e4a",
 };
+
+// Aperçu équipe : ?apercu=N&cle=… montre la page comme si les articles 1 à N étaient sortis
+export const CLE_APERCU = "c3d6539c6ca5";

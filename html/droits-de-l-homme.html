@@ -129,7 +129,7 @@
   function recitHTML(r){
     return r.split(/\n\s*\n/).map(function(p){var e=esc(p).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");return '<p'+(/^«/.test(p.trim())?' class="cit"':'')+'>'+e+'</p>'}).join("");
   }
-  var API="https://mood-tools.yourmood.net/api/droits-homme";
+  var API="https://mood-tools.yourmood.net/api/droits-homme"+(/[?&]apercu=/.test(location.search)?location.search:"");
   function nom(n){return n===1?"Article premier":"Article "+n}
   fetch(API).then(function(r){return r.json()}).then(function(d){
     var jour=null;

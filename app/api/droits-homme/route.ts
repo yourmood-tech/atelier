@@ -2,7 +2,7 @@
 // Les articles à venir ne sortent jamais d'ici → ils restent scellés sur la page, même en lisant son code.
 import { NextResponse } from "next/server";
 import { gq } from "@/lib/calendrier-photos";
-import { ARTICLES, DESSINS, RECITS, VIDEOS } from "@/lib/droits-homme";
+import { ARTICLES, CLE_APERCU, DESSINS, RECITS, VIDEOS } from "@/lib/droits-homme";
 
 export const dynamic = "force-dynamic";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
@@ -10,13 +10,16 @@ export async function OPTIONS() { return new NextResponse(null, { headers: CORS 
 
 const BASE = "https://mood-tools.yourmood.net";
 
-export async function GET() {
-  const d = await gq(`{products(first:60,query:"tag:col-droits-homme-2026 status:active"){nodes{title handle status publishedAt onlineStoreUrl featuredImage{url} images(first:12){nodes{url}}}}}`, {});
+export async function GET(req: Request) {
+  const u = new URL(req.url);
+  const apercu = u.searchParams.get("cle") === CLE_APERCU ? Math.max(0, Math.min(30, parseInt(u.searchParams.get("apercu") || "0", 10) || 0)) : 0;
+  const d = await gq(`{products(first:60,query:"tag:col-droits-homme-2026${apercu ? "" : " status:active"}"){nodes{title handle status publishedAt onlineStoreUrl featuredImage{url} images(first:12){nodes{url}}}}}`, {});
   const vus = new Map<number, { n: number; publie: string; lien: string; photo: string | null; photos: string[] }>();
   for (const p of d.products?.nodes || []) {
-    if (p.status !== "ACTIVE" || !p.onlineStoreUrl || !p.publishedAt) continue;
     const m = /Article\s+(\d+)/i.exec(p.title || ""); if (!m) continue;
     const n = parseInt(m[1], 10); if (!ARTICLES[n]) continue;
+    if (apercu) { if (n > apercu) continue; p.publishedAt = `2026-01-01T00:00:${String(n).padStart(2, "0")}Z`; }
+    else if (p.status !== "ACTIVE" || !p.onlineStoreUrl || !p.publishedAt) continue;
     const prev = vus.get(n);
     if (!prev || p.publishedAt > prev.publie) vus.set(n, { n, publie: p.publishedAt, lien: `https://www.yourmood.net/products/${p.handle}`, photo: p.featuredImage?.url || null, photos: (p.images?.nodes || []).map((x: { url: string }) => x.url) });
   }
@@ -25,5 +28,5 @@ export async function GET() {
     return { ...a, ...ARTICLES[a.n], recit: RECITS[a.n] || null, video: VIDEOS[a.n] ? `${BASE}/droits-homme/${VIDEOS[a.n]}.mp4` : null, affiche: VIDEOS[a.n] ? `${BASE}/droits-homme/${VIDEOS[a.n]}.jpg` : null, dessin: f ? `${BASE}/droits-homme/${f}` : null };
   });
   const duJour = [...articles].sort((a, b) => (a.publie < b.publie ? 1 : -1))[0] || null;
-  return NextResponse.json({ articles, duJour: duJour ? duJour.n : null }, { headers: { ...CORS, "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600" } });
+  return NextResponse.json({ articles, duJour: duJour ? duJour.n : null }, { headers: { ...CORS, "Cache-Control": apercu ? "no-store" : "public, s-maxage=120, stale-while-revalidate=600" } });
 }
