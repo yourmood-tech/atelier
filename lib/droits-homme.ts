@@ -80,3 +80,8 @@ Ces différentes nuances évoquent la **diversité** des couleurs de peau et des
 
 L’idée est simple : nous sommes tous **DIFFÉRENTS**, mais nous naissons tous **LIBRES ET ÉGAUX EN DROITS**.`,
 };
+
+// Films (nom imprévisible) : la vidéo remplit la case de l'article dans la grille
+export const VIDEOS: Record<number, string> = {
+  1: "article-01-9341e2571b",
+};
