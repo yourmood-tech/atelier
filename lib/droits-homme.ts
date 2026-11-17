@@ -83,5 +83,5 @@ L’idée est simple : nous sommes tous **DIFFÉRENTS**, mais nous naissons tous
 
 // Films (nom imprévisible) : la vidéo remplit la case de l'article dans la grille
 export const VIDEOS: Record<number, string> = {
-  1: "article-01-9341e2571b",
+  1: "article-01-66b26e302e",
 };
