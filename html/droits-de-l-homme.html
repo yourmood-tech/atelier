@@ -11,7 +11,7 @@
 #dh .hero{position:relative;min-height:0;height:min(62vh,560px);display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#fff}
 #dh .frappe{position:absolute;inset:0;overflow:hidden}
 #dh .frin{position:absolute;left:10px;right:10px;top:0;bottom:0;overflow:hidden;text-align:justify;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;color:rgba(0,0,0,.12)}
-#dh .defil{animation:dhdef 140s linear infinite}
+#dh .defil{transition:transform 2.6s cubic-bezier(.45,0,.2,1)}
 @keyframes dhdef{from{transform:translateY(0)}to{transform:translateY(-50%)}}
 #dh .frin b{font-weight:700}
 #dh .frin .sep{color:rgba(0,0,0,.10)}
@@ -109,8 +109,10 @@
       for(var q=0;q<spans.length;q++) if(+spans[q].getAttribute("data-k")===k) spans[q].innerHTML=h;
     }
     function remet(k){for(var q=0;q<spans.length;q++) if(+spans[q].getAttribute("data-k")===k) spans[q].innerHTML=bloc(k)}
+    var defil=box.querySelector('.defil'), hero=box.parentNode.parentNode;
+    function suivre(k){var s=box.querySelector('.l[data-k="'+k+'"]');if(!s)return;var y=s.offsetTop-hero.offsetHeight*0.22;defil.style.transform="translateY("+(y>0?-y:0)+"px)"}
     function tape(){
-      var l=DECL[i]; c++; peindre(i,c);
+      var l=DECL[i]; c++; if(c===1) suivre(i); peindre(i,c);
       if(c>=l.length){var fini=i;setTimeout(function(){remet(fini)},1800);i=(i+1)%DECL.length;c=0;setTimeout(tape,500);return}
       var ch=l.charAt(c-1); setTimeout(tape,ch===" "?20:30+Math.random()*30);
     }
