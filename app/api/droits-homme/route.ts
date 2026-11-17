@@ -2,7 +2,7 @@
 // Les articles à venir ne sortent jamais d'ici → ils restent scellés sur la page, même en lisant son code.
 import { NextResponse } from "next/server";
 import { gq } from "@/lib/calendrier-photos";
-import { ARTICLES, DESSINS } from "@/lib/droits-homme";
+import { ARTICLES, DESSINS, RECITS } from "@/lib/droits-homme";
 
 export const dynamic = "force-dynamic";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
@@ -22,7 +22,7 @@ export async function GET() {
   }
   const articles = [...vus.values()].sort((a, b) => a.n - b.n).map((a) => {
     const f = DESSINS[a.n];
-    return { ...a, ...ARTICLES[a.n], dessin: f ? `${BASE}/droits-homme/${f}` : null };
+    return { ...a, ...ARTICLES[a.n], recit: RECITS[a.n] || null, dessin: f ? `${BASE}/droits-homme/${f}` : null };
   });
   const duJour = [...articles].sort((a, b) => (a.publie < b.publie ? 1 : -1))[0] || null;
   return NextResponse.json({ articles, duJour: duJour ? duJour.n : null }, { headers: { ...CORS, "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600" } });

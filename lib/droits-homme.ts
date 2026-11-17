@@ -63,3 +63,20 @@ export const DESSINS: Record<number, string> = {
   26: "bande_26-3580b1f20e.jpg",
   27: "bande_27-61419fc2d3.jpg",
 };
+
+// Récit d'Amila affiché (tapé) à côté de l'addon du jour. **mot** = en gras. Paragraphes séparés par une ligne vide.
+export const RECITS: Record<number, string> = {
+  1: `Aujourd’hui, j’aimerais vous présenter l’**article 1** de la Déclaration universelle des droits de l’homme.
+
+« Tous les êtres humains naissent **LIBRES** et **ÉGAUX** en dignité et en droits. »
+
+Pour représenter cet article, j’ai imaginé un design composé de plusieurs **silhouettes humaines**. Des silhouettes différentes, qui peuvent représenter **tout le monde**, n’importe qui, **sans distinction**.
+
+Elles se tiennent toutes debout sur un **symbole d’égalité**, qui fait le tour de l’add-on. Ce symbole est la base du dessin : peu importe qui nous sommes, nous sommes **tous égaux en droits**.
+
+Le choix des pierres a également une signification particulière. J’ai sélectionné des **saphirs roses, bruns et orange**, ainsi que des **diamants blancs et noirs**.
+
+Ces différentes nuances évoquent la **diversité** des couleurs de peau et des origines humaines. Chaque pierre est différente, mais toutes ont **la même place** et **la même importance** dans le bijou.
+
+L’idée est simple : nous sommes tous **DIFFÉRENTS**, mais nous naissons tous **LIBRES ET ÉGAUX EN DROITS**.`,
+};

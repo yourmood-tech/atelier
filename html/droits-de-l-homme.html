@@ -1,6 +1,6 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Droits de l'Homme — mood</title><meta name="robots" content="noindex">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Poppins:wght@300;400;500&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
 <style>
 #dh{--noir:#111;--gris:#77736c;--ligne:#e6e3de;font-family:Poppins,sans-serif;font-weight:300;color:var(--noir);background:#fff}
 #dh *{box-sizing:border-box} #dh a{color:inherit;text-decoration:none}
@@ -9,7 +9,11 @@
 #dh .btn{display:inline-block;border-radius:999px;padding:14px 30px;font:500 11.5px Poppins;letter-spacing:.2em;text-transform:uppercase}
 /* héros : la déclaration écrite à la main en fond */
 #dh .hero{position:relative;min-height:92vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#fff}
-#dh .hero .fond{position:absolute;inset:-4% -2%;background:url(https://mood-tools.yourmood.net/droits-homme/declaration-main.jpg) center 18%/min(1100px,120%) auto repeat-y;opacity:.11;filter:blur(.2px)}
+#dh .frappe{position:absolute;inset:0;overflow:hidden}
+#dh .frin{position:absolute;left:4vw;right:4vw;top:0;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;color:rgba(0,0,0,.16);letter-spacing:.02em;white-space:pre-wrap;transition:opacity 1s}
+#dh .frin b{font-weight:700;color:rgba(0,0,0,.24)}
+#dh .curseur{display:inline-block;width:.55em;height:1.05em;background:rgba(0,0,0,.35);vertical-align:-.15em;margin-left:1px;animation:dhcl 1s steps(1) infinite}
+@keyframes dhcl{50%{opacity:0}}
 #dh .hero:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,.92) 0%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 75%)}
 #dh .hero .in{position:relative;z-index:1;padding:40px 24px}
 #dh .hero h1{font-size:clamp(52px,8vw,116px);line-height:1;letter-spacing:-.01em;margin:22px 0 22px}
@@ -21,13 +25,17 @@
 #dh .bande{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px;padding:18px 20px;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne);font:500 10.5px Poppins;letter-spacing:.24em;text-transform:uppercase;color:#8d8880}
 /* addon du jour */
 #dh .jour{background:var(--noir);color:#fff}
-#dh .jin{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;min-height:640px}
-#dh .jph{background:#1c1c1c center/cover no-repeat}
+#dh .jin{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;min-height:760px;align-items:start}
+#dh .jph{background:#1c1c1c center/cover no-repeat;position:sticky;top:0;height:100vh;max-height:900px}
 #dh .jtx{padding:80px 64px;display:flex;flex-direction:column;justify-content:center}
 #dh .jtx .k{color:#a9a49b}
 #dh .jtx h2{font-size:clamp(46px,5.4vw,78px);line-height:1;margin:18px 0 8px}
 #dh .jtx h3{font-style:italic;font-size:26px;color:#cfcac1;margin:0 0 22px}
 #dh .jtx p{font-size:15.5px;line-height:1.8;color:#d8d4cc;margin:0 0 30px;max-width:420px}
+#dh .recit{font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;color:#dcd8d0;margin:0 0 30px;max-width:480px;min-height:20em}
+#dh .recit p{margin:0 0 14px;font:inherit;color:inherit;max-width:none} #dh .recit strong{color:#fff;font-weight:700}
+#dh .recit p.cit{font-family:'Playfair Display',serif;font-style:italic;font-size:21px;line-height:1.5;color:#fff}
+#dh .recit .curseur{background:#fff}
 #dh .jdes{margin:0 0 34px;max-width:460px} #dh .jdes img{width:100%;display:block;border-radius:6px}
 #dh .jtx .btn{background:#fff;color:var(--noir);align-self:flex-start}
 #dh .attente{grid-column:1/-1;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:24px;color:#bdb8af}
@@ -51,7 +59,7 @@
 #dh .fin .btn{background:#fff;color:var(--noir)} #dh .fin img{width:110px;margin-top:70px;opacity:.95}
 @media(max-width:900px){#dh .jin{grid-template-columns:1fr} #dh .jph{min-height:420px} #dh .jtx{padding:48px 24px} #dh .grille{grid-template-columns:repeat(3,1fr)}}
 </style></head><body style="margin:0"><div id="dh">
-<section class="hero"><div class="fond"></div><div class="in"><div class="k">mood collection · 2026</div>
+<section class="hero"><div class="frappe" aria-hidden="true"><div class="frin" id="dhFrappe"></div></div><div class="in"><div class="k">mood collection · 2026</div>
 <h1>Droits<br>de l’Homme<i>.</i></h1>
 <p>Trente articles, écrits en 1948 pour le monde entier. On les a dessinés, gravés et sertis à la main. Un article par jour, à clipser sur ta bague mood.</p>
 <a class="btn" href="#dh-jour">L’article du jour</a></div><div class="defile">↓</div></section>
@@ -63,8 +71,41 @@
 </div>
 <script>
 (function(){
-  var API="https://mood-tools.yourmood.net/api/droits-homme";
   function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  var DECL=["ARTICLE 1 : TOUS LES ÊTRES HUMAINS NAISSENT LIBRES ET ÉGAUX EN DIGNITÉ ET EN DROITS.", "ARTICLE 2 : CHACUN PEUT SE PRÉVALOIR DE TOUS LES DROITS, SANS DISTINCTION AUCUNE.", "ARTICLE 3 : CHACUN A DROIT À LA VIE, À LA LIBERTÉ ET À LA SÉCURITÉ.", "ARTICLE 4 : NUL NE PEUT ÊTRE TENU EN ESCLAVAGE NI EN SERVITUDE.", "ARTICLE 5 : NUL NE PEUT ÊTRE SOUMIS À LA TORTURE NI À DES TRAITEMENTS CRUELS, INHUMAINS OU DÉGRADANTS.", "ARTICLE 6 : CHACUN A LE DROIT À LA RECONNAISSANCE DE SA PERSONNALITÉ JURIDIQUE PARTOUT.", "ARTICLE 7 : TOUS SONT ÉGAUX DEVANT LA LOI ET ONT DROIT À LA MÊME PROTECTION.", "ARTICLE 8 : CHACUN A DROIT À UN RECOURS EFFECTIF DEVANT LES TRIBUNAUX.", "ARTICLE 9 : NUL NE PEUT ÊTRE ARRÊTÉ, DÉTENU OU EXILÉ ARBITRAIREMENT.", "ARTICLE 10 : CHACUN A DROIT À UN PROCÈS ÉQUITABLE ET PUBLIC.", "ARTICLE 11 : TOUTE PERSONNE EST PRÉSUMÉE INNOCENTE TANT QUE SA CULPABILITÉ N’A PAS ÉTÉ LÉGALEMENT ÉTABLIE.", "ARTICLE 12 : NUL NE PEUT FAIRE L’OBJET D’IMMIXTIONS ARBITRAIRES DANS SA VIE PRIVÉE, SA FAMILLE, SON DOMICILE OU SA CORRESPONDANCE.", "ARTICLE 13 : CHACUN A LE DROIT DE CIRCULER LIBREMENT ET DE CHOISIR SA RÉSIDENCE.", "ARTICLE 14 : CHACUN A LE DROIT DE CHERCHER ASILE ET DE BÉNÉFICIER DE L’ASILE.", "ARTICLE 15 : CHACUN A LE DROIT À UNE NATIONALITÉ.", "ARTICLE 16 : LES HOMMES ET LES FEMMES ONT LE DROIT DE SE MARIER ET DE FONDER UNE FAMILLE, SUR UN PIED D’ÉGALITÉ.", "ARTICLE 17 : CHACUN A DROIT À LA PROPRIÉTÉ, SEUL OU EN ASSOCIATION.", "ARTICLE 18 : CHACUN A DROIT À LA LIBERTÉ DE PENSÉE, DE CONSCIENCE ET DE RELIGION.", "ARTICLE 19 : CHACUN A DROIT À LA LIBERTÉ D’OPINION ET D’EXPRESSION.", "ARTICLE 20 : CHACUN A DROIT À LA LIBERTÉ DE RÉUNION ET D’ASSOCIATION PACIFIQUES.", "ARTICLE 21 : CHACUN A LE DROIT DE PRENDRE PART À LA DIRECTION DES AFFAIRES PUBLIQUES ET À DES ÉLECTIONS LIBRES.", "ARTICLE 22 : CHACUN A DROIT À LA SÉCURITÉ SOCIALE ET AUX DROITS ÉCONOMIQUES, SOCIAUX ET CULTURELS INDISPENSABLES À SA DIGNITÉ.", "ARTICLE 23 : CHACUN A DROIT AU TRAVAIL, À DES CONDITIONS JUSTES ET FAVORABLES ET À UNE RÉMUNÉRATION ÉQUITABLE.", "ARTICLE 24 : CHACUN A DROIT AU REPOS ET AUX LOISIRS, AINSI QU’À UNE DURÉE RAISONNABLE DE TRAVAIL.", "ARTICLE 25 : CHACUN A DROIT À UN NIVEAU DE VIE SUFFISANT POUR SA SANTÉ, SON BIEN-ÊTRE ET CELUI DE SA FAMILLE.", "ARTICLE 26 : CHACUN A DROIT À L’ÉDUCATION.", "ARTICLE 27 : CHACUN A DROIT DE PRENDRE PART À LA VIE CULTURELLE, DE JOUIR DES ARTS ET DES PROGRÈS SCIENTIFIQUES.", "ARTICLE 28 : CHACUN A DROIT À UN ORDRE SOCIAL ET INTERNATIONAL OÙ CES DROITS PEUVENT ÊTRE PLEINEMENT RÉALISÉS.", "ARTICLE 29 : CHACUN A DES DEVOIRS ENVERS LA COMMUNAUTÉ POUR PERMETTRE LE PLEIN EXERCICE DES DROITS DE TOUS.", "ARTICLE 30 : AUCUNE DISPOSITION DE CETTE DÉCLARATION NE PEUT ÊTRE INTERPRÉTÉE COMME DONNANT LE DROIT DE DÉTRUIRE LES DROITS ET LIBERTÉS QUI Y SONT ÉNONCÉS."];
+  (function(){
+    var box=document.getElementById("dhFrappe"); if(!box) return;
+    var hero=box.parentNode.parentNode, i=0, c=0, html="", cur='<span class="curseur"></span>';
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches){box.innerHTML=DECL.join("\n");return}
+    function rendu(){box.innerHTML=html+cur;var trop=box.offsetHeight-hero.offsetHeight*0.86;box.style.transform="translateY("+(trop>0?-trop:0)+"px)"}
+    function tape(){
+      if(i>=DECL.length){setTimeout(function(){box.style.opacity=0;setTimeout(function(){i=0;c=0;html="";rendu();box.style.opacity=1;setTimeout(tape,600)},1100)},2500);return}
+      var l=DECL[i];
+      if(c===0){html+=(i?"\n":"")+"<b>";}
+      var ch=l.charAt(c); html+=ch; c++;
+      if(l.indexOf(":")===c-1){html+="</b>";}
+      if(c>=l.length){i++;c=0;rendu();setTimeout(tape,380);return}
+      rendu(); setTimeout(tape,ch===" "?18:28+Math.random()*30);
+    }
+    rendu(); setTimeout(tape,500);
+  })();
+  function ecrire(el){
+    var src=el.innerHTML; el.innerHTML="";
+    var tmp=document.createElement("div"); tmp.innerHTML=src;
+    var cur=document.createElement("span"); cur.className="curseur";
+    var noeuds=[]; (function walk(n,dst){for(var k=0;k<n.childNodes.length;k++){var x=n.childNodes[k];if(x.nodeType===3){var t=document.createTextNode("");dst.appendChild(t);noeuds.push([t,x.nodeValue])}else{var y=x.cloneNode(false);dst.appendChild(y);walk(x,y)}}})(tmp,el);
+    var a=0,b=0;
+    (function pas(){
+      if(a>=noeuds.length){cur.remove();return}
+      var t=noeuds[a][0],s=noeuds[a][1]; t.nodeValue=s.slice(0,++b); t.parentNode.appendChild(cur);
+      var ch=s.charAt(b-1); if(b>=s.length){a++;b=0}
+      setTimeout(pas,/[.!?»]/.test(ch)?260:ch===","?120:14+Math.random()*22);
+    })();
+  }
+  function recitHTML(r){
+    return r.split(/\n\s*\n/).map(function(p){var e=esc(p).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");return '<p'+(/^«/.test(p.trim())?' class="cit"':'')+'>'+e+'</p>'}).join("");
+  }
+  var API="https://mood-tools.yourmood.net/api/droits-homme";
   function nom(n){return n===1?"Article premier":"Article "+n}
   fetch(API).then(function(r){return r.json()}).then(function(d){
     var jour=null;
@@ -76,7 +117,9 @@
     });
     var box=document.getElementById("dhJour");
     if(!jour){box.innerHTML='<div class="attente">Le premier article sera bientôt dévoilé…</div>';return}
-    box.innerHTML='<div class="jph" style="background-image:url(\''+esc(jour.photo||jour.dessin)+'\')"></div><div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3><p>« '+esc(jour.sens)+' »</p>'+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
+    box.innerHTML='<div class="jph" style="background-image:url(\''+esc(jour.photo||jour.dessin)+'\')"></div><div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
+    var rc=document.getElementById("dhRecit");
+    if(rc){var fait=false;var go=function(){if(!fait){fait=true;ecrire(rc)}};if("IntersectionObserver" in window){new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();go()}},{threshold:.2}).observe(rc)}else go()}
   }).catch(function(){document.getElementById("dhJour").innerHTML='<div class="attente">Revenez dans un instant…</div>'});
 })();
 </script></body></html>
