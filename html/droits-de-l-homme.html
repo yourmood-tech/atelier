@@ -26,20 +26,19 @@
 #dh .bande{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px;padding:18px 20px;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne);font:500 10.5px Poppins;letter-spacing:.24em;text-transform:uppercase;color:#8d8880}
 /* addon du jour */
 #dh .jour{background:var(--noir);color:#fff}
-#dh .jin{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;min-height:760px;align-items:start}
-#dh .jph{background:#1c1c1c center/cover no-repeat;position:sticky;top:0;height:100vh;max-height:900px}
-#dh .jtx{padding:80px 64px;display:flex;flex-direction:column;justify-content:center}
+#dh .jin{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
+#dh .jph{background:#1c1c1c center/cover no-repeat;height:100%}
+#dh .jtx{padding:56px 60px 48px;display:flex;flex-direction:column;height:100%;min-height:0}
 #dh .jtx .k{color:#a9a49b}
-#dh .jtx h2{font-size:clamp(46px,5.4vw,78px);line-height:1;margin:18px 0 8px}
-#dh .jtx h3{font-style:italic;font-size:26px;color:#cfcac1;margin:0 0 22px}
+#dh .jtx h2{font-size:clamp(38px,4.2vw,60px);line-height:1;margin:14px 0 6px}
+#dh .jtx h3{font-style:italic;font-size:22px;color:#cfcac1;margin:0 0 18px}
 #dh .jtx p{font-size:15.5px;line-height:1.8;color:#d8d4cc;margin:0 0 30px;max-width:420px}
-#dh .recit{position:relative;font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;color:#dcd8d0;margin:0 0 30px;max-width:480px}
-#dh .recit .fantome{visibility:hidden}
-#dh .recit .vivant{position:absolute;inset:0}
+#dh .recit{flex:1;min-height:0;overflow:hidden;font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;color:#dcd8d0;margin:0 0 22px;max-width:500px;padding-top:24px;-webkit-mask-image:linear-gradient(transparent 0,#000 34px);mask-image:linear-gradient(transparent 0,#000 34px);scrollbar-width:thin;scrollbar-color:#444 transparent}
+#dh .recit.fini{overflow-y:auto}
 #dh .recit p{margin:0 0 14px;font:inherit;color:inherit;max-width:none} #dh .recit strong{color:#fff;font-weight:700}
 #dh .recit p.cit{font-family:'Playfair Display',serif;font-style:italic;font-size:21px;line-height:1.5;color:#fff}
 #dh .recit .curseur{background:#fff}
-#dh .jdes{margin:0 0 34px;max-width:460px} #dh .jdes img{width:100%;display:block;border-radius:6px}
+#dh .jdes{margin:0 0 22px;max-width:460px} #dh .jdes img{width:100%;display:block;border-radius:6px}
 #dh .jtx .btn{background:#fff;color:var(--noir);align-self:flex-start}
 #dh .attente{grid-column:1/-1;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-style:italic;font-size:24px;color:#bdb8af}
 /* les 30 */
@@ -60,7 +59,7 @@
 #dh .fin{background:var(--noir);color:#fff;text-align:center;padding:120px 24px}
 #dh .fin h2{font-size:clamp(36px,4.6vw,62px);margin:0 0 16px} #dh .fin p{color:#bdb8af;margin:0 0 34px}
 #dh .fin .btn{background:#fff;color:var(--noir)} #dh .fin img{width:110px;margin-top:70px;opacity:.95}
-@media(max-width:900px){#dh .jin{grid-template-columns:1fr} #dh .jph{min-height:420px} #dh .jtx{padding:48px 24px} #dh .grille{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){#dh .jin{grid-template-columns:1fr;height:auto} #dh .jph{min-height:420px} #dh .recit{height:22em;flex:none} #dh .jtx{padding:48px 24px} #dh .grille{grid-template-columns:repeat(3,1fr)}}
 </style></head><body style="margin:0"><div id="dh">
 <section class="hero"><div class="frappe" aria-hidden="true"><div class="frin" id="dhFrappe"></div></div><div class="in"><div class="k">mood collection · 2026</div>
 <h1>Droits<br>de l’Homme<i>.</i></h1>
@@ -97,14 +96,14 @@
     rendu(); setTimeout(tape,500);
   })();
   function ecrire(el){
-    var src=el.innerHTML; el.innerHTML='<div class="fantome">'+src+'</div><div class="vivant"></div>'; el=el.lastChild;
+    var boite=el, src=el.innerHTML; el.innerHTML="";
     var tmp=document.createElement("div"); tmp.innerHTML=src;
     var cur=document.createElement("span"); cur.className="curseur";
     var noeuds=[]; (function walk(n,dst){for(var k=0;k<n.childNodes.length;k++){var x=n.childNodes[k];if(x.nodeType===3){var t=document.createTextNode("");dst.appendChild(t);noeuds.push([t,x.nodeValue])}else{var y=x.cloneNode(false);dst.appendChild(y);walk(x,y)}}})(tmp,el);
     var a=0,b=0;
     (function pas(){
-      if(a>=noeuds.length){cur.remove();return}
-      var t=noeuds[a][0],s=noeuds[a][1]; t.nodeValue=s.slice(0,++b); t.parentNode.appendChild(cur);
+      if(a>=noeuds.length){cur.remove();boite.classList.add("fini");return}
+      var t=noeuds[a][0],s=noeuds[a][1]; t.nodeValue=s.slice(0,++b); t.parentNode.appendChild(cur); boite.scrollTop=boite.scrollHeight;
       var ch=s.charAt(b-1); if(b>=s.length){a++;b=0}
       setTimeout(pas,/[.!?»]/.test(ch)?260:ch===","?120:14+Math.random()*22);
     })();
