@@ -72,7 +72,7 @@ export const RECITS: Record<number, string> = {
 
 Pour représenter cet article, j’ai imaginé un design composé de plusieurs **silhouettes humaines**. Des silhouettes différentes, qui peuvent représenter **tout le monde**, n’importe qui, **sans distinction**.
 
-Elles se tiennent toutes debout sur un **symbole d’égalité**, qui fait le tour de l’add-on. Ce symbole est la base du dessin : peu importe qui nous sommes, nous sommes **tous égaux en droits**.
+Elles se tiennent toutes debout sur un **symbole d’égalité**, qui fait le tour de l’addon. Ce symbole est la base du dessin : peu importe qui nous sommes, nous sommes **tous égaux en droits**.
 
 Le choix des pierres a également une signification particulière. J’ai sélectionné des **saphirs roses, bruns et orange**, ainsi que des **diamants blancs et noirs**.
 
@@ -83,7 +83,7 @@ L’idée est simple : nous sommes tous **DIFFÉRENTS**, mais nous naissons tous
 
 Cet article nous rappelle que nous avons tous **les mêmes droits et libertés**, sans distinction d’origine, de couleur de peau, de sexe, de religion ou d’opinion.
 
-Pour cet add-on, j’ai voulu représenter cette **diversité** à travers plusieurs **formes différentes**. Chacune a sa **propre identité**, mais elles se retrouvent toutes **réunies sur un même bijou**.
+Pour cet addon, j’ai voulu représenter cette **diversité** à travers plusieurs **formes différentes**. Chacune a sa **propre identité**, mais elles se retrouvent toutes **réunies sur un même bijou**.
 
 Au centre, j’ai placé **deux grandes étoiles** pour donner plus de force à cet ensemble et symboliser notre **UNION**.
 
