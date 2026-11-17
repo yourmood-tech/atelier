@@ -93,7 +93,7 @@ L’idée, c’est de montrer que malgré toutes nos différences, nous faisons 
 // Films (nom imprévisible) : la vidéo remplit la case de l'article dans la grille
 export const VIDEOS: Record<number, string> = {
   1: "article-01-972bb1adc7",
-  2: "article-02-d510a18e4a",
+  2: "article-02-a852ba64f1",
 };
 
 // Aperçu équipe : ?apercu=N&cle=… montre la page comme si les articles 1 à N étaient sortis
