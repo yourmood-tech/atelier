@@ -10,10 +10,13 @@
 /* héros : la déclaration écrite à la main en fond */
 #dh .hero{position:relative;min-height:92vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#fff}
 #dh .frappe{position:absolute;inset:0;overflow:hidden}
-#dh .frin{position:absolute;left:10px;right:10px;top:0;text-align:justify;text-align-last:left;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;white-space:normal;transition:opacity 1s,transform .6s ease}
+#dh .frin{position:absolute;left:10px;right:10px;top:0;bottom:0;overflow:hidden;text-align:justify;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;color:rgba(0,0,0,.12)}
+#dh .defil{animation:dhdef 140s linear infinite}
+@keyframes dhdef{from{transform:translateY(0)}to{transform:translateY(-50%)}}
 #dh .frin b{font-weight:700}
-#dh .frin .l{transition:color .8s}
-#dh .curseur{display:inline-block;width:.55em;height:1.05em;background:rgba(0,0,0,.35);vertical-align:-.15em;margin-left:1px;animation:dhcl 1s steps(1) infinite}
+#dh .frin .sep{color:rgba(0,0,0,.10)}
+#dh .frin .ec{color:rgba(0,0,0,.6);transition:color 1.5s}
+#dh .curseur{display:inline-block;width:.55em;height:1.05em;background:rgba(0,0,0,.45);vertical-align:-.15em;margin-left:1px;animation:dhcl 1s steps(1) infinite}
 @keyframes dhcl{50%{opacity:0}}
 #dh .hero:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,.92) 0%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 75%)}
 #dh .hero .in{position:relative;z-index:1;padding:40px 24px}
@@ -77,23 +80,25 @@
   var DECL=["ARTICLE 1 : TOUS LES ÊTRES HUMAINS NAISSENT LIBRES ET ÉGAUX EN DIGNITÉ ET EN DROITS.", "ARTICLE 2 : CHACUN PEUT SE PRÉVALOIR DE TOUS LES DROITS, SANS DISTINCTION AUCUNE.", "ARTICLE 3 : CHACUN A DROIT À LA VIE, À LA LIBERTÉ ET À LA SÉCURITÉ.", "ARTICLE 4 : NUL NE PEUT ÊTRE TENU EN ESCLAVAGE NI EN SERVITUDE.", "ARTICLE 5 : NUL NE PEUT ÊTRE SOUMIS À LA TORTURE NI À DES TRAITEMENTS CRUELS, INHUMAINS OU DÉGRADANTS.", "ARTICLE 6 : CHACUN A LE DROIT À LA RECONNAISSANCE DE SA PERSONNALITÉ JURIDIQUE PARTOUT.", "ARTICLE 7 : TOUS SONT ÉGAUX DEVANT LA LOI ET ONT DROIT À LA MÊME PROTECTION.", "ARTICLE 8 : CHACUN A DROIT À UN RECOURS EFFECTIF DEVANT LES TRIBUNAUX.", "ARTICLE 9 : NUL NE PEUT ÊTRE ARRÊTÉ, DÉTENU OU EXILÉ ARBITRAIREMENT.", "ARTICLE 10 : CHACUN A DROIT À UN PROCÈS ÉQUITABLE ET PUBLIC.", "ARTICLE 11 : TOUTE PERSONNE EST PRÉSUMÉE INNOCENTE TANT QUE SA CULPABILITÉ N’A PAS ÉTÉ LÉGALEMENT ÉTABLIE.", "ARTICLE 12 : NUL NE PEUT FAIRE L’OBJET D’IMMIXTIONS ARBITRAIRES DANS SA VIE PRIVÉE, SA FAMILLE, SON DOMICILE OU SA CORRESPONDANCE.", "ARTICLE 13 : CHACUN A LE DROIT DE CIRCULER LIBREMENT ET DE CHOISIR SA RÉSIDENCE.", "ARTICLE 14 : CHACUN A LE DROIT DE CHERCHER ASILE ET DE BÉNÉFICIER DE L’ASILE.", "ARTICLE 15 : CHACUN A LE DROIT À UNE NATIONALITÉ.", "ARTICLE 16 : LES HOMMES ET LES FEMMES ONT LE DROIT DE SE MARIER ET DE FONDER UNE FAMILLE, SUR UN PIED D’ÉGALITÉ.", "ARTICLE 17 : CHACUN A DROIT À LA PROPRIÉTÉ, SEUL OU EN ASSOCIATION.", "ARTICLE 18 : CHACUN A DROIT À LA LIBERTÉ DE PENSÉE, DE CONSCIENCE ET DE RELIGION.", "ARTICLE 19 : CHACUN A DROIT À LA LIBERTÉ D’OPINION ET D’EXPRESSION.", "ARTICLE 20 : CHACUN A DROIT À LA LIBERTÉ DE RÉUNION ET D’ASSOCIATION PACIFIQUES.", "ARTICLE 21 : CHACUN A LE DROIT DE PRENDRE PART À LA DIRECTION DES AFFAIRES PUBLIQUES ET À DES ÉLECTIONS LIBRES.", "ARTICLE 22 : CHACUN A DROIT À LA SÉCURITÉ SOCIALE ET AUX DROITS ÉCONOMIQUES, SOCIAUX ET CULTURELS INDISPENSABLES À SA DIGNITÉ.", "ARTICLE 23 : CHACUN A DROIT AU TRAVAIL, À DES CONDITIONS JUSTES ET FAVORABLES ET À UNE RÉMUNÉRATION ÉQUITABLE.", "ARTICLE 24 : CHACUN A DROIT AU REPOS ET AUX LOISIRS, AINSI QU’À UNE DURÉE RAISONNABLE DE TRAVAIL.", "ARTICLE 25 : CHACUN A DROIT À UN NIVEAU DE VIE SUFFISANT POUR SA SANTÉ, SON BIEN-ÊTRE ET CELUI DE SA FAMILLE.", "ARTICLE 26 : CHACUN A DROIT À L’ÉDUCATION.", "ARTICLE 27 : CHACUN A DROIT DE PRENDRE PART À LA VIE CULTURELLE, DE JOUIR DES ARTS ET DES PROGRÈS SCIENTIFIQUES.", "ARTICLE 28 : CHACUN A DROIT À UN ORDRE SOCIAL ET INTERNATIONAL OÙ CES DROITS PEUVENT ÊTRE PLEINEMENT RÉALISÉS.", "ARTICLE 29 : CHACUN A DES DEVOIRS ENVERS LA COMMUNAUTÉ POUR PERMETTRE LE PLEIN EXERCICE DES DROITS DE TOUS.", "ARTICLE 30 : AUCUNE DISPOSITION DE CETTE DÉCLARATION NE PEUT ÊTRE INTERPRÉTÉE COMME DONNANT LE DROIT DE DÉTRUIRE LES DROITS ET LIBERTÉS QUI Y SONT ÉNONCÉS."];
   (function(){
     var box=document.getElementById("dhFrappe"); if(!box) return;
-    var hero=box.parentNode.parentNode, i=0, c=0, html="", cur='<span class="curseur"></span>';
-    if(matchMedia("(prefers-reduced-motion: reduce)").matches){box.innerHTML=DECL.join("\n");return}
-    function rendu(){
-      var lignes=html.split("\n"),n=lignes.length,out="";
-      for(var k=0;k<n;k++){var age=n-1-k,o=age===0?.62:Math.max(.10,.30-age*.03);out+='<span class="l" style="color:rgba(0,0,0,'+o+')">'+lignes[k]+(k===n-1?cur:"")+'</span>'+(k<n-1?'<span style="color:rgba(0,0,0,.14)"> &nbsp;·&nbsp; </span>':'')}
-      box.innerHTML=out;var trop=box.offsetHeight-hero.offsetHeight*0.80;box.style.transform="translateY("+(trop>0?-trop:0)+"px)";
+    function bloc(k,tape){var l=DECL[k],j=l.indexOf(":")+1,html="";
+      for(var x=0;x<l.length;x++){var ch=l.charAt(x);if(x===0)html+="<b>";html+=ch;if(x===j-1)html+="</b>"}
+      return html}
+    var tout="";for(var k=0;k<DECL.length;k++){tout+='<span class="l" data-k="'+k+'">'+bloc(k)+'</span><span class="sep"> &nbsp;·&nbsp; </span>'}
+    box.innerHTML='<div class="defil">'+tout+tout+'</div>';
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var spans=box.querySelectorAll('.l'), i=0, c=0, cur='<span class="curseur"></span>';
+    function peindre(k,n){
+      var l=DECL[k],j=l.indexOf(":")+1,a=l.slice(0,n),b=l.slice(n),fa=a.slice(0,Math.min(n,j)),fb=a.slice(Math.min(n,j));
+      var h='<span class="ec"><b>'+fa+'</b>'+fb+'</span>'+cur+(n<j?'<b>'+l.slice(n,j)+'</b>'+l.slice(j):b);
+      for(var q=0;q<spans.length;q++) if(+spans[q].getAttribute("data-k")===k) spans[q].innerHTML=h;
     }
+    function remet(k){for(var q=0;q<spans.length;q++) if(+spans[q].getAttribute("data-k")===k) spans[q].innerHTML=bloc(k)}
     function tape(){
-      if(i>=DECL.length){setTimeout(function(){box.style.opacity=0;setTimeout(function(){i=0;c=0;html="";rendu();box.style.opacity=1;setTimeout(tape,600)},1100)},2500);return}
-      var l=DECL[i];
-      if(c===0){html+=(i?"\n":"")+"<b>";}
-      var ch=l.charAt(c); html+=ch; c++;
-      if(l.indexOf(":")===c-1){html+="</b>";}
-      if(c>=l.length){i++;c=0;rendu();setTimeout(tape,380);return}
-      rendu(); setTimeout(tape,ch===" "?18:28+Math.random()*30);
+      var l=DECL[i]; c++; peindre(i,c);
+      if(c>=l.length){var fini=i;setTimeout(function(){remet(fini)},1800);i=(i+1)%DECL.length;c=0;setTimeout(tape,500);return}
+      var ch=l.charAt(c-1); setTimeout(tape,ch===" "?20:30+Math.random()*30);
     }
-    rendu(); setTimeout(tape,500);
+    setTimeout(tape,600);
   })();
   function ecrire(el){
     var boite=el, src=el.innerHTML; el.innerHTML="";
