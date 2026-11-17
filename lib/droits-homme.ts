@@ -98,3 +98,11 @@ export const VIDEOS: Record<number, string> = {
 
 // Aperçu équipe : ?apercu=N&cle=… montre la page comme si les articles 1 à N étaient sortis
 export const CLE_APERCU = "c3d6539c6ca5";
+
+// Calendrier de sortie (mis à jour 17.11.2026) — sert à l'aperçu équipe ; en vrai, c'est la mise en ligne de la fiche qui compte
+export const SORTIES: Record<number, string> = {
+  1: "2026-11-17", 2: "2026-11-18", 3: "2026-11-19", 4: "2026-11-20", 5: "2026-11-21", 6: "2026-11-21", 7: "2026-11-22",
+  8: "2026-11-23", 9: "2026-11-24", 10: "2026-11-25", 11: "2026-11-26", 12: "2026-11-26", 13: "2026-11-28", 14: "2026-11-29", 15: "2026-11-29",
+  16: "2026-11-30", 17: "2026-11-30", 18: "2026-12-01", 19: "2026-12-02", 20: "2026-12-02", 21: "2026-12-03", 22: "2026-12-04", 23: "2026-12-04",
+  24: "2026-12-05", 25: "2026-12-06", 26: "2026-12-07", 27: "2026-12-07", 28: "2026-12-08", 29: "2026-12-09", 30: "2026-12-09",
+};

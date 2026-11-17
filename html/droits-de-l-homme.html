@@ -31,6 +31,7 @@
 #dh .jour{background:var(--noir);color:#fff}
 #dh .jin{margin:0;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
 #dh .jph{position:relative;background:#1c1c1c;height:100%;overflow:hidden}
+#dh .jin+.jin{border-top:1px solid #2a2a2a}
 #dh .jph i{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.04);transition:opacity 1.4s ease,transform 6s ease}
 #dh .jph i.on{opacity:1;transform:scale(1)}
 #dh .jpts{position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center;gap:8px;z-index:2}
@@ -132,24 +133,33 @@
   var API="https://mood-tools.yourmood.net/api/droits-homme"+(/[?&]apercu=/.test(location.search)?location.search:"");
   function nom(n){return n===1?"Article premier":"Article "+n}
   fetch(API).then(function(r){return r.json()}).then(function(d){
-    var jour=null;
+    var dj=d.duJours||(d.duJour?[d.duJour]:[]), jours=[];
     (d.articles||[]).forEach(function(a){
       var t=document.getElementById("a"+a.n); if(!t) return;
-      t.className="t ouvert"+(a.n===d.duJour?" jourc":""); t.href=a.lien;
+      var est=dj.indexOf(a.n)>=0;
+      t.className="t ouvert"+(est?" jourc":""); t.href=a.lien;
       if(a.video){t.className+=" film";t.innerHTML='<video autoplay muted loop playsinline preload="metadata" poster="'+esc(a.affiche)+'" src="'+esc(a.video)+'"></video><span class="n">'+(a.n<10?"0":"")+a.n+'</span><span class="s">'+esc(a.titre)+'</span>'}
       else t.innerHTML='<span class="n">'+(a.n<10?"0":"")+a.n+'</span>'+(a.dessin?'<img class="d" loading="lazy" src="'+esc(a.dessin)+'" alt="">':'')+'<span class="s">'+esc(a.titre)+'</span>';
-      if(a.n===d.duJour) jour=a;
+      if(est) jours.push(a);
     });
     var box=document.getElementById("dhJour");
-    if(!jour){box.innerHTML='<div class="attente">Le premier article sera bientôt dévoilé…</div>';return}
-    var imgs=(jour.photos&&jour.photos.length?jour.photos:[jour.photo||jour.dessin]).filter(Boolean);
-    box.innerHTML='<div class="jph" id="dhPh">'+imgs.map(function(u,q){return '<i'+(q?'':' class="on"')+' style="background-image:url(\''+esc(u)+'\')"></i>'}).join('')+(imgs.length>1?'<div class="jpts">'+imgs.map(function(u,q){return '<b'+(q?'':' class="on"')+' data-q="'+q+'"></b>'}).join('')+'</div>':'')+'</div><div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
-    (function(){var ph=document.getElementById("dhPh");if(!ph)return;var is=ph.querySelectorAll("i"),ps=ph.querySelectorAll(".jpts b"),q=0,t;if(is.length<2)return;
-      function va(n){is[q].classList.remove("on");if(ps[q])ps[q].classList.remove("on");q=n;is[q].classList.add("on");if(ps[q])ps[q].classList.add("on")}
-      function boucle(){clearInterval(t);t=setInterval(function(){va((q+1)%is.length)},4500)}
-      for(var z=0;z<ps.length;z++)ps[z].onclick=function(){va(+this.getAttribute("data-q"));boucle()};boucle()})();
-    var rc=document.getElementById("dhRecit");
-    if(rc){var fait=false;var go=function(){if(!fait){fait=true;ecrire(rc)}};if("IntersectionObserver" in window){new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();go()}},{threshold:.2}).observe(rc)}else go()}
-  }).catch(function(){document.getElementById("dhJour").innerHTML='<div class="attente">Revenez dans un instant…</div>'});
+    if(!jours.length){box.innerHTML='<div class="attente">Le premier article sera bientôt dévoilé…</div>';return}
+    var html="";
+    jours.forEach(function(jour,ix){
+      var imgs=(jour.photos&&jour.photos.length?jour.photos:[jour.photo||jour.dessin]).filter(Boolean);
+      var ph='<div class="jph" id="dhPh'+jour.n+'">'+imgs.map(function(u,q){return '<i'+(q?'':' class="on"')+' style="background-image:url(\''+esc(u)+'\')"></i>'}).join('')+(imgs.length>1?'<div class="jpts">'+imgs.map(function(u,q){return '<b'+(q?'':' class="on"')+' data-q="'+q+'"></b>'}).join('')+'</div>':'')+'</div>';
+      var tx='<div class="jtx"><div class="k">Aujourd’hui · '+nom(jour.n)+(jour.format?' · '+esc(jour.format):'')+'</div><h2>'+esc(jour.titre)+'</h2><h3>'+nom(jour.n)+'</h3>'+(jour.recit?'<div class="recit" id="dhRecit'+jour.n+'">'+recitHTML(jour.recit)+'</div>':'<p>« '+esc(jour.sens)+' »</p>')+(jour.dessin?'<div class="jdes"><img src="'+esc(jour.dessin)+'" alt=""></div>':'')+'<a class="btn" href="'+esc(jour.lien)+'">Je découvre</a></div>';
+      html+='<div class="jin'+(ix%2?' inv':'')+'">'+(ix%2?tx+ph:ph+tx)+'</div>';
+    });
+    box.outerHTML=html;
+    jours.forEach(function(jour){
+      (function(){var ph=document.getElementById("dhPh"+jour.n);if(!ph)return;var is=ph.querySelectorAll("i"),ps=ph.querySelectorAll(".jpts b"),q=0,t;if(is.length<2)return;
+        function va(n){is[q].classList.remove("on");if(ps[q])ps[q].classList.remove("on");q=n;is[q].classList.add("on");if(ps[q])ps[q].classList.add("on")}
+        function boucle(){clearInterval(t);t=setInterval(function(){va((q+1)%is.length)},4500)}
+        for(var z=0;z<ps.length;z++)ps[z].onclick=function(){va(+this.getAttribute("data-q"));boucle()};boucle()})();
+      var rc=document.getElementById("dhRecit"+jour.n);
+      if(rc){var fait=false;var go=function(){if(!fait){fait=true;ecrire(rc)}};if("IntersectionObserver" in window){new IntersectionObserver(function(e,o){if(e[0].isIntersecting){o.disconnect();go()}},{threshold:.2}).observe(rc)}else go()}
+    });
+  }).catch(function(){var b=document.getElementById("dhJour");if(b)b.innerHTML='<div class="attente">Revenez dans un instant…</div>'});
 })();
 </script></body></html>

@@ -2,7 +2,7 @@
 // Les articles à venir ne sortent jamais d'ici → ils restent scellés sur la page, même en lisant son code.
 import { NextResponse } from "next/server";
 import { gq } from "@/lib/calendrier-photos";
-import { ARTICLES, CLE_APERCU, DESSINS, RECITS, VIDEOS } from "@/lib/droits-homme";
+import { ARTICLES, CLE_APERCU, DESSINS, RECITS, SORTIES, VIDEOS } from "@/lib/droits-homme";
 
 export const dynamic = "force-dynamic";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   for (const p of d.products?.nodes || []) {
     const m = /Article\s+(\d+)/i.exec(p.title || ""); if (!m) continue;
     const n = parseInt(m[1], 10); if (!ARTICLES[n]) continue;
-    if (apercu) { if (n > apercu) continue; p.publishedAt = `2026-01-01T00:00:${String(n).padStart(2, "0")}Z`; }
+    if (apercu) { if (n > apercu) continue; p.publishedAt = `${SORTIES[n] || "2026-11-17"}T10:00:${String(n).padStart(2, "0")}Z`; }
     else if (p.status !== "ACTIVE" || !p.onlineStoreUrl || !p.publishedAt) continue;
     const prev = vus.get(n);
     if (!prev || p.publishedAt > prev.publie) vus.set(n, { n, publie: p.publishedAt, lien: `https://www.yourmood.net/products/${p.handle}`, photo: p.featuredImage?.url || null, photos: (p.images?.nodes || []).map((x: { url: string }) => x.url) });
@@ -27,6 +27,9 @@ export async function GET(req: Request) {
     const f = DESSINS[a.n];
     return { ...a, ...ARTICLES[a.n], recit: RECITS[a.n] || null, video: VIDEOS[a.n] ? `${BASE}/droits-homme/${VIDEOS[a.n]}.mp4` : null, affiche: VIDEOS[a.n] ? `${BASE}/droits-homme/${VIDEOS[a.n]}.jpg` : null, dessin: f ? `${BASE}/droits-homme/${f}` : null };
   });
-  const duJour = [...articles].sort((a, b) => (a.publie < b.publie ? 1 : -1))[0] || null;
-  return NextResponse.json({ articles, duJour: duJour ? duJour.n : null }, { headers: { ...CORS, "Cache-Control": apercu ? "no-store" : "public, s-maxage=120, stale-while-revalidate=600" } });
+  // « du jour » = tous les articles sortis le dernier jour de sortie (heure suisse) : 1, 2 ou 3 le même jour
+  const jourCH = (iso: string) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zurich" }).format(new Date(iso));
+  const dernier = articles.reduce((m, a) => (jourCH(a.publie) > m ? jourCH(a.publie) : m), "");
+  const duJours = articles.filter((a) => jourCH(a.publie) === dernier).map((a) => a.n);
+  return NextResponse.json({ articles, duJour: duJours[0] ?? null, duJours }, { headers: { ...CORS, "Cache-Control": apercu ? "no-store" : "public, s-maxage=120, stale-while-revalidate=600" } });
 }
