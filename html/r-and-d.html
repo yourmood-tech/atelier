@@ -1492,7 +1492,7 @@ function reconcilierSemaine(debut){
       prevu.shopifyIds = [...new Set([...(prevu.shopifyIds || []), sid])];
       if (!prevu.dateSortie) { prevu.dateSortie = jour; prevu.date = jour; prevu.extraSemaine = false; }
       prevu.etape = Math.max(prevu.etape || 1, 8); change = true;
-    } else if (!donnees.produits.some(p => p.id === 'auto-' + sid)) {
+    } else if (!tagsS.includes('joaillerie') && !donnees.produits.some(p => p.id === 'auto-' + sid)) { // la joaillerie se compte à part, jamais ajoutée ici
       donnees.produits.push({ id: 'auto-' + sid, nom: nomPropre(sx.title), date: jour, dateSortie: jour, auto: true, shopifyIds: [sid], image: sx.image || '', etape: 8, objectifCA: 0, objectifQty: 0 });
       change = true;
     }
