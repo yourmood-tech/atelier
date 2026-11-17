@@ -10,9 +10,9 @@
 /* héros : la déclaration écrite à la main en fond */
 #dh .hero{position:relative;min-height:92vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;background:#fff}
 #dh .frappe{position:absolute;inset:0;overflow:hidden}
-#dh .frin{position:absolute;left:4vw;right:4vw;top:0;text-align:left;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;white-space:pre-wrap;transition:opacity 1s,transform .6s ease}
+#dh .frin{position:absolute;left:10px;right:10px;top:0;text-align:justify;text-align-last:left;font-family:'Courier Prime',monospace;font-size:clamp(15px,1.55vw,22px);line-height:1.75;letter-spacing:.02em;white-space:normal;transition:opacity 1s,transform .6s ease}
 #dh .frin b{font-weight:700}
-#dh .frin .l{display:block;transition:color .8s}
+#dh .frin .l{transition:color .8s}
 #dh .curseur{display:inline-block;width:.55em;height:1.05em;background:rgba(0,0,0,.35);vertical-align:-.15em;margin-left:1px;animation:dhcl 1s steps(1) infinite}
 @keyframes dhcl{50%{opacity:0}}
 #dh .hero:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(255,255,255,.92) 0%,rgba(255,255,255,.55) 45%,rgba(255,255,255,0) 75%)}
@@ -26,7 +26,7 @@
 #dh .bande{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 40px;padding:18px 20px;border-top:1px solid var(--ligne);border-bottom:1px solid var(--ligne);font:500 10.5px Poppins;letter-spacing:.24em;text-transform:uppercase;color:#8d8880}
 /* addon du jour */
 #dh .jour{background:var(--noir);color:#fff}
-#dh .jin{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
+#dh .jin{margin:0;display:grid;grid-template-columns:1fr 1fr;height:min(92vh,820px);min-height:600px}
 #dh .jph{background:#1c1c1c center/cover no-repeat;height:100%}
 #dh .jtx{padding:56px 60px 48px;display:flex;flex-direction:column;height:100%;min-height:0}
 #dh .jtx .k{color:#a9a49b}
@@ -81,7 +81,7 @@
     if(matchMedia("(prefers-reduced-motion: reduce)").matches){box.innerHTML=DECL.join("\n");return}
     function rendu(){
       var lignes=html.split("\n"),n=lignes.length,out="";
-      for(var k=0;k<n;k++){var age=n-1-k,o=age===0?.62:Math.max(.07,.30-age*.035);out+='<span class="l" style="color:rgba(0,0,0,'+o+')">'+lignes[k]+(k===n-1?cur:"")+'</span>'}
+      for(var k=0;k<n;k++){var age=n-1-k,o=age===0?.62:Math.max(.10,.30-age*.03);out+='<span class="l" style="color:rgba(0,0,0,'+o+')">'+lignes[k]+(k===n-1?cur:"")+'</span>'+(k<n-1?' &nbsp;·&nbsp; ':'')}
       box.innerHTML=out;var trop=box.offsetHeight-hero.offsetHeight*0.80;box.style.transform="translateY("+(trop>0?-trop:0)+"px)";
     }
     function tape(){
