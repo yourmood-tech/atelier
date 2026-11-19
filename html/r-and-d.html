@@ -1647,8 +1647,10 @@ function tableauSemaine(annee, m, debut, numSem){
     rowsGC += ligne(escapeHtml(p.nom || '(sans nom)'), etat + lienDet, v, { click: `ouvrirModalEdit('${p.id}')`, editQ: `setChampProduit('${p.id}','objectifQty',this.value)`, editC: `setChampProduit('${p.id}','objectifCA',this.value)`, prevOk });
     if (ouvertP) {
       const VP = D && D.ventesParProduit;
+      // semaine déjà bloquée : ses chiffres par pièce ne sont pas encore chargés → on va les chercher (sinon « chargement » sans fin)
+      if (!VP && !semaineChargement[debut] && !(D && D.erreur)) setTimeout(() => chargerSemaineData(debut), 0);
       const L = VP ? p.shopifyIds.map(id => ({ t: (p.titres && p.titres[id]) || ('pièce ' + id), q: (VP[id] || {}).qty || 0, c: (VP[id] || {}).total || 0 })).sort((a, b) => b.c - a.c || b.q - a.q) : null;
-      const corps = !L ? '<div class="det-vide">⏳ chargement…</div>'
+      const corps = !L ? (D && D.erreur ? '<div class="det-vide">Détail indisponible pour le moment — réessaie dans un instant.</div>' : '<div class="det-vide">⏳ chargement…</div>')
         : `<table class="det-tab">${L.map(x => `<tr${x.q ? '' : ' style="color:#a0948a"'}><td>${escapeHtml(x.t)}</td><td class="p">${n(x.q)} pce${x.q > 1 ? 's' : ''}</td><td class="p">${n(x.c)}.–</td></tr>`).join('')}</table>`;
       rowsGC += `<tr class="det-ligne"><td colspan="9">${corps}</td></tr>`;
     }
