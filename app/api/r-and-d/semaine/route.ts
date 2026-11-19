@@ -16,6 +16,8 @@ const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_R
 
 const EXCLU = /devis|carte cadeau|bon cadeau|gift|seconde main|^\s*\d+\s+(novembre|décembre)|papier cadeau|service|réparation|rénovation|frais/i;
 const SEUIL_JOAILLERIE = 600;
+// pièces rangées en Joaillerie même sous 600.– (demande Amila) : London Blue (medium argent, topazes)
+const JOA_FORCE = new Set(["15982976663929"]);
 // ventes boutique tapées à la main : [titre reconnu, fiche yourmood.net où les compter] (demande Amila 16.11)
 // (pièce à 0.– = commande de fabrication interne, jamais comptée comme vente)
 const A_LA_MAIN: [RegExp, number][] = [
@@ -132,7 +134,7 @@ export async function GET(request: Request) {
       const lie = !l.product_id && t > 0 ? A_LA_MAIN.find(([rx]) => rx.test(l.title || "")) : undefined;
       if (lie) l.product_id = lie[1];
       if (l.product_id) { const k = String(l.product_id); parProduit[k] = parProduit[k] || { qty: 0, total: 0 }; parProduit[k].qty += l.quantity; parProduit[k].total += t; titres[k] = l.title || ""; }
-      if (!lie && parseFloat(l.price) > SEUIL_JOAILLERIE && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; const jt = (l.title || "").trim(); joaDet[jt] = joaDet[jt] || { q: 0, c: 0 }; joaDet[jt].q += l.quantity; joaDet[jt].c += t; }
+      if (!lie && (parseFloat(l.price) > SEUIL_JOAILLERIE || JOA_FORCE.has(String(l.product_id))) && !EXCLU.test(l.title || "") && !/coffret|starter/i.test(l.title || "")) { joaQty += l.quantity; joaTotal += t; const jt = (l.title || "").trim(); joaDet[jt] = joaDet[jt] || { q: 0, c: 0 }; joaDet[jt].q += l.quantity; joaDet[jt].c += t; }
     }
     // lots → produit du lot (le coffret) ; ajouté à parProduit sous l'ID du coffret
     const vids = Object.keys(lots);
