@@ -99,6 +99,7 @@ export const VIDEOS: Record<number, string> = {
   5: "article-05-31eed545a1",
   6: "article-06-79f4ba0d44",
   7: "article-07-d772e981da",
+  8: "article-08-b52a815a78",
   9: "article-09-b44cfef029",
 };
 
