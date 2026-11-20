@@ -378,7 +378,7 @@ export default function IceleaArrivagePage() {
           {summary && (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 text-sm">
               <Stat k="Lignes facture" v={summary.invoiceLines} />
-              <Stat k="Pièces facturées" v={summary.invoicePieces} />
+              <Stat k="Pièces + paires facturées" v={summary.invoicePieces} />
               <Stat k="Lignes de réception" v={summary.receptionRows} />
               <Stat k="Matchées (sûres)" v={summary.matchedRows} />
               <Stat k="À vérifier" v={summary.approxRows} />

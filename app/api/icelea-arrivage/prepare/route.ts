@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
 
     const parsed = await extractInvoiceItems(Buffer.from(await file.arrayBuffer()));
     const { check } = parsed;
-    // seules les pièces de stock se réceptionnent : frais, réparations et paires (boucles d'oreilles) restent hors plan
-    const items = parsed.items.filter((it) => !it.service && it.unit !== "pairs");
+    // frais et réparations restent hors plan ; les paires (boucles d'oreilles MD-EA, sans taille)
+    // se réceptionnent comme les pièces — rapprochées par code seul, toujours « à vérifier »
+    const items = parsed.items.filter((it) => !it.service);
     if (items.length === 0) {
       return NextResponse.json({ error: "Aucune ligne produit trouvée dans la facture" }, { status: 422 });
     }
