@@ -39,7 +39,16 @@ export default function IceleaArrivagePage() {
     qtyDiffs: { label: string; size: string | null; invoiceQty: number; receivedQty: number }[];
     itemRemarks: { sku: string | null; name: string | null; label: string; size: string | null; fr: string; en: string }[];
     remaining: { pos: RemainingPo[]; totalLines: number; totalQty: number };
+    // simulation « colis en route » : rien reçu dans Katana, les pièces des factures listées sont déduites
+    sim?: {
+      invoices: string[]; deducted: number; unsure: number;
+      surplus: { sku: string; name: string | null; size: string | null; qty: number }[];
+      notMatched: { invoice: string; label: string; size: string | null; qty: number }[];
+    };
   };
+  // factures simulées comme arrivées (colis en route), cumulées d'une facture à l'autre
+  type SimInvoice = { deduct: { variantId: number; qty: number }[]; unsure: number; notMatched: { label: string; size: string | null; qty: number }[] };
+  const [simInvoices, setSimInvoices] = useState<Record<string, SimInvoice>>({});
   const [report, setReport] = useState<Report | null>(null);
   const [reportLang, setReportLang] = useState<"fr" | "en">("fr");
   const [remarksFr, setRemarksFr] = useState("");
@@ -254,6 +263,39 @@ export default function IceleaArrivagePage() {
     } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
     finally { setReportBusy(false); }
   }
+  // SIMULATION : la facture chargée (colis en route) est « arrivée » sur le papier seulement →
+  // ses pièces sont retirées des PO ouverts (FIFO), rien n'est écrit dans Katana. On peut charger
+  // une autre facture en route et simuler encore : les colis se cumulent dans le même rapport.
+  async function simulate() {
+    if (!rows) return;
+    const key = invoiceNo || file?.name || "facture";
+    const cur: SimInvoice = {
+      deduct: rows.filter((r) => r.variantId).map((r) => ({ variantId: r.variantId!, qty: r.invoiceQty })),
+      unsure: rows.filter((r) => r.variantId && r.match === "approx").reduce((s, r) => s + r.invoiceQty, 0),
+      notMatched: rows.filter((r) => !r.variantId).map((r) => ({ label: r.label, size: r.size, qty: r.invoiceQty })),
+    };
+    const all = { ...simInvoices, [key]: cur };
+    setReportBusy(true);
+    try {
+      const res = await fetch("/api/icelea-arrivage/open-remaining", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deduct: Object.values(all).flatMap((x) => x.deduct) }),
+      });
+      const rem = await readJson(res);
+      if (!res.ok) { alert((rem.error as string) || "Erreur reste à livrer"); return; }
+      setSimInvoices(all);
+      setReport({
+        neverScanned: [], qtyDiffs: [], itemRemarks: [], remaining: rem as Report["remaining"],
+        sim: {
+          invoices: Object.keys(all), deducted: Number(rem.deducted) || 0,
+          unsure: Object.values(all).reduce((s, x) => s + x.unsure, 0),
+          surplus: (rem.surplus as NonNullable<Report["sim"]>["surplus"]) ?? [],
+          notMatched: Object.entries(all).flatMap(([inv, x]) => x.notMatched.map((n) => ({ invoice: inv, ...n }))),
+        },
+      });
+    } catch (e) { alert(e instanceof Error ? e.message : String(e)); }
+    finally { setReportBusy(false); }
+  }
   // traduit un texte FR→EN via le service (rendu vide en cas d'échec)
   async function translateText(fr: string): Promise<string> {
     if (!fr.trim()) return "";
@@ -332,6 +374,17 @@ export default function IceleaArrivagePage() {
               <button onClick={buildReport} disabled={reportBusy}
                 className="rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 disabled:opacity-50">
                 {reportBusy ? "…" : "Terminer l'arrivage → rapport"}</button>
+            )}
+            {rows && !report && (
+              <button onClick={simulate} disabled={reportBusy || !!bulk}
+                title="Rien n'entre dans Katana : les pièces de cette facture sont seulement retirées du reste à livrer"
+                className="rounded-xl border border-violet-400 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100 disabled:opacity-50">
+                {reportBusy ? "…" : `🧪 Simuler l'arrivée → reste à livrer${Object.keys(simInvoices).length && !(invoiceNo && simInvoices[invoiceNo]) ? ` (+ ${Object.keys(simInvoices).length} colis déjà simulé${Object.keys(simInvoices).length > 1 ? "s" : ""})` : ""}`}</button>
+            )}
+            {Object.keys(simInvoices).length > 0 && !report && (
+              <button onClick={() => setSimInvoices({})}
+                className="rounded-xl border border-neutral-300 px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-100">
+                Vider la simulation ({Object.keys(simInvoices).join(", ")})</button>
             )}
           </div>
           {error && <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
@@ -496,8 +549,24 @@ export default function IceleaArrivagePage() {
               </div>
 
               <div className="space-y-5 text-sm">
-                <h1 className="text-xl font-semibold">{fr ? "Rapport d'arrivage — Icelea" : "Goods receipt report — Icelea"}</h1>
+                <h1 className="text-xl font-semibold">{report.sim
+                  ? (fr ? "Reste à livrer — Icelea" : "Open orders still to deliver — Icelea")
+                  : (fr ? "Rapport d'arrivage — Icelea" : "Goods receipt report — Icelea")}</h1>
+                {report.sim && (
+                  <p className="text-neutral-700">{fr
+                    ? <>État au {new Date().toLocaleDateString("fr-CH")}. Les colis en route ({report.sim.invoices.join(", ")}) sont déjà déduits : ci-dessous, uniquement ce qui reste à expédier.</>
+                    : <>Status as of {new Date().toLocaleDateString("en-GB")}. Shipments in transit ({report.sim.invoices.join(", ")}) are already deducted: below is only what remains to be shipped.</>}</p>
+                )}
+                {report.sim && (
+                  <div className="print:hidden rounded-xl border border-violet-300 bg-violet-50 p-3 text-xs text-violet-900 space-y-1">
+                    <div className="font-medium">🧪 Simulation — rien n&apos;a été reçu dans Katana. {report.sim.deducted} pièce(s) retirée(s) des bons ouverts.</div>
+                    {report.sim.unsure > 0 && <div>⚠ {report.sim.unsure} pièce(s) déduites sur une association « à vérifier » (proposée, pas encore confirmée).</div>}
+                    {report.sim.notMatched.length > 0 && <div>⚠ Non déduites (aucun article Katana associé) : {report.sim.notMatched.map((n) => `${n.label}${n.size ? ` ${n.size}` : ""} ×${n.qty}`).join(" · ")}</div>}
+                    {report.sim.surplus.length > 0 && <div>⚠ En route sans ligne ouverte en face (surplus) : {report.sim.surplus.map((x) => `${x.sku}${x.size ? ` ${x.size}` : ""} ×${x.qty}`).join(" · ")}</div>}
+                  </div>
+                )}
 
+                {!report.sim && (<>
                 <section>
                   <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "1. Pièces facturées non reçues" : "1. Invoiced items not received"}</h2>
                   {report.neverScanned.length === 0 ? <p className="text-neutral-500">{fr ? "Aucune." : "None."}</p> : (
@@ -534,8 +603,10 @@ export default function IceleaArrivagePage() {
                   )}
                 </section>
 
+                </>)}
+
                 <section>
-                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{fr ? "4. Reste à livrer — PO ouverts" : "4. Still to deliver — open POs"} ({report.remaining.totalQty} {fr ? "pièces" : "pcs"})</h2>
+                  <h2 className="mb-1 border-b border-neutral-300 font-semibold">{report.sim ? (fr ? "Reste à livrer — PO ouverts" : "Still to deliver — open POs") : (fr ? "4. Reste à livrer — PO ouverts" : "4. Still to deliver — open POs")} ({report.remaining.totalQty} {fr ? "pièces" : "pcs"})</h2>
                   {report.remaining.pos.map((po) => (
                     <div key={po.po} className="mt-2">
                       <div className="font-medium">{po.po} <span className="text-neutral-400">({po.lines.reduce((s, l) => s + l.qty, 0)} {fr ? "pcs" : "pcs"})</span></div>
