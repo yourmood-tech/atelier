@@ -94,6 +94,12 @@ L’idée, c’est de montrer que malgré toutes nos différences, nous faisons 
 export const VIDEOS: Record<number, string> = {
   1: "article-01-972bb1adc7",
   2: "article-02-a852ba64f1",
+  3: "article-03-e232bd5467",
+  4: "article-04-39fb815e2a",
+  5: "article-05-31eed545a1",
+  6: "article-06-79f4ba0d44",
+  7: "article-07-d772e981da",
+  9: "article-09-b44cfef029",
 };
 
 // Aperçu équipe : ?apercu=N&cle=… montre la page comme si les articles 1 à N étaient sortis
