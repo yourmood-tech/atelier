@@ -36,6 +36,8 @@ const K = {
   recettes: (n: number) => `delai-fab:index:recettes:${n}`,
   cibles: (n: number) => `delai-fab:cibles:${n}`,
   arbre: (n: number) => `delai-fab:arbre:${n}`,
+  skus: (n: number) => `delai-fab:skus:${n}`,
+  arbreAutres: (n: number) => `delai-fab:arbre-autres:${n}`,
   pret: "delai-fab:pret",
   valeurs: "delai-fab:valeurs",
   rapport: "delai-fab:rapport",
@@ -49,7 +51,12 @@ type Etat = {
   debut: string;
   fin?: string;
 };
-type Pret = { construitLe: string; cibles: number; arbre: number; morceauxCibles: number; morceauxArbre: number };
+type Pret = {
+  construitLe: string; cibles: number; arbre: number; morceauxCibles: number; morceauxArbre: number;
+  // produits qui contiennent une matière Icelea (directement ou par un sous-produit : coffrets, packs) —
+  // pour retirer du stock les commandes en attente (règle du 22.11.2026)
+  morceauxSkus?: number; morceauxArbreAutres?: number;
+};
 type Cible = [number, number[]]; // [taille Shopify (id numérique), produits Katana]
 type Noeud = [number, [number, number][]]; // [variante Katana, [[ingrédient, quantité]]]
 
@@ -146,8 +153,10 @@ async function assembler(e: Etat) {
     }
   }
   const produitsIcelea = new Set([...recettes].filter(([, l]) => l.some(([ing]) => ice.has(ing))).map(([pv]) => pv));
-  // Références (SKU) des seuls produits Icelea : 250 par appel, ≈ 65 appels.
-  const ids = [...produitsIcelea];
+  // Un niveau au-dessus : coffrets / packs dont la recette contient un produit Icelea.
+  const contenants = new Set([...recettes].filter(([pv, l]) => !produitsIcelea.has(pv) && l.some(([ing]) => produitsIcelea.has(ing))).map(([pv]) => pv));
+  // Références (SKU) des produits Icelea et de leurs contenants : 250 par appel.
+  const ids = [...produitsIcelea, ...contenants];
   const paquets: number[][] = [];
   for (let i = 0; i < ids.length; i += 250) paquets.push(ids.slice(i, i + 250));
   const lus = await enParallele(paquets, 3, (b) => katana("/variants", { ids: b, limit: 250 }));
@@ -201,12 +210,29 @@ async function assembler(e: Etat) {
   };
   for (const [, ks] of cibles) for (const k of ks) visiter(k, 0);
 
+  // Pour les commandes en attente : référence → produit Katana, et leurs recettes.
+  const skus: [string, number][] = [];
+  for (const [sku, ks] of parSku) skus.push([sku, ks[0]]);
+  const arbreAutres: Noeud[] = [];
+  const vu2 = new Set<number>(vu);
+  const visiter2 = (id: number, prof: number) => {
+    if (vu2.has(id) || prof > 3) return;
+    vu2.add(id);
+    const l = recettes.get(id);
+    if (!l) return;
+    arbreAutres.push([id, l]);
+    for (const [ing] of l) visiter2(ing, prof + 1);
+  };
+  for (const [, k] of skus) visiter2(k, 0);
+
   const pret: Pret = {
     construitLe: new Date().toISOString(),
     cibles: cibles.length,
     arbre: arbre.length,
     morceauxCibles: await ranger(K.cibles, cibles),
     morceauxArbre: await ranger(K.arbre, arbre),
+    morceauxSkus: await ranger(K.skus, skus),
+    morceauxArbreAutres: await ranger(K.arbreAutres, arbreAutres),
   };
   await kv.set(K.pret, pret);
 }
@@ -240,7 +266,7 @@ export async function mettreAJourStock(ecrire = true) {
   // disponible = stock Katana − pièces des commandes des 5 derniers jours pas encore
   // envoyées. 5 jours couvrent un week-end entier (les commandes du vendredi au dimanche
   // partent le lundi). Les ventes en boutique sont remplies tout de suite : déjà sorties.
-  const attente = await deduireCommandesEnAttente(cibles, arbre, stock);
+  const attente = await deduireCommandesEnAttente(pret, cibles, arbre, stock);
 
   const faisable = (id: number, prof: number): number => {
     const l = arbre.get(id);
@@ -290,9 +316,12 @@ const JOURS_EN_ATTENTE = 5;
 
 // Retire du stock (en place) les matières des commandes en ligne des 5 derniers jours
 // pas encore envoyées. Les tailles suivies passent par l'arbre déjà en mémoire ; les autres
-// produits (coffrets, packs…) dont une ligne attend : recette lue à la demande.
-async function deduireCommandesEnAttente(cibles: Cible[], arbre: Map<number, [number, number][]>, stock: Map<number, number>) {
+// produits (coffrets, packs…) par les recettes rangées avec l'index de la semaine — aucun
+// appel Katana ici (le 22.11, des appels à la demande ont fait dépasser les 300 s).
+async function deduireCommandesEnAttente(pret: Pret, cibles: Cible[], arbre: Map<number, [number, number][]>, stock: Map<number, number>) {
   const parTaille = new Map<number, number[]>(cibles);
+  const parSku = new Map<string, number>(pret.morceauxSkus ? await relire<[string, number]>(K.skus, pret.morceauxSkus) : []);
+  const arbreAutres = new Map(pret.morceauxArbreAutres ? await relire<Noeud>(K.arbreAutres, pret.morceauxArbreAutres) : []);
   const depuis = new Date(Date.now() - JOURS_EN_ATTENTE * 24 * 3600 * 1000).toISOString();
   const lignes: { sid: number; sku: string; q: number }[] = [];
   let commandes = 0;
@@ -317,20 +346,9 @@ async function deduireCommandesEnAttente(cibles: Cible[], arbre: Map<number, [nu
     apres = d.orders.pageInfo.endCursor;
   }
 
-  // Produits hors des tailles suivies : recette lue dans Katana (une fois par référence).
-  const autres = [...new Set(lignes.filter((l) => !parTaille.has(l.sid) && l.sku).map((l) => l.sku))];
-  const recetteAutre = new Map<string, [number, number][]>();
-  await enParallele(autres, 3, async (sku) => {
-    const v = (await katana("/variants", { sku, limit: 5 })).find((x) => !x.deleted_at && String(x.sku).trim() === sku);
-    if (!v) return;
-    const rows = await katana("/bom_rows", { product_variant_id: v.id, limit: 100 });
-    const l = rows.filter((r) => r.product_variant_id === v.id && !r.deleted_at).map((r) => [r.ingredient_variant_id, Number(r.quantity ?? 0)] as [number, number]);
-    recetteAutre.set(sku, l.length ? l : [[v.id, 1]]);
-  });
-
   let pieces = 0;
   const consommer = (id: number, q: number, prof: number) => {
-    const l = arbre.get(id);
+    const l = arbre.get(id) ?? arbreAutres.get(id);
     if (l && prof <= 3) { for (const [ing, qq] of l) consommer(ing, q * qq, prof + 1); return; }
     if (!stock.has(id)) return; // matière hors du calcul (acier, bases…) : rien à retirer
     stock.set(id, (stock.get(id) ?? 0) - q);
@@ -339,7 +357,8 @@ async function deduireCommandesEnAttente(cibles: Cible[], arbre: Map<number, [nu
   for (const { sid, sku, q } of lignes) {
     const ks = parTaille.get(sid);
     if (ks) { consommer(ks[0], q, 0); continue; } // une pièce ne se fabrique qu'une fois
-    for (const [ing, qq] of recetteAutre.get(sku) ?? []) consommer(ing, q * qq, 1);
+    const k = parSku.get(sku.toUpperCase());
+    if (k) consommer(k, q, 0);
   }
   return { depuis, commandes, lignes: lignes.length, matieresRetirees: pieces };
 }
