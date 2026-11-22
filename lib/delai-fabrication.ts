@@ -236,6 +236,12 @@ export async function mettreAJourStock(ecrire = true) {
   for (const rows of lus) for (const x of rows) stock.set(x.variant_id, Number(x.quantity_in_stock ?? 0));
   if (stock.size < ids.length * 0.9) throw new Error(`stock incomplet : ${stock.size} lus sur ${ids.length}`);
 
+  // Règle de Philippe (22.11.2026) : on ne compte pas le tiroir tous les jours, donc
+  // disponible = stock Katana − pièces des commandes des 5 derniers jours pas encore
+  // envoyées. 5 jours couvrent un week-end entier (les commandes du vendredi au dimanche
+  // partent le lundi). Les ventes en boutique sont remplies tout de suite : déjà sorties.
+  const attente = await deduireCommandesEnAttente(cibles, arbre, stock);
+
   const faisable = (id: number, prof: number): number => {
     const l = arbre.get(id);
     if (!l || prof > 3) return Math.max(0, Math.floor(stock.get(id) ?? 0));
@@ -274,10 +280,68 @@ export async function mettreAJourStock(ecrire = true) {
   const rapport = {
     le: new Date().toISOString(), tailles: cibles.length, matieresLues: stock.size,
     aZero: zero, pretes: cibles.length - zero, changees: changes.length, ecrites: ecrits, erreurs: erreurs.slice(0, 5),
-    indexDu: pret.construitLe,
+    indexDu: pret.construitLe, enAttente: attente,
   };
   if (ecrire) await kv.set(K.rapport, rapport);
   return { fait: true, ...rapport };
+}
+
+const JOURS_EN_ATTENTE = 5;
+
+// Retire du stock (en place) les matières des commandes en ligne des 5 derniers jours
+// pas encore envoyées. Les tailles suivies passent par l'arbre déjà en mémoire ; les autres
+// produits (coffrets, packs…) dont une ligne attend : recette lue à la demande.
+async function deduireCommandesEnAttente(cibles: Cible[], arbre: Map<number, [number, number][]>, stock: Map<number, number>) {
+  const parTaille = new Map<number, number[]>(cibles);
+  const depuis = new Date(Date.now() - JOURS_EN_ATTENTE * 24 * 3600 * 1000).toISOString();
+  const lignes: { sid: number; sku: string; q: number }[] = [];
+  let commandes = 0;
+  let apres: string | null = null;
+  for (;;) {
+    const d: Ligne = await shopifyGraphql<Ligne>(
+      `query($c:String,$q:String){ orders(first:100, after:$c, query:$q){ pageInfo{ hasNextPage endCursor } nodes{ cancelledAt lineItems(first:100){ nodes{ sku unfulfilledQuantity variant{ id } } } } } }`,
+      { c: apres, q: `created_at:>=${depuis} -fulfillment_status:fulfilled` }
+    );
+    for (const o of d.orders.nodes) {
+      if (o.cancelledAt) continue;
+      let compte = false;
+      for (const li of o.lineItems.nodes) {
+        const q = Number(li.unfulfilledQuantity ?? 0);
+        if (q <= 0) continue;
+        lignes.push({ sid: Number(String(li.variant?.id ?? "").split("/").pop()), sku: String(li.sku ?? "").trim(), q });
+        compte = true;
+      }
+      if (compte) commandes++;
+    }
+    if (!d.orders.pageInfo.hasNextPage) break;
+    apres = d.orders.pageInfo.endCursor;
+  }
+
+  // Produits hors des tailles suivies : recette lue dans Katana (une fois par référence).
+  const autres = [...new Set(lignes.filter((l) => !parTaille.has(l.sid) && l.sku).map((l) => l.sku))];
+  const recetteAutre = new Map<string, [number, number][]>();
+  await enParallele(autres, 3, async (sku) => {
+    const v = (await katana("/variants", { sku, limit: 5 })).find((x) => !x.deleted_at && String(x.sku).trim() === sku);
+    if (!v) return;
+    const rows = await katana("/bom_rows", { product_variant_id: v.id, limit: 100 });
+    const l = rows.filter((r) => r.product_variant_id === v.id && !r.deleted_at).map((r) => [r.ingredient_variant_id, Number(r.quantity ?? 0)] as [number, number]);
+    recetteAutre.set(sku, l.length ? l : [[v.id, 1]]);
+  });
+
+  let pieces = 0;
+  const consommer = (id: number, q: number, prof: number) => {
+    const l = arbre.get(id);
+    if (l && prof <= 3) { for (const [ing, qq] of l) consommer(ing, q * qq, prof + 1); return; }
+    if (!stock.has(id)) return; // matière hors du calcul (acier, bases…) : rien à retirer
+    stock.set(id, (stock.get(id) ?? 0) - q);
+    pieces += q;
+  };
+  for (const { sid, sku, q } of lignes) {
+    const ks = parTaille.get(sid);
+    if (ks) { consommer(ks[0], q, 0); continue; } // une pièce ne se fabrique qu'une fois
+    for (const [ing, qq] of recetteAutre.get(sku) ?? []) consommer(ing, q * qq, 1);
+  }
+  return { depuis, commandes, lignes: lignes.length, matieresRetirees: pieces };
 }
 
 export async function avecVerrou<T>(f: () => Promise<T>): Promise<T | { saute: string }> {
