@@ -1446,6 +1446,14 @@ const MOTS_VIDES = new Set(['anneau','addon','addons','deux','tiers','medium','m
 function motsCles(t){ return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]+/g,' ').split(' ').filter(w => w.length > 2 && !MOTS_VIDES.has(w)); }
 function jourSuisse(iso){ return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Zurich' }); }
 function nomPropre(t){ return (t || '').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/pour bague mood interchangeable/i,'').replace(/\s+/g,' ').trim(); }
+// noms des fiches pour le détail « pièce par pièce » (sinon on affichait « pièce 1234… »)
+const TITRES_FICHES = {}; const titresDemandes = new Set();
+async function chargerTitresFiches(ids){
+  const a = ids.filter(id => !titresDemandes.has(id)); if (!a.length) return; a.forEach(id => titresDemandes.add(id));
+  try { const r = await fetch('/api/r-and-d/titres?ids=' + a.join(',')); if (r.ok) { const j = await r.json(); Object.assign(TITRES_FICHES, j.titres || {}); } } catch(e) {}
+  a.forEach(id => { if (!TITRES_FICHES[id]) TITRES_FICHES[id] = 'fiche ' + id + ' (introuvable)'; });
+  rendreCalendrier();
+}
 async function chargerSemaineData(debut, frais){
   if (semaineChargement[debut]) return; semaineChargement[debut] = true;
   try {
@@ -1649,7 +1657,9 @@ function tableauSemaine(annee, m, debut, numSem){
       const VP = D && D.ventesParProduit;
       // semaine déjà bloquée : ses chiffres par pièce ne sont pas encore chargés → on va les chercher (sinon « chargement » sans fin)
       if (!VP && !semaineChargement[debut] && !(D && D.erreur)) setTimeout(() => chargerSemaineData(debut), 0);
-      const L = VP ? p.shopifyIds.map(id => ({ t: (p.titres && p.titres[id]) || ('pièce ' + id), q: (VP[id] || {}).qty || 0, c: (VP[id] || {}).total || 0 })).sort((a, b) => b.c - a.c || b.q - a.q) : null;
+      const manque = p.shopifyIds.filter(id => !(p.titres && p.titres[id]) && !TITRES_FICHES[id]);
+      if (manque.length) chargerTitresFiches(manque);
+      const L = VP ? p.shopifyIds.map(id => ({ t: (p.titres && p.titres[id]) || TITRES_FICHES[id] || '…', q: (VP[id] || {}).qty || 0, c: (VP[id] || {}).total || 0 })).sort((a, b) => b.c - a.c || b.q - a.q) : null;
       const corps = !L ? (D && D.erreur ? '<div class="det-vide">Détail indisponible pour le moment — réessaie dans un instant.</div>' : '<div class="det-vide">⏳ chargement…</div>')
         : `<table class="det-tab">${L.map(x => `<tr${x.q ? '' : ' style="color:#a0948a"'}><td>${escapeHtml(x.t)}</td><td class="p">${n(x.q)} pce${x.q > 1 ? 's' : ''}</td><td class="p">${n(x.c)}.–</td></tr>`).join('')}</table>`;
       rowsGC += `<tr class="det-ligne"><td colspan="9">${corps}</td></tr>`;
