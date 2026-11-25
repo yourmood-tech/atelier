@@ -187,6 +187,7 @@ function Recadreur({ src, carreParDefaut, onAnnuler, onValider }: { src: string;
   const [r, setR] = useState<R>({ x: 0, y: 0, w: 0, h: 0 });
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   const [erreur, setErreur] = useState("");
+  const [miroir, setMiroir] = useState(false); // retournement gauche ↔ droite
 
   useEffect(() => {
     const i = new Image();
@@ -237,7 +238,11 @@ function Recadreur({ src, carreParDefaut, onAnnuler, onValider }: { src: string;
     const z = Math.min(1, 2400 / Math.max(sw, sh));
     const c = document.createElement("canvas");
     c.width = Math.round(sw * z); c.height = Math.round(sh * z);
-    c.getContext("2d")!.drawImage(img, Math.round(r.x * k), Math.round(r.y * k), sw, sh, 0, 0, c.width, c.height);
+    const ctx = c.getContext("2d")!;
+    // en miroir, le cadre affiché correspond à la zone symétrique de la photo d'origine
+    const sx = miroir ? img.naturalWidth - Math.round((r.x + r.w) * k) : Math.round(r.x * k);
+    if (miroir) { ctx.translate(c.width, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(img, Math.max(0, sx), Math.round(r.y * k), sw, sh, 0, 0, c.width, c.height);
     try {
       c.toBlob((b) => b ? onValider(new File([b], "recadree.jpg", { type: "image/jpeg" })) : setErreur("Recadrage raté"), "image/jpeg", 0.92);
     } catch { setErreur("Cette photo ne peut pas être recadrée ici"); }
@@ -252,17 +257,18 @@ function Recadreur({ src, carreParDefaut, onAnnuler, onValider }: { src: string;
           <div className="choix">
             <button className={carre ? "on" : ""} onClick={() => passerCarre(true)}>Carré</button>
             <button className={!carre ? "on" : ""} onClick={() => passerCarre(false)}>Libre</button>
+            <button className={miroir ? "on" : ""} title="Retourner la photo comme dans un miroir" onClick={() => setMiroir((m) => !m)}>⇋ Miroir</button>
           </div>
         </div>
         {erreur ? <p className="err">{erreur}</p> : !taille ? <p className="vide">Chargement…</p> : (
           <div className="scene" style={{ width: taille.w, height: taille.h }}>
-            <img src={src} alt="" draggable={false} style={{ width: taille.w, height: taille.h }} />
+            <img src={src} alt="" draggable={false} style={{ width: taille.w, height: taille.h, transform: miroir ? "scaleX(-1)" : undefined }} />
             <div className="cadre" style={{ left: r.x, top: r.y, width: r.w, height: r.h }} onPointerDown={(e) => tirer(e, null)}>
               {["hg", "hd", "bg", "bd"].map((c) => <span key={c} className={"coin " + c} onPointerDown={(e) => tirer(e, c)} />)}
             </div>
           </div>
         )}
-        <p className="aide">Déplace le cadre, tire sur les coins pour l'agrandir ou le réduire.</p>
+        <p className="aide">Déplace le cadre, tire sur les coins pour l'agrandir ou le réduire. « Miroir » retourne la photo gauche ↔ droite.</p>
         <div className="rec-pied">
           <button onClick={onAnnuler}>Annuler</button>
           <button className="ok" onClick={valider} disabled={!taille}>Valider</button>
