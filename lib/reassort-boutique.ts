@@ -135,6 +135,9 @@ async function chercher(recherche: string): Promise<Candidat[]> {
         const val = v.selectedOptions.find((o) => o.name === optTaille.name)?.value ?? "";
         tailles.push({ taille: val, variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
       }
+      // « taille inconnue » et autres valeurs sans chiffre : pas commandables en réassort
+      const chiffrees = tailles.filter((t) => tailleDe(t.taille) != null);
+      if (chiffrees.length) tailles.splice(0, tailles.length, ...chiffrees);
       tailles.sort((a, b) => (tailleDe(a.taille) ?? 0) - (tailleDe(b.taille) ?? 0) || a.taille.localeCompare(b.taille));
     } else {
       const v = p.variants.nodes[0];

@@ -158,8 +158,11 @@ export default function ReassortBoutique() {
     } catch (e) { dire((e as Error).message, "erreur"); } finally { setOccupe(null); }
   };
 
+  const [aEffacer, setAEffacer] = useState(false);
   const effacer = async () => {
-    if (!brouillon || !confirm("Supprimer ce brouillon ?")) return;
+    if (!brouillon) return;
+    if (!aEffacer) { setAEffacer(true); return; }
+    setAEffacer(false);
     try { await appel({ action: "supprimer", id: brouillon.id }); fermer(); } catch (e) { dire((e as Error).message, "erreur"); }
   };
 
@@ -332,7 +335,7 @@ export default function ReassortBoutique() {
                 </div>
               )}
             </div>
-            <button onClick={effacer} className="text-sm text-red-700 underline">Supprimer ce brouillon</button>
+            <button onClick={effacer} className="text-sm text-red-700 underline">{aEffacer ? "Sûr ? Clique encore pour supprimer définitivement" : "Supprimer ce brouillon"}</button>
           </section>
         )}
       </div>
