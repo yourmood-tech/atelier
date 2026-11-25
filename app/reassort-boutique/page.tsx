@@ -6,7 +6,7 @@ import { choisirVersion, delai, repartir, type Proposition } from "@/lib/reassor
 
 type Boutique = { id: number; nom: string };
 type Ligne = { variantId: number; productId: number; titre: string; taille: string; version?: string; sku: string; image: string | null; quantite: number; pretes: number | null; alerte: string | null };
-type Brouillon = { id: string; boutique: Boutique; creePar: string; creeLe: string; majLe: string; lignes: Ligne[]; historique: string[] };
+type Brouillon = { id: string; boutique: Boutique; creePar: string; creeLe: string; majLe: string; lignes: Ligne[]; historique: string[]; enCours?: { phrase: string; props: Proposition[]; le: string } };
 type Valide = { commande: string; boutique: string; par: string; pieces: number; le: string };
 
 async function appel<T>(corps: Record<string, unknown>): Promise<T> {
@@ -49,6 +49,8 @@ export default function ReassortBoutique() {
   const [message, setMessage] = useState<{ texte: string; type: "ok" | "erreur" } | null>(null);
   const [recap, setRecap] = useState(false);
   const [ecoute, setEcoute] = useState(false);
+  const [sauveLe, setSauveLe] = useState<string | null>(null);
+  const dernierEtat = useRef("");
   const [voixDispo, setVoixDispo] = useState(false);
   const reco = useRef<Reco | null>(null);
   const baseDictee = useRef("");
@@ -69,7 +71,7 @@ export default function ReassortBoutique() {
     setBoutiqueId(bid);
     charger(bid);
     const enCours = lsGet("rb-brouillon");
-    if (enCours) appel<{ brouillon: Brouillon }>({ action: "lire", id: enCours }).then((j) => setBrouillon(j.brouillon)).catch(() => lsSet("rb-brouillon", null));
+    if (enCours) appel<{ brouillon: Brouillon }>({ action: "lire", id: enCours }).then((j) => ouvrir(j.brouillon)).catch(() => lsSet("rb-brouillon", null));
     const w = window as unknown as { SpeechRecognition?: new () => Reco; webkitSpeechRecognition?: new () => Reco };
     setVoixDispo(!!(w.SpeechRecognition || w.webkitSpeechRecognition));
   }, [charger]);
@@ -78,8 +80,29 @@ export default function ReassortBoutique() {
     setBoutiqueId(id); lsSet("rb-boutique", String(id)); charger(id);
   };
 
-  const ouvrir = (b: Brouillon) => { setBrouillon(b); lsSet("rb-brouillon", b.id); setProps([]); setQuestion(null); setMessage(null); setRecap(false); };
-  const fermer = () => { setBrouillon(null); lsSet("rb-brouillon", null); setProps([]); setRecap(false); charger(boutiqueId); };
+  const ouvrir = (b: Brouillon) => {
+    setBrouillon(b); lsSet("rb-brouillon", b.id); setQuestion(null); setMessage(null); setRecap(false);
+    // on retrouve l'écran tel qu'il était à la dernière sauvegarde
+    const p = b.enCours?.props ?? [], ph = b.enCours?.phrase ?? "";
+    setProps(p); setPhrase(ph); setSauveLe(b.enCours?.le ?? null);
+    dernierEtat.current = JSON.stringify({ phrase: ph, props: p });
+  };
+  const sauverEcran = useCallback(async (id: string, phraseX: string, propsX: Proposition[]) => {
+    const etat = JSON.stringify({ phrase: phraseX, props: propsX });
+    if (etat === dernierEtat.current) return;
+    try {
+      const j = await appel<{ le: string }>({ action: "encours", id, phrase: phraseX, props: propsX });
+      dernierEtat.current = etat; setSauveLe(j.le);
+    } catch { /* on réessaiera au prochain tour */ }
+  }, []);
+  // sauvegarde automatique toutes les 30 secondes (demande de Philippe)
+  const etatRef = useRef({ id: "", phrase: "", props: [] as Proposition[] });
+  etatRef.current = { id: brouillon?.id ?? "", phrase, props };
+  useEffect(() => {
+    const t = setInterval(() => { const e = etatRef.current; if (e.id) sauverEcran(e.id, e.phrase, e.props); }, 30000);
+    return () => clearInterval(t);
+  }, [sauverEcran]);
+  const fermer = () => { if (brouillon) sauverEcran(brouillon.id, phrase, props); setBrouillon(null); setPhrase(""); lsSet("rb-brouillon", null); setProps([]); setRecap(false); charger(boutiqueId); };
 
   const nouveau = async () => {
     if (!boutique) return;
@@ -238,7 +261,10 @@ export default function ReassortBoutique() {
           <section className="space-y-4">
             <div className="flex items-center justify-between text-sm">
               <span className="font-semibold">Commande pour {brouillon.boutique.nom}</span>
-              <button onClick={fermer} className="text-stone-600 underline">Garder pour plus tard</button>
+              <span className="flex items-center gap-3">
+                {sauveLe && <span className="text-xs text-stone-500">Sauvegardé à {new Date(sauveLe).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>}
+                <button onClick={fermer} className="text-stone-600 underline">Garder pour plus tard</button>
+              </span>
             </div>
 
             {/* saisie */}

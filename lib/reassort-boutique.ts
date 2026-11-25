@@ -17,6 +17,8 @@ export type Ligne = { variantId: number; productId: number; titre: string; taill
 export type Brouillon = {
   id: string; boutique: { id: number; nom: string }; creePar: string; creeLe: string; majLe: string;
   lignes: Ligne[]; historique: string[];
+  // ce qui est à l'écran mais pas encore dans la commande (phrase en cours, propositions), sauvé toutes les 30 s
+  enCours?: { phrase: string; props: unknown[]; le: string };
 };
 const maintenant = () => new Date().toISOString();
 const sansAccent = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -89,6 +91,13 @@ export async function enregistrerLignes(id: string, lignes: Ligne[], phrase?: st
     historique: phrase ? [...b.historique, phrase].slice(-50) : b.historique };
   await kv.set(K_B(id), nb);
   return nb;
+}
+
+export async function sauverEnCours(id: string, phrase: string, props: unknown[]): Promise<string> {
+  const b = await lire(id);
+  const le = maintenant();
+  await kv.set(K_B(id), { ...b, enCours: { phrase: phrase.slice(0, 2000), props: props.slice(0, 30), le } });
+  return le;
 }
 
 export async function supprimer(id: string): Promise<void> {
