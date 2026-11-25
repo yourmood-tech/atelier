@@ -128,7 +128,9 @@ type GqlProduit = {
 
 // mots qui disent le TYPE d'article (pèsent moins que le nom : « aura », « authentique »…)
 const MOTS_TYPE = new Set(["medium", "mini", "minis", "base", "bases", "anneau", "anneaux", "addon", "addons", "deuxtiers",
-  "large", "small", "xs", "acier", "argent", "titane", "bague", "bagues", "en", "de", "la", "le", "les", "des", "et"]);
+  "large", "small", "xs", "acier", "argent", "titane", "bague", "bagues", "en", "de", "la", "le", "les", "des", "et",
+  // finitions et formes : décrivent l'article standard, ne sont pas un nom (la base acier simple ne dit pas toujours « polie »)
+  "arrondi", "arrondie", "carre", "carree", "poli", "polie", "mat", "mate", "brosse", "brossee", "sable", "sablee", "martele", "plat", "plate", "satine"]);
 const TAILLES_ANNEAU = new Set(["mini", "minis", "medium", "deuxtiers", "addon", "base", "bases", "xs", "large", "small"]);
 // une seule largeur / un seul type d'anneau à la fois : « XS » ne doit pas remonter les bases small ou large
 const EXCLUSIFS = [["xs", "small", "large"], ["mini", "medium", "deuxtiers"]];
@@ -170,7 +172,8 @@ async function chercher(recherche: string): Promise<Candidat[]> {
       if (dit.length && !dit.some((x) => tm.includes(x)) && g.some((x) => tm.includes(x))) n -= 4;
     }
     for (const f of FAMILLES) if (tm.some((x) => x.startsWith(f)) && !motsR.some((m) => m.startsWith(f))) n -= 3;
-    n -= 0.3 * tm.filter((x) => x.length >= 4 && !NEUTRES.has(x) && !motsR.some((m) => pareil(x, m))).length;
+    // mots en trop (couleur, nom de modèle…) que la vendeuse n'a pas dits : l'article simple passe devant
+    n -= 1.5 * tm.filter((x) => x.length >= 4 && !NEUTRES.has(x) && !motsR.some((m) => pareil(x, m))).length;
     return n;
   };
   const meilleurs = [...vus.entries()].map(([id, titre]) => ({ id, titre, n: note(titre) }))
