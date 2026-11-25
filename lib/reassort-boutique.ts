@@ -21,19 +21,33 @@ export type Brouillon = {
 const maintenant = () => new Date().toISOString();
 const sansAccent = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-// ── boutiques = points de vente Shopify actifs (avec leur adresse pour l'envoi) ─────────
+// ── boutiques : liste fixée par Philippe le 25.11.2026 (points de vente Shopify) + « Réassort stand »
+// (pas de point de vente : livré à l'adresse de l'atelier, Z.I. des Ducats 40b).
+const LISTE: { id: number; nom: string; lieu: number }[] = [
+  { id: 467716, nom: "Orbe", lieu: 467716 },
+  { id: 4514565, nom: "Carouge", lieu: 4514565 },
+  { id: 4686021, nom: "Martigny", lieu: 4686021 },
+  { id: 14059831389, nom: "Fribourg", lieu: 14059831389 },
+  { id: 229015570, nom: "Zürich", lieu: 229015570 },
+  { id: 37359681629, nom: "Zermatt", lieu: 37359681629 },
+  { id: 1, nom: "Réassort stand", lieu: 35252242 },
+];
+
 export async function boutiques(): Promise<Boutique[]> {
   const j = await shopifyGet("/locations.json");
-  const locs = (j.locations ?? []) as Record<string, unknown>[];
-  return locs.filter((l) => l.active).map((l) => ({
-    id: Number(l.id), nom: String(l.name),
-    adresse: {
-      first_name: "Mood", last_name: String(l.name), company: "Mood Collection",
-      address1: String(l.address1 ?? ""), address2: String(l.address2 ?? ""),
-      zip: String(l.zip ?? ""), city: String(l.city ?? ""), country_code: String(l.country_code ?? "CH"),
-      phone: String(l.phone ?? ""),
-    },
-  })).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+  const locs = new Map(((j.locations ?? []) as Record<string, unknown>[]).map((l) => [Number(l.id), l]));
+  return LISTE.map((b) => {
+    const l = locs.get(b.lieu) ?? {};
+    return {
+      id: b.id, nom: b.nom,
+      adresse: {
+        first_name: "Mood", last_name: b.nom, company: "Mood Collection",
+        address1: String(l.address1 ?? ""), address2: String(l.address2 ?? ""),
+        zip: String(l.zip ?? ""), city: String(l.city ?? ""), country_code: String(l.country_code ?? "CH"),
+        phone: String(l.phone ?? ""),
+      },
+    };
+  });
 }
 
 // ── brouillons ─────────────────────────────────────────────────────────────────────────
