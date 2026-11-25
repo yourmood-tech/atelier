@@ -148,7 +148,7 @@ async function chercher(recherche: string): Promise<Candidat[]> {
       for (const v of p.variants.nodes) {
         const val = v.selectedOptions.find((o) => o.name === optTaille.name)?.value ?? "";
         // les autres choix de la variante (finition, couleur…) : une même taille peut exister en plusieurs versions
-        const autres = v.selectedOptions.filter((o) => o.name !== optTaille.name).map((o) => o.value).join(" · ");
+        const autres = v.selectedOptions.filter((o) => o.name !== optTaille.name).map((o) => `${o.name} : ${o.value}`).join(" · ");
         tailles.push({ taille: val, autres, variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
       }
       // « taille inconnue » et autres valeurs sans chiffre : pas commandables en réassort
@@ -172,15 +172,15 @@ export async function interpreter(phrase: string): Promise<{ propositions: Propo
   const { demandes, question } = await comprendre(phrase);
   const propositions = await Promise.all(demandes.slice(0, 15).map(async (d) => {
     const cands = (await chercher(d.recherche)) as (Candidat & { _score: number; _complet: boolean })[];
-    // on ne choisit à sa place que si un seul article correspond à tous les mots
-    const complets = cands.filter((c) => c._complet);
-    const choisi = complets.length === 1 ? cands.indexOf(complets[0]) : null;
+    // on ne choisit jamais à sa place (règle Philippe) : sauf s'il n'y a qu'un seul article possible,
+    // la liste est proposée, le plus probable en premier
+    const choisi = cands.length === 1 ? 0 : null;
     const version = choisi != null ? choisirVersion(cands[choisi], `${d.texte} ${d.recherche}`) : null;
     const rep = choisi != null && version != null ? repartir(cands[choisi], d, version) : { quantites: {}, remarque: null };
     let remarque = rep.remarque;
     if (choisi != null && version == null) remarque = "Cet article existe en plusieurs versions : choisis laquelle.";
     if (!cands.length) remarque = `Rien trouvé pour « ${d.recherche} ». Reformule (nom exact de l'article).`;
-    else if (choisi == null) remarque = cands.length > 1 ? "Plusieurs articles possibles : choisis le bon." : remarque;
+    else if (choisi == null) remarque = cands.length > 1 ? "Choisis l'article dans la liste (le plus probable est en premier)." : remarque;
     return {
       texte: d.texte, recherche: d.recherche, demande: d,
       candidats: cands.map(({ _score, _complet, ...c }) => { void _score; void _complet; return c; }),
