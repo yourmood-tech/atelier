@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { donnees, rattraper } from "@/lib/pilotage-boutiques";
+import { donnees, parCaisse, rattraper } from "@/lib/pilotage-boutiques";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     if (!PILOTAGE_AUTORISES.has(qui)) return NextResponse.json({ ok: false, erreur: "Accès réservé." }, { status: 403 });
     const b = await req.json();
     if (b.action === "rattraper") return NextResponse.json({ ok: true, ...(await rattraper(Number(b.max) || 12)) });
+    if (b.action === "caisses") return NextResponse.json({ ok: true, caisses: await parCaisse() });
     if (b.action === "donnees") return NextResponse.json({ ok: true, ...(await donnees()) });
     return NextResponse.json({ ok: false, erreur: "action inconnue" }, { status: 400 });
   } catch (e) {

@@ -18,8 +18,8 @@ export const BOUTIQUES: { nom: string; lieu: number | null }[] = [
 const STAND = "Réassort stand";
 const nomDuLieu = (lieu: number | null) => BOUTIQUES.find((b) => b.lieu === lieu)?.nom ?? STAND;
 
-type Jour = Record<string, [number, number]>; // boutique → [CA en CHF, pièces vendues]
-const K_JOUR = (j: string) => `pil:j:${j}`;
+type Jour = Record<string, [number, number]>; // numéro de caisse → [CA en CHF, pièces vendues]
+const K_JOUR = (j: string) => `pil2:j:${j}`; // par numéro de caisse (« aucune » = vente sans caisse rattachée)
 export const DEBUT_HISTORIQUE = "2025-11-01";
 
 // ── dates en heure suisse ────────────────────────────────────────────────────────────
@@ -46,9 +46,8 @@ async function ventesDuJour(jour: string): Promise<Jour> {
       { q, a: apres });
     for (const o of r.orders.nodes) {
       if (o.cancelledAt) continue;
-      const lieu = o.retailLocation ? Number(o.retailLocation.id.split("/").pop()) : null;
-      const b = nomDuLieu(lieu);
-      const v = (res[b] ??= [0, 0]);
+      const lieu = o.retailLocation ? o.retailLocation.id.split("/").pop()! : "aucune";
+      const v = (res[lieu] ??= [0, 0]);
       v[0] += Number(o.currentTotalPriceSet.shopMoney.amount) || 0;
       v[1] += o.currentSubtotalLineItemsQuantity || 0;
     }
@@ -119,8 +118,24 @@ export async function donnees(): Promise<{ lignes: LigneJour[]; reassorts: { jou
     return m.get(k)!;
   };
   jours.forEach((j, i) => {
-    for (const [b, [ca, p]] of Object.entries(ventes[i] ?? {})) { const l = ligne(j, b); l.ventes += ca; l.ventesPieces += p; }
+    for (const [lieu, [ca, p]] of Object.entries(ventes[i] ?? {})) {
+      const l = ligne(j, nomDuLieu(lieu === "aucune" ? null : Number(lieu))); l.ventes += ca; l.ventesPieces += p;
+    }
   });
   for (const r of ra) { const l = ligne(r.jour, r.boutique); l.achat += r.valeur; l.achatPieces += r.pieces; }
   return { lignes: [...m.values()], reassorts: ra.sort((a, b) => b.jour.localeCompare(a.jour)), jusquau: auj, manquants: ventes.filter((v) => v == null).length };
+}
+
+// contrôle : ventes des 12 dernières semaines par caisse, avec le nom Shopify de chaque caisse
+export async function parCaisse(): Promise<{ lieu: string; nom: string; boutique: string; ca: number; pieces: number }[]> {
+  const auj = new Date();
+  const jours: string[] = [];
+  for (let i = 0; i < 84; i++) { const d = new Date(auj); d.setDate(d.getDate() - i); jours.push(jourSuisse(d)); }
+  const ventes = await kv.mget<(Jour | null)[]>(...jours.map(K_JOUR));
+  const tot = new Map<string, [number, number]>();
+  for (const v of ventes) for (const [lieu, [ca, p]] of Object.entries(v ?? {})) { const t = tot.get(lieu) ?? [0, 0]; t[0] += ca; t[1] += p; tot.set(lieu, t); }
+  const noms = await shopifyGraphql<{ locations: { nodes: { id: string; name: string }[] } }>(`{ locations(first:100, includeInactive:true){ nodes{ id name } } }`);
+  const nom = new Map(noms.locations.nodes.map((l) => [l.id.split("/").pop()!, l.name]));
+  return [...tot.entries()].map(([lieu, [ca, pieces]]) => ({ lieu, nom: nom.get(lieu) ?? (lieu === "aucune" ? "(sans caisse)" : "?"), boutique: nomDuLieu(lieu === "aucune" ? null : Number(lieu)), ca: Math.round(ca), pieces }))
+    .sort((a, b) => b.ca - a.ca);
 }
