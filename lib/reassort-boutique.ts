@@ -165,7 +165,9 @@ const pareil = (a: string, b: string) => memeMot(a, b) || memeMot(SYNONYMES[a] ?
 async function chercher(recherche: string): Promise<Candidat[]> {
   // règle Philippe (25.11.2026) : pour les bases, « noir » = les bases « black »
   const brut = mots(recherche);
-  const motsR = brut.some((m) => m === "base" || m === "bases") ? brut.map((m) => (/^noir(e|s|es)?$/.test(m) ? "black" : m)) : brut;
+  // et pour une base, « dorée » = la rose gold
+  const estBase = brut.some((m) => m === "base" || m === "bases");
+  const motsR = estBase ? brut.flatMap((m) => (/^noir(e|s|es)?$/.test(m) ? ["black"] : /^doree?s?$/.test(m) ? ["rose", "gold"] : [m])) : brut;
   const noms = motsR.filter((m) => !MOTS_TYPE.has(m) && m.length >= 3);
   // 1) large filet sur les titres (sans les détails, c'est léger) : la phrase entière + les mots du nom
   const qListe = `query($q:String!){ products(first:60, query:$q, sortKey:RELEVANCE){ nodes{ id title options{ values } } } }`;
@@ -199,7 +201,7 @@ async function chercher(recherche: string): Promise<Candidat[]> {
     }
     for (const f of FAMILLES) if (tm.some((x) => x.startsWith(f)) && !motsR.some((m) => m.startsWith(f))) n -= 3;
     // mots en trop (couleur, nom de modèle…) que la vendeuse n'a pas dits : l'article simple passe devant
-    n -= 1.5 * tm.filter((x) => x.length >= 4 && !NEUTRES.has(x) && !motsR.some((m) => pareil(x, m))).length;
+    n -= 1.5 * tm.filter((x) => x.length >= 4 && !NEUTRES.has(x) && !MOTS_TYPE.has(x) && !motsR.some((m) => pareil(x, m))).length;
     return n;
   };
   const meilleurs = [...vus.entries()].map(([id, x]) => ({ id, titre: x.titre, n: note(x.titre, x.valeurs) }))
