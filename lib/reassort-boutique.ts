@@ -157,7 +157,10 @@ const normaliser = (t: string) => sansAccent(t)
 const mots = (t: string) => normaliser(t).split(/[^a-z0-9]+/).filter((m) => m.length >= 2);
 // racine : « polie » = « poli » = « polies », « arrondie » = « arrondi »
 const racine = (m: string) => (m.length > 4 ? m.replace(/(es|e|s)$/, "") : m);
-const pareil = (a: string, b: string) => { const ra = racine(a), rb = racine(b); return ra === rb || (ra.length >= 4 && rb.length >= 4 && (ra.startsWith(rb) || rb.startsWith(ra))); };
+// mots maison équivalents (règle Philippe 25.11.2026) : « doré » = « gold », « blanc » = « white »
+const SYNONYMES: Record<string, string> = { dore: "gold", doree: "gold", dores: "gold", dorees: "gold", blanc: "white", blanche: "white", blancs: "white", blanches: "white" };
+const memeMot = (a: string, b: string) => { const ra = racine(a), rb = racine(b); return ra === rb || (ra.length >= 4 && rb.length >= 4 && (ra.startsWith(rb) || rb.startsWith(ra))); };
+const pareil = (a: string, b: string) => memeMot(a, b) || memeMot(SYNONYMES[a] ?? a, SYNONYMES[b] ?? b);
 
 async function chercher(recherche: string): Promise<Candidat[]> {
   // règle Philippe (25.11.2026) : pour les bases, « noir » = les bases « black »
@@ -170,6 +173,8 @@ async function chercher(recherche: string): Promise<Candidat[]> {
     (await shopifyGraphql<{ products: { nodes: { id: string; title: string; options: { values: string[] }[] }[] } }>(qListe, { q: `${texte} status:active` })).products.nodes;
   const phrase = motsR.map((m) => (m === "xs" ? "extra small" : m === "deuxtiers" ? "deux tiers" : m)).join(" ");
   const essais = [...new Set(motsR !== brut ? [phrase] : [recherche, phrase])];
+  // la même phrase avec « gold » / « white » à la place de « doré » / « blanc »
+  if (motsR.some((m) => SYNONYMES[m])) essais.push(motsR.map((m) => SYNONYMES[m] ?? m).join(" "));
   if (noms.length) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" AND "));
   if (noms.length > 1) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" OR "));
   const vus = new Map<string, { titre: string; valeurs: string[] }>();
