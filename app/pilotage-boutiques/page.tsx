@@ -124,17 +124,18 @@ export default function PilotageBoutiques() {
   const n = mode === "semaine" ? 12 : 12;
   const parBoutique = useMemo(() => (jusquau ? BOUTIQUES.map((b) => ({ b, p: periodes(lignes, b, mode, jusquau, n) })) : []), [lignes, mode, jusquau, n]);
 
-  // depuis le premier réassort de chaque boutique : pièces reçues face aux pièces vendues
+  // 4 dernières semaines : ce que la boutique a racheté face à ce qu'elle a vendu (en francs)
   const depuis = useMemo(() => {
-    const r: Record<string, { debut: string | null; recues: number; vendues: number; achat: number; ventes: number }> = {};
+    const r: Record<string, { debut: string | null; achat: number; ventes: number }> = {};
+    const d = new Date(`${jusquau || "2026-01-01"}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - 27);
+    const depart = d.toISOString().slice(0, 10);
     for (const b of BOUTIQUES) {
       const debut = reassorts.filter((x) => x.boutique === b).map((x) => x.jour).sort()[0] ?? null;
-      const ls = debut ? lignes.filter((l) => l.boutique === b && l.jour >= debut) : [];
-      r[b] = { debut, recues: ls.reduce((s, l) => s + l.achatPieces, 0), vendues: ls.reduce((s, l) => s + l.ventesPieces, 0),
-        achat: ls.reduce((s, l) => s + l.achat, 0), ventes: ls.reduce((s, l) => s + l.ventes, 0) };
+      const ls = lignes.filter((l) => l.boutique === b && l.jour >= depart);
+      r[b] = { debut, achat: ls.reduce((s, l) => s + l.achat, 0), ventes: ls.reduce((s, l) => s + l.ventes, 0) };
     }
     return r;
-  }, [lignes, reassorts]);
+  }, [lignes, reassorts, jusquau]);
 
   return (
     <main className="pilotage min-h-screen" style={{ background: "var(--fond)", color: "var(--texte)" }}>
@@ -173,7 +174,6 @@ export default function PilotageBoutiques() {
           {parBoutique.map(({ b, p }) => {
             const achat = p.reduce((s, x) => s + x.achat, 0), ventes = p.reduce((s, x) => s + x.ventes, 0);
             const d = depuis[b];
-            const ecart = d.recues - d.vendues;
             const alerte = d.debut && d.achat > d.ventes;
             return (
               <section key={b} className="rounded-xl border p-4" style={{ background: "var(--carte)", borderColor: "var(--bord)" }}>
@@ -181,7 +181,7 @@ export default function PilotageBoutiques() {
                   <h2 className="text-lg font-semibold">{b}</h2>
                   {d.debut && (
                     <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${alerte ? "bg-amber-100 text-amber-900" : "bg-green-100 text-green-900"}`}>
-                      {alerte ? "⚠ achète plus qu'elle ne vend" : "✓ vend plus qu'elle n'achète"}
+                      {alerte ? "⚠ achète plus qu'elle ne vend (4 sem.)" : "✓ vend plus qu'elle n'achète (4 sem.)"}
                     </span>
                   )}
                 </div>
@@ -190,11 +190,9 @@ export default function PilotageBoutiques() {
                   <div><div style={{ color: "var(--texte-2)" }}>Ventes ({mode === "semaine" ? "12 sem." : "12 mois"})</div><div className="text-xl font-bold">{chf(ventes)}</div></div>
                 </div>
                 <Barres data={p} a={(x) => x.achat} b={(x) => x.ventes} nomA="Achats" nomB="Ventes" unite={chf} />
-                <div className="mt-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--texte-2)" }}>Pièces reçues / pièces vendues</div>
-                <Barres data={p} a={(x) => x.achatPieces} b={(x) => x.ventesPieces} nomA="Reçues" nomB="Vendues" unite={(n) => `${n} pièce(s)`} />
                 <p className="mt-2 text-sm" style={{ color: "var(--texte-2)" }}>
                   {d.debut
-                    ? <>Depuis le premier réassort ({d.debut.split("-").reverse().join(".")}) : <strong style={{ color: "var(--texte)" }}>{d.recues}</strong> pièces reçues, <strong style={{ color: "var(--texte)" }}>{d.vendues}</strong> vendues → {ecart > 0 ? <>le stock a grossi d&apos;environ <strong style={{ color: "var(--texte)" }}>{ecart}</strong> pièces</> : <>le stock a baissé d&apos;environ <strong style={{ color: "var(--texte)" }}>{-ecart}</strong> pièces</>}.</>
+                    ? <>4 dernières semaines : achats <strong style={{ color: "var(--texte)" }}>{chf(d.achat)}</strong> pour <strong style={{ color: "var(--texte)" }}>{chf(d.ventes)}</strong> de ventes ({d.ventes > 0 ? `${Math.round((d.achat / d.ventes) * 100)} %` : "—"} des ventes rachetées).</>
                     : "Pas encore de réassort commandé avec l'outil."}
                 </p>
               </section>
@@ -219,7 +217,7 @@ export default function PilotageBoutiques() {
           )}
         </section>
         <p className="mt-4 text-xs" style={{ color: "var(--texte-2)" }}>
-          « Réassort stand » = les réassorts pour les stands, comparés aux ventes de toutes les autres caisses (salons, Manor…). Les pièces vendues comptent aussi le stock que la boutique avait déjà avant l&apos;outil.
+          « Réassort stand » = les réassorts pour les stands, comparés aux ventes de toutes les autres caisses (salons, Manor…). Les ventes comptent toute la caisse de la boutique, pas seulement les articles reçus en réassort.
         </p>
       </div>
     </main>
