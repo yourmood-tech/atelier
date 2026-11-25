@@ -143,6 +143,12 @@ const sections: { id: string; title: string; summary: string; tools: Tool[] }[] 
     summary: "Inventaire en boutique et correction de fulfillments pour les équipes en point de vente.",
     tools: [
       {
+        href: "/reassort-boutique",
+        emoji: "🛍️",
+        title: "Réassort boutique",
+        description: "Commandez le stock de votre boutique en l'écrivant ou en le dictant ; l'atelier reçoit une commande « RÉASSORT BOUTIQUE ».",
+      },
+      {
         href: "/stock",
         emoji: "📊",
         title: "Scanner stock",
