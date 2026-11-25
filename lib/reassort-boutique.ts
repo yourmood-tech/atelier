@@ -160,14 +160,16 @@ const racine = (m: string) => (m.length > 4 ? m.replace(/(es|e|s)$/, "") : m);
 const pareil = (a: string, b: string) => { const ra = racine(a), rb = racine(b); return ra === rb || (ra.length >= 4 && rb.length >= 4 && (ra.startsWith(rb) || rb.startsWith(ra))); };
 
 async function chercher(recherche: string): Promise<Candidat[]> {
-  const motsR = mots(recherche);
+  // règle Philippe (25.11.2026) : pour les bases, « noir » = les bases « black »
+  const brut = mots(recherche);
+  const motsR = brut.some((m) => m === "base" || m === "bases") ? brut.map((m) => (/^noir(e|s|es)?$/.test(m) ? "black" : m)) : brut;
   const noms = motsR.filter((m) => !MOTS_TYPE.has(m) && m.length >= 3);
   // 1) large filet sur les titres (sans les détails, c'est léger) : la phrase entière + les mots du nom
   const qListe = `query($q:String!){ products(first:60, query:$q, sortKey:RELEVANCE){ nodes{ id title options{ values } } } }`;
   const liste = async (texte: string) =>
     (await shopifyGraphql<{ products: { nodes: { id: string; title: string; options: { values: string[] }[] }[] } }>(qListe, { q: `${texte} status:active` })).products.nodes;
   const phrase = motsR.map((m) => (m === "xs" ? "extra small" : m === "deuxtiers" ? "deux tiers" : m)).join(" ");
-  const essais = [...new Set([recherche, phrase])];
+  const essais = [...new Set(motsR !== brut ? [phrase] : [recherche, phrase])];
   if (noms.length) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" AND "));
   if (noms.length > 1) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" OR "));
   const vus = new Map<string, { titre: string; valeurs: string[] }>();
