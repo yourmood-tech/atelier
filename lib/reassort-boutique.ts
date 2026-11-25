@@ -108,14 +108,14 @@ export async function supprimer(id: string): Promise<void> {
 // ── compréhension de la phrase ─────────────────────────────────────────────────────────
 async function comprendre(phrase: string): Promise<{ demandes: Demande[]; question: string | null }> {
   const prompt = `Tu aides une boutique de bijoux (bagues mood à anneaux interchangeables) à commander du stock à l'atelier.
-Vocabulaire : « base » (XS, S/Small, L/Large), anneaux « mini », « medium », « deux tiers » (2/3), « addon » ; collections et couleurs (Aura, Willow, nacre, émail…). Tailles de bague : nombres entre 44 et 74.
+Vocabulaire : « base » (XS, S/Small, L/Large), anneaux « mini », « medium », « deux tiers » (2/3), « addon », « insert » (anneau de couleur glissé dans la base ou dans un deux tiers — ce n'est PAS un addon) ; collections et couleurs (Aura, Willow, nacre, émail…). Tailles de bague : nombres entre 44 et 74.
 
 Phrase de la vendeuse :
 """${phrase}"""
 
 Découpe la phrase en demandes (un article par demande). Pour chacune :
 - "texte" : le bout de phrase concerné
-- "recherche" : les mots pour retrouver l'article dans le catalogue (type d'article + nom + couleur/matière si dits), SANS les tailles ni les quantités, ex. "medium aura", "base large titane", "mini nacre blanche"
+- "recherche" : les mots pour retrouver l'article dans le catalogue (type d'article + nom + couleur/matière si dits), SANS les tailles ni les quantités, ex. "medium aura", "base large titane", "mini nacre blanche", "insert noir", "insert deux tiers turquoise". Garde les mots de la vendeuse, ne remplace jamais un type d'article par un autre.
 - "tailles" : la liste des tailles si elles sont citées une par une (ex. [52,54,58]), sinon null
 - "taille_min" / "taille_max" : si elle dit « entre 54 et 62 » ou « de 54 à 62 », sinon null
 - "quantite_par_taille" : si elle dit « 2 par taille », « 2 de chaque », sinon null
@@ -136,18 +136,19 @@ type GqlProduit = {
 };
 
 // mots qui disent le TYPE d'article (pèsent moins que le nom : « aura », « authentique »…)
-const MOTS_TYPE = new Set(["medium", "mini", "minis", "base", "bases", "anneau", "anneaux", "addon", "addons", "deuxtiers",
+const MOTS_TYPE = new Set(["insert", "inserts", "medium", "mini", "minis", "base", "bases", "anneau", "anneaux", "addon", "addons", "deuxtiers",
   "large", "small", "xs", "acier", "argent", "titane", "bague", "bagues", "en", "de", "la", "le", "les", "des", "et",
   // finitions et formes : décrivent l'article standard, ne sont pas un nom (la base acier simple ne dit pas toujours « polie »)
   "arrondi", "arrondie", "carre", "carree", "poli", "polie", "mat", "mate", "brosse", "brossee", "sable", "sablee", "martele", "plat", "plate", "satine"]);
-const TAILLES_ANNEAU = new Set(["mini", "minis", "medium", "deuxtiers", "addon", "base", "bases", "xs", "large", "small"]);
+const TAILLES_ANNEAU = new Set(["insert", "inserts", "mini", "minis", "medium", "deuxtiers", "addon", "base", "bases", "xs", "large", "small"]);
 // une seule largeur / un seul type d'anneau à la fois : « XS » ne doit pas remonter les bases small ou large
 const EXCLUSIFS = [["xs", "small", "large"], ["mini", "medium", "deuxtiers"]];
 // familles d'articles qu'on écarte si la vendeuse ne les a pas nommées
 const FAMILLES = ["pack", "coffret", "clip", "drop", "boucle", "oreille", "box", "lot", "calendrier", "garde"];
 // mots de titre « décoratifs » qui ne pénalisent pas un article
 const NEUTRES = new Set(["pour", "bague", "mood", "interchangeable", "avec", "acier", "inoxydable", "316l", "argent", "925", "serti", "sertie",
-  "zircons", "anneau", "anneaux", "addon", "base", "bijou", "central", "9mm", "11mm", "13mm", "en"]);
+  "zircons", "anneau", "anneaux", "addon", "base", "bijou", "central", "9mm", "11mm", "13mm", "en",
+  "supplementaire", "couleur", "choix", "aluminium"]);
 
 // même écriture des deux côtés : « Extra Small » = « XS », « deux tiers » = « 2/3 », sans accents ni majuscules
 const normaliser = (t: string) => sansAccent(t)
@@ -162,20 +163,26 @@ async function chercher(recherche: string): Promise<Candidat[]> {
   const motsR = mots(recherche);
   const noms = motsR.filter((m) => !MOTS_TYPE.has(m) && m.length >= 3);
   // 1) large filet sur les titres (sans les détails, c'est léger) : la phrase entière + les mots du nom
-  const qListe = `query($q:String!){ products(first:60, query:$q, sortKey:RELEVANCE){ nodes{ id title } } }`;
+  const qListe = `query($q:String!){ products(first:60, query:$q, sortKey:RELEVANCE){ nodes{ id title options{ values } } } }`;
   const liste = async (texte: string) =>
-    (await shopifyGraphql<{ products: { nodes: { id: string; title: string }[] } }>(qListe, { q: `${texte} status:active` })).products.nodes;
+    (await shopifyGraphql<{ products: { nodes: { id: string; title: string; options: { values: string[] }[] }[] } }>(qListe, { q: `${texte} status:active` })).products.nodes;
   const phrase = motsR.map((m) => (m === "xs" ? "extra small" : m === "deuxtiers" ? "deux tiers" : m)).join(" ");
   const essais = [...new Set([recherche, phrase])];
   if (noms.length) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" AND "));
   if (noms.length > 1) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" OR "));
-  const vus = new Map<string, string>();
-  for (const e of essais) for (const p of await liste(e).catch(() => [])) if (!vus.has(p.id)) vus.set(p.id, p.title);
+  const vus = new Map<string, { titre: string; valeurs: string[] }>();
+  for (const e of essais) for (const p of await liste(e).catch(() => []))
+    if (!vus.has(p.id)) vus.set(p.id, { titre: p.title, valeurs: p.options.flatMap((o) => o.values).filter((v) => !/aucun|sans/i.test(v)) });
   // 2) note maison : le nom compte triple, le type double ; mauvaise largeur, packs non demandés et mots en trop font reculer
-  const note = (titre: string) => {
+  const note = (titre: string, valeurs: string[] = []) => {
     const tm = mots(titre.replace(/pack de 2/i, ""));
+    const vm = mots(valeurs.join(" "));
     let n = 0;
-    for (const m of motsR) if (tm.some((x) => pareil(x, m))) n += noms.includes(m) ? 3 : TAILLES_ANNEAU.has(m) ? 2 : 1;
+    for (const m of motsR) {
+      if (tm.some((x) => pareil(x, m))) n += noms.includes(m) ? 3 : TAILLES_ANNEAU.has(m) ? 2 : 1;
+      // la couleur est souvent une version de l'article (« Insert supplémentaire » → Couleur : Noir), pas dans son nom
+      else if (noms.includes(m) && vm.some((x) => pareil(x, m))) n += 2;
+    }
     for (const g of EXCLUSIFS) {
       const dit = g.filter((x) => motsR.includes(x));
       if (dit.length && !dit.some((x) => tm.includes(x)) && g.some((x) => tm.includes(x))) n -= 4;
@@ -185,7 +192,7 @@ async function chercher(recherche: string): Promise<Candidat[]> {
     n -= 1.5 * tm.filter((x) => x.length >= 4 && !NEUTRES.has(x) && !motsR.some((m) => pareil(x, m))).length;
     return n;
   };
-  const meilleurs = [...vus.entries()].map(([id, titre]) => ({ id, titre, n: note(titre) }))
+  const meilleurs = [...vus.entries()].map(([id, x]) => ({ id, titre: x.titre, n: note(x.titre, x.valeurs) }))
     .sort((a, b) => b.n - a.n || a.titre.length - b.titre.length).slice(0, 12);
   if (!meilleurs.length) return [];
   // 3) détails (tailles, versions, délais) seulement pour les 12 meilleurs
