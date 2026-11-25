@@ -123,9 +123,11 @@ export async function ticketsCompletsDeLaVue(viewId: number): Promise<Record<str
   const out: Record<string, unknown>[] = [];
   let cursor: string | null = null;
   for (let i = 0; i < 20; i++) {
-    const d = await gorgiasGet(`/views/${viewId}/items?limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`) as { data?: Record<string, unknown>[]; meta?: { next_cursor?: string | null } };
+    const d = await gorgiasGet(`/views/${viewId}/items?limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`) as { data?: Record<string, unknown>[]; meta?: { next_cursor?: string | null; next_items?: string | null } };
     out.push(...(d.data ?? []));
-    cursor = d.meta?.next_cursor ?? null;
+    // Gorgias donne la page suivante dans next_items (une adresse qui contient cursor=…), pas dans next_cursor
+    const suivant = d.meta?.next_items ? new URL(d.meta.next_items, "https://x").searchParams.get("cursor") : null;
+    cursor = d.meta?.next_cursor ?? suivant;
     if (!cursor) break;
   }
   return out;

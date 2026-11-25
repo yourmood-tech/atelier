@@ -17,15 +17,35 @@ export const maxDuration = 120;
 //
 // Attribution (décision Philippe 12.11.2026) : à chaque passage, les demandes ouvertes de la vue
 // « SAV - division 5 » qui n'ont encore personne sont attribuées à Marlène — de jour comme de nuit.
+//
+// Élargi (décision Philippe 25.11.2026) : aussi les emails/chats de clientes ouverts qui n'ont NI personne
+// NI équipe (vue « Unassigned »), sauf WhatsApp/concours et les mêmes exclusions que la vue division 5 —
+// avant, ces demandes n'arrivaient chez personne (ex. 10 emails du 15 au 25.11).
 const VUE_SAV_DIVISION_5 = 259906;
+const VUE_SANS_PERSONNE = 1408972;
 const MARLENE = 1174596829;   // agent Gorgias de Marlène Epars
+const CANAUX_CLIENTES = new Set(["email", "chat", "contact_form", "help-center"]);
+const ETIQUETTES_EXCLUES = new Set(["concours", "whatsapp", "klaviyo-whatsapp", "jeu whatsapp", "concours facebook",
+  "en attente de réponse client", "division 1: cv retenu", "nino", "partnership_interest", "senegal", "byjuno", "division 1: ethique"]);
+
+function sansEquipeAPrendre(t: Record<string, unknown>): boolean {
+  if ((t.assignee_team as { id?: number } | null)?.id) return false;
+  if (!CANAUX_CLIENTES.has(String(t.channel))) return false;
+  const tags = ((t.tags as { name: string }[]) ?? []).map((x) => x.name.toLowerCase());
+  return !tags.some((x) => ETIQUETTES_EXCLUES.has(x));
+}
 
 type Attribue = { id: number; client: string; sujet: string };
 
 async function attribuerSansPersonne(essai: boolean): Promise<{ attribues: Attribue[]; echecs: { id: number; erreur: string }[] }> {
   const attribues: Attribue[] = []; const echecs: { id: number; erreur: string }[] = [];
-  for (const t of await ticketsCompletsDeLaVue(VUE_SAV_DIVISION_5)) {
+  const division5 = await ticketsCompletsDeLaVue(VUE_SAV_DIVISION_5);
+  const sansEquipe = (await ticketsCompletsDeLaVue(VUE_SANS_PERSONNE)).filter(sansEquipeAPrendre);
+  const vus = new Set<number>();
+  for (const t of [...division5, ...sansEquipe]) {
     if ((t.assignee_user as { id?: number } | null)?.id) continue;
+    if (vus.has(Number(t.id))) continue;
+    vus.add(Number(t.id));
     const id = Number(t.id);
     try {
       if (!essai) await assignTicket(id, MARLENE);
