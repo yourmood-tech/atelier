@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { boutiques, brouillons, creer, enregistrerLignes, interpreter, lire, sauverEnCours, supprimer, valider, valides } from "@/lib/reassort-boutique";
+import { ajuster, boutiques, brouillons, creer, enregistrerLignes, interpreter, lire, sauverEnCours, supprimer, valider, valides } from "@/lib/reassort-boutique";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, ...(await interpreter(phrase)) });
       }
       case "lignes": return NextResponse.json({ ok: true, brouillon: await enregistrerLignes(String(b.id), b.lignes ?? [], b.phrase ? String(b.phrase) : undefined) });
+      case "ajuster": return NextResponse.json({ ok: true, ...(await ajuster(String(b.phrase ?? ""), b.etat ?? { propositions: [], panier: [] })) });
       case "encours": return NextResponse.json({ ok: true, le: await sauverEnCours(String(b.id), String(b.phrase ?? ""), Array.isArray(b.props) ? b.props : []) });
       case "supprimer": await supprimer(String(b.id)); return NextResponse.json({ ok: true });
       case "valider": return NextResponse.json({ ok: true, ...(await valider(String(b.id), qui)) });

@@ -61,6 +61,8 @@ export function repartir(c: Candidat, d: Demande, version: string): { quantites:
       if (paires.length * d.quantite_par_taille === d.quantite_totale) cibles = paires;
     }
   }
+  // « 2 par taille » sans tailles citées = toutes les tailles de l'article
+  if (!cibles.length && !d.tailles?.length && d.taille_min == null && d.taille_max == null && d.quantite_par_taille) cibles = tailles;
   if (!cibles.length) {
     const dit = d.quantite_totale ? `${d.quantite_totale} pièces demandées. ` : "";
     return { quantites: {}, remarque: `${dit}Quelles tailles ? Remplis les quantités ci-dessous.` };

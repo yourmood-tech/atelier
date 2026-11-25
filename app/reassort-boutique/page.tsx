@@ -136,15 +136,56 @@ export default function ReassortBoutique() {
     reco.current = r; r.start(); setEcoute(true);
   };
 
+  const chercherArticles = async (texte: string) => {
+    const j = await appel<{ propositions: Proposition[]; question: string | null }>({ action: "interpreter", phrase: texte });
+    setProps((p) => [...p, ...j.propositions]);
+    setQuestion(j.question);
+    return j.propositions.length > 0;
+  };
+
+  // la phrase peut être une demande d'articles OU une consigne sur ce qui est déjà à l'écran
   const comprendre = async () => {
     if (ecoute) reco.current?.stop();
     if (!phrase.trim()) return;
-    setOccupe("Je cherche les articles…"); setMessage(null); setQuestion(null);
+    setMessage(null); setQuestion(null);
+    const visibles = props.map((p, i) => ({ p, i })).filter(({ p }) => p.choisi != null && p.version != null);
+    const panier = brouillon?.lignes ?? [];
     try {
-      const j = await appel<{ propositions: Proposition[]; question: string | null }>({ action: "interpreter", phrase });
-      setProps((p) => [...p, ...j.propositions]);
-      setQuestion(j.question);
-      if (j.propositions.length) setPhrase("");
+      if (!visibles.length && !panier.length) {
+        setOccupe("Je cherche les articles…");
+        if (await chercherArticles(phrase)) setPhrase("");
+        return;
+      }
+      setOccupe("Je regarde ta demande…");
+      const etat = {
+        propositions: visibles.map(({ p, i }) => {
+          const c = p.candidats[p.choisi!];
+          const t: Record<string, number> = {};
+          for (const x of c.tailles.filter((x) => x.autres === p.version)) t[x.taille] = p.quantites[String(x.variantId)] ?? 0;
+          return { i, article: c.titre, version: p.version ?? "", tailles: t };
+        }),
+        panier: panier.map((l) => ({ variantId: l.variantId, article: l.titre, version: l.version ?? "", taille: l.taille, quantite: l.quantite })),
+      };
+      const r = await appel<{ propositions: { i: number; tailles: Record<string, number> }[]; panier: { variantId: number; quantite: number }[]; nouveaux_articles: string | null; reponse: string }>({ action: "ajuster", phrase, etat });
+      // propositions : tailles → numéro de variante de la version choisie
+      setProps((all) => all.map((p, i) => {
+        const m = r.propositions.find((x) => x.i === i);
+        if (!m || p.choisi == null) return p;
+        const q = { ...p.quantites };
+        for (const x of p.candidats[p.choisi].tailles.filter((x) => x.autres === p.version)) {
+          if (x.taille in m.tailles) q[String(x.variantId)] = Math.max(0, Math.round(Number(m.tailles[x.taille]) || 0));
+        }
+        return { ...p, quantites: q, remarque: null };
+      }));
+      if (r.panier.length && brouillon) {
+        await sauver(brouillon.lignes.map((l) => {
+          const m = r.panier.find((x) => x.variantId === l.variantId);
+          return m ? { ...l, quantite: Math.max(0, Math.round(Number(m.quantite) || 0)) } : l;
+        }), phrase);
+      }
+      if (r.nouveaux_articles) { setOccupe("Je cherche les articles…"); await chercherArticles(r.nouveaux_articles); }
+      if (r.reponse) dire(r.reponse);
+      setPhrase("");
     } catch (e) { dire((e as Error).message, "erreur"); } finally { setOccupe(null); }
   };
 
@@ -270,7 +311,7 @@ export default function ReassortBoutique() {
             {/* saisie */}
             <div className="rounded-xl bg-white p-4 shadow-sm">
               <textarea value={phrase} onChange={(e) => setPhrase(e.target.value)} rows={3}
-                placeholder="Ex. : 10 medium aura doré, 2 par taille entre 54 et 62"
+                placeholder="Ex. : 10 medium aura doré, 2 par taille entre 54 et 62 — puis « mets 2 par taille », « enlève la 48 »…"
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); comprendre(); } }}
                 className="w-full resize-none rounded-lg border border-stone-300 p-3 text-base" />
               <div className="mt-2 flex gap-2">
@@ -279,7 +320,7 @@ export default function ReassortBoutique() {
                     {ecoute ? "⏹ Stop" : "🎤 Dicter"}
                   </button>
                 )}
-                <button onClick={comprendre} disabled={!phrase.trim() || !!occupe} className="flex-1 rounded-lg bg-stone-900 px-4 py-3 text-base font-semibold text-white disabled:opacity-40">Chercher les articles</button>
+                <button onClick={comprendre} disabled={!phrase.trim() || !!occupe} className="flex-1 rounded-lg bg-stone-900 px-4 py-3 text-base font-semibold text-white disabled:opacity-40">Envoyer</button>
               </div>
               {question && <p className="mt-2 rounded-lg bg-amber-50 p-2 text-sm text-amber-900">{question}</p>}
             </div>

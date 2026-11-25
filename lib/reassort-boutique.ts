@@ -250,6 +250,44 @@ export async function interpreter(phrase: string): Promise<{ propositions: Propo
   return { propositions, question };
 }
 
+// ── consigne en langage libre sur ce qui est déjà à l'écran (« mets 2 par taille », « enlève la 48 »…) ──
+export type EtatEcran = {
+  propositions: { i: number; article: string; version: string; tailles: Record<string, number> }[];
+  panier: { variantId: number; article: string; version: string; taille: string; quantite: number }[];
+};
+export type Ajustement = {
+  propositions: { i: number; tailles: Record<string, number> }[];
+  panier: { variantId: number; quantite: number }[];
+  nouveaux_articles: string | null;
+  reponse: string;
+};
+
+export async function ajuster(phrase: string, etat: EtatEcran): Promise<Ajustement> {
+  const prompt = `Tu es l'assistant de commande de stock d'une boutique de bagues mood. La vendeuse parle en langage libre.
+
+État actuel de l'écran :
+- PROPOSITIONS (articles trouvés, pas encore ajoutés à la commande), avec toutes les tailles possibles et la quantité actuelle (0 = rien) :
+${JSON.stringify(etat.propositions)}
+- PANIER (déjà dans la commande) :
+${JSON.stringify(etat.panier)}
+
+Consigne de la vendeuse :
+"""${phrase}"""
+
+Applique la consigne. Règles :
+- « 2 par taille » / « mets 2 partout » = 2 dans chaque taille possible des propositions concernées (toutes si elle ne précise pas).
+- « ajoute 1 » = +1 à la quantité actuelle ; « mets 1 » = remplace.
+- Elle parle d'abord des PROPOSITIONS ; ne touche au PANIER que si elle le dit clairement (« dans la commande », « enlève de la commande »…).
+- Si la consigne demande en plus d'AUTRES articles qui ne sont ni dans les propositions ni dans le panier, recopie ce morceau de phrase dans "nouveaux_articles", sinon null.
+- Ne renvoie que ce qui change : pour une proposition, TOUTES ses tailles avec leur nouvelle quantité ; pour le panier, la nouvelle quantité (0 = retirer).
+- "reponse" : une phrase courte en français (tutoiement) qui dit ce que tu as fait, ou une question si c'est ambigu.
+
+Réponds en JSON : {"propositions":[{"i":0,"tailles":{"54":2}}],"panier":[{"variantId":123,"quantite":0}],"nouveaux_articles":null,"reponse":""}`;
+  const r = await callClaudeJson<Ajustement>({ prompt, model: "claude-haiku-4-5-20251001", temperature: 0, maxTokens: 4000 });
+  if (!r) throw new Error("Je n'ai pas réussi à lire la consigne, réessaie.");
+  return { propositions: r.propositions ?? [], panier: r.panier ?? [], nouveaux_articles: r.nouveaux_articles ?? null, reponse: r.reponse ?? "" };
+}
+
 // ── validation : brouillon Shopify à 100 % puis vraie commande ────────────────────────
 export async function valider(id: string, par: string): Promise<{ commande: string; orderId: number; pieces: number }> {
   const b = await lire(id);
