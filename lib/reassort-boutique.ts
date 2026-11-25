@@ -127,32 +127,50 @@ type GqlProduit = {
 };
 
 // mots qui disent le TYPE d'article (pèsent moins que le nom : « aura », « authentique »…)
-const MOTS_TYPE = new Set(["medium", "mini", "minis", "base", "bases", "anneau", "anneaux", "addon", "addons", "deux", "tiers",
-  "large", "small", "extra", "xs", "acier", "argent", "titane", "bague", "bagues", "en", "de", "la", "le", "les", "des"]);
-const TAILLES_ANNEAU = new Set(["mini", "minis", "medium", "deux", "tiers", "addon", "base", "bases", "xs", "large", "small"]);
+const MOTS_TYPE = new Set(["medium", "mini", "minis", "base", "bases", "anneau", "anneaux", "addon", "addons", "deuxtiers",
+  "large", "small", "xs", "acier", "argent", "titane", "bague", "bagues", "en", "de", "la", "le", "les", "des", "et"]);
+const TAILLES_ANNEAU = new Set(["mini", "minis", "medium", "deuxtiers", "addon", "base", "bases", "xs", "large", "small"]);
+// une seule largeur / un seul type d'anneau à la fois : « XS » ne doit pas remonter les bases small ou large
+const EXCLUSIFS = [["xs", "small", "large"], ["mini", "medium", "deuxtiers"]];
 // familles d'articles qu'on écarte si la vendeuse ne les a pas nommées
-const FAMILLES = ["pack", "coffret", "clip", "drop", "boucle", "oreille", "box", "lot", "calendrier", "garde-mood"];
+const FAMILLES = ["pack", "coffret", "clip", "drop", "boucle", "oreille", "box", "lot", "calendrier", "garde"];
+// mots de titre « décoratifs » qui ne pénalisent pas un article
+const NEUTRES = new Set(["pour", "bague", "mood", "interchangeable", "avec", "acier", "inoxydable", "316l", "argent", "925", "serti", "sertie",
+  "zircons", "anneau", "anneaux", "addon", "base", "bijou", "central", "9mm", "11mm", "13mm", "en"]);
+
+// même écriture des deux côtés : « Extra Small » = « XS », « deux tiers » = « 2/3 », sans accents ni majuscules
+const normaliser = (t: string) => sansAccent(t)
+  .replace(/extra[\s-]*small|x[\s-]small|xsmall/g, " xs ")
+  .replace(/deux[\s-]*tiers|2\s*\/\s*3/g, " deuxtiers ");
+const mots = (t: string) => normaliser(t).split(/[^a-z0-9]+/).filter((m) => m.length >= 2);
+// racine : « polie » = « poli » = « polies », « arrondie » = « arrondi »
+const racine = (m: string) => (m.length > 4 ? m.replace(/(es|e|s)$/, "") : m);
+const pareil = (a: string, b: string) => { const ra = racine(a), rb = racine(b); return ra === rb || (ra.length >= 4 && rb.length >= 4 && (ra.startsWith(rb) || rb.startsWith(ra))); };
 
 async function chercher(recherche: string): Promise<Candidat[]> {
-  const motsR = sansAccent(recherche).split(/[^a-z0-9]+/).filter((m) => m.length >= 2);
+  const motsR = mots(recherche);
   const noms = motsR.filter((m) => !MOTS_TYPE.has(m) && m.length >= 3);
   // 1) large filet sur les titres (sans les détails, c'est léger) : la phrase entière + les mots du nom
   const qListe = `query($q:String!){ products(first:60, query:$q, sortKey:RELEVANCE){ nodes{ id title } } }`;
   const liste = async (texte: string) =>
     (await shopifyGraphql<{ products: { nodes: { id: string; title: string }[] } }>(qListe, { q: `${texte} status:active` })).products.nodes;
-  const essais = [recherche];
-  if (noms.length) essais.push(noms.map((n) => `title:${n}*`).join(" AND "));
-  if (noms.length > 1) essais.push(noms.map((n) => `title:${n}*`).join(" OR "));
+  const phrase = motsR.map((m) => (m === "xs" ? "extra small" : m === "deuxtiers" ? "deux tiers" : m)).join(" ");
+  const essais = [...new Set([recherche, phrase])];
+  if (noms.length) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" AND "));
+  if (noms.length > 1) essais.push(noms.map((n) => `title:${racine(n)}*`).join(" OR "));
   const vus = new Map<string, string>();
   for (const e of essais) for (const p of await liste(e).catch(() => [])) if (!vus.has(p.id)) vus.set(p.id, p.title);
-  // 2) note maison : le nom compte double, les familles non demandées (pack, coffret…) passent derrière
+  // 2) note maison : le nom compte triple, le type double ; mauvaise largeur, packs non demandés et mots en trop font reculer
   const note = (titre: string) => {
-    const t = sansAccent(titre);
+    const tm = mots(titre.replace(/pack de 2/i, ""));
     let n = 0;
-    for (const m of motsR) if (t.includes(m)) n += noms.includes(m) ? 3 : TAILLES_ANNEAU.has(m) ? 2 : 1;
-    // les minis se vendent en « pack de 2 » : ce pack-là n'est pas un lot
-    const t2 = t.replace("pack de 2", "");
-    for (const f of FAMILLES) if (t2.includes(f) && !motsR.some((m) => f.startsWith(m) || m.startsWith(f))) n -= 3;
+    for (const m of motsR) if (tm.some((x) => pareil(x, m))) n += noms.includes(m) ? 3 : TAILLES_ANNEAU.has(m) ? 2 : 1;
+    for (const g of EXCLUSIFS) {
+      const dit = g.filter((x) => motsR.includes(x));
+      if (dit.length && !dit.some((x) => tm.includes(x)) && g.some((x) => tm.includes(x))) n -= 4;
+    }
+    for (const f of FAMILLES) if (tm.some((x) => x.startsWith(f)) && !motsR.some((m) => m.startsWith(f))) n -= 3;
+    n -= 0.3 * tm.filter((x) => x.length >= 4 && !NEUTRES.has(x) && !motsR.some((m) => pareil(x, m))).length;
     return n;
   };
   const meilleurs = [...vus.entries()].map(([id, titre]) => ({ id, titre, n: note(titre) }))
