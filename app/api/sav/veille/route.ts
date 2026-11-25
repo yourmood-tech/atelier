@@ -25,6 +25,7 @@ const VUE_SAV_DIVISION_5 = 259906;
 const VUE_SANS_PERSONNE = 1408972;
 // Élargi encore (Philippe 25.11.2026) : l'équipe « Service Client » sans personne va aussi chez Marlène.
 const EQUIPE_SERVICE_CLIENT = 4379;
+const FENETRE_MS = 3 * 24 * 3600 * 1000;
 const MARLENE = 1174596829;   // agent Gorgias de Marlène Epars
 const CANAUX_CLIENTES = new Set(["email", "chat", "contact_form", "help-center"]);
 const ETIQUETTES_EXCLUES = new Set(["concours", "whatsapp", "klaviyo-whatsapp", "jeu whatsapp", "concours facebook",
@@ -33,6 +34,9 @@ const ETIQUETTES_EXCLUES = new Set(["concours", "whatsapp", "klaviyo-whatsapp", 
 function sansEquipeAPrendre(t: Record<string, unknown>): boolean {
   const equipe = (t.assignee_team as { id?: number } | null)?.id;
   if (equipe && equipe !== EQUIPE_SERVICE_CLIENT) return false;
+  // seulement les demandes des 3 derniers jours (Philippe 25.11.2026) ; les plus vieilles ont été fermées à la main
+  const recu = String(t.last_received_message_datetime || t.created_datetime || "");
+  if (!recu || Date.now() - new Date(recu).getTime() > FENETRE_MS) return false;
   if (!CANAUX_CLIENTES.has(String(t.channel))) return false;
   const tags = ((t.tags as { name: string }[]) ?? []).map((x) => x.name.toLowerCase());
   return !tags.some((x) => ETIQUETTES_EXCLUES.has(x));
