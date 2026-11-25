@@ -195,6 +195,14 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // /pilotage-boutiques (achats des boutiques face aux ventes) → Philippe, Stéphanie, Fabienne
+  if (pathname.startsWith("/pilotage-boutiques") || pathname.startsWith("/api/pilotage-boutiques")) {
+    const email = req.auth.user?.email ?? "";
+    if (!["philippe@yourmood.net", "stephanie@yourmood.net", "fabienne@yourmood.net"].includes(email)) {
+      return new NextResponse("Accès non autorisé", { status: 403 });
+    }
+  }
+
   // /delais (assistant des délais) → Philippe uniquement
   if (pathname.startsWith("/delais") || pathname.startsWith("/api/delais")) {
     if ((req.auth.user?.email ?? "") !== "philippe@yourmood.net") {
