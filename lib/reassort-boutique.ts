@@ -126,18 +126,44 @@ type GqlProduit = {
   variants: { nodes: { id: string; sku: string | null; selectedOptions: { name: string; value: string }[]; pretes: { value: string } | null }[] };
 };
 
+// mots qui disent le TYPE d'article (pèsent moins que le nom : « aura », « authentique »…)
+const MOTS_TYPE = new Set(["medium", "mini", "minis", "base", "bases", "anneau", "anneaux", "addon", "addons", "deux", "tiers",
+  "large", "small", "extra", "xs", "acier", "argent", "titane", "bague", "bagues", "en", "de", "la", "le", "les", "des"]);
+const TAILLES_ANNEAU = new Set(["mini", "minis", "medium", "deux", "tiers", "addon", "base", "bases", "xs", "large", "small"]);
+// familles d'articles qu'on écarte si la vendeuse ne les a pas nommées
+const FAMILLES = ["pack", "coffret", "clip", "drop", "boucle", "oreille", "box", "lot", "calendrier", "garde-mood"];
+
 async function chercher(recherche: string): Promise<Candidat[]> {
-  const q = `query($q:String!){ products(first:15, query:$q, sortKey:RELEVANCE){ nodes{ id title featuredImage{url} alerte: metafield(namespace:"mood", key:"alerte_livraison"){ value }
+  const motsR = sansAccent(recherche).split(/[^a-z0-9]+/).filter((m) => m.length >= 2);
+  const noms = motsR.filter((m) => !MOTS_TYPE.has(m) && m.length >= 3);
+  // 1) large filet sur les titres (sans les détails, c'est léger) : la phrase entière + les mots du nom
+  const qListe = `query($q:String!){ products(first:60, query:$q, sortKey:RELEVANCE){ nodes{ id title } } }`;
+  const liste = async (texte: string) =>
+    (await shopifyGraphql<{ products: { nodes: { id: string; title: string }[] } }>(qListe, { q: `${texte} status:active` })).products.nodes;
+  const essais = [recherche];
+  if (noms.length) essais.push(noms.map((n) => `title:${n}*`).join(" AND "));
+  if (noms.length > 1) essais.push(noms.map((n) => `title:${n}*`).join(" OR "));
+  const vus = new Map<string, string>();
+  for (const e of essais) for (const p of await liste(e).catch(() => [])) if (!vus.has(p.id)) vus.set(p.id, p.title);
+  // 2) note maison : le nom compte double, les familles non demandées (pack, coffret…) passent derrière
+  const note = (titre: string) => {
+    const t = sansAccent(titre);
+    let n = 0;
+    for (const m of motsR) if (t.includes(m)) n += noms.includes(m) ? 3 : TAILLES_ANNEAU.has(m) ? 2 : 1;
+    // les minis se vendent en « pack de 2 » : ce pack-là n'est pas un lot
+    const t2 = t.replace("pack de 2", "");
+    for (const f of FAMILLES) if (t2.includes(f) && !motsR.some((m) => f.startsWith(m) || m.startsWith(f))) n -= 3;
+    return n;
+  };
+  const meilleurs = [...vus.entries()].map(([id, titre]) => ({ id, titre, n: note(titre) }))
+    .sort((a, b) => b.n - a.n || a.titre.length - b.titre.length).slice(0, 12);
+  if (!meilleurs.length) return [];
+  // 3) détails (tailles, versions, délais) seulement pour les 12 meilleurs
+  const qDetails = `query($ids:[ID!]!){ nodes(ids:$ids){ ... on Product { id title featuredImage{url} alerte: metafield(namespace:"mood", key:"alerte_livraison"){ value }
     options{name values} variants(first:100){ nodes{ id sku selectedOptions{name value} pretes: metafield(namespace:"mood", key:"pieces_pretes"){ value } } } } } }`;
-  const essai = async (texte: string) =>
-    (await shopifyGraphql<{ products: { nodes: GqlProduit[] } }>(q, { q: `${texte} status:active` })).products.nodes;
-  let produits = await essai(recherche);
-  if (!produits.length) {
-    // repli : les mots les plus longs seulement
-    const mots = recherche.split(/\s+/).filter((m) => m.length >= 4);
-    if (mots.length && mots.join(" ") !== recherche) produits = await essai(mots.join(" "));
-  }
-  const mots = sansAccent(recherche).split(/\s+/).filter((m) => m.length >= 2);
+  const det = (await shopifyGraphql<{ nodes: (GqlProduit | null)[] }>(qDetails, { ids: meilleurs.map((x) => x.id) })).nodes;
+  const parId = new Map(det.filter(Boolean).map((p) => [p!.id, p!]));
+  const produits = meilleurs.map((x) => parId.get(x.id)).filter(Boolean) as GqlProduit[];
   const candidats = produits.map((p) => {
     const optTaille = p.options.find((o) => /taille|size|gr(o|ö)sse/i.test(o.name))
       ?? p.options.find((o) => o.values.length > 1 && o.values.every((v) => tailleDe(v) != null));
@@ -159,19 +185,16 @@ async function chercher(recherche: string): Promise<Candidat[]> {
       const v = p.variants.nodes[0];
       if (v) tailles.push({ taille: "—", autres: "", variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
     }
-    const titre = sansAccent(p.title);
-    const score = mots.filter((m) => titre.includes(m)).length;
     return { c: { productId: Number(p.id.split("/").pop()), titre: p.title, image: p.featuredImage?.url ?? null, tailles, sansTaille,
-      versions: [...new Set(tailles.map((t) => t.autres))], alerte: p.alerte?.value?.trim() || null }, score };
+      versions: [...new Set(tailles.map((t) => t.autres))], alerte: p.alerte?.value?.trim() || null } };
   }).filter((x) => x.c.tailles.length);
-  candidats.sort((a, b) => b.score - a.score);
-  return candidats.slice(0, 10).map((x) => ({ ...x.c, _score: x.score, _complet: x.score === mots.length } as Candidat & { _score: number; _complet: boolean }));
+  return candidats.map((x) => x.c);
 }
 
 export async function interpreter(phrase: string): Promise<{ propositions: Proposition[]; question: string | null }> {
   const { demandes, question } = await comprendre(phrase);
   const propositions = await Promise.all(demandes.slice(0, 15).map(async (d) => {
-    const cands = (await chercher(d.recherche)) as (Candidat & { _score: number; _complet: boolean })[];
+    const cands = await chercher(d.recherche);
     // on ne choisit jamais à sa place (règle Philippe) : sauf s'il n'y a qu'un seul article possible,
     // la liste est proposée, le plus probable en premier
     const choisi = cands.length === 1 ? 0 : null;
@@ -183,7 +206,7 @@ export async function interpreter(phrase: string): Promise<{ propositions: Propo
     else if (choisi == null) remarque = cands.length > 1 ? "Choisis l'article dans la liste (le plus probable est en premier)." : remarque;
     return {
       texte: d.texte, recherche: d.recherche, demande: d,
-      candidats: cands.map(({ _score, _complet, ...c }) => { void _score; void _complet; return c; }),
+      candidats: cands,
       choisi, version, quantites: rep.quantites, remarque,
     };
   }));
