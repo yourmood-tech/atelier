@@ -4,7 +4,7 @@
 // commande Shopify à 100 % de rabais (0 CHF) → commande réelle étiquetée « REASSORT BOUTIQUE », imprimée à l'atelier.
 import { kv } from "@vercel/kv";
 import { callClaudeJson } from "@/lib/claude-ai";
-import { repartir, tailleDe, type Candidat, type Demande, type Proposition, type TailleDispo } from "@/lib/reassort-boutique-commun";
+import { choisirVersion, repartir, tailleDe, type Candidat, type Demande, type Proposition, type TailleDispo } from "@/lib/reassort-boutique-commun";
 import { addOrderTags, shopifyGet, shopifyGraphql, shopifyWrite } from "@/lib/shopify";
 
 export const TAG_REASSORT = "REASSORT BOUTIQUE";
@@ -13,7 +13,7 @@ const K_B = (id: string) => `rb:brouillon:${id}`;
 const K_VALIDES = "rb:valides";
 
 export type Boutique = { id: number; nom: string; adresse: Record<string, string> };
-export type Ligne = { variantId: number; productId: number; titre: string; taille: string; sku: string; image: string | null; quantite: number; pretes: number | null; alerte: string | null };
+export type Ligne = { variantId: number; productId: number; titre: string; taille: string; version?: string; sku: string; image: string | null; quantite: number; pretes: number | null; alerte: string | null };
 export type Brouillon = {
   id: string; boutique: { id: number; nom: string }; creePar: string; creeLe: string; majLe: string;
   lignes: Ligne[]; historique: string[];
@@ -147,7 +147,9 @@ async function chercher(recherche: string): Promise<Candidat[]> {
       sansTaille = false;
       for (const v of p.variants.nodes) {
         const val = v.selectedOptions.find((o) => o.name === optTaille.name)?.value ?? "";
-        tailles.push({ taille: val, variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
+        // les autres choix de la variante (finition, couleur…) : une même taille peut exister en plusieurs versions
+        const autres = v.selectedOptions.filter((o) => o.name !== optTaille.name).map((o) => o.value).join(" · ");
+        tailles.push({ taille: val, autres, variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
       }
       // « taille inconnue » et autres valeurs sans chiffre : pas commandables en réassort
       const chiffrees = tailles.filter((t) => tailleDe(t.taille) != null);
@@ -155,11 +157,12 @@ async function chercher(recherche: string): Promise<Candidat[]> {
       tailles.sort((a, b) => (tailleDe(a.taille) ?? 0) - (tailleDe(b.taille) ?? 0) || a.taille.localeCompare(b.taille));
     } else {
       const v = p.variants.nodes[0];
-      if (v) tailles.push({ taille: "—", variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
+      if (v) tailles.push({ taille: "—", autres: "", variantId: Number(v.id.split("/").pop()), sku: v.sku ?? "", pretes: v.pretes ? Number(v.pretes.value) : null });
     }
     const titre = sansAccent(p.title);
     const score = mots.filter((m) => titre.includes(m)).length;
-    return { c: { productId: Number(p.id.split("/").pop()), titre: p.title, image: p.featuredImage?.url ?? null, tailles, sansTaille, alerte: p.alerte?.value?.trim() || null }, score };
+    return { c: { productId: Number(p.id.split("/").pop()), titre: p.title, image: p.featuredImage?.url ?? null, tailles, sansTaille,
+      versions: [...new Set(tailles.map((t) => t.autres))], alerte: p.alerte?.value?.trim() || null }, score };
   }).filter((x) => x.c.tailles.length);
   candidats.sort((a, b) => b.score - a.score);
   return candidats.slice(0, 10).map((x) => ({ ...x.c, _score: x.score, _complet: x.score === mots.length } as Candidat & { _score: number; _complet: boolean }));
@@ -172,14 +175,16 @@ export async function interpreter(phrase: string): Promise<{ propositions: Propo
     // on ne choisit à sa place que si un seul article correspond à tous les mots
     const complets = cands.filter((c) => c._complet);
     const choisi = complets.length === 1 ? cands.indexOf(complets[0]) : null;
-    const rep = choisi != null ? repartir(cands[choisi], d) : { quantites: {}, remarque: null };
+    const version = choisi != null ? choisirVersion(cands[choisi], `${d.texte} ${d.recherche}`) : null;
+    const rep = choisi != null && version != null ? repartir(cands[choisi], d, version) : { quantites: {}, remarque: null };
     let remarque = rep.remarque;
+    if (choisi != null && version == null) remarque = "Cet article existe en plusieurs versions : choisis laquelle.";
     if (!cands.length) remarque = `Rien trouvé pour « ${d.recherche} ». Reformule (nom exact de l'article).`;
     else if (choisi == null) remarque = cands.length > 1 ? "Plusieurs articles possibles : choisis le bon." : remarque;
     return {
       texte: d.texte, recherche: d.recherche, demande: d,
       candidats: cands.map(({ _score, _complet, ...c }) => { void _score; void _complet; return c; }),
-      choisi, quantites: rep.quantites, remarque,
+      choisi, version, quantites: rep.quantites, remarque,
     };
   }));
   return { propositions, question };

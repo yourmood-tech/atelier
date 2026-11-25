@@ -2,10 +2,10 @@
 
 // Réassort boutique — la boutique commande son stock en écrivant ou en dictant (demande de Philippe, 25.11.2026).
 import { useCallback, useEffect, useRef, useState } from "react";
-import { delai, repartir, type Proposition } from "@/lib/reassort-boutique-commun";
+import { choisirVersion, delai, repartir, type Proposition } from "@/lib/reassort-boutique-commun";
 
 type Boutique = { id: number; nom: string };
-type Ligne = { variantId: number; productId: number; titre: string; taille: string; sku: string; image: string | null; quantite: number; pretes: number | null; alerte: string | null };
+type Ligne = { variantId: number; productId: number; titre: string; taille: string; version?: string; sku: string; image: string | null; quantite: number; pretes: number | null; alerte: string | null };
 type Brouillon = { id: string; boutique: Boutique; creePar: string; creeLe: string; majLe: string; lignes: Ligne[]; historique: string[] };
 type Valide = { commande: string; boutique: string; par: string; pieces: number; le: string };
 
@@ -128,15 +128,25 @@ export default function ReassortBoutique() {
   const majProp = (i: number, p: Partial<Proposition>) => setProps((all) => all.map((x, k) => (k === i ? { ...x, ...p } : x)));
   const choisirCandidat = (i: number, idx: number) => {
     const p = props[i];
-    const rep = repartir(p.candidats[idx], p.demande);
-    majProp(i, { choisi: idx, quantites: rep.quantites, remarque: rep.remarque });
+    const c = p.candidats[idx];
+    const version = choisirVersion(c, `${p.demande.texte} ${p.demande.recherche}`);
+    if (version == null) { majProp(i, { choisi: idx, version: null, quantites: {}, remarque: "Cet article existe en plusieurs versions : choisis laquelle." }); return; }
+    const rep = repartir(c, p.demande, version);
+    majProp(i, { choisi: idx, version, quantites: rep.quantites, remarque: rep.remarque });
+  };
+  const choisirVersionProp = (i: number, version: string) => {
+    const p = props[i];
+    if (p.choisi == null) return;
+    const rep = repartir(p.candidats[p.choisi], p.demande, version);
+    majProp(i, { version, quantites: rep.quantites, remarque: rep.remarque });
   };
   const ajouter = async (i: number) => {
     const p = props[i];
     if (p.choisi == null || !brouillon) return;
     const c = p.candidats[p.choisi];
-    const nouvelles: Ligne[] = c.tailles.filter((t) => (p.quantites[t.taille] ?? 0) > 0).map((t) => ({
-      variantId: t.variantId, productId: c.productId, titre: c.titre, taille: t.taille, sku: t.sku, image: c.image, quantite: p.quantites[t.taille], pretes: t.pretes, alerte: c.alerte,
+    const nouvelles: Ligne[] = c.tailles.filter((t) => (p.quantites[String(t.variantId)] ?? 0) > 0).map((t) => ({
+      variantId: t.variantId, productId: c.productId, titre: c.titre, taille: t.taille, version: t.autres || undefined, sku: t.sku, image: c.image,
+      quantite: p.quantites[String(t.variantId)], pretes: t.pretes, alerte: c.alerte,
     }));
     if (!nouvelles.length) { majProp(i, { remarque: "Mets au moins une quantité." }); return; }
     await sauver([...brouillon.lignes, ...nouvelles], p.texte);
@@ -261,20 +271,27 @@ export default function ReassortBoutique() {
                       {p.candidats.map((cd, k) => <option key={cd.productId} value={k}>{cd.titre}</option>)}
                     </select>
                   )}
+                  {c && c.versions.length > 1 && (
+                    <select value={p.version ?? ""} onChange={(e) => choisirVersionProp(i, e.target.value)}
+                      className="mb-2 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm">
+                      <option value="" disabled>— choisis la version —</option>
+                      {c.versions.map((v) => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  )}
                   {p.remarque && <p className="mb-2 text-sm text-amber-800">{p.remarque}</p>}
                   {c?.alerte && <p className="mb-2 rounded bg-amber-50 p-2 text-sm text-amber-900">⚠ {c.alerte}</p>}
                   {c && <p className="mb-2 text-xs text-stone-500">Délai habituel sous chaque taille : <span className="text-green-700">72 h</span> = prête à partir · <span className="text-amber-700">4 sem.</span> = fabriquée, environ 4 semaines · <span className="text-stone-400">?</span> = à confirmer par l&apos;atelier</p>}
-                  {c && (
+                  {c && p.version != null && (
                     <div className="flex gap-3">
                       {c.image && <img src={`${c.image}${c.image.includes("?") ? "&" : "?"}width=160`} alt="" className="h-20 w-20 rounded-lg object-cover" />}
                       <div className="grid flex-1 grid-cols-4 gap-2 sm:grid-cols-6">
-                        {c.tailles.map((t) => (
+                        {c.tailles.filter((t) => t.autres === p.version).map((t) => (
                           <label key={t.variantId} className="text-center text-xs">
                             <span className="block text-stone-500">{c.sansTaille ? "Qté" : t.taille}</span>
-                            <input type="number" min={0} inputMode="numeric" value={p.quantites[t.taille] ?? ""}
-                              onChange={(e) => majProp(i, { quantites: { ...p.quantites, [t.taille]: Math.max(0, Number(e.target.value) || 0) } })}
-                              className={`w-full rounded border px-1 py-1 text-center text-sm ${(p.quantites[t.taille] ?? 0) > 0 ? "border-stone-900 font-bold" : "border-stone-200"}`} />
-                            <span className={`block text-[10px] ${COULEUR[delai(t.pretes, Math.max(1, p.quantites[t.taille] ?? 0)).couleur]}`}>{court(t.pretes, Math.max(1, p.quantites[t.taille] ?? 0))}</span>
+                            <input type="number" min={0} inputMode="numeric" value={p.quantites[String(t.variantId)] ?? ""}
+                              onChange={(e) => majProp(i, { quantites: { ...p.quantites, [String(t.variantId)]: Math.max(0, Number(e.target.value) || 0) } })}
+                              className={`w-full rounded border px-1 py-1 text-center text-sm ${(p.quantites[String(t.variantId)] ?? 0) > 0 ? "border-stone-900 font-bold" : "border-stone-200"}`} />
+                            <span className={`block text-[10px] ${COULEUR[delai(t.pretes, Math.max(1, p.quantites[String(t.variantId)] ?? 0)).couleur]}`}>{court(t.pretes, Math.max(1, p.quantites[String(t.variantId)] ?? 0))}</span>
                           </label>
                         ))}
                       </div>
@@ -306,10 +323,10 @@ export default function ReassortBoutique() {
                     <p className="text-sm font-medium">{g[0].titre}</p>
                     {g[0].alerte && <p className="text-xs text-amber-800">⚠ {g[0].alerte}</p>}
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {g.sort((a, b) => a.taille.localeCompare(b.taille, "fr", { numeric: true })).map((l) => (
+                      {g.sort((a, b) => (a.version ?? "").localeCompare(b.version ?? "") || a.taille.localeCompare(b.taille, "fr", { numeric: true })).map((l) => (
                         <span key={l.variantId} title={delai(l.pretes, l.quantite).texte} className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm ${PASTILLE[delai(l.pretes, l.quantite).couleur]}`}>
                           <button onClick={() => changerQte(l.variantId, -1)} className="px-1 font-bold">−</button>
-                          {l.taille !== "—" && <span className="text-stone-500">T{l.taille}</span>}<strong>×{l.quantite}</strong><span className={`text-xs ${COULEUR[delai(l.pretes, l.quantite).couleur]}`}>{court(l.pretes, l.quantite)}</span>
+                          {l.taille !== "—" && <span className="text-stone-500">T{l.taille}</span>}{l.version && <span className="text-stone-500">{l.version}</span>}<strong>×{l.quantite}</strong><span className={`text-xs ${COULEUR[delai(l.pretes, l.quantite).couleur]}`}>{court(l.pretes, l.quantite)}</span>
                           <button onClick={() => changerQte(l.variantId, 1)} className="px-1 font-bold">+</button>
                         </span>
                       ))}
@@ -325,7 +342,7 @@ export default function ReassortBoutique() {
                   <p className="mb-2 font-semibold">On envoie à l&apos;atelier {pieces(brouillon.lignes)} pièce(s) pour {brouillon.boutique.nom} ?</p>
                   <ul className="mb-3 text-sm">
                     {groupes.map((g) => (
-                      <li key={g[0].productId}>• {g[0].titre} : {g.map((l) => `${l.taille !== "—" ? `T${l.taille}` : ""}×${l.quantite} (${court(l.pretes, l.quantite)})`).join(", ")}</li>
+                      <li key={g[0].productId}>• {g[0].titre} : {g.map((l) => `${l.taille !== "—" ? `T${l.taille}` : ""}${l.version ? ` ${l.version}` : ""} ×${l.quantite} (${court(l.pretes, l.quantite)})`).join(", ")}</li>
                     ))}
                   </ul>
                   <div className="flex gap-2">
