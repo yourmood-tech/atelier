@@ -280,7 +280,7 @@ Applique la consigne. Règles :
 - Elle parle d'abord des PROPOSITIONS ; ne touche au PANIER que si elle le dit clairement (« dans la commande », « enlève de la commande »…).
 - Si la consigne demande en plus d'AUTRES articles qui ne sont ni dans les propositions ni dans le panier, recopie ce morceau de phrase dans "nouveaux_articles", sinon null.
 - Ne renvoie que ce qui change : pour une proposition, TOUTES ses tailles avec leur nouvelle quantité ; pour le panier, la nouvelle quantité (0 = retirer).
-- "reponse" : une phrase courte en français (tutoiement) qui dit ce que tu as fait, ou une question si c'est ambigu.
+- "reponse" : une phrase courte en français (tutoiement) qui dit ce que tu as fait, ou une question si c'est ambigu. Ne pose pas de question sur les nouveaux articles : l'outil va les chercher et les proposer tout seul.
 
 Réponds en JSON : {"propositions":[{"i":0,"tailles":{"54":2}}],"panier":[{"variantId":123,"quantite":0}],"nouveaux_articles":null,"reponse":""}`;
   const r = await callClaudeJson<Ajustement>({ prompt, model: "claude-haiku-4-5-20251001", temperature: 0, maxTokens: 4000 });
