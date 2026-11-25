@@ -40,7 +40,7 @@ async function katana(path: string, params: Record<string, string | number>) {
     if (r.status === 429 || r.status >= 500) { await pause(2000 * 1.6 ** i); continue; }
     if (!r.ok) throw new Error(`Katana ${path} ${r.status}`);
     const j = await r.json();
-    return (Array.isArray(j) ? j : j.data) as L[];
+    return (Array.isArray(j) ? j : (j.data ?? j)) as L[]; // une fiche seule (/variants/{id}) revient sans « data »
   }
   throw new Error(`Katana ${path} : trop de refus`);
 }
@@ -55,20 +55,65 @@ async function klaviyo(method: string, path: string, body?: unknown) {
 }
 
 // ── 1. stock réel d'une taille : recette Katana, la matière la plus rare décide ──
-async function faisable(sku: string, cache: Map<number, number>): Promise<number | null> {
-  const v = await katana("/variants", { sku });
-  if (!v.length) return null;
-  const desc = async (id: number, prof: number): Promise<number> => {
-    const rows = prof <= 3 ? (await katana("/bom_rows", { product_variant_id: id, limit: 100 })).filter((r) => r.product_variant_id === id && !r.deleted_at) : [];
-    if (!rows.length) {
-      if (!cache.has(id)) { const inv = await katana("/inventory", { variant_id: id, location_id: ATELIER }); cache.set(id, Number(inv[0]?.quantity_in_stock ?? 0)); }
-      return Math.max(0, Math.floor(cache.get(id)!));
+// Décision Philippe 25.11.2026 : une pièce dont la recette contient une pierre (catégorie Katana « Pierres précieuses »)
+// est sertie à l'atelier → toujours fabriquée à la commande, on ne cherche pas de stock (les pierres servent à toutes
+// les tailles : additionner les tailles gonflait le stock, ex. Yarrow Vertical 51 au lieu de 8 au maximum).
+// Règle Philippe 22.11.2026 : disponible = stock Katana − pièces des commandes des 5 derniers jours pas encore envoyées.
+const PIERRES = "Pierres précieuses";
+const JOURS_EN_ATTENTE = 5;
+type Ctx = { stock: Map<number, number>; recettes: Map<number, L[]>; pierre: Map<number, boolean> };
+const nouveauCtx = (): Ctx => ({ stock: new Map(), recettes: new Map(), pierre: new Map() });
+async function recette(id: number, ctx: Ctx) {
+  if (!ctx.recettes.has(id)) ctx.recettes.set(id, (await katana("/bom_rows", { product_variant_id: id, limit: 100 })).filter((r) => r.product_variant_id === id && !r.deleted_at));
+  return ctx.recettes.get(id)!;
+}
+async function feuille(id: number, ctx: Ctx) {
+  if (!ctx.stock.has(id)) {
+    const inv = await katana("/inventory", { variant_id: id, location_id: ATELIER });
+    ctx.stock.set(id, Number(inv[0]?.quantity_in_stock ?? 0));
+    const v = (await katana(`/variants/${id}`, {}).catch(() => null)) as unknown as L | null;
+    let p = false;
+    if (v?.material_id) { const m = (await katana(`/materials/${v.material_id}`, {}).catch(() => null)) as unknown as L | null; p = m?.category_name === PIERRES; }
+    ctx.pierre.set(id, p);
+  }
+}
+// parcourt la recette jusqu'aux matières (3 niveaux max) ; « appliquer » reçoit chaque matière et la quantité par pièce
+async function parcourir(id: number, prof: number, q: number, ctx: Ctx, appliquer: (mat: number, q: number) => void): Promise<boolean> {
+  const rows = prof <= 3 ? await recette(id, ctx) : [];
+  if (!rows.length) { if (prof === 0) return false; await feuille(id, ctx); appliquer(id, q); return true; }
+  for (const r of rows) { const qq = Number(r.quantity ?? 0); if (qq > 0) await parcourir(r.ingredient_variant_id, prof + 1, q * qq, ctx, appliquer); }
+  return true;
+}
+async function faisable(variantId: number, ctx: Ctx): Promise<{ stock: number | null; sertie: boolean }> {
+  let n = Infinity; let sertie = false;
+  const aRecette = await parcourir(variantId, 0, 1, ctx, (mat, q) => {
+    if (ctx.pierre.get(mat)) sertie = true;
+    n = Math.min(n, Math.floor(Math.max(0, ctx.stock.get(mat) ?? 0) / q));
+  });
+  if (!aRecette) return { stock: null, sertie: false };
+  return { stock: Number.isFinite(n) ? n : 0, sertie };
+}
+// pièces de ces références commandées en ligne ces 5 derniers jours et pas encore envoyées
+async function enAttente(skus: Set<string>) {
+  const out = new Map<string, number>();
+  if (!skus.size) return out;
+  const depuis = new Date(Date.now() - JOURS_EN_ATTENTE * 24 * 3600e3).toISOString();
+  let apres: string | null = null;
+  for (let page = 0; page < 40; page++) {
+    const d: L = await shopifyGraphql<L>(
+      `query($c:String,$q:String){ orders(first:100, after:$c, query:$q){ pageInfo{ hasNextPage endCursor } nodes{ cancelledAt lineItems(first:100){ nodes{ sku unfulfilledQuantity } } } } }`,
+      { c: apres, q: `created_at:>=${depuis} -fulfillment_status:fulfilled` });
+    for (const o of d.orders.nodes) {
+      if (o.cancelledAt) continue;
+      for (const li of o.lineItems.nodes) {
+        const s = String(li.sku ?? "").trim(); const q = Number(li.unfulfilledQuantity ?? 0);
+        if (q > 0 && skus.has(s)) out.set(s, (out.get(s) ?? 0) + q);
+      }
     }
-    let n = Infinity;
-    for (const r of rows) { const q = Number(r.quantity ?? 0); if (q > 0) n = Math.min(n, Math.floor((await desc(r.ingredient_variant_id, prof + 1)) / q)); }
-    return Number.isFinite(n) ? n : 0;
-  };
-  return desc(v[0].id, 0);
+    if (!d.orders.pageInfo.hasNextPage) break;
+    apres = d.orders.pageInfo.endCursor;
+  }
+  return out;
 }
 
 export type Analyse = {
@@ -84,9 +129,11 @@ export type Analyse = {
 export async function analyser(produitId: string): Promise<Analyse> {
   const d: L = await shopifyGraphql<L>(`query($id:ID!){ product(id:$id){ id title handle productType tags descriptionHtml onlineStoreUrl featuredImage{ url } variants(first:100){ nodes{ title sku } } } }`, { id: produitId });
   const p = d.product;
-  const cache = new Map<number, number>();
+  const ctx = nouveauCtx();
   const tailles: Analyse["tailles"] = [];
   let sansRecette = 0;
+  let sertie = false;
+  const aCompter: { sku: string; vid: number | null; t: Analyse["tailles"][number] }[] = [];
   for (const v of p.variants.nodes) {
     const c = classe(p.title, v.title, v.sku, p.productType);
     if (!c.taille || !v.sku) continue;
@@ -100,12 +147,28 @@ export async function analyser(produitId: string): Promise<Analyse> {
     else if (/\bmini\b/.test(vt)) places = PLACES.mini;
     const base = c.pieces.some((x) => x.type === "base");
     if (!places && !base) continue;
-    const stock = await faisable(v.sku, cache);
-    if (stock == null) sansRecette++;
-    tailles.push({ taille: c.taille, stock, places, base });
+    const kv0 = await katana("/variants", { sku: v.sku });
+    const t = { taille: c.taille, stock: null as number | null, places, base };
+    tailles.push(t);
+    aCompter.push({ sku: v.sku, vid: kv0.length ? Number(kv0[0].id) : null, t });
+  }
+  // 1) on lit les recettes (et on repère les pierres) ; 2) on retire les commandes en attente ; 3) on compte
+  for (const x of aCompter) if (x.vid != null) { const f = await faisable(x.vid, ctx); if (f.sertie) sertie = true; }
+  if (!sertie) {
+    const attente = await enAttente(new Set(aCompter.filter((x) => x.vid != null).map((x) => x.sku)));
+    for (const x of aCompter) {
+      const q = attente.get(x.sku) ?? 0;
+      if (q > 0 && x.vid != null) await parcourir(x.vid, 0, q, ctx, (mat, qq) => ctx.stock.set(mat, (ctx.stock.get(mat) ?? 0) - qq));
+    }
+  }
+  for (const x of aCompter) {
+    if (x.vid == null) { sansRecette++; continue; }
+    const f = await faisable(x.vid, ctx);
+    if (f.stock == null) sansRecette++;
+    x.t.stock = f.stock == null ? null : sertie ? 0 : f.stock;
   }
   const stockTotal = tailles.reduce((s, t) => s + (t.stock ?? 0), 0);
-  const mode: Analyse["mode"] = stockTotal === 0 ? "a-la-commande" : stockTotal < SEUIL_PEU ? "peu" : "large";
+  const mode: Analyse["mode"] = sertie || stockTotal === 0 ? "a-la-commande" : stockTotal < SEUIL_PEU ? "peu" : "large";
   // tailles retenues : celles en stock, ou toutes si la pièce est fabriquée à la commande
   const retenues = tailles.filter((t) => mode === "a-la-commande" ? t.stock != null : (t.stock ?? 0) > 0);
   const codes = new Set<string>(); const taillesBase = new Set<number>();
