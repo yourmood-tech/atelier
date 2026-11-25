@@ -142,9 +142,9 @@ const MOTS_TYPE = new Set(["insert", "inserts", "medium", "mini", "minis", "base
   "arrondi", "arrondie", "carre", "carree", "poli", "polie", "mat", "mate", "brosse", "brossee", "sable", "sablee", "martele", "plat", "plate", "satine"]);
 const TAILLES_ANNEAU = new Set(["insert", "inserts", "mini", "minis", "medium", "deuxtiers", "addon", "base", "bases", "xs", "large", "small"]);
 // une seule largeur / un seul type d'anneau à la fois : « XS » ne doit pas remonter les bases small ou large
-const EXCLUSIFS = [["xs", "small", "large"], ["mini", "medium", "deuxtiers"]];
+const EXCLUSIFS = [["xs", "small", "large"], ["mini", "medium", "deuxtiers"], ["base", "addon", "insert"]];
 // familles d'articles qu'on écarte si la vendeuse ne les a pas nommées
-const FAMILLES = ["pack", "coffret", "clip", "drop", "boucle", "oreille", "box", "lot", "calendrier", "garde"];
+const FAMILLES = ["pack", "coffret", "clip", "drop", "boucle", "oreille", "box", "lot", "calendrier", "garde", "service", "traitement"];
 // mots de titre « décoratifs » qui ne pénalisent pas un article
 const NEUTRES = new Set(["pour", "bague", "mood", "interchangeable", "avec", "acier", "inoxydable", "316l", "argent", "925", "serti", "sertie",
   "zircons", "anneau", "anneaux", "addon", "base", "bijou", "central", "9mm", "11mm", "13mm", "en",
@@ -186,8 +186,11 @@ async function chercher(recherche: string): Promise<Candidat[]> {
       else if (noms.includes(m) && vm.some((x) => pareil(x, m))) n += 2;
     }
     for (const g of EXCLUSIFS) {
-      const dit = g.filter((x) => motsR.includes(x));
-      if (dit.length && !dit.some((x) => tm.includes(x)) && g.some((x) => tm.includes(x))) n -= 4;
+      // au pluriel aussi : « bases », « inserts », « addons »
+      const a = (x: string) => racine(x);
+      const rt = tm.map(a), rr = motsR.map(a);
+      const dit = g.filter((x) => rr.includes(a(x)));
+      if (dit.length && !dit.some((x) => rt.includes(a(x))) && g.some((x) => rt.includes(a(x)))) n -= 4;
     }
     for (const f of FAMILLES) if (tm.some((x) => x.startsWith(f)) && !motsR.some((m) => m.startsWith(f))) n -= 3;
     // mots en trop (couleur, nom de modèle…) que la vendeuse n'a pas dits : l'article simple passe devant
