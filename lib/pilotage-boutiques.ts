@@ -65,7 +65,8 @@ export async function rattraper(maxJours = 12): Promise<{ faits: number; reste: 
   for (let j = DEBUT_HISTORIQUE; j <= auj; j = lendemain(j)) jours.push(j);
   const recents = new Set(jours.slice(-3));
   const connus = await kv.mget<(Jour | null)[]>(...jours.map(K_JOUR));
-  const aFaire = jours.filter((j, i) => recents.has(j) || connus[i] == null);
+  // les plus récents d'abord : les dernières semaines s'affichent tout de suite
+  const aFaire = jours.filter((j, i) => recents.has(j) || connus[i] == null).reverse();
   let faits = 0;
   for (const j of aFaire.slice(0, maxJours)) {
     await kv.set(K_JOUR(j), await ventesDuJour(j));
