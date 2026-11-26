@@ -34,7 +34,10 @@ a{color:inherit}
 #hero .over{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 24px 9vh;text-align:center;pointer-events:none}
 #hero h1{font-weight:100;font-size:clamp(54px,13vw,190px);letter-spacing:.14em;padding-left:.14em;line-height:.9;opacity:0;transform:translateY(30px);transition:all 1.6s cubic-bezier(.2,.7,.2,1)}
 #hero p{margin-top:18px;font-family:var(--serif);font-style:italic;font-size:clamp(18px,2.2vw,28px);opacity:0;transform:translateY(20px);transition:all 1.4s .4s ease}
-#hero .cue{margin-top:38px;width:1px;height:54px;background:linear-gradient(var(--ink),transparent);opacity:0;transition:opacity 1s 1s}
+#hero .cue{margin-top:34px;display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--ink);text-decoration:none;pointer-events:auto;opacity:0;transition:opacity 1s 1s}
+#hero .cue span{font-size:10px;letter-spacing:.45em;padding-left:.45em;text-transform:uppercase}
+#hero .cue svg{animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
 #hero.done h1,#hero.done p{opacity:1;transform:none}#hero.done .cue{opacity:1}
 #hero .num{position:absolute;top:28px;left:28px;font-size:10px;letter-spacing:.4em;color:var(--mid)}
 #son{position:fixed;top:22px;right:22px;z-index:40;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.8);backdrop-filter:blur(8px);cursor:pointer;display:none;align-items:center;justify-content:center;gap:3px}
@@ -216,7 +219,7 @@ footer img{width:96px;opacity:.9}
 <header id="hero">
   <video id="film" src="/infinity/vid/infinity-film.mp4" muted playsinline preload="auto"></video>
   <div class="num">OO N°3</div>
-  <div class="over"><h1>Infinity</h1><p>Votre collection grandit, votre boîte aussi.</p><div class="cue"></div></div>
+  <div class="over"><h1>Infinity</h1><p>Votre collection grandit, votre boîte aussi.</p><a class="cue" href="#manifeste" aria-label="Découvrir la suite"><span>Découvrir</span><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M5 9l7 7 7-7"/></svg></a></div>
 </header>
 
 <section id="manifeste"><div class="wrap">
