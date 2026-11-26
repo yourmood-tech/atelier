@@ -71,6 +71,20 @@ section{padding:16vh 24px;position:relative}
 .cta:hover{background:var(--ink);color:#fff}
 .cta span{display:inline-block;width:28px;height:1px;background:currentColor;transition:width .4s}
 .cta:hover span{width:44px}
+/* la boîte en vrai */
+#vraie{border-top:1px solid var(--line)}
+#vraie .wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:6vw;align-items:center}
+#vraie video{width:100%;max-height:82vh;object-fit:cover;display:block;background:#fff}
+#vraie p.lead{font-size:clamp(16px,1.4vw,19px);line-height:1.9;color:#333;max-width:460px;margin-top:28px}
+/* galerie */
+#galerie{border-top:1px solid var(--line);padding-left:0;padding-right:0}
+#galerie .wrap{padding:0 24px}
+.rail{display:flex;gap:2px;margin-top:8vh;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:0 24px}
+.rail::-webkit-scrollbar{display:none}
+.rail figure{flex:0 0 min(42vw,560px);scroll-snap-align:center;overflow:hidden;background:#fff}
+.rail img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)}
+.rail figure:hover img{transform:scale(1.06)}
+.rail figcaption{padding:16px 2px 0;font-size:10px;letter-spacing:.4em;color:var(--mid)}
 /* capacité */
 #capacite{border-top:1px solid var(--line)}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);margin-top:9vh;border-top:1px solid var(--ink)}
@@ -93,7 +107,8 @@ section{padding:16vh 24px;position:relative}
 footer{padding:40px 24px 60px;text-align:center}
 footer img{width:96px;opacity:.9}
 @media(max-width:820px){
-  #manifeste .wrap,#config .wrap{grid-template-columns:1fr}
+  #manifeste .wrap,#config .wrap,#vraie .wrap{grid-template-columns:1fr}
+  .rail figure{flex-basis:78vw}
   .stage{height:56vh}
   .grid4{grid-template-columns:1fr 1fr}.grid4 div:nth-child(2){border-right:0}
   .grid4 div{border-bottom:1px solid var(--line)}
@@ -139,6 +154,23 @@ footer img{width:96px;opacity:.9}
     <a class="cta" href="${FICHE}">JE DÉCOUVRE <span></span></a>
   </div>
 </div></section>
+
+<section id="vraie"><div class="wrap">
+  <video class="rv" src="/infinity/vid/infinity-vraie.mp4" muted loop playsinline autoplay preload="metadata"></video>
+  <div class="rv"><div class="k">Ouvrez · rangez · refermez</div><h2 class="big">Chaque étage,<br><em>un écrin.</em></h2>
+  <p class="lead">Une mousse douce, des fentes sur mesure pour vos addons, deux tiers, mediums et minis, et un emplacement pour votre base. On ouvre, on choisit, on referme : votre collection est rangée, protégée, prête à partir avec vous.</p></div>
+</div></section>
+
+<section id="galerie">
+  <div class="wrap rv"><div class="k">Infinity OO N°3 · Blanc</div><h2 class="big">Ronde. Douce. <em>Infinie.</em></h2></div>
+  <div class="rail rv">
+    <figure><img src="/infinity/img/visuel-1.webp" alt="Infinity fermée" loading="lazy"><figcaption>FERMÉE</figcaption></figure>
+    <figure><img src="/infinity/img/visuel-2.webp" alt="Infinity ouverte" loading="lazy"><figcaption>OUVERTE</figcaption></figure>
+    <figure><img src="/infinity/img/visuel-3.webp" alt="Infinity avec bagues" loading="lazy"><figcaption>AVEC VOS MOOD</figcaption></figure>
+    <figure><img src="/infinity/img/visuel-4.webp" alt="Infinity 2 étages" loading="lazy"><figcaption>2 ÉTAGES</figcaption></figure>
+    <figure><img src="/infinity/img/visuel-5.webp" alt="Infinity 1 étage" loading="lazy"><figcaption>1 ÉTAGE</figcaption></figure>
+  </div>
+</section>
 
 <section id="capacite"><div class="wrap">
   <div class="rv"><div class="k">Capacité de rangement</div><h2 class="big">Dans chaque étage.</h2></div>
