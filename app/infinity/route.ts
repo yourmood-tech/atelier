@@ -344,7 +344,7 @@ footer img{width:96px;opacity:.9}
 (function(){
   var intro=document.getElementById('intro'),film=document.getElementById('film'),hero=document.getElementById('hero'),
       music=document.getElementById('music'),son=document.getElementById('son');
-  function fadeTo(v,ms){var s=music.volume,t0=performance.now();(function f(t){var k=Math.min(1,(t-t0)/ms);music.volume=s+(v-s)*k;if(k<1)requestAnimationFrame(f)})(t0)}
+  function fadeTo(v,ms){var s=music.volume,t0=performance.now();(function f(t){var k=Math.min(1,(t-t0)/ms);music.volume=Math.max(0,Math.min(1,s+(v-s)*k));if(k<1)requestAnimationFrame(f)})(t0)}
   document.getElementById('enter').addEventListener('click',function(){
     intro.classList.add('gone');document.body.classList.remove('locked');
     music.volume=0;music.play().catch(function(){});fadeTo(.8,1800);
