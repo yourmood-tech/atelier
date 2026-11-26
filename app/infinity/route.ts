@@ -43,7 +43,7 @@ a{color:inherit}
 #son.off i{animation:none;height:2px}
 @keyframes eq{0%,100%{height:4px}50%{height:16px}}
 /* ---------- sections ---------- */
-section{padding:16vh 24px;position:relative}
+section{padding:8vh 24px;position:relative}
 .wrap{max-width:1180px;margin:0 auto}
 .k{font-size:10px;letter-spacing:.5em;color:var(--mid);text-transform:uppercase}
 .big{font-weight:100;font-size:clamp(40px,6.4vw,92px);line-height:1.02;letter-spacing:-.01em;margin-top:22px}
@@ -89,7 +89,7 @@ section{padding:16vh 24px;position:relative}
 /* ---------- modularité (défilement) ---------- */
 #modul{padding:0;border-top:1px solid var(--line)}
 #modul .piste{position:relative}
-#modul .scene{position:relative;min-height:100vh;min-height:100svh;padding:10vh 0;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden}
+#modul .scene{position:relative;padding:6vh 0;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden}
 #modul .txt{padding:0 6vw}
 #modul .vue{justify-self:center;display:flex;flex-direction:column;align-items:center}
 #modul canvas{height:min(72vh,780px);width:auto;max-width:44vw;cursor:grab;touch-action:pan-y}
@@ -125,7 +125,7 @@ section{padding:16vh 24px;position:relative}
 .capa em{font-style:normal;color:var(--mid);font-size:11px;display:block;margin-top:2px}
 /* ---------- partout ---------- */
 #partout{border-top:1px solid var(--line)}
-#partout .tete{text-align:center;margin-bottom:12vh}
+#partout .tete{text-align:center;margin-bottom:6vh}
 .edito{display:grid;grid-template-columns:repeat(3,1fr);gap:3vw 2vw;max-width:1280px;margin:0 auto}
 .edito figure{position:relative;overflow:hidden}
 .edito img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)}
@@ -138,7 +138,7 @@ section{padding:16vh 24px;position:relative}
 #grandit{border-top:1px solid var(--line);overflow:hidden}
 #grandit .wrap{display:grid;grid-template-columns:1fr 1fr;gap:6vw;align-items:end}
 #grandit p{font-size:clamp(16px,1.4vw,19px);line-height:1.9;color:#333;max-width:470px;margin-top:22px}
-.marches{display:flex;align-items:flex-end;justify-content:center;gap:1.2vw;margin-top:12vh;padding:0 24px}
+.marches{display:flex;align-items:flex-end;justify-content:center;gap:1.2vw;margin-top:6vh;padding:0 24px}
 .marches figure{flex:0 1 220px;text-align:center}
 .marches img{width:100%;display:block;opacity:0;transform:translateY(40px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.2,.7,.2,1)}
 .marches.in img{opacity:1;transform:none}
@@ -146,7 +146,7 @@ section{padding:16vh 24px;position:relative}
 .marches.in figure:nth-child(4) img{transition-delay:.45s}.marches.in figure:nth-child(5) img{transition-delay:.6s}
 .marches figcaption{margin-top:16px;font-size:10px;letter-spacing:.35em;color:var(--mid)}
 /* ---------- signature ---------- */
-#signature{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:16vh 24px;position:relative;overflow:hidden}
+#signature{min-height:80vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8vh 24px;position:relative;overflow:hidden}
 #signature h2{font-weight:100;font-size:clamp(46px,8.5vw,130px);line-height:1.02;letter-spacing:-.01em}
 #signature h2 span{display:block;opacity:0;transform:translateY(40px);transition:opacity 1.2s ease,transform 1.4s cubic-bezier(.2,.7,.2,1)}
 #signature.in h2 span{opacity:1;transform:none}
@@ -177,7 +177,7 @@ section{padding:16vh 24px;position:relative}
 /* final */
 #final{text-align:center;padding:22vh 24px 18vh;overflow:hidden}
 #final .big{max-width:980px;margin:22px auto 0}
-.defile{margin-top:12vh;white-space:nowrap;font-weight:100;font-size:clamp(40px,7vw,104px);color:#ececec;letter-spacing:.06em}
+.defile{margin-top:6vh;white-space:nowrap;font-weight:100;font-size:clamp(40px,7vw,104px);color:#ececec;letter-spacing:.06em}
 .defile div{display:inline-block;animation:defile 26s linear infinite}
 @keyframes defile{to{transform:translateX(-50%)}}
 footer{padding:40px 24px 60px;text-align:center}
