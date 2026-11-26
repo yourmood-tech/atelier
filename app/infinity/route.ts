@@ -375,7 +375,7 @@ footer img{width:96px;opacity:.9}
   var cv=document.getElementById('modulCanvas'),cx=cv.getContext('2d'),piste=document.querySelector('#modul .piste'),
       barre=document.getElementById('modulBarre'),ets=document.querySelectorAll('#modul .etape'),IM=[],NF=80,dern=-1;
   for(var f=0;f<NF;f++){var ii=new Image();ii.src='/infinity/explode/x'+(f<10?'0':'')+f+'.webp';IM.push(ii)}
-  function dessine(i){var im=IM[i];if(!im.complete){im.onload=function(){if(dern===i)dessine(i)};return}cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height)}
+  function dessine(i){var im=IM[i];if(!im.complete||!im.naturalWidth){if(!im.complete)im.onload=function(){if(dern===i)dessine(i)};return}cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height)}
   function defile(){
     var r=piste.getBoundingClientRect(),tot=r.height-window.innerHeight,p=Math.min(1,Math.max(0,-r.top/tot));
     var i=reduit?40:Math.round(p*(NF-1));if(i!==dern){dern=i;dessine(i)}
