@@ -126,7 +126,7 @@ section{padding:16vh 24px;position:relative}
 .edito figure:hover img{transform:scale(1.04)}
 .edito figcaption{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;font-size:10px;letter-spacing:.4em;color:var(--mid);text-transform:uppercase}
 .edito figcaption b{font-family:var(--serif);font-style:italic;font-weight:400;font-size:20px;letter-spacing:0;color:var(--ink);text-transform:none}
-.e1{grid-column:1/8}.e2{grid-column:9/13;margin-top:22vh}.e3{grid-column:2/6}.e4{grid-column:7/13;margin-top:-10vh}
+.e1{grid-column:1/8}.e2{grid-column:9/13;margin-top:22vh}.e3{grid-column:2/6}.e4{grid-column:7/13;margin-top:12vh}
 .e5{grid-column:1/6;margin-top:6vh}.e6{grid-column:7/12;margin-top:18vh}
 .edito .vide{aspect-ratio:1/1;border:1px dashed #d8d8d8;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px;letter-spacing:.3em}
 /* ---------- grandit ---------- */
