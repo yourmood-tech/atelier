@@ -185,7 +185,8 @@ footer img{width:96px;opacity:.9}
   #modul .scene{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding-top:8vh}
   #modul canvas{height:58vh;max-width:80vw}
   #modul .etapes{height:110px;margin-top:3vh}
-  .pile{height:52vh}
+  .pile{height:36vh}
+  #config .big{font-size:30px!important}
   .capa{grid-template-columns:1fr 1fr}
   .edito{grid-template-columns:1fr;gap:10vh}
   .e1,.e2,.e3,.e4,.e5,.e6{grid-column:1/-1;margin-top:0}
