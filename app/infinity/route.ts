@@ -88,10 +88,16 @@ section{padding:16vh 24px;position:relative}
 
 /* ---------- modularité (défilement) ---------- */
 #modul{padding:0;border-top:1px solid var(--line)}
-#modul .piste{height:170vh;position:relative}
-#modul .scene{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden}
+#modul .piste{position:relative}
+#modul .scene{position:relative;min-height:100vh;min-height:100svh;padding:10vh 0;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden}
 #modul .txt{padding:0 6vw}
-#modul canvas{justify-self:center;height:min(86vh,900px);width:auto;max-width:44vw}
+#modul .vue{justify-self:center;display:flex;flex-direction:column;align-items:center}
+#modul canvas{height:min(72vh,780px);width:auto;max-width:44vw;cursor:grab;touch-action:pan-y}
+.curseur{width:min(360px,80vw);margin-top:26px;text-align:center}
+.curseur input{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--line);outline:none;cursor:pointer}
+.curseur input::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:#fff;border:1px solid var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.12);cursor:grab}
+.curseur input::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#fff;border:1px solid var(--ink);cursor:grab}
+.curseur .aide{margin-top:14px;font-size:10px;letter-spacing:.35em;color:var(--mid);text-transform:uppercase;display:flex;justify-content:space-between}
 #modul .etapes{margin-top:7vh;position:relative;height:130px}
 #modul .etape{position:absolute;inset:0;opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
 #modul .etape.on{opacity:1;transform:none}
@@ -182,7 +188,7 @@ footer img{width:96px;opacity:.9}
   .stage{height:56vh}
   .grid4{grid-template-columns:1fr 1fr}
   #modul .scene{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding-top:8vh}
-  #modul canvas{height:58vh;max-width:80vw}
+  #modul canvas{height:50vh;max-width:80vw}
   #modul .etapes{height:110px;margin-top:3vh}
   .pile{height:36vh}
   #config .big{font-size:30px!important}
@@ -231,7 +237,8 @@ footer img{width:96px;opacity:.9}
     </div>
     <div class="barre"><i id="modulBarre"></i></div>
   </div>
-  <canvas id="modulCanvas" width="360" height="886" aria-label="La boîte Infinity qui se sépare étage par étage puis se réassemble"></canvas>
+  <div class="vue"><canvas id="modulCanvas" width="360" height="886" aria-label="La boîte Infinity qui se sépare étage par étage puis se réassemble"></canvas>
+  <div class="curseur"><input type="range" id="modulCurseur" min="0" max="79" value="0" aria-label="Glissez pour ouvrir la boîte"><div class="aide"><span>Fermée</span><span>Glissez</span><span>Refermée</span></div></div></div>
 </div></div></section>
 
 <section id="config"><div class="wrap">
@@ -377,13 +384,17 @@ footer img{width:96px;opacity:.9}
       barre=document.getElementById('modulBarre'),ets=document.querySelectorAll('#modul .etape'),IM=[],NF=80,dern=-1;
   for(var f=0;f<NF;f++){var ii=new Image();ii.src='/infinity/explode/x'+(f<10?'0':'')+f+'.webp';IM.push(ii)}
   function dessine(i){var im=IM[i];if(!im.complete||!im.naturalWidth){if(!im.complete)im.onload=function(){if(dern===i)dessine(i)};return}cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height)}
+  var cur=document.getElementById('modulCurseur');
   function defile(){
-    var r=piste.getBoundingClientRect(),tot=r.height-window.innerHeight,p=Math.min(1,Math.max(0,-r.top/tot));
-    var i=reduit?40:Math.round(p*(NF-1));if(i!==dern){dern=i;dessine(i)}
+    var i=+cur.value,p=i/(NF-1);if(i!==dern){dern=i;dessine(i)}
     barre.style.width=(p*100)+'%';
     var act=0;ets.forEach(function(el,k){if(p>=parseFloat(el.dataset.a))act=k});ets.forEach(function(el,k){el.classList.toggle('on',k===act)});
   }
-  IM[0].onload=function(){defile()};window.addEventListener('scroll',function(){requestAnimationFrame(defile)},{passive:true});
+  IM[0].onload=function(){defile()};cur.addEventListener('input',defile);
+  // on peut aussi glisser directement sur la boîte
+  var tire=null;cv.addEventListener('pointerdown',function(e){tire={x:e.clientX,v:+cur.value};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'});
+  cv.addEventListener('pointermove',function(e){if(!tire)return;cur.value=Math.max(0,Math.min(NF-1,Math.round(tire.v+(e.clientX-tire.x)/4)));defile()});
+  cv.addEventListener('pointerup',function(){tire=null;cv.style.cursor='grab'});
   // les cinq configurations montent en marche
   new IntersectionObserver(function(es){if(es[0].isIntersecting)document.getElementById('marches').classList.add('in')},{threshold:.3}).observe(document.getElementById('marches'));
   new IntersectionObserver(function(es){if(es[0].isIntersecting)document.getElementById('signature').classList.add('in')},{threshold:.35}).observe(document.getElementById('signature'));
