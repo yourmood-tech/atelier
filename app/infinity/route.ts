@@ -387,16 +387,16 @@ footer img{width:96px;opacity:.9}
       barre=document.getElementById('modulBarre'),ets=document.querySelectorAll('#modul .etape'),IM=[],NF=80,dern=-1;
   for(var f=0;f<NF;f++){var ii=new Image();ii.src='/infinity/explode/x'+(f<10?'0':'')+f+'.webp';IM.push(ii)}
   function dessine(i){var im=IM[i];if(!im.complete||!im.naturalWidth){if(!im.complete)im.onload=function(){if(dern===i)dessine(i)};return}cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height)}
-  var cur=document.getElementById('modulCurseur');
+  var curs=document.getElementById('modulCurseur');
   function defile(){
-    var i=+cur.value,p=i/(NF-1);if(i!==dern){dern=i;dessine(i)}
+    var i=+curs.value,p=i/(NF-1);if(i!==dern){dern=i;dessine(i)}
     barre.style.width=(p*100)+'%';
     var act=0;ets.forEach(function(el,k){if(p>=parseFloat(el.dataset.a))act=k});ets.forEach(function(el,k){el.classList.toggle('on',k===act)});
   }
-  IM[0].onload=function(){defile()};cur.addEventListener('input',defile);
+  IM[0].onload=function(){defile()};curs.addEventListener('input',defile);
   // on peut aussi glisser directement sur la boîte
-  var tire=null;cv.addEventListener('pointerdown',function(e){tire={x:e.clientX,v:+cur.value};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'});
-  cv.addEventListener('pointermove',function(e){if(!tire)return;cur.value=Math.max(0,Math.min(NF-1,Math.round(tire.v+(e.clientX-tire.x)/4)));defile()});
+  var tire=null;cv.addEventListener('pointerdown',function(e){tire={x:e.clientX,v:+curs.value};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'});
+  cv.addEventListener('pointermove',function(e){if(!tire)return;curs.value=Math.max(0,Math.min(NF-1,Math.round(tire.v+(e.clientX-tire.x)/4)));defile()});
   cv.addEventListener('pointerup',function(){tire=null;cv.style.cursor='grab'});
   // les cinq configurations montent en marche
   new IntersectionObserver(function(es){if(es[0].isIntersecting)document.getElementById('marches').classList.add('in')},{threshold:.3}).observe(document.getElementById('marches'));
