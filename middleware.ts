@@ -139,6 +139,11 @@ export default auth((req) => {
     return;
   }
 
+  // /infinity (maquette de lancement de la boîte Infinity OO N°3 — lien à montrer à l'équipe)
+  if (pathname === "/infinity" || pathname.startsWith("/infinity/")) {
+    return;
+  }
+
   // /xsmax (maquette de lancement de la base mood XS MAX — lien à montrer à l'équipe)
   if (pathname === "/xsmax" || pathname.startsWith("/xsmax/")) {
     return;
