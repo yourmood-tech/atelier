@@ -88,7 +88,7 @@ section{padding:16vh 24px;position:relative}
 
 /* ---------- modularité (défilement) ---------- */
 #modul{padding:0;border-top:1px solid var(--line)}
-#modul .piste{height:340vh;position:relative}
+#modul .piste{height:170vh;position:relative}
 #modul .scene{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden}
 #modul .txt{padding:0 6vw}
 #modul canvas{justify-self:center;height:min(86vh,900px);width:auto;max-width:44vw}
@@ -120,14 +120,13 @@ section{padding:16vh 24px;position:relative}
 /* ---------- partout ---------- */
 #partout{border-top:1px solid var(--line)}
 #partout .tete{text-align:center;margin-bottom:12vh}
-.edito{display:grid;grid-template-columns:repeat(12,1fr);gap:4vw 3vw;max-width:1280px;margin:0 auto}
+.edito{display:grid;grid-template-columns:repeat(3,1fr);gap:3vw 2vw;max-width:1280px;margin:0 auto}
 .edito figure{position:relative;overflow:hidden}
 .edito img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)}
 .edito figure:hover img{transform:scale(1.04)}
 .edito figcaption{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;font-size:10px;letter-spacing:.4em;color:var(--mid);text-transform:uppercase}
 .edito figcaption b{font-family:var(--serif);font-style:italic;font-weight:400;font-size:20px;letter-spacing:0;color:var(--ink);text-transform:none}
-.e1{grid-column:1/8}.e2{grid-column:9/13;margin-top:22vh}.e3{grid-column:2/6}.e4{grid-column:7/13;margin-top:12vh}
-.e5{grid-column:1/6;margin-top:6vh}.e6{grid-column:7/12;margin-top:18vh}
+
 .edito .vide{aspect-ratio:1/1;border:1px dashed #d8d8d8;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px;letter-spacing:.3em}
 /* ---------- grandit ---------- */
 #grandit{border-top:1px solid var(--line);overflow:hidden}
@@ -188,8 +187,9 @@ footer img{width:96px;opacity:.9}
   .pile{height:36vh}
   #config .big{font-size:30px!important}
   .capa{grid-template-columns:1fr 1fr}
-  .edito{grid-template-columns:1fr;gap:10vh}
-  .e1,.e2,.e3,.e4,.e5,.e6{grid-column:1/-1;margin-top:0}
+  .edito{grid-template-columns:1fr 1fr;gap:28px 12px}
+  .edito figcaption{flex-direction:column;gap:4px}
+  .edito figcaption b{font-size:16px}
   #grandit .wrap{grid-template-columns:1fr}
   .marches{gap:2vw}.grid4 div:nth-child(2){border-right:0}
   .grid4 div{border-bottom:1px solid var(--line)}
