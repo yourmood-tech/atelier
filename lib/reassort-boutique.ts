@@ -300,6 +300,32 @@ Réponds en JSON : {"propositions":[{"i":0,"tailles":{"54":2}}],"panier":[{"vari
   return { propositions: r.propositions ?? [], panier: r.panier ?? [], nouveaux_articles: r.nouveaux_articles ?? null, reponse: r.reponse ?? "" };
 }
 
+// ── une « cliente » Shopify fixe par boutique (Philippe 26.11.2026) ────────────────────
+// Sans elle, chaque commande de réassort créait une nouvelle fiche cliente sans email → comptée comme
+// « commande d'un nouveau client » dans les chiffres. On retrouve la fiche par son étiquette, sinon on la crée.
+const tagClient = (b: { id: number }) => `REASSORT-CLIENT-${b.id}`;
+async function clientBoutique(bout: Boutique): Promise<number | null> {
+  const tag = tagClient(bout);
+  try {
+    const r = await shopifyGraphql<{ customers: { nodes: { id: string; tags: string[] }[] } }>(
+      `query($q:String!){customers(first:5, query:$q){nodes{id tags}}}`, { q: `tag:'${tag}'` });
+    const trouve = r.customers.nodes.find((c) => c.tags.includes(tag));
+    if (trouve) return Number(trouve.id.split("/").pop());
+    const c = await shopifyWrite("POST", "/customers.json", {
+      customer: {
+        first_name: "Réassort", last_name: bout.nom, tags: `${TAG_REASSORT}, ${tag}`,
+        note: "Fiche technique : commandes de stock de la boutique (outil réassort). Ne pas écrire à cette fiche.",
+        addresses: [{ ...bout.adresse, default: true }],
+      },
+    });
+    const id = Number(((c.customer ?? {}) as Record<string, unknown>).id);
+    return id || null;
+  } catch (e) {
+    console.error("[reassort] fiche cliente boutique introuvable/impossible à créer :", e);
+    return null;
+  }
+}
+
 // ── validation : brouillon Shopify à 100 % puis vraie commande ────────────────────────
 export async function valider(id: string, par: string): Promise<{ commande: string; orderId: number; pieces: number }> {
   const b = await lire(id);
@@ -309,8 +335,10 @@ export async function valider(id: string, par: string): Promise<{ commande: stri
   if (!bout) throw new Error(`Boutique ${b.boutique.nom} introuvable dans Shopify.`);
   const tagBoutique = `BOUTIQUE-${b.boutique.nom.replace(/,/g, " ").trim()}`;
   const pieces = lignes.reduce((s, l) => s + l.quantite, 0);
+  const clientId = await clientBoutique(bout);
   const d = await shopifyWrite("POST", "/draft_orders.json", {
     draft_order: {
+      ...(clientId ? { customer: { id: clientId } } : {}),
       line_items: lignes.map((l) => ({ variant_id: l.variantId, quantity: l.quantite })),
       applied_discount: { value_type: "percentage", value: "100.0", title: "Réassort boutique", description: "Réassort boutique" },
       shipping_address: bout.adresse, billing_address: bout.adresse,
