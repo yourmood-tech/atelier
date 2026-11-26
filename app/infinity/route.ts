@@ -230,6 +230,9 @@ footer img{width:96px;opacity:.9}
   var auto=0,stopped=false;btns.forEach(function(b){b.addEventListener('click',function(e){if(e.isTrusted)stopped=true})});
   var io2=new IntersectionObserver(function(es){if(es[0].isIntersecting&&!stopped&&!auto){auto=setInterval(function(){if(stopped){clearInterval(auto);return}var i=[].indexOf.call(btns,document.querySelector('#floors .on'));btns[(i+1)%5].click()},1600)}},{threshold:.5});
   io2.observe(document.getElementById('stage'));
+  // la vidéo de la vraie boîte se lance quand on arrive dessus
+  var vv=document.querySelector('#vraie video');
+  new IntersectionObserver(function(es){es[0].isIntersecting?vv.play().catch(function(){}):vv.pause()},{threshold:.3}).observe(vv);
 })();
 </script>
 </body></html>`;
