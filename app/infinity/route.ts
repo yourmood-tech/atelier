@@ -278,7 +278,7 @@ footer img{width:96px;opacity:.9}
   <div class="tete rv"><div class="k">Infinity vous accompagne</div><h2 class="big">Votre mood.<br>Partout. <em>À l’infini.</em></h2></div>
   <div class="edito">
     <figure class="e1 rv"><img src="/infinity/vie/sac-a-main.webp" alt="Infinity dans un sac à main" loading="lazy"><figcaption><b>Dans votre sac</b>LE QUOTIDIEN</figcaption></figure>
-    <figure class="e2 rv"><img src="/infinity/vie/valise.webp" alt="Infinity dans une valise" loading="lazy"><figcaption><b>Dans la valise</b>LES VACANCES</figcaption></figure>
+    <figure class="e2 rv"><img src="/infinity/vie/valise.webp?v=3" alt="Infinity dans une valise" loading="lazy"><figcaption><b>Dans la valise</b>LES VACANCES</figcaption></figure>
     <figure class="e3 rv"><img src="/infinity/vie/trousse.webp" alt="Infinity dans une trousse de toilette" loading="lazy"><figcaption><b>Dans la trousse</b>LE WEEK-END</figcaption></figure>
     <figure class="e4 rv"><img src="/infinity/vie/coiffeuse.webp" alt="Infinity sur une coiffeuse" loading="lazy"><figcaption><b>Sur la coiffeuse</b>VOTRE COLLECTION</figcaption></figure>
     <figure class="e5 rv"><img src="/infinity/vie/table-de-nuit.webp" alt="Infinity sur une table de nuit" loading="lazy"><figcaption><b>Sur la table de nuit</b>CHAQUE MATIN</figcaption></figure>
