@@ -85,6 +85,77 @@ section{padding:16vh 24px;position:relative}
 .rail img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)}
 .rail figure:hover img{transform:scale(1.06)}
 .rail figcaption{padding:16px 2px 0;font-size:10px;letter-spacing:.4em;color:var(--mid)}
+
+/* ---------- modularité (défilement) ---------- */
+#modul{padding:0;border-top:1px solid var(--line)}
+#modul .piste{height:340vh;position:relative}
+#modul .scene{position:sticky;top:0;height:100vh;height:100svh;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden}
+#modul .txt{padding:0 6vw}
+#modul canvas{justify-self:center;height:min(86vh,900px);width:auto;max-width:44vw}
+#modul .etapes{margin-top:7vh;position:relative;height:130px}
+#modul .etape{position:absolute;inset:0;opacity:0;transform:translateY(16px);transition:opacity .8s ease,transform .8s ease}
+#modul .etape.on{opacity:1;transform:none}
+#modul .etape b{display:block;font-weight:200;font-size:clamp(22px,2.4vw,34px)}
+#modul .etape span{display:block;margin-top:10px;color:var(--mid);font-size:14px;line-height:1.8;max-width:380px}
+#modul .barre{margin-top:28px;width:180px;height:1px;background:var(--line);position:relative}
+#modul .barre i{position:absolute;left:0;top:0;height:1px;background:var(--ink);width:0}
+/* ---------- configurateur v2 ---------- */
+.pile{position:relative;height:min(78vh,720px);aspect-ratio:376/740;margin:0 auto}
+.pile img{position:absolute;left:0;top:0;width:100%;height:100%;transition:transform .9s cubic-bezier(.2,1.2,.3,1),opacity .5s ease}
+.pile::after{content:'';position:absolute;bottom:13%;left:50%;width:82%;height:20px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(0,0,0,.14),transparent 70%);filter:blur(4px);z-index:-1}
+.reglage{display:flex;align-items:center;gap:22px;margin:38px 0 10px}
+.reglage button.pm{width:58px;height:58px;border-radius:50%;border:1px solid var(--ink);background:#fff;font:200 30px/1 var(--sans);cursor:pointer;transition:all .3s}
+.reglage button.pm:hover{background:var(--ink);color:#fff}
+.reglage button.pm:disabled{opacity:.2;cursor:default;background:#fff;color:var(--ink)}
+.reglage .n{font-weight:100;font-size:64px;width:56px;text-align:center;line-height:1}
+.points{display:flex;gap:10px;margin-left:6px}
+.points i{width:9px;height:9px;border-radius:50%;border:1px solid var(--ink);cursor:pointer;transition:background .3s}
+.points i.on{background:var(--ink)}
+.capa{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:26px;border-top:1px solid var(--line)}
+.capa div{padding:16px 10px 0 0}
+.capa b{display:block;font-weight:200;font-size:34px;line-height:1;transition:transform .4s}
+.capa b.pop{transform:scale(1.18)}
+.capa span{display:block;margin-top:8px;font-size:10px;letter-spacing:.25em;color:var(--mid);text-transform:uppercase}
+.capa em{font-style:normal;color:var(--mid);font-size:11px;display:block;margin-top:2px}
+/* ---------- partout ---------- */
+#partout{border-top:1px solid var(--line)}
+#partout .tete{text-align:center;margin-bottom:12vh}
+.edito{display:grid;grid-template-columns:repeat(12,1fr);gap:4vw 3vw;max-width:1280px;margin:0 auto}
+.edito figure{position:relative;overflow:hidden}
+.edito img{width:100%;display:block;aspect-ratio:1/1;object-fit:cover;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)}
+.edito figure:hover img{transform:scale(1.04)}
+.edito figcaption{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;font-size:10px;letter-spacing:.4em;color:var(--mid);text-transform:uppercase}
+.edito figcaption b{font-family:var(--serif);font-style:italic;font-weight:400;font-size:20px;letter-spacing:0;color:var(--ink);text-transform:none}
+.e1{grid-column:1/8}.e2{grid-column:9/13;margin-top:22vh}.e3{grid-column:2/6}.e4{grid-column:7/13;margin-top:-10vh}
+.e5{grid-column:1/6;margin-top:6vh}.e6{grid-column:7/12;margin-top:18vh}
+.edito .vide{aspect-ratio:1/1;border:1px dashed #d8d8d8;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px;letter-spacing:.3em}
+/* ---------- grandit ---------- */
+#grandit{border-top:1px solid var(--line);overflow:hidden}
+#grandit .wrap{display:grid;grid-template-columns:1fr 1fr;gap:6vw;align-items:end}
+#grandit p{font-size:clamp(16px,1.4vw,19px);line-height:1.9;color:#333;max-width:470px;margin-top:22px}
+.marches{display:flex;align-items:flex-end;justify-content:center;gap:1.2vw;margin-top:12vh;padding:0 24px}
+.marches figure{flex:0 1 220px;text-align:center}
+.marches img{width:100%;display:block;opacity:0;transform:translateY(40px);transition:opacity 1s ease,transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.marches.in img{opacity:1;transform:none}
+.marches.in figure:nth-child(2) img{transition-delay:.15s}.marches.in figure:nth-child(3) img{transition-delay:.3s}
+.marches.in figure:nth-child(4) img{transition-delay:.45s}.marches.in figure:nth-child(5) img{transition-delay:.6s}
+.marches figcaption{margin-top:16px;font-size:10px;letter-spacing:.35em;color:var(--mid)}
+/* ---------- signature ---------- */
+#signature{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:16vh 24px;position:relative;overflow:hidden}
+#signature h2{font-weight:100;font-size:clamp(46px,8.5vw,130px);line-height:1.02;letter-spacing:-.01em}
+#signature h2 span{display:block;opacity:0;transform:translateY(40px);transition:opacity 1.2s ease,transform 1.4s cubic-bezier(.2,.7,.2,1)}
+#signature.in h2 span{opacity:1;transform:none}
+#signature.in h2 span:nth-child(2){transition-delay:.35s}#signature.in h2 span:nth-child(3){transition-delay:.7s}
+#signature h2 em{font-family:var(--serif)}
+#signature p{margin-top:5vh;font-family:var(--serif);font-style:italic;font-size:clamp(18px,1.8vw,24px);color:#444}
+#signature .halo{position:absolute;width:70vmin;height:70vmin;border-radius:50%;border:1px solid #f0f0f0;left:50%;top:50%;transform:translate(-50%,-50%);animation:halo 9s ease-in-out infinite}
+#signature .halo.b{width:95vmin;height:95vmin;animation-delay:-4s}
+@keyframes halo{0%,100%{transform:translate(-50%,-50%) scale(.96);opacity:.6}50%{transform:translate(-50%,-50%) scale(1.03);opacity:1}}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rv,.marches img,#signature h2 span{opacity:1!important;transform:none!important}
+  #modul .piste{height:auto}#modul .scene{position:relative}
+}
 /* capacité */
 #capacite{border-top:1px solid var(--line)}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);margin-top:9vh;border-top:1px solid var(--ink)}
@@ -110,7 +181,16 @@ footer img{width:96px;opacity:.9}
   #manifeste .wrap,#config .wrap,#vraie .wrap{grid-template-columns:1fr}
   .rail figure{flex-basis:78vw}
   .stage{height:56vh}
-  .grid4{grid-template-columns:1fr 1fr}.grid4 div:nth-child(2){border-right:0}
+  .grid4{grid-template-columns:1fr 1fr}
+  #modul .scene{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding-top:8vh}
+  #modul canvas{height:58vh;max-width:80vw}
+  #modul .etapes{height:110px;margin-top:3vh}
+  .pile{height:52vh}
+  .capa{grid-template-columns:1fr 1fr}
+  .edito{grid-template-columns:1fr;gap:10vh}
+  .e1,.e2,.e3,.e4,.e5,.e6{grid-column:1/-1;margin-top:0}
+  #grandit .wrap{grid-template-columns:1fr}
+  .marches{gap:2vw}.grid4 div:nth-child(2){border-right:0}
   .grid4 div{border-bottom:1px solid var(--line)}
   .floors button{height:54px;font-size:22px}
 }
@@ -137,21 +217,42 @@ footer img{width:96px;opacity:.9}
   <p class="lead rv">Infinity OO N°3, c’est la nouvelle boîte de rangement modulable mood, pensée pour s’adapter à votre collection, à vos envies et à votre quotidien. Ronde, épurée, élégante : à la maison, en voyage ou simplement dans votre sac, vos mood préférées restent toujours à portée de main.</p>
 </div></section>
 
-<section id="config"><div class="wrap">
-  <div class="stage rv" id="stage">
-    <img src="/infinity/img/pile-1.webp" alt="Infinity 1 étage" class="on">
-    <img src="/infinity/img/pile-2.webp" alt="Infinity 2 étages">
-    <img src="/infinity/img/pile-3.webp" alt="Infinity 3 étages">
-    <img src="/infinity/img/pile-4.webp" alt="Infinity 4 étages">
-    <img src="/infinity/img/pile-5.webp" alt="Infinity 5 étages">
+
+<section id="modul"><div class="piste"><div class="scene">
+  <div class="txt">
+    <div class="k">Le principe Infinity</div>
+    <h2 class="big">Composez.<br>Empilez.<br><em>Emportez.</em></h2>
+    <div class="etapes">
+      <div class="etape on" data-a="0"><b>Une seule boîte.</b><span>Fermée, compacte, ronde. Elle tient dans la main.</span></div>
+      <div class="etape" data-a=".22"><b>Le couvercle mood.</b><span>Il se soulève et coiffe toujours l’étage du haut, quelle que soit la hauteur de votre boîte.</span></div>
+      <div class="etape" data-a=".4"><b>Chaque étage, un écrin.</b><span>Des fentes sur mesure et un emplacement pour votre base, à chaque niveau.</span></div>
+      <div class="etape" data-a=".7"><b>Et tout se réassemble.</b><span>Les étages se clipsent les uns sur les autres. Ajoutez-en, retirez-en : la boîte suit votre collection.</span></div>
+    </div>
+    <div class="barre"><i id="modulBarre"></i></div>
   </div>
+  <canvas id="modulCanvas" width="360" height="886" aria-label="La boîte Infinity qui se sépare étage par étage puis se réassemble"></canvas>
+</div></div></section>
+
+<section id="config"><div class="wrap">
+  <div class="pile rv" id="pile" aria-live="polite"></div>
   <div class="rv">
     <div class="k">Composez votre Infinity</div>
-    <h2 class="big" style="font-size:clamp(34px,4.4vw,62px)">Choisissez<br>le nombre d’étages.</h2>
-    <div class="floors" id="floors"><button class="on">1</button><button>2</button><button>3</button><button>4</button><button>5</button></div>
-    <div class="prix"><span id="prix">49</span><small>.–</small></div>
-    <div class="lbl" id="lbl">1 étage + couvercle mood</div>
-    <a class="cta" href="${FICHE}">JE DÉCOUVRE <span></span></a>
+    <h2 class="big" style="font-size:clamp(34px,4.4vw,62px)">Ajoutez.<br>Retirez.<br><em>Composez.</em></h2>
+    <div class="reglage">
+      <button class="pm" id="moins" aria-label="Retirer un étage">−</button>
+      <div class="n" id="nb">1</div>
+      <button class="pm" id="plus" aria-label="Ajouter un étage">+</button>
+      <div class="points" id="points"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="lbl" id="lbl">1 étage + couvercle mood inclus</div>
+    <div class="capa" aria-label="Capacité de rangement">
+      <div><b id="c1">1</b><span>Base mood</span></div>
+      <div><b id="c2">1</b><span>Addon</span></div>
+      <div><b id="c3">2</b><span>Deux tiers</span></div>
+      <div><b id="c4">2</b><span>Mediums</span><em id="c5">ou 4 minis</em></div>
+    </div>
+    <div class="prix" style="margin-top:34px"><span id="prix">49</span><small>.–</small></div>
+    <a class="cta" id="ctaConfig" href="${FICHE}">JE COMPOSE MON INFINITY <span></span></a>
   </div>
 </div></section>
 
@@ -169,6 +270,32 @@ footer img{width:96px;opacity:.9}
     <figure><img src="/infinity/img/visuel-3.webp" alt="Infinity avec bagues" loading="lazy"><figcaption>AVEC VOS MOOD</figcaption></figure>
     <figure><img src="/infinity/img/visuel-4.webp" alt="Infinity 2 étages" loading="lazy"><figcaption>2 ÉTAGES</figcaption></figure>
     <figure><img src="/infinity/img/visuel-5.webp" alt="Infinity 1 étage" loading="lazy"><figcaption>1 ÉTAGE</figcaption></figure>
+  </div>
+</section>
+
+<section id="partout">
+  <div class="tete rv"><div class="k">Infinity vous accompagne</div><h2 class="big">Votre mood.<br>Partout. <em>À l’infini.</em></h2></div>
+  <div class="edito">
+    <figure class="e1 rv"><img src="/infinity/vie/sac-a-main.webp" alt="Infinity dans un sac à main" loading="lazy"><figcaption><b>Dans votre sac</b>LE QUOTIDIEN</figcaption></figure>
+    <figure class="e2 rv"><img src="/infinity/vie/valise.webp" alt="Infinity dans une valise" loading="lazy"><figcaption><b>Dans la valise</b>LES VACANCES</figcaption></figure>
+    <figure class="e3 rv"><img src="/infinity/vie/trousse.webp" alt="Infinity dans une trousse de toilette" loading="lazy"><figcaption><b>Dans la trousse</b>LE WEEK-END</figcaption></figure>
+    <figure class="e4 rv"><img src="/infinity/vie/coiffeuse.webp" alt="Infinity sur une coiffeuse" loading="lazy"><figcaption><b>Sur la coiffeuse</b>VOTRE COLLECTION</figcaption></figure>
+    <figure class="e5 rv"><img src="/infinity/vie/table-de-nuit.webp" alt="Infinity sur une table de nuit" loading="lazy"><figcaption><b>Sur la table de nuit</b>CHAQUE MATIN</figcaption></figure>
+    <figure class="e6 rv"><img src="/infinity/vie/sac-de-sport.webp" alt="Infinity dans un sac de sport" loading="lazy"><figcaption><b>Dans le sac de sport</b>L’ENTRAÎNEMENT</figcaption></figure>
+  </div>
+</section>
+
+<section id="grandit">
+  <div class="wrap">
+    <div class="rv"><div class="k">Une boîte qui grandit avec votre collection</div><h2 class="big">Aujourd’hui, un étage.<br><em>Demain, peut-être cinq.</em></h2></div>
+    <div class="rv"><p>Votre collection évolue, vos envies aussi.</p><p>Infinity a été imaginée pour grandir avec vous. Choisissez aujourd’hui le nombre d’étages qui vous correspond et, prochainement, agrandissez votre boîte en ajoutant de nouveaux étages.</p><p><em style="font-family:var(--serif)">Parce que chez mood, les possibilités ne s’arrêtent jamais.</em></p></div>
+  </div>
+  <div class="marches" id="marches">
+    <figure><img src="/infinity/img/pile-1.webp" alt="1 étage" loading="lazy"><figcaption>1</figcaption></figure>
+    <figure><img src="/infinity/img/pile-2.webp" alt="2 étages" loading="lazy"><figcaption>2</figcaption></figure>
+    <figure><img src="/infinity/img/pile-3.webp" alt="3 étages" loading="lazy"><figcaption>3</figcaption></figure>
+    <figure><img src="/infinity/img/pile-4.webp" alt="4 étages" loading="lazy"><figcaption>4</figcaption></figure>
+    <figure><img src="/infinity/img/pile-5.webp" alt="5 étages" loading="lazy"><figcaption>5</figcaption></figure>
   </div>
 </section>
 
@@ -193,10 +320,11 @@ footer img{width:96px;opacity:.9}
   </div>
 </div></section>
 
-<section id="final">
-  <div class="k rv">Infinity OO N°3</div>
-  <h2 class="big rv">Une boîte. <em>Une infinité</em> de possibilités.</h2>
-  <a class="cta rv" href="${FICHE}">JE COMPOSE MA BOÎTE <span></span></a>
+<section id="signature">
+  <div class="halo"></div><div class="halo b"></div>
+  <h2><span>Toutes vos envies.</span><span>Toutes vos mood.</span><span><em>Partout.</em></span></h2>
+  <p>Une collection sans limites mérite un écrin sans limites.</p>
+  <a class="cta" href="#config">COMPOSER MON INFINITY <span></span></a>
   <div class="defile" aria-hidden="true"><div>COMPOSEZ · EMPILEZ · EMPORTEZ · COMPOSEZ · EMPILEZ · EMPORTEZ · </div><div>COMPOSEZ · EMPILEZ · EMPORTEZ · COMPOSEZ · EMPILEZ · EMPORTEZ · </div></div>
 </section>
 <footer><img src="/infinity/img/logo-mood.png" alt="mood"></footer>
@@ -217,19 +345,47 @@ footer img{width:96px;opacity:.9}
   // apparitions au défilement
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.18});
   document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
-  // configurateur
-  var prix=[49,59,69,79,89],imgs=document.querySelectorAll('#stage img'),btns=document.querySelectorAll('#floors button'),
-      p=document.getElementById('prix'),l=document.getElementById('lbl'),cur=49;
-  function count(to){var from=cur,t0=performance.now();cur=to;(function f(t){var k=Math.min(1,(t-t0)/500);p.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0)}
-  btns.forEach(function(b,i){b.addEventListener('click',function(){
-    btns.forEach(function(x){x.classList.remove('on')});b.classList.add('on');
-    imgs.forEach(function(im,j){im.classList.toggle('on',j===i)});
-    count(prix[i]);l.textContent=(i+1)+(i?' étages':' étage')+' + couvercle mood';
-  })});
-  // la pile grandit toute seule tant qu'on n'a pas cliqué
-  var auto=0,stopped=false;btns.forEach(function(b){b.addEventListener('click',function(e){if(e.isTrusted)stopped=true})});
-  var io2=new IntersectionObserver(function(es){if(es[0].isIntersecting&&!stopped&&!auto){auto=setInterval(function(){if(stopped){clearInterval(auto);return}var i=[].indexOf.call(btns,document.querySelector('#floors .on'));btns[(i+1)%5].click()},1600)}},{threshold:.5});
-  io2.observe(document.getElementById('stage'));
+  var reduit=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // configurateur : la pile se construit étage par étage
+  var PRIX=[49,59,69,79,89],pile=document.getElementById('pile'),N=1,PAS=99/740*100,
+      nb=document.getElementById('nb'),lbl=document.getElementById('lbl'),pr=document.getElementById('prix'),
+      moins=document.getElementById('moins'),plus=document.getElementById('plus'),pts=document.querySelectorAll('#points i'),cur=49;
+  var etages=[],couv;
+  for(var e=0;e<5;e++){var im=new Image();im.src='/infinity/img/etage.webp';im.alt='';im.style.zIndex=e+1;pile.appendChild(im);etages.push(im)}
+  couv=new Image();couv.src='/infinity/img/couvercle.webp';couv.alt='couvercle mood';couv.style.zIndex=20;pile.appendChild(couv);
+  function compte(to){var from=cur,t0=performance.now();cur=to;if(reduit){pr.textContent=to;return}(function f(t){var k=Math.min(1,(t-t0)/500);pr.textContent=Math.round(from+(to-from)*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0)}
+  function pop(id,v){var el=document.getElementById(id);if(el.textContent!=String(v)){el.textContent=v;el.classList.add('pop');setTimeout(function(){el.classList.remove('pop')},250)}}
+  function regle(n){
+    N=Math.max(1,Math.min(5,n));
+    etages.forEach(function(im,i){
+      if(i<N){im.style.opacity=1;im.style.transform='translateY(-'+(i*PAS)+'%)'}
+      else{im.style.opacity=0;im.style.transform='translateY(-'+(i*PAS+18)+'%)'}
+    });
+    couv.style.transform='translateY(-'+(N*PAS)+'%)';
+    nb.textContent=N;moins.disabled=N===1;plus.disabled=N===5;
+    pts.forEach(function(p,i){p.classList.toggle('on',i<N)});
+    lbl.textContent=N+(N>1?' étages':' étage')+' + couvercle mood inclus';
+    pop('c1',N);pop('c2',N);pop('c3',2*N);pop('c4',2*N);document.getElementById('c5').textContent='ou '+(4*N)+' minis';
+    compte(PRIX[N-1]);
+  }
+  moins.addEventListener('click',function(){regle(N-1)});plus.addEventListener('click',function(){regle(N+1)});
+  pts.forEach(function(p,i){p.addEventListener('click',function(){regle(i+1)})});
+  regle(1);
+  // modularité : la boîte se sépare puis se réassemble au fil du défilement
+  var cv=document.getElementById('modulCanvas'),cx=cv.getContext('2d'),piste=document.querySelector('#modul .piste'),
+      barre=document.getElementById('modulBarre'),ets=document.querySelectorAll('#modul .etape'),IM=[],NF=80,dern=-1;
+  for(var f=0;f<NF;f++){var ii=new Image();ii.src='/infinity/explode/x'+(f<10?'0':'')+f+'.webp';IM.push(ii)}
+  function dessine(i){var im=IM[i];if(!im.complete){im.onload=function(){if(dern===i)dessine(i)};return}cx.clearRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height)}
+  function defile(){
+    var r=piste.getBoundingClientRect(),tot=r.height-window.innerHeight,p=Math.min(1,Math.max(0,-r.top/tot));
+    var i=reduit?40:Math.round(p*(NF-1));if(i!==dern){dern=i;dessine(i)}
+    barre.style.width=(p*100)+'%';
+    var act=0;ets.forEach(function(el,k){if(p>=parseFloat(el.dataset.a))act=k});ets.forEach(function(el,k){el.classList.toggle('on',k===act)});
+  }
+  IM[0].onload=function(){defile()};window.addEventListener('scroll',function(){requestAnimationFrame(defile)},{passive:true});
+  // les cinq configurations montent en marche
+  new IntersectionObserver(function(es){if(es[0].isIntersecting)document.getElementById('marches').classList.add('in')},{threshold:.3}).observe(document.getElementById('marches'));
+  new IntersectionObserver(function(es){if(es[0].isIntersecting)document.getElementById('signature').classList.add('in')},{threshold:.35}).observe(document.getElementById('signature'));
   // la vidéo de la vraie boîte se lance quand on arrive dessus
   var vv=document.querySelector('#vraie video');
   new IntersectionObserver(function(es){es[0].isIntersecting?vv.play().catch(function(){}):vv.pause()},{threshold:.3}).observe(vv);
