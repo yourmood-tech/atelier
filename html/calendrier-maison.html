@@ -1,148 +1,77 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Le calendrier mood — une pépite chaque jour</title><meta name="robots" content="noindex,nofollow">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300;1,400&family=Poppins:wght@300;400&display=swap" rel="stylesheet">
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le calendrier mood — une pépite chaque jour</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-body{margin:0;background:#eef1f6;font-family:Poppins,sans-serif}
-.vil{position:relative;width:100%;max-width:1600px;margin:0 auto;aspect-ratio:2400/1792;overflow:hidden;background:url(https://mood-tools.yourmood.net/calendrier/village/fond.jpg) center/100% 100%}
-.sc{position:absolute;inset:0;transition:transform .6s ease-out}
-.pc{position:absolute}
-.pc img{width:100%;height:100%;display:block;filter:drop-shadow(1.2px 0 0 #fff) drop-shadow(-1.2px 0 0 #fff) drop-shadow(0 1.2px 0 #fff) drop-shadow(0 -1.2px 0 #fff) drop-shadow(2px 4px 3px rgba(30,50,60,.28))}
-@keyframes vole{0%{transform:translate(70%,62%) rotate(-2deg)}25%{transform:translate(20%,40%) rotate(2deg)}50%{transform:translate(-40%,66%) rotate(-3deg)}75%{transform:translate(-110%,46%) rotate(1deg)}100%{transform:translate(-190%,60%) rotate(-2deg)}}
-@keyframes tete{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
-@keyframes balance{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
-@keyframes balance2{0%,100%{transform:rotate(3deg) translateX(0)}50%{transform:rotate(-3deg) translateX(-4%)}}
-@keyframes saute{0%,100%{transform:translateY(0)}50%{transform:translateY(-14%) rotate(-4deg)}}
-@keyframes glisse{0%,100%{transform:translateX(-18%) rotate(-6deg)}50%{transform:translateX(22%) rotate(6deg)}}
-@keyframes glisse2{0%,100%{transform:translateX(16%) rotate(5deg)}50%{transform:translateX(-20%) rotate(-5deg)}}
-@keyframes glisse3{0%,100%{transform:translateX(-12%) rotate(4deg)}50%{transform:translateX(18%) rotate(-6deg)}}
-@keyframes trot{0%,100%{transform:translate(0,0)}25%{transform:translate(-2%,-2%)}50%{transform:translate(-4%,0)}75%{transform:translate(-2%,-2%)}}
-@keyframes tire{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(-6%) rotate(-1.5deg)}}
-.lu{position:absolute;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;background:radial-gradient(circle,rgba(255,246,200,.95) 0,rgba(255,214,120,.55) 30%,rgba(255,200,90,0) 70%);animation:brille 2s steps(3) infinite;pointer-events:none;mix-blend-mode:screen}
-@keyframes brille{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.25)}}
-.fu{position:absolute;width:2.2%;aspect-ratio:1;margin-left:-1.1%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.95) 0,rgba(240,244,248,.75) 45%,rgba(255,255,255,0) 72%);animation:fume 4s steps(8) infinite;pointer-events:none}
-@keyframes fume{0%{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:.95}100%{transform:translate(60%,-520%) scale(2.2);opacity:0}}
-#neige{position:absolute;inset:0;pointer-events:none;z-index:60;overflow:hidden}
-#neige i{position:absolute;top:-12%;animation:tombe linear infinite}
-#neige s{display:block;width:100%;height:100%;background:url(https://mood-tools.yourmood.net/calendrier/village/flocon.png) center/contain no-repeat;animation:tourne linear infinite;filter:drop-shadow(0 0 1.5px rgba(47,82,96,.22))}
-#neige b{position:absolute;top:-2%;border-radius:50%;background:#fff;box-shadow:0 0 3px rgba(255,255,255,.9),0 0 1px rgba(47,82,96,.35);animation:tombe linear infinite}
-@keyframes tourne{to{transform:rotate(360deg)}}
-@keyframes tombe{0%{transform:translate(0,0)}50%{transform:translate(30px,60vh)}100%{transform:translate(-15px,125vh)}}
-
-.vil{container-type:inline-size}
-.mz{position:absolute;z-index:27;pointer-events:auto;cursor:pointer;transform:translate(-50%,-50%);transform-origin:50% -60%;animation:flotte 4s steps(8) infinite;filter:none;text-decoration:none;display:block}
-@keyframes flotte{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,-62%)}}
-@keyframes pend{0%,100%{transform:translate(-50%,-50%) rotate(-1.2deg)}50%{transform:translate(-50%,-50%) rotate(1.2deg)}}
-.mz .pl::after{content:'';position:absolute;left:50%;bottom:-.45cqw;margin-left:-.45cqw;border:.45cqw solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.93)}
-.mz .fi{display:none}
-.mz .pl{display:block;position:relative;background:rgba(255,255,255,.93);padding:.35cqw .9cqw .4cqw;border-radius:2cqw;box-shadow:0 .2cqw .8cqw rgba(20,40,52,.25);text-align:center;transition:text-shadow .3s}
-.mz .nm{display:block;font:italic 500 1.25cqw/1.05 'Cormorant Garamond',serif;color:#2f5260;letter-spacing:.01em;white-space:nowrap}
-.mz .un{position:static;display:block;color:#8a7350!important;max-height:none;overflow:visible;font:400 .55cqw/1.4 Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;transition:max-height .35s,margin .35s}
-.mz:hover{animation-play-state:paused;z-index:40}
-.mz:hover .pl,.mz.actif .pl{box-shadow:0 0 1.4cqw .3cqw rgba(255,214,120,.85)}
-
-.pt{position:absolute;top:10%;width:.45cqw;height:.45cqw;background:var(--c);border-radius:50%;opacity:0;animation:monte 3.2s steps(10) infinite;pointer-events:none;box-shadow:0 0 .5cqw var(--c)}
-.pt.etoile{border-radius:0;clip-path:polygon(50% 0,61% 38%,100% 38%,68% 60%,80% 100%,50% 75%,20% 100%,32% 60%,0 38%,39% 38%);width:.7cqw;height:.7cqw;box-shadow:none}
-.pt.coeur{border-radius:0;clip-path:path('M5 9 L1 5 A2.2 2.2 0 0 1 5 2 A2.2 2.2 0 0 1 9 5 Z');width:10px;height:10px;box-shadow:none}
-@keyframes monte{0%{transform:translate(0,0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translate(.6cqw,-4.5cqw) scale(1.1);opacity:0}}
-
-.ms{position:absolute;z-index:26;cursor:pointer}
-.ms img{width:100%;height:100%;display:block;opacity:0;transform:translateY(4%) scale(.9);transform-origin:50% 100%;transition:opacity .35s steps(4),transform .45s steps(5);filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(3px 7px 5px rgba(30,50,60,.35))}
-.ms.on{z-index:31}
-.ms.on img{opacity:1;transform:translateY(-5%) scale(1.15)}
-.vil::after{content:"";position:absolute;inset:0;background:rgba(18,34,44,.5);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:24}
-
-
-.vil .mz.actif{opacity:1!important;z-index:32}
-
-
-.ms .sc2{position:absolute;width:.5cqw;height:.5cqw;background:#fff6d8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;pointer-events:none}
-.ms.on .sc2{animation:pique 1.4s steps(4) infinite;width:1cqw;height:1cqw}
+/* Le calendrier = toute la page (Amila, 27.11.2026) : la boîte remplit l'écran, sans bord ni titre ;
+   l'addon du jour remplace le petit village peint des deux fenêtres du haut ; pièces qui sortent en petits sauts (esprit Village mood) */
+html,body{margin:0;height:100%;overflow:hidden;background:#EBD8BC radial-gradient(ellipse at 50% 50%,#F1E2C9 0,#E6D1B2 100%)}
+#cal{position:absolute;left:50%;top:50%;width:min(100vw,calc(100vh * 1260 / 886));aspect-ratio:1260/886;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
+#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cal::after{content:"";position:absolute;inset:0;background:rgba(18,34,44,.5);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
+#cal.survol::after{opacity:1}
+#neige{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60}
+/* les deux fenêtres du haut */
+.fen{position:absolute;top:5.2%;height:38.6%;overflow:hidden;border-radius:.2cqw;background:#14263a;z-index:3}
+.fen.g{left:3.1%;width:44.9%} .fen.d{left:52.3%;width:44.9%}
+.fen img{width:100%;height:100%;object-fit:cover;display:block;animation:pop .6s steps(5) both .3s}
+.fen.d img{animation-delay:.55s}
+@keyframes pop{0%{opacity:0;transform:scale(.88)}100%{opacity:1;transform:scale(1)}}
+.fen .voile{position:absolute;left:0;right:0;bottom:0;padding:5cqw 2cqw 1.6cqw;background:linear-gradient(0deg,rgba(12,24,38,.78),rgba(12,24,38,0));color:#fff;text-align:center}
+.fen .k2{display:block;font:400 .75cqw/1 Poppins,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:#F1DDA9}
+.fen .nm2{display:block;font:italic 400 3.2cqw/1.05 'Cormorant Garamond',serif;margin-top:.5cqw}
+.fen .px2{display:block;font:300 .95cqw/1.4 Poppins,sans-serif;letter-spacing:.06em;margin-top:.3cqw;color:#e6edf3}
+.btn{display:inline-block;text-decoration:none;font:400 .95cqw Poppins,sans-serif;letter-spacing:.08em;color:#14263a;background:#F1DDA9;border-radius:2cqw;padding:.65cqw 1.9cqw;box-shadow:0 .3cqw .9cqw rgba(0,0,0,.3);transition:transform .2s steps(3)}
+.btn:hover{transform:translateY(-.2cqw)}
+.fen .seul{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;background:radial-gradient(ellipse at 50% 40%,#22406a 0,#14263a 75%)}
+.fen .seul .nm2{font-size:2.6cqw;padding:0 2cqw}
+.compte{position:absolute;left:50%;top:1.1%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.92);border-radius:2cqw;padding:.25cqw 1cqw;font:400 .7cqw Poppins,sans-serif;letter-spacing:.06em;color:#2f5260;white-space:nowrap}
+.compte b{font-weight:400;color:#a07a2c;font-variant-numeric:tabular-nums}
+.compte[hidden]{display:none}
+.sc2{position:absolute;width:1.2cqw;height:1.2cqw;background:#fff6d8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;pointer-events:none;z-index:4;animation:pique 1.4s steps(4) infinite}
 @keyframes pique{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1.4)}}
-.vil.survol .mz{opacity:.35} .vil.survol .mz.actif{opacity:1}
-.tx{position:absolute;left:0;right:0;top:2%;text-align:center;z-index:30;pointer-events:none}
-.tx .k{font:400 clamp(9px,.9vw,12px)/1 Poppins;letter-spacing:.42em;text-transform:uppercase;color:#426875}
-.tx h1{margin:.25em 0 .1em;font:200 clamp(24px,3.2vw,52px)/1 Poppins;letter-spacing:.1em;color:#2f5260}
-.tx p{margin:0;font:italic 300 clamp(14px,1.5vw,22px)/1.3 'Cormorant Garamond',serif;color:#2f5260}
-
-/* ---- calendrier (27.11.2026) : tout tient sur un seul écran, la boîte posée au premier plan du village ---- */
-html,body{height:100%}
-body{display:flex;align-items:center;justify-content:center;overflow:hidden;background:#e9edf2}
-body::before{content:'';position:fixed;inset:-60px;background:url(https://mood-tools.yourmood.net/calendrier/village/fond.jpg) center/cover;filter:blur(22px) brightness(1.03);z-index:-1}
-.vil{box-shadow:0 0 60px rgba(30,50,60,.25)}
-.vil{width:min(100vw,calc(100vh * 2400 / 1792));max-width:none}
-.vil::after{content:"";position:absolute;inset:0;background:rgba(18,34,44,.5);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
-.vil.survol::after{opacity:1}
-.cj-compte{display:inline-block;margin-top:.8cqw;background:rgba(255,255,255,.9);border-radius:2cqw;padding:.35cqw 1.1cqw;font:400 .85cqw Poppins,sans-serif;letter-spacing:.06em;color:#2f5260;box-shadow:0 .2cqw .8cqw rgba(20,40,52,.18)}
-.cj-compte b{font-weight:400;color:#a07a2c;font-variant-numeric:tabular-nums}
-.cj-compte[hidden]{display:none}
-.cj-boite{position:absolute;left:50%;bottom:2.5%;width:84%;aspect-ratio:1260/886;transform:translateX(-50%);z-index:30}
-.cj-boite>img{width:100%;height:100%;display:block;border-radius:.3cqw;filter:drop-shadow(.15cqw 0 0 #fff) drop-shadow(-.15cqw 0 0 #fff) drop-shadow(0 .15cqw 0 #fff) drop-shadow(0 -.15cqw 0 #fff) drop-shadow(.4cqw .9cqw .7cqw rgba(30,50,60,.4))}
-.cj-t{position:absolute;display:block;text-decoration:none;z-index:2}
-.cj-ph{position:absolute;inset:0;border-radius:.2cqw;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 .12cqw #F4EEDF}
-.cj-ph img{width:100%;height:100%;object-fit:cover;display:block}
-.cj-pn{position:absolute;top:5%;left:5%;min-width:22%;border-radius:2cqw;background:rgba(255,255,255,.92);font:600 1cqw/1.6 Poppins,sans-serif;text-align:center;color:#2f5260;z-index:2}
-.cj-t.ouvert{cursor:pointer}
-.cj-t.ouvert .cj-ph{transform-origin:50% 100%;transition:transform .45s steps(5),box-shadow .35s steps(4)}
-.cj-t.on{z-index:40}
-.cj-t.on .cj-ph{transform:translateY(-12%) scale(1.6) rotate(-2deg);box-shadow:0 0 0 .2cqw #fff,.3cqw .7cqw .8cqw rgba(30,50,60,.45)}
-.cj-t.on .cj-pn{opacity:0}
-.cj-pl{position:absolute;left:50%;bottom:100%;transform:translate(-50%,0);background:rgba(255,255,255,.95);padding:.35cqw .9cqw .4cqw;border-radius:2cqw;box-shadow:0 0 1.4cqw .3cqw rgba(255,214,120,.85);text-align:center;white-space:nowrap;opacity:0;transition:opacity .3s steps(3),transform .45s steps(5);pointer-events:none;z-index:3}
-.cj-pl::after{content:'';position:absolute;left:50%;bottom:-.45cqw;margin-left:-.45cqw;border:.45cqw solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.95)}
-.cj-pl .nm{display:block;font:italic 400 1.25cqw/1.05 'Cormorant Garamond',serif;color:#2f5260}
-.cj-pl .un{display:block;font:400 .55cqw/1.4 Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#8a7350}
-.cj-t.on .cj-pl{opacity:1;transform:translate(-50%,-130%)}
-.sc2{position:absolute;width:1cqw;height:1cqw;background:#fff6d8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;pointer-events:none;z-index:4}
-.cj-t.on .sc2,.cj-vedette .sc2{animation:pique 1.4s steps(4) infinite}
-.cj-t.auj .cj-ph{box-shadow:0 0 0 .15cqw #fff,0 0 1cqw .3cqw rgba(255,214,120,.95)}
-.cj-porte{position:absolute;inset:0;border-radius:.2cqw;background:url(https://mood-tools.yourmood.net/calendrier/village/boite-seule.jpg) no-repeat;z-index:5;transform-origin:50% 0;transition:transform .7s steps(6),opacity .7s steps(6)}
-.cj-porte.ouvert{transform:translateY(70%) scale(1.25);opacity:0}
-.cj-t.ferme{cursor:pointer} .cj-t.ferme.secoue{animation:secoue .45s steps(6)}
+/* les tiroirs */
+.t{position:absolute;display:block;text-decoration:none;z-index:2}
+.ph{position:absolute;inset:0;border-radius:.2cqw;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 .12cqw #F4EEDF}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.pn{position:absolute;top:5%;left:5%;min-width:22%;border-radius:2cqw;background:rgba(255,255,255,.92);font:500 1cqw/1.6 Poppins,sans-serif;text-align:center;color:#2f5260;z-index:2}
+.t.ouvert{cursor:pointer}
+.t.ouvert .ph{transform-origin:50% 100%;transition:transform .45s steps(5),box-shadow .35s steps(4)}
+.t.on{z-index:40}
+.t.on .ph{transform:translateY(-12%) scale(1.6) rotate(-2deg);box-shadow:0 0 0 .2cqw #fff,.3cqw .7cqw .8cqw rgba(30,50,60,.45)}
+.t.on .pn{opacity:0}
+.t .sc2{display:none} .t.on .sc2{display:block}
+.pl{position:absolute;left:50%;bottom:100%;transform:translate(-50%,0);background:rgba(255,255,255,.95);padding:.35cqw .9cqw .4cqw;border-radius:2cqw;box-shadow:0 0 1.4cqw .3cqw rgba(255,214,120,.85);text-align:center;white-space:nowrap;opacity:0;transition:opacity .3s steps(3),transform .45s steps(5);pointer-events:none;z-index:3}
+.pl::after{content:'';position:absolute;left:50%;bottom:-.45cqw;margin-left:-.45cqw;border:.45cqw solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.95)}
+.pl .nm{display:block;font:italic 400 1.3cqw/1.05 'Cormorant Garamond',serif;color:#2f5260}
+.pl .un{display:block;font:400 .55cqw/1.4 Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#8a7350}
+.t.on .pl{opacity:1;transform:translate(-50%,-130%)}
+.t.auj .ph{box-shadow:0 0 0 .15cqw #fff,0 0 1cqw .3cqw rgba(255,214,120,.95)}
+.porte{position:absolute;inset:0;border-radius:.2cqw;background:url(https://mood-tools.yourmood.net/calendrier/village/boite-seule.jpg) no-repeat;z-index:5;transform-origin:50% 0;transition:transform .7s steps(6),opacity .7s steps(6)}
+.porte.ouvert{transform:translateY(70%) scale(1.25);opacity:0}
+.t.ferme{cursor:pointer} .t.ferme.secoue{animation:secoue .45s steps(6)}
 @keyframes secoue{0%,100%{transform:translateX(0)}20%{transform:translateX(-6%)}40%{transform:translateX(6%)}60%{transform:translateX(-4%)}80%{transform:translateX(2%)}}
-.cj-bulle{position:absolute;z-index:45;transform:translate(-50%,-115%);background:#fff;border-radius:2cqw;padding:.35cqw .9cqw;font:400 .75cqw Poppins,sans-serif;color:#2f5260;white-space:nowrap;box-shadow:0 .3cqw .9cqw rgba(30,50,80,.25);pointer-events:none;transition:opacity .3s steps(3)}
-/* l'addon du jour, à la place du petit village peint dans les deux fenêtres du haut de la boîte */
-.cj-fen{position:absolute;z-index:3;overflow:hidden;border-radius:.2cqw}
-.cj-fen.g{left:3.7%;top:5.9%;width:44.2%;height:37.9%;background:#14263a}
-.cj-fen.d{left:52.3%;top:5.9%;width:44.9%;height:37.9%;background:radial-gradient(ellipse at 50% 40%,#22406a 0,#14263a 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff}
-.cj-fen.g img{width:100%;height:100%;object-fit:cover;display:block;animation:pop .6s steps(5) both .3s}
-@keyframes pop{0%{opacity:0;transform:scale(.85)}100%{opacity:1;transform:scale(1)}}
-.cj-fen .sc2{animation:pique 1.4s steps(4) infinite;width:1.4cqw;height:1.4cqw}
-.cj-fen.d .k2{font:400 .75cqw/1 Poppins,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:#F1DDA9}
-.cj-fen.d .nm2{font:italic 400 3.4cqw/1.05 'Cormorant Garamond',serif;margin:.6cqw 0 .3cqw;color:#fff}
-.cj-fen.d .ty2{font:400 .8cqw/1.4 Poppins,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#cfdbe6}
-.cj-fen.d .px2{font:300 1.5cqw Poppins,sans-serif;margin:.5cqw 0 1cqw;color:#fff}
-.cj-btn{display:inline-block;text-decoration:none;font:400 .95cqw Poppins,sans-serif;letter-spacing:.08em;color:#14263a;background:#F1DDA9;border-radius:2cqw;padding:.65cqw 1.8cqw;box-shadow:0 .3cqw .9cqw rgba(0,0,0,.3);transition:transform .2s steps(3)}
-.cj-btn:hover{transform:translateY(-.2cqw)}
-.cj-fen.d .avant{font:italic 400 2.6cqw/1.15 'Cormorant Garamond',serif;color:#fff;padding:0 2cqw}
-.cj-etoiles i{position:absolute;width:.25cqw;height:.25cqw;border-radius:50%;background:#fff6d8;animation:pique 2.4s steps(4) infinite}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style></head><body>
-<div class="vil" id="vil"><div class="sc" id="sc"><span class="fu" style="left:29.17%;top:55.80%;animation-delay:-0.0s"></span><span class="fu" style="left:29.17%;top:55.80%;animation-delay:-1.3s"></span><span class="fu" style="left:29.17%;top:55.80%;animation-delay:-2.6s"></span><span class="fu" style="left:40.42%;top:53.57%;animation-delay:-0.9s"></span><span class="fu" style="left:40.42%;top:53.57%;animation-delay:-2.2s"></span><span class="fu" style="left:40.42%;top:53.57%;animation-delay:-3.5s"></span><span class="fu" style="left:63.75%;top:54.97%;animation-delay:-1.8s"></span><span class="fu" style="left:63.75%;top:54.97%;animation-delay:-3.1s"></span><span class="fu" style="left:63.75%;top:54.97%;animation-delay:-4.4s"></span><span class="fu" style="left:75.83%;top:57.76%;animation-delay:-2.7s"></span><span class="fu" style="left:75.83%;top:57.76%;animation-delay:-4.0s"></span><span class="fu" style="left:75.83%;top:57.76%;animation-delay:-5.3s"></span><span class="fu" style="left:82.17%;top:52.73%;animation-delay:-3.6s"></span><span class="fu" style="left:82.17%;top:52.73%;animation-delay:-4.9s"></span><span class="fu" style="left:82.17%;top:52.73%;animation-delay:-6.2s"></span></div>
-<div class="cj-boite" id="cj-boite"><img src="https://mood-tools.yourmood.net/calendrier/village/boite-seule.jpg" alt="Le calendrier de l'Avent mood"></div><div class="tx"><div class="k">Calendrier de l'Avent 2026</div><h1>Le calendrier mood</h1><p id="cj-sous">Chaque jour, une pépite créative sort de son tiroir…</p><div class="cj-compte" id="cj-compte" hidden>Prochain tiroir dans <b id="cj-chrono">--:--:--</b></div></div>
-<div id="neige"></div></div>
-<script>
-(function(){var n=document.getElementById("neige");
-for(var i=0;i<18;i++){var e=document.createElement("i"),r=Math.random(),s=r<.2?70+Math.random()*60:(r<.5?32+Math.random()*26:14+Math.random()*16);
-e.style.cssText="left:"+(Math.random()*100)+"%;width:"+s+"px;height:"+s*1.1+"px;opacity:"+(.88+Math.random()*.12)+";animation-duration:"+(s>70?15+Math.random()*8:9+Math.random()*10)+"s;animation-delay:-"+(Math.random()*20)+"s";
-var t=document.createElement("s");t.style.animationDuration=(4+Math.random()*6)+"s";if(Math.random()<.5)t.style.animationDirection="reverse";e.appendChild(t);n.appendChild(e);}
-for(var j=0;j<40;j++){var d=document.createElement("b"),z=2+Math.random()*4;d.style.cssText="left:"+(Math.random()*100)+"%;width:"+z+"px;height:"+z+"px;opacity:"+(.6+Math.random()*.4)+";animation-duration:"+(7+Math.random()*10)+"s;animation-delay:-"+(Math.random()*17)+"s";n.appendChild(d);}
-(function(){var vil=document.getElementById("vil"),ms=[].slice.call(document.querySelectorAll(".ms")),zs=[].slice.call(document.querySelectorAll(".mz")),cur=-1,auto=true;
-function sg(m){return zs.filter(function(z){return z.querySelector(".nm").textContent==m.dataset.u})[0]}
-function show(i){ms.forEach(function(m,j){m.classList.toggle("on",j==i);var z=sg(m);if(z)z.classList.toggle("actif",j==i);});cur=i;}
-ms.forEach(function(m,i){var z=sg(m);[m,z].forEach(function(el){if(!el)return;el.addEventListener("mouseenter",function(){show(i);});el.addEventListener("mouseleave",function(){show(-1);});el.addEventListener("click",function(e){e.preventDefault();});});});})();
-var v=document.getElementById("vil"),sc=document.getElementById("sc");v.addEventListener("mousemove",function(ev){var b=v.getBoundingClientRect(),x=(ev.clientX-b.left)/b.width-.5,y=(ev.clientY-b.top)/b.height-.5;sc.style.transform="translate("+(-x*10)+"px,"+(-y*6)+"px)";});})();
-</script>
+.bulle{position:absolute;z-index:45;transform:translate(-50%,-115%);background:#fff;border-radius:2cqw;padding:.35cqw .9cqw;font:400 .8cqw Poppins,sans-serif;color:#2f5260;white-space:nowrap;box-shadow:0 .3cqw .9cqw rgba(30,50,80,.25);pointer-events:none;transition:opacity .3s steps(3)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important} #neige{display:none}}
+</style></head>
+<body>
+<div id="cal"><img class="fond" src="https://mood-tools.yourmood.net/calendrier/village/boite-seule.jpg" alt="Le calendrier de l'Avent mood">
+  <div class="compte" id="compte" hidden>Prochain tiroir dans <b id="chrono">--:--:--</b></div>
+</div>
+<canvas id="neige" aria-hidden="true"></canvas>
 <script>
 (function(){
   var API = (location.hostname === 'mood-tools.yourmood.net' || location.hostname === 'localhost' || location.hostname === 'katana-scanner-mvp.vercel.app') ? '/api/calendrier-jours' : 'https://mood-tools.yourmood.net/api/calendrier-jours';
-  var q = new URLSearchParams(location.search), jourApercu = q.get('jour');
-  var MOIS = ' décembre', TACTILE = window.matchMedia && matchMedia('(hover: none)').matches;
-  var vil = document.getElementById('vil'), boite = document.getElementById('cj-boite');
+  var jourApercu = new URLSearchParams(location.search).get('jour');
+  var MOIS = ' décembre', TACTILE = window.matchMedia && matchMedia('(hover: none)').matches, cal = document.getElementById('cal');
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function pad(n){ return (n < 10 ? '0' : '') + n; }
-  function etincelles(nb){ var h = ''; for (var i = 0; i < nb; i++) h += '<span class="sc2" style="left:' + (Math.random() * 100).toFixed(0) + '%;top:' + (Math.random() * 100).toFixed(0) + '%;animation-delay:-' + (Math.random() * 1.4).toFixed(2) + 's"></span>'; return h; }
+  function etincelles(nb){ var h = ''; for (var i = 0; i < nb; i++) h += '<span class="sc2" style="left:' + (5 + Math.random() * 90).toFixed(0) + '%;top:' + (5 + Math.random() * 60).toFixed(0) + '%;animation-delay:-' + (Math.random() * 1.4).toFixed(2) + 's"></span>'; return h; }
   function chrono(jour){
-    var el = document.getElementById('cj-compte'), t = document.getElementById('cj-chrono');
     if (jourApercu !== null || jour >= 24) return;
-    var cible = new Date((jour === 0 ? '2026-12-01' : '2026-12-' + pad(jour + 1)) + 'T00:00:00+01:00'); el.hidden = false;
+    var el = document.getElementById('compte'), t = document.getElementById('chrono'), cible = new Date((jour === 0 ? '2026-12-01' : '2026-12-' + pad(jour + 1)) + 'T00:00:00+01:00'); el.hidden = false;
     function tic(){ var s = Math.max(0, Math.floor((cible - new Date()) / 1000)); if (s <= 0) { location.reload(); return; }
       var j = Math.floor(s / 86400); s %= 86400; t.textContent = (j ? j + ' j ' : '') + pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); }
     tic(); setInterval(tic, 1000);
@@ -152,49 +81,60 @@ var v=document.getElementById("vil"),sc=document.getElementById("sc");v.addEvent
   function rect(n){ var c2 = n > 12 ? 1 : 0, k = (n - 1) % 12, r = Math.floor(k / 4), c = k % 4; return { x: COLS[c2][c] + 2 - OX, y: ROWS[r][0] + 2 - OY, w: COLS[c2][c + 1] - COLS[c2][c] - 4, h: ROWS[r][1] - ROWS[r][0] - 4 }; }
   function pos(R){ return 'left:' + (R.x / IW * 100) + '%;top:' + (R.y / IH * 100) + '%;width:' + (R.w / IW * 100) + '%;height:' + (R.h / IH * 100) + '%'; }
   function porte(R){ return 'background-size:' + (IW / R.w * 100) + '% ' + (IH / R.h * 100) + '%;background-position:' + (R.x / (IW - R.w) * 100) + '% ' + (R.y / (IH - R.h) * 100) + '%'; }
-  function montre(t){ boite.querySelectorAll('.cj-t.on').forEach(function(o){ if (o !== t) o.classList.remove('on'); }); if (t) t.classList.add('on'); vil.classList.toggle('survol', !!t); }
+  function montre(t){ cal.querySelectorAll('.t.on').forEach(function(o){ if (o !== t) o.classList.remove('on'); }); if (t) t.classList.add('on'); cal.classList.toggle('survol', !!t); }
   function rendre(d){
-    var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; }); var auj = par[jour];
-    var etoiles = ''; for (var i = 0; i < 26; i++) etoiles += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;top:' + (Math.random() * 100).toFixed(1) + '%;animation-delay:-' + (Math.random() * 2.4).toFixed(2) + 's"></i>';
-    var fen;
+    var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; }); var auj = par[jour], h = '';
     if (auj) {
-      fen = '<div class="cj-fen g"><img src="' + esc(auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(5) + '</div>' +
-        '<div class="cj-fen d"><span class="cj-etoiles">' + etoiles + '</span><span class="k2">' + (jour >= 24 && jourApercu === null ? 'La dernière pépite' : 'Aujourd\'hui · ' + jour + (jour === 1 ? 'er' : '') + MOIS) + '</span>' +
-        '<span class="nm2">' + esc(auj.nom) + '</span><span class="ty2">' + esc(auj.type || '') + '</span>' + (auj.prix ? '<span class="px2">' + auj.prix + '.–</span>' : '<span class="px2"></span>') +
-        (auj.url ? '<a class="cj-btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div>';
+      var titre = jour >= 24 && jourApercu === null ? 'La dernière pépite' : 'Aujourd\'hui · ' + jour + (jour === 1 ? 'er' : '') + MOIS;
+      var autre = auj.photo && auj.photo !== auj.image ? auj.photo : auj.image;
+      h += '<div class="fen g"><img src="' + esc(auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(4) +
+        '<div class="voile"><span class="k2">' + esc(titre) + '</span><span class="nm2">' + esc(auj.nom) + '</span></div></div>';
+      h += '<div class="fen d"><img src="' + esc(autre) + '" alt="">' + etincelles(3) +
+        '<div class="voile"><span class="px2">' + esc(auj.type || '') + (auj.prix ? ' · ' + auj.prix + '.–' : '') + '</span>' +
+        (auj.url ? '<div style="margin-top:.8cqw"><a class="btn" href="' + esc(auj.url) + '">Je la découvre</a></div>' : '') + '</div></div>';
     } else {
-      fen = '<div class="cj-fen d" style="left:3.7%;width:93.4%"><span class="cj-etoiles">' + etoiles + '</span><span class="k2">Du 1er au 24 décembre</span><span class="avant">' + (jour ? 'Toutes les pépites sont sorties' : 'Le premier tiroir s\'ouvre le 1er décembre, à minuit…') + '</span></div>';
+      h += '<div class="fen g" style="width:93.5%"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">' + (jour ? 'Toutes les pépites sont sorties' : 'Chaque jour, une pépite sort de son tiroir… premier rendez-vous le 1er décembre, à minuit') + '</span></div></div>';
     }
-    boite.insertAdjacentHTML('beforeend', fen);
-    var g = '';
     for (var n = 1; n <= 24; n++) {
       var x = par[n], R = rect(n);
-      if (x) g += '<a class="cj-t ouvert' + (n === jour ? ' auj' : '') + '" style="' + pos(R) + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + ' aria-label="' + esc(n + ' décembre · ' + x.nom) + '">' +
-          '<span class="cj-ph"><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt=""></span><span class="cj-pn">' + n + '</span>' +
-          '<span class="cj-pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
-          (n === jour ? '<span class="cj-porte" style="' + porte(R) + '"></span>' : '') + '</a>';
-      else g += '<span class="cj-t ferme" data-n="' + n + '" style="' + pos(R) + '"></span>';
+      if (x) h += '<a class="t ouvert' + (n === jour ? ' auj' : '') + '" style="' + pos(R) + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + ' aria-label="' + esc(n + ' décembre · ' + x.nom) + '">' +
+          '<span class="ph"><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt=""></span><span class="pn">' + n + '</span>' +
+          '<span class="pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
+          (n === jour ? '<span class="porte" style="' + porte(R) + '"></span>' : '') + '</a>';
+      else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '"></span>';
     }
-    boite.insertAdjacentHTML('beforeend', g);
-    boite.querySelectorAll('.cj-t.ouvert').forEach(function(t){
+    cal.insertAdjacentHTML('beforeend', h);
+    cal.querySelectorAll('.t.ouvert').forEach(function(t){
       t.addEventListener('mouseenter', function(){ if (!TACTILE) montre(t); });
       t.addEventListener('mouseleave', function(){ if (!TACTILE) montre(null); });
       t.addEventListener('click', function(e){ if (TACTILE && !t.classList.contains('on')) { e.preventDefault(); montre(t); } });
     });
-    boite.addEventListener('click', function(e){
-      var t = e.target.closest && e.target.closest('.cj-t.ferme'); if (!t) return;
+    cal.addEventListener('click', function(e){
+      var t = e.target.closest && e.target.closest('.t.ferme'); if (!t) return;
       t.classList.remove('secoue'); void t.offsetWidth; t.classList.add('secoue');
-      var old = boite.querySelector('.cj-bulle'); if (old) old.remove();
-      var b = document.createElement('span'), n = +t.dataset.n; b.className = 'cj-bulle';
+      var old = cal.querySelector('.bulle'); if (old) old.remove();
+      var b = document.createElement('span'), n = +t.dataset.n; b.className = 'bulle';
       b.textContent = n === jour + 1 ? 'Patience… il s\'ouvre cette nuit' : 'Patience… il s\'ouvre le ' + n + (n === 1 ? 'er' : '') + MOIS;
       b.style.left = (parseFloat(t.style.left) + parseFloat(t.style.width) / 2) + '%'; b.style.top = t.style.top;
-      boite.appendChild(b); setTimeout(function(){ b.style.opacity = 0; setTimeout(function(){ b.remove(); }, 300); }, 1800);
+      cal.appendChild(b); setTimeout(function(){ b.style.opacity = 0; setTimeout(function(){ b.remove(); }, 300); }, 1800);
     });
-    var tAuj = boite.querySelector('.cj-t.auj');
-    if (tAuj) setTimeout(function(){ var p = tAuj.querySelector('.cj-porte'); if (p) p.classList.add('ouvert');
-      setTimeout(function(){ montre(tAuj); setTimeout(function(){ if (!tAuj.matches(':hover')) montre(null); }, 2400); }, 750); }, 1200);
+    var tA = cal.querySelector('.t.auj');
+    if (tA) setTimeout(function(){ var p = tA.querySelector('.porte'); if (p) p.classList.add('ouvert');
+      setTimeout(function(){ montre(tA); setTimeout(function(){ if (!tA.matches(':hover')) montre(null); }, 2400); }, 750); }, 1200);
     chrono(jour);
   }
+  (function(){ // la neige qui tombe
+    var c = document.getElementById('neige'); if (!c || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    var x = c.getContext('2d'), W, H, dpr = Math.min(window.devicePixelRatio || 1, 2), F = [];
+    function taille(){ W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; }
+    taille(); addEventListener('resize', taille);
+    for (var i = 0; i < (innerWidth < 600 ? 50 : 100); i++) F.push({ x: Math.random(), y: Math.random(), r: .8 + Math.random() * 2.4, v: .25 + Math.random() * .9, o: Math.random() * 6.28, a: .55 + Math.random() * .4 });
+    (function tour(){ x.clearRect(0, 0, W, H);
+      for (var i = 0; i < F.length; i++) { var f = F[i]; f.y += f.v * dpr / H * 1.4; f.o += .012; if (f.y > 1.02) { f.y = -.02; f.x = Math.random(); }
+        x.fillStyle = 'rgba(255,255,255,' + f.a + ')'; x.shadowColor = 'rgba(90,130,170,.5)'; x.shadowBlur = 3 * dpr; x.beginPath(); x.arc((f.x + Math.sin(f.o) * .012) * W, f.y * H, f.r * dpr * .8, 0, 6.28); x.fill(); x.shadowBlur = 0; }
+      requestAnimationFrame(tour); })();
+  })();
   fetch(API + (jourApercu !== null ? '?jour=' + encodeURIComponent(jourApercu) : '')).then(function(r){ return r.json(); }).then(rendre).catch(function(){ rendre({ jour: 0, jours: [] }); });
 })();
-</script></body></html>
+</script>
+</body></html>
