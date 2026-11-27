@@ -8,7 +8,7 @@
 /* Calendrier d'hiver raffiné (maquette d'Amila 27.11.2026) : le décor = son image ; les vraies pièces posées dedans.
    Fenêtres du haut = l'addon du jour ; tiroirs = cartes aquarelle, la pièce sort en petits sauts au survol (esprit Village mood). */
 html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mood-tools.yourmood.net/calendrier/papier-aquarelle.jpg) 0 0/720px repeat}
-#cal{position:absolute;left:50%;top:50%;width:min(100vw,calc(100vh * 1505 / 1045));aspect-ratio:1505/1045;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
+#cal{position:absolute;left:50%;top:0;width:min(100vw,calc(85vh * 1505 / 1045));aspect-ratio:1505/1045;transform:translateX(-50%);container-type:inline-size;font-family:Poppins,sans-serif}
 #cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block;--m:linear-gradient(90deg,transparent 0,#000 2%,#000 98%,transparent 100%),linear-gradient(180deg,transparent 0,#000 6%,#000 96.2%,transparent 100%);-webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-composite:source-in;mask-composite:intersect}
 #cal::after{content:"";position:absolute;inset:0;background:rgba(30,45,65,.38);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
 #cal.survol::after{opacity:1}
@@ -63,12 +63,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
 .t.ferme{cursor:pointer} .t.ferme.secoue{animation:secoue .45s steps(6)}
 @keyframes secoue{0%,100%{transform:translateX(0)}20%{transform:translateX(-5%)}40%{transform:translateX(5%)}60%{transform:translateX(-3%)}80%{transform:translateX(2%)}}
 .bulle{position:absolute;z-index:45;transform:translate(-50%,-115%);background:#fff;border-radius:2cqw;padding:.4cqw 1cqw;font:400 .85cqw Poppins,sans-serif;color:#34506a;white-space:nowrap;box-shadow:0 .3cqw .9cqw rgba(30,50,80,.2);pointer-events:none;transition:opacity .3s steps(3)}
+
+/* la poésie : chaque nom d'addon est un morceau ; un nouveau morceau s'écrit à chaque tiroir ouvert */
+#poeme{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(94vw,calc(85vh * 1505 / 1045 * .92));height:15vh;display:flex;align-items:center;justify-content:center;text-align:center;
+  font:italic 400 clamp(15px,2.3vh,26px)/1.45 'Cormorant Garamond',serif;color:#34506a;z-index:10}
+#poeme .vers{display:inline}
+#poeme .et{display:inline-block;width:.55em;height:.55em;margin:0 .45em;vertical-align:.12em;background:#c9a15e;clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
+#poeme .neuf{display:inline;color:#8a6a2e;clip-path:inset(0 100% 0 0);animation:plume 3.2s steps(28) .9s forwards}
+@keyframes plume{to{clip-path:inset(0 0 0 0)}}
+#poeme .neuf{display:inline-block}
+#poeme .attente{opacity:.6}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important} #neige{display:none}}
 </style></head>
 <body>
 <div id="cal"><img class="fond" src="https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg" alt="Le calendrier de l'Avent mood">
   <div class="compte" id="compte" hidden>Prochain tiroir dans <b id="chrono">--:--:--</b></div>
 </div>
+<p id="poeme"></p>
 <canvas id="neige" aria-hidden="true"></canvas>
 <script>
 (function(){
@@ -115,6 +126,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
           (n === jour ? '<span class="porte" style="' + porte(R) + '">' + num(n) + '</span>' : '') + '</a>';
       else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '">' + num(n) + '</span>';
     }
+    // la poésie : les morceaux déjà sortis, deux par vers ; le dernier s'écrit comme à la plume
+    var morceaux = []; for (var m = 1; m <= jour; m++) if (par[m]) morceaux.push(par[m].nom);
+    var po = document.getElementById('poeme');
+    if (!morceaux.length) po.innerHTML = '<span class="attente">Chaque nuit, un nouveau vers de notre poésie de Noël s\'écrira ici…</span>';
+    else po.innerHTML = '<span>' + morceaux.map(function(t, i){
+      var txt = i % 2 ? ' ' + t.charAt(0).toLowerCase() + t.slice(1) : t;
+      var span = '<span class="' + (i === morceaux.length - 1 && jour === morceaux.length ? 'neuf' : 'vers') + '">' + esc(txt) + '</span>';
+      return (i && i % 2 === 0 ? '<i class="et"></i>' : '') + span;
+    }).join('') + '</span>';
     cal.insertAdjacentHTML('beforeend', h);
     cal.querySelectorAll('.t.ouvert').forEach(function(t){
       t.addEventListener('mouseenter', function(){ if (!TACTILE) montre(t); });
