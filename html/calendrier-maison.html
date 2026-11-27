@@ -7,15 +7,15 @@
 <style>
 /* Le calendrier = toute la page (Amila, 27.11.2026) : la boîte remplit l'écran, sans bord ni titre ;
    l'addon du jour remplace le petit village peint des deux fenêtres du haut ; pièces qui sortent en petits sauts (esprit Village mood) */
-html,body{margin:0;height:100%;overflow:hidden;background:#EBD8BC radial-gradient(ellipse at 50% 50%,#F1E2C9 0,#E6D1B2 100%)}
-#cal{position:absolute;left:50%;top:50%;width:min(100vw,calc(100vh * 1260 / 886));aspect-ratio:1260/886;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
-#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block}
+html,body{margin:0;height:100%;overflow:hidden;background:#dfe6ee url(https://mood-tools.yourmood.net/calendrier/village/fond.jpg) center 70%/cover no-repeat}
+#cal{position:absolute;left:50%;top:50%;width:min(95vw,calc(94vh * 1260 / 886));aspect-ratio:1260/886;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
+#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:.3cqw;filter:drop-shadow(.18cqw 0 0 #fff) drop-shadow(-.18cqw 0 0 #fff) drop-shadow(0 .18cqw 0 #fff) drop-shadow(0 -.18cqw 0 #fff) drop-shadow(.5cqw 1.2cqw 1.2cqw rgba(20,40,60,.45))}
 #cal::after{content:"";position:absolute;inset:0;background:rgba(18,34,44,.5);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
 #cal.survol::after{opacity:1}
 #neige{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60}
 /* les deux fenêtres du haut */
-.fen{position:absolute;top:5.2%;height:38.6%;overflow:hidden;border-radius:.2cqw;background:#14263a;z-index:3}
-.fen.g{left:3.1%;width:44.9%} .fen.d{left:52.3%;width:44.9%}
+.fen{position:absolute;top:4.18%;height:39.28%;overflow:hidden;border-radius:0;box-shadow:inset 0 .4cqw .6cqw rgba(0,0,0,.35);background:#14263a;z-index:3}
+.fen.g{left:2.94%;width:44.52%} .fen.d{left:52.14%;width:44.52%}
 .fen img{width:100%;height:100%;object-fit:cover;display:block;animation:pop .6s steps(5) both .3s}
 .fen.d img{animation-delay:.55s}
 @keyframes pop{0%{opacity:0;transform:scale(.88)}100%{opacity:1;transform:scale(1)}}
@@ -93,7 +93,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#EBD8BC radial-gradien
         '<div class="voile"><span class="px2">' + esc(auj.type || '') + (auj.prix ? ' · ' + auj.prix + '.–' : '') + '</span>' +
         (auj.url ? '<div style="margin-top:.8cqw"><a class="btn" href="' + esc(auj.url) + '">Je la découvre</a></div>' : '') + '</div></div>';
     } else {
-      h += '<div class="fen g" style="width:93.5%"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">' + (jour ? 'Toutes les pépites sont sorties' : 'Chaque jour, une pépite sort de son tiroir… premier rendez-vous le 1er décembre, à minuit') + '</span></div></div>';
+      h += '<div class="fen g" style="width:93.72%"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">' + (jour ? 'Toutes les pépites sont sorties' : 'Chaque jour, une pépite sort de son tiroir… premier rendez-vous le 1er décembre, à minuit') + '</span></div></div>';
     }
     for (var n = 1; n <= 24; n++) {
       var x = par[n], R = rect(n);
