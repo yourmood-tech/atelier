@@ -5,59 +5,64 @@
 <meta name="robots" content="noindex,nofollow">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-/* Le calendrier = toute la page (Amila, 27.11.2026) : la boîte remplit l'écran, sans bord ni titre ;
-   l'addon du jour remplace le petit village peint des deux fenêtres du haut ; pièces qui sortent en petits sauts (esprit Village mood) */
-html,body{margin:0;height:100%;overflow:hidden;background:#dfe6ee url(https://mood-tools.yourmood.net/calendrier/village/fond.jpg) center 70%/cover no-repeat}
-#cal{position:absolute;left:50%;top:50%;width:min(95vw,calc(94vh * 1260 / 886));aspect-ratio:1260/886;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
-#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:.3cqw;filter:drop-shadow(.18cqw 0 0 #fff) drop-shadow(-.18cqw 0 0 #fff) drop-shadow(0 .18cqw 0 #fff) drop-shadow(0 -.18cqw 0 #fff) drop-shadow(.5cqw 1.2cqw 1.2cqw rgba(20,40,60,.45))}
-#cal::after{content:"";position:absolute;inset:0;background:rgba(18,34,44,.5);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
+/* Calendrier d'hiver raffiné (maquette d'Amila 27.11.2026) : le décor = son image ; les vraies pièces posées dedans.
+   Fenêtres du haut = l'addon du jour ; tiroirs = cartes aquarelle, la pièce sort en petits sauts au survol (esprit Village mood). */
+html,body{margin:0;height:100%;overflow:hidden;background:#F1F1F5}
+#cal{position:absolute;left:50%;top:50%;width:min(100vw,calc(100vh * 1505 / 1045));aspect-ratio:1505/1045;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
+#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 2.5%,#000 97.5%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 2.5%,#000 97.5%,transparent 100%)}
+#cal::after{content:"";position:absolute;inset:0;background:rgba(30,45,65,.38);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
 #cal.survol::after{opacity:1}
 #neige{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60}
 /* les deux fenêtres du haut */
-.fen{position:absolute;top:4.18%;height:39.28%;overflow:hidden;border-radius:0;box-shadow:inset 0 .4cqw .6cqw rgba(0,0,0,.35);background:#14263a;z-index:3}
-.fen.g{left:2.94%;width:44.52%} .fen.d{left:52.14%;width:44.52%}
+.fen{position:absolute;top:11.67%;height:33.88%;overflow:hidden;border-radius:1.1cqw;background:linear-gradient(160deg,#F4F6FA,#DCE3EE);box-shadow:0 0 0 .2cqw rgba(255,255,255,.95),0 .5cqw 1.4cqw rgba(60,80,110,.18);z-index:3}
+.fen.g{left:2.39%;width:47.04%} .fen.d{left:50.63%;width:46.91%}
 .fen img{width:100%;height:100%;object-fit:cover;display:block;animation:pop .6s steps(5) both .3s}
 .fen.d img{animation-delay:.55s}
-@keyframes pop{0%{opacity:0;transform:scale(.88)}100%{opacity:1;transform:scale(1)}}
-.fen .voile{position:absolute;left:0;right:0;bottom:0;padding:5cqw 2cqw 1.6cqw;background:linear-gradient(0deg,rgba(12,24,38,.78),rgba(12,24,38,0));color:#fff;text-align:center}
-.fen .k2{display:block;font:400 .75cqw/1 Poppins,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:#F1DDA9}
-.fen .nm2{display:block;font:italic 400 3.2cqw/1.05 'Cormorant Garamond',serif;margin-top:.5cqw}
-.fen .px2{display:block;font:300 .95cqw/1.4 Poppins,sans-serif;letter-spacing:.06em;margin-top:.3cqw;color:#e6edf3}
-.btn{display:inline-block;text-decoration:none;font:400 .95cqw Poppins,sans-serif;letter-spacing:.08em;color:#14263a;background:#F1DDA9;border-radius:2cqw;padding:.65cqw 1.9cqw;box-shadow:0 .3cqw .9cqw rgba(0,0,0,.3);transition:transform .2s steps(3)}
+@keyframes pop{0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
+.fen .voile{position:absolute;left:0;right:0;bottom:0;padding:5cqw 2cqw 1.4cqw;background:linear-gradient(0deg,rgba(244,246,250,.95) 0,rgba(244,246,250,.82) 55%,rgba(244,246,250,0) 100%);text-align:center;color:#34506a}
+.k2{display:block;font:500 .78cqw/1 Poppins,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:#34506a}
+.nm2{display:block;font:italic 400 3.3cqw/1.05 'Cormorant Garamond',serif;margin-top:.5cqw;color:#34506a}
+.orne{display:flex;align-items:center;justify-content:center;gap:.8cqw;margin-top:.6cqw}
+.orne i{display:block;width:6.5cqw;height:1px;background:linear-gradient(90deg,rgba(176,140,80,0),#b08c50)}
+.orne i+b+i{background:linear-gradient(90deg,#b08c50,rgba(176,140,80,0))}
+.orne b{display:block;width:1.2cqw;height:1.2cqw;background:#c9a15e;clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
+.px2{display:block;font:italic 400 1.8cqw/1.2 'Cormorant Garamond',serif;color:#34506a}
+.btn{display:inline-block;margin-top:.8cqw;text-decoration:none;font:400 1cqw Poppins,sans-serif;letter-spacing:.06em;color:#fff;background:#3d5a74;border-radius:2cqw;padding:.75cqw 2.4cqw;box-shadow:0 .3cqw .9cqw rgba(40,60,90,.25);transition:transform .2s steps(3)}
 .btn:hover{transform:translateY(-.2cqw)}
-.fen .seul{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;background:radial-gradient(ellipse at 50% 40%,#22406a 0,#14263a 75%)}
-.fen .seul .nm2{font-size:2.6cqw;padding:0 2cqw}
-.compte{position:absolute;left:50%;top:1.1%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.92);border-radius:2cqw;padding:.25cqw 1cqw;font:400 .7cqw Poppins,sans-serif;letter-spacing:.06em;color:#2f5260;white-space:nowrap}
+.fen .seul{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 3cqw}
+.compte{position:absolute;left:50%;top:7.2%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.92);border-radius:2cqw;padding:.3cqw 1.1cqw;font:400 .75cqw Poppins,sans-serif;letter-spacing:.06em;color:#34506a;white-space:nowrap;box-shadow:0 .2cqw .8cqw rgba(60,80,110,.15)}
 .compte b{font-weight:400;color:#a07a2c;font-variant-numeric:tabular-nums}
 .compte[hidden]{display:none}
-.sc2{position:absolute;width:1.2cqw;height:1.2cqw;background:#fff6d8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;pointer-events:none;z-index:4;animation:pique 1.4s steps(4) infinite}
+.sc2{position:absolute;width:1.3cqw;height:1.3cqw;background:#fff6d8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;pointer-events:none;z-index:4;animation:pique 1.4s steps(4) infinite;filter:drop-shadow(0 0 .3cqw rgba(255,214,120,.9))}
 @keyframes pique{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1.4)}}
 /* les tiroirs */
-.t{position:absolute;display:block;text-decoration:none;z-index:2}
-.ph{position:absolute;inset:0;border-radius:.2cqw;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 .12cqw #F4EEDF}
+.t{position:absolute;display:block;text-decoration:none;z-index:2;border-radius:.8cqw}
+.ph{position:absolute;inset:0;border-radius:.8cqw;overflow:hidden;background:#EEF2F7;box-shadow:0 0 0 .15cqw rgba(255,255,255,.95),0 .3cqw .9cqw rgba(60,80,110,.15)}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
-.pn{position:absolute;top:5%;left:5%;min-width:22%;border-radius:2cqw;background:rgba(255,255,255,.92);font:500 1cqw/1.6 Poppins,sans-serif;text-align:center;color:#2f5260;z-index:2}
+.pn{position:absolute;top:6%;left:6%;min-width:16%;padding:0 .4cqw;border-radius:2cqw;background:rgba(255,255,255,.95);font:500 .85cqw/1.75 Poppins,sans-serif;text-align:center;color:#34506a;z-index:2}
+.num{position:absolute;left:0;right:0;top:4%;text-align:center;font:italic 400 4.4cqw/1 'Cormorant Garamond',serif;pointer-events:none;z-index:6}
+.num.or{color:#a8865a} .num.bl{color:#3e5a74}
 .t.ouvert{cursor:pointer}
 .t.ouvert .ph{transform-origin:50% 100%;transition:transform .45s steps(5),box-shadow .35s steps(4)}
 .t.on{z-index:40}
-.t.on .ph{transform:translateY(-12%) scale(1.6) rotate(-2deg);box-shadow:0 0 0 .2cqw #fff,.3cqw .7cqw .8cqw rgba(30,50,60,.45)}
+.t.on .ph{transform:translateY(-10%) scale(1.45) rotate(-2deg);box-shadow:0 0 0 .3cqw #fff,.4cqw .9cqw 1.1cqw rgba(30,50,70,.4)}
 .t.on .pn{opacity:0}
 .t .sc2{display:none} .t.on .sc2{display:block}
-.pl{position:absolute;left:50%;bottom:100%;transform:translate(-50%,0);background:rgba(255,255,255,.95);padding:.35cqw .9cqw .4cqw;border-radius:2cqw;box-shadow:0 0 1.4cqw .3cqw rgba(255,214,120,.85);text-align:center;white-space:nowrap;opacity:0;transition:opacity .3s steps(3),transform .45s steps(5);pointer-events:none;z-index:3}
-.pl::after{content:'';position:absolute;left:50%;bottom:-.45cqw;margin-left:-.45cqw;border:.45cqw solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.95)}
-.pl .nm{display:block;font:italic 400 1.3cqw/1.05 'Cormorant Garamond',serif;color:#2f5260}
-.pl .un{display:block;font:400 .55cqw/1.4 Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#8a7350}
-.t.on .pl{opacity:1;transform:translate(-50%,-130%)}
-.t.auj .ph{box-shadow:0 0 0 .15cqw #fff,0 0 1cqw .3cqw rgba(255,214,120,.95)}
-.porte{position:absolute;inset:0;border-radius:.2cqw;background:url(https://mood-tools.yourmood.net/calendrier/village/boite-seule.jpg) no-repeat;z-index:5;transform-origin:50% 0;transition:transform .7s steps(6),opacity .7s steps(6)}
-.porte.ouvert{transform:translateY(70%) scale(1.25);opacity:0}
+.pl{position:absolute;left:50%;bottom:100%;transform:translate(-50%,0);background:rgba(255,255,255,.96);padding:.4cqw 1cqw .45cqw;border-radius:2cqw;box-shadow:0 0 1.4cqw .3cqw rgba(255,214,120,.8);text-align:center;white-space:nowrap;opacity:0;transition:opacity .3s steps(3),transform .45s steps(5);pointer-events:none;z-index:3}
+.pl::after{content:'';position:absolute;left:50%;bottom:-.45cqw;margin-left:-.45cqw;border:.45cqw solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.96)}
+.pl .nm{display:block;font:italic 400 1.4cqw/1.05 'Cormorant Garamond',serif;color:#34506a}
+.pl .un{display:block;font:400 .55cqw/1.5 Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#8a7350}
+.t.on .pl{opacity:1;transform:translate(-50%,-125%)}
+.t.auj .ph{box-shadow:0 0 0 .2cqw #fff,0 0 1.2cqw .35cqw rgba(255,206,110,.95)}
+.porte{position:absolute;inset:0;border-radius:.8cqw;overflow:hidden;background:url(https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg) no-repeat;z-index:5;transform-origin:50% 0;transition:transform .7s steps(6),opacity .7s steps(6)}
+.porte.ouvert{transform:translateY(60%) scale(1.2);opacity:0}
 .t.ferme{cursor:pointer} .t.ferme.secoue{animation:secoue .45s steps(6)}
-@keyframes secoue{0%,100%{transform:translateX(0)}20%{transform:translateX(-6%)}40%{transform:translateX(6%)}60%{transform:translateX(-4%)}80%{transform:translateX(2%)}}
-.bulle{position:absolute;z-index:45;transform:translate(-50%,-115%);background:#fff;border-radius:2cqw;padding:.35cqw .9cqw;font:400 .8cqw Poppins,sans-serif;color:#2f5260;white-space:nowrap;box-shadow:0 .3cqw .9cqw rgba(30,50,80,.25);pointer-events:none;transition:opacity .3s steps(3)}
+@keyframes secoue{0%,100%{transform:translateX(0)}20%{transform:translateX(-5%)}40%{transform:translateX(5%)}60%{transform:translateX(-3%)}80%{transform:translateX(2%)}}
+.bulle{position:absolute;z-index:45;transform:translate(-50%,-115%);background:#fff;border-radius:2cqw;padding:.4cqw 1cqw;font:400 .85cqw Poppins,sans-serif;color:#34506a;white-space:nowrap;box-shadow:0 .3cqw .9cqw rgba(30,50,80,.2);pointer-events:none;transition:opacity .3s steps(3)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important} #neige{display:none}}
 </style></head>
 <body>
-<div id="cal"><img class="fond" src="https://mood-tools.yourmood.net/calendrier/village/boite-seule.jpg" alt="Le calendrier de l'Avent mood">
+<div id="cal"><img class="fond" src="https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg" alt="Le calendrier de l'Avent mood">
   <div class="compte" id="compte" hidden>Prochain tiroir dans <b id="chrono">--:--:--</b></div>
 </div>
 <canvas id="neige" aria-hidden="true"></canvas>
@@ -68,7 +73,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dfe6ee url(https://mo
   var MOIS = ' décembre', TACTILE = window.matchMedia && matchMedia('(hover: none)').matches, cal = document.getElementById('cal');
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
   function pad(n){ return (n < 10 ? '0' : '') + n; }
-  function etincelles(nb){ var h = ''; for (var i = 0; i < nb; i++) h += '<span class="sc2" style="left:' + (5 + Math.random() * 90).toFixed(0) + '%;top:' + (5 + Math.random() * 60).toFixed(0) + '%;animation-delay:-' + (Math.random() * 1.4).toFixed(2) + 's"></span>'; return h; }
+  function etincelles(nb){ var h = ''; for (var i = 0; i < nb; i++) h += '<span class="sc2" style="left:' + (5 + Math.random() * 90).toFixed(0) + '%;top:' + (5 + Math.random() * 55).toFixed(0) + '%;animation-delay:-' + (Math.random() * 1.4).toFixed(2) + 's"></span>'; return h; }
   function chrono(jour){
     if (jourApercu !== null || jour >= 24) return;
     var el = document.getElementById('compte'), t = document.getElementById('chrono'), cible = new Date((jour === 0 ? '2026-12-01' : '2026-12-' + pad(jour + 1)) + 'T00:00:00+01:00'); el.hidden = false;
@@ -76,11 +81,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dfe6ee url(https://mo
       var j = Math.floor(s / 86400); s %= 86400; t.textContent = (j ? j + ' j ' : '') + pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); }
     tic(); setInterval(tic, 1000);
   }
-  // tiroirs mesurés sur la boîte (photo d'origine 1441 × 1092, découpée à partir de 101,104 → 1260 × 886)
-  var IW = 1260, IH = 886, OX = 101, OY = 104, COLS = [[114,259,411,557,700],[749,892,1038,1188,1340]], ROWS = [[513,654],[663,804],[813,962]];
-  function rect(n){ var c2 = n > 12 ? 1 : 0, k = (n - 1) % 12, r = Math.floor(k / 4), c = k % 4; return { x: COLS[c2][c] + 2 - OX, y: ROWS[r][0] + 2 - OY, w: COLS[c2][c + 1] - COLS[c2][c] - 4, h: ROWS[r][1] - ROWS[r][0] - 4 }; }
+  // cartes mesurées sur la maquette (1505 × 1045)
+  var IW = 1505, IH = 1045, CL = [[32,204],[212,384],[391,563],[571,742]], CR = [[768,940],[948,1119],[1128,1299],[1307,1474]], RG = [[492,650],[657,817],[825,999]];
+  function rect(n){ var cols = n > 12 ? CR : CL, k = (n - 1) % 12, r = Math.floor(k / 4), c = k % 4; return { x: cols[c][0] + 2, y: RG[r][0] + 2, w: cols[c][1] - cols[c][0] - 4, h: RG[r][1] - RG[r][0] - 4 }; }
   function pos(R){ return 'left:' + (R.x / IW * 100) + '%;top:' + (R.y / IH * 100) + '%;width:' + (R.w / IW * 100) + '%;height:' + (R.h / IH * 100) + '%'; }
   function porte(R){ return 'background-size:' + (IW / R.w * 100) + '% ' + (IH / R.h * 100) + '%;background-position:' + (R.x / (IW - R.w) * 100) + '% ' + (R.y / (IH - R.h) * 100) + '%'; }
+  function num(n){ return n <= 6 ? '<span class="num ' + (n % 2 ? 'or' : 'bl') + '">' + n + '</span>' : ''; } // 1 à 6 : chiffre posé sur le dessin
   function montre(t){ cal.querySelectorAll('.t.on').forEach(function(o){ if (o !== t) o.classList.remove('on'); }); if (t) t.classList.add('on'); cal.classList.toggle('survol', !!t); }
   function rendre(d){
     var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; }); var auj = par[jour], h = '';
@@ -88,20 +94,21 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dfe6ee url(https://mo
       var titre = jour >= 24 && jourApercu === null ? 'La dernière pépite' : 'Aujourd\'hui · ' + jour + (jour === 1 ? 'er' : '') + MOIS;
       var autre = auj.photo && auj.photo !== auj.image ? auj.photo : auj.image;
       h += '<div class="fen g"><img src="' + esc(auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(4) +
-        '<div class="voile"><span class="k2">' + esc(titre) + '</span><span class="nm2">' + esc(auj.nom) + '</span></div></div>';
+        '<div class="voile"><span class="k2">' + esc(titre) + '</span><span class="nm2">' + esc(auj.nom) + '</span><span class="orne"><i></i><b></b><i></i></span></div></div>';
       h += '<div class="fen d"><img src="' + esc(autre) + '" alt="">' + etincelles(3) +
         '<div class="voile"><span class="px2">' + esc(auj.type || '') + (auj.prix ? ' · ' + auj.prix + '.–' : '') + '</span>' +
-        (auj.url ? '<div style="margin-top:.8cqw"><a class="btn" href="' + esc(auj.url) + '">Je la découvre</a></div>' : '') + '</div></div>';
+        (auj.url ? '<a class="btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div></div>';
     } else {
-      h += '<div class="fen g" style="width:93.72%"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">' + (jour ? 'Toutes les pépites sont sorties' : 'Chaque jour, une pépite sort de son tiroir… premier rendez-vous le 1er décembre, à minuit') + '</span></div></div>';
+      h += '<div class="fen g"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">Une pépite chaque jour</span><span class="orne"><i></i><b></b><i></i></span></div></div>';
+      h += '<div class="fen d"><div class="seul"><span class="px2">' + (jour ? 'Toutes les pépites sont sorties' : 'Premier tiroir le 1er décembre, à minuit') + '</span></div></div>';
     }
     for (var n = 1; n <= 24; n++) {
       var x = par[n], R = rect(n);
       if (x) h += '<a class="t ouvert' + (n === jour ? ' auj' : '') + '" style="' + pos(R) + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + ' aria-label="' + esc(n + ' décembre · ' + x.nom) + '">' +
           '<span class="ph"><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt=""></span><span class="pn">' + n + '</span>' +
           '<span class="pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
-          (n === jour ? '<span class="porte" style="' + porte(R) + '"></span>' : '') + '</a>';
-      else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '"></span>';
+          (n === jour ? '<span class="porte" style="' + porte(R) + '">' + num(n) + '</span>' : '') + '</a>';
+      else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '">' + num(n) + '</span>';
     }
     cal.insertAdjacentHTML('beforeend', h);
     cal.querySelectorAll('.t.ouvert').forEach(function(t){
@@ -128,10 +135,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dfe6ee url(https://mo
     var x = c.getContext('2d'), W, H, dpr = Math.min(window.devicePixelRatio || 1, 2), F = [];
     function taille(){ W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; }
     taille(); addEventListener('resize', taille);
-    for (var i = 0; i < (innerWidth < 600 ? 50 : 100); i++) F.push({ x: Math.random(), y: Math.random(), r: .8 + Math.random() * 2.4, v: .25 + Math.random() * .9, o: Math.random() * 6.28, a: .55 + Math.random() * .4 });
+    for (var i = 0; i < (innerWidth < 600 ? 40 : 80); i++) F.push({ x: Math.random(), y: Math.random(), r: .8 + Math.random() * 2.2, v: .25 + Math.random() * .8, o: Math.random() * 6.28, a: .6 + Math.random() * .35 });
     (function tour(){ x.clearRect(0, 0, W, H);
       for (var i = 0; i < F.length; i++) { var f = F[i]; f.y += f.v * dpr / H * 1.4; f.o += .012; if (f.y > 1.02) { f.y = -.02; f.x = Math.random(); }
-        x.fillStyle = 'rgba(255,255,255,' + f.a + ')'; x.shadowColor = 'rgba(90,130,170,.5)'; x.shadowBlur = 3 * dpr; x.beginPath(); x.arc((f.x + Math.sin(f.o) * .012) * W, f.y * H, f.r * dpr * .8, 0, 6.28); x.fill(); x.shadowBlur = 0; }
+        x.fillStyle = 'rgba(255,255,255,' + f.a + ')'; x.shadowColor = 'rgba(90,120,160,.55)'; x.shadowBlur = 3 * dpr; x.beginPath(); x.arc((f.x + Math.sin(f.o) * .012) * W, f.y * H, f.r * dpr * .8, 0, 6.28); x.fill(); x.shadowBlur = 0; }
       requestAnimationFrame(tour); })();
   })();
   fetch(API + (jourApercu !== null ? '?jour=' + encodeURIComponent(jourApercu) : '')).then(function(r){ return r.json(); }).then(rendre).catch(function(){ rendre({ jour: 0, jours: [] }); });
