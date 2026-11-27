@@ -191,6 +191,24 @@ type R = { x: number; y: number; w: number; h: number };
 function Recadreur({ src, carreParDefaut, calque, onAnnuler, onValider }: { src: string; carreParDefaut: boolean; calque?: string; onAnnuler: () => void; onValider: (f: File) => void }) {
   const [carre, setCarre] = useState(carreParDefaut);
   const [voirCalque, setVoirCalque] = useState(!!calque);
+  const [bougeCalque, setBougeCalque] = useState(false); // mode « bouger / agrandir le calque »
+  // place et taille du calque dans le cadre (en fractions du cadre), gardées pour les photos suivantes
+  const [cq, setCq] = useState<{ x: number; y: number; s: number }>(() => {
+    try { const v = JSON.parse(localStorage.getItem("calque-place") || ""); if (typeof v.s === "number") return v; } catch {}
+    return { x: 0, y: 0, s: 1 };
+  });
+  useEffect(() => { try { localStorage.setItem("calque-place", JSON.stringify(cq)); } catch {} }, [cq]);
+  const tirerCalque = (e: React.PointerEvent, agrandir: boolean) => {
+    e.preventDefault(); e.stopPropagation();
+    const x0 = e.clientX, y0 = e.clientY, d = { ...cq }, L = r.w || 1;
+    const bouge = (ev: PointerEvent) => {
+      const dx = (ev.clientX - x0) / L, dy = (ev.clientY - y0) / L;
+      if (agrandir) setCq({ ...d, s: Math.max(0.2, Math.min(3, d.s + Math.max(dx, dy))) });
+      else setCq({ ...d, x: d.x + dx, y: d.y + dy });
+    };
+    const fin = () => { window.removeEventListener("pointermove", bouge); window.removeEventListener("pointerup", fin); };
+    window.addEventListener("pointermove", bouge); window.addEventListener("pointerup", fin);
+  };
   const [taille, setTaille] = useState<{ w: number; h: number } | null>(null); // taille affichée
   const [r, setR] = useState<R>({ x: 0, y: 0, w: 0, h: 0 });
   const [img, setImg] = useState<HTMLImageElement | null>(null);
@@ -267,18 +285,25 @@ function Recadreur({ src, carreParDefaut, calque, onAnnuler, onValider }: { src:
             <button className={!carre ? "on" : ""} onClick={() => passerCarre(false)}>Libre</button>
             <button className={miroir ? "on" : ""} title="Retourner la photo comme dans un miroir" onClick={() => setMiroir((m) => !m)}>⇋ Miroir</button>
             {calque && <button className={voirCalque ? "on" : ""} title="Bague de référence en transparence pour caler la taille et la place" onClick={() => setVoirCalque((v) => !v)}>◎ Calque</button>}
+            {calque && voirCalque && <button className={bougeCalque ? "on" : ""} title="Déplacer ou agrandir le calque" onClick={() => setBougeCalque((v) => !v)}>✥ Régler le calque</button>}
           </div>
         </div>
         {erreur ? <p className="err">{erreur}</p> : !taille ? <p className="vide">Chargement…</p> : (
           <div className="scene" style={{ width: taille.w, height: taille.h }}>
             <img src={src} alt="" draggable={false} style={{ width: taille.w, height: taille.h, transform: miroir ? "scaleX(-1)" : undefined }} />
             <div className="cadre" style={{ left: r.x, top: r.y, width: r.w, height: r.h }} onPointerDown={(e) => tirer(e, null)}>
-              {calque && voirCalque && <img className="calque" src={calque} alt="" draggable={false} />}
+              {calque && voirCalque && (
+                <div className={"calque-boite" + (bougeCalque ? " reglage" : "")} style={{ left: cq.x * 100 + "%", top: cq.y * 100 + "%", width: cq.s * 100 + "%", height: cq.s * 100 + "%" }}
+                  onPointerDown={bougeCalque ? (e) => tirerCalque(e, false) : undefined}>
+                  <img className="calque" src={calque} alt="" draggable={false} />
+                  {bougeCalque && <span className="coin-calque" onPointerDown={(e) => tirerCalque(e, true)} />}
+                </div>
+              )}
               {["hg", "hd", "bg", "bd"].map((c) => <span key={c} className={"coin " + c} onPointerDown={(e) => tirer(e, c)} />)}
             </div>
           </div>
         )}
-        <p className="aide">Déplace le cadre, tire sur les coins pour l'agrandir ou le réduire. « Miroir » retourne la photo gauche ↔ droite.{calque ? " « Calque » montre une bague déjà calée en transparence : pose ta bague exactement dessus." : ""}</p>
+        <p className="aide">Déplace le cadre, tire sur les coins pour l'agrandir ou le réduire. « Miroir » retourne la photo gauche ↔ droite.{calque ? " « Calque » montre une bague déjà calée en transparence : pose ta bague exactement dessus. « Régler le calque » : tire-le pour le déplacer, tire le rond doré pour l'agrandir (la place est gardée pour les photos suivantes)." : ""}</p>
         <div className="rec-pied">
           <button onClick={onAnnuler}>Annuler</button>
           <button className="ok" onClick={valider} disabled={!taille}>Valider</button>
@@ -349,7 +374,10 @@ const CSS = `
 .cp .scene{position:relative;margin:0 auto;user-select:none;touch-action:none;overflow:hidden}
 .cp .scene img{display:block}
 .cp .cadre{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.55);outline:2px solid #fff;cursor:move}
+.cp .cadre .calque-boite{position:absolute;pointer-events:none}
+.cp .cadre .calque-boite.reglage{pointer-events:auto;cursor:grab;outline:1.5px dashed #ffd27a;z-index:3}
 .cp .cadre .calque{position:absolute;inset:0;width:100%;height:100%;opacity:.38;pointer-events:none;mix-blend-mode:multiply;filter:saturate(.6)}
+.cp .cadre .coin-calque{position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;background:#ffd27a;border:2px solid #fff;cursor:nwse-resize}
 .cp .coin{position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 0 0 2px var(--gold)}
 .cp .coin.hg{left:-3px;top:-3px;cursor:nwse-resize} .cp .coin.bd{right:-3px;bottom:-3px;cursor:nwse-resize}
 .cp .coin.hd{right:-3px;top:-3px;cursor:nesw-resize} .cp .coin.bg{left:-3px;bottom:-3px;cursor:nesw-resize}
