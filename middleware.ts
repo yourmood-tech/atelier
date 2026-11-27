@@ -78,7 +78,7 @@ export default auth((req) => {
   }
 
   // /aura (page de la famille Aura — lien à montrer à l'équipe)
-  if (pathname === "/aura" || pathname === "/aura-xs" || pathname === "/dernier-jour" || pathname === "/les-oubliees" || pathname === "/les-discretes" || pathname === "/refonte" || pathname === "/api/refonte" || pathname === "/catalogue-noel" || pathname === "/calendrier" || pathname === "/calendrier-essai" || pathname === "/calendrier-decembre" || pathname === "/sertis-noel" || pathname === "/black-pass-neige" || pathname === "/droits-de-l-homme" || pathname === "/api/droits-homme" || pathname === "/avant-premiere" || pathname === "/email-hiver" || pathname.startsWith("/aura/")) {
+  if (pathname === "/aura" || pathname === "/aura-xs" || pathname === "/dernier-jour" || pathname === "/les-oubliees" || pathname === "/les-discretes" || pathname === "/refonte" || pathname === "/api/refonte" || pathname === "/catalogue-noel" || pathname === "/calendrier" || pathname === "/calendrier-essai" || pathname === "/calendrier-decembre" || pathname === "/calendrier-maison" || pathname === "/sertis-noel" || pathname === "/black-pass-neige" || pathname === "/droits-de-l-homme" || pathname === "/api/droits-homme" || pathname === "/avant-premiere" || pathname === "/email-hiver" || pathname.startsWith("/aura/")) {
     return;
   }
 

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le calendrier mood — la maison des pépites</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Esprit « Village mood » (Amila, 27.11.2026) : papier clair, autocollants à contour blanc qui sortent en petits sauts, le reste s'assombrit */
+#calj{--encre:#2f5260;--or:#8a7350;--or2:#B88A35;font-family:Poppins,system-ui,sans-serif;font-weight:300;color:var(--encre);
+  background:radial-gradient(ellipse at 50% 0,#fff 0,#FBF9F4 45%,#F3EFE6 100%);min-height:100vh;overflow-x:clip;position:relative}
+#calj *{box-sizing:border-box}
+#cj-neige{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50}
+#calj .cj-tete{text-align:center;padding:42px 16px 10px;position:relative}
+#calj .cj-kick{font:400 12px Poppins,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:var(--encre);margin:0 0 12px}
+#calj h1{font:300 clamp(34px,6vw,64px)/1.05 Poppins,sans-serif;letter-spacing:.06em;margin:0;color:var(--encre)}
+#calj .cj-sous{font:italic 400 clamp(19px,2.4vw,26px)/1.3 'Cormorant Garamond',serif;margin:10px 0 0;color:var(--encre)}
+#calj .cj-compte{display:inline-flex;gap:8px;align-items:center;margin-top:16px;background:#fff;border-radius:999px;padding:7px 16px;font-size:13px;box-shadow:0 .3rem 1rem rgba(20,40,52,.12)}
+#calj .cj-compte[hidden]{display:none}
+#calj .cj-compte b{font:500 14px Poppins,sans-serif;letter-spacing:.06em;font-variant-numeric:tabular-nums;color:var(--or2)}
+#calj .cj-wrap{width:min(1080px,100%);margin:0 auto;padding:0 16px 60px}
+
+/* l'addon du jour, en vedette */
+#calj .cj-vedette{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(18px,4vw,56px);align-items:center;margin:26px auto 46px;max-width:900px}
+#calj .cj-stick{position:relative;justify-self:center;width:min(380px,80vw);aspect-ratio:1}
+#calj .cj-stick img{width:100%;height:100%;object-fit:cover;display:block;border-radius:18px;transform:rotate(-2.5deg);
+  box-shadow:0 0 0 7px #fff,6px 14px 22px rgba(30,50,60,.28);animation:cjPop .55s steps(5) both .25s}
+@keyframes cjPop{0%{opacity:0;transform:rotate(-2.5deg) translateY(10%) scale(.7)}100%{opacity:1;transform:rotate(-2.5deg) translateY(0) scale(1)}}
+#calj .sc2{position:absolute;width:22px;height:22px;background:#fff6d8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);pointer-events:none;opacity:0}
+#calj .cj-stick .sc2{animation:cjPique 1.4s steps(4) infinite}
+@keyframes cjPique{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:1;transform:scale(1.4)}}
+#calj .cj-info{text-align:left}
+#calj .cj-pill{display:inline-block;background:#fff;border-radius:999px;padding:6px 16px;font:400 11px Poppins,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:var(--or);box-shadow:0 0 1.2rem .2rem rgba(255,214,120,.55)}
+#calj .cj-info h2{font:italic 500 clamp(34px,4.4vw,52px)/1.05 'Cormorant Garamond',serif;margin:16px 0 6px;color:var(--encre)}
+#calj .cj-type{font:400 11.5px Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--or);margin:0 0 16px}
+#calj .cj-prix{font:400 20px Poppins,sans-serif;margin:0 0 22px}
+#calj .cj-btn{display:inline-block;text-decoration:none;font:500 14px Poppins,sans-serif;letter-spacing:.06em;color:#fff;background:var(--encre);border-radius:999px;padding:13px 30px;transition:transform .2s steps(3),box-shadow .2s}
+#calj .cj-btn:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(20,40,52,.2)}
+#calj .cj-avant{max-width:620px;margin:26px auto 40px;text-align:center}
+#calj .cj-avant h2{font:italic 500 34px 'Cormorant Garamond',serif;margin:0 0 6px}
+#calj .cj-avant p{margin:0;font-size:14px;line-height:1.6;color:#5b7480}
+
+/* la maison */
+#calj .cj-titre2{text-align:center;font:italic 500 clamp(26px,3vw,34px) 'Cormorant Garamond',serif;margin:0 0 4px}
+#calj .cj-titre2 + p{text-align:center;margin:0 0 20px;font-size:13px;letter-spacing:.04em;color:#5b7480}
+#calj .cj-boite{position:relative;width:min(820px,100%);margin:0 auto;border-radius:20px;container-type:inline-size}
+#calj .cj-boite>img.cj-fond{display:block;width:100%;height:auto;border-radius:20px;box-shadow:0 18px 50px rgba(30,50,80,.14)}
+#calj .cj-boite::after{content:"";position:absolute;inset:0;border-radius:20px;background:rgba(18,34,44,.5);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:24}
+#calj .cj-boite.survol::after{opacity:1}
+#calj .cj-t{position:absolute;display:block;text-decoration:none;z-index:2}
+#calj .cj-t .cj-ph{position:absolute;inset:0;border-radius:4px;overflow:hidden;background:#fff;box-shadow:inset 0 0 0 2px #F4EEDF}
+#calj .cj-t .cj-ph img{width:100%;height:100%;object-fit:cover;display:block}
+#calj .cj-t .cj-pn{position:absolute;top:5%;left:4%;min-width:20%;padding:0 .5cqw;border-radius:999px;background:rgba(255,255,255,.92);font:600 1.5cqw/1.7 Poppins,sans-serif;text-align:center;color:var(--encre);z-index:2}
+/* survol : la pièce sort comme un autocollant, en petits sauts */
+#calj .cj-t.ouvert{cursor:pointer}
+#calj .cj-t.ouvert .cj-ph{transform-origin:50% 100%;transition:transform .45s steps(5),box-shadow .35s steps(4)}
+#calj .cj-t.on{z-index:31}
+#calj .cj-t.on .cj-ph{transform:translateY(-12%) scale(1.55) rotate(-2deg);box-shadow:0 0 0 .5cqw #fff,.4cqw 1cqw 1.2cqw rgba(30,50,60,.4)}
+#calj .cj-t.on .cj-pn{opacity:0}
+#calj .cj-pl{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-.6cqw);background:rgba(255,255,255,.95);padding:.5cqw 1.4cqw .6cqw;border-radius:3cqw;box-shadow:0 0 1.6cqw .3cqw rgba(255,214,120,.85);text-align:center;white-space:nowrap;opacity:0;transition:opacity .3s steps(3),transform .45s steps(5);pointer-events:none;z-index:3}
+#calj .cj-pl::after{content:'';position:absolute;left:50%;bottom:-.6cqw;margin-left:-.6cqw;border:.6cqw solid transparent;border-bottom:0;border-top-color:rgba(255,255,255,.95)}
+#calj .cj-pl .nm{display:block;font:italic 500 2.3cqw/1.05 'Cormorant Garamond',serif;color:var(--encre)}
+#calj .cj-pl .un{display:block;font:400 1cqw/1.5 Poppins,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:var(--or)}
+#calj .cj-t.on .cj-pl{opacity:1;transform:translate(-50%,-90%)}
+#calj .cj-t .sc2{width:1.6cqw;height:1.6cqw;z-index:4}
+#calj .cj-t.on .sc2{animation:cjPique 1.4s steps(4) infinite}
+/* le tiroir du jour : il brille, puis s'ouvre en petits sauts à l'arrivée */
+#calj .cj-t.auj .cj-ph{box-shadow:0 0 0 .35cqw #fff,0 0 1.8cqw .5cqw rgba(255,214,120,.95)}
+#calj .cj-t .cj-porte{position:absolute;inset:0;border-radius:4px;background:url(https://mood-tools.yourmood.net/calendrier/maison.jpg) no-repeat;z-index:5;transform-origin:50% 0;transition:transform .7s steps(6),opacity .7s steps(6)}
+#calj .cj-t .cj-porte.ouvert{transform:translateY(70%) scale(1.25);opacity:0}
+/* tiroir fermé : il tremble et dit quand il s'ouvrira */
+#calj .cj-t.ferme{cursor:pointer} #calj .cj-t.ferme.secoue{animation:cjSecoue .45s steps(6)}
+@keyframes cjSecoue{0%,100%{transform:translateX(0)}20%{transform:translateX(-5%)}40%{transform:translateX(5%)}60%{transform:translateX(-3%)}80%{transform:translateX(2%)}}
+#calj .cj-bulle{position:absolute;z-index:40;transform:translate(-50%,-115%);background:#fff;border-radius:999px;padding:6px 14px;font:500 12px Poppins,sans-serif;color:var(--encre);white-space:nowrap;box-shadow:0 8px 20px rgba(30,50,80,.2);pointer-events:none;transition:opacity .3s steps(3)}
+#calj .cj-t.quatre .cj-ph,#calj .cj-t.quatre .cj-porte{clip-path:polygon(0 0,33% 0,100% 70%,100% 100%,0 100%)}
+#calj .cj-t.quatre.on .cj-ph{clip-path:none}
+#calj .cj-eclat{position:absolute;pointer-events:none;transform:translate(-50%,-50%);z-index:3;width:var(--t,1%);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,230,160,.8) 35%,rgba(255,230,160,0) 70%);animation:cjScint var(--d,2.2s) steps(5) var(--r,0s) infinite}
+@keyframes cjScint{0%,100%{opacity:.15;transform:translate(-50%,-50%) scale(.55)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.25)}}
+#calj .cj-pied{text-align:center;margin-top:34px;font-size:13px;color:#5b7480}
+#calj .cj-pied a{color:var(--or2);font-weight:500}
+@media (max-width:760px){#calj .cj-vedette{grid-template-columns:1fr;margin-top:14px} #calj .cj-info{text-align:center} #calj .cj-pl{display:none}}
+@media (prefers-reduced-motion:reduce){#cj-neige{display:none} #calj *{animation:none!important;transition:none!important}}
+</style></head>
+<body style="margin:0">
+<div id="calj">
+  <canvas id="cj-neige" aria-hidden="true"></canvas>
+  <header class="cj-tete">
+    <p class="cj-kick">Calendrier de l'Avent 2026</p>
+    <h1>Le calendrier mood</h1>
+    <p class="cj-sous">Chaque jour, une pépite créative sort de son tiroir…</p>
+    <div class="cj-compte" id="cj-compte" hidden>Prochain tiroir dans <b id="cj-chrono">--:--:--</b></div>
+  </header>
+  <div class="cj-wrap">
+    <div id="cj-haut"></div>
+    <h2 class="cj-titre2">La maison des pépites</h2>
+    <p id="cj-sous2">Un tiroir s'ouvre chaque nuit à minuit.</p>
+    <div class="cj-boite" id="cj-grille"><img class="cj-fond" src="https://mood-tools.yourmood.net/calendrier/maison.jpg" alt="La maison des pépites mood"></div>
+    <p class="cj-pied">Tu préfères tout recevoir d'un coup ? <a href="https://www.yourmood.net/pages/calendrier-mood">Compose ton calendrier</a></p>
+  </div>
+</div>
+<script>
+(function(){
+  var API = (location.hostname === 'mood-tools.yourmood.net' || location.hostname === 'localhost' || location.hostname === 'katana-scanner-mvp.vercel.app') ? '/api/calendrier-jours' : 'https://mood-tools.yourmood.net/api/calendrier-jours';
+  var q = new URLSearchParams(location.search); var jourApercu = q.get('jour');
+  var MOIS = ' décembre', TACTILE = window.matchMedia && matchMedia('(hover: none)').matches;
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function etincelles(nb){ var h = ''; for (var i = 0; i < nb; i++) h += '<span class="sc2" style="left:' + (Math.random() * 100).toFixed(0) + '%;top:' + (Math.random() * 100).toFixed(0) + '%;animation-delay:-' + (Math.random() * 1.4).toFixed(2) + 's"></span>'; return h; }
+  function prochaineOuverture(jour){ if (jour >= 24) return null; return new Date((jour === 0 ? '2026-12-01' : '2026-12-' + pad(jour + 1)) + 'T00:00:00+01:00'); }
+  function chrono(cible){
+    var el = document.getElementById('cj-compte'), t = document.getElementById('cj-chrono');
+    if (!cible) { el.hidden = true; return; } el.hidden = false;
+    function tic(){ var s = Math.max(0, Math.floor((cible - new Date()) / 1000)); if (s <= 0 && !jourApercu) { location.reload(); return; }
+      var j = Math.floor(s / 86400); s %= 86400; t.textContent = (j ? j + ' j ' : '') + pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s % 3600 / 60)) + ':' + pad(s % 60); }
+    tic(); setInterval(tic, 1000);
+  }
+  // tiroirs mesurés à la main sur la photo de la maison (1312 × 1199)
+  var IW = 1312, IH = 1199, K = 1312 / 700;
+  var T = {1:[158,133,266,207],2:[268,133,376,207],3:[380,133,494,207],4:[498,133,606,207],5:[93,209,244,277],6:[247,209,325,277],7:[328,209,460,277],8:[463,209,606,277],
+    9:[93,279,190,378],10:[193,279,334,350],11:[337,279,488,350],12:[491,279,606,350],13:[93,381,190,428],14:[193,353,347,428],15:[350,353,458,428],16:[461,353,606,428],
+    17:[93,430,267,494],18:[270,430,360,494],19:[363,430,448,494],20:[451,430,606,494],21:[93,497,212,575],22:[216,497,350,575],23:[353,497,460,575],24:[463,497,606,575]};
+  function rect(n){ var t = T[n]; return { x: t[0] * K + 3, y: t[1] * K + 3, w: (t[2] - t[0]) * K - 6, h: (t[3] - t[1]) * K - 6 }; }
+  function pos(R){ return 'left:' + (R.x / IW * 100) + '%;top:' + (R.y / IH * 100) + '%;width:' + (R.w / IW * 100) + '%;height:' + (R.h / IH * 100) + '%'; }
+  function porte(R){ return 'background-size:' + (IW / R.w * 100) + '% ' + (IH / R.h * 100) + '%;background-position:' + (R.x / (IW - R.w) * 100) + '% ' + (R.y / (IH - R.h) * 100) + '%'; }
+
+  function rendre(d){
+    var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; });
+    var haut = document.getElementById('cj-haut'), auj = par[jour];
+    if (!jour) {
+      haut.innerHTML = '<div class="cj-avant"><h2>Rendez-vous le 1er décembre</h2><p>Le premier tiroir s\'ouvrira à minuit. Chaque jour jusqu\'au 24, une nouvelle pépite t\'attendra ici.</p></div>';
+    } else if (auj) {
+      var titre = jour >= 24 && !jourApercu ? 'La dernière pépite' : 'Aujourd\'hui · ' + jour + (jour === 1 ? 'er' : '') + MOIS;
+      haut.innerHTML = '<section class="cj-vedette"><div class="cj-stick"><img src="' + esc(auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(6) + '</div>' +
+        '<div class="cj-info"><span class="cj-pill">' + esc(titre) + '</span><h2>' + esc(auj.nom) + '</h2><p class="cj-type">' + esc(auj.type) + '</p>' +
+        (auj.prix ? '<p class="cj-prix">' + auj.prix + '.–</p>' : '') +
+        (auj.url ? '<a class="cj-btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div></section>';
+    }
+    var g = '<img class="cj-fond" src="https://mood-tools.yourmood.net/calendrier/maison.jpg" alt="La maison des pépites mood">';
+    for (var n = 1; n <= 24; n++) {
+      var x = par[n], R = rect(n), q4 = n === 4 ? ' quatre' : '';
+      if (x) {
+        g += '<a class="cj-t ouvert' + (n === jour ? ' auj' : '') + q4 + '" style="' + pos(R) + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + ' aria-label="' + esc(n + ' décembre · ' + x.nom) + '">' +
+          '<span class="cj-ph"><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt=""></span><span class="cj-pn">' + n + '</span>' +
+          '<span class="cj-pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
+          (n === jour ? '<span class="cj-porte" style="' + porte(R) + '"></span>' : '') + '</a>';
+      } else {
+        g += '<span class="cj-t ferme' + q4 + '" data-n="' + n + '" style="' + pos(R) + '"></span>';
+      }
+    }
+    var boite = document.getElementById('cj-grille'); boite.innerHTML = g;
+    var h = ''; for (var i = 0; i < 22; i++) h += '<span class="cj-eclat" style="left:' + (2 + Math.random() * 96).toFixed(1) + '%;top:' + (94 + Math.random() * 5).toFixed(1) + '%;--t:' + (.6 + Math.random() * .8).toFixed(2) + '%;--d:' + (1.6 + Math.random() * 2.4).toFixed(2) + 's;--r:-' + (Math.random() * 3).toFixed(2) + 's"></span>';
+    boite.insertAdjacentHTML('beforeend', h);
+    // survol : la pièce sort, la maison s'assombrit
+    function montre(t){ boite.querySelectorAll('.cj-t.on').forEach(function(o){ if (o !== t) o.classList.remove('on'); }); if (t) t.classList.add('on'); boite.classList.toggle('survol', !!t); }
+    boite.querySelectorAll('.cj-t.ouvert').forEach(function(t){
+      t.addEventListener('mouseenter', function(){ if (!TACTILE) montre(t); });
+      t.addEventListener('mouseleave', function(){ if (!TACTILE) montre(null); });
+      t.addEventListener('click', function(e){ if (TACTILE && !t.classList.contains('on')) { e.preventDefault(); montre(t); } }); // téléphone : 1er toucher = elle sort, 2e = la fiche
+    });
+    boite.addEventListener('click', function(e){
+      var t = e.target.closest && e.target.closest('.cj-t.ferme');
+      if (!t) { if (TACTILE && !(e.target.closest && e.target.closest('.cj-t'))) montre(null); return; }
+      t.classList.remove('secoue'); void t.offsetWidth; t.classList.add('secoue');
+      var old = boite.querySelector('.cj-bulle'); if (old) old.remove();
+      var b = document.createElement('span'), n = +t.dataset.n; b.className = 'cj-bulle';
+      b.textContent = n === jour + 1 ? 'Patience… il s\'ouvre cette nuit' : 'Patience… il s\'ouvre le ' + n + (n === 1 ? 'er' : '') + MOIS;
+      b.style.left = (parseFloat(t.style.left) + parseFloat(t.style.width) / 2) + '%'; b.style.top = t.style.top;
+      boite.appendChild(b); setTimeout(function(){ b.style.opacity = 0; setTimeout(function(){ b.remove(); }, 300); }, 1800);
+    });
+    // à l'arrivée : le tiroir du jour s'ouvre en petits sauts, la pépite sort un instant
+    var tAuj = boite.querySelector('.cj-t.auj');
+    if (tAuj) {
+      var obs = new IntersectionObserver(function(es){ if (!es[0].isIntersecting) return; obs.disconnect();
+        setTimeout(function(){ var p = tAuj.querySelector('.cj-porte'); if (p) p.classList.add('ouvert');
+          setTimeout(function(){ montre(tAuj); setTimeout(function(){ if (!tAuj.matches(':hover')) montre(null); }, 2200); }, 750); }, 500); }, { threshold: .5 });
+      obs.observe(boite);
+    }
+    document.getElementById('cj-sous2').textContent = jour >= 24 ? 'Tous les tiroirs sont ouverts. Passe sur une pépite pour la revoir.' :
+      (jour ? jour + ' tiroir' + (jour > 1 ? 's' : '') + ' ouvert' + (jour > 1 ? 's' : '') + ' · passe sur une pépite pour la voir sortir' : 'Un tiroir s\'ouvre chaque nuit à minuit, du 1er au 24 décembre.');
+    chrono(jourApercu !== null ? null : prochaineOuverture(jour));
+  }
+  (function(){ // la neige qui tombe
+    var c = document.getElementById('cj-neige'); if (!c || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    var x = c.getContext('2d'), W, H, dpr = Math.min(window.devicePixelRatio || 1, 2), F = [];
+    function taille(){ W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; }
+    taille(); addEventListener('resize', taille);
+    for (var i = 0; i < (innerWidth < 600 ? 60 : 120); i++) F.push({ x: Math.random(), y: Math.random(), r: .8 + Math.random() * 2.6, v: .25 + Math.random() * .9, o: Math.random() * 6.28, a: .5 + Math.random() * .45 });
+    function tour(){
+      x.clearRect(0, 0, W, H);
+      for (var i = 0; i < F.length; i++) { var f = F[i]; f.y += f.v * dpr / H * 1.4; f.o += .012; var px = (f.x + Math.sin(f.o) * .012) * W, py = f.y * H;
+        if (f.y > 1.02) { f.y = -.02; f.x = Math.random(); }
+        x.fillStyle = 'rgba(255,255,255,' + f.a + ')'; x.shadowColor = 'rgba(90,130,170,.5)'; x.shadowBlur = 3 * dpr; x.beginPath(); x.arc(px, py, f.r * dpr * .8, 0, 6.28); x.fill(); x.shadowBlur = 0; }
+      requestAnimationFrame(tour);
+    }
+    tour();
+  })();
+  fetch(API + (jourApercu !== null ? '?jour=' + encodeURIComponent(jourApercu) : ''))
+    .then(function(r){ return r.json(); }).then(rendre)
+    .catch(function(){ rendre({ jour: 0, jours: [] }); });
+})();
+</script>
+</body></html>
