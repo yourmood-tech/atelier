@@ -59,7 +59,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
 .t.on .pl{opacity:1;transform:translate(-50%,-125%)}
 .t.auj .ph{box-shadow:0 0 0 .2cqw #fff,0 0 1.2cqw .35cqw rgba(255,206,110,.95)}
 .porte{position:absolute;inset:0;border-radius:.8cqw;overflow:hidden;background:url(https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg) no-repeat;z-index:5;transform-origin:50% 0;transition:transform .7s steps(6),opacity .7s steps(6)}
-.porte.ouvert{transform:translateY(60%) scale(1.2);opacity:0}
+.porte{background:none!important;overflow:visible!important}
+.porte .dm{position:absolute;inset:0;background-image:url(https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg);background-repeat:no-repeat;border-radius:.8cqw;transition:transform 1s steps(9),opacity 1s steps(9);filter:drop-shadow(1.2px 0 0 #fff) drop-shadow(-1.2px 0 0 #fff) drop-shadow(0 .2cqw .4cqw rgba(30,50,70,.35))}
+.porte .dg{clip-path:polygon(0 0,53% 0,47% 9%,55% 19%,46% 30%,54% 41%,45% 53%,53% 64%,46% 76%,55% 87%,48% 100%,0 100%)}
+.porte .dd{clip-path:polygon(53% 0,100% 0,100% 100%,48% 100%,55% 87%,46% 76%,53% 64%,45% 53%,54% 41%,46% 30%,55% 19%,47% 9%)}
+.porte.tire{animation:tire .5s steps(6)}
+@keyframes tire{0%,100%{transform:none}25%{transform:rotate(-1.5deg) scale(1.02)}50%{transform:rotate(1.5deg) scale(1.03)}75%{transform:rotate(-1deg) scale(1.02)}}
+.porte.ouvert{transform:none;opacity:1;pointer-events:none}
+.porte.ouvert .dg{transform:translate(-55%,28%) rotate(-22deg);opacity:0}
+.porte.ouvert .dd{transform:translate(55%,34%) rotate(19deg);opacity:0}
 .t.ferme{cursor:pointer} .t.ferme.secoue{animation:secoue .45s steps(6)}
 @keyframes secoue{0%,100%{transform:translateX(0)}20%{transform:translateX(-5%)}40%{transform:translateX(5%)}60%{transform:translateX(-3%)}80%{transform:translateX(2%)}}
 .bulle{position:absolute;z-index:45;transform:translate(-50%,-115%);background:#fff;border-radius:2cqw;padding:.4cqw 1cqw;font:400 .85cqw Poppins,sans-serif;color:#34506a;white-space:nowrap;box-shadow:0 .3cqw .9cqw rgba(30,50,80,.2);pointer-events:none;transition:opacity .3s steps(3)}
@@ -109,7 +117,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
 </style></head>
 <body>
 <div id="cal"><img class="fond" src="https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg" alt="Le calendrier de l'Avent mood">
-  <div class="compte" id="compte" hidden>Prochain tiroir dans <b id="chrono">--:--:--</b></div>
+  <div class="compte" id="compte" hidden>Prochaine case dans <b id="chrono">--:--:--</b></div>
 </div>
 <p id="poeme"></p>
 <canvas id="neige" aria-hidden="true"></canvas>
@@ -147,7 +155,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
       h += '<div class="fen c1"><img src="' + esc(auj.portee || auj.photo || auj.image) + '" alt="' + esc(auj.nom) + ' portée">' + etincelles(2) + '</div>';
       h += '<div class="fen c2"><img src="' + esc(auj.gif || auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(2) + '</div>';
     } else {
-      h += '<div class="fen r"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">Une pépite chaque jour</span><span class="orne"><i></i><b></b><i></i></span><span class="px2">' + (jour ? 'Toutes les pépites sont sorties' : 'Premier tiroir le 1er décembre, à minuit') + '</span></div></div>';
+      h += '<div class="fen r"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">Une pépite chaque jour</span><span class="orne"><i></i><b></b><i></i></span><span class="px2">' + (jour ? 'Toutes les pépites sont sorties' : 'Première case le 1er décembre, à minuit') + '</span></div></div>';
       h += '<div class="fen c1"></div><div class="fen c2"></div>';
     }
     for (var n = 1; n <= 24; n++) {
@@ -155,7 +163,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
       if (x) h += '<a class="t ouvert' + (n === jour ? ' auj' : '') + '" style="' + pos(R) + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + ' aria-label="' + esc(n + ' décembre · ' + x.nom) + '">' +
           '<span class="ph"><img loading="lazy" src="' + esc(x.gif || x.image || x.photo) + '" alt=""></span><span class="pn">' + n + '</span>' +
           '<span class="pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
-          (n === jour ? '<span class="porte" style="' + porte(R) + '">' + num(n) + '</span>' : '') + '</a>';
+          (n === jour ? '<span class="porte"><span class="dm dg" style="' + porte(R) + '">' + num(n) + '</span><span class="dm dd" style="' + porte(R) + '">' + num(n) + '</span></span>' : '') + '</a>';
       else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '"><span class="art" style="' + porte(R) + '"></span>' + num(n) + '</span>';
     }
     // la poésie : les morceaux déjà sortis, deux par vers ; le dernier s'écrit comme à la plume
@@ -187,8 +195,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
       if (nb > 1) setInterval(function(){ i++; df.style.transition = 'transform 1.2s cubic-bezier(.6,0,.3,1)'; df.style.transform = 'translateX(' + (-100 * i) + '%)';
         if (i === nb) setTimeout(function(){ df.style.transition = 'none'; df.style.transform = 'translateX(0)'; i = 0; }, 1250); }, 4000); }
     var tA = cal.querySelector('.t.auj');
-    if (tA) setTimeout(function(){ var p = tA.querySelector('.porte'); if (p) p.classList.add('ouvert');
-      setTimeout(function(){ montre(tA); setTimeout(function(){ if (!tA.matches(':hover')) montre(null); }, 2400); }, 750); }, 1200);
+    if (tA) setTimeout(function(){ var p = tA.querySelector('.porte'); if (p) { p.classList.add('tire'); setTimeout(function(){ p.classList.remove('tire'); p.classList.add('ouvert'); }, 520); }
+      setTimeout(function(){ montre(tA); setTimeout(function(){ if (!tA.matches(':hover')) montre(null); }, 2600); }, 1250); }, 1200);
     chrono(jour);
   }
   (function(){ // la neige qui tombe

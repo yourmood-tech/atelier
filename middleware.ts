@@ -17,6 +17,11 @@ export default auth((req) => {
     return;
   }
 
+  // /visite-noel (aperçu du site habillé pour Noël, à montrer à Stéphanie — pages fixes dans /public)
+  if (pathname === "/visite-noel" || pathname.startsWith("/visite-noel/")) {
+    return;
+  }
+
   // /coffret3d (maquette 3D du coffret en forme de bague)
   if (pathname === "/coffret3d" || pathname.startsWith("/coffret3d/")) {
     return;
