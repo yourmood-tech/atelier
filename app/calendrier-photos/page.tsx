@@ -86,6 +86,13 @@ export default function CalendrierPhotos() {
     finally { setOccupe(null); }
   };
 
+  // calque : la même photo d'une case déjà calée (la case 1, ou la 2 si on recadre la 1), en transparence dans le cadre
+  const calqueDe = (n: number, slot: string): string | undefined => {
+    if (slot !== "sansBase" && slot !== "avecBase") return undefined;
+    const ref = cases.find((c) => c.n !== n && c.photos[slot as "sansBase" | "avecBase"]);
+    return ref ? ref.photos[slot as "sansBase" | "avecBase"] : undefined;
+  };
+
   const manque = (p: Photos) => [
     ...SLOTS.filter((s) => !p[s.k]).map((s) => s.label.toLowerCase()),
     ...(!p.ambiance?.length ? ["ambiance"] : []),
@@ -96,7 +103,7 @@ export default function CalendrierPhotos() {
   return (
     <main className="cp">
       <style>{CSS}</style>
-      {recadre && <Recadreur src={recadre.src} carreParDefaut={recadre.slot !== "ambiance"} onAnnuler={() => setRecadre(null)} onValider={finirRecadrage} />}
+      {recadre && <Recadreur src={recadre.src} carreParDefaut={recadre.slot !== "ambiance"} calque={calqueDe(recadre.n, recadre.slot)} onAnnuler={() => setRecadre(null)} onValider={finirRecadrage} />}
       <header>
         <h1>Photos du calendrier 2026</h1>
         <p className="sous">Dépose les photos de chaque case. Elles se posent toutes seules sur la fiche <b>le jour J à minuit</b>, avec le gif (fabriqué automatiquement avec les deux photos produit).</p>
@@ -181,8 +188,9 @@ function Zone({ label, url, occupe, onFiles, onRecadrer, onRetirer }: { label: s
 
 // fenêtre de recadrage : un cadre qu'on déplace et qu'on agrandit par les coins
 type R = { x: number; y: number; w: number; h: number };
-function Recadreur({ src, carreParDefaut, onAnnuler, onValider }: { src: string; carreParDefaut: boolean; onAnnuler: () => void; onValider: (f: File) => void }) {
+function Recadreur({ src, carreParDefaut, calque, onAnnuler, onValider }: { src: string; carreParDefaut: boolean; calque?: string; onAnnuler: () => void; onValider: (f: File) => void }) {
   const [carre, setCarre] = useState(carreParDefaut);
+  const [voirCalque, setVoirCalque] = useState(!!calque);
   const [taille, setTaille] = useState<{ w: number; h: number } | null>(null); // taille affichée
   const [r, setR] = useState<R>({ x: 0, y: 0, w: 0, h: 0 });
   const [img, setImg] = useState<HTMLImageElement | null>(null);
@@ -258,17 +266,19 @@ function Recadreur({ src, carreParDefaut, onAnnuler, onValider }: { src: string;
             <button className={carre ? "on" : ""} onClick={() => passerCarre(true)}>Carré</button>
             <button className={!carre ? "on" : ""} onClick={() => passerCarre(false)}>Libre</button>
             <button className={miroir ? "on" : ""} title="Retourner la photo comme dans un miroir" onClick={() => setMiroir((m) => !m)}>⇋ Miroir</button>
+            {calque && <button className={voirCalque ? "on" : ""} title="Bague de référence en transparence pour caler la taille et la place" onClick={() => setVoirCalque((v) => !v)}>◎ Calque</button>}
           </div>
         </div>
         {erreur ? <p className="err">{erreur}</p> : !taille ? <p className="vide">Chargement…</p> : (
           <div className="scene" style={{ width: taille.w, height: taille.h }}>
             <img src={src} alt="" draggable={false} style={{ width: taille.w, height: taille.h, transform: miroir ? "scaleX(-1)" : undefined }} />
             <div className="cadre" style={{ left: r.x, top: r.y, width: r.w, height: r.h }} onPointerDown={(e) => tirer(e, null)}>
+              {calque && voirCalque && <img className="calque" src={calque} alt="" draggable={false} />}
               {["hg", "hd", "bg", "bd"].map((c) => <span key={c} className={"coin " + c} onPointerDown={(e) => tirer(e, c)} />)}
             </div>
           </div>
         )}
-        <p className="aide">Déplace le cadre, tire sur les coins pour l'agrandir ou le réduire. « Miroir » retourne la photo gauche ↔ droite.</p>
+        <p className="aide">Déplace le cadre, tire sur les coins pour l'agrandir ou le réduire. « Miroir » retourne la photo gauche ↔ droite.{calque ? " « Calque » montre une bague déjà calée en transparence : pose ta bague exactement dessus." : ""}</p>
         <div className="rec-pied">
           <button onClick={onAnnuler}>Annuler</button>
           <button className="ok" onClick={valider} disabled={!taille}>Valider</button>
@@ -339,6 +349,7 @@ const CSS = `
 .cp .scene{position:relative;margin:0 auto;user-select:none;touch-action:none;overflow:hidden}
 .cp .scene img{display:block}
 .cp .cadre{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.55);outline:2px solid #fff;cursor:move}
+.cp .cadre .calque{position:absolute;inset:0;width:100%;height:100%;opacity:.38;pointer-events:none;mix-blend-mode:multiply;filter:saturate(.6)}
 .cp .coin{position:absolute;width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 0 0 2px var(--gold)}
 .cp .coin.hg{left:-3px;top:-3px;cursor:nwse-resize} .cp .coin.bd{right:-3px;bottom:-3px;cursor:nwse-resize}
 .cp .coin.hd{right:-3px;top:-3px;cursor:nesw-resize} .cp .coin.bg{left:-3px;bottom:-3px;cursor:nesw-resize}

@@ -106,9 +106,22 @@ export async function deposer(buf: Buffer, nom: string, mime: string): Promise<s
 // gif : produit sans base ↔ avec base, en fondu doux, carré 900 px
 export async function faireGif(n: number, sansBase: string, avecBase: string): Promise<string> {
   const T = 900;
+  // une photo tout juste déposée n'est pas toujours servie tout de suite : on réessaie jusqu'à ~20 s
   const lire = async (u: string) => {
-    const b = Buffer.from(await (await fetch(u)).arrayBuffer());
-    return sharp(b).rotate().resize(T, T, { fit: "cover" }).removeAlpha().raw().toBuffer();
+    let err: unknown = null;
+    for (let i = 0; i < 10; i++) {
+      try {
+        const r = await fetch(u, { cache: "no-store" });
+        const t = r.headers.get("content-type") || "";
+        if (r.ok && t.startsWith("image/")) {
+          const b = Buffer.from(await r.arrayBuffer());
+          return await sharp(b).rotate().resize(T, T, { fit: "cover" }).removeAlpha().raw().toBuffer();
+        }
+        err = new Error("photo pas encore prête (" + r.status + ")");
+      } catch (e) { err = e; }
+      await new Promise((ok) => setTimeout(ok, 2000));
+    }
+    throw err;
   };
   const [a, b] = await Promise.all([lire(sansBase), lire(avecBase)]);
   const melange = (x: number) => {
