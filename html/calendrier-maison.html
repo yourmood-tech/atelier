@@ -73,6 +73,38 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
 @keyframes plume{to{clip-path:inset(0 0 0 0)}}
 #poeme .neuf{display:inline-block}
 #poeme .attente{opacity:.6}
+
+.art{display:none}
+/* ---- téléphone tenu en hauteur : décor en haut, addon du jour, 24 tiroirs en 4 colonnes, poésie ---- */
+@media (max-aspect-ratio:1/1){
+  html,body{height:auto;overflow-x:hidden;overflow-y:auto}
+  #cal{position:relative;left:auto;top:auto;transform:none;width:100vw;aspect-ratio:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:2.4vw;padding:25vw 3.5vw 4vw;box-sizing:border-box}
+  #cal::before{content:"";position:absolute;left:0;right:0;top:0;height:20vw;background:url(https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg) 0 0/260vw auto no-repeat;
+    -webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 50%,transparent 100%);pointer-events:none}
+  #cal::before{-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent 100%)}
+  #cal>img.fond,.dessous{display:none}
+  .compte{position:absolute;top:16vw;font-size:3vw;padding:1vw 3vw;border-radius:5vw}
+  .fen,.t{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important}
+  .fen{border-radius:3vw;box-shadow:0 0 0 .6vw #fff,0 1.5vw 4vw rgba(60,80,110,.18)}
+  .fen.r{grid-column:1/-1;aspect-ratio:4/3}
+  .fen.c1,.fen.c2{grid-column:span 2;aspect-ratio:1}
+  .t{aspect-ratio:171/157;border-radius:2.4vw}
+  .ph,.porte{border-radius:2.4vw}
+  .art{display:block;position:absolute;inset:0;border-radius:2.4vw;box-shadow:0 0 0 .4vw rgba(255,255,255,.95),0 1vw 2.5vw rgba(60,80,110,.15);background-image:url(https://mood-tools.yourmood.net/calendrier/hiver-fond.jpg);background-repeat:no-repeat}
+  .fen .voile{padding:12vw 4vw 3.5vw}
+  .k2{font-size:2.5vw} .nm2{font-size:7.5vw;margin-top:1.2vw} .px2{font-size:4.2vw;margin-top:1vw}
+  .orne{gap:2vw;margin-top:1.2vw} .orne i{width:12vw} .orne b{width:2.6vw;height:2.6vw}
+  .btn{font-size:3.6vw;padding:2.2vw 6vw;margin-top:2vw;border-radius:6vw}
+  .pn{font-size:2.8vw;border-radius:5vw}
+  .num{font-size:9vw}
+  .sc2{width:3.5vw;height:3.5vw}
+  .t.on .ph{transform:translateY(-6%) scale(1.25) rotate(-2deg)}
+  .pl{display:none}
+  .bulle{font-size:3.2vw;padding:1.4vw 3vw;border-radius:5vw}
+  .fen .seul .nm2{font-size:7vw}
+  #poeme{position:relative;left:auto;bottom:auto;transform:none;width:auto;height:auto;padding:4vw 6vw 10vw;font-size:5vw}
+  #cal::after{position:fixed}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important} #neige{display:none}}
 </style></head>
 <body>
@@ -124,7 +156,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
           '<span class="ph"><img loading="lazy" src="' + esc(x.gif || x.image || x.photo) + '" alt=""></span><span class="pn">' + n + '</span>' +
           '<span class="pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
           (n === jour ? '<span class="porte" style="' + porte(R) + '">' + num(n) + '</span>' : '') + '</a>';
-      else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '">' + num(n) + '</span>';
+      else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '"><span class="art" style="' + porte(R) + '"></span>' + num(n) + '</span>';
     }
     // la poésie : les morceaux déjà sortis, deux par vers ; le dernier s'écrit comme à la plume
     var morceaux = []; for (var m = 1; m <= jour; m++) if (par[m]) morceaux.push(par[m].nom);
