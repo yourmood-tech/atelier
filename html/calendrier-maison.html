@@ -15,22 +15,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
 #neige{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60}
 /* les deux fenêtres du haut */
 .fen{position:absolute;top:11.67%;height:33.88%;overflow:hidden;border-radius:1.1cqw;background:linear-gradient(160deg,#F4F6FA,#DCE3EE);box-shadow:0 0 0 .2cqw rgba(255,255,255,.95),0 .5cqw 1.4cqw rgba(60,80,110,.18);z-index:3}
-.fen.g{left:2.39%;width:47.04%} .fen.d{left:50.63%;width:46.91%}
+.fen.r{left:2.39%;width:46.31%} .fen.c1{left:49.6%;width:23.52%} .fen.c2{left:74.02%;width:23.52%}
+.dessous{position:absolute;left:1.6%;top:10.9%;width:96.8%;height:35.4%;background:#F5F3EF url(https://mood-tools.yourmood.net/calendrier/papier-aquarelle.jpg) 0 0/50cqw repeat;border-radius:1.4cqw;z-index:2;-webkit-mask-image:radial-gradient(ellipse 52% 56% at 50% 50%,#000 88%,transparent 100%);mask-image:radial-gradient(ellipse 52% 56% at 50% 50%,#000 88%,transparent 100%)}
 .fen img{width:100%;height:100%;object-fit:cover;display:block;animation:pop .6s steps(5) both .3s}
-.fen.d img{animation-delay:.55s}
+.fen.c1 img{animation-delay:.5s} .fen.c2 img{animation-delay:.7s}
 .fen .defile{position:absolute;inset:0;display:flex;height:100%;will-change:transform}
 .fen .defile img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;animation:none}
 
 @keyframes pop{0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
-.fen .voile{position:absolute;left:0;right:0;bottom:0;padding:5cqw 2cqw 1.4cqw;background:linear-gradient(0deg,rgba(244,246,250,.95) 0,rgba(244,246,250,.82) 55%,rgba(244,246,250,0) 100%);text-align:center;color:#34506a}
+.fen .voile{position:absolute;left:0;right:0;bottom:0;padding:5cqw 2cqw 1.2cqw;background:linear-gradient(0deg,rgba(244,246,250,.95) 0,rgba(244,246,250,.82) 55%,rgba(244,246,250,0) 100%);text-align:center;color:#34506a}
 .k2{display:block;font:500 .78cqw/1 Poppins,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:#34506a}
-.nm2{display:block;font:italic 400 3.3cqw/1.05 'Cormorant Garamond',serif;margin-top:.5cqw;color:#34506a}
+.nm2{display:block;font:italic 400 3cqw/1.05 'Cormorant Garamond',serif;margin-top:.5cqw;color:#34506a}
 .orne{display:flex;align-items:center;justify-content:center;gap:.8cqw;margin-top:.6cqw}
 .orne i{display:block;width:6.5cqw;height:1px;background:linear-gradient(90deg,rgba(176,140,80,0),#b08c50)}
 .orne i+b+i{background:linear-gradient(90deg,#b08c50,rgba(176,140,80,0))}
 .orne b{display:block;width:1.2cqw;height:1.2cqw;background:#c9a15e;clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%)}
-.px2{display:block;font:italic 400 1.8cqw/1.2 'Cormorant Garamond',serif;color:#34506a}
-.btn{display:inline-block;margin-top:.8cqw;text-decoration:none;font:400 1cqw Poppins,sans-serif;letter-spacing:.06em;color:#fff;background:#3d5a74;border-radius:2cqw;padding:.75cqw 2.4cqw;box-shadow:0 .3cqw .9cqw rgba(40,60,90,.25);transition:transform .2s steps(3)}
+.px2{display:block;font:italic 400 1.5cqw/1.2 'Cormorant Garamond',serif;color:#34506a;margin-top:.4cqw}
+.btn{display:inline-block;margin-top:.6cqw;text-decoration:none;font:400 1cqw Poppins,sans-serif;letter-spacing:.06em;color:#fff;background:#3d5a74;border-radius:2cqw;padding:.75cqw 2.4cqw;box-shadow:0 .3cqw .9cqw rgba(40,60,90,.25);transition:transform .2s steps(3)}
 .btn:hover{transform:translateY(-.2cqw)}
 .fen .seul{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 3cqw}
 .compte{position:absolute;left:50%;top:7.2%;transform:translateX(-50%);z-index:5;background:rgba(255,255,255,.92);border-radius:2cqw;padding:.3cqw 1.1cqw;font:400 .75cqw Poppins,sans-serif;letter-spacing:.06em;color:#34506a;white-space:nowrap;box-shadow:0 .2cqw .8cqw rgba(60,80,110,.15)}
@@ -93,17 +94,18 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mo
   function montre(t){ cal.querySelectorAll('.t.on').forEach(function(o){ if (o !== t) o.classList.remove('on'); }); if (t) t.classList.add('on'); cal.classList.toggle('survol', !!t); }
   function rendre(d){
     var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; }); var auj = par[jour], h = '';
+    h += '<div class="dessous"></div>';
     if (auj) {
       var titre = jour >= 24 && jourApercu === null ? 'La dernière pépite' : 'Aujourd\'hui · ' + jour + (jour === 1 ? 'er' : '') + MOIS;
       var amb = (auj.ambiance && auj.ambiance.length) ? auj.ambiance : [auj.photo || auj.image];
-      h += '<div class="fen g"><img src="' + esc(auj.portee || auj.photo || auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(4) +
-        '<div class="voile"><span class="k2">' + esc(titre) + '</span><span class="nm2">' + esc(auj.nom) + '</span><span class="orne"><i></i><b></b><i></i></span></div></div>';
-      h += '<div class="fen d"><div class="defile" style="--nb:' + amb.length + '">' + amb.concat(amb.length > 1 ? [amb[0]] : []).map(function(u){ return '<img src="' + esc(u) + '" alt="">'; }).join('') + '</div>' + etincelles(3) +
-        '<div class="voile"><span class="px2">' + esc(auj.type || '') + (auj.prix ? ' · ' + auj.prix + '.–' : '') + '</span>' +
-        (auj.url ? '<a class="btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div></div>';
+      h += '<div class="fen r"><div class="defile" style="--nb:' + amb.length + '">' + amb.concat(amb.length > 1 ? [amb[0]] : []).map(function(u){ return '<img src="' + esc(u) + '" alt="">'; }).join('') + '</div>' + etincelles(4) +
+        '<div class="voile"><span class="k2">' + esc(titre) + '</span><span class="nm2">' + esc(auj.nom) + '</span><span class="orne"><i></i><b></b><i></i></span>' +
+        '<span class="px2">' + esc(auj.type || '') + (auj.prix ? ' · ' + auj.prix + '.–' : '') + '</span>' + (auj.url ? '<a class="btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div></div>';
+      h += '<div class="fen c1"><img src="' + esc(auj.portee || auj.photo || auj.image) + '" alt="' + esc(auj.nom) + ' portée">' + etincelles(2) + '</div>';
+      h += '<div class="fen c2"><img src="' + esc(auj.gif || auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(2) + '</div>';
     } else {
-      h += '<div class="fen g"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">Une pépite chaque jour</span><span class="orne"><i></i><b></b><i></i></span></div></div>';
-      h += '<div class="fen d"><div class="seul"><span class="px2">' + (jour ? 'Toutes les pépites sont sorties' : 'Premier tiroir le 1er décembre, à minuit') + '</span></div></div>';
+      h += '<div class="fen r"><div class="seul"><span class="k2">Du 1er au 24 décembre</span><span class="nm2">Une pépite chaque jour</span><span class="orne"><i></i><b></b><i></i></span><span class="px2">' + (jour ? 'Toutes les pépites sont sorties' : 'Premier tiroir le 1er décembre, à minuit') + '</span></div></div>';
+      h += '<div class="fen c1"></div><div class="fen c2"></div>';
     }
     for (var n = 1; n <= 24; n++) {
       var x = par[n], R = rect(n);
