@@ -49,6 +49,7 @@ export async function GET(req: Request) {
       n: c.n, nom: c.t, type: c.d,
       image: ph.gif || ph.avecBase || ph.sansBase || `https://mood-tools.yourmood.net/calendrier/cases/${nn}.jpg`,
       photo: ph.avecBase || ph.sansBase || null,
+      gif: ph.gif || null, portee: ph.portee || null, ambiance: (ph.ambiance || []).filter(Boolean),
       url: v ? `https://www.yourmood.net/products/${v.adresse}` : null,
       prix: id && prix ? prix[id] || null : null,
     };

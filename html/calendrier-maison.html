@@ -7,9 +7,9 @@
 <style>
 /* Calendrier d'hiver raffiné (maquette d'Amila 27.11.2026) : le décor = son image ; les vraies pièces posées dedans.
    Fenêtres du haut = l'addon du jour ; tiroirs = cartes aquarelle, la pièce sort en petits sauts au survol (esprit Village mood). */
-html,body{margin:0;height:100%;overflow:hidden;background:#F1F1F5}
+html,body{margin:0;height:100%;overflow:hidden;background:#F5F3EF url(https://mood-tools.yourmood.net/calendrier/papier-aquarelle.jpg) 0 0/720px repeat}
 #cal{position:absolute;left:50%;top:50%;width:min(100vw,calc(100vh * 1505 / 1045));aspect-ratio:1505/1045;transform:translate(-50%,-50%);container-type:inline-size;font-family:Poppins,sans-serif}
-#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 2.5%,#000 97.5%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 2.5%,#000 97.5%,transparent 100%)}
+#cal>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block;--m:linear-gradient(90deg,transparent 0,#000 2%,#000 98%,transparent 100%),linear-gradient(180deg,transparent 0,#000 6%,#000 96.2%,transparent 100%);-webkit-mask-image:var(--m);mask-image:var(--m);-webkit-mask-composite:source-in;mask-composite:intersect}
 #cal::after{content:"";position:absolute;inset:0;background:rgba(30,45,65,.38);opacity:0;transition:opacity .4s steps(4);pointer-events:none;z-index:29}
 #cal.survol::after{opacity:1}
 #neige{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:60}
@@ -18,6 +18,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F1F1F5}
 .fen.g{left:2.39%;width:47.04%} .fen.d{left:50.63%;width:46.91%}
 .fen img{width:100%;height:100%;object-fit:cover;display:block;animation:pop .6s steps(5) both .3s}
 .fen.d img{animation-delay:.55s}
+.fen .defile{position:absolute;inset:0;display:flex;height:100%;will-change:transform}
+.fen .defile img{flex:0 0 100%;width:100%;height:100%;object-fit:cover;animation:none}
+
 @keyframes pop{0%{opacity:0;transform:scale(.9)}100%{opacity:1;transform:scale(1)}}
 .fen .voile{position:absolute;left:0;right:0;bottom:0;padding:5cqw 2cqw 1.4cqw;background:linear-gradient(0deg,rgba(244,246,250,.95) 0,rgba(244,246,250,.82) 55%,rgba(244,246,250,0) 100%);text-align:center;color:#34506a}
 .k2{display:block;font:500 .78cqw/1 Poppins,sans-serif;letter-spacing:.3em;text-transform:uppercase;color:#34506a}
@@ -92,10 +95,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F1F1F5}
     var jour = d.jour, par = {}; (d.jours || []).forEach(function(x){ par[x.n] = x; }); var auj = par[jour], h = '';
     if (auj) {
       var titre = jour >= 24 && jourApercu === null ? 'La dernière pépite' : 'Aujourd\'hui · ' + jour + (jour === 1 ? 'er' : '') + MOIS;
-      var autre = auj.photo && auj.photo !== auj.image ? auj.photo : auj.image;
-      h += '<div class="fen g"><img src="' + esc(auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(4) +
+      var amb = (auj.ambiance && auj.ambiance.length) ? auj.ambiance : [auj.photo || auj.image];
+      h += '<div class="fen g"><img src="' + esc(auj.portee || auj.photo || auj.image) + '" alt="' + esc(auj.nom) + '">' + etincelles(4) +
         '<div class="voile"><span class="k2">' + esc(titre) + '</span><span class="nm2">' + esc(auj.nom) + '</span><span class="orne"><i></i><b></b><i></i></span></div></div>';
-      h += '<div class="fen d"><img src="' + esc(autre) + '" alt="">' + etincelles(3) +
+      h += '<div class="fen d"><div class="defile" style="--nb:' + amb.length + '">' + amb.concat(amb.length > 1 ? [amb[0]] : []).map(function(u){ return '<img src="' + esc(u) + '" alt="">'; }).join('') + '</div>' + etincelles(3) +
         '<div class="voile"><span class="px2">' + esc(auj.type || '') + (auj.prix ? ' · ' + auj.prix + '.–' : '') + '</span>' +
         (auj.url ? '<a class="btn" href="' + esc(auj.url) + '">Je la découvre</a>' : '') + '</div></div>';
     } else {
@@ -105,7 +108,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F1F1F5}
     for (var n = 1; n <= 24; n++) {
       var x = par[n], R = rect(n);
       if (x) h += '<a class="t ouvert' + (n === jour ? ' auj' : '') + '" style="' + pos(R) + '"' + (x.url ? ' href="' + esc(x.url) + '"' : '') + ' aria-label="' + esc(n + ' décembre · ' + x.nom) + '">' +
-          '<span class="ph"><img loading="lazy" src="' + esc(x.photo || x.image) + '" alt=""></span><span class="pn">' + n + '</span>' +
+          '<span class="ph"><img loading="lazy" src="' + esc(x.gif || x.image || x.photo) + '" alt=""></span><span class="pn">' + n + '</span>' +
           '<span class="pl"><span class="nm">' + esc(x.nom) + '</span><span class="un">' + esc(x.type || '') + '</span></span>' + etincelles(3) +
           (n === jour ? '<span class="porte" style="' + porte(R) + '">' + num(n) + '</span>' : '') + '</a>';
       else h += '<span class="t ferme" data-n="' + n + '" style="' + pos(R) + '">' + num(n) + '</span>';
@@ -125,6 +128,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#F1F1F5}
       b.style.left = (parseFloat(t.style.left) + parseFloat(t.style.width) / 2) + '%'; b.style.top = t.style.top;
       cal.appendChild(b); setTimeout(function(){ b.style.opacity = 0; setTimeout(function(){ b.remove(); }, 300); }, 1800);
     });
+    var df = cal.querySelector('.fen .defile');
+    if (df) { var nb = +getComputedStyle(df).getPropertyValue('--nb') || 1, i = 0;
+      if (nb > 1) setInterval(function(){ i++; df.style.transition = 'transform 1.2s cubic-bezier(.6,0,.3,1)'; df.style.transform = 'translateX(' + (-100 * i) + '%)';
+        if (i === nb) setTimeout(function(){ df.style.transition = 'none'; df.style.transform = 'translateX(0)'; i = 0; }, 1250); }, 4000); }
     var tA = cal.querySelector('.t.auj');
     if (tA) setTimeout(function(){ var p = tA.querySelector('.porte'); if (p) p.classList.add('ouvert');
       setTimeout(function(){ montre(tA); setTimeout(function(){ if (!tA.matches(':hover')) montre(null); }, 2400); }, 750); }, 1200);
